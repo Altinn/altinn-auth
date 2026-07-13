@@ -1,6 +1,7 @@
 ﻿using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Data;
 
@@ -387,18 +388,23 @@ public static partial class StaticDataIngest
             new EntityVariantRole() { Id = Guid.Parse("a3719e58-286d-4395-95b0-1a654f2eeafa"), VariantId = EntityVariantConstants.VPFO.Id, RoleId = RoleConstants.ManagingDirector.Id },
         };
 
+        // The table only ever holds this seed set, so a single query keyed on Id finds
+        // what is missing, instead of one existence check per row.
+        var existing = await dbContext.EntityVariantRoles
+            .AsTracking()
+            .ToDictionaryAsync(t => t.Id, cancellationToken);
+
         foreach (var d in data)
         {
             // Verify: Compare on Id or Code?
-            var obj = dbContext.EntityVariantRoles.FirstOrDefault(t => t.Id == d.Id);
-            if (obj == null)
-            {
-                dbContext.EntityVariantRoles.Add(d);
-            }
-            else
+            if (existing.TryGetValue(d.Id, out var obj))
             {
                 obj.VariantId = d.VariantId;
                 obj.RoleId = d.RoleId;
+            }
+            else
+            {
+                dbContext.EntityVariantRoles.Add(d);
             }
         }
 

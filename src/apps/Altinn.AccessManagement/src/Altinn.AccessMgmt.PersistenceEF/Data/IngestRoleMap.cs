@@ -474,13 +474,17 @@ public static partial class StaticDataIngest
             new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.AuditorCertifier.Id }
         };
 
-        // Upsert RoleMap data
+        // The table only ever holds this seed set, so a single query for the existing
+        // (HasRoleId, GetRoleId) pairs is enough to find what is missing, instead of one
+        // existence check per row.
+        var existingPairs = await dbContext.RoleMaps
+            .Select(x => new { x.HasRoleId, x.GetRoleId })
+            .ToListAsync(cancellationToken);
+        var existing = existingPairs.Select(x => (x.HasRoleId, x.GetRoleId)).ToHashSet();
+
         foreach (var rm in roleMaps)
         {
-            var existing = await dbContext.RoleMaps
-                .FirstOrDefaultAsync(x => x.HasRoleId == rm.HasRoleId && x.GetRoleId == rm.GetRoleId, cancellationToken);
-
-            if (existing == null)
+            if (!existing.Contains((rm.HasRoleId, rm.GetRoleId)))
             {
                 dbContext.RoleMaps.Add(rm);
             }

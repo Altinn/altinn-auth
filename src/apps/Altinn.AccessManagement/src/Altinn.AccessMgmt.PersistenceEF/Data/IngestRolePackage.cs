@@ -1,6 +1,7 @@
 ﻿using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Data;
 
@@ -1460,14 +1461,16 @@ public static partial class StaticDataIngest
             new RolePackage() { RoleId = RoleConstants.BusinessManager, PackageId = PackageConstants.BusinessAndAccessManagementNUF.Id, EntityVariantId = EntityVariantConstants.NUF.Id, CanDelegate = true, CanAssign = true, HasAccess = true },
         };
 
+        // The table only ever holds this seed set, so a single query keyed on the
+        // (RoleId, PackageId, EntityVariantId) triple finds what is missing or changed,
+        // instead of one existence check per row.
+        var existing = await dbContext.RolePackages
+            .AsTracking()
+            .ToDictionaryAsync(t => (t.RoleId, t.PackageId, t.EntityVariantId), cancellationToken);
+
         foreach (var d in data)
         {
-            var obj = dbContext.RolePackages.FirstOrDefault(t => t.RoleId == d.RoleId && t.PackageId == d.PackageId && t.EntityVariantId == d.EntityVariantId);
-            if (obj == null)
-            {
-                dbContext.RolePackages.Add(d);
-            }
-            else
+            if (existing.TryGetValue((d.RoleId, d.PackageId, d.EntityVariantId), out var obj))
             {
                 if (obj.CanAssign != d.CanAssign || obj.CanDelegate != d.CanDelegate || obj.HasAccess != d.HasAccess)
                 {
@@ -1475,6 +1478,10 @@ public static partial class StaticDataIngest
                     obj.CanDelegate = d.CanDelegate;
                     obj.HasAccess = d.HasAccess;
                 }
+            }
+            else
+            {
+                dbContext.RolePackages.Add(d);
             }
         }
 
