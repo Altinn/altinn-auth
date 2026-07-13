@@ -222,9 +222,10 @@ jobs:
       # Coverage is collected only on the nightly `analyze` run (no dotnet-coverage
       # instrumentation overhead on PR runs); both still emit .trx + FixtureTiming.
       # On the analyze run each lane writes its .coverage file; the Convert steps
-      # below merge them for Sonar + the coverage report. On a non-zero exit the lane
-      # prints its own failing tests inline via eng/testing/report-failed-tests.ps1,
-      # then re-raises the exit code so the failures show on the step that ran them.
+      # below merge them for Sonar + the coverage report. Every run, pass or fail,
+      # reports the lane's pass/fail/skip tally via eng/testing/report-failed-tests.ps1
+      # (on a non-zero exit it also prints the failing tests inline), then
+      # re-raises the exit code so the failures show on the step that ran them.
       - name: Test - unit lane (coverage on analyze run)
         id: test_unit
         shell: bash
@@ -241,10 +242,9 @@ jobs:
           fi
           code=$?
           set -e
-          # Surface the failing tests on this step, then re-raise the real exit code.
-          if [ "$code" -ne 0 ]; then
-            pwsh -NoProfile -File "$GITHUB_WORKSPACE/eng/testing/report-failed-tests.ps1" -ResultsDirectory TestResults/unit
-          fi
+          # Report the tally (and, on failure, the per-test detail), then re-raise
+          # the real exit code.
+          pwsh -NoProfile -File "$GITHUB_WORKSPACE/eng/testing/report-failed-tests.ps1" -ResultsDirectory TestResults/unit
           exit "$code"
 
       - name: Test - integration lane (coverage on analyze run)
@@ -270,10 +270,9 @@ jobs:
           fi
           code=$?
           set -e
-          # Surface the failing tests on this step, then re-raise the real exit code.
-          if [ "$code" -ne 0 ]; then
-            pwsh -NoProfile -File "$GITHUB_WORKSPACE/eng/testing/report-failed-tests.ps1" -ResultsDirectory TestResults/integration
-          fi
+          # Report the tally (and, on failure, the per-test detail), then re-raise
+          # the real exit code.
+          pwsh -NoProfile -File "$GITHUB_WORKSPACE/eng/testing/report-failed-tests.ps1" -ResultsDirectory TestResults/integration
           exit "$code"
 
       - name: Setup-timing breakdown (FixtureTiming)

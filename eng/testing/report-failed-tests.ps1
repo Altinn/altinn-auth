@@ -1,7 +1,8 @@
 #!/usr/bin/env pwsh
-# Surfaces failing tests from a test lane in two places: a human-readable block in
-# that lane's own step log, and a Markdown list appended to the GitHub job summary
-# ($GITHUB_STEP_SUMMARY) so the failures also show on the run's summary page.
+# Reports on a test lane in two places: a human-readable failure block in that
+# lane's own step log, and a pass/fail/skip tally (plus, on failure, the failing
+# projects) appended to the GitHub job summary ($GITHUB_STEP_SUMMARY) so the
+# result is visible without opening the step log.
 #
 # The xUnit-v3 / Microsoft-Testing-Platform per-project log
 # (`<Project>_<tfm>_<arch>.log`, UTF-16) carries the test-level detail that the
@@ -13,8 +14,17 @@
 #             at <stack frame>
 #             at <... in /path/File.cs:line>
 #
-# Called from the test lane after `dotnet test`; the lane keeps and propagates the
-# real test exit code, so this script is best-effort and always exits 0.
+# and the run closes with a per-project summary block:
+#
+#     Test run summary: Passed!
+#       total: 3
+#       failed: 0
+#       succeeded: 2
+#       skipped: 1
+#
+# Called from the test lane after every `dotnet test`, pass or fail; the lane
+# keeps and propagates the real test exit code, so this script is best-effort
+# and always exits 0.
 [CmdletBinding()]
 param(
     # The relative results directory the lane passed to `--results-directory`
@@ -108,6 +118,12 @@ $totalFailures = 0
 $lanePassed = 0
 $laneFailed = 0
 $laneSkipped = 0
+# Whether any log actually reached its "Test run summary" block. A project whose
+# host crashed mid-run (or was killed) leaves a log with no such block; without
+# this guard its silent zero contribution would be indistinguishable from a real
+# all-zero result, and a lane where every log crashed would render a tally of
+# "0 passed, 0 failed, 0 skipped" as if nothing had run rather than not reporting.
+$foundAnySummary = $false
 
 foreach ($log in $logs) {
     # PS7 Get-Content auto-detects the UTF-16 BOM these logs carry.
@@ -119,7 +135,7 @@ foreach ($log in $logs) {
     $inSummary = $false
     foreach ($raw in $lines) {
         $line = $raw -replace "`r", ''
-        if ($line -match '^\s*Test run summary') { $inSummary = $true; continue }
+        if ($line -match '^\s*Test run summary') { $inSummary = $true; $foundAnySummary = $true; continue }
         if (-not $inSummary) { continue }
         if ($line -match '^\s*succeeded:\s*(\d+)') { $lanePassed += [int]$Matches[1] }
         elseif ($line -match '^\s*failed:\s*(\d+)') { $laneFailed += [int]$Matches[1] }
@@ -253,20 +269,27 @@ foreach ($log in $logs) {
     }
 }
 
-# Job summary: a terse count per project plus a link to this run, where the test
-# step above shows the full detail. Deliberately does not repeat the per-test
-# names/messages/sources.
-if ($totalFailures -gt 0 -and -not [string]::IsNullOrWhiteSpace($env:GITHUB_STEP_SUMMARY)) {
+# Job summary: always a one-line pass/fail/skip tally for the lane, so a green
+# run is as visible at a glance as a red one; on failure it also lists the
+# failing projects and links to the job log. Deliberately does not repeat the
+# per-test names/messages/sources — those stay in the step log above.
+if ($foundAnySummary -and -not [string]::IsNullOrWhiteSpace($env:GITHUB_STEP_SUMMARY)) {
+    $headerIcon = if ($laneFailed -gt 0) { '❌' } else { '✅' }
+    $headerText = if ($laneFailed -gt 0) { 'Failed tests' } else { 'Tests passed' }
+
     $sb = [System.Text.StringBuilder]::new()
-    [void]$sb.AppendLine(('### ❌ Failed tests ({0} lane)' -f $lane))
+    [void]$sb.AppendLine(('### {0} {1} ({2} lane)' -f $headerIcon, $headerText, $lane))
     [void]$sb.AppendLine('')
     [void]$sb.AppendLine(('✅ {0} passed · ❌ {1} failed · ⚠️ {2} skipped' -f $lanePassed, $laneFailed, $laneSkipped))
-    [void]$sb.AppendLine('')
-    [void]$sb.AppendLine(('Failing: {0}.' -f ($projectSummaries -join ', ')))
+    if ($totalFailures -gt 0) {
+        [void]$sb.AppendLine('')
+        [void]$sb.AppendLine(('Failing: {0}.' -f ($projectSummaries -join ', ')))
+    }
     [void]$sb.AppendLine('')
     $jobUrl = Get-JobUrl
     if ($jobUrl) {
-        [void]$sb.AppendLine(('[See the failing tests in this job''s log]({0})' -f $jobUrl))
+        $linkText = if ($totalFailures -gt 0) { 'See the failing tests in this job''s log' } else { 'See this job''s log' }
+        [void]$sb.AppendLine(('[{0}]({1})' -f $linkText, $jobUrl))
     }
     Add-Content -LiteralPath $env:GITHUB_STEP_SUMMARY -Value $sb.ToString()
 }
