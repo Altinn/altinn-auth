@@ -91,7 +91,12 @@ public class ConnectionQueryFilterTest
     public void Validate_AnyFilterSet_DoesNotThrow()
     {
         var filter = new ConnectionQueryFilter { FromIds = [Guid.NewGuid()] };
-        filter.Validate();
+
+        // With at least one narrowing filter set, Validate must accept the filter.
+        // This is the positive counterpart to Validate_NoFilters_ThrowsArgumentException.
+        var exception = Record.Exception(filter.Validate);
+
+        Assert.Null(exception);
     }
 
     [Fact]

@@ -258,6 +258,11 @@ public class AssignmentServiceClearAssignmentsInAfterLifeTest : IClassFixture<Ap
 
         using var scope = Fixture.Services.CreateScope();
         var svc = ResolveService(scope);
-        await svc.ClearAssignmentsInAfterLife(nonExistentPerson, TestAudit, TestContext.Current.CancellationToken);
+
+        // Clearing assignments for a person that has none must be a no-op that completes
+        // without throwing, not an error path.
+        var exception = await Record.ExceptionAsync(() => svc.ClearAssignmentsInAfterLife(nonExistentPerson, TestAudit, TestContext.Current.CancellationToken));
+
+        Assert.Null(exception);
     }
 }

@@ -421,7 +421,11 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
             OnlyUniqueResults = flags[7]
         };
 
-        await _query.GetConnectionsAsync(filter, ConnectionQueryDirection.FromOthers, ct: TestContext.Current.CancellationToken);
+        // Every flag combination must produce a valid query that runs against the database
+        // without the query builder throwing. Any combination that faults is a regression.
+        var exception = await Record.ExceptionAsync(() => _query.GetConnectionsAsync(filter, ConnectionQueryDirection.FromOthers, ct: TestContext.Current.CancellationToken));
+
+        Assert.Null(exception);
     }
 
     public static IEnumerable<object[]> GetFilterCombinations()
