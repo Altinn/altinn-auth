@@ -85,7 +85,7 @@ public class AccessListsController
         [FromQuery(Name = "resource")] string? resourceIdentifier = null,
         CancellationToken cancellationToken = default)
     {
-        ValidationErrorBuilder errors = default;
+        ValidationProblemBuilder errors = default;
 
         if (include.HasFlag(AccessListIncludes.Members))
         {

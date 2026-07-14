@@ -142,7 +142,7 @@ namespace Altinn.ResourceRegistry.Core.Services
             
             IDictionary<string, ICollection<string>> subjectAttributes = policy.GetAttributeDictionaryByCategory(XacmlConstants.MatchAttributeCategory.Subject);
             ResourceSubjects resourceSubjects = GetResourceSubjects(serviceResource, subjectAttributes);
-            await _repository.SetResourceSubjects(resourceSubjects, CancellationToken.None);
+            await _repository.SetResourceSubjects(resourceSubjects, logPolicyChange: true, CancellationToken.None);
             return response?.GetRawResponse()?.Status == (int)HttpStatusCode.Created;
         }
 
@@ -157,7 +157,7 @@ namespace Altinn.ResourceRegistry.Core.Services
 
             IDictionary<string, ICollection<string>> subjectAttributes = policy.GetAttributeDictionaryByCategory(XacmlConstants.MatchAttributeCategory.Subject);
             ResourceSubjects resourceSubjects = GetResourceSubjects(serviceResource, subjectAttributes);
-            await _repository.SetResourceSubjects(resourceSubjects, cancellationToken);
+            await _repository.SetResourceSubjects(resourceSubjects, cancellationToken: cancellationToken);
         }
 
         /// <inheritdoc/>
@@ -181,7 +181,7 @@ namespace Altinn.ResourceRegistry.Core.Services
                 }
             };
             ResourceSubjects resourceSubjects = GetResourceSubjects(virtualAppResource, subjectAttributes);
-            await _repository.SetResourceSubjects(resourceSubjects, cancellationToken);
+            await _repository.SetResourceSubjects(resourceSubjects, cancellationToken: cancellationToken);
         }
 
         /// <inheritdoc/>
@@ -373,6 +373,12 @@ namespace Altinn.ResourceRegistry.Core.Services
         public async Task<List<UpdatedResourceSubject>> FindUpdatedResourceSubjects(DateTimeOffset lastUpdated, int limit, (Uri ResourceUrn, Uri SubjectUrn)? skipPast = null, CancellationToken cancellationToken = default)
         {
             return await _repository.FindUpdatedResourceSubjects(lastUpdated, limit, skipPast, cancellationToken);
+        }
+
+        /// <inheritdoc/>
+        public async Task<List<ResourceChange>> FindChangedResources(long skipPastChangeId, int limit, CancellationToken cancellationToken = default)
+        {
+            return await _repository.FindChangedResources(skipPastChangeId, limit, cancellationToken);
         }
 
         private static ResourceSubjects GetResourceSubjects(ServiceResource resource, IDictionary<string, ICollection<string>> subjectAttributes)

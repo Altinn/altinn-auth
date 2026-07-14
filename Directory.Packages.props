@@ -5,8 +5,8 @@
   <ItemGroup>
     <PackageVersion Include="Altinn.Authorization.ABAC" Version="0.1.1" />
     <PackageVersion Include="Altinn.Authorization.ModelUtils" Version="3.3.0" />
-    <PackageVersion Include="Altinn.Authorization.ProblemDetails.Abstractions" Version="4.0.1" />
-    <PackageVersion Include="Altinn.Authorization.ProblemDetails" Version="4.0.1" />
+    <PackageVersion Include="Altinn.Authorization.ProblemDetails.Abstractions" Version="5.4.0" />
+    <PackageVersion Include="Altinn.Authorization.ProblemDetails" Version="5.4.0" />
     <PackageVersion Include="Altinn.Authorization.ServiceDefaults.Npgsql.Yuniql" Version="4.4.0" />
     <PackageVersion Include="Altinn.Authorization.ServiceDefaults.Npgsql" Version="4.4.0" />
     <PackageVersion Include="Altinn.Authorization.ServiceDefaults" Version="4.4.0" />
@@ -22,7 +22,7 @@
     <PackageVersion Include="Azure.Security.KeyVault.Certificates" Version="4.8.0" />
     <PackageVersion Include="Azure.Security.KeyVault.Secrets" Version="4.8.0" />
     <PackageVersion Include="Azure.Storage.Blobs" Version="12.27.0" />
-    <PackageVersion Include="CommunityToolkit.Diagnostics" Version="8.4.0" />
+    <PackageVersion Include="CommunityToolkit.Diagnostics" Version="8.4.2" />
     <PackageVersion Include="coverlet.collector" Version="6.0.4" />
     <PackageVersion Include="dotNetRdf" Version="3.4.1" />
     <PackageVersion Include="FluentAssertions.Analyzers" Version="0.34.1" />

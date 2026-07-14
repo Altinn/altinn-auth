@@ -161,6 +161,8 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
                 }
             }
 
+            // The new resource_identifier row gets its global_change_id and last_changed from the
+            // column defaults (tx_nextval and now()).
             await tx.CommitAsync(cancellationToken);
             return serviceResource;
         }
@@ -178,10 +180,26 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
     /// <inheritdoc/>
     public async Task<ServiceResource?> DeleteResource(string id, CancellationToken cancellationToken = default)
     {
+        // Deleting a resource removes all its version rows; the latest version is returned. The
+        // resource_identifier row is kept and marked deleted, so the change feed can exclude the
+        // resource (and expose the deletion later if needed).
         const string QUERY = /*strpsql*/@"
-            DELETE FROM resourceregistry.resources
-            WHERE identifier = @identifier
-            RETURNING identifier, created, modified, serviceresourcejson    
+            WITH del AS (
+                DELETE FROM resourceregistry.resources
+                WHERE identifier = @identifier
+                RETURNING identifier, created, modified, serviceresourcejson, version_id
+            ), bump AS (
+                UPDATE resourceregistry.resource_identifier ri
+                SET deleted = true,
+                    global_change_id = resourceregistry.tx_nextval('resourceregistry.resource_change_id_seq'),
+                    last_changed = now()
+                WHERE ri.identifier = @identifier
+                  AND EXISTS (SELECT 1 FROM del)
+            )
+            SELECT identifier, created, modified, serviceresourcejson, version_id
+            FROM del
+            ORDER BY version_id DESC
+            LIMIT 1
             ";
 
         try
@@ -285,20 +303,29 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
     public async Task<ServiceResource> UpdateResource(ServiceResource resource, CancellationToken cancellationToken = default)
     {
         const string QUERY = /*strpsql*/@"
-            INSERT INTO resourceregistry.resources(
-                identifier,
-                created,
-                modified,
-                serviceresourcejson
+            WITH ins AS (
+                INSERT INTO resourceregistry.resources(
+                    identifier,
+                    created,
+                    modified,
+                    serviceresourcejson
+                )
+                VALUES
+                (
+                    @identifier,
+                    Now(),
+                    Now(),
+                    @serviceresourcejson
+                )
+                RETURNING identifier, created, modified, serviceresourcejson, version_id
+            ), bump AS (
+                UPDATE resourceregistry.resource_identifier ri
+                SET global_change_id = resourceregistry.tx_nextval('resourceregistry.resource_change_id_seq'),
+                    last_changed = ins.modified
+                FROM ins
+                WHERE ri.identifier = ins.identifier
             )
-            VALUES
-            (
-                @identifier,
-                Now(),
-                Now(),
-                @serviceresourcejson
-            )
-            RETURNING identifier, created, modified, serviceresourcejson, version_id
+            SELECT identifier, created, modified, serviceresourcejson, version_id FROM ins
             ";
 
         ArgumentNullException.ThrowIfNull(resource);
@@ -469,7 +496,49 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
     }
 
     /// <inheritdoc/>
-    public async Task SetResourceSubjects(ResourceSubjects resourceSubjects, CancellationToken cancellationToken = default)
+    public async Task<List<ResourceChange>> FindChangedResources(long skipPastChangeId, int limit, CancellationToken cancellationToken = default)
+    {
+        // Deleted resources and resources that have never had a policy uploaded are excluded from
+        // the feed. A policy may be empty on purpose, so "has a policy" is the policy_uploaded
+        // flag, not the presence of resource subjects. The scan is capped at tx_max_safeval so a
+        // change id drawn by a still-running transaction can never be paged past and lost; see
+        // Migration/v0.10-resource-change-feed/01-functions.sql.
+        const string selectChangedResources = /*strpsql*/
+            """
+            SELECT identifier, global_change_id, last_changed
+            FROM resourceregistry.resource_identifier
+            WHERE global_change_id > @change_id
+              AND global_change_id <= resourceregistry.tx_max_safeval('resourceregistry.resource_change_id_seq')
+              AND policy_uploaded = true
+              AND deleted = false
+            ORDER BY global_change_id
+            LIMIT @limit
+            """;
+
+        await using NpgsqlConnection conn = await _conn.OpenConnectionAsync(cancellationToken);
+        await using NpgsqlCommand selectCmd = new NpgsqlCommand(selectChangedResources, conn);
+        selectCmd.Parameters.AddWithValue("change_id", NpgsqlDbType.Bigint, skipPastChangeId);
+        selectCmd.Parameters.AddWithValue("limit", NpgsqlDbType.Integer, limit);
+        await selectCmd.PrepareAsync(cancellationToken);
+        await using NpgsqlDataReader reader = await selectCmd.ExecuteReaderAsync(cancellationToken);
+
+        List<ResourceChange> changedResources = new List<ResourceChange>();
+
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            changedResources.Add(new ResourceChange
+            {
+                ResourceId = await reader.GetFieldValueAsync<string>("identifier", cancellationToken: cancellationToken),
+                ChangeId = await reader.GetFieldValueAsync<long>("global_change_id", cancellationToken: cancellationToken),
+                ChangedAt = await reader.GetFieldValueAsync<DateTimeOffset>("last_changed", cancellationToken: cancellationToken)
+            });
+        }
+
+        return changedResources;
+    }
+
+    /// <inheritdoc/>
+    public async Task SetResourceSubjects(ResourceSubjects resourceSubjects, bool logPolicyChange = false, CancellationToken cancellationToken = default)
     {
         const string selectExistingPairsSQL = "SELECT subject_urn FROM resourceregistry.resourcesubjects WHERE resource_urn = @resourceurn AND deleted = false";
         const string softDeletePairSQL = "UPDATE resourceregistry.resourcesubjects SET deleted = true, updated_at = NOW() WHERE resource_urn = @resourceurn AND subject_urn = ANY(@subjecturns)";
@@ -546,6 +615,29 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
 
             await resourceCmd.PrepareAsync(cancellationToken);
             await resourceCmd.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        // Step 4: Mark the resource as having a policy and bump its global change id, in the same
+        // transaction as the subject changes so the feed can never miss a committed policy update.
+        // No-op for identifiers not in the registry (e.g. apps not imported as resources).
+        if (logPolicyChange)
+        {
+            const string flagPolicyUploadedSQL = /*strpsql*/
+                """
+                UPDATE resourceregistry.resource_identifier
+                SET policy_uploaded = true,
+                    global_change_id = resourceregistry.tx_nextval('resourceregistry.resource_change_id_seq'),
+                    last_changed = now()
+                WHERE identifier = @identifier
+                """;
+
+            await using (var flagCmd = new NpgsqlCommand(flagPolicyUploadedSQL, conn, tx))
+            {
+                flagCmd.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, resourceSubjects.Resource.Value);
+
+                await flagCmd.PrepareAsync(cancellationToken);
+                await flagCmd.ExecuteNonQueryAsync(cancellationToken);
+            }
         }
 
         await tx.CommitAsync(cancellationToken);

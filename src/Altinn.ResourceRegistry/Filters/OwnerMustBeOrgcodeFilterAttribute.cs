@@ -92,7 +92,7 @@ internal sealed class OwnerMustBeOrgcodeFilterAttribute
             {
                 if (!serviceOwners.TryGet(resourceOwner, out var serviceOwner))
                 {
-                    ValidationErrorBuilder builder = default;
+                    ValidationProblemBuilder builder = default;
                     builder.Add(ValidationErrors.AccessList_Owner_MustBe_OrgCode, provider.Path);
 
                     var success = builder.TryToActionResult(out var result);

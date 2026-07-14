@@ -84,11 +84,27 @@ namespace Altinn.ResourceRegistry.Core
         Task<List<UpdatedResourceSubject>> FindUpdatedResourceSubjects(DateTimeOffset lastUpdated, int limit, (Uri ResourceUrn, Uri SubjectUrn)? skipPast = null, CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Returns a list of changed resources ordered by their global change id, which is bumped on every
+        /// metadata create/update, policy upload and delete. Each resource appears at most once, at its
+        /// latest change, and only resources that have had a policy uploaded at least once (the policy may
+        /// be empty) and that are not deleted are included.
+        /// </summary>
+        /// <param name="skipPastChangeId">Only resources with a global change id greater than this value are returned. Use 0 to start from the beginning</param>
+        /// <param name="limit">The maximum number of entries to return</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns>List of changed resources ordered by global change id</returns>
+        Task<List<ResourceChange>> FindChangedResources(long skipPastChangeId, int limit, CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Resett subjects for a given resource
         /// </summary>
         /// <param name="resourceSubjects">The resourceSubjects with resource and list of subjects</param>
+        /// <param name="logPolicyChange">If true, the resource is marked as having a policy uploaded and its global
+        /// change id is bumped in the same transaction, so the change is reflected in the resource change feed.
+        /// No-op if the resource does not exist. Metadata and delete changes bump the change id in the respective
+        /// repository methods themselves.</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
         /// <returns></returns>
-        Task SetResourceSubjects(ResourceSubjects resourceSubjects, CancellationToken cancellationToken = default);
+        Task SetResourceSubjects(ResourceSubjects resourceSubjects, bool logPolicyChange = false, CancellationToken cancellationToken = default);
     }
 }

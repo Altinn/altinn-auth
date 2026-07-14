@@ -58,7 +58,7 @@ public class AccessListMembershipsController
     {
         List<PartyUrn>? parties = null;
         List<ResourceUrn>? resources = null;
-        ValidationErrorBuilder errors = default;
+        ValidationProblemBuilder errors = default;
 
         if (partiesQuery is { Count: > 0 } pq)
         {

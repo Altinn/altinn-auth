@@ -171,5 +171,17 @@ namespace Altinn.ResourceRegistry.Core.Services.Interfaces
         /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
         /// <returns>List of resource/subject pairs updated since lastUpdated</returns>
         Task<List<UpdatedResourceSubject>> FindUpdatedResourceSubjects(DateTimeOffset lastUpdated, int limit, (Uri ResourceUrn, Uri SubjectUrn)? skipPast = null, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Returns a list of changed resources ordered by their global change id, which is bumped on every
+        /// metadata create/update, policy upload and delete. Each resource appears at most once, at its
+        /// latest change, and only resources that have had a policy uploaded at least once (the policy may
+        /// be empty) and that are not deleted are included.
+        /// </summary>
+        /// <param name="skipPastChangeId">Only changes with a sequence number greater than this value are returned. Use 0 to start from the beginning</param>
+        /// <param name="limit">The maximum number of entries to return</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns>List of changed resources ordered by change-log sequence number</returns>
+        Task<List<ResourceChange>> FindChangedResources(long skipPastChangeId, int limit, CancellationToken cancellationToken = default);
     }
 }

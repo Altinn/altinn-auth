@@ -77,4 +77,11 @@ public static class ValidationErrors
     /// </summary>
     public static ValidationErrorDescriptor AccessList_Owner_MustBe_OrgCode { get; }
         = _factory.Create(10, "Access list owner must be a valid and registered org-code.");
+
+    /// <summary>
+    /// Gets a validation error descriptor for when a value is outside its valid range. Add a detail
+    /// to the instance describing the valid range and the actual value.
+    /// </summary>
+    public static ValidationErrorDescriptor ValueOutsideRange { get; }
+        = _factory.Create(11, "Value outside valid range.");
 }

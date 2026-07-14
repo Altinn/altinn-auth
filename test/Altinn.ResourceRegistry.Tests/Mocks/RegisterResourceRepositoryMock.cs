@@ -192,9 +192,23 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
             };
         }
 
-        public Task SetResourceSubjects(ResourceSubjects resourceSubjects, CancellationToken cancellationToken)
+        public Task SetResourceSubjects(ResourceSubjects resourceSubjects, bool logPolicyChange = false, CancellationToken cancellationToken = default)
         {
             return Task.CompletedTask;
         }
+
+        /// <inheritdoc/>
+        public Task<List<ResourceChange>> FindChangedResources(long skipPastChangeId, int limit, CancellationToken cancellationToken = default)
+        {
+            List<ResourceChange> changes = new List<ResourceChange>
+            {
+                new ResourceChange { ResourceId = "first", ChangedAt = DateTimeOffset.Parse("2024-01-01T00:00:00Z"), ChangeId = 1 },
+                new ResourceChange { ResourceId = "second", ChangedAt = DateTimeOffset.Parse("2024-02-01T00:00:00Z"), ChangeId = 2 },
+                new ResourceChange { ResourceId = "third", ChangedAt = DateTimeOffset.Parse("2024-03-01T00:00:00Z"), ChangeId = 3 },
+            };
+
+            return Task.FromResult(changes.Where(c => c.ChangeId > skipPastChangeId).Take(limit).ToList());
+        }
+
     }
 }

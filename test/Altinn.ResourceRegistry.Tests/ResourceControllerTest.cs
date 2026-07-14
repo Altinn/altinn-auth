@@ -48,6 +48,44 @@ namespace Altinn.ResourceRegistry.Tests
         }
 
         [Fact]
+        public async Task GetResourceChanges_Paginates()
+        {
+            var client = CreateClient();
+
+            HttpResponseMessage response = await client.GetAsync("resourceregistry/api/v1/resource/changes?limit=2");
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Paginated<ResourceChange>? changes = await response.Content.ReadFromJsonAsync<Paginated<ResourceChange>>();
+
+            Assert.NotNull(changes);
+            Assert.Equal(2, changes.Items.Count());
+            Assert.Equal("first", changes.Items.First().ResourceId);
+            Assert.Equal("second", changes.Items.Last().ResourceId);
+            Assert.NotNull(changes.Links.Next);
+            Assert.Contains("?token=", changes.Links.Next);
+            Assert.Contains("&limit=2", changes.Links.Next);
+
+            Assert.True(Uri.TryCreate(changes.Links.Next, UriKind.Absolute, out Uri? nextUri));
+            Assert.NotNull(nextUri);
+            response = await client.GetAsync(nextUri.PathAndQuery);
+            changes = await response.Content.ReadFromJsonAsync<Paginated<ResourceChange>>();
+
+            Assert.NotNull(changes);
+            Assert.Single(changes.Items);
+            Assert.Equal("third", changes.Items.First().ResourceId);
+            Assert.Null(changes.Links.Next);
+        }
+
+        [Fact]
+        public async Task GetResourceChanges_InvalidLimit_ReturnsValidationProblem()
+        {
+            var client = CreateClient();
+
+            HttpResponseMessage response = await client.GetAsync("resourceregistry/api/v1/resource/changes?limit=1001");
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        [Fact]
         public async Task GetResource_app_skd_flyttemelding_OK()
         {
             var client = CreateClient();
