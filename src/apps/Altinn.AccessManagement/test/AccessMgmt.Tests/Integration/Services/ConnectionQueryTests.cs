@@ -64,7 +64,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
             EnrichPackageResources = false
         };
 
-        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, true, TestContext.Current.CancellationToken);
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
         var connections = DtoMapper.ConvertFromOthers(dbResult, false);
 
         Assert.Single<ConnectionDto>(connections, t => t.Party.Id == orgId);
@@ -96,7 +96,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
             EnrichPackageResources = false
         };
 
-        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, true, TestContext.Current.CancellationToken);
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
         var connections = DtoMapper.ConvertFromOthers(dbResult, false);
 
         Assert.Single<ConnectionDto>(connections, t => t.Party.Id == orgId);
@@ -128,7 +128,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
             EnrichPackageResources = false
         };
 
-        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, true, TestContext.Current.CancellationToken);
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
         var connections = DtoMapper.ConvertFromOthers(dbResult, false);
 
         Assert.Single<ConnectionDto>(connections, t => t.Party.Id == orgId);
@@ -153,7 +153,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
             EnrichPackageResources = false
         };
 
-        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, true, TestContext.Current.CancellationToken);
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
         var connections = DtoMapper.ConvertFromOthers(dbResult, false);
 
         Assert.Single<ConnectionDto>(connections, t => t.Party.Id == orgId);
@@ -183,7 +183,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
             EnrichPackageResources = false
         };
 
-        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, true, TestContext.Current.CancellationToken);
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
         var connections = DtoMapper.ConvertFromOthers(dbResult, false);
 
         Assert.Single<ConnectionDto>(connections, t => t.Party.Id == orgId);
@@ -204,7 +204,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
             IncludeKeyRole = true
         };
 
-        var result = await _query.GetConnectionsAsync(filter, ConnectionQueryDirection.FromOthers, true, TestContext.Current.CancellationToken);
+        var result = await _query.GetConnectionsAsync(filter, ConnectionQueryDirection.FromOthers, TestContext.Current.CancellationToken);
 
         Assert.NotNull(result);
         Assert.True(result.Any(), "Expected a connections, but none were found.");
@@ -256,7 +256,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
             IncludeKeyRole = true,
         };
 
-        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, true, TestContext.Current.CancellationToken);
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
 
         Assert.DoesNotContain(dbResult, r =>
             r.FromId == iksId);
@@ -274,7 +274,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
             IncludeKeyRole = true,
         };
 
-        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, true, TestContext.Current.CancellationToken);
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
 
         Assert.Contains(dbResult, r =>
             r.FromId == nonIksId &&
@@ -295,7 +295,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
             IncludeKeyRole = true,
         };
 
-        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, true, TestContext.Current.CancellationToken);
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
 
         Assert.Contains(dbResult, r =>
             r.FromId == iksId &&
@@ -352,7 +352,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
             IncludeKeyRole = true,
         };
 
-        var dbResult = await _query.GetConnectionsToOthersAsync(filter, true, TestContext.Current.CancellationToken);
+        var dbResult = await _query.GetConnectionsToOthersAsync(filter, TestContext.Current.CancellationToken);
 
         Assert.DoesNotContain(dbResult, r =>
             r.ToId == personId &&
@@ -372,7 +372,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
             IncludeKeyRole = true,
         };
 
-        var dbResult = await _query.GetConnectionsToOthersAsync(filter, true, TestContext.Current.CancellationToken);
+        var dbResult = await _query.GetConnectionsToOthersAsync(filter, TestContext.Current.CancellationToken);
 
         Assert.Contains(dbResult, r =>
             r.ToId == personId &&
@@ -392,7 +392,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
             IncludeKeyRole = true,
         };
 
-        var dbResult = await _query.GetConnectionsToOthersAsync(filter, true, TestContext.Current.CancellationToken);
+        var dbResult = await _query.GetConnectionsToOthersAsync(filter, TestContext.Current.CancellationToken);
 
         Assert.Contains(dbResult, r =>
             r.ToId == personId &&

@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.Api.Enduser.Models;
+﻿using Altinn.AccessManagement.Api.Enduser.Models;
 using Altinn.AccessManagement.Core;
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Helpers;
@@ -40,7 +40,6 @@ public class InputValidation(
                         FromIds = [party],
                         ToIds = [toEntity.Id],
                     },
-                    true,
                     cancellationToken);
 
                 if (connections.Count > 0)

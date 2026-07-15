@@ -125,7 +125,6 @@ public class AuthorizedPartyRepoServiceEf(AppDbContext db, ConnectionQuery conne
             ExcludeDeleted = false
         },
         ConnectionQueryDirection.FromOthers,
-        useNewQuery: true,
         ct);
     }
 
@@ -152,7 +151,6 @@ public class AuthorizedPartyRepoServiceEf(AppDbContext db, ConnectionQuery conne
                 ExcludeDeleted = false
             },
             ConnectionQueryDirection.FromOthers,
-            useNewQuery: true,
             ct);
     }
 

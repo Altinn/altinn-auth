@@ -92,7 +92,6 @@ public partial class ConnectionService(
                 OnlyUniqueResults = false
             },
             direction,
-            true,
             cancellationToken
         );
 
@@ -304,7 +303,6 @@ public partial class ConnectionService(
                 IncludeDelegation = false,
             },
             direction,
-            true,
             cancellationToken
         );
 
@@ -348,7 +346,6 @@ public partial class ConnectionService(
                 IncludeDelegation = false,
             },
             direction,
-            true,
             cancellationToken
         );
 
@@ -524,7 +521,6 @@ public partial class ConnectionService(
             OnlyUniqueResults = false
         },
         direction,
-        true,
         cancellationToken
         );
 
@@ -902,7 +898,7 @@ public partial class ConnectionService(
             ExcludeDeleted = false
         };
 
-        var connections = await connectionQuery.GetConnectionsAsync(filter, direction, true, cancellationToken);
+        var connections = await connectionQuery.GetConnectionsAsync(filter, direction, cancellationToken);
         return connections.Where(c => c.AssignmentId.HasValue).GroupBy(r => r.RoleId).Select(connection =>
         {
             var role = connection.First().Role;
@@ -1128,7 +1124,6 @@ public partial class ConnectionService(
                 EnrichEntities = false,
             },
             ConnectionQueryDirection.FromOthers,
-            true,
             cancellationToken
         );
         return connectionsToFromParty.Any(c => c.RoleId == RoleConstants.MainAdministratorA2.Id || c.Packages.Any(p => p.Id == PackageConstants.MainAdministrator.Id));
@@ -2534,7 +2529,7 @@ public partial class ConnectionService
                 RoleIds = [role.Id]
             };
 
-            var connections = await connectionQuery.GetConnectionsAsync(filter, direction, true, cancellationToken);
+            var connections = await connectionQuery.GetConnectionsAsync(filter, direction, cancellationToken);
 
             if (connections.Count == 0)
             {
