@@ -647,21 +647,6 @@ public class DelegationMetadataRepositoryMock : IDelegationMetadataRepository
         throw new NotImplementedException();
     }
 
-    public Task<List<DelegationChange>> GetNextPageAppDelegationChanges(long startFeedIndex = 1, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<List<DelegationChange>> GetNextPageResourceDelegationChanges(long startFeedIndex = 1, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<List<InstanceDelegationChange>> GetNextPageInstanceDelegationChanges(long startFeedIndex = 1, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
     public Task<List<DelegationChange>> GetResourceRegistryDelegationChanges(List<string> resourceIds, Guid? offeredByPartyUuid, Guid? coveredByPartyUuid, ResourceType resourceType, CancellationToken cancellationToken = default)
     {
         int offeredByPartyId = LookupPartyIdByUuid(offeredByPartyUuid);

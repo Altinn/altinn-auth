@@ -116,29 +116,5 @@ namespace Altinn.AccessManagement.Core.Services.Interfaces
         /// <param name="cancellationToken">CancellationToken</param>
         /// <returns>VersionId</returns>
         Task<string> ClearPolicyRules(string policyPath, string policyVersion, CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Gets the next page of delegation changes from the app right feed
-        /// </summary>
-        /// <param name="appRightFeedId">The current position in the feed</param>
-        /// <param name="cancellationToken">Cancellation token</param>
-        /// <returns></returns>
-        Task<List<DelegationChange>> GetNextPageAppDelegationChanges(long appRightFeedId = 1, CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Gets the next page of delegation changes from the resource right feed
-        /// </summary>
-        /// <param name="resourceRightFeedId">The current position in the feed</param>
-        /// <param name="cancellationToken">Cancellation token</param>
-        /// <returns></returns>
-        Task<List<DelegationChange>> GetNextPageResourceDelegationChanges(long resourceRightFeedId = 1, CancellationToken cancellationToken = default);
-
-        /// <summary>
-        /// Gets the next page of delegation changes from the instance right feed
-        /// </summary>
-        /// <param name="instanceRightFeedId">The current position in the feed</param>
-        /// <param name="cancellationToken">Cancellation token</param>
-        /// <returns></returns>
-        Task<List<InstanceDelegationChange>> GetNextPageInstanceDelegationChanges(long instanceRightFeedId = 1, CancellationToken cancellationToken = default);
     }
 }

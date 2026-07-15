@@ -23,8 +23,6 @@ public class DelegationMetadataEFRepositoryTests : IAsyncLifetime
 {
     private PostgresDatabase? _database;
     private ServiceProvider? _serviceProvider;
-    private DelegationMetadataRepo? _legacyRepo;
-    private NpgsqlDataSource? _dataSourceBuilder;
 
     public async ValueTask InitializeAsync()
     {
@@ -37,15 +35,12 @@ public class DelegationMetadataEFRepositoryTests : IAsyncLifetime
                 opts.EnableEFPooling = false;
             })
             .BuildServiceProvider();
-        _dataSourceBuilder = new NpgsqlDataSourceBuilder(_database!.User.ToString()).Build();
-        _legacyRepo = new DelegationMetadataRepo(_dataSourceBuilder);        
     }
 
     public ValueTask DisposeAsync()
     {
         _serviceProvider?.Dispose();
         NpgsqlConnection.ClearAllPools();
-        _dataSourceBuilder?.Dispose();
         return ValueTask.CompletedTask;
     }
 
@@ -88,8 +83,7 @@ public class DelegationMetadataEFRepositoryTests : IAsyncLifetime
         var audit = new AuditValues(SystemEntityConstants.StaticDataIngest);
         return new DelegationMetadataEF(
             new AuditAccessor { AuditValues = audit },
-            db,
-            _legacyRepo
+            db
         );
     }
 

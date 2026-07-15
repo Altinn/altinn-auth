@@ -45,7 +45,6 @@ public static class PersistenceDependencyInjectionExtensions
 
         builder.Services.AddSingleton<Marker>();
 
-        builder.Services.AddScoped<DelegationMetadataRepo>();
         builder.Services.AddScoped<IDelegationMetadataRepository, DelegationMetadataEF>();
 
         builder.Services.AddSingleton<IResourceMetadataRepository, ResourceMetadataRepo>();

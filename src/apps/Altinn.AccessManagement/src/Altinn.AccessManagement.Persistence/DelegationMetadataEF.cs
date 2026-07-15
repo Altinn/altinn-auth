@@ -14,7 +14,7 @@ using ResourceRegistryResourceType = Altinn.AccessManagement.Core.Models.Resourc
 namespace Altinn.AccessMgmt.Core.Services.Legacy;
 
 /// <inheritdoc/>
-public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbContext, DelegationMetadataRepo LegacyRepo) : IDelegationMetadataRepository
+public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbContext) : IDelegationMetadataRepository
 {
     private string ConvertFromAppResourceId(string resourceId)
     {
@@ -957,18 +957,6 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
 
         return result.Select(ConvertForAuthorizedParties).ToList();
     }
-
-    /// <inheritdoc/>
-    public Task<List<DelegationChange>> GetNextPageAppDelegationChanges(long startFeedIndex, CancellationToken cancellationToken)
-        => LegacyRepo.GetNextPageAppDelegationChanges(startFeedIndex, cancellationToken);
-
-    /// <inheritdoc/>
-    public Task<List<DelegationChange>> GetNextPageResourceDelegationChanges(long startFeedIndex, CancellationToken cancellationToken)
-        => LegacyRepo.GetNextPageResourceDelegationChanges(startFeedIndex, cancellationToken);
-
-    /// <inheritdoc/>
-    public Task<List<InstanceDelegationChange>> GetNextPageInstanceDelegationChanges(long startFeedIndex, CancellationToken cancellationToken)
-        => LegacyRepo.GetNextPageInstanceDelegationChanges(startFeedIndex, cancellationToken);
 
     private static string MapResourceTypeToResourceTypeName(ResourceRegistryResourceType resourceType)
     {

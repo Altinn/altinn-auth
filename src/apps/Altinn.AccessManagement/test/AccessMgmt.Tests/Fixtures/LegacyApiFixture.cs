@@ -14,11 +14,11 @@ namespace Altinn.AccessManagement.Tests.Fixtures;
 /// <remarks>
 /// <para>
 /// Use this fixture for test classes that exercise code paths backed by the
-/// still-extant Dapper / raw-Npgsql repositories — <c>ResourceMetadataRepo</c> and
-/// <c>DelegationMetadataRepo</c> (on the Yuniql <c>accessmanagement</c> /
-/// <c>delegation</c> schemas) and <c>ConsentRepository</c> (on the EF-provisioned
-/// <c>consent</c> schema) — or any component that depends on the Yuniql-provisioned
-/// enum types bound via <c>PersistenceDependencyInjectionExtensions.AddDatabase</c>.
+/// still-extant Dapper / raw-Npgsql repositories — <c>ResourceMetadataRepo</c>
+/// (on the Yuniql <c>accessmanagement</c> schema) and <c>ConsentRepository</c>
+/// (on the EF-provisioned <c>consent</c> schema) — or any component that depends
+/// on the Yuniql-provisioned enum types bound via
+/// <c>PersistenceDependencyInjectionExtensions.AddDatabase</c>.
 /// For pure EF tests that need none of the Yuniql schemas, keep using
 /// <see cref="ApiFixture"/> directly — it boots faster because it skips the Yuniql
 /// pipeline.
