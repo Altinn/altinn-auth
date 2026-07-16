@@ -5,7 +5,7 @@ COPY src/ .
 WORKDIR /src/apps/Altinn.Authorization/src/Altinn.Authorization
 RUN dotnet publish -c Release -o /app
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine@sha256:57bd717ac18ff6c8a39cc0ee4a76c1f15adc46df50434c73eff0c3f1df4c88f0 AS final
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine@sha256:27b6b84beeede74fd16886177d360799c8e4299ceadfbd64eef57bafead7878a AS final
 EXPOSE 5050
 WORKDIR /app
 COPY --from=build /app .
