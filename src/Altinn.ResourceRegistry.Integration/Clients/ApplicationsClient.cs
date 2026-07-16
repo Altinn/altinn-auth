@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Json;
+﻿using System.Net;
+using System.Net.Http.Json;
 using System.Text.Json;
 using Altinn.Platform.Storage.Interface.Models;
 using Altinn.ResourceRegistry.Core.Configuration;
@@ -69,6 +70,33 @@ namespace Altinn.ResourceRegistry.Integration.Clients
             catch (Exception ex)
             {
                 throw new Exception($"Something went wrong when retrieving applications", ex);
+            }
+        }
+
+        /// <inheritdoc/>
+        public async Task<Application?> GetApplication(string org, string app, CancellationToken cancellationToken = default)
+        {
+            // Direct single-app lookup against Storage. Intentionally NOT served from the cached
+            // application list ("applications"), so a freshly published app is resolvable immediately
+            // instead of returning null until the 10 minute list cache expires.
+            string applicationPath = _settings.StorageApiEndpoint + $"applications/{org}/{app}";
+
+            try
+            {
+                HttpResponseMessage response = await _client.GetAsync(applicationPath, cancellationToken);
+
+                if (response.StatusCode == HttpStatusCode.NotFound)
+                {
+                    return null;
+                }
+
+                response.EnsureSuccessStatusCode();
+
+                return await response.Content.ReadFromJsonAsync<Application>(SerializerOptions, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Something went wrong when retrieving application {org}/{app}", ex);
             }
         }
     }

@@ -89,6 +89,62 @@ namespace Altinn.ResourceRegistry.Tests
             Assert.Contains(result.Applications, r => r.Id == "skd/a2-4223-160201");
         }
 
+        [Fact]
+        public async Task GetApplication_ExistingApp_ReturnsApplication_AndCallsSingleAppEndpoint()
+        {
+            // Arrange
+            _platformSettings.Value.StorageApiEndpoint = "http://localhost:5117/storage/api/v1/";
+            HttpRequestMessage? requestMessage = null;
+            var cache = new MemoryCache(new MemoryCacheOptions());
+
+            Mock<HttpMessageHandler> mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            mockHttpMessageHandler.Protected()
+                .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .Callback<HttpRequestMessage, CancellationToken>((rm, ct) => requestMessage = rm)
+                .ReturnsAsync(new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    Content = JsonContent.Create(new Application { Id = "skd/cluster-test", Org = "skd" })
+                });
+            HttpClient applicationsClient = new HttpClient(mockHttpMessageHandler.Object);
+            ApplicationsClient target = new ApplicationsClient(applicationsClient, _platformSettings, cache);
+
+            // Act
+            Application? result = await target.GetApplication("skd", "cluster-test", cancellationToken: default);
+
+            // Assert
+            Assert.NotNull(result);
+            Assert.Equal("skd/cluster-test", result.Id);
+            Assert.NotNull(requestMessage);
+            Assert.Equal("http://localhost:5117/storage/api/v1/applications/skd/cluster-test", requestMessage.RequestUri!.ToString());
+        }
+
+        [Fact]
+        public async Task GetApplication_NotFound_ReturnsNull()
+        {
+            // Arrange
+            _platformSettings.Value.StorageApiEndpoint = "http://localhost:5117/storage/api/v1/";
+            var cache = new MemoryCache(new MemoryCacheOptions());
+
+            Mock<HttpMessageHandler> mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            mockHttpMessageHandler.Protected()
+                .Setup<Task<HttpResponseMessage>>("SendAsync", ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>())
+                .ReturnsAsync(new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.NotFound
+                });
+            HttpClient applicationsClient = new HttpClient(mockHttpMessageHandler.Object);
+            ApplicationsClient target = new ApplicationsClient(applicationsClient, _platformSettings, cache);
+
+            // Act
+            Application? result = await target.GetApplication("nav", "flyttemelding", cancellationToken: default);
+
+            // Assert
+            Assert.Null(result);
+        }
+
         private async Task<ApplicationList> GetApplicationsData()
         {
             ApplicationList? applicationList = new ApplicationList();

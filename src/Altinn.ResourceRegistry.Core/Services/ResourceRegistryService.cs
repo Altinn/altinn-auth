@@ -92,6 +92,19 @@ namespace Altinn.ResourceRegistry.Core.Services
         }
 
         /// <inheritdoc/>
+        public async Task<ServiceResource> GetAppResource(string org, string app, CancellationToken cancellationToken = default)
+        {
+            Application application = await _applicationsClient.GetApplication(org, app, cancellationToken);
+            if (application == null)
+            {
+                return null;
+            }
+
+            ServiceOwnerLookup serviceOwners = await _serviceOwnerService.GetServiceOwners(cancellationToken);
+            return MapApplicationToApplicationResource(application, serviceOwners);
+        }
+
+        /// <inheritdoc/>
         public async Task<Result<CompetentAuthorityReference>> GetResourceOwner(string id, CancellationToken cancellationToken = default)
         {
             return await _repository.GetResourceOwner(id, cancellationToken);
@@ -315,46 +328,50 @@ namespace Altinn.ResourceRegistry.Core.Services
 
                 return applicationList.Applications.Select(application => MapApplicationToApplicationResource(application, serviceOwners)).ToList();
             }
+        }
 
-            ServiceResource MapApplicationToApplicationResource(Application application, ServiceOwnerLookup serviceOwners)
+        /// <summary>
+        /// Maps an Altinn Storage <see cref="Application"/> to a <see cref="ServiceResource"/>. Shared by the
+        /// full resource list and the direct single-app lookup so both produce identical app resources.
+        /// </summary>
+        private static ServiceResource MapApplicationToApplicationResource(Application application, ServiceOwnerLookup serviceOwners)
+        {
+            ServiceResource service = new ServiceResource();
+            service.Title = application.Title;
+            service.Identifier = $"{ResourceConstants.APPLICATION_RESOURCE_PREFIX}{application.Org}_{application.Id.Substring(application.Id.IndexOf("/") + 1)}";
+            if (service.Identifier.Contains("_a2-") || service.Identifier.Contains("_a1-"))
             {
-                ServiceResource service = new ServiceResource();
-                service.Title = application.Title;
-                service.Identifier = $"{ResourceConstants.APPLICATION_RESOURCE_PREFIX}{application.Org}_{application.Id.Substring(application.Id.IndexOf("/") + 1)}";
-                if (service.Identifier.Contains("_a2-") || service.Identifier.Contains("_a1-"))
-                {
-                    service.ResourceType = Enums.ResourceType.MigratedApp;
-                }
-                else
-                {
-                    service.ResourceType = Enums.ResourceType.AltinnApp;
-                }
-
-                service.ResourceReferences = new List<ResourceReference>
-                {
-                    new ResourceReference() { ReferenceSource = Enums.ReferenceSource.Altinn3, ReferenceType = Enums.ReferenceType.ApplicationId, Reference = application.Id }
-                };
-                service.AuthorizationReference = new List<AuthorizationReferenceAttribute>
-                {
-                    new AuthorizationReferenceAttribute() { Id = "urn:altinn:org", Value = application.Org },
-                    new AuthorizationReferenceAttribute() { Id = "urn:altinn:app", Value = application.Id.Substring(application.Id.IndexOf("/") + 1) }
-                };
-                service.HasCompetentAuthority = new CompetentAuthority();
-                service.HasCompetentAuthority.Orgcode = application.Org.ToLower();
-                if (serviceOwners.TryGet(service.HasCompetentAuthority.Orgcode, out var orgentity))
-                {
-                    service.HasCompetentAuthority.Organization = orgentity.OrganizationNumber.ToString();
-                    service.HasCompetentAuthority.Name = orgentity.Name;
-                }
-
-                if (application.Id.StartsWith("a1-"))
-                {
-                    service.Delegable = false;
-                    service.Visible = false;
-                }
-
-                return service;
+                service.ResourceType = Enums.ResourceType.MigratedApp;
             }
+            else
+            {
+                service.ResourceType = Enums.ResourceType.AltinnApp;
+            }
+
+            service.ResourceReferences = new List<ResourceReference>
+            {
+                new ResourceReference() { ReferenceSource = Enums.ReferenceSource.Altinn3, ReferenceType = Enums.ReferenceType.ApplicationId, Reference = application.Id }
+            };
+            service.AuthorizationReference = new List<AuthorizationReferenceAttribute>
+            {
+                new AuthorizationReferenceAttribute() { Id = "urn:altinn:org", Value = application.Org },
+                new AuthorizationReferenceAttribute() { Id = "urn:altinn:app", Value = application.Id.Substring(application.Id.IndexOf("/") + 1) }
+            };
+            service.HasCompetentAuthority = new CompetentAuthority();
+            service.HasCompetentAuthority.Orgcode = application.Org.ToLower();
+            if (serviceOwners.TryGet(service.HasCompetentAuthority.Orgcode, out var orgentity))
+            {
+                service.HasCompetentAuthority.Organization = orgentity.OrganizationNumber.ToString();
+                service.HasCompetentAuthority.Name = orgentity.Name;
+            }
+
+            if (application.Id.StartsWith("a1-"))
+            {
+                service.Delegable = false;
+                service.Visible = false;
+            }
+
+            return service;
         }
 
         /// <inheritdoc/>

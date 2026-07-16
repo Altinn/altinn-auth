@@ -119,6 +119,27 @@ namespace Altinn.ResourceRegistry.Tests
         }
 
         [Fact]
+        public async Task GetResource_app_not_in_registry_resolved_directly_from_storage_OK()
+        {
+            // app_skd_cluster-test is not registered as a resource (no file under Data/Resources), so the
+            // direct DB lookup misses. It must be resolved directly from application storage rather than the
+            // cached resource list, proving a freshly published app is returned immediately.
+            var client = CreateClient();
+            string requestUri = "resourceregistry/api/v1/Resource/app_skd_cluster-test";
+
+            HttpResponseMessage response = await client.GetAsync(requestUri);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+            string responseContent = await response.Content.ReadAsStringAsync();
+            ServiceResource? resource = JsonSerializer.Deserialize<ServiceResource>(responseContent, new System.Text.Json.JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
+
+            Assert.NotNull(resource);
+            Assert.Equal("app_skd_cluster-test", resource.Identifier);
+            Assert.Equal(ResourceType.AltinnApp, resource.ResourceType);
+        }
+
+        [Fact]
         public async Task Test_Nav_Get()
         {
             var client = CreateClient();

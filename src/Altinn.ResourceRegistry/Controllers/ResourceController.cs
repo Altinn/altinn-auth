@@ -89,11 +89,17 @@ namespace Altinn.ResourceRegistry.Controllers
 
             if (resource == null && id.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX))
             {
-                List<ServiceResource> resourceList = await _resourceRegistry.GetResourceList(includeApps: true, includeExpired: true, includeMigratedApps: true, includeAllVersions:false, cancellationToken);
-                ServiceResource appResource = resourceList.FirstOrDefault(r => r.Identifier == id);
-                if (appResource != null)
+                // App not registered as a resource: resolve it directly from application storage instead of
+                // the cached resource list, so a freshly published app is returned immediately rather than
+                // 404 until the list cache expires. Only 404 when the app is missing from Storage as well.
+                string[] parts = id.Split('_', 3);
+                if (parts.Length == 3)
                 {
-                    return Ok(appResource);
+                    ServiceResource appResource = await _resourceRegistry.GetAppResource(parts[1], parts[2], cancellationToken);
+                    if (appResource != null)
+                    {
+                        return Ok(appResource);
+                    }
                 }
             }
 
@@ -414,8 +420,13 @@ namespace Altinn.ResourceRegistry.Controllers
 
             if (resource == null && id.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX))
             {
-                List<ServiceResource> resourceList = await _resourceRegistry.GetResourceList(includeApps: true, includeExpired: true, includeMigratedApps: true, includeAllVersions: false, cancellationToken);
-                resource = resourceList.FirstOrDefault(r => r.Identifier == id);
+                // Resolve the app directly from application storage rather than the cached resource list,
+                // so policy can be written for an app that was just published.
+                string[] parts = id.Split('_', 3);
+                if (parts.Length == 3)
+                {
+                    resource = await _resourceRegistry.GetAppResource(parts[1], parts[2], cancellationToken);
+                }
             }
 
             if (resource == null)

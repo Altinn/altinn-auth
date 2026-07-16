@@ -49,6 +49,13 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
             throw new FileNotFoundException("Could not find testdatafolder");
         }
 
+        public async Task<Application?> GetApplication(string org, string app, CancellationToken cancellationToken = default)
+        {
+            ApplicationList applicationList = await GetApplicationList(true, cancellationToken);
+            string appId = $"{org}/{app}";
+            return applicationList.Applications.FirstOrDefault(a => a.Id.Equals(appId, StringComparison.OrdinalIgnoreCase));
+        }
+
         private static string? GetAltinn2TestDatafolder()
         {
             string? unitTestFolder = Path.GetDirectoryName(new Uri(typeof(PolicyRepositoryMock).Assembly.Location).LocalPath);

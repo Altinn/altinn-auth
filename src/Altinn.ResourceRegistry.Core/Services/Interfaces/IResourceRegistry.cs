@@ -19,6 +19,18 @@ namespace Altinn.ResourceRegistry.Core.Services.Interfaces
         Task<ServiceResource> GetResource(string id, int? versionId,  CancellationToken cancellationToken = default);
 
         /// <summary>
+        /// Gets a single Altinn app as a <see cref="ServiceResource"/> directly from application storage.
+        /// Used for apps that are not registered as resources in the resource registry. Bypasses the cached
+        /// application list so a freshly published app is resolvable immediately instead of returning
+        /// <see langword="null"/> until the list cache expires.
+        /// </summary>
+        /// <param name="org">The organisation/service owner code</param>
+        /// <param name="app">The application name (without the org prefix)</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns>The app as a service resource, or <see langword="null"/> if it does not exist</returns>
+        Task<ServiceResource> GetAppResource(string org, string app, CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Gets the resource owner for a given resource, or <see langword="null"/> if it has no owner.
         /// </summary>
         /// <param name="id">The resource identifier to retrieve</param>
