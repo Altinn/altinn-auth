@@ -234,6 +234,12 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
             _logger.LogError(ex, "Failed to ingest and/or merge Assignment batch {0} to db", batchId.ToString());
             throw new InvalidOperationException($"Failed to ingest and/or merge Assignment batch {batchId} to db", ex);
         }
+        finally
+        {
+            // A successful merge drops its own temp table; this guarantees cleanup when a
+            // failure between ingest and merge leaves a temp table orphaned.
+            await ingestService.DropTempData<Assignment>(batchId, cancellationToken);
+        }
     }
 
     private async Task<int> RemoveParents(AppDbContextFactory dbContextFactory, Dictionary<Guid, Guid> relations, CancellationToken cancellationToken = default)
