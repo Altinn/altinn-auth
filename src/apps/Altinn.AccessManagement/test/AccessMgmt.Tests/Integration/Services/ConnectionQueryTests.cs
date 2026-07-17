@@ -247,8 +247,8 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
     [Fact]
     public async Task KeyRole_IksWithDeltakerDeltAnsvar_IsNotIncluded()
     {
-        var personId = TestDataSet.GetEntity("Rådmann Kommune").Id;
-        var iksId = TestDataSet.GetEntity("IKS Selskap").Id;
+        var personId = TestDataSet.GetEntity("Rådmann Kommune 1").Id;
+        var iksId = TestDataSet.GetEntity("IKS Selskap 1").Id;
 
         var filter = new ConnectionQueryFilter
         {
@@ -265,7 +265,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
     [Fact]
     public async Task KeyRole_NonIksWithDeltakerDeltAnsvar_IsIncluded()
     {
-        var personId = TestDataSet.GetEntity("Rådmann Kommune").Id;
+        var personId = TestDataSet.GetEntity("Rådmann Kommune 1").Id;
         var nonIksId = TestDataSet.GetEntity("Non-IKS Selskap").Id;
 
         var filter = new ConnectionQueryFilter
@@ -286,7 +286,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
     [Fact]
     public async Task KeyRole_IksWithDifferentKeyRole_IsIncluded()
     {
-        var personId = TestDataSet.GetEntity("Rådmann Kommune").Id;
+        var personId = TestDataSet.GetEntity("Rådmann Kommune 1").Id;
         var iksId = TestDataSet.GetEntity("IKS Selskap 2").Id;
 
         var filter = new ConnectionQueryFilter
@@ -307,8 +307,8 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
     [Fact]
     public async Task HasConnection_IksWithDeltakerDeltAnsvarRole_ReturnsFalse()
     {
-        var fromId = TestDataSet.GetEntity("IKS Selskap").Id;
-        var toId = TestDataSet.GetEntity("Rådmann Kommune").Id;
+        var fromId = TestDataSet.GetEntity("IKS Selskap 1").Id;
+        var toId = TestDataSet.GetEntity("Rådmann Kommune 1").Id;
 
         var (result, reason) = await _query.HasConnection(fromId, toId, [ConnectionReason.KeyRole]);
 
@@ -320,7 +320,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
     public async Task HasConnection_NonIksWithDeltakerDeltAnsvarRole_ReturnsKeyRole()
     {
         var fromId = TestDataSet.GetEntity("Non-IKS Selskap").Id;
-        var toId = TestDataSet.GetEntity("Rådmann Kommune").Id;
+        var toId = TestDataSet.GetEntity("Rådmann Kommune 1").Id;
 
         var (result, reason) = await _query.HasConnection(fromId, toId, [ConnectionReason.KeyRole]);
 
@@ -332,7 +332,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
     public async Task HasConnection_IksWithDifferentRole_ReturnsKeyRole()
     {
         var fromId = TestDataSet.GetEntity("IKS Selskap 2").Id;
-        var toId = TestDataSet.GetEntity("Rådmann Kommune").Id;
+        var toId = TestDataSet.GetEntity("Rådmann Kommune 1").Id;
 
         var (result, reason) = await _query.HasConnection(fromId, toId, [ConnectionReason.KeyRole]);
 
@@ -343,8 +343,8 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
     [Fact]
     public async Task KeyRole_ToOthers_IksWithDeltakerDeltAnsvar_IsNotIncluded()
     {
-        var iksId = TestDataSet.GetEntity("IKS Selskap").Id;
-        var personId = TestDataSet.GetEntity("Rådmann Kommune").Id;
+        var iksId = TestDataSet.GetEntity("IKS Selskap 1").Id;
+        var personId = TestDataSet.GetEntity("Rådmann Kommune 1").Id;
 
         var filter = new ConnectionQueryFilter
         {
@@ -361,10 +361,61 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
     }
 
     [Fact]
+    public async Task KeyRole_ToOthers_ViaIksWithDeltakerDeltAnsvar_IsNotIncluded()
+    {
+        var iksId = TestDataSet.GetEntity("ABC IKS").Id;
+        var orgId = TestDataSet.GetEntity("Kommune 2").Id;
+
+        var filter = new ConnectionQueryFilter
+        {
+            FromIds = new[] { iksId },
+            IncludeKeyRole = true,
+        };
+
+        var dbResult = await _query.GetConnectionsToOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        Assert.DoesNotContain(dbResult, r =>
+            r.ToId == orgId &&
+            r.RoleId == RoleConstants.Auditor.Id &&
+            r.Reason == ConnectionReason.KeyRole);  
+    }
+
+    [Fact]
+    public async Task KeyRole_FromOthers_ViaIksWithDeltakerDeltAnsvar_IsNotIncluded()
+    {
+        var orgId = TestDataSet.GetEntity("Kommune 2").Id;
+        var iksId = TestDataSet.GetEntity("ABC IKS").Id;
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { orgId },
+            IncludeKeyRole = true,
+        };
+
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        Assert.DoesNotContain(dbResult, r =>
+            r.FromId == iksId &&
+            r.RoleId == RoleConstants.Auditor.Id);
+    }
+
+    [Fact]
+    public async Task HasConnection_ViaIksWithDeltakerDeltAnsvarRole_ReturnsFalse()
+    {
+        var fromId = TestDataSet.GetEntity("ABC IKS").Id;
+        var toId = TestDataSet.GetEntity("Kommune 2").Id;
+
+        var (result, reason) = await _query.HasConnection(fromId, toId, [ConnectionReason.KeyRole]);
+
+        Assert.False(result);
+        Assert.Null(reason);
+    }
+
+    [Fact]
     public async Task KeyRole_ToOthers_NonIksWithDeltakerDeltAnsvar_IsIncluded()
     {
         var nonIksId = TestDataSet.GetEntity("Non-IKS Selskap").Id;
-        var personId = TestDataSet.GetEntity("Rådmann Kommune").Id;
+        var personId = TestDataSet.GetEntity("Rådmann Kommune 1").Id;
 
         var filter = new ConnectionQueryFilter
         {
@@ -378,13 +429,13 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
             r.ToId == personId &&
             r.RoleId == RoleConstants.ParticipantSharedResponsibility.Id &&
             r.Reason == ConnectionReason.KeyRole);
-    }
+    }    
 
     [Fact]
     public async Task KeyRole_ToOthers_IksWithDifferentRole_IsIncluded()
     {
         var iksId2 = TestDataSet.GetEntity("IKS Selskap 2").Id;
-        var personId = TestDataSet.GetEntity("Rådmann Kommune").Id;
+        var personId = TestDataSet.GetEntity("Rådmann Kommune 1").Id;
 
         var filter = new ConnectionQueryFilter
         {
@@ -490,10 +541,13 @@ internal static class TestDataSet
         new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000004"), Name = "Lars", TypeId = EntityTypeConstants.Person, VariantId = EntityVariantConstants.Person, PersonIdentifier = "08018412345", RefId = "08018412345", DateOfBirth = DateOnly.Parse("1984-01-08") },
 
         // IKS keyrole test entities
-        new Entity() { Id = Guid.Parse("0195efb8-7c80-7839-8b2a-8794bf7a929d"), Name = "Rådmann Kommune", TypeId = EntityTypeConstants.Person, VariantId = EntityVariantConstants.Person, PersonIdentifier = "09018412345", RefId = "09018412345", DateOfBirth = DateOnly.Parse("1984-01-09") },
-        new Entity() { Id = Guid.Parse("0195efb8-7c80-7e40-9ea1-4362ea2aefa5"), Name = "Kommune", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.KOMM, OrganizationIdentifier = "605001750", ParentId = null, RefId = "605001750" },
-        new Entity() { Id = Guid.Parse("0195efb8-7c80-76ee-a7d9-f2d76ac7187b"), Name = "IKS Selskap", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.IKS, OrganizationIdentifier = "605001769", ParentId = null, RefId = "605001769" },
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7839-8b2a-8794bf7a929d"), Name = "Rådmann Kommune 1", TypeId = EntityTypeConstants.Person, VariantId = EntityVariantConstants.Person, PersonIdentifier = "09018412345", RefId = "09018412345", DateOfBirth = DateOnly.Parse("1984-01-09") },
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7e40-9ea1-4362ea2aefa5"), Name = "Kommune 1", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.KOMM, OrganizationIdentifier = "605001750", ParentId = null, RefId = "605001750" },
+        new Entity() { Id = Guid.Parse("019f64dc-314f-714f-9443-b2ab79b52309"), Name = "Kommune 2", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.KOMM, OrganizationIdentifier = "605001807", ParentId = null, RefId = "605001807" },
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-76ee-a7d9-f2d76ac7187b"), Name = "IKS Selskap 1", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.IKS, OrganizationIdentifier = "605001769", ParentId = null, RefId = "605001769" },
         new Entity() { Id = Guid.Parse("019f21f7-aa45-75ce-a26f-a4a06f238604"), Name = "IKS Selskap 2", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.IKS, OrganizationIdentifier = "605001785", ParentId = null, RefId = "605001785" },
+        new Entity() { Id = Guid.Parse("019f64ec-6579-7579-b961-3277e49293cf"), Name = "ABC IKS", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.IKS, OrganizationIdentifier = "605001815", ParentId = null, RefId = "605001815" },
+        new Entity() { Id = Guid.Parse("019f64e1-2ad1-7ad1-b839-9a4265b79b5a"), Name = "DEF IKS", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.IKS, OrganizationIdentifier = "605001793", ParentId = null, RefId = "605001793" },
         new Entity() { Id = Guid.Parse("0195efb8-7c80-7a77-8203-e7ca159053d0"), Name = "Non-IKS Selskap", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.AS, OrganizationIdentifier = "605001777", ParentId = null, RefId = "605001777" },
     };
 
@@ -516,10 +570,15 @@ internal static class TestDataSet
         new Assignment() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000013"), FromId = Entities.First(t => t.Name == "NUF International Corp").Id, ToId = Entities.First(t => t.Name == "Lars").Id, RoleId = RoleConstants.NorwegianRepresentativeForeignEntity }, // Norsk representant for utenlandsk foretak
 
         // IKS keyrole test assignments
-        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7604-8518-2ddb45c89645"), FromId = Entities.First(t => t.Name == "Kommune").Id, ToId = Entities.First(t => t.Name == "Rådmann Kommune").Id, RoleId = RoleConstants.ManagingDirector }, // daglig-leder (different keyrole)
-        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7532-9427-433385e63908"), FromId = Entities.First(t => t.Name == "IKS Selskap").Id, ToId = Entities.First(t => t.Name == "Kommune").Id, RoleId = RoleConstants.ParticipantSharedResponsibility }, // deltaker-delt-ansvar (keyrole) for IKS Selskap
-        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7b15-bfc8-4d596bc18d01"), FromId = Entities.First(t => t.Name == "IKS Selskap 2").Id, ToId = Entities.First(t => t.Name == "Kommune").Id, RoleId = RoleConstants.Accountant }, // Regnskapsfører  (not deltaker-delt-ansvar) for IKS Selskap
-        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7d79-87ce-f1dcdf1bba79"), FromId = Entities.First(t => t.Name == "Non-IKS Selskap").Id, ToId = Entities.First(t => t.Name == "Kommune").Id, RoleId = RoleConstants.ParticipantSharedResponsibility }, // deltaker-delt-ansvar (keyrole) for Non IKS Selskap
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7604-8518-2ddb45c89645"), FromId = Entities.First(t => t.Name == "Kommune 1").Id, ToId = Entities.First(t => t.Name == "Rådmann Kommune 1").Id, RoleId = RoleConstants.ManagingDirector }, // daglig-leder (different keyrole)
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7532-9427-433385e63908"), FromId = Entities.First(t => t.Name == "IKS Selskap 1").Id, ToId = Entities.First(t => t.Name == "Kommune 1").Id, RoleId = RoleConstants.ParticipantSharedResponsibility }, // deltaker-delt-ansvar (keyrole) for IKS Selskap
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7b15-bfc8-4d596bc18d01"), FromId = Entities.First(t => t.Name == "IKS Selskap 2").Id, ToId = Entities.First(t => t.Name == "Kommune 1").Id, RoleId = RoleConstants.Accountant }, // Regnskapsfører  (not deltaker-delt-ansvar) for IKS Selskap
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7d79-87ce-f1dcdf1bba79"), FromId = Entities.First(t => t.Name == "Non-IKS Selskap").Id, ToId = Entities.First(t => t.Name == "Kommune 1").Id, RoleId = RoleConstants.ParticipantSharedResponsibility }, // deltaker-delt-ansvar (keyrole) for Non IKS Selskap
+        
+        new Assignment() { Id = Guid.Parse("019f64f7-f575-7575-98f8-474361196943"), FromId = Entities.First(t => t.Name == "ABC IKS").Id, ToId = Entities.First(t => t.Name == "Kommune 1").Id, RoleId = RoleConstants.ParticipantSharedResponsibility }, // deltaker-delt-ansvar (keyrole) for IKS ABC to Kommune 1
+        new Assignment() { Id = Guid.Parse("019f64f8-1c28-7c28-9a1c-daba52081006"), FromId = Entities.First(t => t.Name == "ABC IKS").Id, ToId = Entities.First(t => t.Name == "Kommune 2").Id, RoleId = RoleConstants.ParticipantSharedResponsibility }, // deltaker-delt-ansvar (keyrole) for IKS ABC to Kommune 2
+        new Assignment() { Id = Guid.Parse("019f64f8-39fc-79fc-b40f-65f25fa98b92"), FromId = Entities.First(t => t.Name == "ABC IKS").Id, ToId = Entities.First(t => t.Name == "DEF IKS").Id, RoleId = RoleConstants.Auditor }, // Revisor for IKS ABC to DEF IKS
+        new Assignment() { Id = Guid.Parse("019f64f8-5c9c-7c9c-9a6e-f2e4f28e439a"), FromId = Entities.First(t => t.Name == "DEF IKS").Id, ToId = Entities.First(t => t.Name == "Kommune 2").Id, RoleId = RoleConstants.ParticipantSharedResponsibility }, // deltaker-delt-ansvar (keyrole) for IKS DEF to Kommune 2
     };
 
     internal static Assignment GetAssignment(string fromName, string toName, Guid roleId)

@@ -95,10 +95,14 @@ public class ConnectionQuery(AppDbContext db)
         {
             var keyRoles =
             from a in db.Assignments.AsNoTracking()
-            join ae in db.Entities.AsNoTracking() on a.FromId equals ae.Id
             join k in db.Assignments.AsNoTracking() on a.ToId equals k.FromId            
             join kr in db.Roles.AsNoTracking() on k.RoleId equals kr.Id
-            where a.FromId == fromId && kr.IsKeyRole == true && k.ToId == toId && (a.RoleId != RoleConstants.ParticipantSharedResponsibility.Id || ae.VariantId != EntityVariantConstants.IKS.Id)
+            where
+                a.FromId == fromId && 
+                kr.IsKeyRole == true && 
+                k.ToId == toId && 
+                (a.RoleId != RoleConstants.ParticipantSharedResponsibility.Id || a.From.VariantId != EntityVariantConstants.IKS.Id) &&
+                (k.RoleId != RoleConstants.ParticipantSharedResponsibility.Id || a.To.VariantId != EntityVariantConstants.IKS.Id)
             select 1;
 
             if (await keyRoles.AnyAsync())
@@ -282,13 +286,9 @@ public class ConnectionQuery(AppDbContext db)
                     a2 => a2.ToId,
                     (x, a2) => new { x, a2 }
                 )
-                .Join(
-                    db.Entities,
-                    y => y.a2.FromId,
-                    e => e.Id,
-                    (y, e) => new { y.x, y.a2, e }
-                )
-                .Where(z => !(z.e.VariantId == EntityVariantConstants.IKS.Id && z.a2.RoleId == RoleConstants.ParticipantSharedResponsibility.Id))
+                .Where(z => 
+                    !(z.a2.From.VariantId == EntityVariantConstants.IKS.Id && z.a2.RoleId == RoleConstants.ParticipantSharedResponsibility.Id) &&
+                    !(z.a2.To.VariantId == EntityVariantConstants.IKS.Id && z.x.d.RoleId == RoleConstants.ParticipantSharedResponsibility.Id))
                 .Select(z => new ConnectionQueryBaseRecord
                 {
                     AssignmentId = z.a2.Id,
@@ -568,9 +568,13 @@ public class ConnectionQuery(AppDbContext db)
         var keyRoleAssignments =
             from all in allAssignments.Concat(roleMapAssignments) // Must include RoleMap assignments
             join fromEntity in db.Entities on all.FromId equals fromEntity.Id
+            join toEntity in db.Entities on all.ToId equals toEntity.Id
             join keyRoleAssignment in db.Assignments on all.ToId equals keyRoleAssignment.FromId            
             join role in db.Roles on keyRoleAssignment.RoleId equals role.Id
-            where role.IsKeyRole && !(fromEntity.VariantId == EntityVariantConstants.IKS.Id && all.RoleId == RoleConstants.ParticipantSharedResponsibility.Id)
+            where 
+                role.IsKeyRole && 
+                !(fromEntity.VariantId == EntityVariantConstants.IKS.Id && all.RoleId == RoleConstants.ParticipantSharedResponsibility.Id) &&
+                !(toEntity.VariantId == EntityVariantConstants.IKS.Id && keyRoleAssignment.RoleId == RoleConstants.ParticipantSharedResponsibility.Id)
             select new ConnectionQueryBaseRecord()
             {
                 AssignmentId = all.AssignmentId,
