@@ -187,11 +187,10 @@ public class ConnectionQuery(AppDbContext db)
                 throw new InvalidOperationException("Failed to include instances", ex);
             }
 
-            if (filter.EnrichEntities || filter.ExcludeDeleted)
+            if (filter.EnrichEntities)
             {
                 result = await EnrichEntities(
                     result,
-                    filter.ExcludeDeleted,
                     direction,
                     filter,
                     filter.IncludeSubConnections && delayChildNesting,
@@ -605,7 +604,7 @@ public class ConnectionQuery(AppDbContext db)
             .RoleIdExcludes(roleSetExclude);
     }
 
-    private async Task<List<ConnectionQueryExtendedRecord>> EnrichEntities(List<ConnectionQueryExtendedRecord> allKeys, bool excludeDeleted, ConnectionQueryDirection direction, ConnectionQueryFilter filter, bool doChildNesting, bool applyFromFilter, CancellationToken ct)
+    private async Task<List<ConnectionQueryExtendedRecord>> EnrichEntities(List<ConnectionQueryExtendedRecord> allKeys, ConnectionQueryDirection direction, ConnectionQueryFilter filter, bool doChildNesting, bool applyFromFilter, CancellationToken ct)
     {
         SortedSet<Guid> parties = [];
         foreach (var item in allKeys)
@@ -736,11 +735,6 @@ public class ConnectionQuery(AppDbContext db)
         List<ConnectionQueryExtendedRecord> keysWithChildren = [];
         foreach (var c in allKeys)
         {
-            if (excludeDeleted && ((direction == ConnectionQueryDirection.FromOthers && c.From.IsDeleted) || (direction == ConnectionQueryDirection.ToOthers && c.To.IsDeleted)))
-            {
-                continue;
-            }
-
             c.From = entityDict[c.FromId];
             c.To = entityDict[c.ToId];
             c.Via = c.ViaId != null ? entityDict[(Guid)c.ViaId] : null;

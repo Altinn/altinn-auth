@@ -84,7 +84,7 @@ public sealed class ConnectionQueryFilter
     public bool EnrichPackageResources { get; init; } = false;
 
     /// <summary>
-    /// Gets or sets a value indicating whether to include or exclude deleted entities.
+    /// Gets or sets a value indicating whether to include or exclude deleted entities. ToDo: Implementation for this in the ConnectionQuery (see issue #3786).
     /// </summary>
     public bool ExcludeDeleted { get; init; } = false;
 
