@@ -75,7 +75,7 @@ public class GetInstanceRights(DefaultHost host) {
 
 ## Host-build count
 
-`AccessMgmt.Tests` builds ~65 hosts. There is no CI guard on the count — CI does
+`Altinn.AccessManagement.Tests` builds ~65 hosts. There is no CI guard on the count — CI does
 not fail a test for being inefficient. `FixtureTiming` measures per-assembly
 setup time for anyone optimising locally (see
 [TEST_SETUP_TIMING.md](TEST_SETUP_TIMING.md)).

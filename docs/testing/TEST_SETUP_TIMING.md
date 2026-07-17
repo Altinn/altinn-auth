@@ -9,7 +9,7 @@ Two things dominate integration-test setup:
 
 - **Per-class `WebApplicationFactory` host builds.** Each `IClassFixture` builds
   its own host (DI graph + EF model) — the single largest cost in
-  `AccessMgmt.Tests`.
+  `Altinn.AccessManagement.Tests`.
 - **Per-fixture database provisioning.** In the other AccessManagement test
   assemblies (`Enduser.Api.Tests`, `ServiceOwner.Api.Tests`,
   `AccessMgmt.Core.Tests`) this dominates instead — mostly time spent blocked on
@@ -67,6 +67,6 @@ per-assembly breakdown in the test job log automatically. Locally:
 FIXTURE_TIMING_FILE="$PWD/fixture-timing.txt" \
 DOCKER_HOST="npipe://./pipe/podman-machine-default" \
 TESTCONTAINERS_RYUK_DISABLED=true \
-dotnet test src/apps/Altinn.AccessManagement/test/AccessMgmt.Tests/AccessMgmt.Tests.csproj \
+dotnet test src/apps/Altinn.AccessManagement/test/AccessMgmt.Tests/Altinn.AccessManagement.Tests.csproj \
   -c Release -- --filter-trait "Category=Integration" --ignore-exit-code 8
 ```

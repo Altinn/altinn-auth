@@ -86,6 +86,6 @@ Do **not** use a bare status word (`BadRequest`), a synonym (`Success`, `OK`, `V
 
 ### Scope
 
-Applies to all test projects: the AccessManagement projects (`AccessMgmt.Tests`, `Enduser.Api.Tests`, `Api.Tests`, `ServiceOwner.Api.Tests`, `Api.Internal.Tests`, `Core.Tests`, `PersistenceEF.Tests`), the ABAC test project (`Altinn.Authorization.ABAC.Tests`), and the Authorization test projects. New tests must follow it; existing tests were aligned in #3500.
+Applies to all test projects: the AccessManagement projects (`Altinn.AccessManagement.Tests`, `Enduser.Api.Tests`, `Api.Tests`, `ServiceOwner.Api.Tests`, `Api.Internal.Tests`, `Core.Tests`, `PersistenceEF.Tests`), the ABAC test project (`Altinn.Authorization.ABAC.Tests`), and the Authorization test projects. New tests must follow it; existing tests were aligned in #3500.
 
 This is a review-time convention, not CI-enforced. Reviewers should flag bare status words (`BadRequest`), numeric codes with no name (`Returns400`), opaque ids (`_TCxx`), and status-only HTTP results where the response has a meaningful body.

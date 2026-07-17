@@ -6,7 +6,7 @@ $env:TESTCONTAINERS_DOCKER_SOCKET_OVERRIDE = '//./pipe/podman-machine-default'
 $env:TESTCONTAINERS_RYUK_DISABLED = 'true'
 
 $projects = @(
-    'src/apps/Altinn.AccessManagement/test/AccessMgmt.Tests/AccessMgmt.Tests.csproj',
+    'src/apps/Altinn.AccessManagement/test/AccessMgmt.Tests/Altinn.AccessManagement.Tests.csproj',
     'src/apps/Altinn.AccessManagement/test/Altinn.AccessMgmt.Core.Tests/Altinn.AccessMgmt.Core.Tests.csproj',
     'src/apps/Altinn.AccessManagement/test/Altinn.AccessMgmt.PersistenceEF.Tests/Altinn.AccessMgmt.PersistenceEF.Tests.csproj',
     'src/apps/Altinn.AccessManagement/test/Altinn.AccessManagement.Api.Tests/Altinn.AccessManagement.Api.Tests.csproj',

@@ -16,7 +16,7 @@ namespace Altinn.Authorization.Testing;
 /// writes one summary line, of the form:
 /// </para>
 /// <code>
-/// ===FIXTURE_TIMING=== assembly=AccessMgmt.Tests host_build_ms=12345 host_build_n=85 db_provision_ms=6789 db_provision_n=85 clone_ms=4200 clone_n=85 template_build_ms=900 server_start_ms=8000 migrate_ms=600 seed_ms=300 provision_wait_ms=4900
+/// ===FIXTURE_TIMING=== assembly=Altinn.AccessManagement.Tests host_build_ms=12345 host_build_n=85 db_provision_ms=6789 db_provision_n=85 clone_ms=4200 clone_n=85 template_build_ms=900 server_start_ms=8000 migrate_ms=600 seed_ms=300 provision_wait_ms=4900
 /// </code>
 /// <para>
 /// For each bucket, <c>_ms</c> is the total milliseconds spent and <c>_n</c> is how
