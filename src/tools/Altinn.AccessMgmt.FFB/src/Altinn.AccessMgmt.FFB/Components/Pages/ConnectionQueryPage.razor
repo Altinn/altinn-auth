@@ -81,7 +81,6 @@
         <MudItem xs="12">
             <MudText Typo="Typo.body2" Class="mb-1 mud-text-secondary">Alternativer</MudText>
             <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
-                <MudCheckBox @bind-Value="_onlyUniqueResults" Label="Bare unike" Color="Color.Default" Dense="true" />
                 <MudCheckBox @bind-Value="_excludeDeleted" Label="Ekskluder slettede" Color="Color.Default" Dense="true" />
                 <MudCheckBox @bind-Value="_enrichPackageResources" Label="Berik pakkeressurser" Color="Color.Default" Dense="true" />
             </MudStack>
@@ -319,7 +318,6 @@
     private bool _includePackages;
     private bool _includeResources;
     private bool _includeInstances;
-    private bool _onlyUniqueResults;
     private bool _excludeDeleted;
     private bool _enrichPackageResources;
 
@@ -411,7 +409,6 @@
                 IncludeKeyRole = _includeKeyRole,
                 IncludeSubConnections = _includeSubConnections,
                 IncludeMainUnitConnections = _includeMainUnitConnections,
-                OnlyUniqueResults = _onlyUniqueResults,
                 ExcludeDeleted = _excludeDeleted,
                 EnrichEntities = true,
                 EnrichPackageResources = _enrichPackageResources,

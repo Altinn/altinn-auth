@@ -5,7 +5,7 @@
 /// </summary>
 /// <remarks>This class provides properties to specify different filtering criteria for connection queries, such
 /// as filtering by IDs of entities involved in the connection, roles, packages, and resources. It also includes options
-/// to control the inclusion of additional data and the uniqueness of results.</remarks>
+/// to control the inclusion of additional data.</remarks>
 public sealed class ConnectionQueryFilter
 {
     /// <summary>
@@ -52,11 +52,6 @@ public sealed class ConnectionQueryFilter
     /// Gets the collection of instance identifiers.
     /// </summary>
     public IReadOnlyCollection<string> InstanceIds { get; init; }
-
-    /// <summary>
-    /// Gets or sets a value indicating whether only unique results should be returned.
-    /// </summary>
-    public bool OnlyUniqueResults { get; set; } = false;
 
     /// <summary>
     /// Gets or sets a value indicating whether to enrich entities with more details.

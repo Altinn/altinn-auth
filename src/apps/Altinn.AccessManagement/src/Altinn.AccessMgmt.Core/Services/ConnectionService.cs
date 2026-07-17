@@ -88,8 +88,7 @@ public partial class ConnectionService(
                 IncludeInstances = includeInstances,
                 EnrichPackageResources = false,
                 ExcludeDeleted = false,
-                ExcludeRoleIds = includeAgentConnections ? null : [RoleConstants.Agent.Id],
-                OnlyUniqueResults = false
+                ExcludeRoleIds = includeAgentConnections ? null : [RoleConstants.Agent.Id]
             },
             direction,
             cancellationToken
@@ -517,8 +516,7 @@ public partial class ConnectionService(
             IncludePackages = true,
             IncludeResources = false,
             EnrichPackageResources = false,
-            ExcludeDeleted = false,
-            OnlyUniqueResults = false
+            ExcludeDeleted = false
         },
         direction,
         cancellationToken

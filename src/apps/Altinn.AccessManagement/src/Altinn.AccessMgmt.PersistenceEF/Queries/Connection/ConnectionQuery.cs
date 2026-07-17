@@ -415,13 +415,6 @@ public class ConnectionQuery(AppDbContext db)
                 Reason = ConnectionReason.Hierarchy,
             };
 
-        /*
-        // Gir timeouts i YT        
-        var query = filter.OnlyUniqueResults
-            ? a2.Union(fromChildren).Union(innehaverConnections)
-            : a2.Concat(fromChildren).Concat(innehaverConnections);
-        */
-
         var query = doChildNesting
             ? filter.IncludeSubConnections ? a2.Concat(fromChildren).Concat(innehaverConnections) : a2.Concat(fromChildren)
             : filter.IncludeSubConnections ? a2.Concat(innehaverConnections) : a2;
