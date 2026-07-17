@@ -36,6 +36,8 @@ services:
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@admin.com
       PGADMIN_DEFAULT_PASSWORD: admin
+    networks:
+      - postgres
     volumes:
       - altinn_authorization_data:/pgadmin
 

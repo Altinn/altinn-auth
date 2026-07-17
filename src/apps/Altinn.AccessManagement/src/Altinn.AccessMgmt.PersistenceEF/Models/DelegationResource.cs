@@ -16,4 +16,9 @@ public class DelegationResource : BaseDelegationResource
     /// Resource
     /// </summary>
     public Resource Resource { get; set; }
+
+    /// <summary>
+    /// AssignmentResource
+    /// </summary>
+    public AssignmentResource AssignmentResource { get; set; }
 }

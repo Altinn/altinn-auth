@@ -126,7 +126,7 @@ public class ClientDelegationController(
             return Unauthorized();
         }
 
-        var problem = await clientDelegationService.RemoveAnAgentsClient(provider, from, partyUuid, cascade, cancellationToken);
+        var problem = await clientDelegationService.RemoveClientFromAgent(provider, from, partyUuid, cascade, cancellationToken);
         if (problem is { })
         {
             return problem.ToActionResult();
@@ -288,7 +288,7 @@ public class ClientDelegationController(
         [FromQuery(Name = "cascade")] bool cascade = false,
         CancellationToken cancellationToken = default)
     {
-        var problem = await clientDelegationService.RemoveAnAgentsClient(party, from, to, cascade, cancellationToken);
+        var problem = await clientDelegationService.RemoveClientFromAgent(party, from, to, cascade, cancellationToken);
         if (problem is { })
         {
             return problem.ToActionResult();

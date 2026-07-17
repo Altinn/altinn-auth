@@ -26,4 +26,9 @@ public class Delegation : BaseDelegation
     /// Delegation Packages
     /// </summary>
     public ICollection<DelegationPackage> DelegationPackages { get; set; } = [];
+
+    /// <summary>
+    /// Delegation Resources
+    /// </summary>
+    public ICollection<DelegationResource> DelegationResources { get; set; } = [];
 }

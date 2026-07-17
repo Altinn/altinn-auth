@@ -17,5 +17,10 @@ public class AssignmentResource : BaseAssignmentResource
     /// </summary>
     public Resource Resource { get; set; }
 
+    /// <summary>
+    /// Delegation Resources
+    /// </summary>
+    public ICollection<DelegationResource> DelegationResources { get; set; } = [];
+
     public Entity? ChangedBy { get; set; }
 }

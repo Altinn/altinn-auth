@@ -18,7 +18,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("Altinn:AuditVersion", 3)
-                .HasAnnotation("ProductVersion", "10.0.8")
+                .HasAnnotation("ProductVersion", "10.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -928,6 +928,10 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.Property<DateTimeOffset>("Audit_ValidTo")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("audit_validto");
+
+                    b.Property<Guid>("AssignmentResourceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("assignmentresourceid");
 
                     b.Property<string>("Audit_ChangeOperation")
                         .HasColumnType("text")
@@ -2286,6 +2290,10 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<Guid>("AssignmentResourceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("assignmentresourceid");
+
                     b.Property<string>("Audit_ChangeOperation")
                         .HasColumnType("text")
                         .HasColumnName("audit_changeoperation");
@@ -2312,6 +2320,9 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_delegationresource");
+
+                    b.HasIndex("AssignmentResourceId")
+                        .HasDatabaseName("ix_delegationresource_assignmentresourceid");
 
                     b.HasIndex("DelegationId")
                         .HasDatabaseName("ix_delegationresource_delegationid");
@@ -3998,8 +4009,15 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.DelegationResource", b =>
                 {
+                    b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.AssignmentResource", "AssignmentResource")
+                        .WithMany("DelegationResources")
+                        .HasForeignKey("AssignmentResourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_delegationresource_assignmentresource_assignmentresourceid");
+
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Delegation", "Delegation")
-                        .WithMany()
+                        .WithMany("DelegationResources")
                         .HasForeignKey("DelegationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
@@ -4011,6 +4029,8 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired()
                         .HasConstraintName("fk_delegationresource_resource_resourceid");
+
+                    b.Navigation("AssignmentResource");
 
                     b.Navigation("Delegation");
 
@@ -4376,9 +4396,16 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.Navigation("DelegationPackages");
                 });
 
+            modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.AssignmentResource", b =>
+                {
+                    b.Navigation("DelegationResources");
+                });
+
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.Delegation", b =>
                 {
                     b.Navigation("DelegationPackages");
+
+                    b.Navigation("DelegationResources");
                 });
 
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.OutboxMessage", b =>
