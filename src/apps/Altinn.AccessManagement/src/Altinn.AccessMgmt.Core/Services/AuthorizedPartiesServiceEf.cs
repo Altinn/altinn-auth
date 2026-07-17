@@ -574,8 +574,8 @@ public class AuthorizedPartiesServiceEf(
         // Only build resource filters if providerCode or anyOfResourceIds filters are specified
         if (filter.ProviderCode != null || filter.AnyOfResourceIds?.Length > 0)
         {
-            // Make sure all include filters are set to true, as we need all access info when filtering on provider/resources
-            filter.IncludeRoles = filter.IncludeAccessPackages = filter.IncludeResources = filter.IncludeInstances = true;
+            // The populated ResourceFilter/PackageFilter drive the connection query and FilterConnections internally.
+            // The caller's Include* flags are left untouched so EnrichWithPartiesWithAccessInfo shapes the response fields per what the caller requested.
 
             // Build cache key. Currently PackageFilter and RoleFilter are always empty when entering this method
             StringBuilder cacheBuilder = new($"pparf:{filter.ProviderCode}:");
