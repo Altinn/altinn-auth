@@ -38,9 +38,19 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
 
     private async Task SeedTestData(AppDbContext db)
     {
+        db.Set<ResourceType>().AddRange(TestDataSet.ResourceTypes);
+        await db.SaveChangesAsync(new Altinn.AccessMgmt.PersistenceEF.Extensions.AuditValues(SystemEntityConstants.StaticDataIngest, SystemEntityConstants.StaticDataIngest));
+
+        db.Set<Resource>().AddRange(TestDataSet.Resources);
+        await db.SaveChangesAsync(new Altinn.AccessMgmt.PersistenceEF.Extensions.AuditValues(SystemEntityConstants.StaticDataIngest, SystemEntityConstants.StaticDataIngest));
+
         db.Entities.AddRange(TestDataSet.Entities);
         db.Assignments.AddRange(TestDataSet.Assignments);
         db.Delegations.AddRange(TestDataSet.Delegations);
+        db.AssignmentPackages.AddRange(TestDataSet.AssignmentPackages);
+        db.DelegationPackages.AddRange(TestDataSet.DelegationPackages);
+        db.Set<AssignmentResource>().AddRange(TestDataSet.AssignmentResources);
+        db.Set<AssignmentInstance>().AddRange(TestDataSet.AssignmentInstances);
 
         await db.SaveChangesAsync(new Altinn.AccessMgmt.PersistenceEF.Extensions.AuditValues(SystemEntityConstants.StaticDataIngest, SystemEntityConstants.StaticDataIngest));
     }
@@ -446,6 +456,633 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
             r.Reason == ConnectionReason.KeyRole);
     }
 
+    #region HasConnection - Assignment and Delegation
+
+    [Fact]
+    public async Task HasConnection_DirectAssignment_ReturnsAssignment()
+    {
+        var fromId = TestDataSet.GetEntity("Regnskaperne").Id;
+        var toId = TestDataSet.GetEntity("Petter").Id;
+
+        var (result, reason) = await _query.HasConnection(fromId, toId, [ConnectionReason.Assignment]);
+
+        Assert.True(result);
+        Assert.Equal(ConnectionReason.Assignment, reason);
+    }
+
+    [Fact]
+    public async Task HasConnection_NoAssignment_ReturnsFalse()
+    {
+        var fromId = TestDataSet.GetEntity("Baker Johnsen").Id;
+        var toId = TestDataSet.GetEntity("Petter").Id;
+
+        var (result, reason) = await _query.HasConnection(fromId, toId, [ConnectionReason.Assignment]);
+
+        Assert.False(result);
+        Assert.Null(reason);
+    }
+
+    [Fact]
+    public async Task HasConnection_Delegation_ReturnsDelegation()
+    {
+        var fromId = TestDataSet.GetEntity("Baker Johnsen").Id;
+        var toId = TestDataSet.GetEntity("Gunnar").Id;
+
+        var (result, reason) = await _query.HasConnection(fromId, toId, [ConnectionReason.Delegation]);
+
+        Assert.True(result);
+        Assert.Equal(ConnectionReason.Delegation, reason);
+    }
+
+    [Fact]
+    public async Task HasConnection_NoDelegation_ReturnsFalse()
+    {
+        var fromId = TestDataSet.GetEntity("Skrik Frisør").Id;
+        var toId = TestDataSet.GetEntity("Petter").Id;
+
+        var (result, reason) = await _query.HasConnection(fromId, toId, [ConnectionReason.Delegation]);
+
+        Assert.False(result);
+        Assert.Null(reason);
+    }
+
+    #endregion
+
+    #region HasConnection - Hierarchy
+
+    [Fact]
+    public async Task HasConnection_Hierarchy_SubunitToPersonViaMainUnit_ReturnsHierarchy()
+    {
+        // Regnskaperne - Oslo is a subunit of Regnskaperne, which has an assignment to Petter
+        // Hierarchy: assignment from Regnskaperne to Petter, sub-entity Regnskaperne - Oslo (Id) has ParentId = Regnskaperne
+        var fromId = TestDataSet.GetEntity("Regnskaperne - Oslo").Id;
+        var toId = TestDataSet.GetEntity("Petter").Id;
+
+        var (result, reason) = await _query.HasConnection(fromId, toId, [ConnectionReason.Hierarchy]);
+
+        Assert.True(result);
+        Assert.Equal(ConnectionReason.Hierarchy, reason);
+    }
+
+    [Fact]
+    public async Task HasConnection_Hierarchy_NoRelation_ReturnsFalse()
+    {
+        var fromId = TestDataSet.GetEntity("Skrik Frisør - Byporten").Id;
+        var toId = TestDataSet.GetEntity("Petter").Id;
+
+        var (result, reason) = await _query.HasConnection(fromId, toId, [ConnectionReason.Hierarchy]);
+
+        Assert.False(result);
+        Assert.Null(reason);
+    }
+
+    #endregion
+
+    #region AuthorizedParties - FromOthers with packages
+
+    [Fact]
+    public async Task GetConnectionsFromOthers_WithPackages_ReturnsPackagesForDelegation()
+    {
+        var personId = TestDataSet.GetEntity("Gunnar").Id;
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { personId },
+            IncludeKeyRole = true,
+            IncludeDelegation = true,
+            IncludePackages = true,
+            EnrichEntities = true,
+        };
+
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        // Gunnar has delegation from Baker Johnsen via Regnskaperne with 3 packages
+        var bakerConnection = dbResult.Where(r => r.FromId == TestDataSet.GetEntity("Baker Johnsen").Id && r.Reason == ConnectionReason.Delegation).ToList();
+        Assert.NotEmpty(bakerConnection);
+
+        var packagesOnDelegation = bakerConnection.SelectMany(c => c.Packages ?? []).ToList();
+        Assert.Contains(packagesOnDelegation, p => p.Id == PackageConstants.AccountantWithSigningRights.Id);
+        Assert.Contains(packagesOnDelegation, p => p.Id == PackageConstants.AccountantSalary.Id);
+        Assert.Contains(packagesOnDelegation, p => p.Id == PackageConstants.AccountantWithoutSigningRights.Id);
+    }
+
+    [Fact]
+    public async Task GetConnectionsFromOthers_WithPackages_ReturnsAssignmentPackage()
+    {
+        var personId = TestDataSet.GetEntity("Nina").Id;
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { personId },
+            IncludeKeyRole = true,
+            IncludeDelegation = true,
+            IncludePackages = true,
+            EnrichEntities = true,
+        };
+
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        // Nina has assignment package AOrderSystem from Skrik Frisør (Rightholder role)
+        var skrikConnection = dbResult.Where(r => r.FromId == TestDataSet.GetEntity("Skrik Frisør").Id && r.Reason == ConnectionReason.Assignment).ToList();
+        Assert.NotEmpty(skrikConnection);
+
+        var packagesOnAssignment = skrikConnection.SelectMany(c => c.Packages ?? []).ToList();
+        Assert.Contains(packagesOnAssignment, p => p.Id == PackageConstants.AOrderSystem.Id);
+    }
+
+    #endregion
+
+    #region PIP - FromOthers with packages, no entity enrichment
+
+    [Fact]
+    public async Task GetConnectionsFromOthers_PipScenario_NoEntityEnrichment_StillReturnsPackages()
+    {
+        var personId = TestDataSet.GetEntity("Gunnar").Id;
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { personId },
+            IncludeKeyRole = true,
+            IncludeDelegation = true,
+            IncludePackages = true,
+            EnrichEntities = false,
+            EnrichPackageResources = true,
+        };
+
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        // Should still return connections and packages even without entity enrichment
+        Assert.NotEmpty(dbResult);
+        var bakerConnection = dbResult.Where(r => r.FromId == TestDataSet.GetEntity("Baker Johnsen").Id && r.Reason == ConnectionReason.Delegation).ToList();
+        Assert.NotEmpty(bakerConnection);
+
+        var packagesOnDelegation = bakerConnection.SelectMany(c => c.Packages ?? []).ToList();
+        Assert.NotEmpty(packagesOnDelegation);
+    }
+
+    #endregion
+
+    #region ToOthers direction
+
+    [Fact]
+    public async Task GetConnectionsToOthers_Regnskaperne_ReturnsPetterAndGunnar()
+    {
+        var orgId = TestDataSet.GetEntity("Regnskaperne").Id;
+
+        var filter = new ConnectionQueryFilter
+        {
+            FromIds = new[] { orgId },
+            IncludeKeyRole = true,
+            IncludeDelegation = true,
+            EnrichEntities = true,
+        };
+
+        var dbResult = await _query.GetConnectionsToOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        Assert.Contains(dbResult, r => r.ToId == TestDataSet.GetEntity("Petter").Id);
+        Assert.Contains(dbResult, r => r.ToId == TestDataSet.GetEntity("Gunnar").Id);
+    }
+
+    #endregion
+
+    #region ENK/Innehaver
+
+    [Fact]
+    public async Task GetConnectionsFromOthers_EnkInnehaver_ReturnsInnehaverAsConnection()
+    {
+        // ENK Frisør has Innehaver -> Ole, and Accountant role to Regnskaperne
+        // So when querying FromOthers for Petter (who is DagligLeder of Regnskaperne),
+        // the ENK/Innehaver logic should include Ole as a connection via ENK Frisør
+        var personId = TestDataSet.GetEntity("Petter").Id;
+        var oleId = TestDataSet.GetEntity("Ole ENK Innehaver").Id;
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { personId },
+            IncludeKeyRole = true,
+            IncludeDelegation = true,
+            EnrichEntities = true,
+        };
+
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        Assert.Contains(dbResult, r => r.FromId == oleId);
+    }
+
+    #endregion
+
+    #region RoleMap connections
+
+    [Fact]
+    public async Task GetConnectionsFromOthers_RoleMapConnectionsAppear()
+    {
+        // Petter has ManagingDirector from Regnskaperne. ManagingDirector has RoleMaps in static data (e.g. to A0212, A0236, etc.)
+        var personId = TestDataSet.GetEntity("Petter").Id;
+        var regnskaperneId = TestDataSet.GetEntity("Regnskaperne").Id;
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { personId },
+            IncludeKeyRole = false,
+            IncludeDelegation = false,
+            EnrichEntities = false,
+        };
+
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        // Should have direct assignment AND rolemap results from Regnskaperne
+        var directAssignment = dbResult.Where(r => r.FromId == regnskaperneId && r.Reason == ConnectionReason.Assignment).ToList();
+        Assert.NotEmpty(directAssignment);
+
+        var roleMapConnections = dbResult.Where(r => r.FromId == regnskaperneId && r.Reason == ConnectionReason.RoleMap).ToList();
+        Assert.NotEmpty(roleMapConnections);
+        Assert.All(roleMapConnections, r => Assert.True(r.IsRoleMap));
+    }
+
+    #endregion
+
+    #region IncludeResources
+
+    [Fact]
+    public async Task GetConnectionsFromOthers_IncludeResources_ReturnsResources()
+    {
+        var personId = TestDataSet.GetEntity("Nina").Id;
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { personId },
+            IncludeKeyRole = false,
+            IncludeDelegation = false,
+            IncludeResources = true,
+            EnrichEntities = false,
+        };
+
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        // Nina has a Rightholder assignment from Skrik Frisør with an AssignmentResource
+        var skrikRightholder = dbResult.Where(r =>
+            r.FromId == TestDataSet.GetEntity("Skrik Frisør").Id &&
+            r.RoleId == RoleConstants.Rightholder.Id).ToList();
+        Assert.NotEmpty(skrikRightholder);
+
+        var resources = skrikRightholder.SelectMany(c => c.Resources ?? []).ToList();
+        Assert.Contains(resources, r => r.Id == TestDataSet.TestResourceId);
+    }
+
+    [Fact]
+    public async Task GetConnectionsFromOthers_WithoutIncludeResources_DoesNotReturnResources()
+    {
+        var personId = TestDataSet.GetEntity("Nina").Id;
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { personId },
+            IncludeKeyRole = false,
+            IncludeDelegation = false,
+            IncludeResources = false,
+            EnrichEntities = false,
+        };
+
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        var skrikRightholder = dbResult.Where(r =>
+            r.FromId == TestDataSet.GetEntity("Skrik Frisør").Id &&
+            r.RoleId == RoleConstants.Rightholder.Id).ToList();
+        Assert.NotEmpty(skrikRightholder);
+
+        var resources = skrikRightholder.SelectMany(c => c.Resources ?? []).ToList();
+        Assert.Empty(resources);
+    }
+
+    #endregion
+
+    #region IncludeInstances
+
+    [Fact]
+    public async Task GetConnectionsFromOthers_IncludeInstances_ReturnsInstances()
+    {
+        var personId = TestDataSet.GetEntity("Nina").Id;
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { personId },
+            IncludeKeyRole = false,
+            IncludeDelegation = false,
+            IncludeInstances = true,
+            EnrichEntities = false,
+        };
+
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        var skrikRightholder = dbResult.Where(r =>
+            r.FromId == TestDataSet.GetEntity("Skrik Frisør").Id &&
+            r.RoleId == RoleConstants.Rightholder.Id &&
+            r.Reason == ConnectionReason.Assignment).ToList();
+        Assert.NotEmpty(skrikRightholder);
+
+        var instances = skrikRightholder.SelectMany(c => c.Instances ?? []).ToList();
+        Assert.Contains(instances, i => i.InstanceId == "instance-001");
+    }
+
+    #endregion
+
+    #region PackageIds filtering
+
+    [Fact]
+    public async Task GetConnectionsFromOthers_PackageIdsFilter_OnlyMatchingPackagesReturned()
+    {
+        var personId = TestDataSet.GetEntity("Gunnar").Id;
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { personId },
+            IncludeKeyRole = true,
+            IncludeDelegation = true,
+            IncludePackages = true,
+            PackageIds = new[] { PackageConstants.AccountantSalary.Id },
+            EnrichEntities = false,
+        };
+
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        // Only connections with AccountantSalary package should remain
+        var delegationConnections = dbResult.Where(r => r.Reason == ConnectionReason.Delegation).ToList();
+        Assert.NotEmpty(delegationConnections);
+
+        var allPackages = delegationConnections.SelectMany(c => c.Packages ?? []).ToList();
+        Assert.All(allPackages, p => Assert.Equal(PackageConstants.AccountantSalary.Id, p.Id));
+    }
+
+    [Fact]
+    public async Task GetConnectionsFromOthers_PackageIdsFilter_RemovesConnectionsWithNoMatchingPackages()
+    {
+        var personId = TestDataSet.GetEntity("Gunnar").Id;
+        var nonExistentPackageId = Guid.NewGuid();
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { personId },
+            IncludeKeyRole = false,
+            IncludeDelegation = true,
+            IncludePackages = true,
+            PackageIds = new[] { nonExistentPackageId },
+            EnrichEntities = false,
+        };
+
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        // Delegation connections should be removed since no packages matched
+        var delegationConnections = dbResult.Where(r => r.Reason == ConnectionReason.Delegation).ToList();
+        Assert.Empty(delegationConnections);
+    }
+
+    #endregion
+
+    #region Supplier role exclusion
+
+    [Fact]
+    public async Task GetConnectionsFromOthers_SupplierRoleAlwaysExcluded()
+    {
+        var consumerId = TestDataSet.GetEntity("Consumer Corp").Id;
+        var supplierId = TestDataSet.GetEntity("Supplier Corp").Id;
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { supplierId },
+            IncludeKeyRole = true,
+            IncludeDelegation = true,
+            EnrichEntities = false,
+        };
+
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        // Consumer Corp has added Supplier Corp as their supplier, but the connection shoul not be included in ConnectionQuery results
+        Assert.DoesNotContain(dbResult, r => r.FromId == consumerId && r.RoleId == RoleConstants.Supplier.Id);
+    }
+
+    [Fact]
+    public async Task GetConnectionsToOthers_SupplierRoleAlwaysExcluded()   
+    {
+        var consumerId = TestDataSet.GetEntity("Consumer Corp").Id;
+        var supplierId = TestDataSet.GetEntity("Supplier Corp").Id;
+
+        var filter = new ConnectionQueryFilter
+        {
+            FromIds = new[] { consumerId },
+            IncludeKeyRole = true,
+            IncludeDelegation = true,
+            EnrichEntities = false,
+        };
+
+        var dbResult = await _query.GetConnectionsToOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        // Consumer Corp has added Supplier Corp as their supplier, but the connection shoul not be included in ConnectionQuery results
+        Assert.DoesNotContain(dbResult, r => r.ToId == supplierId && r.RoleId == RoleConstants.Supplier.Id);
+    }
+
+    #endregion
+
+    #region ToOthers from subunit
+
+    [Fact]
+    public async Task GetConnectionsToOthers_FromSubunit_IncludesMainUnitConnections()
+    {
+        // Baker Johnsen - Oslo is a subunit of Baker Johnsen
+        // Baker Johnsen has assignment to Regnskaperne (Accountant)
+        // When querying ToOthers from Oslo with IncludeMainUnitConnections=true, 
+        // we should see Regnskaperne as a connection via the mainunit
+        var osloId = TestDataSet.GetEntity("Baker Johnsen - Oslo").Id;
+
+        var filter = new ConnectionQueryFilter
+        {
+            FromIds = new[] { osloId },
+            IncludeKeyRole = true,
+            IncludeDelegation = true,
+            IncludeMainUnitConnections = true,
+            EnrichEntities = false,
+        };
+
+        var dbResult = await _query.GetConnectionsToOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        // Should have hierarchy connections from the mainunit
+        var hierarchyConnections = dbResult.Where(r => r.Reason == ConnectionReason.Hierarchy).ToList();
+        Assert.NotEmpty(hierarchyConnections);
+        Assert.Contains(hierarchyConnections, r => r.ToId == TestDataSet.GetEntity("Regnskaperne").Id);
+    }
+
+    #endregion
+
+    #region ToOthers with delegations
+
+    [Fact]
+    public async Task GetConnectionsToOthers_WithDelegation_ReturnsClientDelegations()
+    {
+        // Baker Johnsen has delegation via Regnskaperne to Gunnar (Agent)
+        var bakerId = TestDataSet.GetEntity("Baker Johnsen").Id;
+
+        var filter = new ConnectionQueryFilter
+        {
+            FromIds = new[] { bakerId },
+            IncludeKeyRole = false,
+            IncludeDelegation = true,
+            EnrichEntities = false,
+        };
+
+        var dbResult = await _query.GetConnectionsToOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        var delegations = dbResult.Where(r => r.Reason == ConnectionReason.Delegation).ToList();
+        Assert.NotEmpty(delegations);
+        Assert.Contains(delegations, r => r.ToId == TestDataSet.GetEntity("Gunnar").Id);
+    }
+
+    [Fact]
+    public async Task GetConnectionsToOthers_DelegationDisabled_NoDelegationResults()
+    {
+        var bakerId = TestDataSet.GetEntity("Baker Johnsen").Id;
+
+        var filter = new ConnectionQueryFilter
+        {
+            FromIds = new[] { bakerId },
+            IncludeKeyRole = false,
+            IncludeDelegation = false,
+            EnrichEntities = false,
+        };
+
+        var dbResult = await _query.GetConnectionsToOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        var delegations = dbResult.Where(r => r.Reason == ConnectionReason.Delegation).ToList();
+        Assert.Empty(delegations);
+    }
+
+    #endregion
+
+    #region IncludeSubConnections = false
+
+    [Fact]
+    public async Task GetConnectionsFromOthers_IncludeSubConnectionsFalse_NoHierarchyChildren()
+    {
+        var personId = TestDataSet.GetEntity("Petter").Id;
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { personId },
+            IncludeKeyRole = true,
+            IncludeDelegation = true,
+            IncludeSubConnections = false,
+            EnrichEntities = true,
+        };
+
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        // Baker Johnsen should appear but without sub-entities (Oslo, Bergen, Kristiansand)
+        // When IncludeSubConnections=false, child nesting is skipped AND Innehaver connections are skipped
+        var hierarchyResults = dbResult.Where(r => r.Reason == ConnectionReason.Hierarchy).ToList();
+        Assert.Empty(hierarchyResults);
+    }
+
+    #endregion
+
+    #region IncludeMainUnitConnections = false (ToOthers)
+
+    [Fact]
+    public async Task GetConnectionsToOthers_IncludeMainUnitConnectionsFalse_NoMainUnitAssignments()
+    {
+        var osloId = TestDataSet.GetEntity("Baker Johnsen - Oslo").Id;
+
+        var filter = new ConnectionQueryFilter
+        {
+            FromIds = new[] { osloId },
+            IncludeKeyRole = false,
+            IncludeDelegation = false,
+            IncludeMainUnitConnections = false,
+            EnrichEntities = false,
+        };
+
+        var dbResult = await _query.GetConnectionsToOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        // Oslo subunit has no direct assignments, so with mainunit connections disabled, expect empty
+        var hierarchyConnections = dbResult.Where(r => r.Reason == ConnectionReason.Hierarchy).ToList();
+        Assert.Empty(hierarchyConnections);
+    }
+
+    #endregion
+
+    #region HasConnection priority ordering
+
+    [Fact]
+    public async Task HasConnection_MultipleReasons_ReturnsHighestPriority()
+    {
+        // Regnskaperne has a direct assignment to Petter (ManagingDirector)
+        // So checking with both Assignment and KeyRole should return Assignment (higher priority)
+        var fromId = TestDataSet.GetEntity("Regnskaperne").Id;
+        var toId = TestDataSet.GetEntity("Petter").Id;
+
+        var (result, reason) = await _query.HasConnection(fromId, toId);
+
+        Assert.True(result);
+        Assert.Equal(ConnectionReason.Assignment, reason);
+    }
+
+    [Fact]
+    public async Task HasConnection_EmptyReasons_ReturnsFalse()
+    {
+        var fromId = TestDataSet.GetEntity("Regnskaperne").Id;
+        var toId = TestDataSet.GetEntity("Petter").Id;
+
+        var (result, reason) = await _query.HasConnection(fromId, toId, []);
+
+        Assert.False(result);
+        Assert.Null(reason);
+    }
+
+    #endregion
+
+    #region AppControlledRightholder exclusion
+
+    [Fact]
+    public async Task GetConnectionsFromOthers_AppControlledRightholder_ExcludedByDefault()
+    {
+        var personId = TestDataSet.GetEntity("Nina").Id;
+        var skrikId = TestDataSet.GetEntity("Skrik Frisør").Id;
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { personId },
+            IncludeKeyRole = false,
+            IncludeDelegation = false,
+            IncludeAppControlledInstances = false,
+            EnrichEntities = false,
+        };
+
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        // AppControlledRightholder role should be excluded by default
+        Assert.DoesNotContain(dbResult, r => r.FromId == skrikId && r.RoleId == RoleConstants.AppControlledRightholder.Id);
+    }
+
+    [Fact]
+    public async Task GetConnectionsFromOthers_AppControlledRightholder_IncludedWhenRequested()
+    {
+        var personId = TestDataSet.GetEntity("Nina").Id;
+        var skrikId = TestDataSet.GetEntity("Skrik Frisør").Id;
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { personId },
+            IncludeKeyRole = false,
+            IncludeDelegation = false,
+            IncludeAppControlledInstances = true,
+            EnrichEntities = false,
+        };
+
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        // AppControlledRightholder role should be included when explicitly requested
+        Assert.Contains(dbResult, r => r.FromId == skrikId && r.RoleId == RoleConstants.AppControlledRightholder.Id);
+    }
+
+    #endregion
+
     [Theory]
     [MemberData(nameof(GetFilterCombinations))]
     public async Task GetConnectionsAsync_AllFilterFlagCombinations_DoesNotThrow(bool[] flags, bool useSingle)
@@ -534,6 +1171,17 @@ internal static class TestDataSet
         new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000003"), Name = "Siri", TypeId = EntityTypeConstants.Person, VariantId = EntityVariantConstants.Person, PersonIdentifier = "07018412345", RefId = "07018412345", DateOfBirth = DateOnly.Parse("1984-01-07") },
         new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000004"), Name = "Lars", TypeId = EntityTypeConstants.Person, VariantId = EntityVariantConstants.Person, PersonIdentifier = "08018412345", RefId = "08018412345", DateOfBirth = DateOnly.Parse("1984-01-08") },
 
+        // ENK/Innehaver test entities
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000020"), Name = "ENK Frisør", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.ENK, OrganizationIdentifier = "ORG-ENK-01", ParentId = null, RefId = "ORG-ENK-01" },
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000021"), Name = "Ole ENK Innehaver", TypeId = EntityTypeConstants.Person, VariantId = EntityVariantConstants.Person, PersonIdentifier = "10018412345", RefId = "10018412345", DateOfBirth = DateOnly.Parse("1984-01-10") },
+
+        // Supplier/Consumer test entities
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000040"), Name = "Supplier Corp", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.AS, OrganizationIdentifier = "ORG-SUPP-01", ParentId = null, RefId = "ORG-SUPP-01" },
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000041"), Name = "Consumer Corp", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.AS, OrganizationIdentifier = "ORG-CONS-01", ParentId = null, RefId = "ORG-CONS-01" },
+
+        // Deleted entity for ExcludeDeleted tests
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000030"), Name = "Deleted Org", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.AS, OrganizationIdentifier = "ORG-DEL-01", ParentId = null, RefId = "ORG-DEL-01", IsDeleted = true, DeletedAt = DateTimeOffset.UtcNow.AddDays(-10) },
+
         // IKS keyrole test entities
         new Entity() { Id = Guid.Parse("0195efb8-7c80-7839-8b2a-8794bf7a929d"), Name = "Rådmann Kommune 1", TypeId = EntityTypeConstants.Person, VariantId = EntityVariantConstants.Person, PersonIdentifier = "09018412345", RefId = "09018412345", DateOfBirth = DateOnly.Parse("1984-01-09") },
         new Entity() { Id = Guid.Parse("0195efb8-7c80-7e40-9ea1-4362ea2aefa5"), Name = "Kommune 1", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.KOMM, OrganizationIdentifier = "605001750", ParentId = null, RefId = "605001750" },
@@ -562,6 +1210,19 @@ internal static class TestDataSet
         new Assignment() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000011"), FromId = Entities.First(t => t.Name == "Non-NUF Client AS").Id, ToId = Entities.First(t => t.Name == "Regnskaperne").Id, RoleId = RoleConstants.BusinessManager }, // Forretningsfører from non-NUF client
         new Assignment() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000012"), FromId = Entities.First(t => t.Name == "NUF International Corp").Id, ToId = Entities.First(t => t.Name == "Siri").Id, RoleId = RoleConstants.ContactPersonNUF }, // Kontaktperson NUF
         new Assignment() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000013"), FromId = Entities.First(t => t.Name == "NUF International Corp").Id, ToId = Entities.First(t => t.Name == "Lars").Id, RoleId = RoleConstants.NorwegianRepresentativeForeignEntity }, // Norsk representant for utenlandsk foretak
+
+        // Supplier role assignment (should always be excluded from results)
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000041"), FromId = Entities.First(t => t.Name == "Consumer Corp").Id, ToId = Entities.First(t => t.Name == "Supplier Corp").Id, RoleId = RoleConstants.Supplier }, // Supplier role
+
+        // AppControlledRightholder assignment for Nina from Skrik Frisør
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000042"), FromId = Entities.First(t => t.Name == "Skrik Frisør").Id, ToId = Entities.First(t => t.Name == "Nina").Id, RoleId = RoleConstants.AppControlledRightholder }, // App-controlled rightholder
+
+        // ENK/Innehaver test assignments
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000022"), FromId = Entities.First(t => t.Name == "ENK Frisør").Id, ToId = Entities.First(t => t.Name == "Ole ENK Innehaver").Id, RoleId = RoleConstants.Innehaver }, // Innehaver
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000023"), FromId = Entities.First(t => t.Name == "ENK Frisør").Id, ToId = Entities.First(t => t.Name == "Regnskaperne").Id, RoleId = RoleConstants.Accountant }, // Regnskapsfører
+
+        // Deleted org assignment
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000031"), FromId = Entities.First(t => t.Name == "Deleted Org").Id, ToId = Entities.First(t => t.Name == "Petter").Id, RoleId = RoleConstants.ManagingDirector }, // Direct assignment from deleted org
 
         // IKS keyrole test assignments
         new Assignment() { Id = Guid.Parse("0195efb8-7c80-7604-8518-2ddb45c89645"), FromId = Entities.First(t => t.Name == "Kommune 1").Id, ToId = Entities.First(t => t.Name == "Rådmann Kommune 1").Id, RoleId = RoleConstants.ManagingDirector }, // daglig-leder (different keyrole)
@@ -617,6 +1278,39 @@ internal static class TestDataSet
         new DelegationPackage() { DelegationId = Guid.Parse("0195efb8-7c80-7bda-9f72-4ef5c897f619"), PackageId = PackageConstants.AccountantWithSigningRights.Id },
         new DelegationPackage() { DelegationId = Guid.Parse("0195efb8-7c80-7bda-9f72-4ef5c897f619"), PackageId = PackageConstants.AccountantSalary.Id },
         new DelegationPackage() { DelegationId = Guid.Parse("0195efb8-7c80-7bda-9f72-4ef5c897f619"), PackageId = PackageConstants.AccountantWithoutSigningRights.Id },
+    };
+
+    internal static readonly Guid TestResourceTypeId = Guid.Parse("0195efb8-7c80-7a01-8001-000000000050");
+    internal static readonly Guid TestResourceId = Guid.Parse("0195efb8-7c80-7a01-8001-000000000051");
+
+#pragma warning disable SA1401 // Fields should be private
+    internal static List<ResourceType> ResourceTypes = new()
+#pragma warning restore SA1401 // Fields should be private
+    {
+        new ResourceType() { Id = TestResourceTypeId, Name = "TestResourceType" },
+    };
+
+#pragma warning disable SA1401 // Fields should be private
+    internal static List<Resource> Resources = new()
+#pragma warning restore SA1401 // Fields should be private
+    {
+        new Resource() { Id = TestResourceId, Name = "Test Bakery Resource", Description = "Test resource", RefId = "test-bakery-resource", TypeId = TestResourceTypeId, ProviderId = ProviderConstants.Altinn3.Id },
+    };
+
+#pragma warning disable SA1401 // Fields should be private
+    internal static List<AssignmentResource> AssignmentResources = new()
+#pragma warning restore SA1401 // Fields should be private
+    {
+        // Resource assigned to Nina's Rightholder assignment from Skrik Frisør
+        new AssignmentResource() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000052"), AssignmentId = Assignments.First(t => t.FromId == GetEntity("Skrik Frisør").Id && t.ToId == GetEntity("Nina").Id && t.RoleId == RoleConstants.Rightholder).Id, ResourceId = TestResourceId },
+    };
+
+#pragma warning disable SA1401 // Fields should be private
+    internal static List<AssignmentInstance> AssignmentInstances = new()
+#pragma warning restore SA1401 // Fields should be private
+    {
+        // Instance assigned to Nina's Rightholder assignment from Skrik Frisør
+        new AssignmentInstance() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000053"), AssignmentId = Assignments.First(t => t.FromId == GetEntity("Skrik Frisør").Id && t.ToId == GetEntity("Nina").Id && t.RoleId == RoleConstants.Rightholder).Id, ResourceId = TestResourceId, InstanceId = "instance-001", InstanceSourceTypeId = InstanceSourceTypeConstants.EndUser.Id },
     };
 }
 
