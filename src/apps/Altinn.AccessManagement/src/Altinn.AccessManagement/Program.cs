@@ -32,9 +32,15 @@ if (app.Environment.IsDevelopment())
     // Enable higher level of detail in exceptions related to JWT validation
     IdentityModelEventSource.ShowPII = true;
 
-    // Enable Swagger
+    // Enable Swagger with an endpoint per discovered API version
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(options =>
+    {
+        foreach (var description in app.DescribeApiVersions())
+        {
+            options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json", description.GroupName.ToUpperInvariant());
+        }
+    });
 }
 
 app.UseAuthentication();

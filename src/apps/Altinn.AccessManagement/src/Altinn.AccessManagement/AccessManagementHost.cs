@@ -36,6 +36,8 @@ using Altinn.Common.PEP.Clients;
 using Altinn.Common.PEP.Implementation;
 using Altinn.Common.PEP.Interfaces;
 using AltinnCore.Authentication.JwtCookie;
+using Asp.Versioning;
+using Asp.Versioning.ApiExplorer;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.FeatureManagement;
@@ -46,6 +48,7 @@ using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using Swashbuckle.AspNetCore.Filters;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Altinn.AccessManagement;
 
@@ -233,9 +236,44 @@ internal static partial class AccessManagementHost
 
     private static void ConfigureOpenAPI(this WebApplicationBuilder builder)
     {
+        builder.Services.AddApiVersioning(options =>
+        {
+            // Existing routes carry a literal "v1" segment and no api version attribute,
+            // so unspecified requests must keep resolving to 1.0. The url segment reader
+            // keeps ?api-version=... query parameters inert on those routes.
+            options.DefaultApiVersion = new ApiVersion(1.0);
+            options.AssumeDefaultVersionWhenUnspecified = true;
+            options.ApiVersionReader = new UrlSegmentApiVersionReader();
+        })
+        .AddMvc()
+        .AddApiExplorer(options =>
+        {
+            // Formats the version as "'v'major[.minor][-status]" so group names
+            // line up with the swagger document names ("v1", "v2", ...).
+            options.GroupNameFormat = "'v'VVV";
+            options.SubstituteApiVersionInUrl = true;
+        });
+
         builder.Services.AddEndpointsApiExplorer();
+
+        var applicationName = builder.Environment.ApplicationName;
+        builder.Services.AddOptions<SwaggerGenOptions>()
+            .Configure((SwaggerGenOptions options, IApiVersionDescriptionProvider provider) =>
+            {
+                // One swagger document per discovered api version. The v1 document keeps
+                // the name and URL of the previous single document, which external APIM
+                // extraction depends on.
+                foreach (var description in provider.ApiVersionDescriptions)
+                {
+                    options.SwaggerDoc(description.GroupName, new OpenApiInfo { Title = applicationName, Version = description.ApiVersion.ToString() });
+                }
+            });
+
         builder.Services.AddSwaggerGen(options =>
         {
+            // Endpoints without a version group (minimal endpoints) belong to the v1 document.
+            options.DocInclusionPredicate((documentName, apiDescription) => (apiDescription.GroupName ?? "v1") == documentName);
+
             options.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
             {
                 Description = "Standard Authorization header using the Bearer scheme. Example: \"bearer {token}\"",
