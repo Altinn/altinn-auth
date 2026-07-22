@@ -17,7 +17,8 @@ public class ConnectionQuery(AppDbContext db)
     // It looks like the same join order is chosen no matter if we use a low value (1) or a very large value. A very large value is
     // chosen to ensure that the cutoff doesn't really reduce the result set.
     private const int PostgresPlanHintTakeLimit = 100_000_000;
-    private List<ConnectionQueryExtendedRecord>? _rightholderAssignments = null;
+    private readonly ConnectionResourceLoader _resourceLoader = new(db);
+    private readonly ConnectionPackageLoader _packageLoader = new(db);
 
     /// <summary>
     /// Shared set of role IDs for accountant/auditor roles used in innehaver connection lookups.
@@ -135,7 +136,6 @@ public class ConnectionQuery(AppDbContext db)
     {
         try
         {
-            _rightholderAssignments = null;
             bool delayChildNesting = true;
             bool delayFromFilter = true;
             if (direction == ConnectionQueryDirection.ToOthers || (filter.FromIds?.Count > 0 && filter.FromIds?.Count <= 20))
@@ -157,10 +157,10 @@ public class ConnectionQuery(AppDbContext db)
             {
                 try
                 {
-                    var pkgs = await LoadPackagesByKeyAsync(result, filter, ct);
+                    var pkgs = await _packageLoader.LoadPackagesByKeyAsync(result, filter, ct);
                     if (filter.EnrichPackageResources)
                     {
-                        await EnrichPackageResourcesAsync(pkgs, filter, ct);
+                        await _packageLoader.EnrichPackageResourcesAsync(pkgs, filter, ct);
                     }
 
                     result = Attach(result, pkgs, p => p.Id, (dto, list) => dto.Packages = list);
@@ -177,28 +177,41 @@ public class ConnectionQuery(AppDbContext db)
                 }
             }
 
-            try
+            if (filter.IncludeResources || filter.IncludeInstances)
             {
-                if (filter.IncludeResources)
-                {
-                    result = await LoadResourcesByKeyAsync(result, filter, ct);
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("Failed to include resources", ex);
-            }
+                var rightholderAssignments = ConnectionResourceLoader.GetRightholderAssignments(result, filter);
 
-            try
-            {
-                if (filter.IncludeInstances)
+                try
                 {
-                    result = await LoadInstancesByKeyAsync(result, filter, ct);
+                    if (filter.IncludeResources)
+                    {
+                        var rightholderAssignmentIds = rightholderAssignments.Select(a => (Guid)a.AssignmentId).Distinct().ToHashSet();
+                        if (rightholderAssignmentIds.Count > 0)
+                        {
+                            result = await _resourceLoader.LoadResourcesByKeyAsync(result, rightholderAssignmentIds, filter, ct);
+                        }
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("Failed to include instances", ex);
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException("Failed to include resources", ex);
+                }
+
+                try
+                {
+                    if (filter.IncludeInstances)
+                    {
+                        var rightholderAssignmentIds = rightholderAssignments.Where(a => a.Reason != ConnectionReason.Hierarchy && !a.IsMainUnitAccess).Select(a => (Guid)a.AssignmentId).Distinct().ToHashSet();
+                        if (rightholderAssignmentIds.Count > 0)
+                        {
+                            result = await _resourceLoader.LoadInstancesByKeyAsync(result, rightholderAssignmentIds, filter, ct);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw new InvalidOperationException("Failed to include instances", ex);
+                }
             }
 
             if (filter.EnrichEntities)
@@ -786,386 +799,6 @@ public class ConnectionQuery(AppDbContext db)
         return keysWithChildren;
     }
 
-    private async Task<ConnectionIndex<ConnectionQueryPackage>> LoadPackagesByKeyAsync(IEnumerable<ConnectionQueryExtendedRecord> keys, ConnectionQueryFilter filter, CancellationToken ct)
-    {
-        var packageSet = filter.PackageIds?.Count > 0 ? new HashSet<Guid>(filter.PackageIds) : null;
-        var index = new ConnectionIndex<ConnectionQueryPackage>();
-
-        var assignmentPackageKeys = keys.Where(k => k.AssignmentId.HasValue && k.RoleId == RoleConstants.Rightholder).Select(k => k.AssignmentId).Distinct().ToList();
-
-        SortedList<Guid, List<Guid>> assignmentPackages = [];
-        SortedSet<Guid> assignmentPackageIds = [];
-        if (assignmentPackageKeys.Count > 0)
-        {
-            var assignmentPackagesRaw = await db.AssignmentPackages.Where(a => assignmentPackageKeys.Contains(a.AssignmentId))
-                .WhereIf(packageSet is not null, p => packageSet!.Contains(p.PackageId))
-                .Select(ap => new { ap.PackageId, ap.AssignmentId })
-                .ToListAsync(ct);
-
-            foreach (var assignmentPackage in assignmentPackagesRaw)
-            {
-                assignmentPackageIds.Add(assignmentPackage.PackageId);
-                if (assignmentPackages.TryGetValue(assignmentPackage.AssignmentId, out var ids))
-                {
-                    ids.Add(assignmentPackage.PackageId);
-                }
-                else
-                {
-                    assignmentPackages.Add(assignmentPackage.AssignmentId, [assignmentPackage.PackageId]);
-                }
-            }
-        }
-
-        var rolePackageKeys = keys.Where(k => k.AssignmentId.HasValue).Select(k => k.RoleId).Distinct().ToList();
-        var rolePackagesRaw = await db.RolePackages.Where(r => r.HasAccess && rolePackageKeys.Contains(r.RoleId))
-            .WhereIf(packageSet is not null, p => packageSet!.Contains(p.PackageId))
-            .Select(rp => new { rp.PackageId, rp.RoleId, rp.EntityVariantId })
-            .ToListAsync(ct);
-        SortedList<Guid, List<Guid>> rolePackagesForAll = [];
-        SortedList<Guid, Dictionary<Guid, List<Guid>>> rolePackagesForEntity = [];
-        SortedSet<Guid> rolePackageIds = [];
-        foreach (var rolePackage in rolePackagesRaw)
-        {
-            rolePackageIds.Add(rolePackage.PackageId);
-            if (rolePackage.EntityVariantId == null)
-            {
-                if (rolePackagesForAll.TryGetValue(rolePackage.RoleId, out var ids))
-                {
-                    ids.Add(rolePackage.PackageId);
-                }
-                else
-                {
-                    rolePackagesForAll.Add(rolePackage.RoleId, [rolePackage.PackageId]);
-                }
-            }
-            else
-            {
-                if (rolePackagesForEntity.TryGetValue(rolePackage.RoleId, out var variantDict))
-                {
-                    if (variantDict.TryGetValue((Guid)rolePackage.EntityVariantId, out var ids))
-                    {
-                        ids.Add(rolePackage.PackageId);
-                    }
-                    else
-                    {
-                        variantDict.Add((Guid)rolePackage.EntityVariantId, [rolePackage.PackageId]);
-                    }
-                }
-                else
-                {
-                    rolePackagesForEntity.Add(rolePackage.RoleId, new() { { (Guid)rolePackage.EntityVariantId, [rolePackage.PackageId] } });
-                }
-            }
-        }
-
-        SortedList<Guid, Guid> entityVariants = [];
-        var entityKeys = keys.Where(k => k.AssignmentId.HasValue && rolePackagesForEntity.ContainsKey(k.RoleId)).Select(k => k.FromId).Distinct().ToList();
-        if (entityKeys.Count > 0)
-        {
-            var entityVariantsRaw = await db.Entities.Where(e => entityKeys.Contains(e.Id))
-                .Select(e => new { e.Id, e.VariantId })
-                .ToListAsync(ct);
-            foreach (var entityVariant in entityVariantsRaw)
-            {
-                entityVariants[entityVariant.Id] = entityVariant.VariantId;
-            }
-        }
-
-        var delegationIds = keys.Select(k => k.DelegationId).Where(id => id != null).Distinct().ToList();
-        var delegationPackagesRaw = delegationIds.Count == 0 ? [] :
-            await db.DelegationPackages.Where(d => delegationIds.Contains(d.DelegationId))
-            .WhereIf(packageSet is not null, p => packageSet!.Contains(p.PackageId))
-            .Select(d => new { d.PackageId, d.DelegationId })
-            .ToListAsync(ct);
-        SortedList<Guid, List<Guid>> delegationPackages = [];
-        SortedSet<Guid> delegationPackageIds = [];
-        foreach (var delegationPackage in delegationPackagesRaw)
-        {
-            delegationPackageIds.Add(delegationPackage.PackageId);
-            if (delegationPackages.TryGetValue(delegationPackage.DelegationId, out var ids))
-            {
-                ids.Add(delegationPackage.PackageId);
-            }
-            else
-            {
-                delegationPackages.Add(delegationPackage.DelegationId, [delegationPackage.PackageId]);
-            }
-        }
-
-        var packageIds = assignmentPackageIds
-            .Union(rolePackageIds)
-            .Union(delegationPackageIds)
-            .Distinct()
-            .ToList();
-
-        var packagesRaw = await db.Packages.Where(p => packageIds.Contains(p.Id)).Select(p => new { p.Id, p.Name, p.AreaId, p.Urn }).ToListAsync(ct);
-        SortedList<Guid, ConnectionQueryPackage> packages = [];
-        foreach (var package in packagesRaw)
-        {
-            packages[package.Id] = new() { Id = package.Id, Name = package.Name, AreaId = package.AreaId, Urn = package.Urn };
-        }
-
-        foreach (var key in keys)
-        {
-            IEnumerable<Guid> keyPackageIds = [];
-
-            if (!key.AssignmentId.HasValue)
-            {
-                // if connection record is a client delegation, we only need to consider delegationpackages, and not from assignment or role packages.
-                var clientDelegationPackages = key.DelegationId.HasValue
-                 ? (key.DelegationId != null && delegationPackages.ContainsKey((Guid)key.DelegationId)) ? delegationPackages[(Guid)key.DelegationId] : []
-                 : [];
-
-                keyPackageIds = clientDelegationPackages.Distinct();
-            }
-            else if (key.AssignmentId.HasValue && key.RoleId == RoleConstants.Rightholder.Id)
-            {
-                // if connection is for rightholder we only need to consider assignment packages and not role packages or client delegations
-                var assPackages = key.AssignmentId.HasValue
-                     ? assignmentPackages.ContainsKey((Guid)key.AssignmentId) ? assignmentPackages[(Guid)key.AssignmentId] : []
-                     : [];
-
-                keyPackageIds = assPackages.Distinct();
-            }
-            else
-            {
-                // else we need to consider check for role packages
-                List<Guid> rolePackagesForEntityForKey = [];
-                if (rolePackagesForEntity.TryGetValue(key.RoleId, out var entityDict)
-                    && entityDict.TryGetValue(entityVariants[key.FromId], out var entityIds))
-                {
-                    rolePackagesForEntityForKey = entityIds;
-                }
-
-                keyPackageIds = (rolePackagesForAll.TryGetValue(key.RoleId, out List<Guid> packagesForAll) ? packagesForAll : [])
-                        .Union(rolePackagesForEntityForKey).Distinct();
-            }
-
-            if (!keyPackageIds.Any())
-            {
-                continue;
-            }
-
-            List<ConnectionQueryPackage> keyPackages = [];
-            foreach (var id in keyPackageIds)
-            {
-                keyPackages.Add(packages[id]);
-            }
-
-            index.AddRange(new(key.FromId, key.ToId, key.RoleId, key.AssignmentId, key.DelegationId, key.ViaId, key.ViaRoleId), keyPackages);
-        }
-
-        return index;
-    }
-
-    private async Task<List<ConnectionQueryExtendedRecord>> LoadResourcesByKeyAsync(List<ConnectionQueryExtendedRecord> allKeys, ConnectionQueryFilter filter, CancellationToken ct)
-    {
-        var resourceSet = filter.ResourceIds?.Count > 0 ? new HashSet<Guid>(filter.ResourceIds) : null;
-
-        var rightholderAssignments = GetRightholderAssignments(allKeys, filter);
-        var rightholderAssignmentIds = rightholderAssignments.Select(a => (Guid)a.AssignmentId).Distinct().ToList();
-        if (rightholderAssignmentIds.Count == 0)
-        {
-            return allKeys;
-        }
-
-        var assignmentResources = await db.AssignmentResources
-            .Where(ai => rightholderAssignmentIds.Contains(ai.AssignmentId))
-            .Select(ai => new { ai.AssignmentId, ai.Id, ai.ResourceId })
-            .WhereIf(resourceSet is not null, x => resourceSet!.Contains(x.ResourceId))
-            .Join(db.Resources, x => x.ResourceId, r => r.Id, (x, r) => new
-            {
-                x.AssignmentId,
-                r.Id,
-                r.Name,
-                r.RefId
-            })
-            .AsNoTracking()
-            .ToListAsync(ct);
-
-        SortedList<Guid, List<ConnectionQueryResource>> resourcesByAssignment = [];
-        foreach (var ai in assignmentResources)
-        {
-            if (resourcesByAssignment.TryGetValue(ai.AssignmentId, out var list))
-            {
-                list.Add(new ConnectionQueryResource()
-                {
-                    Id = ai.Id,
-                    Name = ai.Name,
-                    RefId = ai.RefId
-                });
-            }
-            else
-            {
-                resourcesByAssignment[ai.AssignmentId] =
-                [
-                    new ConnectionQueryResource()
-                    {
-                        Id = ai.Id,
-                        Name = ai.Name,
-                        RefId = ai.RefId
-                    }
-                ];
-            }
-        }
-
-        foreach (var key in allKeys)
-        {
-            if (key.AssignmentId.HasValue && resourcesByAssignment.TryGetValue((Guid)key.AssignmentId!, out var list))
-            {
-                key.Resources = list;
-            }
-        }
-
-        return allKeys;
-    }
-
-    private async Task<List<ConnectionQueryExtendedRecord>> LoadInstancesByKeyAsync(List<ConnectionQueryExtendedRecord> allKeys, ConnectionQueryFilter filter, CancellationToken ct)
-    {
-        var instanceSet = filter.InstanceIds?.Count > 0 ? new HashSet<string>(filter.InstanceIds) : null;
-        var resourceSet = filter.ResourceIds?.Count > 0 ? new HashSet<Guid>(filter.ResourceIds) : null;
-
-        // Assignment → AssignmentInstance
-        var rightholderAssignments = GetRightholderAssignments(allKeys, filter);
-        var rightholderAssignmentIds = rightholderAssignments.Where(a => a.Reason != ConnectionReason.Hierarchy && !a.IsMainUnitAccess).Select(a => (Guid)a.AssignmentId).Distinct().ToList();
-        if (rightholderAssignmentIds.Count == 0)
-        {
-            return allKeys;
-        }
-
-        var assignmentInstances = await db.AssignmentInstances
-            .Where(ai => rightholderAssignmentIds.Contains(ai.AssignmentId))
-            .Select(ai => new { ai.AssignmentId, ai.Id, ai.ResourceId, ai.InstanceId })
-            .WhereIf(instanceSet is not null, x => instanceSet!.Contains(x.InstanceId))
-            .WhereIf(resourceSet is not null, x => resourceSet!.Contains(x.ResourceId))
-            .Join(db.Resources, x => x.ResourceId, r => r.Id, (x, r) => new
-            {
-                x.AssignmentId,
-                x.Id,
-                x.ResourceId,
-                x.InstanceId,
-                ResourceName = r.Name,
-                ResourceRefId = r.RefId
-            })
-            .AsNoTracking()
-            .ToListAsync(ct);
-
-        SortedList<Guid, List<ConnectionQueryInstance>> instancesByAssignment = [];
-        foreach (var ai in assignmentInstances)
-        {
-            if (instancesByAssignment.TryGetValue(ai.AssignmentId, out var list))
-            {
-                list.Add(new ConnectionQueryInstance()
-                {
-                    Id = ai.Id,
-                    ResourceId = ai.ResourceId,
-                    InstanceId = ai.InstanceId,
-                    ResourceName = ai.ResourceName,
-                    ResourceRefId = ai.ResourceRefId
-                });
-            }
-            else
-            {
-                instancesByAssignment[ai.AssignmentId] =
-                [
-                    new ConnectionQueryInstance()
-                    {
-                        Id = ai.Id,
-                        ResourceId = ai.ResourceId,
-                        InstanceId = ai.InstanceId,
-                        ResourceName = ai.ResourceName,
-                        ResourceRefId = ai.ResourceRefId
-                    }
-                ];
-            }
-        }
-
-        foreach (var key in allKeys.Where(k => k.AssignmentId.HasValue && rightholderAssignmentIds.Contains((Guid)k.AssignmentId) && k.Reason != ConnectionReason.Hierarchy && !k.IsMainUnitAccess))
-        {
-            if (key.AssignmentId.HasValue && instancesByAssignment.TryGetValue((Guid)key.AssignmentId!, out var list))
-            {
-                key.Instances = list;
-            }
-        }
-
-        return allKeys;
-    }
-
-    private List<ConnectionQueryExtendedRecord> GetRightholderAssignments(List<ConnectionQueryExtendedRecord> allKeys, ConnectionQueryFilter filter)
-    {
-        List<Guid> rightholderRoles = [RoleConstants.Rightholder.Id];
-        if (filter.IncludeAppControlledInstances)
-        {
-            rightholderRoles.Add(RoleConstants.AppControlledRightholder.Id);
-        }
-
-        if (_rightholderAssignments is null)
-        {
-            _rightholderAssignments = allKeys.Where(a => a.AssignmentId.HasValue && rightholderRoles.Contains(a.RoleId)).ToList();
-        }
-
-        return _rightholderAssignments;
-    }
-
-    private async Task EnrichPackageResourcesAsync(ConnectionIndex<ConnectionQueryPackage> packageIndex, ConnectionQueryFilter filter, CancellationToken ct = default)
-    {
-        var packageIds = packageIndex.Pairs
-            .SelectMany(kv => kv.Value)
-            .Select(p => p.Id)
-            .Distinct()
-            .ToList();
-
-        if (packageIds.Count == 0)
-        {
-            return;
-        }
-
-        var resourceSet = filter.ResourceIds is { Count: > 0 }
-            ? new HashSet<Guid>(filter.ResourceIds!)
-            : null;
-
-        var rows = await db.PackageResources
-            .Where(pr => packageIds.Contains(pr.PackageId))
-            .WhereIf(resourceSet is not null, pr => resourceSet!.Contains(pr.ResourceId))
-            .Join(db.Resources, pr => pr.ResourceId, r => r.Id, (pr, r) => new
-            {
-                pr.PackageId,
-                Resource = new ConnectionQueryResource { Id = r.Id, Name = r.Name }
-            })
-            .AsNoTracking()
-            .ToListAsync(ct);
-
-        var resourcesByPackage = rows
-            .GroupBy(x => x.PackageId)
-            .ToDictionary(
-                g => g.Key,
-                g => g.Select(z => z.Resource).DistinctBy(r => r.Id).ToList()
-            );
-
-        foreach (var kv in packageIndex.Pairs)
-        {
-            var packages = kv.Value;
-
-            foreach (var pkg in packages.ToList())
-            {
-                if (resourcesByPackage.TryGetValue(pkg.Id, out var list))
-                {
-                    pkg.Resources = list.ToList();
-                }
-                else
-                {
-                    pkg.Resources = new List<ConnectionQueryResource>(capacity: 0);
-                }
-            }
-
-            // Fjern tomme pakker hvis IncludePackages er false
-            if (!filter.IncludePackages)
-            {
-                kv.Value.RemoveAll(p => p.Resources.Count == 0);
-            }
-        }
-    }
-
     private static List<ConnectionQueryExtendedRecord> Attach<T>(IEnumerable<ConnectionQueryExtendedRecord> results, ConnectionIndex<T> index, Func<T, Guid> idSelector, Action<ConnectionQueryExtendedRecord, List<T>> assign)
     {
         foreach (var dto in results)
@@ -1191,36 +824,6 @@ public class ConnectionQuery(AppDbContext db)
         IsMainUnitAccess = x.IsMainUnitAccess,
         IsRoleMap = x.IsRoleMap
     };
-}
-
-internal sealed class ConnectionIndex<T>
-{
-    private readonly Dictionary<ConnectionCompositeKey, List<T>> map = new();
-
-    public void Add(ConnectionCompositeKey key, T item)
-    {
-        if (!map.TryGetValue(key, out var list))
-        {
-            map[key] = list = new List<T>(4);
-        }
-
-        list.Add(item);
-    }
-
-    public void AddRange(ConnectionCompositeKey key, IEnumerable<T> items)
-    {
-        if (!map.TryGetValue(key, out var list))
-        {
-            map[key] = list = new List<T>();
-        }
-
-        list.AddRange(items);
-    }
-
-    public IReadOnlyList<T> Get(ConnectionCompositeKey key) =>
-        map.TryGetValue(key, out var list) ? list : Array.Empty<T>();
-
-    public IEnumerable<KeyValuePair<ConnectionCompositeKey, List<T>>> Pairs => map;
 }
 
 internal static class ConnectionQueryExtensions
