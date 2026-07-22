@@ -19,6 +19,20 @@ public class ConnectionQuery(AppDbContext db)
     private const int PostgresPlanHintTakeLimit = 100_000_000;
     private List<ConnectionQueryExtendedRecord>? _rightholderAssignments = null;
 
+    /// <summary>
+    /// Shared set of role IDs for accountant/auditor roles used in innehaver connection lookups.
+    /// </summary>
+    private static readonly HashSet<Guid> ReviRegnRoleSet =
+    [
+        RoleConstants.Accountant.Id,
+        RoleConstants.Auditor.Id,
+        RoleConstants.AccountantWithoutSigningRights.Id,
+        RoleConstants.AccountantWithSigningRights.Id,
+        RoleConstants.AccountantSalary.Id,
+        RoleConstants.AssistantAuditor.Id,
+        RoleConstants.AuditorInCharge.Id
+    ];
+    
     public async Task<List<ConnectionQueryExtendedRecord>> GetConnectionsFromOthersAsync(ConnectionQueryFilter filter, CancellationToken ct = default)
     {
         return await GetConnectionsAsync(filter, ConnectionQueryDirection.FromOthers, ct);
@@ -206,11 +220,11 @@ public class ConnectionQuery(AppDbContext db)
         }
     }
 
-    private IQueryable<ConnectionQueryBaseRecord> BuildBaseQueryFromOthers(AppDbContext db, ConnectionQueryFilter filter, bool doChildNesting, bool applyFromFilter)
+    /// <summary>
+    /// Builds the common filter HashSets used by both query directions.
+    /// </summary>
+    private static (HashSet<Guid>? ViaSet, HashSet<Guid>? ViaRoleSet, HashSet<Guid>? RoleSet, HashSet<Guid> RoleSetExclude) BuildFilterSets(ConnectionQueryFilter filter)
     {
-        var toId = filter.ToIds.First();
-        var fromSet = filter.FromIds?.Count > 0 ? new HashSet<Guid>(filter.FromIds) : null;
-        var fromSetForDelegation = fromSet != null && filter.IncludeDelegation ? new HashSet<Guid>(fromSet) : [];
         var viaSet = filter.ViaIds?.Count > 0 ? new HashSet<Guid>(filter.ViaIds) : null;
         var viaRoleSet = filter.ViaRoleIds?.Count > 0 ? new HashSet<Guid>(filter.ViaRoleIds) : null;
         var roleSet = filter.RoleIds?.Count > 0 ? new HashSet<Guid>(filter.RoleIds) : null;
@@ -220,6 +234,16 @@ public class ConnectionQuery(AppDbContext db)
         {
             roleSetExclude.Add(RoleConstants.AppControlledRightholder.Id); // App-controlled instance access should be excluded if not explicitly requested.
         }
+
+        return (viaSet, viaRoleSet, roleSet, roleSetExclude);
+    }
+
+    private IQueryable<ConnectionQueryBaseRecord> BuildBaseQueryFromOthers(AppDbContext db, ConnectionQueryFilter filter, bool doChildNesting, bool applyFromFilter)
+    {
+        var toId = filter.ToIds.First();
+        var fromSet = filter.FromIds?.Count > 0 ? new HashSet<Guid>(filter.FromIds) : null;
+        var fromSetForDelegation = fromSet != null && filter.IncludeDelegation ? new HashSet<Guid>(fromSet) : [];
+        var (viaSet, viaRoleSet, roleSet, roleSetExclude) = BuildFilterSets(filter);
 
         if (fromSet != null && filter.IncludeDelegation)
         {
@@ -240,17 +264,6 @@ public class ConnectionQuery(AppDbContext db)
                 .ToList();
             fromSetForDelegation.UnionWith(enksOfInnh);
         }
-
-        var reviRegnRoleSet = new HashSet<Guid>
-        {
-            RoleConstants.Accountant.Id,
-            RoleConstants.Auditor.Id,
-            RoleConstants.AccountantWithoutSigningRights.Id,
-            RoleConstants.AccountantWithSigningRights.Id,
-            RoleConstants.AccountantSalary.Id,
-            RoleConstants.AssistantAuditor,
-            RoleConstants.AuditorInCharge.Id
-        };
 
         var direct =
             db.Assignments
@@ -394,7 +407,7 @@ public class ConnectionQuery(AppDbContext db)
             join innehaverConnection in db.Assignments on reviRegnConnection.FromId equals innehaverConnection.FromId
             join innehaver in db.Entities on innehaverConnection.ToId equals innehaver.Id
             join enk in db.Entities on innehaverConnection.FromId equals enk.Id
-            where reviRegnRoleSet.Contains(reviRegnConnection.RoleId)
+            where ReviRegnRoleSet.Contains(reviRegnConnection.RoleId)
                 && innehaverConnection.RoleId == RoleConstants.Innehaver.Id
                 && enk.VariantId == EntityVariantConstants.ENK.Id
                 && innehaver.DateOfDeath == null
@@ -452,15 +465,7 @@ public class ConnectionQuery(AppDbContext db)
 
         var fromId = filter.FromIds.First();
         var toSet = filter.ToIds?.Count > 0 ? new HashSet<Guid>(filter.ToIds) : null;
-        var viaSet = filter.ViaIds?.Count > 0 ? new HashSet<Guid>(filter.ViaIds) : null;
-        var viaRoleSet = filter.ViaRoleIds?.Count > 0 ? new HashSet<Guid>(filter.ViaRoleIds) : null;
-        var roleSet = filter.RoleIds?.Count > 0 ? new HashSet<Guid>(filter.RoleIds) : null;
-        var roleSetExclude = filter.ExcludeRoleIds?.Count > 0 ? new HashSet<Guid>(filter.ExcludeRoleIds) : [];
-        roleSetExclude.Add(RoleConstants.Supplier.Id); // Supplier role should never be included in results as it is only used for maskinporten schemas.
-        if (!filter.IncludeAppControlledInstances)
-        {
-            roleSetExclude.Add(RoleConstants.AppControlledRightholder.Id); // App-controlled instance access should be excluded if not explicitly requested.
-        }
+        var (viaSet, viaRoleSet, roleSet, roleSetExclude) = BuildFilterSets(filter);
 
         /*
         Direct Assignments
