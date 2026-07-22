@@ -181,4 +181,24 @@ public static class Problems
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
     public static ProblemDescriptor ResourceNotDelegable { get; }
     = _factory.Create(42, HttpStatusCode.BadRequest, "The resource is not available for delegation");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor SsnNotFound { get; }
+    = _factory.Create(43, HttpStatusCode.BadRequest, "The SSN was not found");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor IdPortenAuthorizationBadRequest { get; }
+    = _factory.Create(44, HttpStatusCode.BadRequest, "Invalid request to IdPorten authorization service");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor IdPortenAuthorizationUnauthorized { get; }
+    = _factory.Create(45, HttpStatusCode.Unauthorized, "Unauthorized request to IdPorten authorization service");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor IdPortenAuthorizationForbidden { get; }
+    = _factory.Create(46, HttpStatusCode.Forbidden, "The web API is disabled");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor IdPortenAuthorizationInternalServerError { get; }
+    = _factory.Create(47, HttpStatusCode.InternalServerError, "An internal server error occurred while processing the IdPorten authorization request");
 }

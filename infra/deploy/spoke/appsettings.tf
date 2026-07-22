@@ -7,6 +7,10 @@ locals {
     "Platform:AccessManagement:Endpoint" = var.appconfiguration.platform_accessmanagement_endpoint
     "Lease:StorageAccount:BlobEndpoint"  = azurerm_storage_account.storage.primary_blob_endpoint
     "Altinn:MaskinPorten:Endpoint"       = var.appconfiguration.maskinporten_endpoint
+
+    "IdPortenAuthorizationMaskinportenClientSettings:IdPortenApiEndpoint" = var.appconfiguration.idporten_authorization_endpoint
+    "IdPortenAuthorizationMaskinportenClientSettings:ClientId"            = var.appconfiguration.idporten_authorization_client_id
+    "IdPortenAuthorizationMaskinportenClientSettings:Environment"         = var.appconfiguration.idporten_authorization_environment
   }
 }
 

@@ -90,7 +90,8 @@ namespace Altinn.AccessManagement.Tests.Mocks
                 PartyUuid = party.PartyUuid ?? Guid.Empty,
                 Name = party.Name,
                 OrganizationId = party.OrgNumber,
-                PartyType = party.PartyTypeName == Altinn.Platform.Register.Enums.PartyType.Person ? PersonPartyType : OrganizationPartyType
+                PartyType = party.PartyTypeName == Altinn.Platform.Register.Enums.PartyType.Person ? PersonPartyType : OrganizationPartyType,
+                PersonId = party.SSN
             };
         }
 

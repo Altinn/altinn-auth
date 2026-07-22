@@ -1,9 +1,12 @@
 ﻿using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Integration.Clients;
+using Altinn.AccessManagement.Integration.Configuration;
 using Altinn.AccessManagement.Integration.Services;
 using Altinn.AccessManagement.Integration.Services.Interfaces;
 using Altinn.AccessManagement.Services;
+using Altinn.ApiClients.Maskinporten.Extensions;
+using Altinn.ApiClients.Maskinporten.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Http.Resilience;
@@ -31,7 +34,16 @@ public static class IntegrationDependencyInjectionExtensions
         builder.Services.AddHttpClient<IAccessListsAuthorizationClient, AccessListAuthorizationClient>();
         builder.Services.AddHttpClient<IAltinn2RightsClient, Altinn2RightsClient>();
         builder.Services.AddHttpClient<IAuthenticationClient, AuthenticationClient>();
+        builder.Services.AddHttpClient<IIdPortenAuthorizationClient, IdPortenAuthorizationClient>();
         builder.Services.AddSingleton<IResourceRegistryClient, ResourceRegistryClient>();
+
+        // ID-porten authorizations: the client fetches its Maskinporten token manually via
+        // IMaskinportenService, using the JWK/settings bound from IdPortenAuthorizationMaskinportenClientSettings.
+        // AddMaskinportenHttpClient is what registers IMaskinportenService in DI (the service the client depends on).
+        builder.Services.Configure<IdPortenAuthorizationMaskinportenClientSettings>(builder.Configuration.GetSection("IdPortenAuthorizationMaskinportenClientSettings"));
+        builder.Services.AddMaskinportenHttpClient<SettingsJwkClientDefinition>(
+            "idporten-authorization-maskinporten",
+            builder.Configuration.GetSection("IdPortenAuthorizationMaskinportenClientSettings"));
 
         builder.Services.AddHttpClient<IAltinnRolesClient, AltinnRolesClient>()
             .ReplaceResilienceHandler(static c =>

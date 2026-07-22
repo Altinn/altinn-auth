@@ -35,6 +35,7 @@ public static class CoreDependencyInjectionExtensions
         builder.Services.AddTransient<PartyAttributeResolver>();
         builder.Services.AddTransient<UserAttributeResolver>();
         builder.Services.AddTransient<IConsent, ConsentService>();
+        builder.Services.AddTransient<IIdPortenAuthorizationService, IdPortenAuthorizationService>();
         builder.Services.AddTransient<IAMPartyService, AMPartyService>();
 
         builder.Services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPoint>();

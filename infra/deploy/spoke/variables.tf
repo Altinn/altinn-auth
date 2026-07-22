@@ -67,6 +67,9 @@ variable "appconfiguration" {
     platform_accessmanagement_endpoint  = string
     platform_sbl_bridge_endpoint        = string
     maskinporten_endpoint               = string
+    idporten_authorization_endpoint     = string
+    idporten_authorization_client_id    = string
+    idporten_authorization_environment  = string
   })
 }
 
