@@ -101,7 +101,8 @@ public static class TestDataSeeds
             TestData.Milena,
             TestData.KaosMagicDesignAndArts,
             TestData.JinxArcane,
-            TestData.AlexTheArtist
+            TestData.AlexTheArtist,
+            TestData.MinSystemBruker
         ]);
         #endregion
 

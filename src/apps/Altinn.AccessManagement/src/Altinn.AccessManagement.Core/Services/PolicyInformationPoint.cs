@@ -12,6 +12,7 @@ using Altinn.AccessManagement.Core.Models.Rights;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Enums;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.Authorization.ABAC;
 using Altinn.Authorization.ABAC.Constants;
@@ -391,15 +392,17 @@ namespace Altinn.AccessManagement.Core.Services
 
             Guid? fromParty = null;
             List<Guid> toParties = null;
+            HashSet<Guid> toAppControlledRightholders = null;
 
             var from = await _dbContext.Entities
-                    .AsNoTracking()
+                    .AsNoTracking() 
                     .Where(e => e.PartyId == reporteePartyId)
                     .FirstOrDefaultAsync(cancellationToken);
             if (includeInstanceDelegations)
             {
                 fromParty = from?.Id;
                 toParties = new List<Guid>();
+                toAppControlledRightholders = [];
             }
 
             // Check if mainunit exists
@@ -466,6 +469,24 @@ namespace Altinn.AccessManagement.Core.Services
                     coveredByPartyIds.AddRange(keyRoleSubUnits.Where(s => s.PartyId.HasValue).Select(s => s.PartyId.Value));
                     coveredByPartyUuids = keyRoleAssignments.Select(t => t.FromId).Distinct().ToList();
                     coveredByPartyUuids.AddRange(keyRoleSubUnits.Select(s => s.Id).ToList());
+
+                    if (includeInstanceDelegations)
+                    {
+                        // Fetch all the parties the subject user has the CompanyRepresentativeFormTasks package for, and add them to separate list of toPartiesRuntimeDelegated to verify only AltinnApp instance delegations.
+                        var representativeFormTasks = await _dbContext.Assignments
+                            .AsNoTracking()
+                            .Where(t => t.ToId == subject.Id)
+                            .Join(_dbContext.AssignmentPackages, a => a.Id, p => p.AssignmentId, (a, p) => new { Assignment = a, AssignmentPackage = p })
+                            .Where(t => t.AssignmentPackage.PackageId == PackageConstants.CompanyRepresentativeFormTasks)
+                            .ToListAsync(cancellationToken);
+                        var representativeFormTasksSubUnits = await _dbContext.Entities
+                            .AsNoTracking()
+                            .Where(e => e.ParentId.HasValue && representativeFormTasks.Select(k => k.Assignment.FromId).Distinct().Contains(e.ParentId.Value))
+                            .ToListAsync(cancellationToken);
+
+                        toAppControlledRightholders.UnionWith(representativeFormTasks.Select(t => t.Assignment.FromId));
+                        toAppControlledRightholders.UnionWith(representativeFormTasksSubUnits.Select(s => s.Id));
+                    }
                 }
             }
 
@@ -485,8 +506,8 @@ namespace Altinn.AccessManagement.Core.Services
                 }
             }
 
-            // 3. Get all instance delegations of the resource both directly delegated to user and indirectly through keyrole units
-            if (includeInstanceDelegations && fromParty.HasValue && toParties.Count > 0)
+            // 3. Get all instance delegations of the resource both directly delegated to user and indirectly through keyrole units and runtime-delegated signing packages
+            if (includeInstanceDelegations && fromParty.HasValue && (toParties.Count > 0 || toAppControlledRightholders.Count > 0))
             {
                 if (resourceMatchType == ResourceAttributeMatchType.AltinnAppId)
                 {
@@ -494,15 +515,15 @@ namespace Altinn.AccessManagement.Core.Services
                     resourceIds = $"app_{resourceOrgApp[0]}_{resourceOrgApp[1]}".SingleToList();
                 }
 
-                delegations.AddRange(await GetInstanceDelegations(resourceIds, fromParty.Value, toParties, cancellationToken));
+                delegations.AddRange(await GetInstanceDelegations(resourceIds, fromParty.Value, toParties.ToList(), toAppControlledRightholders.ToList(), cancellationToken));
             }
 
             return delegations;
         }
 
-        private async Task<IEnumerable<DelegationChange>> GetInstanceDelegations(List<string> resourceIds, Guid from, List<Guid> to, CancellationToken cancellationToken = default)
+        private async Task<IEnumerable<DelegationChange>> GetInstanceDelegations(List<string> resourceIds, Guid from, List<Guid> to, List<Guid> toAppControlledRightholders, CancellationToken cancellationToken = default)
         {
-            IEnumerable<InstanceDelegationChange> instanceDelegations = await _delegationRepository.GetActiveInstanceDelegations(resourceIds, from, to, cancellationToken);
+            IEnumerable<InstanceDelegationChange> instanceDelegations = await _delegationRepository.GetActiveInstanceDelegations(resourceIds, from, to, toAppControlledRightholders, cancellationToken);
             return from InstanceDelegationChange instanceDelegation in instanceDelegations
                    let delegationChange = new DelegationChange
                    {

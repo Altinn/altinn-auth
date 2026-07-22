@@ -53,24 +53,40 @@ public static class PackageValidation
 
         var notAssignablePackages = new List<string>();
 
-        if (assignedToType.Id == EntityTypeConstants.Organization)
+        foreach (var package in packages)
         {
-            foreach (var package in packages)
+            if (PackageConstants.TryGetByAll(package, out var packageObj))
             {
-                if (PackageConstants.TryGetByAll(package, out var packageObj))
+                if (assignedToType.Id == EntityTypeConstants.Organization)
                 {
                     if (packageObj.Id == PackageConstants.MainAdministrator.Id)
                     {
                         notAssignablePackages.Add(package);
                     }
+
+                    if (packageObj.Id == PackageConstants.CompanyRepresentativeFormTasks.Id)
+                    {
+                        notAssignablePackages.Add(package);
+                    }
                 }
-            }
+
+                if (assignedToType.Id == EntityTypeConstants.SystemUser)
+                {
+                    if (PackageConstants.TryGetByAll(package, out packageObj))
+                    {
+                        if (packageObj.Id == PackageConstants.CompanyRepresentativeFormTasks.Id)
+                        {
+                            notAssignablePackages.Add(package);
+                        }
+                    }
+                }
+            }            
         }
 
         if (notAssignablePackages.Any())
         {
             return (ref ValidationErrorBuilder errors) =>
-                errors.Add(ValidationErrors.PackageIsNotAssignableToRecipient, $"QUERY/{paramName}", [new("Packages", $"{string.Join(", ", notAssignablePackages)} are not assignable to an organization.")]);
+                errors.Add(ValidationErrors.PackageIsNotAssignableToRecipient, $"QUERY/{paramName}", [new("Packages", $"{string.Join(", ", notAssignablePackages)} are not assignable to the given entitytype in input.")]);
         }
 
         return null;

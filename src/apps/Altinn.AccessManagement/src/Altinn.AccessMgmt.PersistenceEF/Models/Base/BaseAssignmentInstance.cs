@@ -71,4 +71,28 @@ public class BaseAssignmentInstance : BaseAudit
     /// Gets or sets the unique identifier that specifies the source type of the instance delegation.
     /// </summary>
     public Guid InstanceSourceTypeId { get; set; }
+
+    /// <summary>
+    /// Determines whether the specified object is equal to the current object.
+    /// Equality is based on the assignment, resource, and instance identifier.
+    /// </summary>
+    public override bool Equals(object obj)
+    {
+        if (obj is not BaseAssignmentInstance other)
+        {
+            return false;
+        }
+
+        return AssignmentId == other.AssignmentId &&
+               ResourceId == other.ResourceId &&
+               InstanceId == other.InstanceId;
+    }
+
+    /// <summary>
+    /// Serves as the default hash function.
+    /// </summary>
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(AssignmentId, ResourceId, InstanceId);
+    }
 }

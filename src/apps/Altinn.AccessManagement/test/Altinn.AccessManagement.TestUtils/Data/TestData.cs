@@ -730,6 +730,31 @@ public static class TestData
 
     #endregion
 
+    #region Systembruker  - Kaos Magic Design and Arts
+
+    public static ConstantDefinition<Entity> MinSystemBruker { get; } = new("afb94d9d-8621-4700-a252-20269196097f")
+    {
+        Entity = new()
+        {
+            DateOfBirth = null,
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "Sharpest knife",
+            OrganizationIdentifier = null,
+            Parent = null,
+            ParentId = null,
+            PartyId = null,
+            RefId = "afb94d9d-8621-4700-a252-20269196097f",
+            TypeId = EntityTypeConstants.SystemUser,
+            UserId = null,
+            Username = null,
+            VariantId = EntityVariantConstants.StandardSystem,
+        }
+    };
+
+    #endregion
+
     #region Personer - Fredriksons Fabrikk
 
     public static ConstantDefinition<Entity> SiljeHaugen { get; } = new("10000007-aaaa-4bbb-8ccc-ddddeeee0007")
@@ -1223,6 +1248,7 @@ public static class TestData
 
     // Kaos Magic Design and Arts - rettighetshavere
     public static readonly Guid AssignKaosJosephineRightholder = Guid.Parse("0196a0b1-0001-7001-8001-000000000053");
+    public static readonly Guid AssignKaosSvendsenAutomobilRightholder = Guid.Parse("0196a0b1-0001-7001-8001-000000000054");
 
     // Dumbo Adventures - org-til-org
     private static readonly Guid AssignDumboAdventuresKaosAuditor = Guid.Parse("0196a0b1-0001-7001-8001-000000000052");
@@ -1300,6 +1326,7 @@ public static class TestData
 
         // Kaos Magic Design and Arts - rettighetshavere
         new Assignment() { Id = AssignKaosJosephineRightholder, FromId = KaosMagicDesignAndArts, ToId = JosephineYvonnesdottir, RoleId = RoleConstants.Rightholder },
+        new Assignment() { Id = AssignKaosSvendsenAutomobilRightholder, FromId = KaosMagicDesignAndArts, ToId = SvendsenAutomobil, RoleId = RoleConstants.Rightholder },
 
         // Dumbo Adventures - org-til-org (Kaos is auditor for Dumbo)
         new Assignment() { Id = AssignDumboAdventuresKaosAuditor, FromId = DumboAdventures, ToId = KaosMagicDesignAndArts, RoleId = RoleConstants.Auditor },

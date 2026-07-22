@@ -7816,4 +7816,43 @@ public static class PackageConstants
     };
 
     #endregion
+
+    #region Company Representative Form Tasks
+
+    /// <summary>
+    /// Represents the 'Virksomhetens representant - skjemaoppgaver' access package.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 8cb5c1f8-fad7-4ae0-b02b-8ad4cb2652eb
+    /// - <c>URN:</c> urn:altinn:accesspackage:virksomhetens-representant-skjemaoppgaver
+    /// - <c>Provider:</c> Altinn3
+    /// - <c>Code:</c> virksomhetens-representant-skjemaoppgaver
+    /// - <c>Description:</c> Denne tilgangspakken gir fullmakt til rollen som virksomhetens representant for skjemaoppgaver, Mottakeren av tilgangspakken kan da utføre alle oppgaver applikasjoner har definert at denne virksomheten skal utføre på vegne av virksomheten.
+    /// </remarks>
+    public static ConstantDefinition<Package> CompanyRepresentativeFormTasks { get; } = new ConstantDefinition<Package>("8cb5c1f8-fad7-4ae0-b02b-8ad4cb2652eb")
+    {
+        Entity = new()
+        {
+            Name = "Virksomhetens representant - skjemaoppgaver",
+            Code = "virksomhetens-representant-skjemaoppgaver",
+            Description = "Denne tilgangspakken gir fullmakt til rollen som virksomhetens representant for skjemaoppgaver, Mottakeren av tilgangspakken kan da utføre alle oppgaver applikasjoner har definert at denne virksomheten skal utføre på vegne av virksomheten.",
+            Urn = "urn:altinn:accesspackage:virksomhetens-representant-skjemaoppgaver",
+            IsDelegable = false,
+            IsAssignable = true,
+            IsAvailableForServiceOwners = false,
+            EntityTypeId = EntityTypeConstants.Organization,
+            ProviderId = ProviderConstants.Altinn3,
+            AreaId = AreaConstants.BusinessAffairs,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Company representative - form tasks"),
+            KeyValuePair.Create("Description", "This access package provides the role as the company's representative for form tasks. The recipient of the access package can then perform all tasks that applications have defined for this company to perform on behalf of the company.")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Representant for verksemda - skjemaopp­gåver"),
+            KeyValuePair.Create("Description", "Denne tilgangspakken gir fullmakt til rolla som representant for verksemda for skjemaopp­gåver. Mottakaren av tilgangspakken kan då utføre alle oppgåver applikasjonar har definert at denne verksemda skal utføre på vegne av verksemda.")
+        ),
+    };
+
+    #endregion
 }

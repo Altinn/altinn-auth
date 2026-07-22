@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
+using Microsoft.EntityFrameworkCore;
 using Altinn.AccessManagement.TestUtils.Factories;
 using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
@@ -345,6 +346,29 @@ public class ApiFixture : WebApplicationFactory<Program>, IAsyncLifetime
             var audit = new AuditValues(SystemEntityConstants.StaticDataIngest);
             using var scope = Services.CreateEFScope(audit);
             using var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+
+            // Before each SaveChanges call (which the lambdas are responsible for invoking),
+            // check every Added entity against the database. If the row already exists
+            // (e.g. it was inserted by a migration as a constant/lookup row), change its
+            // state to Unchanged so EF skips the INSERT and avoids a duplicate-key violation.
+            db.SavingChanges += (sender, _) =>
+            {
+                if (sender is not DbContext ctx)
+                {
+                    return;
+                }
+
+                foreach (var entry in ctx.ChangeTracker.Entries()
+                    .Where(e => e.State == EntityState.Added)
+                    .ToList())
+                {
+                    if (entry.GetDatabaseValues() is not null)
+                    {
+                        entry.State = EntityState.Unchanged;
+                    }
+                }
+            };
+
             foreach (var configure in configureDb)
             {
                 configure(db);
