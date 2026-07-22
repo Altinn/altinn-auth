@@ -20,6 +20,18 @@ module "frontend_appsettings" {
       label       = "${lower(var.environment)}-access-management-ui"
       default     = false
     },
+    {
+      name        = "AccessManagementUI.ShowHandledRequests"
+      description = "Whether or not to show handled sent and received access package and resource requests."
+      label       = "${lower(var.environment)}-access-management-ui"
+      default     = false
+    },
+    {
+      name        = "AccessManagementUI.ShowIdPortenAuthorizations"
+      description = "Whether or not to include ID-porten authorizations in active consents list."
+      label       = "${lower(var.environment)}-access-management-ui"
+      default     = false
+    },
   ]
 
   providers = {
