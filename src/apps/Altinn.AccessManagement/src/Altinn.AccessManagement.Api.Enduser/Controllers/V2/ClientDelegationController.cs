@@ -151,7 +151,15 @@ public class ClientDelegationController(
             return Unauthorized();
         }
 
-        var result = await clientDelegationService.DeleteMyClient(authenticatedUser, provider, client, payload, cancellationToken);
+        // The agent is the authenticated user, so agent errors point at the provider
+        // parameter that names the relationship.
+        var result = await clientDelegationService.DeleteMyClient(
+            authenticatedUser,
+            provider,
+            client,
+            payload,
+            new ClientDelegationParameterNames(Party: "provider", Client: "client", Agent: "provider"),
+            cancellationToken);
         if (result.IsProblem)
         {
             return result.Problem.ToActionResult();
@@ -230,6 +238,7 @@ public class ClientDelegationController(
             {
                 options.AllowedToEntityTypes = [EntityTypeConstants.Person, EntityTypeConstants.SystemUser];
                 options.EntitiesToValidateForAnyConnections = [EntityTypeConstants.Person];
+                options.ToParameterName = "agent";
             },
             cancellationToken);
 
@@ -238,7 +247,7 @@ public class ClientDelegationController(
             return entity.Problem.ToActionResult();
         }
 
-        var result = await clientDelegationService.AddAgent(party, entity.Value.Id, cancellationToken);
+        var result = await clientDelegationService.AddAgent(party, entity.Value.Id, ClientDelegationParameterNames.V2, cancellationToken);
         if (result.IsProblem)
         {
             return result.Problem.ToActionResult();
@@ -352,7 +361,7 @@ public class ClientDelegationController(
         [FromBody][Required] DelegationBatchInputDto payload,
         CancellationToken cancellationToken = default)
     {
-        var result = await clientDelegationService.DelegateAccessPackageToAgent(party, client, agent, payload, cancellationToken);
+        var result = await clientDelegationService.DelegateAccessPackageToAgent(party, client, agent, payload, ClientDelegationParameterNames.V2, cancellationToken);
         if (result.IsProblem)
         {
             return result.Problem.ToActionResult();
@@ -377,7 +386,7 @@ public class ClientDelegationController(
         CancellationToken cancellationToken = default
     )
     {
-        var result = await clientDelegationService.RemoveAgentDelegation(party, client, agent, payload, cancellationToken);
+        var result = await clientDelegationService.RemoveAgentDelegation(party, client, agent, payload, ClientDelegationParameterNames.V2, cancellationToken);
         if (result.IsProblem)
         {
             return result.Problem.ToActionResult();

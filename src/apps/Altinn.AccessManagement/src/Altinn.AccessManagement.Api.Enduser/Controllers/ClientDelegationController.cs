@@ -154,7 +154,7 @@ public class ClientDelegationController(
             return Unauthorized();
         }
 
-        var result = await clientDelegationService.DeleteMyClient(partyUuid, provider, from, payload, cancellationToken);
+        var result = await clientDelegationService.DeleteMyClient(partyUuid, provider, from, payload, ClientDelegationParameterNames.V1, cancellationToken);
         if (result.IsProblem)
         {
             return result.Problem.ToActionResult();
@@ -241,7 +241,7 @@ public class ClientDelegationController(
             return entity.Problem.ToActionResult();
         }
 
-        var result = await clientDelegationService.AddAgent(party, entity.Value.Id, cancellationToken);
+        var result = await clientDelegationService.AddAgent(party, entity.Value.Id, ClientDelegationParameterNames.V1, cancellationToken);
         if (result.IsProblem)
         {
             return result.Problem.ToActionResult();
@@ -355,7 +355,7 @@ public class ClientDelegationController(
         [FromBody][Required] DelegationBatchInputDto payload,
         CancellationToken cancellationToken = default)
     {
-        var result = await clientDelegationService.DelegateAccessPackageToAgent(party, from, to, payload, cancellationToken);
+        var result = await clientDelegationService.DelegateAccessPackageToAgent(party, from, to, payload, ClientDelegationParameterNames.V1, cancellationToken);
         if (result.IsProblem)
         {
             return result.Problem.ToActionResult();
@@ -380,7 +380,7 @@ public class ClientDelegationController(
         CancellationToken cancellationToken = default
     )
     {
-        var result = await clientDelegationService.RemoveAgentDelegation(party, from, to, payload, cancellationToken);
+        var result = await clientDelegationService.RemoveAgentDelegation(party, from, to, payload, ClientDelegationParameterNames.V1, cancellationToken);
         if (result.IsProblem)
         {
             return result.Problem.ToActionResult();

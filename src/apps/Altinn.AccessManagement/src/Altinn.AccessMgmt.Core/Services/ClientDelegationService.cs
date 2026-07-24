@@ -327,9 +327,9 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
     }
 
     /// <inheritdoc/>
-    public async Task<Result<List<DelegationDto>>> DeleteMyClient(Guid partyUuid, Guid providerUuid, Guid fromUuid, DelegationBatchInputDto payload, CancellationToken cancellationToken = default)
+    public async Task<Result<List<DelegationDto>>> DeleteMyClient(Guid partyUuid, Guid providerUuid, Guid fromUuid, DelegationBatchInputDto payload, ClientDelegationParameterNames parameterNames, CancellationToken cancellationToken = default)
     {
-        return await RemoveAgentDelegation(providerUuid, fromUuid, partyUuid, payload, cancellationToken);
+        return await RemoveAgentDelegation(providerUuid, fromUuid, partyUuid, payload, parameterNames, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -586,7 +586,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
     }
 
     /// <inheritdoc/>
-    public async Task<Result<AssignmentDto>> AddAgent(Guid partyUuid, Guid toUuid, CancellationToken cancellationToken = default)
+    public async Task<Result<AssignmentDto>> AddAgent(Guid partyUuid, Guid toUuid, ClientDelegationParameterNames parameterNames, CancellationToken cancellationToken = default)
     {
         ValidationErrorBuilder errorBuilder = default;
 
@@ -607,7 +607,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
             var supportedToTypeNames = string.Join(", ", SupportedToTypes.Select(t => t.Entity.Name));
             errorBuilder.Add(
                 ValidationErrors.DisallowedEntityType,
-                "$QUERY/to",
+                $"$QUERY/{parameterNames.Agent}",
                 [new($"{entity.TypeId}", $"Entity type is not supported as an agent. Supported types: <{supportedToTypeNames}>.")]
             );
         }
@@ -616,7 +616,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         {
             errorBuilder.Add(
                 ValidationErrors.DisallowedEntityType,
-                "$QUERY/to",
+                $"$QUERY/{parameterNames.Agent}",
                 [new($"{toUuid}", $"System user with id '{toUuid}' is not created for client delegation.")]
             );
         }
@@ -946,6 +946,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         Guid fromId,
         Guid toId,
         DelegationBatchInputDto payload,
+        ClientDelegationParameterNames parameterNames,
         CancellationToken cancellationToken = default)
     {
         ValidationErrorBuilder errorBuilder = default;
@@ -1020,7 +1021,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         {
             errorBuilder.Add(
                 ValidationErrors.EntityNotExists,
-                $"$QUERY/from",
+                $"$QUERY/{parameterNames.Client}",
                 [new($"{fromId}", "entity do not exist.")]
             );
         }
@@ -1029,7 +1030,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         {
             errorBuilder.Add(
                 ValidationErrors.EntityNotExists,
-                $"$QUERY/to",
+                $"$QUERY/{parameterNames.Agent}",
                 [new($"{toId}", "entity do not exist.")]
             );
         }
@@ -1049,7 +1050,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
             {
                 errorBuilder.Add(
                     ValidationErrors.MissingAssignment,
-                    $"$QUERY/to",
+                    $"$QUERY/{parameterNames.Agent}",
                     [new(RoleConstants.Agent.Entity.Urn, $"Role is not assigned to '{toId}' from '{partyId}'.")]
                 );
             }
@@ -1071,7 +1072,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
             var supportedToTypeNames = string.Join(", ", SupportedToTypes.Select(t => t.Entity.Name));
             errorBuilder.Add(
                 ValidationErrors.DisallowedEntityType,
-                "$QUERY/to",
+                $"$QUERY/{parameterNames.Agent}",
                 [new($"{to.TypeId}", $"entity type is not supported as agent, only <{supportedToTypeNames}>.")]
             );
         }
@@ -1080,7 +1081,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         {
             errorBuilder.Add(
                 ValidationErrors.DisallowedEntityType,
-                "$QUERY/to",
+                $"$QUERY/{parameterNames.Agent}",
                 [new($"{to.Id}", $"system user '{to.Id}' is not created for client delegation.")]
             );
         }
@@ -1222,6 +1223,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         Guid fromUuid,
         Guid toUuid,
         DelegationBatchInputDto payload,
+        ClientDelegationParameterNames parameterNames,
         CancellationToken cancellationToken = default)
     {
         ValidationErrorBuilder errorBuilder = default;
@@ -1283,7 +1285,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         {
             errorBuilder.Add(
                 ValidationErrors.EntityNotExists,
-                "$QUERY/party",
+                $"$QUERY/{parameterNames.Party}",
                 [new($"{partyUuid}", "entity do not exist.")]
             );
         }
@@ -1292,7 +1294,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         {
             errorBuilder.Add(
                 ValidationErrors.EntityNotExists,
-                $"$QUERY/from",
+                $"$QUERY/{parameterNames.Client}",
                 [new($"{fromUuid}", "entity do not exist.")]
             );
         }
@@ -1301,7 +1303,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         {
             errorBuilder.Add(
                 ValidationErrors.EntityNotExists,
-                $"$QUERY/to",
+                $"$QUERY/{parameterNames.Agent}",
                 [new($"{toUuid}", "entity do not exist.")]
             );
         }
@@ -1313,7 +1315,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         {
             errorBuilder.Add(
                 ValidationErrors.MissingAssignment,
-                $"$QUERY/to",
+                $"$QUERY/{parameterNames.Agent}",
                 [new(RoleConstants.Agent.Entity.Urn, $"Role is not assigned to '{toUuid}' from '{partyUuid}'.")]
             );
         }
@@ -1496,6 +1498,7 @@ public interface IClientDelegationService
         Guid providerUuid,
         Guid fromUuid,
         DelegationBatchInputDto payload,
+        ClientDelegationParameterNames parameterNames,
         CancellationToken cancellationToken = default);
 
     #endregion
@@ -1543,6 +1546,7 @@ public interface IClientDelegationService
     Task<Result<AssignmentDto>> AddAgent(
         Guid partyUuid,
         Guid toUuid,
+        ClientDelegationParameterNames parameterNames,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1602,6 +1606,7 @@ public interface IClientDelegationService
         Guid fromUuid,
         Guid toUuid,
         DelegationBatchInputDto payload,
+        ClientDelegationParameterNames parameterNames,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1612,7 +1617,29 @@ public interface IClientDelegationService
         Guid fromUuid,
         Guid toUuid,
         DelegationBatchInputDto payload,
+        ClientDelegationParameterNames parameterNames,
         CancellationToken cancellationToken = default);
 
     #endregion
+}
+
+/// <summary>
+/// Names of the query parameters a client delegation endpoint exposes for the party,
+/// client and agent entities. Validation error pointers are built from these names,
+/// so each API version points at the parameters present on its own routes.
+/// </summary>
+/// <param name="Party">Name of the query parameter holding the facilitator party.</param>
+/// <param name="Client">Name of the query parameter holding the client entity.</param>
+/// <param name="Agent">Name of the query parameter holding the agent entity.</param>
+public sealed record ClientDelegationParameterNames(string Party, string Client, string Agent)
+{
+    /// <summary>
+    /// Parameter names exposed by the v1 endpoints.
+    /// </summary>
+    public static ClientDelegationParameterNames V1 { get; } = new("party", "from", "to");
+
+    /// <summary>
+    /// Parameter names exposed by the v2 endpoints.
+    /// </summary>
+    public static ClientDelegationParameterNames V2 { get; } = new("party", "client", "agent");
 }

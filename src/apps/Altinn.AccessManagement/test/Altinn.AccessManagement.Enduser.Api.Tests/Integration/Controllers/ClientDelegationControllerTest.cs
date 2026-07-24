@@ -761,6 +761,26 @@ public class ClientDelegationControllerTest
             Assert.All(problem.Errors, error =>
             {
                 Assert.Equal(ValidationErrors.DisallowedEntityType.ErrorCode, error.ErrorCode);
+                Assert.Contains("$QUERY/to", error.Paths);
+            });
+        }
+
+        [Fact]
+        public async Task AddAgent_WithUnknownTo_Returns400WithToQueryPointer()
+        {
+            var client = CreateClient();
+            var response = await client.PostAsync($"{Route}/agents?party={TestEntities.OrganizationVerdiqAS}&to={Guid.NewGuid()}", null, TestContext.Current.CancellationToken);
+
+            var data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            var problem = JsonSerializer.Deserialize<AltinnValidationProblemDetails>(data);
+
+            Assert.Single(problem.Errors);
+            Assert.All(problem.Errors, error =>
+            {
+                Assert.Equal(ValidationErrors.EntityNotExists.ErrorCode, error.ErrorCode);
+                Assert.Contains("QUERY/to", error.Paths);
+                Assert.DoesNotContain("QUERY/agent", error.Paths);
             });
         }
 
@@ -1503,6 +1523,35 @@ public class ClientDelegationControllerTest
             {
                 Assert.Equal(ValidationErrors.PackageIsNotDelegable.ErrorCode, error.ErrorCode);
             });
+        }
+
+        [Fact]
+        public async Task DelegateAccessPackageToAgent_WithUnknownFromAndTo_Returns400WithFromAndToQueryPointers()
+        {
+            var client = CreateClient();
+            var response = await client.PostAsJsonAsync(
+                $"{Route}/agents/accesspackages?party={TestEntities.OrganizationVerdiqAS}&from={Guid.NewGuid()}&to={Guid.NewGuid()}",
+                new DelegationBatchInputDto()
+                {
+                    Values = [
+                        new()
+                        {
+                            Role = RoleConstants.Rightholder.Entity.Code,
+                            Packages = [PackageConstants.Customs.Entity.Urn]
+                        }
+                    ]
+                },
+                TestContext.Current.CancellationToken
+            );
+
+            var data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+            var problem = JsonSerializer.Deserialize<AltinnValidationProblemDetails>(data);
+
+            Assert.Equal(2, problem.Errors.Count);
+            Assert.Single(problem.Errors, e => e.Paths.Contains("$QUERY/from"));
+            Assert.Single(problem.Errors, e => e.Paths.Contains("$QUERY/to"));
         }
     }
 
@@ -2383,6 +2432,97 @@ public class ClientDelegationControllerTest
                 var deleteResult = JsonSerializer.Deserialize<List<DelegationDto>>(deleteResponsePayload);
                 return deleteResult;
             }
+        }
+
+        [Fact]
+        public async Task DeleteAccessPackageToAgent_WithUnknownPartyFromAndTo_Returns400WithV1QueryPointers()
+        {
+            var client = CreateClient();
+
+            using var request = new HttpRequestMessage(HttpMethod.Delete, $"{Route}/agents/accesspackages?party={Guid.NewGuid()}&from={Guid.NewGuid()}&to={Guid.NewGuid()}")
+            {
+                Content = JsonContent.Create(new DelegationBatchInputDto()
+                {
+                    Values = [
+                        new()
+                        {
+                            Role = RoleConstants.Rightholder.Entity.Code,
+                            Packages = [PackageConstants.Customs.Entity.Urn]
+                        }
+                    ]
+                })
+            };
+
+            var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
+            var data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            var problem = JsonSerializer.Deserialize<AltinnValidationProblemDetails>(data);
+
+            Assert.Single(problem.Errors, e => e.Paths.Contains("$QUERY/party"));
+            Assert.Single(problem.Errors, e => e.Paths.Contains("$QUERY/from"));
+            Assert.Contains(problem.Errors, e => e.Paths.Contains("$QUERY/to"));
+            Assert.DoesNotContain(problem.Errors, e => e.Paths.Contains("$QUERY/client") || e.Paths.Contains("$QUERY/agent"));
+        }
+    }
+    #endregion
+
+    #region DELETE accessmanagement/api/v1/enduser/clientdelegations/my/clients/accesspackages
+
+    /// <summary>
+    /// <see cref="ClientDelegationController.DeleteMyPackagesToClientViaProvider(Guid, Guid, DelegationBatchInputDto, CancellationToken)"/>
+    /// </summary>
+    [IntegrationTest]
+    public class DeleteMyClientAccessPackages : IClassFixture<ApiFixture>
+    {
+        public DeleteMyClientAccessPackages(ApiFixture fixture)
+        {
+            Fixture = fixture;
+        }
+
+        public ApiFixture Fixture { get; }
+
+        private HttpClient CreateClient()
+        {
+            var client = Fixture.Server.CreateClient();
+            var token = TestTokenGenerator.CreateToken(new ClaimsIdentity("mock"), claims =>
+            {
+                claims.Add(new Claim(AltinnCoreClaimTypes.PartyUuid, TestEntities.PersonPaula.Id.ToString()));
+                claims.Add(new Claim("scope", AuthzConstants.SCOPE_PORTAL_ENDUSER));
+            });
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            return client;
+        }
+
+        [Fact]
+        public async Task DeleteMyClientAccessPackages_WithUnknownProviderAndFrom_Returns400WithV1QueryPointers()
+        {
+            var client = CreateClient();
+
+            using var request = new HttpRequestMessage(HttpMethod.Delete, $"{Route}/my/clients/accesspackages?provider={Guid.NewGuid()}&from={Guid.NewGuid()}")
+            {
+                Content = JsonContent.Create(new DelegationBatchInputDto()
+                {
+                    Values = [
+                        new()
+                        {
+                            Role = RoleConstants.Rightholder.Entity.Code,
+                            Packages = [PackageConstants.Customs.Entity.Urn]
+                        }
+                    ]
+                })
+            };
+
+            var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
+            var data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            var problem = JsonSerializer.Deserialize<AltinnValidationProblemDetails>(data);
+
+            Assert.Single(problem.Errors, e => e.Paths.Contains("$QUERY/party"));
+            Assert.Single(problem.Errors, e => e.Paths.Contains("$QUERY/from"));
+            Assert.Contains(problem.Errors, e => e.Paths.Contains("$QUERY/to"));
+            Assert.DoesNotContain(problem.Errors, e => e.Paths.Contains("$QUERY/provider") || e.Paths.Contains("$QUERY/client"));
         }
     }
     #endregion
