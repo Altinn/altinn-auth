@@ -25,28 +25,4 @@ public class MyClientProviderDto
     /// </summary>
     [JsonPropertyName("access")]
     public List<RoleAccess> Access { get; set; } = [];
-
-    /// <summary>
-    /// Access given through a single role
-    /// </summary>
-    public class RoleAccess
-    {
-        /// <summary>
-        /// Role
-        /// </summary>
-        [JsonPropertyName("role")]
-        public CompactRoleDto Role { get; set; }
-
-        /// <summary>
-        /// Packages
-        /// </summary>
-        [JsonPropertyName("packages")]
-        public List<CompactPackageDto> Packages { get; set; } = [];
-
-        /// <summary>
-        /// Resources
-        /// </summary>
-        [JsonPropertyName("resources")]
-        public List<CompactResourceDto> Resources { get; set; } = [];
-    }
 }

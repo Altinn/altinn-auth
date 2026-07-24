@@ -183,10 +183,11 @@ public class ClientDelegationController(
         [FromQuery(Name = "party")][Required] Guid party,
         [FromQuery(Name = "roles")] List<string>? roles,
         [FromQuery(Name = "packages")] List<string>? packages,
+        [FromQuery(Name = "resources")] List<string>? resources,
         [FromQuery, FromHeader] PagingInput paging,
         CancellationToken cancellationToken = default)
     {
-        var result = await clientDelegationService.GetClientsV2(party, roles, packages, cancellationToken);
+        var result = await clientDelegationService.GetClientsV2(party, roles, packages, resources, cancellationToken);
         if (result.IsProblem)
         {
             return result.Problem.ToActionResult();
@@ -387,6 +388,98 @@ public class ClientDelegationController(
     )
     {
         var result = await clientDelegationService.RemoveAgentDelegation(party, client, agent, payload, ClientDelegationParameterNames.V2, cancellationToken);
+        if (result.IsProblem)
+        {
+            return result.Problem.ToActionResult();
+        }
+
+        return Ok(result.Value);
+    }
+
+    [HttpGet("agents/resources")]
+    [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_READ)]
+    [Authorize(Policy = AuthzConstants.POLICY_CLIENTDELEGATION_READ)]
+    [ProducesResponseType<PaginatedResult<ContractsV2.ClientResourcesDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetDelegatedResourcesToAgentsViaParty(
+        [FromQuery(Name = "party")][Required] Guid party,
+        [FromQuery(Name = "agent")][Required] Guid agent,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await clientDelegationService.GetDelegatedResourcesToAgentsViaPartyV2(party, agent, cancellationToken);
+        if (result.IsProblem)
+        {
+            return result.Problem.ToActionResult();
+        }
+
+        return Ok(PaginatedResult.Create(result.Value, null));
+    }
+
+    [HttpGet("clients/resources")]
+    [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_READ)]
+    [Authorize(Policy = AuthzConstants.POLICY_CLIENTDELEGATION_READ)]
+    [ProducesResponseType<PaginatedResult<ContractsV2.AgentResourcesDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetDelegatedResourcesFromClientsViaParty(
+        [FromQuery(Name = "party")][Required] Guid party,
+        [FromQuery(Name = "client")][Required] Guid client,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var result = await clientDelegationService.GetDelegatedResourcesFromClientsViaPartyV2(party, client, cancellationToken);
+        if (result.IsProblem)
+        {
+            return result.Problem.ToActionResult();
+        }
+
+        return Ok(PaginatedResult.Create(result.Value, null));
+    }
+
+    [HttpPost("agents/resources")]
+    [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_WRITE)]
+    [Authorize(Policy = AuthzConstants.POLICY_CLIENTDELEGATION_WRITE)]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+    [ProducesResponseType<List<ContractsV2.ResourceDelegationDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> DelegateResourceToAgent(
+        [FromQuery(Name = "party")][Required] Guid party,
+        [FromQuery(Name = "client")][Required] Guid client,
+        [FromQuery(Name = "agent")][Required] Guid agent,
+        [FromBody][Required] ContractsV2.ResourceDelegationBatchInputDto payload,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await clientDelegationService.DelegateResourceToAgent(party, client, agent, payload, cancellationToken);
+        if (result.IsProblem)
+        {
+            return result.Problem.ToActionResult();
+        }
+
+        return Ok(result.Value);
+    }
+
+    [HttpDelete("agents/resources")]
+    [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_WRITE)]
+    [Authorize(Policy = AuthzConstants.POLICY_CLIENTDELEGATION_WRITE)]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+    [ProducesResponseType<List<ContractsV2.ResourceDelegationDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> DeleteAgentResource(
+        [FromQuery(Name = "party")][Required] Guid party,
+        [FromQuery(Name = "client")][Required] Guid client,
+        [FromQuery(Name = "agent")][Required] Guid agent,
+        [FromBody][Required] ContractsV2.ResourceDelegationBatchInputDto payload,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var result = await clientDelegationService.RemoveAgentResourceDelegation(party, client, agent, payload, cancellationToken);
         if (result.IsProblem)
         {
             return result.Problem.ToActionResult();

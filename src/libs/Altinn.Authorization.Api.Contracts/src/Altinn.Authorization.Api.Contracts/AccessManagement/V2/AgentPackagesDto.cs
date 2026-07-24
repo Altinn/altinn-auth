@@ -23,23 +23,5 @@ public class AgentPackagesDto
     /// Gets or sets a collection of all access information for the agent
     /// </summary>
     [JsonPropertyName("access")]
-    public List<RoleAccess> Access { get; set; } = [];
-
-    /// <summary>
-    /// Access given through a single role
-    /// </summary>
-    public class RoleAccess
-    {
-        /// <summary>
-        /// Role
-        /// </summary>
-        [JsonPropertyName("role")]
-        public CompactRoleDto Role { get; set; }
-
-        /// <summary>
-        /// Packages
-        /// </summary>
-        [JsonPropertyName("packages")]
-        public List<CompactPackageDto> Packages { get; set; } = [];
-    }
+    public List<PackageAccess> Access { get; set; } = [];
 }
