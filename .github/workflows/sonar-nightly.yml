@@ -19,6 +19,7 @@ on:
 
 permissions:
   contents: read
+  actions: read # tpl-vertical-ci.yml reads the jobs API to deep-link the failed-test summary
 
 # Never let two nightly scans overlap (a slow run must not stack on the next
 # day's), but don't cancel an in-progress scan — let it finish.
