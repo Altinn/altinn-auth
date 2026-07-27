@@ -1340,7 +1340,7 @@ public class ClientDelegationControllerTest
 
     #endregion
 
-    #region DELETE accessmanagement/api/v2/enduser/clientdelegations/agents/accesspackages
+    #region POST accessmanagement/api/v2/enduser/clientdelegations/agents/accesspackages/delete
 
     /// <summary>
     /// <see cref="ClientDelegationController.DeleteAgentAccessPackage(Guid, Guid, Guid, DelegationBatchInputDto, CancellationToken)"/>
@@ -1418,7 +1418,7 @@ public class ClientDelegationControllerTest
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
             // Delete Delegation
-            using var request = new HttpRequestMessage(HttpMethod.Delete, $"{Route}/agents/accesspackages?party={TestEntities.OrganizationVerdiqAS}&client={TestEntities.OrganizationNordisAS}&agent={TestEntities.PersonPaula}")
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"{Route}/agents/accesspackages/delete?party={TestEntities.OrganizationVerdiqAS}&client={TestEntities.OrganizationNordisAS}&agent={TestEntities.PersonPaula}")
             {
                 Content = JsonContent.Create(new DelegationBatchInputDto()
                 {
@@ -1453,7 +1453,7 @@ public class ClientDelegationControllerTest
         {
             var client = CreateClient();
 
-            using var request = new HttpRequestMessage(HttpMethod.Delete, $"{Route}/agents/accesspackages?party={Guid.NewGuid()}&client={Guid.NewGuid()}&agent={Guid.NewGuid()}")
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"{Route}/agents/accesspackages/delete?party={Guid.NewGuid()}&client={Guid.NewGuid()}&agent={Guid.NewGuid()}")
             {
                 Content = JsonContent.Create(new DelegationBatchInputDto()
                 {
@@ -1481,7 +1481,7 @@ public class ClientDelegationControllerTest
     }
     #endregion
 
-    #region DELETE accessmanagement/api/v2/enduser/clientdelegations/my/clients/accesspackages
+    #region POST accessmanagement/api/v2/enduser/clientdelegations/my/clients/accesspackages/delete
 
     /// <summary>
     /// <see cref="ClientDelegationController.DeleteMyPackagesToClientViaProvider(Guid, Guid, DelegationBatchInputDto, CancellationToken)"/>
@@ -1513,7 +1513,7 @@ public class ClientDelegationControllerTest
         {
             var client = CreateClient();
 
-            using var request = new HttpRequestMessage(HttpMethod.Delete, $"{Route}/my/clients/accesspackages?provider={Guid.NewGuid()}&client={Guid.NewGuid()}")
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"{Route}/my/clients/accesspackages/delete?provider={Guid.NewGuid()}&client={Guid.NewGuid()}")
             {
                 Content = JsonContent.Create(new DelegationBatchInputDto()
                 {
@@ -1641,7 +1641,7 @@ public class ClientDelegationControllerTest
         {
             var client = CreateClient();
 
-            using var request = new HttpRequestMessage(HttpMethod.Delete, $"{Route}/agents/accesspackages?party={TestEntities.OrganizationVerdiqAS}&client={TestEntities.OrganizationNordisAS}&agent={TestEntities.PersonPaula}")
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"{Route}/agents/accesspackages/delete?party={TestEntities.OrganizationVerdiqAS}&client={TestEntities.OrganizationNordisAS}&agent={TestEntities.PersonPaula}")
             {
                 Content = JsonContent.Create(new DelegationBatchInputDto()
                 {
@@ -2168,7 +2168,7 @@ public class ClientDelegationControllerTest
 
     #endregion
 
-    #region DELETE accessmanagement/api/v2/enduser/clientdelegations/agents/resources
+    #region POST accessmanagement/api/v2/enduser/clientdelegations/agents/resources/delete
 
     /// <summary>
     /// <see cref="ClientDelegationController.DeleteAgentResource(Guid, Guid, Guid, ContractsV2.ResourceDelegationBatchInputDto, CancellationToken)"/>
@@ -2333,7 +2333,7 @@ public class ClientDelegationControllerTest
 
         private static async Task<List<ContractsV2.ResourceDelegationDto>> DeleteResource(HttpClient client, Guid agent)
         {
-            using var request = new HttpRequestMessage(HttpMethod.Delete, $"{Route}/agents/resources?party={TestEntities.OrganizationVerdiqAS}&client={TestEntities.OrganizationNordisAS}&agent={agent}")
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"{Route}/agents/resources/delete?party={TestEntities.OrganizationVerdiqAS}&client={TestEntities.OrganizationNordisAS}&agent={agent}")
             {
                 Content = JsonContent.Create(new ContractsV2.ResourceDelegationBatchInputDto()
                 {
@@ -2356,7 +2356,7 @@ public class ClientDelegationControllerTest
     }
     #endregion
 
-    #region DELETE accessmanagement/api/v2/enduser/clientdelegations/my/clients/resources
+    #region POST accessmanagement/api/v2/enduser/clientdelegations/my/clients/resources/delete
 
     /// <summary>
     /// <see cref="ClientDelegationController.DeleteMyResourcesToClientViaProvider(Guid, Guid, ContractsV2.ResourceDelegationBatchInputDto, CancellationToken)"/>
@@ -2534,7 +2534,7 @@ public class ClientDelegationControllerTest
         {
             var client = CreateClient();
 
-            using var request = new HttpRequestMessage(HttpMethod.Delete, $"{Route}/my/clients/resources?provider={Guid.NewGuid()}&client={Guid.NewGuid()}")
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"{Route}/my/clients/resources/delete?provider={Guid.NewGuid()}&client={Guid.NewGuid()}")
             {
                 Content = JsonContent.Create(new ContractsV2.ResourceDelegationBatchInputDto()
                 {
@@ -2561,7 +2561,7 @@ public class ClientDelegationControllerTest
 
         private static async Task<List<ContractsV2.ResourceDelegationDto>> DeleteMyResource(HttpClient client, Guid clientId)
         {
-            using var request = new HttpRequestMessage(HttpMethod.Delete, $"{Route}/my/clients/resources?provider={TestEntities.OrganizationVerdiqAS}&client={clientId}")
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"{Route}/my/clients/resources/delete?provider={TestEntities.OrganizationVerdiqAS}&client={clientId}")
             {
                 Content = JsonContent.Create(new ContractsV2.ResourceDelegationBatchInputDto()
                 {

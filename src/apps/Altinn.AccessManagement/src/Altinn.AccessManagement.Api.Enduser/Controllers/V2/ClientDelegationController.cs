@@ -132,7 +132,7 @@ public class ClientDelegationController(
         return NoContent();
     }
 
-    [HttpDelete("my/clients/accesspackages")]
+    [HttpPost("my/clients/accesspackages/delete")]
     [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_MYCLIENTS_WRITE)]
     [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
     [ProducesResponseType<List<DelegationDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
@@ -168,7 +168,7 @@ public class ClientDelegationController(
         return Ok(result.Value);
     }
 
-    [HttpDelete("my/clients/resources")]
+    [HttpPost("my/clients/resources/delete")]
     [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_MYCLIENTS_WRITE)]
     [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
     [ProducesResponseType<List<ContractsV2.ResourceDelegationDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
@@ -407,7 +407,7 @@ public class ClientDelegationController(
         return Ok(result.Value);
     }
 
-    [HttpDelete("agents/accesspackages")]
+    [HttpPost("agents/accesspackages/delete")]
     [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_WRITE)]
     [Authorize(Policy = AuthzConstants.POLICY_CLIENTDELEGATION_WRITE)]
     [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
@@ -499,7 +499,7 @@ public class ClientDelegationController(
         return Ok(result.Value);
     }
 
-    [HttpDelete("agents/resources")]
+    [HttpPost("agents/resources/delete")]
     [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_WRITE)]
     [Authorize(Policy = AuthzConstants.POLICY_CLIENTDELEGATION_WRITE)]
     [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
