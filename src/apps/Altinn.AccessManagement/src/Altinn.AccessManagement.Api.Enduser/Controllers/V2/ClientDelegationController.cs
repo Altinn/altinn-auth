@@ -168,6 +168,42 @@ public class ClientDelegationController(
         return Ok(result.Value);
     }
 
+    [HttpDelete("my/clients/resources")]
+    [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_MYCLIENTS_WRITE)]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+    [ProducesResponseType<List<ContractsV2.ResourceDelegationDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> DeleteMyResourcesToClientViaProvider(
+        [FromQuery(Name = "provider")][Required] Guid provider,
+        [FromQuery(Name = "client")][Required] Guid client,
+        [FromBody][Required] ContractsV2.ResourceDelegationBatchInputDto payload,
+        CancellationToken cancellationToken = default)
+    {
+        var authenticatedUser = AuthenticationHelper.GetAuthenticatedPartyUuid(httpContextAccessor.HttpContext);
+        if (authenticatedUser == Guid.Empty)
+        {
+            return Unauthorized();
+        }
+
+        // The agent is the authenticated user, so agent errors point at the provider
+        // parameter that names the relationship.
+        var result = await clientDelegationService.DeleteMyClientResources(
+            authenticatedUser,
+            provider,
+            client,
+            payload,
+            new ClientDelegationParameterNames(Party: "provider", Client: "client", Agent: "provider"),
+            cancellationToken);
+        if (result.IsProblem)
+        {
+            return result.Problem.ToActionResult();
+        }
+
+        return Ok(result.Value);
+    }
+
     #endregion
 
     #region Provider
@@ -479,7 +515,7 @@ public class ClientDelegationController(
         CancellationToken cancellationToken = default
     )
     {
-        var result = await clientDelegationService.RemoveAgentResourceDelegation(party, client, agent, payload, cancellationToken);
+        var result = await clientDelegationService.RemoveAgentResourceDelegation(party, client, agent, payload, ClientDelegationParameterNames.V2, cancellationToken);
         if (result.IsProblem)
         {
             return result.Problem.ToActionResult();

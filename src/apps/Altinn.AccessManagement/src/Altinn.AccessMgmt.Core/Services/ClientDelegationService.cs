@@ -333,6 +333,12 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
     }
 
     /// <inheritdoc/>
+    public async Task<Result<List<ContractsV2.ResourceDelegationDto>>> DeleteMyClientResources(Guid partyUuid, Guid providerUuid, Guid fromUuid, ContractsV2.ResourceDelegationBatchInputDto payload, ClientDelegationParameterNames parameterNames, CancellationToken cancellationToken = default)
+    {
+        return await RemoveAgentResourceDelegation(providerUuid, fromUuid, partyUuid, payload, parameterNames, cancellationToken);
+    }
+
+    /// <inheritdoc/>
     public async Task<Result<List<ClientDto>>> GetClients(Guid partyUuid, List<string>? roles, List<string>? packages, CancellationToken cancellationToken = default)
     {
         roles ??= [];
@@ -1836,6 +1842,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         Guid fromUuid,
         Guid toUuid,
         ContractsV2.ResourceDelegationBatchInputDto payload,
+        ClientDelegationParameterNames parameterNames,
         CancellationToken cancellationToken = default)
     {
         ValidationErrorBuilder errorBuilder = default;
@@ -1901,7 +1908,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         {
             errorBuilder.Add(
                 ValidationErrors.EntityNotExists,
-                "$QUERY/party",
+                $"$QUERY/{parameterNames.Party}",
                 [new($"{partyUuid}", "entity does not exist.")]
             );
         }
@@ -1910,7 +1917,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         {
             errorBuilder.Add(
                 ValidationErrors.EntityNotExists,
-                $"$QUERY/client",
+                $"$QUERY/{parameterNames.Client}",
                 [new($"{fromUuid}", $"'{fromUuid}' is not a valid existing Client for '{partyUuid}'.")]
             );
         }
@@ -1919,7 +1926,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         {
             errorBuilder.Add(
                 ValidationErrors.EntityNotExists,
-                $"$QUERY/agent",
+                $"$QUERY/{parameterNames.Agent}",
                 [new($"{toUuid}", "entity does not exist.")]
             );
         }
@@ -1931,7 +1938,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         {
             errorBuilder.Add(
                 ValidationErrors.MissingAssignment,
-                $"$QUERY/agent",
+                $"$QUERY/{parameterNames.Agent}",
                 [new(RoleConstants.Agent.Entity.Urn, $"The user '{toUuid}' is not a valid registered Agent for '{partyUuid}'.")]
             );
         }
@@ -2112,6 +2119,17 @@ public interface IClientDelegationService
         ClientDelegationParameterNames parameterNames,
         CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Removes delegated single resources from a client relationship.
+    /// </summary>
+    Task<Result<List<ContractsV2.ResourceDelegationDto>>> DeleteMyClientResources(
+        Guid partyUuid,
+        Guid providerUuid,
+        Guid fromUuid,
+        ContractsV2.ResourceDelegationBatchInputDto payload,
+        ClientDelegationParameterNames parameterNames,
+        CancellationToken cancellationToken = default);
+
     #endregion
 
     #region Provider
@@ -2267,6 +2285,7 @@ public interface IClientDelegationService
         Guid fromUuid,
         Guid toUuid,
         ContractsV2.ResourceDelegationBatchInputDto payload,
+        ClientDelegationParameterNames parameterNames,
         CancellationToken cancellationToken = default);
 
     #endregion
