@@ -19,17 +19,7 @@ public static class BaseUrn
     public static string[] InternalIds => [Altinn.Organization.PartyId, Altinn.Person.PartyId, Altinn.Person.UserId, Altinn.EnterpriseUser.UserId, AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute];
 
     /// <summary>
-    /// InternalIds from Altinn II
-    /// </summary>
-    public static string[] RevokeInternalFromIds => [AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute];
-
-    /// <summary>
-    /// InternalIds for revoke
-    /// </summary>
-    public static string[] RevokeInternalToIds => [AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute, AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute, AltinnXacmlConstants.MatchAttributeIdentifiers.SystemUserUuid, AltinnXacmlConstants.MatchAttributeIdentifiers.OrganizationUuid, AltinnXacmlConstants.MatchAttributeIdentifiers.PersonUuid];
-
-    /// <summary>
-    /// Resources that belongs to Altinn 
+    /// Resources that belongs to Altinn
     /// </summary>
     public static class Altinn
     {

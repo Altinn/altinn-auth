@@ -34,40 +34,14 @@ namespace Altinn.AccessManagement.Mappers
             CreateMap<AttributeMatch, AttributeMatchExternal>();
             CreateMap<AttributeMatchExternal, AttributeMatch>();
             CreateMap<BaseAttribute, AttributeDto>();
-            CreateMap<BaseAttribute, BaseAttributeExternal>();
             CreateMap<AttributeDto, BaseAttribute>();
-            CreateMap<BaseAttributeExternal, BaseAttribute>();
             CreateMap<PolicyAttributeMatch, PolicyAttributeMatchExternal>();
             CreateMap<PolicyAttributeMatchExternal, PolicyAttributeMatch>();
 
             // Rights
-            CreateMap<RightSource, RightSourceExternal>();
-            CreateMap<RightSourceExternal, RightSource>();
-            CreateMap<RightsDelegationCheckRequestExternal, RightsDelegationCheckRequest>();
-            CreateMap<RightDelegationCheckResult, RightDelegationCheckResultExternal>()
-                .ForMember(dest => dest.Action, act => act.MapFrom(src => src.Action.Value));
             CreateMap<Detail, DetailExternal>();
-            CreateMap<Right, RightExternal>()
-                .ForMember(dest => dest.Action, act => act.MapFrom(src => src.Action.Value));
-            CreateMap<BaseRightExternal, Right>()
-                .ForMember(dest => dest.Action, opt => opt.MapFrom(src =>
-                    new AttributeMatch
-                    {
-                        Id = XacmlConstants.MatchAttributeIdentifiers.ActionId,
-                        Value = src.Action
-                    }));
-            CreateMap<Right, BaseRightExternal>()
-                .ForMember(dest => dest.Action, act => act.MapFrom(src => src.Action.Value));
-            CreateMap<RightDelegation, RightDelegationExternal>();
 
             // Delegation
-            CreateMap<RightsDelegationRequestExternal, DelegationLookup>();
-            CreateMap<RevokeOfferedDelegationExternal, DelegationLookup>();
-            CreateMap<RevokeReceivedDelegationExternal, DelegationLookup>();
-            CreateMap<DelegationActionResult, RightsDelegationResponseExternal>()
-                .ForMember(dest => dest.RightDelegationResults, act => act.MapFrom(src => src.Rights));
-            CreateMap<RightDelegationResult, RightDelegationResultExternal>()
-                .ForMember(dest => dest.Action, act => act.MapFrom(src => src.Action.Value));
             CreateMap<DelegationChange, DelegationChangeExternal>();
             CreateMap<DelegationChangeType, DelegationChangeTypeExternal>();
 

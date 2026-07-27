@@ -3,16 +3,13 @@ using Altinn.AccessManagement.Tests.Fixtures;
 namespace Altinn.AccessManagement.Tests.Integration.Controllers;
 
 /// <summary>
-/// Shares a single <see cref="RightsApiFixture"/> — one test host plus one seeded
-/// database — across the controller tests that mock the policy / delegation data
-/// layer (RightsInternal and AppsInstanceDelegation), instead of each building its
-/// own host.
+/// Shares a single <see cref="RightsApiFixture"/>, one test host plus one seeded
+/// database, across the controller tests that mock the policy / delegation data
+/// layer, instead of each building its own host.
 /// </summary>
 /// <remarks>
 /// Members are safe to share: AppsInstanceDelegation seeds additively under its own
-/// IDs via <c>EnsureSeedOnce</c> and RightsInternal reads only baseline + mocked
-/// data, so there is no cross-class collision. The RightsInternal sibling that needs
-/// an extra <c>PepWithPDPAuthorizationMock</c> singleton keeps its own fixture.
+/// IDs via <c>EnsureSeedOnce</c>, so there is no cross-class collision.
 /// </remarks>
 [CollectionDefinition(Name)]
 public sealed class RightsDbCollection : ICollectionFixture<RightsApiFixture>

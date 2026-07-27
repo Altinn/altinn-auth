@@ -43,7 +43,6 @@ public partial class ConnectionsControllerTest
     /// Mocks:
     /// - <see cref="ResourceRegistryClientMock"/> for resource registry policy lookups
     /// - <see cref="PolicyRetrievalPointMock"/> for XACML policy evaluation
-    /// - <see cref="Altinn2RightsClientMock"/> to prevent real HTTP calls to Altinn 2 SBL Bridge
     /// </para>
     /// <para>
     /// Actors:

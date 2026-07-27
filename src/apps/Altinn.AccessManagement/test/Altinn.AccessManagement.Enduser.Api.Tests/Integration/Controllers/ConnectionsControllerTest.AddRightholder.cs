@@ -27,7 +27,6 @@ public partial class ConnectionsControllerTest
     /// <para>
     /// Mocks:
     /// - <see cref="UserProfileLookupServiceMock"/> for PersonInput-based user lookup by SSN and last name
-    /// - <see cref="Altinn2RightsClientMock"/> to prevent real HTTP calls to Altinn 2 SBL Bridge
     /// </para>
     /// <para>
     /// Actors:
