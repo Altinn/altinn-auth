@@ -207,8 +207,9 @@ public class ClientDelegationControllerTest
             var access = verdiqClient.Access.FirstOrDefault(a => a.Role.Id == RoleConstants.Accountant);
             Assert.NotNull(access);
 
-            Assert.Single(access.Resources);
-            Assert.Equal(TestData.MattilsynetBakeryService.Id, access.Resources.FirstOrDefault()?.Id);
+            var accessResource = Assert.Single(access.Resources);
+            Assert.Equal(TestData.MattilsynetBakeryService.Id, accessResource.Id);
+            Assert.Equal(TestData.MattilsynetBakeryService.RefId, accessResource.RefId);
         }
 
         [Fact]
@@ -270,6 +271,7 @@ public class ClientDelegationControllerTest
             var verdiqResource = verdiqAccess.Resources.FirstOrDefault();
             Assert.NotNull(verdiqResource);
             Assert.Equal(TestData.MattilsynetBakeryService.Id, verdiqResource.Id);
+            Assert.Equal(TestData.MattilsynetBakeryService.RefId, verdiqResource.RefId);
         }
     }
     #endregion
@@ -539,8 +541,9 @@ public class ClientDelegationControllerTest
             var accountantAccess = nordisClient.Access.FirstOrDefault(a => a.Role.Id == RoleConstants.Accountant);
             Assert.NotNull(accountantAccess);
 
-            Assert.Single(accountantAccess.Resources);
-            Assert.Equal(TestData.MattilsynetBakeryService.Id, accountantAccess.Resources.FirstOrDefault()?.Id);
+            var accountantResource = Assert.Single(accountantAccess.Resources);
+            Assert.Equal(TestData.MattilsynetBakeryService.Id, accountantResource.Id);
+            Assert.Equal(TestData.MattilsynetBakeryService.RefId, accountantResource.RefId);
         }
 
         [Fact]
@@ -582,8 +585,9 @@ public class ClientDelegationControllerTest
             var accountantAccess = nordisClient.Access.FirstOrDefault(a => a.Role.Id == RoleConstants.Accountant);
             Assert.NotNull(accountantAccess);
 
-            Assert.Single(accountantAccess.Resources);
-            Assert.Equal(TestData.MattilsynetBakeryService.Id, accountantAccess.Resources.FirstOrDefault()?.Id);
+            var accountantResource = Assert.Single(accountantAccess.Resources);
+            Assert.Equal(TestData.MattilsynetBakeryService.Id, accountantResource.Id);
+            Assert.Equal(TestData.MattilsynetBakeryService.RefId, accountantResource.RefId);
         }
 
         [Fact]
@@ -617,6 +621,7 @@ public class ClientDelegationControllerTest
 
             var resource = Assert.Single(accountantAccess.Resources);
             Assert.Equal(TestData.MattilsynetBakeryService.Id, resource.Id);
+            Assert.Equal(TestData.MattilsynetBakeryService.RefId, resource.RefId);
 
             Assert.Contains(accountantAccess.Packages, p => p.Id == PackageConstants.Customs.Id);
 
@@ -659,6 +664,7 @@ public class ClientDelegationControllerTest
 
             var resource = Assert.Single(accountantAccess.Resources);
             Assert.Equal(TestData.MattilsynetBakeryService.Id, resource.Id);
+            Assert.Equal(TestData.MattilsynetBakeryService.RefId, resource.RefId);
 
             // No rightholder assignment holds the resource, so the combined filter matches nothing.
             response = await client.GetAsync($"{Route}/clients?party={TestEntities.OrganizationVerdiqAS.Id}&roles=rettighetshaver&resources={TestData.MattilsynetBakeryService.RefId}", TestContext.Current.CancellationToken);
@@ -694,6 +700,7 @@ public class ClientDelegationControllerTest
 
             var resource = Assert.Single(accountantAccess.Resources);
             Assert.Equal(TestData.MattilsynetBakeryService.Id, resource.Id);
+            Assert.Equal(TestData.MattilsynetBakeryService.RefId, resource.RefId);
         }
     }
     #endregion
@@ -809,6 +816,7 @@ public class ClientDelegationControllerTest
 
             var resource = Assert.Single(accountantAccess.Resources);
             Assert.Equal(TestData.MattilsynetBakeryService.Id, resource.Id);
+            Assert.Equal(TestData.MattilsynetBakeryService.RefId, resource.RefId);
         }
     }
     #endregion
@@ -1773,6 +1781,7 @@ public class ClientDelegationControllerTest
 
             var resource = Assert.Single(access.Resources);
             Assert.Equal(TestData.MattilsynetBakeryService.Id, resource.Id);
+            Assert.Equal(TestData.MattilsynetBakeryService.RefId, resource.RefId);
         }
 
         [Fact]
@@ -1883,6 +1892,7 @@ public class ClientDelegationControllerTest
 
             var resource = Assert.Single(access.Resources);
             Assert.Equal(TestData.MattilsynetBakeryService.Id, resource.Id);
+            Assert.Equal(TestData.MattilsynetBakeryService.RefId, resource.RefId);
         }
     }
     #endregion

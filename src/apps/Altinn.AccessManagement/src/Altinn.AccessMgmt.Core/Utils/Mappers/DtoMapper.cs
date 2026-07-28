@@ -160,20 +160,6 @@ public partial class DtoMapper
         return null;
     }
 
-    public static CompactResourceDto ConvertCompactResource(ConnectionQueryResource resource)
-    {
-        if (resource is { })
-        {
-            return new CompactResourceDto()
-            {
-                Id = resource.Id,
-                Value = resource.Name
-            };
-        }
-
-        return null;
-    }
-
     public static CompactResourceDto ConvertCompactResource(Resource resource)
     {
         if (resource is { })
@@ -181,7 +167,7 @@ public partial class DtoMapper
             return new CompactResourceDto()
             {
                 Id = resource.Id,
-                Value = resource.Name
+                RefId = resource.RefId
             };
         }
 

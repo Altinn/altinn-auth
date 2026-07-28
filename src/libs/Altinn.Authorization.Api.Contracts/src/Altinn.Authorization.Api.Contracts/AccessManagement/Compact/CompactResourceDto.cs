@@ -3,7 +3,7 @@
 namespace Altinn.Authorization.Api.Contracts.AccessManagement;
 
 /// <summary>
-/// Compact versjon of resource
+/// Compact version of resource
 /// </summary>
 public class CompactResourceDto
 {
@@ -14,8 +14,8 @@ public class CompactResourceDto
     public Guid Id { get; set; }
 
     /// <summary>
-    /// Value
+    /// Reference identifier
     /// </summary>
-    [JsonPropertyName("value")]
-    public string Value { get; set; }
+    [JsonPropertyName("refId")]
+    public string RefId { get; set; }
 }
