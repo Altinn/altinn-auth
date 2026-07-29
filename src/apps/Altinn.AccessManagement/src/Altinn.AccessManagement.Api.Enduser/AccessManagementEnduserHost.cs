@@ -1,7 +1,10 @@
 ﻿using Altinn.AccessManagement.Api.Enduser.Validation;
 using Altinn.Authorization.Host.Startup;
+using Asp.Versioning;
+using Asp.Versioning.ApiExplorer;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Filters;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Altinn.AccessManagement.Api.Enduser;
 
@@ -38,9 +41,45 @@ public static partial class AccessManagementEnduserHost
     /// <param name="builder">The web application builder to configure with OpenAPI and Swagger services. Cannot be null.</param>
     public static void ConfigureOpenAPI(this WebApplicationBuilder builder)
     {
+        // The v2 routes carry a v{version:apiVersion} segment, so the constraint has to be
+        // registered here as well as in the combined host. Without it the route table cannot
+        // be built and swagger generation fails.
+        builder.Services.AddApiVersioning(options =>
+        {
+            // Existing routes carry a literal "v1" segment and no api version attribute,
+            // so unspecified requests must keep resolving to 1.0. The url segment reader
+            // keeps ?api-version=... query parameters inert on those routes.
+            options.DefaultApiVersion = new ApiVersion(1.0);
+            options.AssumeDefaultVersionWhenUnspecified = true;
+            options.ApiVersionReader = new UrlSegmentApiVersionReader();
+        })
+        .AddMvc()
+        .AddApiExplorer(options =>
+        {
+            // Formats the version as "'v'major[.minor][-status]" so group names
+            // line up with the swagger document names ("v1", "v2", ...).
+            options.GroupNameFormat = "'v'VVV";
+            options.SubstituteApiVersionInUrl = true;
+        });
+
+        var applicationName = builder.Environment.ApplicationName;
+        builder.Services.AddOptions<SwaggerGenOptions>()
+            .Configure((SwaggerGenOptions options, IApiVersionDescriptionProvider provider) =>
+            {
+                // One swagger document per discovered api version, matching the combined host.
+                foreach (var description in provider.ApiVersionDescriptions)
+                {
+                    options.SwaggerDoc(description.GroupName, new OpenApiInfo { Title = applicationName, Version = description.ApiVersion.ToString() });
+                }
+            });
+
         builder.Services.AddEndpointsApiExplorer();
         builder.Services.AddSwaggerGen(options =>
         {
+            // Endpoints without a version group (minimal endpoints) belong to the v1 document.
+            // Without this they land in every document, including v2.
+            options.DocInclusionPredicate((documentName, apiDescription) => (apiDescription.GroupName ?? "v1") == documentName);
+
             options.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
             {
                 Description = "Standard Authorization header using the Bearer scheme. Example: \"bearer {token}\"",
