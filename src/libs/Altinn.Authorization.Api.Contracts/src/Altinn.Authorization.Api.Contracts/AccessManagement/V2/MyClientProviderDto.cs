@@ -19,10 +19,4 @@ public class MyClientProviderDto
     /// </summary>
     [JsonPropertyName("providerAddedAt")]
     public DateTimeOffset ProviderAddedAt { get; set; }
-
-    /// <summary>
-    /// Gets or sets a collection of all access information the agent has through the provider
-    /// </summary>
-    [JsonPropertyName("access")]
-    public List<RoleAccess> Access { get; set; } = [];
 }

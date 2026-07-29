@@ -337,10 +337,7 @@ public class ClientDelegationControllerTest
             var verdiq = result.Items.FirstOrDefault(p => p.Provider.Id == TestEntities.OrganizationVerdiqAS);
             Assert.NotNull(verdiq);
             Assert.NotNull(verdiq.Provider);
-
-            var access = Assert.Single(verdiq.Access);
-            Assert.Empty(access.Packages);
-            Assert.Empty(access.Resources);
+            Assert.NotEqual(default, verdiq.ProviderAddedAt);
         }
     }
     #endregion

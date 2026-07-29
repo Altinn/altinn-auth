@@ -309,14 +309,6 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
             {
                 Provider = DtoMapper.Convert(a.From),
                 ProviderAddedAt = a.Audit_ValidFrom,
-                Access = [
-                    new()
-                    {
-                        Role = DtoMapper.ConvertCompactRole(RoleConstants.Agent.Entity),
-                        Packages = [],
-                        Resources = [],
-                    }
-                ]
             }).ToList();
     }
 
