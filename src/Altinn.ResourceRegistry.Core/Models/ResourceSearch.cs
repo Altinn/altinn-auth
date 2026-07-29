@@ -37,5 +37,15 @@ namespace Altinn.ResourceRegistry.Core.Models
         /// To search for a specific reference
         /// </summary>
         public string? Reference { get; set; }
+
+        /// <summary>
+        /// To search for a specific organization code
+        /// </summary>
+        public string? OrgCode { get; set; }
+
+        /// <summary>
+        /// To search for a specific organization number
+        /// </summary>
+        public string? OrganizationId { get; set; }
     }
 }

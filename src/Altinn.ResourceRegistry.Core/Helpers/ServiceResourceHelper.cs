@@ -34,8 +34,13 @@ namespace Altinn.ResourceRegistry.Core.Helpers
 
             foreach (ServiceResource serviceResource in resourceList)
             {
-                if (MatchingIdentifier(serviceResource, resourceSearch) && MatchingDescription(serviceResource, resourceSearch) && MatchingResourceType(serviceResource, resourceSearch) && MatchingKeywords(serviceResource, resourceSearch)
-                    && MatchingReference(serviceResource, resourceSearch))
+                if (MatchingIdentifier(serviceResource, resourceSearch) &&
+                    MatchingResourceType(serviceResource, resourceSearch) &&
+                    MatchingOrgCode(serviceResource, resourceSearch) &&
+                    MatchingOrganizationId(serviceResource, resourceSearch) &&
+                    MatchingDescription(serviceResource, resourceSearch) &&
+                    MatchingKeywords(serviceResource, resourceSearch) &&
+                    MatchingReference(serviceResource, resourceSearch))
                 {
                     searchResults.Add(serviceResource);
                 }
@@ -302,6 +307,16 @@ namespace Altinn.ResourceRegistry.Core.Helpers
         private static bool MatchingIdentifier(ServiceResource resource, ResourceSearch resourceSearch)
         {
             return resourceSearch.Id == null || resource.Identifier.Contains(resourceSearch.Id, StringComparison.InvariantCultureIgnoreCase);
+        }
+
+        private static bool MatchingOrgCode(ServiceResource serviceResource, ResourceSearch resourceSearch)
+        {
+            return resourceSearch.OrgCode == null || (serviceResource.HasCompetentAuthority != null && serviceResource.HasCompetentAuthority.Orgcode?.Equals(resourceSearch.OrgCode, StringComparison.InvariantCultureIgnoreCase) == true);
+        }
+
+        private static bool MatchingOrganizationId(ServiceResource serviceResource, ResourceSearch resourceSearch)
+        {
+            return resourceSearch.OrganizationId == null || (serviceResource.HasCompetentAuthority != null && serviceResource.HasCompetentAuthority.Organization?.Equals(resourceSearch.OrganizationId , StringComparison.InvariantCultureIgnoreCase) == true);
         }
 
         private static bool MatchingDescription(ServiceResource resource, ResourceSearch resourceSearch)
