@@ -1,0 +1,48 @@
+meta {
+  name: 06_THEN_ClientListShowsCcrClientThroughRole
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/clients?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+docs {
+  THEN the client list shows the CCR client through the regnskapsforer role, with
+  the delegable packages the role carries.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+
+  test("THEN the client list request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the CCR client appears through the regnskapsforer role with role packages", function() {
+    const clientA = td.REGN_Organisasjon.REGN_Org_Clients.client_A.partyUuid.toLowerCase();
+    const entry = res.getBody().data.find(item => item.client.id.toLowerCase() === clientA);
+    expect(entry, "expected the CCR client in the client list").to.not.be.undefined;
+    const roleAccess = entry.access.find(a => a.role.code === "regnskapsforer");
+    expect(roleAccess, "expected a regnskapsforer access element").to.not.be.undefined;
+    const urns = roleAccess.packages.map(p => p.urn);
+    expect(urns).to.include(td.clientDelegationV2.packages.regnskapsforerLonn);
+    expect(urns).to.include(td.clientDelegationV2.packages.regnskapsforerMedSignering);
+  });
+}

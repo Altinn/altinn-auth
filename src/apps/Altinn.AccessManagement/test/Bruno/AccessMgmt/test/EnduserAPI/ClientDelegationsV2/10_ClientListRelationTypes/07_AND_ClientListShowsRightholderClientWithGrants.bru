@@ -1,0 +1,47 @@
+meta {
+  name: 07_AND_ClientListShowsRightholderClientWithGrants
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/clients?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+docs {
+  AND the client list shows the rightholder client with the individually granted
+  package and single resource under the rettighetshaver role.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+
+  test("AND the client list request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the rightholder client appears with the granted package and resource", function() {
+    const clientB = td.REGN_Organisasjon.REGN_Org_Clients.client_B.partyUuid.toLowerCase();
+    const entry = res.getBody().data.find(item => item.client.id.toLowerCase() === clientB);
+    expect(entry, "expected the rightholder client in the client list").to.not.be.undefined;
+    const roleAccess = entry.access.find(a => a.role.code === "rettighetshaver");
+    expect(roleAccess, "expected a rettighetshaver access element").to.not.be.undefined;
+    expect(roleAccess.packages.map(p => p.urn)).to.include(td.clientDelegationV2.packages.skattegrunnlag);
+    expect(roleAccess.resources.map(r => r.refId)).to.include(td.clientDelegationV2.singleResource);
+  });
+}

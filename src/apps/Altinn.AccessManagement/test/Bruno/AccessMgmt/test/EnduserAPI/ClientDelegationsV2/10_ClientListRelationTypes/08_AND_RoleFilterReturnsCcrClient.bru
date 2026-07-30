@@ -1,0 +1,48 @@
+meta {
+  name: 08_AND_RoleFilterReturnsCcrClient
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/clients?party={{party}}&roles=regnskapsforer
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  roles: regnskapsforer
+}
+
+docs {
+  AND filtering the client list on the regnskapsforer role returns the CCR
+  client, and every returned client holds that role.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+
+  test("AND the role filtered client list request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the CCR client is returned and every client holds the role", function() {
+    const data = res.getBody().data;
+    const clientA = td.REGN_Organisasjon.REGN_Org_Clients.client_A.partyUuid.toLowerCase();
+    expect(data.some(item => item.client.id.toLowerCase() === clientA)).to.be.true;
+    data.forEach(item => {
+      expect(item.access.some(a => a.role.code === "regnskapsforer"),
+        `expected ${item.client.name} to hold the regnskapsforer role`).to.be.true;
+    });
+  });
+}

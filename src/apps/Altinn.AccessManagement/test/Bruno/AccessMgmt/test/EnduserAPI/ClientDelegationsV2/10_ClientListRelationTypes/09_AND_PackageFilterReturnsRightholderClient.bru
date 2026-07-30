@@ -1,0 +1,56 @@
+meta {
+  name: 09_AND_PackageFilterReturnsRightholderClient
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/clients?party={{party}}&packages={{package}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  packages: {{package}}
+}
+
+docs {
+  AND filtering the client list on the individually granted package returns the
+  rightholder client. The CCR client does not hold this package, so it is not in
+  the result.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("package", td.clientDelegationV2.packages.skattegrunnlag);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+
+  test("AND the package filtered client list request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the rightholder client is returned and the CCR client is not", function() {
+    const data = res.getBody().data;
+    const clientA = td.REGN_Organisasjon.REGN_Org_Clients.client_A.partyUuid.toLowerCase();
+    const clientB = td.REGN_Organisasjon.REGN_Org_Clients.client_B.partyUuid.toLowerCase();
+    expect(data.some(item => item.client.id.toLowerCase() === clientB)).to.be.true;
+    expect(data.some(item => item.client.id.toLowerCase() === clientA)).to.be.false;
+  });
+
+  test("AND every returned client holds the filtered package", function() {
+    const packageUrn = td.clientDelegationV2.packages.skattegrunnlag;
+    res.getBody().data.forEach(item => {
+      const urns = item.access.flatMap(a => a.packages.map(p => p.urn));
+      expect(urns, `expected ${item.client.name} to hold ${packageUrn}`).to.include(packageUrn);
+    });
+  });
+}

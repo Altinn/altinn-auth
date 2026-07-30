@@ -1,0 +1,40 @@
+meta {
+  name: 03_AND_ClientDelegatesPackageToFacilitator
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{clientB}}&to={{party}}&package={{package}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{clientB}}
+  to: {{party}}
+  package: {{package}}
+}
+
+docs {
+  AND the rightholder client delegates a package to the facilitator through the
+  v1 connections API.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("clientB", td.REGN_Organisasjon.REGN_Org_Clients.client_B.partyUuid);
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("package", td.clientDelegationV2.packages.skattegrunnlag);
+
+  await loginAs(td.REGN_Organisasjon.REGN_Org_Clients.client_B.dagligleder);
+}
+
+tests {
+  test("AND the client delegates the package to the facilitator, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+    expect(res.getBody()).to.be.ok;
+  });
+}

@@ -84,6 +84,14 @@
         ansvarligRevisor: "urn:altinn:accesspackage:ansvarlig-revisor",
         klientadministrator: "urn:altinn:accesspackage:klientadministrator",
         skattegrunnlag: "urn:altinn:accesspackage:skattegrunnlag",
+        forretningsforerEiendom: "urn:altinn:accesspackage:forretningsforer-eiendom",
+      },
+      // Forretningsforer client of the systemuser-clientdelegation facilitator whose
+      // unit type (BBL) is outside the ESEK/BRL scope of forretningsforer-eiendom.
+      forretningsforerBblClient: {
+        name: "USELVSTENDIG FLAT PUMA BBL",
+        orgno: "210815872",
+        partyUuid: "bd95521a-17e9-4817-8207-735ef015bf53",
       },
       unknown: {
         partyUuid: "11111111-1111-1111-1111-111111111111",

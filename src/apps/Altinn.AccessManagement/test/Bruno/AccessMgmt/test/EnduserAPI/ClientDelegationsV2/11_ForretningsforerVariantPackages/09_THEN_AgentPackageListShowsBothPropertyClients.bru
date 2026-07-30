@@ -1,0 +1,52 @@
+meta {
+  name: 09_THEN_AgentPackageListShowsBothPropertyClients
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents/accesspackages?party={{party}}&agent={{agent}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  agent: {{agent}}
+}
+
+docs {
+  THEN the agent package list shows both the BRL and the ESEK client with the
+  eiendom package.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const su = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", su.regnskapsforer.partyuuid);
+  bru.setVar("agent", td.REGN_Organisasjon.REGN_Agent.userUuid);
+
+  await loginAs(su.regnskapsforer.dagl);
+}
+
+tests {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const su = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+
+  test("THEN the agent package list request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN both property clients are listed with the eiendom package", function() {
+    const data = res.getBody().data;
+    const eiendom = td.clientDelegationV2.packages.forretningsforerEiendom;
+    [su.brl_type_client_org, su.esek_type_client_org].forEach(client => {
+      const entry = data.find(item => item.client.id.toLowerCase() === client.partyuuid.toLowerCase());
+      expect(entry, `expected ${client.name} in the agent package list`).to.not.be.undefined;
+      const urns = entry.access.flatMap(a => a.packages.map(p => p.urn));
+      expect(urns).to.include(eiendom);
+    });
+  });
+}

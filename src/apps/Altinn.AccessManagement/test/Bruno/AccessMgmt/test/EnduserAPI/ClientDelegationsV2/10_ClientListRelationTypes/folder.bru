@@ -1,0 +1,21 @@
+meta {
+  name: 10_ClientListRelationTypes
+  seq: 10
+}
+
+docs {
+  Scenario: The client list shows every client relation type and honors the filters
+
+    Given no rightholder relation exists between the rightholder client and the facilitator
+    And the rightholder client adds the facilitator as rightholder
+    And the rightholder client delegates a package to the facilitator
+    And the rightholder client checks which rights on the single resource it can delegate
+    And the rightholder client grants the facilitator the single resource
+    Then the client list shows the CCR client through its role with the role packages
+    And the client list shows the rightholder client with the granted package and resource
+    And filtering on the accountant role returns the CCR client
+    And filtering on the granted package returns the rightholder client
+    And filtering on the granted resource returns the rightholder client
+    And filtering on an unknown role returns an empty list
+    And the package grant, the resource grant and the rightholder relation are cleaned up
+}

@@ -1,0 +1,24 @@
+meta {
+  name: 11_ForretningsforerVariantPackages
+  seq: 11
+}
+
+docs {
+  Scenario: Forretningsforer package access depends on the client unit type
+
+    Given the facilitator has no agent registration for the agent person
+    And the agent person is registered as agent
+    Then the BRL client carries the eiendom package through the forretningsforer role
+    And the ESEK client carries the eiendom package through the forretningsforer role
+    And the BBL client carries no packages through the forretningsforer role
+    When the eiendom package is delegated to the agent for the BRL client
+    And the eiendom package is delegated to the agent for the ESEK client
+    When the eiendom package is delegated for the BBL client the request fails
+    Then the agent package list shows both property clients
+    And the delegations and the agent registration are cleaned up
+
+  The facilitator and its forretningsforer clients come from the register test
+  data behind testdata/systemuser-clientdelegation. No NUF unit holds a
+  forretningsforer relation to the facilitator in AT22 or TT02, so the NUF
+  scoped packages are not covered here.
+}

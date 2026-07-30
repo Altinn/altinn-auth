@@ -1,0 +1,45 @@
+meta {
+  name: 02_AND_AgentIsRegistered
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents?party={{party}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+body:json {
+  {
+    "personIdentifier": "{{agentPid}}",
+    "lastName": "{{agentLastName}}"
+  }
+}
+
+docs {
+  AND the agent person is registered as agent for the forretningsforer
+  facilitator by person number.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const su = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", su.regnskapsforer.partyuuid);
+  bru.setVar("agentPid", td.REGN_Organisasjon.REGN_Agent.personidentity);
+  bru.setVar("agentLastName", td.REGN_Organisasjon.REGN_Agent.etternavn);
+
+  await loginAs(su.regnskapsforer.dagl);
+}
+
+tests {
+  test("AND registering the agent returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+}

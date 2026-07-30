@@ -1,0 +1,42 @@
+meta {
+  name: 11_AND_UnknownRoleFilterReturnsEmptyList
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/clients?party={{party}}&roles={{unknownRole}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  roles: {{unknownRole}}
+}
+
+docs {
+  AND filtering the client list on a role that does not exist returns an empty
+  list with 200, not an error.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("unknownRole", td.clientDelegationV2.unknown.roleCode);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  test("AND the unknown role filtered request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the result is an empty list", function() {
+    const data = res.getBody().data;
+    expect(data).to.be.an("array").that.is.empty;
+  });
+}

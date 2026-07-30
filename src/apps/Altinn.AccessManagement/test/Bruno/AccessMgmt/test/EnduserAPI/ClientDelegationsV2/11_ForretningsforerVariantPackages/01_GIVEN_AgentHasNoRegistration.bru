@@ -1,0 +1,39 @@
+meta {
+  name: 01_GIVEN_AgentHasNoRegistration
+  type: http
+  seq: 1
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents?party={{party}}&agent={{agent}}&cascade=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  agent: {{agent}}
+  cascade: true
+}
+
+docs {
+  GIVEN the forretningsforer facilitator has no agent registration for the agent
+  person. Reset step, idempotent 204.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const su = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", su.regnskapsforer.partyuuid);
+  bru.setVar("agent", td.REGN_Organisasjon.REGN_Agent.userUuid);
+
+  await loginAs(su.regnskapsforer.dagl);
+}
+
+tests {
+  test("GIVEN the facilitator has no registered agent, the reset delete returns 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}
