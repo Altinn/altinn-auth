@@ -523,6 +523,12 @@ module "appsettings" {
       label       = "${lower(var.environment)}-access-management"
       value       = false
     },
+    {
+      name        = "AccessManagement.Pip.IncludeClientDelegatedResources"
+      description = "Specifies if v2 client-delegated resources should be included in PIP GetAllDelegationChanges response."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
   ]
   providers = {
     azurerm.hub = azurerm.hub
