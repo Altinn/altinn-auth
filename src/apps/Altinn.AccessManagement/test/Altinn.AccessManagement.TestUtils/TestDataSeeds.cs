@@ -43,6 +43,7 @@ public static class TestDataSeeds
             TestEntities.SystemUserClient,
             TestEntities.SystemUserStandard,
             TestEntities.OrganizationOkernBorettslag,
+            TestEntities.OrganizationSolsidenSameie,
             TestEntities.OrganizationNufExampleNUF,
             TestEntities.SIUserMarius,
             TestEntities.EmailUserMarius,

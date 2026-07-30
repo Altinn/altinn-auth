@@ -120,6 +120,28 @@ public static class TestEntities
         }
     };
 
+    public static ConstantDefinition<Entity> OrganizationSolsidenSameie { get; } = new("f0d3bd4c-24c9-4a37-9a2e-1b5cc9be80d1")
+    {
+        Entity = new()
+        {
+            DateOfBirth = null,
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "Solsiden Sameie ESEK",
+            OrganizationIdentifier = "815493002",
+            Parent = null,
+            ParentId = null,
+            PartyId = 50068513,
+            PersonIdentifier = null,
+            RefId = "815493002",
+            TypeId = EntityTypeConstants.Organization,
+            UserId = null,
+            Username = null,
+            VariantId = EntityVariantConstants.ESEK,
+        }
+    };
+
     public static ConstantDefinition<Entity> OrganizationNufExampleNUF { get; } = new("d4a7e3b1-9c2f-4a8e-b6d5-1f3e7a9c2b4d")
     {
         Entity = new()

@@ -1684,6 +1684,235 @@ public class ClientDelegationControllerTest
             });
         }
     }
+
+    /// <summary>
+    /// <see cref="ClientDelegationController.DeleteAgentAccessPackage(Guid, Guid, Guid, DelegationBatchInputDto, CancellationToken)"/>
+    /// Removal of a package whose RolePackage rows are entity variant scoped, with one row per client unit type.
+    /// </summary>
+    [IntegrationTest]
+    public class DeleteAgentAccessPackagesWithVariantScopedRolePackage : IClassFixture<ApiFixture>
+    {
+        public DeleteAgentAccessPackagesWithVariantScopedRolePackage(ApiFixture fixture)
+        {
+            Fixture = fixture;
+            Fixture.EnsureSeedOnce<DeleteAgentAccessPackagesWithVariantScopedRolePackage>(db =>
+            {
+                var businessManagerFromOkernToVerdiq = new Assignment()
+                {
+                    FromId = TestEntities.OrganizationOkernBorettslag.Id,
+                    ToId = TestEntities.OrganizationVerdiqAS.Id,
+                    RoleId = RoleConstants.BusinessManager,
+                };
+
+                var businessManagerFromSolsidenToVerdiq = new Assignment()
+                {
+                    FromId = TestEntities.OrganizationSolsidenSameie.Id,
+                    ToId = TestEntities.OrganizationVerdiqAS.Id,
+                    RoleId = RoleConstants.BusinessManager,
+                };
+
+                var agentFromVerdiqToPaula = new Assignment()
+                {
+                    FromId = TestEntities.OrganizationVerdiqAS.Id,
+                    ToId = TestEntities.PersonPaula,
+                    RoleId = RoleConstants.Agent,
+                };
+
+                db.Assignments.Add(businessManagerFromOkernToVerdiq);
+                db.Assignments.Add(businessManagerFromSolsidenToVerdiq);
+                db.Assignments.Add(agentFromVerdiqToPaula);
+
+                db.SaveChanges();
+            });
+        }
+
+        public ApiFixture Fixture { get; }
+
+        private HttpClient CreateClient()
+        {
+            var client = Fixture.Server.CreateClient();
+            var token = TestTokenGenerator.CreateToken(new ClaimsIdentity("mock"), claims =>
+            {
+                claims.Add(new Claim(AltinnCoreClaimTypes.PartyUuid, TestEntities.PersonPaula.Id.ToString()));
+                claims.Add(new Claim("scope", $"{AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_READ} {AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_WRITE}"));
+            });
+
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            return client;
+        }
+
+        [Fact]
+        public async Task DeleteAccessPackages_WithVariantScopedRolePackageRows_Returns200WithRemovedDelegationForEachClientVariant()
+        {
+            var client = CreateClient();
+            var payload = new DelegationBatchInputDto()
+            {
+                Values = [
+                    new()
+                    {
+                        Role = RoleConstants.BusinessManager.Entity.Code,
+                        Packages = [PackageConstants.BusinessManagerRealEstate.Entity.Urn]
+                    }
+                ]
+            };
+
+            // The BRL and ESEK clients hold the same package through different variant scoped RolePackage rows.
+            Guid[] clientOrgs = [TestEntities.OrganizationOkernBorettslag.Id, TestEntities.OrganizationSolsidenSameie.Id];
+            foreach (var clientOrg in clientOrgs)
+            {
+                var delegateResponse = await client.PostAsJsonAsync(
+                    $"{Route}/agents/accesspackages?party={TestEntities.OrganizationVerdiqAS}&client={clientOrg}&agent={TestEntities.PersonPaula}",
+                    payload,
+                    TestContext.Current.CancellationToken
+                );
+
+                Assert.Equal(HttpStatusCode.OK, delegateResponse.StatusCode);
+            }
+
+            foreach (var clientOrg in clientOrgs)
+            {
+                using var request = new HttpRequestMessage(HttpMethod.Post, $"{Route}/agents/accesspackages/delete?party={TestEntities.OrganizationVerdiqAS}&client={clientOrg}&agent={TestEntities.PersonPaula}")
+                {
+                    Content = JsonContent.Create(payload)
+                };
+
+                var deleteResponse = await client.SendAsync(request, TestContext.Current.CancellationToken);
+                var deleteResponsePayload = await deleteResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+                Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
+                var deleteResult = JsonSerializer.Deserialize<List<DelegationDto>>(deleteResponsePayload);
+                var deleteRow = Assert.Single(deleteResult);
+                Assert.True(deleteRow.Changed);
+            }
+
+            // Both delegations were emptied, so no delegation to the agent remains.
+            await Fixture.QueryDb(static async db =>
+            {
+                var delegations = await db.Delegations
+                    .Where(d => d.FacilitatorId == TestEntities.OrganizationVerdiqAS.Id && d.To.ToId == TestEntities.PersonPaula.Id)
+                    .ToListAsync(TestContext.Current.CancellationToken);
+
+                Assert.Empty(delegations);
+            });
+        }
+    }
+
+    /// <summary>
+    /// <see cref="ClientDelegationController.DeleteAgentAccessPackage(Guid, Guid, Guid, DelegationBatchInputDto, CancellationToken)"/>
+    /// Removal of a delegation package whose stored RolePackageId points at a RolePackage row
+    /// scoped to a different entity variant than the client.
+    /// </summary>
+    [IntegrationTest]
+    public class DeleteAgentAccessPackagesWithStaleRolePackageId : IClassFixture<ApiFixture>
+    {
+        public DeleteAgentAccessPackagesWithStaleRolePackageId(ApiFixture fixture)
+        {
+            Fixture = fixture;
+            Fixture.EnsureSeedOnce<DeleteAgentAccessPackagesWithStaleRolePackageId>(db =>
+            {
+                var businessManagerFromOkernToVerdiq = new Assignment()
+                {
+                    FromId = TestEntities.OrganizationOkernBorettslag.Id,
+                    ToId = TestEntities.OrganizationVerdiqAS.Id,
+                    RoleId = RoleConstants.BusinessManager,
+                };
+
+                var agentFromVerdiqToPaula = new Assignment()
+                {
+                    FromId = TestEntities.OrganizationVerdiqAS.Id,
+                    ToId = TestEntities.PersonPaula,
+                    RoleId = RoleConstants.Agent,
+                };
+
+                var delegationToPaula = new AccessMgmt.PersistenceEF.Models.Delegation()
+                {
+                    FromId = businessManagerFromOkernToVerdiq.Id,
+                    ToId = agentFromVerdiqToPaula.Id,
+                    FacilitatorId = TestEntities.OrganizationVerdiqAS.Id,
+                };
+
+                // The client is a BRL unit, but the stored RolePackageId references the ESEK
+                // scoped row. Rows with this shape exist in the database from before the
+                // delegate path filtered RolePackage rows on the client's entity variant.
+                var wrongVariantRolePackage = db.RolePackages.First(r =>
+                    r.RoleId == RoleConstants.BusinessManager
+                    && r.PackageId == PackageConstants.BusinessManagerRealEstate
+                    && r.EntityVariantId == EntityVariantConstants.ESEK.Id);
+
+                var delegationPackage = new DelegationPackage()
+                {
+                    DelegationId = delegationToPaula.Id,
+                    PackageId = PackageConstants.BusinessManagerRealEstate.Id,
+                    RolePackageId = wrongVariantRolePackage.Id,
+                };
+
+                db.Assignments.Add(businessManagerFromOkernToVerdiq);
+                db.Assignments.Add(agentFromVerdiqToPaula);
+                db.Delegations.Add(delegationToPaula);
+                db.DelegationPackages.Add(delegationPackage);
+
+                db.SaveChanges();
+            });
+        }
+
+        public ApiFixture Fixture { get; }
+
+        private HttpClient CreateClient()
+        {
+            var client = Fixture.Server.CreateClient();
+            var token = TestTokenGenerator.CreateToken(new ClaimsIdentity("mock"), claims =>
+            {
+                claims.Add(new Claim(AltinnCoreClaimTypes.PartyUuid, TestEntities.PersonPaula.Id.ToString()));
+                claims.Add(new Claim("scope", $"{AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_READ} {AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_WRITE}"));
+            });
+
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            return client;
+        }
+
+        [Fact]
+        public async Task DeleteAccessPackages_WithStoredWrongVariantRolePackageId_Returns200WithRemovedDelegation()
+        {
+            var client = CreateClient();
+
+            using var request = new HttpRequestMessage(HttpMethod.Post, $"{Route}/agents/accesspackages/delete?party={TestEntities.OrganizationVerdiqAS}&client={TestEntities.OrganizationOkernBorettslag}&agent={TestEntities.PersonPaula}")
+            {
+                Content = JsonContent.Create(new DelegationBatchInputDto()
+                {
+                    Values = [
+                        new()
+                        {
+                            Role = RoleConstants.BusinessManager.Entity.Code,
+                            Packages = [PackageConstants.BusinessManagerRealEstate.Entity.Urn]
+                        }
+                    ]
+                })
+            };
+
+            var deleteResponse = await client.SendAsync(request, TestContext.Current.CancellationToken);
+            var deleteResponsePayload = await deleteResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.OK, deleteResponse.StatusCode);
+            var deleteResult = JsonSerializer.Deserialize<List<DelegationDto>>(deleteResponsePayload);
+            var deleteRow = Assert.Single(deleteResult);
+            Assert.True(deleteRow.Changed);
+
+            // The delegation package row is gone and the emptied delegation with it.
+            await Fixture.QueryDb(static async db =>
+            {
+                var delegationPackages = await db.DelegationPackages
+                    .Where(dp => dp.Delegation.FacilitatorId == TestEntities.OrganizationVerdiqAS.Id && dp.Delegation.To.ToId == TestEntities.PersonPaula.Id)
+                    .ToListAsync(TestContext.Current.CancellationToken);
+
+                var delegations = await db.Delegations
+                    .Where(d => d.FacilitatorId == TestEntities.OrganizationVerdiqAS.Id && d.To.ToId == TestEntities.PersonPaula.Id)
+                    .ToListAsync(TestContext.Current.CancellationToken);
+
+                Assert.Empty(delegationPackages);
+                Assert.Empty(delegations);
+            });
+        }
+    }
     #endregion
 
     #region GET accessmanagement/api/v2/enduser/clientdelegations/agents/resources
