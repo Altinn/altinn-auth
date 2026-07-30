@@ -95,6 +95,7 @@ internal static partial class AccessManagementHost
                     .WithTracing(tracing =>
                     {
                         tracing
+                            .AddProcessor(sp => new ApiVersionRouteProcessor(sp.GetRequiredService<IHttpContextAccessor>()))
                             .AddProcessor(sp => new NpgsqlProcessor(
                                 TimeSpan.FromMilliseconds(npgsqlMinDurationMs),
                                 sp.GetRequiredService<IHttpContextAccessor>()));
