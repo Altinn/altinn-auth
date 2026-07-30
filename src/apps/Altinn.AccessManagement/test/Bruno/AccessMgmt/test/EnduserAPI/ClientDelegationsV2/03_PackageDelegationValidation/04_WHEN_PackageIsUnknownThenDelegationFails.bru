@@ -1,0 +1,63 @@
+meta {
+  name: 04_WHEN_PackageIsUnknownThenDelegationFails
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents/accesspackages?party={{party}}&client={{client}}&agent={{agent}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  client: {{client}}
+  agent: {{agent}}
+}
+
+body:json {
+  {
+    "values": [
+      {
+        "role": "regnskapsforer",
+        "packages": [
+          "{{packageUrn}}"
+        ]
+      }
+    ]
+  }
+}
+
+docs {
+  WHEN a package urn that does not exist is delegated under the regnskapsforer role.
+
+  Expects 400 with error code STD-00000 and validation error AM.VLD-00030
+  whose paths point at the packages field.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("client", td.REGN_Organisasjon.REGN_Org_Clients.client_A.partyUuid);
+  bru.setVar("agent", td.REGN_Organisasjon.REGN_Agent.userUuid);
+  bru.setVar("packageUrn", td.clientDelegationV2.unknown.packageUrn);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  test("WHEN an unknown package is delegated, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN validation error AM.VLD-00030 points at the packages", function() {
+    const body = res.getBody();
+    expect(body.code).to.equal("STD-00000");
+    const err = body.validationErrors.find(e => e.code === "AM.VLD-00030");
+    expect(err, "expected validation error AM.VLD-00030").to.not.be.undefined;
+    expect(JSON.stringify(err.paths)).to.include("packages");
+  });
+}

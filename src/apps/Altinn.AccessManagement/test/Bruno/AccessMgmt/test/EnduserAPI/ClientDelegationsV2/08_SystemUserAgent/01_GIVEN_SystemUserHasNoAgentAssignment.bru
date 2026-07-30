@@ -1,0 +1,41 @@
+meta {
+  name: 01_GIVEN_SystemUserHasNoAgentAssignment
+  type: http
+  seq: 1
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents?party={{party}}&agent={{agent}}&cascade=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  agent: {{agent}}
+  cascade: true
+}
+
+docs {
+  GIVEN the system user has no agent assignment.
+
+  Reset step: removes any leftover agent assignment for the system user from
+  earlier runs, including delegations hanging on it. The delete is idempotent
+  and returns 204 either way.
+}
+
+script:pre-request {
+  const su = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", su.regnskapsforer.partyuuid);
+  bru.setVar("agent", su.regnskapsforer.systemuser.id);
+
+  await loginAs(su.regnskapsforer.dagl);
+}
+
+tests {
+  test("GIVEN the system user has no agent assignment, the reset delete returns 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

@@ -1,0 +1,58 @@
+meta {
+  name: 11_WHEN_UnknownResourceIsDelegatedThenRequestFails
+  type: http
+  seq: 11
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents/resources?party={{party}}&client={{clientB}}&agent={{agent}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  client: {{clientB}}
+  agent: {{agent}}
+}
+
+body:json {
+  {
+    "values": [
+      {
+        "role": "rettighetshaver",
+        "resources": ["{{unknownResource}}"]
+      }
+    ]
+  }
+}
+
+docs {
+  WHEN an unknown resource is delegated the request fails.
+
+  Expects 400 with validation error AM.VLD-00012 for the unknown resource.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("clientB", td.REGN_Organisasjon.REGN_Org_Clients.client_B.partyUuid);
+  bru.setVar("agent", td.REGN_Organisasjon.REGN_Agent.userUuid);
+  bru.setVar("unknownResource", td.clientDelegationV2.unknown.resourceRefId);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  test("WHEN an unknown resource is delegated, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN the error body flags the unknown resource with AM.VLD-00012", function() {
+    const body = res.getBody();
+    expect(body.code).to.equal("STD-00000");
+    expect(body.validationErrors.some(e => e.code === "AM.VLD-00012")).to.be.true;
+  });
+}

@@ -1,0 +1,40 @@
+meta {
+  name: 04_AND_DedicatedReadScopeGrantsAccess
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/clients?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+docs {
+  AND the same request succeeds when the token carries the dedicated client
+  delegations read scope instead of the portal scope. Expects 200 with a data
+  array.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs, scopes } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder, scopes.clientdelegationsRead);
+}
+
+tests {
+  test("AND the dedicated read scope makes the request return 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the response contains a data array", function() {
+    expect(res.getBody().data).to.be.an("array");
+  });
+}

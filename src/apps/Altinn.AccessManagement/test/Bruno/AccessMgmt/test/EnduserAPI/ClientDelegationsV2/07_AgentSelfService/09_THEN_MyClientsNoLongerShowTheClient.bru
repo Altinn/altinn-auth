@@ -1,0 +1,38 @@
+meta {
+  name: 09_THEN_MyClientsNoLongerShowTheClient
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/my/clients
+  body: none
+  auth: inherit
+}
+
+docs {
+  THEN the my clients list no longer shows the client after the agent removed its
+  only package delegation for it.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs, scopes } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  await loginAs(td.REGN_Organisasjon.REGN_Agent, scopes.myclientsRead);
+}
+
+tests {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+
+  test("THEN the my clients request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the client is no longer in the my clients list", function() {
+    const clientUuid = td.REGN_Organisasjon.REGN_Org_Clients.client_A.partyUuid.toLowerCase();
+    const clients = res.getBody().data.flatMap(item => item.clients);
+    const entry = clients.find(item => item.client.id.toLowerCase() === clientUuid);
+    expect(entry, "expected the client to be gone from the my clients list").to.be.undefined;
+  });
+}

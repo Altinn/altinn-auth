@@ -1,0 +1,61 @@
+meta {
+  name: 06_WHEN_PackageIsNotHeldThroughRoleThenDelegationFails
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents/accesspackages?party={{party}}&client={{client}}&agent={{agent}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  client: {{client}}
+  agent: {{agent}}
+}
+
+body:json {
+  {
+    "values": [
+      {
+        "role": "regnskapsforer",
+        "packages": [
+          "{{packageUrn}}"
+        ]
+      }
+    ]
+  }
+}
+
+docs {
+  WHEN the ansvarlig-revisor package, a delegable auditor package the regnskapsforer
+  role does not carry, is delegated under the regnskapsforer role.
+
+  Expects 400 with error code STD-00000 and validation error AM.VLD-00026.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("client", td.REGN_Organisasjon.REGN_Org_Clients.client_A.partyUuid);
+  bru.setVar("agent", td.REGN_Organisasjon.REGN_Agent.userUuid);
+  bru.setVar("packageUrn", td.clientDelegationV2.packages.ansvarligRevisor);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  test("WHEN a package the client role does not carry is delegated, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN validation error AM.VLD-00026 identifies the package outside the role", function() {
+    const body = res.getBody();
+    expect(body.code).to.equal("STD-00000");
+    expect(body.validationErrors.some(e => e.code === "AM.VLD-00026")).to.be.true;
+  });
+}

@@ -1,0 +1,15 @@
+meta {
+  name: 09_AuthorizationBoundaries
+  seq: 9
+}
+
+docs {
+  Scenario: The API rejects callers without the required authorization
+
+    When no token is provided the request fails
+    When the user has no client administration access for the party the request fails
+    When the token scope is insufficient the request fails
+    And the dedicated read scope grants access
+    When the token carries no party the my clients request fails
+    When the party parameter is missing the request fails
+}

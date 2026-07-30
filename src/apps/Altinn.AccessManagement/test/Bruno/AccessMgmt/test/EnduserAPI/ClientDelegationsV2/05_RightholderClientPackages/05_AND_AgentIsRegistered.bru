@@ -1,0 +1,46 @@
+meta {
+  name: 05_AND_AgentIsRegistered
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents?party={{party}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+body:json {
+  {
+    "personIdentifier": "{{agentPid}}",
+    "lastName": "{{agentLastName}}"
+  }
+}
+
+docs {
+  AND the facilitator registers the person as agent by person number and last
+  name, so the rightholder package can be delegated to the agent.
+
+  Expects 200 with the created assignment.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("agentPid", td.REGN_Organisasjon.REGN_Agent.personidentity);
+  bru.setVar("agentLastName", td.REGN_Organisasjon.REGN_Agent.etternavn);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  test("AND the agent is registered, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+}

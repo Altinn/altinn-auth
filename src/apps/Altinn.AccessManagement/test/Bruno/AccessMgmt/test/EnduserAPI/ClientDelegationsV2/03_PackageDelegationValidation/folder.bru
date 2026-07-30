@@ -1,0 +1,20 @@
+meta {
+  name: 03_PackageDelegationValidation
+  seq: 3
+}
+
+docs {
+  Scenario: Package delegation rejects invalid input
+
+    Given the facilitator has no agent registration for the agent person
+    And the agent person is registered as agent
+    When a package is delegated under an unknown role the request fails
+    When an unknown package is delegated the request fails
+    When a package that is not delegable is delegated the request fails
+    When a package the client role does not carry is delegated the request fails
+    When the client uuid is unknown the request fails
+    When the agent uuid is unknown the request fails
+    When the agent person is not registered the request fails
+    When the value list is empty nothing is delegated
+    And the agent registration is cleaned up
+}

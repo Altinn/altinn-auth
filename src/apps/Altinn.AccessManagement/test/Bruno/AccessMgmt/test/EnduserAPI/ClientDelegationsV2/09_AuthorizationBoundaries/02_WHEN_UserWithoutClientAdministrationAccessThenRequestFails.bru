@@ -1,0 +1,36 @@
+meta {
+  name: 02_WHEN_UserWithoutClientAdministrationAccessThenRequestFails
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/clients?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+docs {
+  WHEN a user without client administration access for the facilitator party
+  requests the client list, the request fails with 403. The private person has
+  no role at the facilitator, so the PDP denies client administration.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+
+  await loginAs(td.privatPerson);
+}
+
+tests {
+  test("WHEN the user has no client administration access, the request returns 403", function() {
+    expect(res.status).to.equal(403);
+  });
+}

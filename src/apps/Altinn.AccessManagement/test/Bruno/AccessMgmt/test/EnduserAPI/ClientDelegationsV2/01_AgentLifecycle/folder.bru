@@ -1,0 +1,15 @@
+meta {
+  name: 01_AgentLifecycle
+  seq: 1
+}
+
+docs {
+  Scenario: The facilitator registers and removes an agent
+
+    Given the facilitator has no agent registration for the agent person
+    When the facilitator registers the person as agent by person number
+    Then the agent appears in the facilitator's agent list
+    And registering the same agent again returns the same assignment
+    When the facilitator removes the agent
+    Then the agent list no longer contains the agent
+}

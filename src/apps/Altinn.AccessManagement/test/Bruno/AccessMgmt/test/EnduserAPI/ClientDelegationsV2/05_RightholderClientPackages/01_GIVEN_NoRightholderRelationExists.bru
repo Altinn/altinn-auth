@@ -1,0 +1,42 @@
+meta {
+  name: 01_GIVEN_NoRightholderRelationExists
+  type: http
+  seq: 1
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{clientB}}&from={{clientB}}&to={{party}}&cascade=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{clientB}}
+  from: {{clientB}}
+  to: {{party}}
+  cascade: true
+}
+
+docs {
+  GIVEN no rightholder relation exists between the client and the facilitator.
+
+  Reset step: removes any leftover rightholder connection from earlier runs,
+  including package grants hanging on it. The delete is idempotent and returns
+  204 either way.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("clientB", td.REGN_Organisasjon.REGN_Org_Clients.client_B.partyUuid);
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+
+  await loginAs(td.REGN_Organisasjon.REGN_Org_Clients.client_B.dagligleder);
+}
+
+tests {
+  test("GIVEN no rightholder relation exists, the reset delete returns 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

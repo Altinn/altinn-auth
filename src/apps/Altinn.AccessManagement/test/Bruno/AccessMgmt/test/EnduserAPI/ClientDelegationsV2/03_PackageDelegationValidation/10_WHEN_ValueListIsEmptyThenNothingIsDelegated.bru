@@ -1,0 +1,52 @@
+meta {
+  name: 10_WHEN_ValueListIsEmptyThenNothingIsDelegated
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents/accesspackages?party={{party}}&client={{client}}&agent={{agent}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  client: {{client}}
+  agent: {{agent}}
+}
+
+body:json {
+  {
+    "values": []
+  }
+}
+
+docs {
+  WHEN the value list in the body is empty.
+
+  Expects 200 with an empty result array: nothing is delegated and nothing fails.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("client", td.REGN_Organisasjon.REGN_Org_Clients.client_A.partyUuid);
+  bru.setVar("agent", td.REGN_Organisasjon.REGN_Agent.userUuid);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  test("WHEN the value list is empty, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN nothing is delegated and the result is an empty array", function() {
+    const body = res.getBody();
+    expect(Array.isArray(body)).to.be.true;
+    expect(body.length).to.equal(0);
+  });
+}

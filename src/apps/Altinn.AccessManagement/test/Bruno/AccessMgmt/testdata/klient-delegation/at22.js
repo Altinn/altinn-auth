@@ -74,4 +74,22 @@
       partyId: 51177430,
       partyUuid: "7b7bc643-821f-4cb2-b874-9dc6eb58f5c5",
     },
+    // Fixtures for the v2 client delegation scenarios in test/EnduserAPI/ClientDelegationsV2.
+    clientDelegationV2: {
+      // Single resource whose policy lets a dagligleder delegate it onwards.
+      singleResource: "tilgangspakke_delegering_ressurs",
+      packages: {
+        regnskapsforerLonn: "urn:altinn:accesspackage:regnskapsforer-lonn",
+        regnskapsforerMedSignering: "urn:altinn:accesspackage:regnskapsforer-med-signeringsrettighet",
+        ansvarligRevisor: "urn:altinn:accesspackage:ansvarlig-revisor",
+        klientadministrator: "urn:altinn:accesspackage:klientadministrator",
+        skattegrunnlag: "urn:altinn:accesspackage:skattegrunnlag",
+      },
+      unknown: {
+        partyUuid: "11111111-1111-1111-1111-111111111111",
+        packageUrn: "urn:altinn:accesspackage:bruno-finnes-ikke",
+        resourceRefId: "bruno-finnes-ikke",
+        roleCode: "bruno-finnes-ikke",
+      },
+    },
   };

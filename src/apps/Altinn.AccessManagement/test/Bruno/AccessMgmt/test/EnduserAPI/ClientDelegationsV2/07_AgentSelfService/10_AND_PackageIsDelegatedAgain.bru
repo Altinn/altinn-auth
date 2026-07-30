@@ -1,0 +1,59 @@
+meta {
+  name: 10_AND_PackageIsDelegatedAgain
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents/accesspackages?party={{party}}&client={{client}}&agent={{agent}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  client: {{client}}
+  agent: {{agent}}
+}
+
+body:json {
+  {
+    "values": [
+      {
+        "role": "regnskapsforer",
+        "packages": ["{{package}}"]
+      }
+    ]
+  }
+}
+
+docs {
+  AND the facilitator delegates the package to the agent again, so the client
+  removal steps have a delegation to cascade over.
+
+  Expects 200 where every returned row reports changed true.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("client", td.REGN_Organisasjon.REGN_Org_Clients.client_A.partyUuid);
+  bru.setVar("agent", td.REGN_Organisasjon.REGN_Agent.userUuid);
+  bru.setVar("package", td.clientDelegationV2.packages.regnskapsforerLonn);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  test("AND re-delegating the package returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND every returned row reports a change", function() {
+    const body = res.getBody();
+    expect(body).to.be.an("array").that.is.not.empty;
+    expect(body.every(row => row.changed === true)).to.be.true;
+  });
+}

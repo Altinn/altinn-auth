@@ -1,0 +1,20 @@
+meta {
+  name: 02_DelegateClientPackagesToAgent
+  seq: 2
+}
+
+docs {
+  Scenario: The facilitator delegates CCR client packages to an agent
+
+    Given the facilitator has no agent registration for the agent person
+    And the agent person is registered as agent
+    And the client list shows the CCR client with its delegable packages
+    When both accountant packages are delegated to the agent for the client
+    Then the delegated packages are listed for the agent
+    And the delegated packages are listed for the client
+    And delegating the same packages again reports no change
+    When removing the agent without cascade the request fails
+    When the package delegations are removed
+    Then the agent package list is empty
+    And the agent registration is cleaned up
+}

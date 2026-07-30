@@ -1,0 +1,64 @@
+meta {
+  name: 02_WHEN_AgentIsRegisteredByPersonNumber
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents?party={{party}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+body:json {
+  {
+    "personIdentifier": "{{agentPid}}",
+    "lastName": "{{agentLastName}}"
+  }
+}
+
+docs {
+  WHEN the facilitator registers the person as agent by person number and last name.
+
+  Expects 200 with the created assignment: fromId is the facilitator, toId is the
+  agent person, roleId is the agent role. The assignment id is captured for the
+  idempotency step later in the scenario.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("agentPid", td.REGN_Organisasjon.REGN_Agent.personidentity);
+  bru.setVar("agentLastName", td.REGN_Organisasjon.REGN_Agent.etternavn);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+script:post-response {
+  const body = res.getBody();
+  if (body && body.id) {
+    bru.setVar("cdv2_agentAssignmentId", body.id);
+  }
+}
+
+tests {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+
+  test("WHEN the agent is registered, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the assignment connects the facilitator to the agent with the agent role", function() {
+    const body = res.getBody();
+    expect(body.fromId.toLowerCase()).to.equal(td.REGN_Organisasjon.partyUuid.toLowerCase());
+    expect(body.toId.toLowerCase()).to.equal(td.REGN_Organisasjon.REGN_Agent.userUuid.toLowerCase());
+    expect(body.roleId.toLowerCase()).to.equal("ff4c33f5-03f7-4445-85ed-1e60b8aafb30");
+    expect(body.id).to.be.a("string").that.is.not.empty;
+  });
+}

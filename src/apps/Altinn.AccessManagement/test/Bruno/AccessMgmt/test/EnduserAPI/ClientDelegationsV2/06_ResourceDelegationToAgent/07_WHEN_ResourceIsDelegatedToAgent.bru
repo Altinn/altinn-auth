@@ -1,0 +1,68 @@
+meta {
+  name: 07_WHEN_ResourceIsDelegatedToAgent
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents/resources?party={{party}}&client={{clientB}}&agent={{agent}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  client: {{clientB}}
+  agent: {{agent}}
+}
+
+body:json {
+  {
+    "values": [
+      {
+        "role": "rettighetshaver",
+        "resources": ["{{resource}}"]
+      }
+    ]
+  }
+}
+
+docs {
+  WHEN the resource is delegated to the agent for the client.
+
+  Expects 200 with one delegation row: changed is true, the roleId is the
+  rettighetshaver role, fromId is the client, toId is the agent and viaId is
+  the facilitator.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("clientB", td.REGN_Organisasjon.REGN_Org_Clients.client_B.partyUuid);
+  bru.setVar("agent", td.REGN_Organisasjon.REGN_Agent.userUuid);
+  bru.setVar("resource", td.clientDelegationV2.singleResource);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+
+  test("WHEN the resource is delegated to the agent, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the response contains one changed delegation row for the rettighetshaver role", function() {
+    const body = res.getBody();
+    expect(body).to.be.an("array").with.lengthOf(1);
+    const row = body[0];
+    expect(row.changed).to.be.true;
+    expect(row.roleId.toLowerCase()).to.equal("42cae370-2dc1-4fdc-9c67-c2f4b0f0f829");
+    expect(row.fromId.toLowerCase()).to.equal(td.REGN_Organisasjon.REGN_Org_Clients.client_B.partyUuid.toLowerCase());
+    expect(row.toId.toLowerCase()).to.equal(td.REGN_Organisasjon.REGN_Agent.userUuid.toLowerCase());
+    expect(row.viaId.toLowerCase()).to.equal(td.REGN_Organisasjon.partyUuid.toLowerCase());
+    expect(row.resourceId).to.be.a("string").that.is.not.empty;
+  });
+}

@@ -1,0 +1,40 @@
+meta {
+  name: 09_WHEN_ClientIsRemovedFromAgentWithCascade
+  type: http
+  seq: 9
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents/clients?party={{party}}&client={{clientB}}&agent={{agent}}&cascade=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  client: {{clientB}}
+  agent: {{agent}}
+  cascade: true
+}
+
+docs {
+  WHEN the client is removed from the agent with cascade, so the package
+  delegation is removed together with the client relation.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("clientB", td.REGN_Organisasjon.REGN_Org_Clients.client_B.partyUuid);
+  bru.setVar("agent", td.REGN_Organisasjon.REGN_Agent.userUuid);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  test("WHEN the client is removed from the agent with cascade, the request returns 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

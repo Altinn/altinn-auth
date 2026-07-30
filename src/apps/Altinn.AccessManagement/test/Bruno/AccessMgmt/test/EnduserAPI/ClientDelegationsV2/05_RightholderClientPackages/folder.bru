@@ -1,0 +1,19 @@
+meta {
+  name: 05_RightholderClientPackages
+  seq: 5
+}
+
+docs {
+  Scenario: A rightholder client's package travels through the facilitator to an agent
+
+    Given no rightholder relation exists between the client and the facilitator
+    And the client adds the facilitator as rightholder
+    And the client delegates a package to the facilitator
+    And the facilitator has a registered agent
+    When the rightholder package is delegated to the agent for the client
+    Then the agent package list shows the rightholder client
+    When removing the client from the agent without cascade the request fails
+    When the client is removed from the agent with cascade
+    Then the agent package list is empty
+    And the package grant, the rightholder relation and the agent registration are cleaned up
+}

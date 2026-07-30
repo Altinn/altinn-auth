@@ -1,0 +1,55 @@
+meta {
+  name: 13_WHEN_AgentRemovesOwnResourceDelegation
+  type: http
+  seq: 13
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/my/clients/resources/delete?provider={{party}}&client={{clientB}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  provider: {{party}}
+  client: {{clientB}}
+}
+
+body:json {
+  {
+    "values": [
+      {
+        "role": "rettighetshaver",
+        "resources": ["{{resource}}"]
+      }
+    ]
+  }
+}
+
+docs {
+  WHEN the agent removes its own resource delegation through the my clients
+  endpoint. Expects 200 with every returned row reporting changed true.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs, scopes } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("clientB", td.REGN_Organisasjon.REGN_Org_Clients.client_B.partyUuid);
+  bru.setVar("resource", td.clientDelegationV2.singleResource);
+
+  await loginAs(td.REGN_Organisasjon.REGN_Agent, scopes.myclientsWrite);
+}
+
+tests {
+  test("WHEN the agent removes its own resource delegation, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN every returned row reports a change", function() {
+    const body = res.getBody();
+    expect(body).to.be.an("array").that.is.not.empty;
+    expect(body.every(row => row.changed === true)).to.be.true;
+  });
+}

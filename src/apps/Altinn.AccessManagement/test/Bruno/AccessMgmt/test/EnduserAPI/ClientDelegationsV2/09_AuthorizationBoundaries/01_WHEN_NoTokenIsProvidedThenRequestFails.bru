@@ -1,0 +1,32 @@
+meta {
+  name: 01_WHEN_NoTokenIsProvidedThenRequestFails
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/clients?party={{party}}
+  body: none
+  auth: none
+}
+
+params:query {
+  party: {{party}}
+}
+
+docs {
+  WHEN no token is provided, the client list request fails with 401. The request
+  is sent without a bearer token on purpose.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+}
+
+tests {
+  test("WHEN no token is provided, the request returns 401", function() {
+    expect(res.status).to.equal(401);
+  });
+}

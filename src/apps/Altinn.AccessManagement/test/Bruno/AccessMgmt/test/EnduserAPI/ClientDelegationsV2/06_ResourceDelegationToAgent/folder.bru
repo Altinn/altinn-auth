@@ -1,0 +1,24 @@
+meta {
+  name: 06_ResourceDelegationToAgent
+  seq: 6
+}
+
+docs {
+  Scenario: A single resource travels from the client through the facilitator to an agent
+
+    Given no rightholder relation exists between the client and the facilitator
+    And the client adds the facilitator as rightholder
+    And the client checks which rights on the single resource it can delegate
+    And the client grants the facilitator the single resource
+    And the facilitator has a registered agent
+    When the resource is delegated to the agent for the client
+    Then the agent resource list shows the client
+    And the client resource list shows the agent
+    And the agent sees the resource on the my clients endpoint
+    When an unknown resource is delegated the request fails
+    When a resource the facilitator does not hold for a client is delegated the request fails
+    When the agent removes its own resource delegation
+    Then the agent resource list is empty
+    And removing the resource again reports no change
+    And the resource grant, the rightholder relation and the agent registration are cleaned up
+}

@@ -1,0 +1,39 @@
+meta {
+  name: 12_CLEANUP_RightholderRelationIsRemoved
+  type: http
+  seq: 12
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{clientB}}&from={{clientB}}&to={{party}}&cascade=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{clientB}}
+  from: {{clientB}}
+  to: {{party}}
+  cascade: true
+}
+
+docs {
+  CLEANUP the rightholder relation between the client and the facilitator is
+  removed, including anything still hanging on it.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("clientB", td.REGN_Organisasjon.REGN_Org_Clients.client_B.partyUuid);
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+
+  await loginAs(td.REGN_Organisasjon.REGN_Org_Clients.client_B.dagligleder);
+}
+
+tests {
+  test("CLEANUP the rightholder relation is removed, the delete returns 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

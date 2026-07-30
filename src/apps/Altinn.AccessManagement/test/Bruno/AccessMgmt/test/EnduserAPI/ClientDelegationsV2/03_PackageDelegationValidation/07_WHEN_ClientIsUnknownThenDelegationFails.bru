@@ -1,0 +1,64 @@
+meta {
+  name: 07_WHEN_ClientIsUnknownThenDelegationFails
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents/accesspackages?party={{party}}&client={{client}}&agent={{agent}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  client: {{client}}
+  agent: {{agent}}
+}
+
+body:json {
+  {
+    "values": [
+      {
+        "role": "regnskapsforer",
+        "packages": [
+          "{{packageUrn}}"
+        ]
+      }
+    ]
+  }
+}
+
+docs {
+  WHEN the client query parameter is a uuid no party has, while the body is a
+  valid regnskapsforer package delegation.
+
+  Expects 400 with error code STD-00000 and validation error AM.VLD-00006
+  whose paths point at the client parameter.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("client", td.clientDelegationV2.unknown.partyUuid);
+  bru.setVar("agent", td.REGN_Organisasjon.REGN_Agent.userUuid);
+  bru.setVar("packageUrn", td.clientDelegationV2.packages.regnskapsforerLonn);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  test("WHEN the client uuid is unknown, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN validation error AM.VLD-00006 points at the client", function() {
+    const body = res.getBody();
+    expect(body.code).to.equal("STD-00000");
+    const err = body.validationErrors.find(e => e.code === "AM.VLD-00006");
+    expect(err, "expected validation error AM.VLD-00006").to.not.be.undefined;
+    expect(JSON.stringify(err.paths)).to.include("client");
+  });
+}

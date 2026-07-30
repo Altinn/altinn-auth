@@ -1,0 +1,44 @@
+meta {
+  name: 13_THEN_MyClientsAreEmptyForTheProvider
+  type: http
+  seq: 13
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/my/clients?provider={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  provider: {{party}}
+}
+
+docs {
+  THEN the my clients list is empty for the provider after the cascading client
+  removal.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs, scopes } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+
+  await loginAs(td.REGN_Organisasjon.REGN_Agent, scopes.myclientsRead);
+}
+
+tests {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+
+  test("THEN the provider filtered my clients request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the removed client is not in the my clients list", function() {
+    const clientUuid = td.REGN_Organisasjon.REGN_Org_Clients.client_A.partyUuid.toLowerCase();
+    const clients = res.getBody().data.flatMap(item => item.clients);
+    const entry = clients.find(item => item.client.id.toLowerCase() === clientUuid);
+    expect(entry, "expected the client to be gone from the my clients list").to.be.undefined;
+  });
+}

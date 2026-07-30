@@ -1,0 +1,23 @@
+meta {
+  name: 07_AgentSelfService
+  seq: 7
+}
+
+docs {
+  Scenario: The agent manages its own client accesses through the my endpoints
+
+    Given the facilitator has a registered agent with a delegated client package
+    When the agent lists its providers
+    And the agent lists its clients
+    And filtering on the provider returns the clients
+    And filtering on an unknown provider returns nothing
+    When the agent removes its own package delegation
+    Then the my clients list no longer shows the client
+    And the package is delegated again
+    When the agent removes the client without cascade the request fails
+    When the agent removes the client with cascade
+    Then the my clients list is empty for the provider
+    When the agent leaves the provider
+    Then the my provider list is empty
+    And the facilitator agent list is empty
+}

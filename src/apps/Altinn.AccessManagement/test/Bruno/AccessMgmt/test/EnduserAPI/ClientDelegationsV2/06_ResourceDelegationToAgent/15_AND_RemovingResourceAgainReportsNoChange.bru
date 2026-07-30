@@ -1,0 +1,56 @@
+meta {
+  name: 15_AND_RemovingResourceAgainReportsNoChange
+  type: http
+  seq: 15
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents/resources/delete?party={{party}}&client={{clientB}}&agent={{agent}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  client: {{clientB}}
+  agent: {{agent}}
+}
+
+body:json {
+  {
+    "values": [
+      {
+        "role": "rettighetshaver",
+        "resources": ["{{resource}}"]
+      }
+    ]
+  }
+}
+
+docs {
+  AND removing the resource again reports no change: the delegation is already
+  gone, so the delete is a no-op. Expects 200 with every returned row reporting
+  changed false.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("clientB", td.REGN_Organisasjon.REGN_Org_Clients.client_B.partyUuid);
+  bru.setVar("agent", td.REGN_Organisasjon.REGN_Agent.userUuid);
+  bru.setVar("resource", td.clientDelegationV2.singleResource);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  test("AND removing the resource again returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND no returned row reports a change", function() {
+    expect(res.getBody().every(row => row.changed === false)).to.be.true;
+  });
+}

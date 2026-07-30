@@ -1,0 +1,42 @@
+meta {
+  name: 02_AND_ClientAddsFacilitatorAsRightholder
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{clientB}}&to={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{clientB}}
+  to: {{party}}
+}
+
+docs {
+  AND the client adds the facilitator as rightholder through the v1 connections API.
+
+  Expects 200 with the created assignment carrying the rettighetshaver role.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("clientB", td.REGN_Organisasjon.REGN_Org_Clients.client_B.partyUuid);
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+
+  await loginAs(td.REGN_Organisasjon.REGN_Org_Clients.client_B.dagligleder);
+}
+
+tests {
+  test("AND the client adds the facilitator as rightholder, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the created assignment carries the rettighetshaver role", function() {
+    expect(res.getBody().roleId.toLowerCase()).to.equal("42cae370-2dc1-4fdc-9c67-c2f4b0f0f829");
+  });
+}

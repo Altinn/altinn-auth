@@ -1,0 +1,12 @@
+meta {
+  name: 04_AgentRegistrationValidation
+  seq: 4
+}
+
+docs {
+  Scenario: Agent registration rejects invalid input
+
+    When an organisation is registered as agent the request fails
+    When the agent uuid is unknown the request fails
+    When neither agent nor person details are given the request fails
+}

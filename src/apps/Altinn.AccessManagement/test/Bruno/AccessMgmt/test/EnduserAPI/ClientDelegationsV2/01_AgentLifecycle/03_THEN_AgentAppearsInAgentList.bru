@@ -1,0 +1,46 @@
+meta {
+  name: 03_THEN_AgentAppearsInAgentList
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+docs {
+  THEN the agent appears in the facilitator's agent list with the agent role
+  and no delegations yet.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+
+  test("THEN the agent list request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the agent appears in the agent list with the agent role", function() {
+    const agentUuid = td.REGN_Organisasjon.REGN_Agent.userUuid.toLowerCase();
+    const entry = res.getBody().data.find(item => item.agent.id.toLowerCase() === agentUuid);
+    expect(entry, "expected the registered agent in the agent list").to.not.be.undefined;
+    expect(entry.agent.type).to.equal("Person");
+    expect(entry.agent.personIdentifier).to.equal(td.REGN_Organisasjon.REGN_Agent.personidentity);
+    expect(entry.access.some(a => a.role.code === "agent")).to.be.true;
+  });
+}

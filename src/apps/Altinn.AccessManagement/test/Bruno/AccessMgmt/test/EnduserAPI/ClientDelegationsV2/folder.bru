@@ -1,0 +1,36 @@
+meta {
+  name: ClientDelegationsV2
+  seq: 3
+}
+
+docs {
+  # Client delegation v2 scenarios
+
+  BDD scenarios for the enduser client delegation API at
+  `/accessmanagement/api/v2/enduser/clientdelegations`.
+
+  Each subfolder is one scenario. The files inside are the scenario steps, named
+  `NN_GIVEN|WHEN|THEN|AND|CLEANUP_...` and ordered by `seq`. A scenario always starts
+  from a known state (the GIVEN steps reset leftovers from earlier runs) and removes
+  everything it created, so the whole folder can run repeatedly against a shared
+  environment. Scenarios are independent of each other and can run standalone.
+
+  ## Personas and fixtures
+
+  Seed data comes from `testdata/klient-delegation/<env>.js`:
+
+  - Facilitator: REGN_Organisasjon (accounting firm), acting through its dagligleder.
+  - CCR client: client_A, tied to the facilitator through the regnskapsforer role.
+  - Rightholder client: client_B, which grants the facilitator packages and single
+    resources through the v1 connections API in the GIVEN steps.
+  - Agent: REGN_Agent, the person the facilitator delegates client access to. The
+    my/* scenarios authenticate as this person with the dedicated myclients scopes.
+
+  The system user scenario uses the canonical system user fixtures from
+  `testdata/systemuser-clientdelegation/<env>.js`.
+
+  ## Environments
+
+  Runs against AT22. TT02 does not route `/accessmanagement/api/v2/` yet, so the
+  suite cannot pass there until the v2 routes are exposed through the gateway.
+}

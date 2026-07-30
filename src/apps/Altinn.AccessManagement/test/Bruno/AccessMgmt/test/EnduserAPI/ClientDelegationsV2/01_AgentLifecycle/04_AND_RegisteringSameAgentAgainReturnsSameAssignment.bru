@@ -1,0 +1,41 @@
+meta {
+  name: 04_AND_RegisteringSameAgentAgainReturnsSameAssignment
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents?party={{party}}&agent={{agent}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  agent: {{agent}}
+}
+
+docs {
+  AND registering the same agent again, this time by party uuid, returns the
+  existing assignment instead of creating a duplicate.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("agent", td.REGN_Organisasjon.REGN_Agent.userUuid);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  test("AND re-registering the agent returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the assignment id is unchanged", function() {
+    expect(res.getBody().id).to.equal(bru.getVar("cdv2_agentAssignmentId"));
+  });
+}

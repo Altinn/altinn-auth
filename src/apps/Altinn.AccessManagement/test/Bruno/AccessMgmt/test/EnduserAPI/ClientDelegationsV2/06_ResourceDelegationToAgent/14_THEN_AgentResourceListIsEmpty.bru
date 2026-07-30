@@ -1,0 +1,45 @@
+meta {
+  name: 14_THEN_AgentResourceListIsEmpty
+  type: http
+  seq: 14
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents/resources?party={{party}}&agent={{agent}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  agent: {{agent}}
+}
+
+docs {
+  THEN the agent resource list is empty: the client no longer appears after the
+  agent removed the delegation.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("agent", td.REGN_Organisasjon.REGN_Agent.userUuid);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+
+  test("THEN the agent resource list request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the client is no longer in the agent resource list", function() {
+    const clientUuid = td.REGN_Organisasjon.REGN_Org_Clients.client_B.partyUuid.toLowerCase();
+    const entry = res.getBody().data.find(item => item.client.id.toLowerCase() === clientUuid);
+    expect(entry, "expected the client to be gone from the agent resource list").to.be.undefined;
+  });
+}
