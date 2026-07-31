@@ -85,6 +85,28 @@
         klientadministrator: "urn:altinn:accesspackage:klientadministrator",
         skattegrunnlag: "urn:altinn:accesspackage:skattegrunnlag",
         forretningsforerEiendom: "urn:altinn:accesspackage:forretningsforer-eiendom",
+        tjenesterNuf: "urn:altinn:accesspackage:tjenester-nuf",
+        fforTilgangsstyrerNufNotDelegable: "urn:altinn:accesspackage:ffor-tilgangsstyrer-nuf",
+      },
+      // Facilitator with forretningsforer relations to NUF clients.
+      forretningsforerNuf: {
+        facilitator: {
+          name: "OPPBLÅST UNG MINK ANS",
+          orgno: "314240200",
+          partyUuid: "41889f4c-48ce-44d9-ac23-aee0f9b1826b",
+          dagligleder: {
+            name: "ANSTENDIG ARTERIE",
+            pid: "15847099396",
+            userId: 20883145,
+            partyId: 50958336,
+            partyUuid: "b82992c6-9f7f-4445-bbe4-33a15873417a",
+          },
+        },
+        nufClient: {
+          name: "SAKTE FRISK STRUTS AB",
+          orgno: "311762966",
+          partyUuid: "56c38c7f-dbfb-4042-8058-bc424610311d",
+        },
       },
       // Forretningsforer client of the systemuser-clientdelegation facilitator whose
       // unit type (BBL) is outside the ESEK/BRL scope of forretningsforer-eiendom.

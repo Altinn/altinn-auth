@@ -1,0 +1,59 @@
+meta {
+  name: 05_WHEN_NonDelegablePackageIsDelegatedThenRequestFails
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents/accesspackages?party={{party}}&client={{client}}&agent={{agent}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  client: {{client}}
+  agent: {{agent}}
+}
+
+body:json {
+  {
+    "values": [
+      {
+        "role": "forretningsforer",
+        "packages": ["{{package}}"]
+      }
+    ]
+  }
+}
+
+docs {
+  WHEN the NUF access management package is delegated, the request fails.
+
+  The package is scoped to NUF units through the forretningsforer role but is
+  not delegable onwards. Expects 400 with validation error AM.VLD-00033.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.clientDelegationV2.forretningsforerNuf.facilitator.partyUuid);
+  bru.setVar("client", td.clientDelegationV2.forretningsforerNuf.nufClient.partyUuid);
+  bru.setVar("agent", td.REGN_Organisasjon.REGN_Agent.userUuid);
+  bru.setVar("package", td.clientDelegationV2.packages.fforTilgangsstyrerNufNotDelegable);
+
+  await loginAs(td.clientDelegationV2.forretningsforerNuf.facilitator.dagligleder);
+}
+
+tests {
+  test("WHEN the non delegable NUF package is delegated, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN the error body reports validation error AM.VLD-00033", function() {
+    const body = res.getBody();
+    expect(body.code).to.equal("STD-00000");
+    expect(body.validationErrors.some(e => e.code === "AM.VLD-00033")).to.be.true;
+  });
+}

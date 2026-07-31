@@ -1,0 +1,20 @@
+meta {
+  name: 12_ForretningsforerNufPackages
+  seq: 12
+}
+
+docs {
+  Scenario: A NUF client carries the NUF scoped packages through forretningsforer
+
+    Given the facilitator has no agent registration for the agent person
+    And the agent person is registered as agent
+    Then the NUF client carries the NUF services package and not the eiendom package
+    When the NUF services package is delegated to the agent for the NUF client
+    When the non delegable NUF package is delegated the request fails
+    When the eiendom package is delegated for the NUF client the request fails
+    Then the agent package list shows the NUF client
+    And the delegation and the agent registration are cleaned up
+
+  The facilitator and its NUF clients come from register test data referenced in
+  testdata/klient-delegation under clientDelegationV2.forretningsforerNuf.
+}

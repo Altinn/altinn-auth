@@ -1,0 +1,59 @@
+meta {
+  name: 06_WHEN_EiendomIsDelegatedForNufClientThenRequestFails
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents/accesspackages?party={{party}}&client={{client}}&agent={{agent}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  client: {{client}}
+  agent: {{agent}}
+}
+
+body:json {
+  {
+    "values": [
+      {
+        "role": "forretningsforer",
+        "packages": ["{{package}}"]
+      }
+    ]
+  }
+}
+
+docs {
+  WHEN the eiendom package is delegated for the NUF client, the request fails.
+
+  The eiendom package is scoped to the ESEK and BRL unit types, so a NUF client
+  cannot receive it. Expects 400 with validation error AM.VLD-00026.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.clientDelegationV2.forretningsforerNuf.facilitator.partyUuid);
+  bru.setVar("client", td.clientDelegationV2.forretningsforerNuf.nufClient.partyUuid);
+  bru.setVar("agent", td.REGN_Organisasjon.REGN_Agent.userUuid);
+  bru.setVar("package", td.clientDelegationV2.packages.forretningsforerEiendom);
+
+  await loginAs(td.clientDelegationV2.forretningsforerNuf.facilitator.dagligleder);
+}
+
+tests {
+  test("WHEN the eiendom package is delegated for the NUF client, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN the error body reports validation error AM.VLD-00026", function() {
+    const body = res.getBody();
+    expect(body.code).to.equal("STD-00000");
+    expect(body.validationErrors.some(e => e.code === "AM.VLD-00026")).to.be.true;
+  });
+}

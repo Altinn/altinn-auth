@@ -1,0 +1,53 @@
+meta {
+  name: 08_CLEANUP_NufDelegationIsRemoved
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents/accesspackages/delete?party={{party}}&client={{client}}&agent={{agent}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  client: {{client}}
+  agent: {{agent}}
+}
+
+body:json {
+  {
+    "values": [
+      {
+        "role": "forretningsforer",
+        "packages": ["{{package}}"]
+      }
+    ]
+  }
+}
+
+docs {
+  CLEANUP: the NUF services delegation is removed at package level. The package
+  has a single RolePackage row under forretningsforer, so the removal is not
+  affected by the variant row mismatch tracked in the delete path.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.clientDelegationV2.forretningsforerNuf.facilitator.partyUuid);
+  bru.setVar("client", td.clientDelegationV2.forretningsforerNuf.nufClient.partyUuid);
+  bru.setVar("agent", td.REGN_Organisasjon.REGN_Agent.userUuid);
+  bru.setVar("package", td.clientDelegationV2.packages.tjenesterNuf);
+
+  await loginAs(td.clientDelegationV2.forretningsforerNuf.facilitator.dagligleder);
+}
+
+tests {
+  test("CLEANUP the NUF delegation delete returns 200 with a change", function() {
+    expect(res.status).to.equal(200);
+    expect(res.getBody().every(row => row.changed === true)).to.be.true;
+  });
+}
