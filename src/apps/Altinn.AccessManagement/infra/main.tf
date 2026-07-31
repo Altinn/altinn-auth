@@ -529,6 +529,12 @@ module "appsettings" {
       label       = "${lower(var.environment)}-access-management"
       value       = false
     },
+    {
+      name        = "AccessManagement.ConnectionQuery.IncludeClientDelegationResources"
+      description = "Specifies if client-delegated resources should be included in ConnectionQuery and AuthorizedParties response."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
   ]
   providers = {
     azurerm.hub = azurerm.hub

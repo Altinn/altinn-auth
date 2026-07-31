@@ -148,4 +148,69 @@ internal class ConnectionResourceLoader(AppDbContext db)
 
         return allKeys;
     }
+
+    /// <summary>
+    /// Loads delegation resources for connections with a DelegationId and merges them into the corresponding records.
+    /// </summary>
+    public async Task<List<ConnectionQueryExtendedRecord>> LoadDelegationResourcesByKeyAsync(List<ConnectionQueryExtendedRecord> allKeys, HashSet<Guid> delegationIds, ConnectionQueryFilter filter, CancellationToken ct)
+    {
+        var resourceSet = filter.ResourceIds?.Count > 0 ? new HashSet<Guid>(filter.ResourceIds) : null;
+
+        var delegationResources = await db.DelegationResources
+            .Where(dr => delegationIds.Contains(dr.DelegationId))
+            .Select(dr => new { dr.DelegationId, dr.Id, dr.ResourceId })
+            .WhereIf(resourceSet is not null, x => resourceSet!.Contains(x.ResourceId))
+            .Join(db.Resources, x => x.ResourceId, r => r.Id, (x, r) => new
+            {
+                x.DelegationId,
+                r.Id,
+                r.Name,
+                r.RefId
+            })
+            .AsNoTracking()
+            .ToListAsync(ct);
+
+        SortedList<Guid, List<ConnectionQueryResource>> resourcesByDelegation = [];
+        foreach (var dr in delegationResources)
+        {
+            if (resourcesByDelegation.TryGetValue(dr.DelegationId, out var list))
+            {
+                list.Add(new ConnectionQueryResource()
+                {
+                    Id = dr.Id,
+                    Name = dr.Name,
+                    RefId = dr.RefId
+                });
+            }
+            else
+            {
+                resourcesByDelegation[dr.DelegationId] =
+                [
+                    new ConnectionQueryResource()
+                    {
+                        Id = dr.Id,
+                        Name = dr.Name,
+                        RefId = dr.RefId
+                    }
+                ];
+            }
+        }
+
+        foreach (var key in allKeys)
+        {
+            if (key.DelegationId.HasValue && resourcesByDelegation.TryGetValue((Guid)key.DelegationId!, out var list))
+            {
+                if (key.Resources is null)
+                {
+                    key.Resources = list;
+                }
+                else
+                {
+                    key.Resources.AddRange(list);
+                }
+            }
+        }
+
+        return allKeys;
+    }
 }

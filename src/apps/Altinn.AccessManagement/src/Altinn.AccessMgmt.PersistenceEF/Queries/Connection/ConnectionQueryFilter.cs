@@ -69,6 +69,11 @@ public sealed class ConnectionQueryFilter
     public bool IncludeResources { get; init; } = false;
 
     /// <summary>
+    /// Gets or sets a value indicating whether to include delegation resources from client delegations.
+    /// </summary>
+    public bool IncludeDelegationResources { get; init; } = false;
+
+    /// <summary>
     /// Gets or sets a value indicating whether to include instances.
     /// </summary>
     public bool IncludeInstances { get; init; } = false;

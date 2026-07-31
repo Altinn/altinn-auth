@@ -8,6 +8,7 @@ using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Microsoft.EntityFrameworkCore;
 using DelegationPackage = Altinn.AccessMgmt.PersistenceEF.Models.DelegationPackage;
+using DelegationResource = Altinn.AccessMgmt.PersistenceEF.Models.DelegationResource;
 
 namespace Altinn.AccessManagement.Tests.Integration.Services;
 
@@ -51,6 +52,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
         db.DelegationPackages.AddRange(TestDataSet.DelegationPackages);
         db.Set<AssignmentResource>().AddRange(TestDataSet.AssignmentResources);
         db.Set<AssignmentInstance>().AddRange(TestDataSet.AssignmentInstances);
+        db.Set<DelegationResource>().AddRange(TestDataSet.DelegationResources);
 
         await db.SaveChangesAsync(new Altinn.AccessMgmt.PersistenceEF.Extensions.AuditValues(SystemEntityConstants.StaticDataIngest, SystemEntityConstants.StaticDataIngest));
     }
@@ -756,6 +758,82 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
 
     #endregion
 
+    #region IncludeDelegationResources
+
+    [Fact]
+    public async Task GetConnectionsFromOthers_IncludeDelegationResources_ReturnsDelegationResources()
+    {
+        var personId = TestDataSet.GetEntity("Gunnar").Id;
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { personId },
+            IncludeKeyRole = false,
+            IncludeDelegation = true,
+            IncludeResources = true,
+            IncludeDelegationResources = true,
+            EnrichEntities = false,
+        };
+
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        // Gunnar has a delegation from Baker Johnsen via Regnskaperne with a DelegationResource
+        var delegationConnections = dbResult.Where(r => r.DelegationId.HasValue).ToList();
+        Assert.NotEmpty(delegationConnections);
+
+        var resources = delegationConnections.SelectMany(c => c.Resources ?? []).ToList();
+        Assert.Contains(resources, r => r.Id == TestDataSet.DelegationTestResourceId);
+    }
+
+    [Fact]
+    public async Task GetConnectionsFromOthers_IncludeDelegationFalse_DoesNotReturnDelegationConnections()
+    {
+        var personId = TestDataSet.GetEntity("Gunnar").Id;
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { personId },
+            IncludeKeyRole = false,
+            IncludeDelegation = false,
+            IncludeResources = true,
+            IncludeDelegationResources = true,
+            EnrichEntities = false,
+        };
+
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        // With IncludeDelegation = false, no delegation connections should appear
+        var delegationConnections = dbResult.Where(r => r.DelegationId.HasValue).ToList();
+        Assert.Empty(delegationConnections);
+    }
+
+    [Fact]
+    public async Task GetConnectionsFromOthers_IncludeDelegationResourcesFalse_DoesNotReturnDelegationResources()
+    {
+        var personId = TestDataSet.GetEntity("Gunnar").Id;
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { personId },
+            IncludeKeyRole = false,
+            IncludeDelegation = true,
+            IncludeResources = true,
+            IncludeDelegationResources = false,
+            EnrichEntities = false,
+        };
+
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        // Delegation connections exist but should not have resources loaded
+        var delegationConnections = dbResult.Where(r => r.DelegationId.HasValue).ToList();
+        Assert.NotEmpty(delegationConnections);
+
+        var resources = delegationConnections.SelectMany(c => c.Resources ?? []).ToList();
+        Assert.Empty(resources);
+    }
+
+    #endregion
+
     #region IncludeInstances
 
     [Fact]
@@ -1282,6 +1360,7 @@ internal static class TestDataSet
 
     internal static readonly Guid TestResourceTypeId = Guid.Parse("0195efb8-7c80-7a01-8001-000000000050");
     internal static readonly Guid TestResourceId = Guid.Parse("0195efb8-7c80-7a01-8001-000000000051");
+    internal static readonly Guid DelegationTestResourceId = Guid.Parse("0195efb8-7c80-7a01-8001-000000000060");
 
 #pragma warning disable SA1401 // Fields should be private
     internal static List<ResourceType> ResourceTypes = new()
@@ -1295,6 +1374,15 @@ internal static class TestDataSet
 #pragma warning restore SA1401 // Fields should be private
     {
         new Resource() { Id = TestResourceId, Name = "Test Bakery Resource", Description = "Test resource", RefId = "test-bakery-resource", TypeId = TestResourceTypeId, ProviderId = ProviderConstants.Altinn3.Id },
+        new Resource() { Id = DelegationTestResourceId, Name = "Delegation Test Resource", Description = "Test delegation resource", RefId = "delegation-test-resource", TypeId = TestResourceTypeId, ProviderId = ProviderConstants.Altinn3.Id },
+    };
+
+#pragma warning disable SA1401 // Fields should be private
+    internal static List<DelegationResource> DelegationResources = new()
+#pragma warning restore SA1401 // Fields should be private
+    {
+        // Resource delegated via Baker Johnsen -> Gunnar delegation
+        new DelegationResource() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000061"), DelegationId = Guid.Parse("0195efb8-7c80-7bda-9f72-4ef5c897f619"), ResourceId = DelegationTestResourceId, AssignmentResourceId = Guid.Parse("0195efb8-7c80-7a01-8001-000000000052") },
     };
 
 #pragma warning disable SA1401 // Fields should be private

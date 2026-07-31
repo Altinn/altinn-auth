@@ -127,4 +127,9 @@ public static class AccessMgmtFeatureFlags
     /// Feature flag for including v2 client-delegated resources in PIP GetAllDelegationChanges response.
     /// </summary>
     public const string IncludeClientDelegatedResourcesInPip = "AccessManagement.Pip.IncludeClientDelegatedResources";
+
+    /// <summary>
+    /// Feature flag for including client-delegated resources in ConnectionQuery and AuthorizedParties response.
+    /// </summary>
+    public const string IncludeClientDelegationResourcesInConnectionQuery = "AccessManagement.ConnectionQuery.IncludeClientDelegationResources";
 }
