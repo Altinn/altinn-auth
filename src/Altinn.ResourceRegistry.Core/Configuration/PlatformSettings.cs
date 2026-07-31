@@ -9,11 +9,6 @@ namespace Altinn.ResourceRegistry.Core.Configuration
     public class PlatformSettings
     {
         /// <summary>
-        /// URL endpoint for AccessManagement API
-        /// </summary>
-        public string ApiAccessManagementEndpoint { get; set; }
-
-        /// <summary>
         /// Issuer to use in the generated token that will be used in calling AccessManagement
         /// </summary>
         public string AccessTokenIssuer { get; set; } = "Platform";

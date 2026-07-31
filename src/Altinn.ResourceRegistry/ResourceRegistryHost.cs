@@ -10,8 +10,6 @@ using Altinn.Common.PEP.Authorization;
 using Altinn.Platform.Events.Formatters;
 using Altinn.Register.Authorization;
 using Altinn.ResourceRegistry.Core;
-using Altinn.ResourceRegistry.Core.Clients;
-using Altinn.ResourceRegistry.Core.Clients.Interfaces;
 using Altinn.ResourceRegistry.Core.Configuration;
 using Altinn.ResourceRegistry.Core.Constants;
 using Altinn.ResourceRegistry.Core.Services;
@@ -87,7 +85,6 @@ internal static class ResourceRegistryHost
             });
 
         services.AddUrnSwaggerSupport();
-        services.AddHttpClient<IAccessManagementClient, AccessManagementClient>();
         services.AddHttpClient<IOrgListClient, OrgListClient>();
         services.AddHttpClient<IApplications, ApplicationsClient>();
         services.AddAltinnRegisterClient();

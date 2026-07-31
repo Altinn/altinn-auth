@@ -135,14 +135,6 @@ namespace Altinn.ResourceRegistry.Core.Services.Interfaces
         Task<List<Right>> GetPolicyRightsV2(string resourceId, bool includeServiceOwnerRights, bool includeAppRights, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Updates Access management with changes in recource registry
-        /// </summary>
-        /// <param name="serviceResource">The resource to add to access management</param>
-        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
-        /// <returns><see langword="true"/> if the update succeeded, otherwise <see langword="false"/></returns>
-        Task<bool> UpdateResourceInAccessManagement(ServiceResource serviceResource, CancellationToken cancellationToken = default);
-
-        /// <summary>
         /// Returns a list over resources for what each subject has access to
         /// </summary>
         /// <param name="subjects">List of subjects</param>

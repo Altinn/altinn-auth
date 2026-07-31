@@ -1,6 +1,5 @@
 ﻿using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Platform.Storage.Interface.Models;
-using Altinn.ResourceRegistry.Core.Clients;
 using Altinn.ResourceRegistry.Core.Configuration;
 using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Integration.Clients;
