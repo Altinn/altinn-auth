@@ -36,6 +36,7 @@ public class PolicyInformationPointClientDelegationResourceTest
     private const int RecipientUserId = 20900021;
     private const int RecipientPartyId = 50900021;
     private const int NonRecipientUserId = 20900022;
+    private const int ClientProviderPartyId = 50900023;
 
     // Assignment IDs
     private static readonly Guid AssignOrgToClientId = Guid.Parse("0196b000-0002-7001-8001-000000000020");
@@ -109,7 +110,7 @@ public class PolicyInformationPointClientDelegationResourceTest
                     VariantId = EntityVariantConstants.AS,
                     OrganizationIdentifier = "399900023",
                     RefId = "399900023",
-                    PartyId = 50900023,
+                    PartyId = ClientProviderPartyId,
                 },
                 new Entity()
                 {
@@ -240,12 +241,12 @@ public class PolicyInformationPointClientDelegationResourceTest
             d.ResourceId == "nav_sykepenger_dialog" &&
             d.BlobStoragePolicyPath == ResourcePolicyPath);
 
-        // Verify from/to mapping is populated for PDP consumption
+        // Verify from/to mapping: viaParty org is the covered-by party (same pattern as keyrole delegations)
         Assert.Equal(OrgMainUnitPartyId, delegation.OfferedByPartyId);
         Assert.Equal(OrgMainUnitId, delegation.FromUuid);
-        Assert.Equal(PersonRecipientId, delegation.ToUuid);
-        Assert.Equal(RecipientUserId, delegation.CoveredByUserId);
-        Assert.Null(delegation.CoveredByPartyId);
+        Assert.Equal(ClientProviderId, delegation.ToUuid);
+        Assert.Null(delegation.CoveredByUserId);
+        Assert.Equal(ClientProviderPartyId, delegation.CoveredByPartyId);
     }
 
     /// <summary>
@@ -275,15 +276,15 @@ public class PolicyInformationPointClientDelegationResourceTest
             d.ResourceId == "nav_sykepenger_dialog" &&
             d.BlobStoragePolicyPath == ResourcePolicyPath);
 
-        // Verify system user gets ToUuid/ToUuidType populated
+        // Verify viaParty org is the covered-by party (same for system user recipients)
         Assert.Equal(OrgMainUnitPartyId, delegation.OfferedByPartyId);
-        Assert.Equal(SystemUserRecipientId, delegation.ToUuid);
+        Assert.Equal(ClientProviderId, delegation.ToUuid);
         Assert.Null(delegation.CoveredByUserId);
-        Assert.Null(delegation.CoveredByPartyId);
+        Assert.Equal(ClientProviderPartyId, delegation.CoveredByPartyId);
     }
 
     /// <summary>
-    /// Party is the subunit of the main unit that has the delegation.
+    /// Party is the subunit of the main unit
     /// The query should resolve the parent and find the delegation.
     /// </summary>
     [Fact]
