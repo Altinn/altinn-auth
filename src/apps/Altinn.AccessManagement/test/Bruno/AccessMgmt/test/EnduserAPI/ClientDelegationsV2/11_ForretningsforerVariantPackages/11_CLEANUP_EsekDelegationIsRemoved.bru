@@ -4,9 +4,9 @@ meta {
   seq: 11
 }
 
-delete {
-  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents/clients?party={{party}}&client={{client}}&agent={{agent}}&cascade=true
-  body: none
+post {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents/accesspackages/delete?party={{party}}&client={{client}}&agent={{agent}}
+  body: json
   auth: inherit
 }
 
@@ -14,12 +14,23 @@ params:query {
   party: {{party}}
   client: {{client}}
   agent: {{agent}}
-  cascade: true
+}
+
+body:json {
+  {
+    "values": [
+      {
+        "role": "forretningsforer",
+        "packages": ["{{package}}"]
+      }
+    ]
+  }
 }
 
 docs {
-  CLEANUP: the ESEK client is removed from the agent with cascade, which removes
-  the eiendom delegation with it.
+  CLEANUP: the eiendom delegation for the ESEK client is removed at package
+  level. The package is backed by a variant scoped RolePackage row, so the
+  delete must resolve the ESEK row for the delegation to be removed.
 }
 
 script:pre-request {
@@ -30,12 +41,19 @@ script:pre-request {
   bru.setVar("party", su.regnskapsforer.partyuuid);
   bru.setVar("client", su.esek_type_client_org.partyuuid);
   bru.setVar("agent", td.REGN_Organisasjon.REGN_Agent.userUuid);
+  bru.setVar("package", td.clientDelegationV2.packages.forretningsforerEiendom);
 
   await loginAs(su.regnskapsforer.dagl);
 }
 
 tests {
-  test("CLEANUP removing the ESEK client from the agent returns 204", function() {
-    expect(res.status).to.equal(204);
+  test("CLEANUP removing the eiendom package for the ESEK client returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("CLEANUP the delete row reports a change", function() {
+    const body = res.getBody();
+    expect(body).to.be.an("array").with.lengthOf(1);
+    expect(body[0].changed).to.be.true;
   });
 }

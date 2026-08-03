@@ -47,5 +47,6 @@ tests {
     const readRight = res.getBody().rights.find(r => r.right.action.value === "read");
     expect(readRight, "expected a read right in the delegation check response").to.not.be.undefined;
     expect(readRight.result).to.be.true;
+    expect(readRight.right.key, "expected the read right to carry a right key").to.be.a("string").that.is.not.empty;
   });
 }
