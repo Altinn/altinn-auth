@@ -47,8 +47,6 @@ public static class PersistenceDependencyInjectionExtensions
 
         builder.Services.AddScoped<IDelegationMetadataRepository, DelegationMetadataEF>();
 
-        builder.Services.AddSingleton<IResourceMetadataRepository, ResourceMetadataRepo>();
-
         builder.Services.AddSingleton<IConsentRepository, ConsentRepository>();
         builder.Services.AddSingleton<IAltinn2ConsentClient, Altinn2ConsentClient>();
 

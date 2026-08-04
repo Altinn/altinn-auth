@@ -21,10 +21,10 @@ and known-good seed-data IDs.
 - `bruno.json` / `collection.bru`: collection config and collection-level scripts.
 - `environments/`: one `.bru` per Altinn environment (`AT22`, `AT23`, `AT24`, `TT02`,
   `YT01`, `DEV`, `PROD`); selects `baseUrl`, `tokenEnv`, and other per-env variables.
-- `shared/` and `test/`: requests grouped by API area: `Consent`, `Delegations`,
-  `Enduser`, `InternalAPI`, `Lookup`, `Maskinporten`, `MaskinportenSchema`,
-  `PolicyInformationPoint`, `Resource`, `RightsInternal`, `SystemUserClientDelegation`,
-  `AuthorizedParties`, `AppsInstanceDelegation`, … (`old_SBL_Bridge_tests/` is legacy,
+- `shared/` and `test/`: requests grouped by API area: `Consent`, `Enduser`,
+  `EnduserAPI`, `InternalAPI`, `Lookup`, `Maskinporten`, `PolicyInformationPoint`,
+  `SystemUserClientDelegation`, `AuthorizedParties`, `AppsInstanceDelegation`,
+  `KlientDelegation`, `Virksomhetsdelegering`, … (`old_SBL_Bridge_tests/` is legacy,
   ignore it).
 - `TestToolsTokenGenerator.js` + per-area `testdata/*.js`: generate platform / Maskinporten
   tokens and supply seed-data IDs (org / app / party / instance) at request time.

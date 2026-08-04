@@ -14,8 +14,7 @@ namespace Altinn.AccessManagement.Tests.Fixtures;
 /// <remarks>
 /// <para>
 /// Use this fixture for test classes that exercise code paths backed by the
-/// still-extant Dapper / raw-Npgsql repositories — <c>ResourceMetadataRepo</c>
-/// (on the Yuniql <c>accessmanagement</c> schema) and <c>ConsentRepository</c>
+/// still-extant Dapper / raw-Npgsql repositories — <c>ConsentRepository</c>
 /// (on the EF-provisioned <c>consent</c> schema) — or any component that depends
 /// on the Yuniql-provisioned enum types bound via
 /// <c>PersistenceDependencyInjectionExtensions.AddDatabase</c>.

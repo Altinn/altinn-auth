@@ -133,8 +133,8 @@ flag-enabled client so the decision is actually exercised.
 ## 3. `LegacyApiFixture` — legacy-schema tests
 
 **Location:** `AccessMgmt.Tests/Fixtures/LegacyApiFixture.cs`
-**Use for:** Tests backed by the Dapper / raw-Npgsql repositories on the
-`accessmanagement`, `delegation` and `consent` schemas.
+**Use for:** Tests backed by the Dapper / raw-Npgsql `ConsentRepository` on the
+`consent` schema, or by components that depend on the Yuniql-provisioned enum types.
 **Database:** EF Core (the `dbo` and `consent` schemas) **and** the Yuniql
 `accessmanagement` / `delegation` schemas, side-by-side.
 
