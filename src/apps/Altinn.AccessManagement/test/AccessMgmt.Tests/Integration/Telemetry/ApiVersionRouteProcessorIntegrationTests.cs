@@ -45,8 +45,8 @@ public class ApiVersionRouteProcessorIntegrationTests(ApiVersionRouteProcessorIn
     }
 
     /// <summary>
-    /// Hosts the endpoints under test, calls them all and shuts the host down again, so that every
-    /// request activity is completed and captured before any assertion runs.
+    /// Hosts the endpoints under test and calls them all, waiting for each request activity to be
+    /// captured before moving on, so that every activity is available when the assertions run.
     /// </summary>
     public sealed class TelemetryHostFixture : IAsyncLifetime
     {
@@ -57,7 +57,10 @@ public class ApiVersionRouteProcessorIntegrationTests(ApiVersionRouteProcessorIn
             "/accessmanagement/api/v1/enduser/clientdelegations/clients",
         ];
 
-        private readonly List<Activity> _exported = [];
+        private static readonly TimeSpan CaptureTimeout = TimeSpan.FromSeconds(30);
+
+        private readonly ActivityCapture _capture = new(Paths);
+        private readonly Dictionary<string, Activity> _requests = [];
 
         public async ValueTask InitializeAsync()
         {
@@ -74,7 +77,7 @@ public class ApiVersionRouteProcessorIntegrationTests(ApiVersionRouteProcessorIn
             builder.Services.AddOpenTelemetry().WithTracing(tracing => tracing
                 .AddAspNetCoreInstrumentation()
                 .AddProcessor(sp => new ApiVersionRouteProcessor(sp.GetRequiredService<IHttpContextAccessor>()))
-                .AddProcessor(new CaptureProcessor(_exported)));
+                .AddProcessor(_capture));
 
             await using var app = builder.Build();
             app.MapGet("accessmanagement/api/v{version:apiVersion}/enduser/clientdelegations/my/clients", () => Results.Ok());
@@ -89,6 +92,11 @@ public class ApiVersionRouteProcessorIntegrationTests(ApiVersionRouteProcessorIn
                 {
                     var response = await client.GetAsync(path, TestContext.Current.CancellationToken);
                     response.EnsureSuccessStatusCode();
+
+                    // The test server returns the response before the hosting pipeline stops the
+                    // request activity, so the activity is only guaranteed to exist once captured.
+                    _requests[path] = await _capture.ActivityFor(path)
+                        .WaitAsync(CaptureTimeout, TestContext.Current.CancellationToken);
                 }
             }
 
@@ -97,12 +105,35 @@ public class ApiVersionRouteProcessorIntegrationTests(ApiVersionRouteProcessorIn
 
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
 
-        public Activity RequestTo(string path) =>
-            _exported.Should().ContainSingle(a => a.Kind == ActivityKind.Server && Equals(a.GetTagItem("url.path"), path)).Subject;
+        public Activity RequestTo(string path) => _requests.Should().ContainKey(path).WhoseValue;
 
-        private sealed class CaptureProcessor(List<Activity> exported) : BaseProcessor<Activity>
+        /// <summary>
+        /// Captures the request activity for each path under test. ASP.NET Core instrumentation listens
+        /// on a process-wide activity source, so requests made by other test classes running in parallel
+        /// also reach this processor on their own threads; only the paths under test are kept, and each
+        /// of them is published through a completion source rather than a shared mutable collection.
+        /// </summary>
+        private sealed class ActivityCapture : BaseProcessor<Activity>
         {
-            public override void OnEnd(Activity activity) => exported.Add(activity);
+            private readonly Dictionary<string, TaskCompletionSource<Activity>> _byPath;
+
+            public ActivityCapture(IEnumerable<string> paths) =>
+                _byPath = paths.ToDictionary(
+                    path => path,
+                    _ => new TaskCompletionSource<Activity>(TaskCreationOptions.RunContinuationsAsynchronously),
+                    StringComparer.Ordinal);
+
+            public Task<Activity> ActivityFor(string path) => _byPath[path].Task;
+
+            public override void OnEnd(Activity activity)
+            {
+                if (activity.Kind == ActivityKind.Server
+                    && activity.GetTagItem("url.path") is string path
+                    && _byPath.TryGetValue(path, out var captured))
+                {
+                    captured.TrySetResult(activity);
+                }
+            }
         }
     }
 }
