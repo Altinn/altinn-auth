@@ -1,0 +1,66 @@
+meta {
+  name: 01_WHEN_ClientListIsFilteredByEiendomPackage
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/clients?party={{party}}&packages={{packages}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  packages: {{packages}}
+}
+
+docs {
+  WHEN the client list is filtered by the eiendom package, THEN only the
+  clients whose unit type is inside the ESEK and BRL scope of the package are
+  returned, each carrying the package.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const su = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", su.regnskapsforer.partyuuid);
+  bru.setVar("packages", td.clientDelegationV2.packages.forretningsforerEiendom);
+
+  await loginAs(su.regnskapsforer.dagl);
+}
+
+tests {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const su = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+
+  test("WHEN the package filtered client list request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the BRL client is returned carrying the eiendom package", function() {
+    const brl = su.brl_type_client_org.partyuuid.toLowerCase();
+    const entry = res.getBody().data.find(item => item.client.id.toLowerCase() === brl);
+    expect(entry, "expected the BRL client in the package filtered client list").to.not.be.undefined;
+    const roleAccess = entry.access.find(a => a.role.code === "forretningsforer");
+    expect(roleAccess, "expected a forretningsforer access element").to.not.be.undefined;
+    expect(roleAccess.packages.map(p => p.urn)).to.include(td.clientDelegationV2.packages.forretningsforerEiendom);
+  });
+
+  test("AND the ESEK client is returned carrying the eiendom package", function() {
+    const esek = su.esek_type_client_org.partyuuid.toLowerCase();
+    const entry = res.getBody().data.find(item => item.client.id.toLowerCase() === esek);
+    expect(entry, "expected the ESEK client in the package filtered client list").to.not.be.undefined;
+    const roleAccess = entry.access.find(a => a.role.code === "forretningsforer");
+    expect(roleAccess, "expected a forretningsforer access element").to.not.be.undefined;
+    expect(roleAccess.packages.map(p => p.urn)).to.include(td.clientDelegationV2.packages.forretningsforerEiendom);
+  });
+
+  test("AND the BBL client is not in the list", function() {
+    const bbl = td.clientDelegationV2.forretningsforerBblClient.partyUuid.toLowerCase();
+    const entry = res.getBody().data.find(item => item.client.id.toLowerCase() === bbl);
+    expect(entry, "the BBL client must not be selected by the eiendom package filter").to.be.undefined;
+  });
+}

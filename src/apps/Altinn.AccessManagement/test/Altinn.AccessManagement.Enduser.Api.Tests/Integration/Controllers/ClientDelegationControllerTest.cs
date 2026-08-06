@@ -596,6 +596,34 @@ public class ClientDelegationControllerTest
             Assert.DoesNotContain(bedrClientAccess.Packages, package => package.Id == PackageConstants.SalarySpecialCategory);
             Assert.DoesNotContain(bedrClientAccess.Packages, package => package.Id == PackageConstants.OppgiNaermesteLeder);
         }
+
+        [Fact]
+        public async Task ListClient_WithPackagesFilterOnVariantScopedRolePackage_Returns200WithoutVariantMismatchedClients()
+        {
+            var client = CreateClient();
+
+            var response = await client.GetAsync($"{Route}/clients?party={TestEntities.OrganizationVerdiqAS.Id}&packages={PackageConstants.BusinessManagerRealEstate.Entity.Urn}", TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            var data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            var result = JsonSerializer.Deserialize<PaginatedResult<ClientDto>>(data);
+
+            // The BEDR and NUF clients relate to the package only through role packages scoped
+            // to the ESEK and BRL variants, so the filter must not select them.
+            Assert.DoesNotContain(result.Items, c => c.Client.Id == TestEntities.MainUnitNordis.Id);
+            Assert.DoesNotContain(result.Items, c => c.Client.Id == TestEntities.OrganizationNufExampleNUF.Id);
+
+            // The BRL client holds the package through the variant scoped role package and is
+            // returned carrying it.
+            var brlClient = Assert.Single(result.Items);
+            Assert.Equal(TestEntities.OrganizationOkernBorettslag.Id, brlClient.Client.Id);
+
+            var businessManagerAccess = Assert.Single(brlClient.Access);
+            Assert.Equal(RoleConstants.BusinessManager.Id, businessManagerAccess.Role.Id);
+
+            var package = Assert.Single(businessManagerAccess.Packages);
+            Assert.Equal(PackageConstants.BusinessManagerRealEstate.Id, package.Id);
+        }
     }
     #endregion
 

@@ -443,6 +443,23 @@ public class ClientDelegationControllerTest
                     RoleId = RoleConstants.Rightholder,
                 };
 
+                // Business manager clients used to assert the packages filter against the
+                // variant scoped forretningsforer-eiendom role package: the BRL client holds
+                // it, the BEDR main unit does not.
+                var businessManagerFromOkernToVerdiq = new Assignment()
+                {
+                    FromId = TestEntities.OrganizationOkernBorettslag.Id,
+                    ToId = TestEntities.OrganizationVerdiqAS.Id,
+                    RoleId = RoleConstants.BusinessManager,
+                };
+
+                var businessManagerFromMainUnitNordisToVerdiq = new Assignment()
+                {
+                    FromId = TestEntities.MainUnitNordis.Id,
+                    ToId = TestEntities.OrganizationVerdiqAS.Id,
+                    RoleId = RoleConstants.BusinessManager,
+                };
+
                 var assignmentResourceForAccountant = new AssignmentResource()
                 {
                     AssignmentId = accountantFromNordisToVerdiq.Id,
@@ -455,6 +472,8 @@ public class ClientDelegationControllerTest
                 db.Assignments.Add(accountantFromNordisToVerdiq);
                 db.Assignments.Add(agentFromPaulaToNordis);
                 db.Assignments.Add(rightholderFromOkernToVerdiq);
+                db.Assignments.Add(businessManagerFromOkernToVerdiq);
+                db.Assignments.Add(businessManagerFromMainUnitNordisToVerdiq);
 
                 db.AssignmentPackages.Add(new()
                 {
@@ -698,6 +717,63 @@ public class ClientDelegationControllerTest
             var resource = Assert.Single(accountantAccess.Resources);
             Assert.Equal(TestData.MattilsynetBakeryService.Id, resource.Id);
             Assert.Equal(TestData.MattilsynetBakeryService.RefId, resource.RefId);
+        }
+
+        [Fact]
+        public async Task ListClient_WithPackagesFilterOnVariantScopedRolePackage_Returns200WithoutVariantMismatchedClient()
+        {
+            var client = CreateClient();
+
+            var response = await client.GetAsync($"{Route}/clients?party={TestEntities.OrganizationVerdiqAS.Id}&packages={PackageConstants.BusinessManagerRealEstate.Entity.Urn}", TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            var data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            var result = JsonSerializer.Deserialize<PaginatedResult<ContractsV2.ClientDto>>(data);
+
+            // The BEDR client's only relation to the package is a role package scoped to the
+            // ESEK and BRL variants, so the filter must not select it.
+            Assert.DoesNotContain(result.Items, c => c.Client.Id == TestEntities.MainUnitNordis.Id);
+
+            // The BRL client holds the package through the variant scoped role package and is
+            // returned carrying it.
+            var brlClient = Assert.Single(result.Items);
+            Assert.Equal(TestEntities.OrganizationOkernBorettslag.Id, brlClient.Client.Id);
+
+            var businessManagerAccess = Assert.Single(brlClient.Access);
+            Assert.Equal(RoleConstants.BusinessManager.Id, businessManagerAccess.Role.Id);
+
+            var package = Assert.Single(businessManagerAccess.Packages);
+            Assert.Equal(PackageConstants.BusinessManagerRealEstate.Id, package.Id);
+        }
+
+        [Fact]
+        public async Task ListClient_WithMultiplePackagesFilter_Returns200WithClientsHoldingAnyFilterPackage()
+        {
+            var client = CreateClient();
+
+            var response = await client.GetAsync($"{Route}/clients?party={TestEntities.OrganizationVerdiqAS.Id}&packages={PackageConstants.AccountantSalary.Entity.Urn}&packages={PackageConstants.BusinessManagerRealEstate.Entity.Urn}", TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            var data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            var result = JsonSerializer.Deserialize<PaginatedResult<ContractsV2.ClientDto>>(data);
+
+            // Each client holds exactly one of the filter packages, so both are returned and
+            // each renders only the package it holds.
+            Assert.Equal(2, result.Items.Count());
+
+            var nordisClient = result.Items.FirstOrDefault(c => c.Client.Id == TestEntities.OrganizationNordisAS.Id);
+            Assert.NotNull(nordisClient);
+            var accountantAccess = Assert.Single(nordisClient.Access);
+            Assert.Equal(RoleConstants.Accountant.Id, accountantAccess.Role.Id);
+            var accountantPackage = Assert.Single(accountantAccess.Packages);
+            Assert.Equal(PackageConstants.AccountantSalary.Id, accountantPackage.Id);
+
+            var brlClient = result.Items.FirstOrDefault(c => c.Client.Id == TestEntities.OrganizationOkernBorettslag.Id);
+            Assert.NotNull(brlClient);
+            var businessManagerAccess = Assert.Single(brlClient.Access);
+            Assert.Equal(RoleConstants.BusinessManager.Id, businessManagerAccess.Role.Id);
+            var businessManagerPackage = Assert.Single(businessManagerAccess.Packages);
+            Assert.Equal(PackageConstants.BusinessManagerRealEstate.Id, businessManagerPackage.Id);
         }
     }
     #endregion

@@ -399,7 +399,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
             )
             .Where(x => x.RolePackage != null || x.AssignmentPackage != null)
             .WhereIf(roleFilter.Count > 0, x => roleFilter.Contains(x.Role.Id))
-            .WhereIf(packageFilter.Count > 0, x => (x.RolePackage != null && packageFilter.Contains(x.RolePackage.Id)) || (x.AssignmentPackage != null && packageFilter.Contains(x.AssignmentPackage.Id)))
+            .WhereIf(packageFilter.Count > 0, x => (x.RolePackage != null && (x.RolePackageEntityVariantId == null || x.RolePackageEntityVariantId == x.From.VariantId) && packageFilter.Contains(x.RolePackage.Id)) || (x.AssignmentPackage != null && packageFilter.Contains(x.AssignmentPackage.Id)))
             .GroupBy(x => x.From.Id)
             .ToListAsync(cancellationToken);
 
@@ -510,7 +510,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
                 }
             )
             .Where(x => x.RolePackage != null || x.AssignmentPackage != null)
-            .WhereIf(packageFilter.Count > 0, x => (x.RolePackage != null && packageFilter.Contains(x.RolePackage.Id)) || (x.AssignmentPackage != null && packageFilter.Contains(x.AssignmentPackage.Id)))
+            .WhereIf(packageFilter.Count > 0, x => (x.RolePackage != null && (x.RolePackageEntityVariantId == null || x.RolePackageEntityVariantId == x.From.VariantId) && packageFilter.Contains(x.RolePackage.Id)) || (x.AssignmentPackage != null && packageFilter.Contains(x.AssignmentPackage.Id)))
             .ToListAsync(cancellationToken);
 
         // Resources are fetched as their own row set to avoid a packages x resources product per
