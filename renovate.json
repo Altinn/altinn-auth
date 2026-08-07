@@ -47,6 +47,18 @@
     {
       "matchManagers": ["nuget"],
       "matchPackageNames": [
+        "Npgsql",
+        "Npgsql.DependencyInjection",
+        "Npgsql.EntityFrameworkCore.PostgreSQL",
+        "Npgsql.OpenTelemetry"
+      ],
+      "groupName": "Npgsql",
+      "groupSlug": "npgsql",
+      "matchUpdateTypes": ["major"]
+    },
+    {
+      "matchManagers": ["nuget"],
+      "matchPackageNames": [
         "xunit.v3.extensibility.core",
         "xunit.v3",
         "xunit.v3.assert"
