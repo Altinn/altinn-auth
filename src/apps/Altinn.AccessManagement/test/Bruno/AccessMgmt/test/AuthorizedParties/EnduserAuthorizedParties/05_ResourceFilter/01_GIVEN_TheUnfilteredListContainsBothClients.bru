@@ -1,0 +1,50 @@
+meta {
+  name: 01_GIVEN_TheUnfilteredListContainsBothClients
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeResources=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeResources: true
+}
+
+docs {
+  GIVEN the unfiltered list contains both the rightholder client, which carries the
+  single resources the scenario filters on, and a client that carries none of them.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  const firm = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER;
+
+  test("GIVEN the unfiltered list, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("GIVEN the unfiltered list, the rightholder client carries the resource", function() {
+    const party = findParty(res.getBody().data, firm.client_rightholderOrg2.partyUuid);
+    expect(party, "expected the rightholder client").to.not.be.undefined;
+    expect(party.authorizedResources).to.include(firm.client_rightholderOrg2.resourceIdDelegatedToPerson);
+  });
+
+  test("GIVEN the unfiltered list, the accountant client carries none of those resources", function() {
+    const party = findParty(res.getBody().data, firm.client_USENSUELL_UVIRKSOM_TIGER.partyUuid);
+    expect(party, "expected the accountant client").to.not.be.undefined;
+    expect(party.authorizedResources).to.not.include(firm.client_rightholderOrg2.resourceIdDelegatedToPerson);
+  });
+}

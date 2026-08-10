@@ -1,0 +1,30 @@
+meta {
+  name: 02_WHEN_TheScopeIsInsufficientThenRequestFails
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties
+  body: none
+  auth: inherit
+}
+
+docs {
+  WHEN a user who does have authorized parties calls with a token whose scope the policy
+  does not accept, the request fails with 403. Authentication succeeds, authorization
+  does not.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs, scopes } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder, scopes.read);
+}
+
+tests {
+  test("WHEN the token scope is insufficient, the request returns 403", function() {
+    expect(res.status).to.equal(403);
+  });
+}

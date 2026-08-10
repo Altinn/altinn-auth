@@ -1,0 +1,92 @@
+meta {
+  name: 01_WHEN_TheDailyLeaderListsAuthorizedParties
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeRoles=true&includeAccessPackages=true&includeResources=true&includeInstances=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeRoles: true
+  includeAccessPackages: true
+  includeResources: true
+  includeInstances: true
+}
+
+docs {
+  WHEN the daily leader of the accounting firm lists authorized parties with every
+  access information flag on.
+
+  THEN the response is the paginated envelope, an object with a `links` object and a
+  `data` array of parties, and every party carries the full set of party fields.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder);
+}
+
+tests {
+  const { flatten } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  test("WHEN the daily leader lists authorized parties, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the response is a paginated envelope with a data array and a links object", function() {
+    const body = res.getBody();
+    expect(body).to.be.an("object");
+    expect(body.data, "expected the party list on the data property").to.be.an("array").that.is.not.empty;
+    expect(body.links, "expected a links object on the envelope").to.be.an("object");
+    expect(body.links).to.have.property("next");
+  });
+
+  test("AND every party carries the party fields of the contract", function() {
+    for (const party of flatten(res.getBody().data)) {
+      expect(party).to.have.all.keys(
+        "partyUuid",
+        "name",
+        "organizationNumber",
+        "parentId",
+        "personId",
+        "dateOfBirth",
+        "partyId",
+        "emailId",
+        "type",
+        "unitType",
+        "isDeleted",
+        "onlyHierarchyElementWithNoAccess",
+        "authorizedAccessPackages",
+        "authorizedResources",
+        "authorizedRoles",
+        "authorizedInstances",
+        "subunits");
+      expect(party.partyUuid, `party ${party.name} has no uuid`).to.be.a("string");
+      expect(party.type, `unexpected party type on ${party.name}`).to.be.oneOf(["None", "Person", "Organization", "SelfIdentified"]);
+      expect(party.isDeleted).to.be.a("boolean");
+      expect(party.onlyHierarchyElementWithNoAccess).to.be.a("boolean");
+      expect(party.authorizedAccessPackages).to.be.an("array");
+      expect(party.authorizedResources).to.be.an("array");
+      expect(party.authorizedRoles).to.be.an("array");
+      expect(party.authorizedInstances).to.be.an("array");
+      expect(party.subunits).to.be.an("array");
+    }
+  });
+
+  test("AND every authorized instance carries a resource id, an instance id and an instance reference", function() {
+    const instances = flatten(res.getBody().data).flatMap(party => party.authorizedInstances);
+    expect(instances, "expected the fixtures to carry at least one delegated instance").to.not.be.empty;
+    for (const instance of instances) {
+      expect(instance).to.have.all.keys("resourceId", "instanceId", "instanceRef");
+      expect(instance.resourceId).to.be.a("string").that.is.not.empty;
+      expect(instance.instanceRef, "the instance reference is an instance urn").to.match(/^urn:altinn:instance-id:\d+\//);
+      expect(instance.instanceRef, "the instance reference ends with the instance id").to.contain(instance.instanceId);
+    }
+  });
+}

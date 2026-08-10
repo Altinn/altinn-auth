@@ -1,0 +1,53 @@
+meta {
+  name: 09_THEN_InstanceAccessIsNotInheritedBySubunits
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeAccessPackages=true&includeInstances=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeAccessPackages: true
+  includeInstances: true
+}
+
+docs {
+  THEN an app instance delegated by a main unit stays on that main unit. Access packages
+  delegated by the main unit are inherited by its subunits, but the instance is not.
+}
+
+script:pre-request {
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.authParties_hovedenhetA.authParties_personC);
+}
+
+tests {
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+
+  const mainUnit = testdata.authParties_hovedenhetA;
+
+  test("THEN the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the app instance delegated by the main unit is on the main unit", function() {
+    const party = res.getBody().data.find(item => item.partyUuid.toLowerCase() === mainUnit.partyuuid.toLowerCase());
+    expect(party, `expected ${mainUnit.name} in the party list`).to.not.be.undefined;
+    const instance = party.authorizedInstances.find(item => item.instanceRef === testdata.instancer.personC_instansid);
+    expect(instance, "expected the app instance delegated by the main unit").to.not.be.undefined;
+  });
+
+  test("THEN the subunit inherits the access packages but not the instance", function() {
+    const party = res.getBody().data.find(item => item.partyUuid.toLowerCase() === mainUnit.partyuuid.toLowerCase());
+    const subunit = party.subunits.find(item => item.partyUuid.toLowerCase() === mainUnit.authParties_underenhetA.partyuuid.toLowerCase());
+    expect(subunit, `expected ${mainUnit.authParties_underenhetA.name} nested under the main unit`).to.not.be.undefined;
+    expect(subunit.authorizedAccessPackages).to.include.members(party.authorizedAccessPackages);
+    expect(subunit.authorizedInstances, "instance access is not inherited by subunits").to.be.empty;
+  });
+}

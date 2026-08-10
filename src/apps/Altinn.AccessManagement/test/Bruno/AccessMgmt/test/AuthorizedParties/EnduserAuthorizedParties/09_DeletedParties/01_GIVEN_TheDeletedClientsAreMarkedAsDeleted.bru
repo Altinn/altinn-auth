@@ -1,0 +1,61 @@
+meta {
+  name: 01_GIVEN_TheDeletedClientsAreMarkedAsDeleted
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeAccessPackages=true&includeInactiveParties=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeAccessPackages: true
+  includeInactiveParties: true
+}
+
+docs {
+  GIVEN the accounting firm has two sole proprietorship clients that are deleted in the
+  Central Coordinating Register, both are returned with the deleted flag set and still
+  carry the packages the firm holds through the accountant role.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  const firm = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER;
+  const deletedClients = [
+    firm.client_ENK_DELETED_2025_11_27_InnehaverAccess,
+    firm.client_ENK_DELETED_2023_11_01_NoInnehaverAccess,
+  ];
+
+  test("GIVEN inactive parties are included, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("GIVEN the deleted clients, both are returned marked as deleted", function() {
+    for (const client of deletedClients) {
+      const party = findParty(res.getBody().data, client.partyUuid);
+      expect(party, `expected the deleted client ${client.name}`).to.not.be.undefined;
+      expect(party.isDeleted, `${client.name} should be marked as deleted`).to.be.true;
+      expect(party.unitType).to.equal("ENK");
+      expect(party.organizationNumber).to.equal(client.orgno);
+    }
+  });
+
+  test("GIVEN the deleted clients, the firm still holds them through the accountant role", function() {
+    for (const client of deletedClients) {
+      const party = findParty(res.getBody().data, client.partyUuid);
+      expect(party.authorizedAccessPackages, `${client.name} should still carry the accountant packages`).to.include("regnskapsforer-lonn");
+    }
+  });
+}

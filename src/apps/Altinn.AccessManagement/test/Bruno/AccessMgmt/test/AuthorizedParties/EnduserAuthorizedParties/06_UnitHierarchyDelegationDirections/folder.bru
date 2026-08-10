@@ -1,0 +1,24 @@
+meta {
+  name: 06_UnitHierarchyDelegationDirections
+  seq: 6
+}
+
+docs {
+  Scenario: Which side ends up with access for each delegation direction
+
+    When a main unit delegates to a main unit, to a person and to a subunit
+    And a person delegates to a main unit and to a person
+    And a subunit delegates to a main unit, to a subunit and to a person
+    Then the recipient side sees the delegating party
+    And a delegating subunit is returned under a main unit that carries no access itself
+    And instance access on a main unit is not inherited by its subunits
+
+  In the two directions where the recipient is a subunit, main unit to subunit and subunit
+  to subunit, the delegating party does not show up at all for a person with a key role on
+  the main unit above the receiving subunit, even though a key role on a main unit
+  otherwise carries down to its subunits. Those two steps assert that as the behaviour of
+  the day and name #2952, which tracks the gap.
+
+  Personas come from `testdata/auth-parties-testdata/<env>.js`. The delegations are part
+  of the seeded environment data, so the steps read them rather than creating them.
+}

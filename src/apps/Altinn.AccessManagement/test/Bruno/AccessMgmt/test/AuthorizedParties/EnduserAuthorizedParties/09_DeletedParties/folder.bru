@@ -1,0 +1,17 @@
+meta {
+  name: 09_DeletedParties
+  seq: 9
+}
+
+docs {
+  Scenario: The retention window for a deleted sole proprietorship
+
+    Given the accounting firm has two clients that are deleted sole proprietorships
+    Then both are returned marked as deleted
+    And the owner of the one deleted inside the retention window is an authorized party
+    And the owner of the one deleted before the window is not
+
+  The two fixtures were deleted on different dates. The steps compare the deletion date in
+  the fixture against the retention window rather than against a fixed calendar date, so
+  the expectation follows the rule as time passes.
+}

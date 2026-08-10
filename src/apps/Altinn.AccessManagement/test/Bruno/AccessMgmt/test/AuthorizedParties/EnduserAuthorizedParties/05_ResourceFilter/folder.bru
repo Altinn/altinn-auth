@@ -1,0 +1,16 @@
+meta {
+  name: 05_ResourceFilter
+  seq: 5
+}
+
+docs {
+  Scenario: Narrowing the party list with anyOfResourceIds
+
+    Given the unfiltered list contains the parties the scenario is about
+    When the list is filtered on a resource delegated to the caller on one client
+    Then that client is returned with the resource, and a client without it is not
+    When the list is filtered on a resource delegated only to a subunit
+    Then the subunit carries the resource and its main unit is a hierarchy element only
+    When the list is filtered on a resource id that does not exist
+    Then the party list is empty
+}

@@ -1,0 +1,54 @@
+meta {
+  name: 07_WHEN_SubPartiesAreExcluded
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeSubParties=false
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeSubParties: false
+}
+
+docs {
+  WHEN subunits are excluded, the subunits come back anyway. The service resolves
+  `includeSubParties` and then never applies it to the query, so the parameter has no
+  effect on the result.
+
+  The correct behaviour is that no party carries subunits and only the main units the
+  caller has access to are returned. Completing the filter is tracked by #3522, and this
+  step turns red when the fix lands.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty, partyUuids } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  const firm = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER;
+
+  test("WHEN subunits are excluded, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN parties still carry subunits, because the filter is not applied (#3522)", function() {
+    const withSubunits = res.getBody().data.filter(party => party.subunits.length > 0);
+    expect(withSubunits, "the filter has started taking effect, so this step needs to be flipped").to.not.be.empty;
+  });
+
+  test("THEN the client's subunit is still part of the result (#3522)", function() {
+    expect(findParty(res.getBody().data, firm.client_USENSUELL_UVIRKSOM_TIGER.subunit.partyUuid), "the filter has started taking effect, so this step needs to be flipped").to.not.be.undefined;
+  });
+
+  bru.setVar("subPartiesFalsePartyUuids", JSON.stringify(partyUuids(res.getBody().data).sort()));
+}

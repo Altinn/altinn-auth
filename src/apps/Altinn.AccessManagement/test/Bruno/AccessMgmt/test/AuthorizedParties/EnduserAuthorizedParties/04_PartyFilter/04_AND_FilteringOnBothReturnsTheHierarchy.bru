@@ -1,0 +1,59 @@
+meta {
+  name: 04_AND_FilteringOnBothReturnsTheHierarchy
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeAccessPackages=true&partyFilter={{mainUnit}}&partyFilter={{subUnit}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeAccessPackages: true
+  partyFilter: {{mainUnit}}
+  partyFilter: {{subUnit}}
+}
+
+docs {
+  AND the party filter is repeatable, so filtering on the main unit and the subunit at
+  the same time returns the hierarchy with both, and the main unit carries its own access
+  rather than being a hierarchy element only.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  const client = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_rightholderOrg2;
+  bru.setVar("mainUnit", client.partyUuid);
+  bru.setVar("subUnit", client.subunit.partyUuid);
+
+  await loginAs(testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { flatten } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  const client = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_rightholderOrg2;
+
+  test("AND the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND both filtered parties are returned and nothing else is", function() {
+    const parties = flatten(res.getBody().data);
+    expect(parties.map(party => party.partyUuid.toLowerCase())).to.have.members([
+      client.partyUuid.toLowerCase(),
+      client.subunit.partyUuid.toLowerCase(),
+    ]);
+  });
+
+  test("AND the main unit carries its own access", function() {
+    const party = res.getBody().data[0];
+    expect(party.onlyHierarchyElementWithNoAccess).to.be.false;
+    expect(party.authorizedAccessPackages).to.include(client.directPackageToDelegate);
+  });
+}

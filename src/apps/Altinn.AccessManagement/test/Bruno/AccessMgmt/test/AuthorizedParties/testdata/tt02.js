@@ -130,6 +130,7 @@ module.exports =
         },
         "client_ENK_DELETED_2025_11_27_InnehaverAccess": {
             "name": "SJELDEN REN KATT KONJAKK",
+            "deletedDate": "2025-11-27",
             "orgno": "313744019",
             "partyId": 51866777,
             "partyUuid": "3dbea3e5-d16b-4d22-9638-9503aefc1215",
@@ -149,6 +150,7 @@ module.exports =
         },
         "client_ENK_DELETED_2023_11_01_NoInnehaverAccess": {
             "name": "OMSORGSFULL KUL KATT SKATOLL",
+            "deletedDate": "2023-11-01",
             "orgno": "312282054",
             "partyId": 51758726,
             "partyUuid": "8f74d6a1-146c-49ea-9d39-9a76dde61210",
@@ -201,6 +203,11 @@ module.exports =
             "clientPackageToDelegate": "urn:altinn:accesspackage:regnskapsforer-med-signeringsrettighet",
             "clientEnkPackageToDelegate": "urn:altinn:accesspackage:regnskapsforer-lonn",
             "clientPackageForDelete": "urn:altinn:accesspackage:regnskapsforer-uten-signeringsrettighet"
+        },
+        "systemuser_tilgangsstyrer": {
+            "name": "314242726_bruno-systembruker-som-tilgangsstyrer",
+            "clientId": "76db1f73-9895-41c0-8f76-09e8ebaee6c9",
+            "partyUuid": "7ba107f5-19ae-4342-b8c2-ced6501a0adb"
         },
         "subunit": {
             "name": "ULASTELIG RETTFERDIG TIGER AS",
@@ -375,5 +382,6 @@ module.exports =
       "userId": 2680437,
       "partyId": 53440923,
       "partyUuid": "a28806e7-5e11-4ffa-be5a-56c47dcedf98",
-    }
+    },
+    "deletedPartyRetentionYears": 2
 };

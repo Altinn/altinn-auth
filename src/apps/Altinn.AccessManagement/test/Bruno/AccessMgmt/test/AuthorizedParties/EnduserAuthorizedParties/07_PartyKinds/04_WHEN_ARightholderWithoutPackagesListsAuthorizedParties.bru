@@ -1,0 +1,45 @@
+meta {
+  name: 04_WHEN_ARightholderWithoutPackagesListsAuthorizedParties
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeAccessPackages=true&includeRoles=true&includeResources=true&includeInstances=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeAccessPackages: true
+  includeRoles: true
+  includeResources: true
+  includeInstances: true
+}
+
+docs {
+  WHEN a person who has been added as a rightholder but has been given nothing lists
+  authorized parties, the request succeeds and the party list is empty. A rightholder
+  relation on its own does not make a party authorized.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.employee_rightholderWithoutPackages);
+}
+
+tests {
+  test("WHEN a rightholder without packages lists authorized parties, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the party list is empty", function() {
+    expect(res.getBody().data).to.be.an("array").that.is.empty;
+  });
+
+  test("THEN the response is still the paginated envelope", function() {
+    expect(res.getBody().links).to.be.an("object");
+  });
+}

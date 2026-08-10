@@ -1,0 +1,37 @@
+meta {
+  name: 04_AND_TheAuthorizedPartiesScopeGrantsAccess
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties
+  body: none
+  auth: inherit
+}
+
+docs {
+  AND the same user also gets 200 with the dedicated authorized parties scope, the other
+  scope the endpoint policy accepts, and the same party list.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs, scopes } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder, scopes.authorizedParties);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  test("AND the authorized parties scope makes the request return 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the response contains the same party list as the portal scope", function() {
+    expect(res.getBody().data).to.be.an("array").that.is.not.empty;
+    expect(findParty(res.getBody().data, testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid), "expected the accounting firm").to.not.be.undefined;
+  });
+}

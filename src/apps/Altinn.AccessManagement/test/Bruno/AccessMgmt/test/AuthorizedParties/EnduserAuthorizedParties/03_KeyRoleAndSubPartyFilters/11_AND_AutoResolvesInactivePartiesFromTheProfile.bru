@@ -1,0 +1,42 @@
+meta {
+  name: 11_AND_AutoResolvesInactivePartiesFromTheProfile
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeInactiveParties=auto
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeInactiveParties: auto
+}
+
+docs {
+  AND auto resolves the inactive party setting from the caller's user profile, so the
+  result has to match one of the two explicit settings rather than something in between.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder);
+}
+
+tests {
+  const { partyUuids } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  test("AND the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND auto returns the same parties as one of the explicit settings", function() {
+    const auto = JSON.stringify(partyUuids(res.getBody().data).sort());
+    const withInactive = bru.getVar("inactivePartiesTruePartyUuids");
+    const withoutInactive = bru.getVar("inactivePartiesFalsePartyUuids");
+    expect(auto, "auto resolved to a party set that matches neither true nor false").to.be.oneOf([withInactive, withoutInactive]);
+  });
+}

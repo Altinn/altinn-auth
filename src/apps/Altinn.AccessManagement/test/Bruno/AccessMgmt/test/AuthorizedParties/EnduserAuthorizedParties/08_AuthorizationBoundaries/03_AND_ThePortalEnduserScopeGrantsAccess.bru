@@ -1,0 +1,33 @@
+meta {
+  name: 03_AND_ThePortalEnduserScopeGrantsAccess
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties
+  body: none
+  auth: inherit
+}
+
+docs {
+  AND the same user gets 200 with the portal enduser scope, which is one of the two scopes
+  the endpoint policy accepts.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs, scopes } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder, scopes.portalEnduser);
+}
+
+tests {
+  test("AND the portal enduser scope makes the request return 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the response contains a party list", function() {
+    expect(res.getBody().data).to.be.an("array").that.is.not.empty;
+  });
+}

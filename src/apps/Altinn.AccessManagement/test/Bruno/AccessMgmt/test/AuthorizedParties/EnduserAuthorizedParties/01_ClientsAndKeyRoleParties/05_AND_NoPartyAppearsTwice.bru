@@ -1,0 +1,69 @@
+meta {
+  name: 05_AND_NoPartyAppearsTwice
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeRoles=true&includeAccessPackages=true&includeResources=true&includeInstances=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeRoles: true
+  includeAccessPackages: true
+  includeResources: true
+  includeInstances: true
+}
+
+docs {
+  AND no party appears twice anywhere in the response, neither twice at the top level
+  nor both at the top level and as a subunit of another party. A party the caller
+  reaches through several routes is merged into one entry.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder);
+}
+
+tests {
+  const { duplicatePartyUuids, flatten } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  test("AND the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND no party uuid appears more than once in the response", function() {
+    const duplicates = duplicatePartyUuids(res.getBody().data);
+    expect(duplicates.length, `duplicate party uuids: ${duplicates.join(", ")}`).to.equal(0);
+  });
+
+  test("AND a main unit's access is also present on its subunits", function() {
+    for (const party of res.getBody().data) {
+      for (const subunit of party.subunits) {
+        expect(subunit.authorizedAccessPackages, `subunit ${subunit.partyUuid} is missing packages held on its main unit`)
+          .to.include.members(party.authorizedAccessPackages);
+        expect(subunit.authorizedResources, `subunit ${subunit.partyUuid} is missing resources held on its main unit`)
+          .to.include.members(party.authorizedResources);
+        expect(subunit.authorizedRoles, `subunit ${subunit.partyUuid} is missing roles held on its main unit`)
+          .to.include.members(party.authorizedRoles);
+      }
+    }
+  });
+
+  test("AND instance access on a main unit is not inherited by its subunits", function() {
+    for (const party of flatten(res.getBody().data)) {
+      const parentInstances = party.authorizedInstances.map(instance => instance.instanceId);
+      for (const subunit of party.subunits) {
+        const inherited = subunit.authorizedInstances
+          .map(instance => instance.instanceId)
+          .filter(instanceId => parentInstances.includes(instanceId));
+        expect(inherited.length, `subunit ${subunit.partyUuid} inherited instances from its main unit: ${inherited.join(", ")}`).to.equal(0);
+      }
+    }
+  });
+}

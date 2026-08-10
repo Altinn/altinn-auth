@@ -1,0 +1,43 @@
+meta {
+  name: 03_AND_AProfileWithoutClientUnitsIsSampledWithKeyRolePartiesExcluded
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includePartiesViaKeyRoles=false
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includePartiesViaKeyRoles: false
+}
+
+docs {
+  AND to show what auto resolves to, the scenario switches to the daily leader of an
+  accounting firm whose profile has the client units setting turned off. This step
+  records the party list that the explicit false setting gives for that user.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.regnskapsforerShowClientUnitsFalse.dagligleder);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty, partyUuids } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  test("AND the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the user still reaches the firm they are daily leader for", function() {
+    expect(findParty(res.getBody().data, testdata.regnskapsforerShowClientUnitsFalse.partyUuid), "expected the user's own firm").to.not.be.undefined;
+  });
+
+  bru.setVar("keyRolesFalsePartyUuids", JSON.stringify(partyUuids(res.getBody().data).sort()));
+}

@@ -1,0 +1,47 @@
+meta {
+  name: 09_AND_InactivePartiesAreIncluded
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeInactiveParties=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeInactiveParties: true
+}
+
+docs {
+  AND with inactive parties included, a client that is marked as deleted in the Central
+  Coordinating Register is part of the result and carries the deleted flag.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty, partyUuids } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  const deletedClient = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_DELETED_2025_11_27_InnehaverAccess;
+
+  test("AND the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the deleted client is returned with the deleted flag set", function() {
+    const party = findParty(res.getBody().data, deletedClient.partyUuid);
+    expect(party, `expected the deleted client ${deletedClient.name}`).to.not.be.undefined;
+    expect(party.isDeleted).to.be.true;
+    expect(party.unitType).to.equal("ENK");
+  });
+
+  bru.setVar("inactivePartiesTruePartyUuids", JSON.stringify(partyUuids(res.getBody().data).sort()));
+}

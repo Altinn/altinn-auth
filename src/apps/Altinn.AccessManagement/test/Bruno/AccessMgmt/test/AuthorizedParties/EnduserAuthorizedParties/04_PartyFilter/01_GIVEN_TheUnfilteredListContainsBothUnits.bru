@@ -1,0 +1,47 @@
+meta {
+  name: 01_GIVEN_TheUnfilteredListContainsBothUnits
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeAccessPackages=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeAccessPackages: true
+}
+
+docs {
+  GIVEN the unfiltered party list contains both the rightholder client and its subunit,
+  so the filtered steps that follow are narrowing a list that would otherwise be wider.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  const client = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_rightholderOrg2;
+
+  test("GIVEN the unfiltered list, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("GIVEN the unfiltered list, it contains more than the parties under test", function() {
+    expect(res.getBody().data.length).to.be.greaterThan(1);
+  });
+
+  test("GIVEN the unfiltered list, it contains the rightholder client and its subunit", function() {
+    expect(findParty(res.getBody().data, client.partyUuid), "expected the rightholder client").to.not.be.undefined;
+    expect(findParty(res.getBody().data, client.subunit.partyUuid), "expected the rightholder client's subunit").to.not.be.undefined;
+  });
+}

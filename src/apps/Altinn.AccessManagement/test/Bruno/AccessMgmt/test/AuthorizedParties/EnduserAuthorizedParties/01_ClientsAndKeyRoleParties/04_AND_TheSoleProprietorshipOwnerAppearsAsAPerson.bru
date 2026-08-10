@@ -1,0 +1,71 @@
+meta {
+  name: 04_AND_TheSoleProprietorshipOwnerAppearsAsAPerson
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeRoles=true&includeAccessPackages=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeRoles: true
+  includeAccessPackages: true
+}
+
+docs {
+  AND the owner of a sole proprietorship client appears as a person party in their own
+  right, carrying the person fields and the same client packages as the sole
+  proprietorship.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  const enk = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL;
+  const accountantPackages = [
+    "regnskapsforer-lonn",
+    "regnskapsforer-med-signeringsrettighet",
+    "regnskapsforer-uten-signeringsrettighet",
+  ];
+
+  test("AND the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the sole proprietorship appears as an organization of unit type ENK", function() {
+    const party = findParty(res.getBody().data, enk.partyUuid);
+    expect(party, `expected the sole proprietorship ${enk.name} in the party list`).to.not.be.undefined;
+    expect(party.type).to.equal("Organization");
+    expect(party.unitType).to.equal("ENK");
+    expect(party.organizationNumber).to.equal(enk.orgno);
+    expect(party.authorizedAccessPackages).to.include.members(accountantPackages);
+  });
+
+  test("AND its owner appears as a person party with the person fields set", function() {
+    const owner = findParty(res.getBody().data, enk.innehaver.partyUuid);
+    expect(owner, `expected the owner ${enk.innehaver.name} in the party list`).to.not.be.undefined;
+    expect(owner.type).to.equal("Person");
+    expect(owner.personId).to.equal(enk.innehaver.pid);
+    expect(owner.partyId).to.equal(enk.innehaver.partyId);
+    expect(owner.dateOfBirth, "a person party carries a date of birth").to.match(/^\d{4}-\d{2}-\d{2}$/);
+    expect(owner.organizationNumber).to.be.null;
+    expect(owner.unitType).to.be.null;
+    expect(owner.subunits, "a person party has no subunits").to.be.empty;
+  });
+
+  test("AND the owner carries the same client packages as the sole proprietorship", function() {
+    const owner = findParty(res.getBody().data, enk.innehaver.partyUuid);
+    expect(owner.authorizedAccessPackages).to.include.members(accountantPackages);
+  });
+}

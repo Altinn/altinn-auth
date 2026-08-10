@@ -1,0 +1,55 @@
+meta {
+  name: 03_WHEN_AMainUnitDelegatesToASubunit
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeAccessPackages=true&includeResources=true&includeInstances=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeAccessPackages: true
+  includeResources: true
+  includeInstances: true
+}
+
+docs {
+  WHEN main unit A has delegated to subunit C, the daily leader of subunit C's main unit
+  does not see main unit A at all. Access delegated to a subunit does not reach the key
+  role holders of the subunit's main unit.
+
+  The correct behaviour is that main unit A appears for that caller with the delegated
+  access, since a key role on a main unit otherwise carries down to the unit's subunits.
+  The gap is tracked by #2952, and this step turns red when the fix lands.
+}
+
+script:pre-request {
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.authParties_hovedenhetC.dagligleder);
+}
+
+tests {
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  const delegator = testdata.authParties_hovedenhetA;
+  const recipientMainUnit = testdata.authParties_hovedenhetC;
+
+  test("WHEN a main unit delegates to a subunit, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the receiving subunit's key role holder does not see the delegating main unit (#2952)", function() {
+    expect(findParty(res.getBody().data, delegator.partyuuid), `${delegator.name} has started appearing for this caller, so this step needs to be flipped`).to.be.undefined;
+  });
+
+  test("THEN the caller only reaches their own main unit and themselves", function() {
+    expect(findParty(res.getBody().data, recipientMainUnit.partyuuid), "expected the caller's own main unit").to.not.be.undefined;
+    expect(findParty(res.getBody().data, recipientMainUnit.authParties_underenhetC.partyuuid), "expected the receiving subunit under the caller's own main unit").to.not.be.undefined;
+  });
+}

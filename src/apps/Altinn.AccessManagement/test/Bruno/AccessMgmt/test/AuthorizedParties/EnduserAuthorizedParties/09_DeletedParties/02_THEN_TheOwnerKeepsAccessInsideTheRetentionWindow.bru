@@ -1,0 +1,58 @@
+meta {
+  name: 02_THEN_TheOwnerKeepsAccessInsideTheRetentionWindow
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeAccessPackages=true&includeInactiveParties=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeAccessPackages: true
+  includeInactiveParties: true
+}
+
+docs {
+  THEN the owner of a sole proprietorship deleted inside the retention window is still an
+  authorized party for the accounting firm, and carries the same client packages as the
+  sole proprietorship itself.
+
+  The step derives the expectation from the deletion date in the fixture and the retention
+  window, so it keeps asserting the rule when the fixture ages out of the window.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty, isInsideRetentionWindow } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  const client = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_DELETED_2025_11_27_InnehaverAccess;
+  const insideWindow = isInsideRetentionWindow(client.deletedDate, testdata.deletedPartyRetentionYears);
+
+  test("THEN the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the owner is an authorized party while the deletion is inside the retention window", function() {
+    expect(insideWindow, `${client.name} was deleted on ${client.deletedDate}, which is outside the retention window of ${testdata.deletedPartyRetentionYears} years, so this fixture no longer covers the inside case`).to.be.true;
+    const owner = findParty(res.getBody().data, client.innehaver.partyUuid);
+    expect(owner, `expected the owner ${client.innehaver.name} of the recently deleted sole proprietorship`).to.not.be.undefined;
+    expect(owner.type).to.equal("Person");
+    expect(owner.isDeleted, "the owner is a living person, only the sole proprietorship is deleted").to.be.false;
+  });
+
+  test("THEN the owner carries the same client packages as the deleted sole proprietorship", function() {
+    const soleProprietorship = findParty(res.getBody().data, client.partyUuid);
+    const owner = findParty(res.getBody().data, client.innehaver.partyUuid);
+    expect(owner.authorizedAccessPackages).to.include.members(soleProprietorship.authorizedAccessPackages);
+  });
+}

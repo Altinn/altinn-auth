@@ -1,0 +1,55 @@
+meta {
+  name: 03_AND_FilteringOnASubunitOnlyResource
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeResources=true&anyOfResourceIds={{resourceId}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeResources: true
+  anyOfResourceIds: {{resourceId}}
+}
+
+docs {
+  AND when the resource is delegated only to a subunit, the subunit carries it and the
+  main unit above it is returned as a hierarchy element with no access of its own.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  bru.setVar("resourceId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_rightholderOrg2.subunit.resourceIdDelegatedToKeyRoleUnit);
+
+  await loginAs(testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  const client = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_rightholderOrg2;
+  const resourceId = client.subunit.resourceIdDelegatedToKeyRoleUnit;
+
+  test("AND the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the subunit carries the filtered resource", function() {
+    const subunit = findParty(res.getBody().data, client.subunit.partyUuid);
+    expect(subunit, "expected the subunit that carries the filtered resource").to.not.be.undefined;
+    expect(subunit.authorizedResources).to.have.members([resourceId]);
+  });
+
+  test("AND the main unit above it is a hierarchy element with no access", function() {
+    const mainUnit = findParty(res.getBody().data, client.partyUuid);
+    expect(mainUnit, "expected the main unit as a hierarchy carrier").to.not.be.undefined;
+    expect(mainUnit.onlyHierarchyElementWithNoAccess).to.be.true;
+    expect(mainUnit.authorizedResources).to.be.empty;
+  });
+}

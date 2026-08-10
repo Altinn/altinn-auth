@@ -1,0 +1,55 @@
+meta {
+  name: 10_WHEN_InactivePartiesAreExcluded
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeInactiveParties=false
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeInactiveParties: false
+}
+
+docs {
+  WHEN inactive parties are excluded, the deleted parties come back anyway. The service
+  resolves `includeInactiveParties` and then never applies it to the query, so the
+  parameter has no effect on the result.
+
+  The correct behaviour is that no party marked as deleted is returned. Completing the
+  filter is tracked by #3522, and this step turns red when the fix lands.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { flatten, findParty, partyUuids } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  const deletedClient = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_DELETED_2025_11_27_InnehaverAccess;
+
+  test("WHEN inactive parties are excluded, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN deleted parties are still returned, because the filter is not applied (#3522)", function() {
+    const deleted = flatten(res.getBody().data).filter(party => party.isDeleted);
+    expect(deleted, "the filter has started taking effect, so this step needs to be flipped").to.not.be.empty;
+  });
+
+  test("THEN the deleted client is still part of the result (#3522)", function() {
+    const party = findParty(res.getBody().data, deletedClient.partyUuid);
+    expect(party, "the filter has started taking effect, so this step needs to be flipped").to.not.be.undefined;
+    expect(party.isDeleted).to.be.true;
+  });
+
+  bru.setVar("inactivePartiesFalsePartyUuids", JSON.stringify(partyUuids(res.getBody().data).sort()));
+}

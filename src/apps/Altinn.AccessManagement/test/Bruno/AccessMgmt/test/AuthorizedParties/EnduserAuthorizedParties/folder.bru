@@ -1,0 +1,48 @@
+meta {
+  name: EnduserAuthorizedParties
+  seq: 3
+}
+
+auth {
+  mode: inherit
+}
+
+docs {
+  # Enduser authorized parties scenarios
+
+  BDD scenarios for `GET /accessmanagement/api/v1/enduser/authorizedparties`.
+
+  Each subfolder is one scenario. The files inside are the scenario steps, named
+  `NN_GIVEN|WHEN|THEN|AND|CLEANUP_...` and ordered by `seq`. Scenarios are independent of
+  each other and can run standalone, and anything a scenario creates it removes again, so
+  the whole folder can run repeatedly against a shared environment.
+
+  ## Response shape
+
+  The endpoint returns a paginated envelope, `{ "links": { "next": ... }, "data": [ ... ] }`.
+  Every step reads the party list from `res.getBody().data`.
+
+  A party carries `partyUuid`, `name`, `organizationNumber`, `parentId`, `personId`,
+  `dateOfBirth`, `partyId`, `emailId`, `type`, `unitType`, `isDeleted`,
+  `onlyHierarchyElementWithNoAccess`, `authorizedAccessPackages`, `authorizedResources`,
+  `authorizedRoles`, `authorizedInstances` and `subunits`. Subunits are nested under their
+  main unit rather than listed at the top level.
+
+  ## Authorization
+
+  The endpoint is behind the `EnduserAuthorizedParty` policy, which accepts either the
+  `altinn:portal/enduser` scope or `altinn:accessmanagement/authorizedparties`. The caller
+  is resolved from the user id claim, falling back to the system user uuid.
+
+  ## Personas and fixtures
+
+  - `test/AuthorizedParties/testdata/<env>.js`: the accounting firm tree around
+    REGN_ULASTELIG_RETTFERDIG_TIGER, its clients, rightholders, deleted sole
+    proprietorships, self identified users and the system user.
+  - `testdata/auth-parties-testdata/<env>.js`: the main unit / subunit / person matrix used
+    by the delegation direction scenario.
+
+  ## Environments
+
+  Runs against AT22.
+}

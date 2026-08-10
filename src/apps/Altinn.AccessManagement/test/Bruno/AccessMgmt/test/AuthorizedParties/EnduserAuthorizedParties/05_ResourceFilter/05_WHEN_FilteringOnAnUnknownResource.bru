@@ -1,0 +1,39 @@
+meta {
+  name: 05_WHEN_FilteringOnAnUnknownResource
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeResources=true&anyOfResourceIds=devtest_gar_enduser_authorizedparties_unknown_resource
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeResources: true
+  anyOfResourceIds: devtest_gar_enduser_authorizedparties_unknown_resource
+}
+
+docs {
+  WHEN the list is filtered on a resource id that is not registered, the request succeeds
+  and the party list is empty. No party can hold access to a resource that does not
+  exist, so nothing matches the filter.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder);
+}
+
+tests {
+  test("WHEN filtering on an unknown resource, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the party list is empty", function() {
+    expect(res.getBody().data).to.be.an("array").that.is.empty;
+  });
+}

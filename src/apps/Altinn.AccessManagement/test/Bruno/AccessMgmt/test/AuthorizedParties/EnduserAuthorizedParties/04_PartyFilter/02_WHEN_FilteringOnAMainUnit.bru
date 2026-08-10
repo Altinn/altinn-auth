@@ -1,0 +1,57 @@
+meta {
+  name: 02_WHEN_FilteringOnAMainUnit
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeAccessPackages=true&includeResources=true&partyFilter={{mainUnit}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeAccessPackages: true
+  includeResources: true
+  partyFilter: {{mainUnit}}
+}
+
+docs {
+  WHEN the list is filtered on a main unit, only that main unit is returned, with the
+  access the caller holds on it. The filter is on the party, not on the hierarchy, so the
+  main unit's subunits are not pulled in.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  bru.setVar("mainUnit", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_rightholderOrg2.partyUuid);
+
+  await loginAs(testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { flatten } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  const client = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_rightholderOrg2;
+
+  test("WHEN filtering on a main unit, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN only the filtered main unit is returned", function() {
+    const parties = flatten(res.getBody().data);
+    expect(parties.map(party => party.partyUuid.toLowerCase())).to.have.members([client.partyUuid.toLowerCase()]);
+  });
+
+  test("THEN the filtered main unit carries the access the caller holds on it", function() {
+    const party = res.getBody().data[0];
+    expect(party.organizationNumber).to.equal(client.orgno);
+    expect(party.onlyHierarchyElementWithNoAccess).to.be.false;
+    expect(party.authorizedAccessPackages).to.include(client.directPackageToDelegate);
+    expect(party.authorizedResources).to.include(client.resourceIdDelegatedToPerson);
+    expect(party.subunits, "the subunit is not pulled in by a main unit filter").to.be.empty;
+  });
+}

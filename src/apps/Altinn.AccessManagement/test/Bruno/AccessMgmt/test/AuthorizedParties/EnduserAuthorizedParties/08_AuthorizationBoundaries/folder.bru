@@ -1,0 +1,19 @@
+meta {
+  name: 08_AuthorizationBoundaries
+  seq: 8
+}
+
+docs {
+  Scenario: What the endpoint policy accepts
+
+    When no token is provided
+    Then the request fails with 401
+    When the token carries a scope the policy does not accept
+    Then the request fails with 403
+    When the token carries the portal enduser scope
+    Then the request succeeds
+    When the token carries the authorized parties scope
+    Then the request succeeds
+
+  Authorization negatives carry no problem body, so those steps assert the status alone.
+}

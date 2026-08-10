@@ -1,0 +1,19 @@
+meta {
+  name: 07_PartyKinds
+  seq: 7
+}
+
+docs {
+  Scenario: The kinds of caller the endpoint resolves
+
+    When a self identified user lists authorized parties
+    Then only that user's own party is returned, typed as self identified
+    When an ID-porten user registered by email lists authorized parties
+    Then the party carries the email identifier
+    When a rightholder with access packages lists authorized parties
+    Then the organisation that gave the packages is returned
+    When a rightholder without access packages lists authorized parties
+    Then the party list is empty
+    When a system user lists authorized parties
+    Then the organisation the system user belongs to is returned
+}

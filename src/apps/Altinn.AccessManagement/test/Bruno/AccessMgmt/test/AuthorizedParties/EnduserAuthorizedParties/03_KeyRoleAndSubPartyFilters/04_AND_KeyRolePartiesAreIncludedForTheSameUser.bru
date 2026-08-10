@@ -1,0 +1,44 @@
+meta {
+  name: 04_AND_KeyRolePartiesAreIncludedForTheSameUser
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includePartiesViaKeyRoles=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includePartiesViaKeyRoles: true
+}
+
+docs {
+  AND the explicit true setting overrides the profile for the same user, so the party
+  list is strictly larger than the one the false setting gives.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.regnskapsforerShowClientUnitsFalse.dagligleder);
+}
+
+tests {
+  const { partyUuids } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  test("AND the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the true setting returns strictly more parties than the false setting", function() {
+    const withoutKeyRoles = JSON.parse(bru.getVar("keyRolesFalsePartyUuids"));
+    const withKeyRoles = partyUuids(res.getBody().data);
+    expect(withKeyRoles).to.include.members(withoutKeyRoles);
+    expect(withKeyRoles.length, "the explicit true setting should reach the firm's client units").to.be.greaterThan(withoutKeyRoles.length);
+  });
+
+  bru.setVar("keyRolesTruePartyUuids", JSON.stringify(partyUuids(res.getBody().data).sort()));
+}

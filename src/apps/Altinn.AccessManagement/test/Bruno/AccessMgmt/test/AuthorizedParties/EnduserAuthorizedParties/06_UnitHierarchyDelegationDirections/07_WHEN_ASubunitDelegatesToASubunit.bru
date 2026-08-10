@@ -1,0 +1,58 @@
+meta {
+  name: 07_WHEN_ASubunitDelegatesToASubunit
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeAccessPackages=true&includeResources=true&includeInstances=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeAccessPackages: true
+  includeResources: true
+  includeInstances: true
+}
+
+docs {
+  WHEN subunit D has delegated to subunit C, the daily leader of subunit C's main unit
+  does not see subunit D or the main unit above it. This is the same gap as the main unit
+  to subunit step: access delegated to a subunit does not reach the key role holders of
+  the subunit's main unit.
+
+  The correct behaviour is that subunit D appears for that caller, nested under D's own
+  main unit as a hierarchy element with no access. The gap is tracked by #2952, and this
+  step turns red when the fix lands.
+}
+
+script:pre-request {
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.authParties_hovedenhetC.dagligleder);
+}
+
+tests {
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  const delegatorMainUnit = testdata.authParties_hovedenhetD;
+  const delegator = delegatorMainUnit.authParties_underenhetD;
+  const recipientMainUnit = testdata.authParties_hovedenhetC;
+
+  test("WHEN a subunit delegates to a subunit, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the receiving subunit's key role holder does not see the delegating subunit (#2952)", function() {
+    expect(findParty(res.getBody().data, delegator.partyuuid), `${delegator.name} has started appearing for this caller, so this step needs to be flipped`).to.be.undefined;
+    expect(findParty(res.getBody().data, delegatorMainUnit.partyuuid), `${delegatorMainUnit.name} has started appearing for this caller, so this step needs to be flipped`).to.be.undefined;
+  });
+
+  test("THEN the caller only reaches their own main unit and themselves", function() {
+    expect(findParty(res.getBody().data, recipientMainUnit.partyuuid), "expected the caller's own main unit").to.not.be.undefined;
+    expect(findParty(res.getBody().data, recipientMainUnit.authParties_underenhetC.partyuuid), "expected the receiving subunit under the caller's own main unit").to.not.be.undefined;
+  });
+}
