@@ -93,7 +93,7 @@ public static class ResourceRegistryDependencyInjectionExtensions
         var fs = new ManifestEmbeddedFileProvider(typeof(ResourceRegistryDependencyInjectionExtensions).Assembly, "Migration");
         builder.AddAltinnPostgresDataSource()
             .MapEnum<ResourceType>("resourceregistry.resourcetype")
-            .AddYuniqlMigrations(cfg =>
+            .AddYuniqlMigrations(typeof(ResourceRegistryDependencyInjectionExtensions), cfg =>
             {
                 cfg.WorkspaceFileProvider = fs;
                 cfg.Workspace = "/";

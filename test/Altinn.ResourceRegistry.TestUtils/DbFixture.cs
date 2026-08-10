@@ -136,11 +136,10 @@ public class DbFixture
 
         public void ConfigureServices(IServiceCollection services, string serviceName)
         {
-            services.AddOptions<YuniqlDatabaseMigratorOptions>()
-                .Configure(cfg =>
-                {
-                    cfg.Environment = "integrationtest";
-                });
+            services.PostConfigureAll<YuniqlDatabaseMigratorOptions>(cfg =>
+            {
+                cfg.Environment = "integrationtest";
+            });
         }
 
         public async ValueTask DisposeAsync()
