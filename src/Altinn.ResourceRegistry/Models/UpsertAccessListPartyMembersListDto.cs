@@ -4,7 +4,7 @@ using System.Collections;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Altinn.ResourceRegistry.Core.Register;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.Annotations;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -86,13 +86,19 @@ public class UpsertAccessListPartyMembersListDto(
 
     private sealed class SchemaFilter : ISchemaFilter
     {
-        public void Apply(OpenApiSchema schema, SchemaFilterContext context)
+        public void Apply(IOpenApiSchema schema, SchemaFilterContext context)
         {
-            schema.Type = "object";
-            schema.Properties.Clear();
-            schema.Properties.Add("data", context.SchemaGenerator.GenerateSchema(typeof(List<PartyUrn>), context.SchemaRepository));
-            schema.Required.Clear();
-            schema.Required.Add("data");
+            if (schema is not OpenApiSchema openApiSchema)
+            {
+                return;
+            }
+
+            openApiSchema.Type = JsonSchemaType.Object;
+            openApiSchema.Properties = new Dictionary<string, IOpenApiSchema>
+            {
+                { "data", context.SchemaGenerator.GenerateSchema(typeof(List<PartyUrn>), context.SchemaRepository) },
+            };
+            openApiSchema.Required = new HashSet<string> { "data" };
         }
     }
 }

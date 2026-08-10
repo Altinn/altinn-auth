@@ -1,5 +1,5 @@
-﻿using Microsoft.OpenApi.Any;
-using Microsoft.OpenApi.Models;
+﻿using System.Text.Json.Nodes;
+using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Altinn.ResourceRegistry.JsonPatch;
@@ -18,8 +18,8 @@ public sealed partial record class JsonPatchOperation
             return new()
             {
                 Description = "The operation to perform",
-                Type = "string",
-                Enum = [new OpenApiString(type)],
+                Type = JsonSchemaType.String,
+                Enum = [(JsonNode)type],
             };
         }
 
@@ -31,13 +31,13 @@ public sealed partial record class JsonPatchOperation
             };
         }
 
-        private static OpenApiSchema GetOrRegister(SchemaFilterContext context, Type type)
+        private static OpenApiSchemaReference GetOrRegister(SchemaFilterContext context, Type type)
         {
             if (!context.SchemaRepository.TryLookupByType(type, out var schema))
             {
                 var schemaId = type.Name;
-                schema = context.SchemaGenerator.GenerateSchema(type, context.SchemaRepository);
-                schema = context.SchemaRepository.AddDefinition(schemaId, schema);
+                var generated = context.SchemaGenerator.GenerateSchema(type, context.SchemaRepository);
+                schema = context.SchemaRepository.AddDefinition(schemaId, (OpenApiSchema)generated);
                 context.SchemaRepository.RegisterType(type, schemaId);
             }
 
@@ -45,16 +45,21 @@ public sealed partial record class JsonPatchOperation
         }
 
         /// <inheritdoc/>
-        public void Apply(OpenApiSchema schema, SchemaFilterContext context)
+        public void Apply(IOpenApiSchema schema, SchemaFilterContext context)
         {
+            if (schema is not OpenApiSchema openApiSchema)
+            {
+                return;
+            }
+
             var jsonPointer = GetOrRegister(context, typeof(JsonPointer));
 
             var add = context.SchemaRepository.AddDefinition("JsonPatchAddOperation", new()
             {
-                Type = "object",
+                Type = JsonSchemaType.Object,
                 AdditionalPropertiesAllowed = false,
                 Required = new HashSet<string> { OP, PATH, VALUE },
-                Properties = new Dictionary<string, OpenApiSchema>
+                Properties = new Dictionary<string, IOpenApiSchema>
                 {
                     { OP, OpSchema("add") },
                     { PATH, jsonPointer },
@@ -64,10 +69,10 @@ public sealed partial record class JsonPatchOperation
 
             var copy = context.SchemaRepository.AddDefinition("JsonPatchCopyOperation", new()
             {
-                Type = "object",
+                Type = JsonSchemaType.Object,
                 AdditionalPropertiesAllowed = false,
                 Required = new HashSet<string> { OP, FROM, PATH },
-                Properties = new Dictionary<string, OpenApiSchema>
+                Properties = new Dictionary<string, IOpenApiSchema>
                 {
                     { OP, OpSchema("copy") },
                     { FROM, jsonPointer },
@@ -77,10 +82,10 @@ public sealed partial record class JsonPatchOperation
 
             var move = context.SchemaRepository.AddDefinition("JsonPatchMoveOperation", new()
             {
-                Type = "object",
+                Type = JsonSchemaType.Object,
                 AdditionalPropertiesAllowed = false,
                 Required = new HashSet<string> { OP, FROM, PATH },
-                Properties = new Dictionary<string, OpenApiSchema>
+                Properties = new Dictionary<string, IOpenApiSchema>
                 {
                     { OP, OpSchema("move") },
                     { FROM, jsonPointer },
@@ -90,10 +95,10 @@ public sealed partial record class JsonPatchOperation
 
             var remove = context.SchemaRepository.AddDefinition("JsonPatchRemoveOperation", new()
             {
-                Type = "object",
+                Type = JsonSchemaType.Object,
                 AdditionalPropertiesAllowed = false,
                 Required = new HashSet<string> { OP, PATH },
-                Properties = new Dictionary<string, OpenApiSchema>
+                Properties = new Dictionary<string, IOpenApiSchema>
                 {
                     { OP, OpSchema("remove") },
                     { PATH, jsonPointer },
@@ -102,10 +107,10 @@ public sealed partial record class JsonPatchOperation
 
             var replace = context.SchemaRepository.AddDefinition("JsonPatchReplaceOperation", new()
             {
-                Type = "object",
+                Type = JsonSchemaType.Object,
                 AdditionalPropertiesAllowed = false,
                 Required = new HashSet<string> { OP, PATH, VALUE },
-                Properties = new Dictionary<string, OpenApiSchema>
+                Properties = new Dictionary<string, IOpenApiSchema>
                 {
                     { OP, OpSchema("replace") },
                     { PATH, jsonPointer },
@@ -115,10 +120,10 @@ public sealed partial record class JsonPatchOperation
 
             var test = context.SchemaRepository.AddDefinition("JsonPatchTestOperation", new()
             {
-                Type = "object",
+                Type = JsonSchemaType.Object,
                 AdditionalPropertiesAllowed = false,
                 Required = new HashSet<string> { OP, PATH, VALUE },
-                Properties = new Dictionary<string, OpenApiSchema>
+                Properties = new Dictionary<string, IOpenApiSchema>
                 {
                     { OP, OpSchema("test") },
                     { PATH, jsonPointer },
@@ -126,21 +131,21 @@ public sealed partial record class JsonPatchOperation
                 },
             });
 
-            schema.Properties.Clear();
-            schema.Discriminator = new() 
-            { 
+            openApiSchema.Properties?.Clear();
+            openApiSchema.Discriminator = new()
+            {
                 PropertyName = "op",
-                Mapping = new Dictionary<string, string>
+                Mapping = new Dictionary<string, OpenApiSchemaReference>
                 {
-                    { "add", add.Reference.ReferenceV3 },
-                    { "copy", copy.Reference.ReferenceV3 },
-                    { "move", move.Reference.ReferenceV3 },
-                    { "remove", remove.Reference.ReferenceV3 },
-                    { "replace", replace.Reference.ReferenceV3 },
-                    { "test", test.Reference.ReferenceV3 },
+                    { "add", add },
+                    { "copy", copy },
+                    { "move", move },
+                    { "remove", remove },
+                    { "replace", replace },
+                    { "test", test },
                 },
             };
-            schema.OneOf = [
+            openApiSchema.OneOf = [
                 add,
                 copy,
                 move,

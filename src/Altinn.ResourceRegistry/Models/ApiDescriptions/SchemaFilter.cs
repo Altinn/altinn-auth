@@ -1,6 +1,6 @@
 ﻿#nullable enable
 
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Altinn.ResourceRegistry.Models.ApiDescriptions;
@@ -13,14 +13,17 @@ public abstract class SchemaFilter<T>
     : ISchemaFilter
 {
     /// <inheritdoc/>
-    void ISchemaFilter.Apply(OpenApiSchema schema, SchemaFilterContext context)
+    void ISchemaFilter.Apply(IOpenApiSchema schema, SchemaFilterContext context)
     {
         if (context.Type != typeof(T))
         {
             return;
         }
 
-        Apply(schema, context);
+        if (schema is OpenApiSchema openApiSchema)
+        {
+            Apply(openApiSchema, context);
+        }
     }
 
     /// <summary>

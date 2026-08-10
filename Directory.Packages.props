@@ -15,8 +15,8 @@
     <PackageVersion Include="Altinn.Common.PEP" Version="4.2.3" />
     <PackageVersion Include="Altinn.Platform.Storage.Interface" Version="4.7.1" />
     <PackageVersion Include="Altinn.Swashbuckle.Abstractions" Version="3.1.0" />
-    <PackageVersion Include="Altinn.Urn.Swashbuckle" Version="3.0.0" />
-    <PackageVersion Include="Altinn.Urn" Version="3.0.0" />
+    <PackageVersion Include="Altinn.Urn.Swashbuckle" Version="5.0.0" />
+    <PackageVersion Include="Altinn.Urn" Version="5.0.0" />
     <PackageVersion Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.5.1" />
     <PackageVersion Include="Azure.Identity" Version="1.21.0" />
     <PackageVersion Include="Azure.Security.KeyVault.Certificates" Version="4.9.0" />
@@ -47,9 +47,9 @@
     <PackageVersion Include="Nerdbank.Streams" Version="2.13.31" />
     <PackageVersion Include="Npgsql" Version="9.0.5" />
     <PackageVersion Include="StyleCop.Analyzers" Version="1.2.0-beta.556" />
-    <PackageVersion Include="Swashbuckle.AspNetCore.Annotations" Version="7.3.2" />
-    <PackageVersion Include="Swashbuckle.AspNetCore.Filters" Version="8.0.3" />
-    <PackageVersion Include="Swashbuckle.AspNetCore" Version="7.3.2" />
+    <PackageVersion Include="Swashbuckle.AspNetCore.Annotations" Version="10.2.3" />
+    <PackageVersion Include="Swashbuckle.AspNetCore.Filters" Version="10.0.1" />
+    <PackageVersion Include="Swashbuckle.AspNetCore" Version="10.2.3" />
     <PackageVersion Include="Testcontainers.PostgreSql" Version="4.13.0" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
     <PackageVersion Include="xunit" Version="2.9.3" />

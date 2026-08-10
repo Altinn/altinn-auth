@@ -8,8 +8,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using CommunityToolkit.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.OpenApi.Any;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.Annotations;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -341,12 +340,17 @@ public sealed class JsonPointer
     private sealed class SchemaFilter : ISchemaFilter
     {
         /// <inheritdoc/>
-        public void Apply(OpenApiSchema schema, SchemaFilterContext context)
+        public void Apply(IOpenApiSchema schema, SchemaFilterContext context)
         {
-            schema.Type = "string";
-            schema.Format = "json-pointer";
-            schema.Items = null;
-            schema.Example = new OpenApiString("/foo/bar");
+            if (schema is not OpenApiSchema openApiSchema)
+            {
+                return;
+            }
+
+            openApiSchema.Type = JsonSchemaType.String;
+            openApiSchema.Format = "json-pointer";
+            openApiSchema.Items = null;
+            openApiSchema.Example = "/foo/bar";
         }
     }
 }

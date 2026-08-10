@@ -1,9 +1,9 @@
 ﻿#nullable enable
 
+using System.Text.Json.Nodes;
 using Altinn.ResourceRegistry.Core.AccessLists;
 using Altinn.ResourceRegistry.Models.ModelBinding;
-using Microsoft.OpenApi.Any;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Altinn.ResourceRegistry.Models.ApiDescriptions;
@@ -19,11 +19,11 @@ public sealed class AccessListIncludesSchemaFilter
     {
         schema.Enum = null;
         schema.Format = null;
-        schema.Type = "array";
+        schema.Type = JsonSchemaType.Array;
         schema.Items = new OpenApiSchema
         {
-            Type = "string",
-            Enum = AccessListIncludesModelBinder.AllowedValues.Select(v => (IOpenApiAny)new OpenApiString(v)).ToList(),
+            Type = JsonSchemaType.String,
+            Enum = AccessListIncludesModelBinder.AllowedValues.Select(v => (JsonNode)v).ToList(),
         };
     }
 }

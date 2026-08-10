@@ -26,7 +26,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.Filters;
 
 namespace Altinn.ResourceRegistry;
@@ -137,7 +137,7 @@ internal static class ResourceRegistryHost
 
         builder.Services.AddSwaggerGen(c =>
         {
-            c.AddSecurityDefinition("oauth2", new()
+            c.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme()
             {
                 Description = "Standard Authorization header using the Bearer scheme. Example: \"bearer {token}\"",
                 In = ParameterLocation.Header,

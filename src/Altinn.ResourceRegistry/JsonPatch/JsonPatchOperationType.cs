@@ -3,11 +3,11 @@
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using Altinn.ResourceRegistry.Extensions;
 using Altinn.ResourceRegistry.Models.ApiDescriptions;
-using Microsoft.OpenApi.Any;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.Annotations;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -174,15 +174,15 @@ internal class JsonPatchOperationTypeSchemaFilter
     /// <inheritdoc/>
     protected override void Apply(OpenApiSchema schema, SchemaFilterContext context)
     {
-        schema.Type = "string";
+        schema.Type = JsonSchemaType.String;
         schema.Format = null;
 
-        while (TryFind(schema.Enum, static v => v is OpenApiNull, out var index))
+        while (schema.Enum is not null && TryFind(schema.Enum, static v => v is null || v.GetValueKind() == System.Text.Json.JsonValueKind.Null, out var index))
         {
             schema.Enum.SwapRemoveAt(index);
         }
-        
-        static bool TryFind(IList<IOpenApiAny> list, Predicate<IOpenApiAny> predicate, out int index)
+
+        static bool TryFind(IList<JsonNode> list, Predicate<JsonNode?> predicate, out int index)
         {
             for (index = 0; index < list.Count; index++)
             {

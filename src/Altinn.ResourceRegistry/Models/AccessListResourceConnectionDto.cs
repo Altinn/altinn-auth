@@ -3,7 +3,7 @@
 using System.Text.Json.Serialization;
 using Altinn.ResourceRegistry.Core.AccessLists;
 using Altinn.ResourceRegistry.Core.Utils;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.Annotations;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -42,9 +42,15 @@ public record AccessListResourceConnectionDto(
     private sealed class SchemaFilter : ISchemaFilter
     {
         /// <inheritdoc/>
-        public void Apply(OpenApiSchema schema, SchemaFilterContext context)
+        public void Apply(IOpenApiSchema schema, SchemaFilterContext context)
         {
-            schema.Required.UnionWith(["resourceIdentifier", "createdAt", "updatedAt"]);
+            if (schema is not OpenApiSchema openApiSchema)
+            {
+                return;
+            }
+
+            openApiSchema.Required ??= new HashSet<string>();
+            openApiSchema.Required.UnionWith(["resourceIdentifier", "createdAt", "updatedAt"]);
         }
     }
 }

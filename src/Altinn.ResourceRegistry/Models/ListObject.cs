@@ -1,7 +1,7 @@
 ﻿#nullable enable
 
 using System.Text.Json.Serialization;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.Annotations;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -29,14 +29,23 @@ public abstract record ListObject
     protected class SchemaFilter : ISchemaFilter
     {
         /// <inheritdoc/>
-        public void Apply(OpenApiSchema schema, SchemaFilterContext context)
+        public void Apply(IOpenApiSchema schema, SchemaFilterContext context)
         {
-            foreach (var prop in schema.Properties)
+            if (schema is not OpenApiSchema openApiSchema || openApiSchema.Properties is null)
             {
-                schema.Required.Add(prop.Key);
+                return;
             }
 
-            schema.Properties["data"].Nullable = false;
+            openApiSchema.Required ??= new HashSet<string>();
+            foreach (var prop in openApiSchema.Properties)
+            {
+                openApiSchema.Required.Add(prop.Key);
+            }
+
+            if (openApiSchema.Properties.TryGetValue("data", out var dataSchema) && dataSchema is OpenApiSchema dataOpenApiSchema)
+            {
+                dataOpenApiSchema.Type &= ~JsonSchemaType.Null;
+            }
         }
     }
 }

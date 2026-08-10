@@ -4,8 +4,7 @@ using System.Text.Json.Serialization;
 using Altinn.ResourceRegistry.Core.AccessLists;
 using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Core.Utils;
-using Microsoft.OpenApi.Any;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.Annotations;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -59,17 +58,40 @@ public record AccessListInfoDto(
     private sealed class SchemaFilter : ISchemaFilter
     {
         /// <inheritdoc/>
-        public void Apply(OpenApiSchema schema, SchemaFilterContext context)
+        public void Apply(IOpenApiSchema schema, SchemaFilterContext context)
         {
-            schema.Required.UnionWith(["identifier", "name", "description", "createdAt", "updatedAt"]);
+            if (schema is not OpenApiSchema openApiSchema)
+            {
+                return;
+            }
 
-            schema.Properties["identifier"].Nullable = false;
-            schema.Properties["identifier"].Format = "slug";
-            schema.Properties["identifier"].Example = new OpenApiString("godkjente-banker");
-            schema.Properties["name"].Nullable = false;
-            schema.Properties["name"].Example = new OpenApiString("Godkjente banker");
-            schema.Properties["description"].Nullable = false;
-            schema.Properties["description"].Example = new OpenApiString("En liste over godkjente banker");
+            openApiSchema.Required ??= new HashSet<string>();
+            openApiSchema.Required.UnionWith(["identifier", "name", "description", "createdAt", "updatedAt"]);
+
+            var properties = openApiSchema.Properties;
+            if (properties is null)
+            {
+                return;
+            }
+
+            if (properties.TryGetValue("identifier", out var identifierSchema) && identifierSchema is OpenApiSchema identifier)
+            {
+                identifier.Type &= ~JsonSchemaType.Null;
+                identifier.Format = "slug";
+                identifier.Example = "godkjente-banker";
+            }
+
+            if (properties.TryGetValue("name", out var nameSchema) && nameSchema is OpenApiSchema name)
+            {
+                name.Type &= ~JsonSchemaType.Null;
+                name.Example = "Godkjente banker";
+            }
+
+            if (properties.TryGetValue("description", out var descriptionSchema) && descriptionSchema is OpenApiSchema description)
+            {
+                description.Type &= ~JsonSchemaType.Null;
+                description.Example = "En liste over godkjente banker";
+            }
         }
     }
 }

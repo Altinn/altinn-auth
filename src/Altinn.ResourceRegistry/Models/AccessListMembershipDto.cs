@@ -4,8 +4,7 @@ using System.Text.Json.Serialization;
 using Altinn.ResourceRegistry.Core.AccessLists;
 using Altinn.ResourceRegistry.Core.Register;
 using Altinn.Urn;
-using Microsoft.OpenApi.Any;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.Annotations;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -48,20 +47,32 @@ public record AccessListMembershipDto(
     private sealed class SchemaFilter : ISchemaFilter
     {
         /// <inheritdoc/>
-        public void Apply(OpenApiSchema schema, SchemaFilterContext context)
+        public void Apply(IOpenApiSchema schema, SchemaFilterContext context)
         {
-            schema.Required.Clear();
-            schema.Required.Add("id");
-            schema.Required.Add("since");
+            if (schema is not OpenApiSchema openApiSchema)
+            {
+                return;
+            }
 
-            var idSchema = schema.Properties["id"];
-            idSchema.Nullable = false;
-            idSchema.Type = "string";
-            idSchema.Format = "urn";
-            idSchema.Example = new OpenApiString("urn:altinn:party:e458014d-4d4f-49a1-96d5-a869d95e8715");
+            openApiSchema.Required = new HashSet<string> { "id", "since" };
 
-            var identifiersSchema = schema.Properties["identifiers"];
-            identifiersSchema.Nullable = true;
+            var properties = openApiSchema.Properties;
+            if (properties is null)
+            {
+                return;
+            }
+
+            if (properties.TryGetValue("id", out var idSchemaValue) && idSchemaValue is OpenApiSchema idSchema)
+            {
+                idSchema.Type = JsonSchemaType.String;
+                idSchema.Format = "urn";
+                idSchema.Example = "urn:altinn:party:e458014d-4d4f-49a1-96d5-a869d95e8715";
+            }
+
+            if (properties.TryGetValue("identifiers", out var identifiersSchemaValue) && identifiersSchemaValue is OpenApiSchema identifiersSchema)
+            {
+                identifiersSchema.Type |= JsonSchemaType.Null;
+            }
         }
     }
 }

@@ -3,7 +3,7 @@
 using System.Collections.Immutable;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.Annotations;
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -91,14 +91,18 @@ public sealed record class JsonPatchDocument
     private sealed class SchemaFilter : ISchemaFilter
     {
         /// <inheritdoc/>
-        public void Apply(OpenApiSchema schema, SchemaFilterContext context)
+        public void Apply(IOpenApiSchema schema, SchemaFilterContext context)
         {
-            var operationsSchema = schema.Properties["operations"];
+            if (schema is not OpenApiSchema openApiSchema || openApiSchema.Properties is null
+                || !openApiSchema.Properties.TryGetValue("operations", out var operationsSchema))
+            {
+                return;
+            }
 
-            schema.Properties.Clear();
-            schema.Type = "array";
-            schema.AdditionalPropertiesAllowed = true;
-            schema.Items = operationsSchema.Items;
+            openApiSchema.Properties.Clear();
+            openApiSchema.Type = JsonSchemaType.Array;
+            openApiSchema.AdditionalPropertiesAllowed = true;
+            openApiSchema.Items = operationsSchema.Items;
         }
     }
 }
