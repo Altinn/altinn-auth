@@ -1,0 +1,37 @@
+meta {
+  name: 02_AND_PartialTermMatches
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/search?term={{term}}
+  body: none
+  auth: none
+}
+
+params:query {
+  term: {{term}}
+}
+
+docs {
+  AND a partial term drawn from the middle of the package name also matches.
+}
+
+script:pre-request {
+  bru.setVar("term", "underhold");
+}
+
+tests {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  test("AND the partial term returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the matching package is the top result", function() {
+    const data = res.getBody();
+    expect(data).to.be.an("array").that.is.not.empty;
+    expect(data[0].object).to.have.property("id", td.packages.kunstOgUnderholdning.id);
+  });
+}

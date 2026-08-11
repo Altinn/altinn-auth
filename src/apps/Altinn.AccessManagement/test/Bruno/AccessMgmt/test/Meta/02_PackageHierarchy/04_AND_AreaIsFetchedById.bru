@@ -1,0 +1,40 @@
+meta {
+  name: 04_AND_AreaIsFetchedById
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/area/:id
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{areaId}}
+}
+
+docs {
+  AND the Kultur og frivillighet area is fetched by id, THEN its name is
+  returned.
+}
+
+script:pre-request {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  bru.setVar("areaId", td.areas.kulturOgFrivillighet.id);
+}
+
+tests {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  test("AND the area by id request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the area name matches", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("id", td.areas.kulturOgFrivillighet.id);
+    expect(body).to.have.property("name", td.areas.kulturOgFrivillighet.name);
+  });
+}

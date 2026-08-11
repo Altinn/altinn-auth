@@ -1,0 +1,37 @@
+meta {
+  name: 06_AND_ExportHierarchyIsFetched
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/export
+  body: none
+  auth: none
+}
+
+docs {
+  AND the export endpoint returns the same hierarchy nested under groups and
+  areas, THEN the Bransje group, the Kultur og frivillighet area and the
+  Kunst og underholdning package are all reachable in the nested structure.
+}
+
+tests {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  test("AND the export request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the group, area and package are reachable in the nested export", function() {
+    const groups = res.getBody();
+    const group = groups.find(g => g.id === td.groups.bransje.id);
+    expect(group, "expected the Bransje group in the export").to.exist;
+
+    const area = group.areas.find(a => a.id === td.areas.kulturOgFrivillighet.id);
+    expect(area, "expected the Kultur og frivillighet area under the group").to.exist;
+
+    const pkg = area.packages.find(p => p.id === td.packages.kunstOgUnderholdning.id);
+    expect(pkg, "expected the Kunst og underholdning package under the area").to.exist;
+  });
+}

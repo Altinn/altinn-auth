@@ -1,0 +1,39 @@
+meta {
+  name: 04_AND_AssignablePackageIsFlaggedAssignable
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/package/:id
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{packageId}}
+}
+
+docs {
+  AND a package known to be assignable is returned with isAssignable true.
+}
+
+script:pre-request {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  bru.setVar("packageId", td.packages.skattNaering.id);
+}
+
+tests {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  test("AND the assignable package request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN isAssignable is true", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("id", td.packages.skattNaering.id);
+    expect(body).to.have.property("isAssignable", true);
+  });
+}

@@ -1,0 +1,18 @@
+meta {
+  name: 08_Translation
+  seq: 8
+}
+
+docs {
+  Scenario: Accept-Language changes the name returned for a package and a role
+
+    When a package is requested with Accept-Language nb
+    And the same package is requested with Accept-Language en
+    And the same package is requested with Accept-Language nn
+    When a role is requested across the same three languages
+    And the X-Accept-Partial-Translation header is accepted
+
+  Package and role names are seeded with real nb/en/nn translations for the
+  entities used here, so the name actually changes per request. The scenario
+  is read only and needs no cleanup.
+}

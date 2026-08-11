@@ -1,0 +1,29 @@
+meta {
+  name: 10_WHEN_TermWithNoHitsReturnsNoContent
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/search?term={{term}}
+  body: none
+  auth: none
+}
+
+params:query {
+  term: {{term}}
+}
+
+docs {
+  WHEN the search term matches nothing at all, THEN the response is 204.
+}
+
+script:pre-request {
+  bru.setVar("term", "zzzznotfound12345");
+}
+
+tests {
+  test("WHEN the term has no hits, the request returns 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

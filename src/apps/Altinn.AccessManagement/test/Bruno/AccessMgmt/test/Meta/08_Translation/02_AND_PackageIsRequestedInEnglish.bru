@@ -1,0 +1,44 @@
+meta {
+  name: 02_AND_PackageIsRequestedInEnglish
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/package/:id
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{packageId}}
+}
+
+headers {
+  Accept-Language: en
+}
+
+docs {
+  AND the same package requested with Accept-Language en comes back with a
+  different, English name.
+}
+
+script:pre-request {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  bru.setVar("packageId", td.packages.kunstOgUnderholdning.id);
+}
+
+tests {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  test("AND Accept-Language en returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the name is translated to English", function() {
+    const body = res.getBody();
+    expect(body.name).to.equal(td.packages.kunstOgUnderholdning.enName);
+    expect(body.name).to.not.equal(td.packages.kunstOgUnderholdning.name);
+  });
+}

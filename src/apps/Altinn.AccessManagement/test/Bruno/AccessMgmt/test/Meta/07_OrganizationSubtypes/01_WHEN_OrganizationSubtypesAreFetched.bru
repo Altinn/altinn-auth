@@ -1,0 +1,44 @@
+meta {
+  name: 01_WHEN_OrganizationSubtypesAreFetched
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/types/organization/subtypes
+  body: none
+  auth: none
+}
+
+docs {
+  WHEN the organization subtypes are fetched, THEN the known variants are
+  present with their id, name and description.
+}
+
+tests {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  test("WHEN the organization subtypes are fetched, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the known variants are present with their fields", function() {
+    const data = res.getBody();
+    expect(data).to.be.an("array").that.is.not.empty;
+
+    const utbg = data.find(t => t.name === td.organizationSubtypes.utbg.name);
+    expect(utbg, "expected the UTBG subtype").to.exist;
+    expect(utbg).to.have.property("id", td.organizationSubtypes.utbg.id);
+    expect(utbg.description).to.be.a("string").that.is.not.empty;
+
+    const rev = data.find(t => t.name === td.organizationSubtypes.rev.name);
+    expect(rev, "expected the REV subtype").to.exist;
+    expect(rev).to.have.property("id", td.organizationSubtypes.rev.id);
+
+    data.forEach(t => {
+      expect(t).to.have.property("id");
+      expect(t).to.have.property("typeId");
+      expect(t).to.have.property("name");
+    });
+  });
+}

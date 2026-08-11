@@ -1,0 +1,46 @@
+meta {
+  name: 02_WHEN_PackageIsLookedUpById
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/package/:id
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{packageId}}
+}
+
+docs {
+  WHEN a package is looked up by id, THEN the full DTO is returned with its
+  id, name, urn, description, area and type.
+}
+
+script:pre-request {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  bru.setVar("packageId", td.packages.skattegrunnlag.id);
+}
+
+tests {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  test("WHEN a package is looked up by id, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the full package DTO is returned", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("id", td.packages.skattegrunnlag.id);
+    expect(body).to.have.property("name", td.packages.skattegrunnlag.name);
+    expect(body).to.have.property("urn", td.packages.skattegrunnlag.urn);
+    expect(body.description).to.be.a("string").that.is.not.empty;
+    expect(body.area).to.have.property("id");
+    expect(body.area).to.have.property("name");
+    expect(body.type).to.have.property("id");
+    expect(body.type).to.have.property("name");
+  });
+}

@@ -1,0 +1,16 @@
+meta {
+  name: 05_RoleLookup
+  seq: 5
+}
+
+docs {
+  Scenario: Roles can be listed and looked up by id
+
+    When the full role list is fetched
+    And a role is looked up by id
+
+  The roles endpoint binds no query parameters, so a role can only be found
+  by walking the full list. The by id action returns an array rather than a
+  single object; this scenario asserts that shape as it is. The scenario is
+  read only and needs no cleanup.
+}

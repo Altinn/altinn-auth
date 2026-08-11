@@ -1,0 +1,34 @@
+meta {
+  name: 05_AND_SimpleSearchMissesAFullNameFuzzySearchFinds
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/search?term={{term}}
+  body: none
+  auth: none
+}
+
+params:query {
+  term: {{term}}
+}
+
+docs {
+  AND simpleSearch is true by default and matches on substrings and
+  prefixes only. A term with one letter transposed, close enough for a
+  human to recognize but not a substring of the real name, finds nothing
+  under the default search, THEN the same term with simpleSearch false runs
+  FuzzySearch instead and finds the package anyway. This is a genuine
+  difference between the two search modes.
+}
+
+script:pre-request {
+  bru.setVar("term", "underholdnig");
+}
+
+tests {
+  test("AND the default simpleSearch returns 204 for a transposed term", function() {
+    expect(res.status).to.equal(204);
+  });
+}

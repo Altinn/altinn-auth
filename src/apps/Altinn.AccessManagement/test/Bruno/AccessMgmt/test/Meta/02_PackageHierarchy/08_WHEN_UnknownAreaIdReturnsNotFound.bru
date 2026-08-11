@@ -1,0 +1,30 @@
+meta {
+  name: 08_WHEN_UnknownAreaIdReturnsNotFound
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/area/:id
+  body: none
+  auth: none
+}
+
+params:path {
+  id: 00000000-0000-0000-0000-000000000000
+}
+
+docs {
+  WHEN an unknown area id is requested, THEN the response is 404.
+}
+
+tests {
+  test("WHEN the area id is unknown, the request returns 404", function() {
+    expect(res.status).to.equal(404);
+  });
+
+  test("THEN the response carries a problem body", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("status", 404);
+  });
+}

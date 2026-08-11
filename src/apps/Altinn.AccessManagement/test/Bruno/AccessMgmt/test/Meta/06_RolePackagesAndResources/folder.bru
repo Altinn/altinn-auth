@@ -1,0 +1,20 @@
+meta {
+  name: 06_RolePackagesAndResources
+  seq: 6
+}
+
+docs {
+  Scenario: A role's packages and resources can be fetched by code or by id
+
+    When a role's packages are fetched through the role and variant query
+    And the same packages are fetched through the {id}/packages route
+    And includeResources nests the resources behind each package
+    When a role's resources are fetched through the role and variant query
+    And the same resources are fetched through the {id}/resources route
+    And includePackageResources widens the resource list
+    When an unknown role code returns 404
+    And an unknown variant returns 404
+    When an unknown role id answers 200 with an empty list, not 404
+
+  The scenario is read only and needs no cleanup.
+}

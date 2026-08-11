@@ -1,0 +1,41 @@
+meta {
+  name: 01_WHEN_SearchMatchesByName
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/search?term={{term}}
+  body: none
+  auth: none
+}
+
+params:query {
+  term: {{term}}
+}
+
+docs {
+  WHEN the search term is the full name of a package, THEN that package is
+  the top match.
+}
+
+script:pre-request {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  bru.setVar("term", td.packages.kunstOgUnderholdning.name);
+}
+
+tests {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  test("WHEN the term matches a package name, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the matching package is the top result", function() {
+    const data = res.getBody();
+    expect(data).to.be.an("array").that.is.not.empty;
+    expect(data[0].object).to.have.property("id", td.packages.kunstOgUnderholdning.id);
+    expect(data[0].object).to.have.property("name", td.packages.kunstOgUnderholdning.name);
+  });
+}

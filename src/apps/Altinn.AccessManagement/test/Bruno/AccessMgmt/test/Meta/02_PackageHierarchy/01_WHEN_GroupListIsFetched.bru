@@ -1,0 +1,27 @@
+meta {
+  name: 01_WHEN_GroupListIsFetched
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/group/
+  body: none
+  auth: none
+}
+
+docs {
+  WHEN the area group list is fetched, THEN it includes the known top level
+  groups.
+}
+
+tests {
+  test("WHEN the group list is fetched, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the known groups are present", function() {
+    const names = res.getBody().map(g => g.name);
+    expect(names).to.include.members(["Allment", "Bransje", "Særskilt", "Innbygger"]);
+  });
+}

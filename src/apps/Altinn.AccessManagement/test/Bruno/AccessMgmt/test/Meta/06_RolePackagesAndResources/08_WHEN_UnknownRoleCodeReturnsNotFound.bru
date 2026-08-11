@@ -1,0 +1,26 @@
+meta {
+  name: 08_WHEN_UnknownRoleCodeReturnsNotFound
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/roles/packages?role=does-not-exist&variant=ENK
+  body: none
+  auth: none
+}
+
+params:query {
+  role: does-not-exist
+  variant: ENK
+}
+
+docs {
+  WHEN the role code does not resolve, THEN the request returns 404.
+}
+
+tests {
+  test("WHEN the role code is unknown, the request returns 404", function() {
+    expect(res.status).to.equal(404);
+  });
+}

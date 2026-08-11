@@ -1,0 +1,41 @@
+meta {
+  name: 03_AND_GroupAreasAreFetched
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/group/:id/areas
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{groupId}}
+}
+
+docs {
+  AND the areas belonging to the Bransje group are fetched, THEN the Kultur
+  og frivillighet area used later in this scenario is among them.
+}
+
+script:pre-request {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  bru.setVar("groupId", td.groups.bransje.id);
+}
+
+tests {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  test("AND the group areas request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the Kultur og frivillighet area is present", function() {
+    const data = res.getBody();
+    const area = data.find(a => a.id === td.areas.kulturOgFrivillighet.id);
+    expect(area, "expected the Kultur og frivillighet area in the group").to.exist;
+    expect(area.name).to.equal(td.areas.kulturOgFrivillighet.name);
+  });
+}

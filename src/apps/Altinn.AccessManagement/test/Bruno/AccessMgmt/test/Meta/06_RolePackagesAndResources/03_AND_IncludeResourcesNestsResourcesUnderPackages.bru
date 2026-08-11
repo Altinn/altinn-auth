@@ -1,0 +1,45 @@
+meta {
+  name: 03_AND_IncludeResourcesNestsResourcesUnderPackages
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/roles/packages?role={{role}}&variant={{variant}}&includeResources=true
+  body: none
+  auth: none
+}
+
+params:query {
+  role: {{role}}
+  variant: {{variant}}
+  includeResources: true
+}
+
+docs {
+  AND with includeResources set, a package known to carry resources through
+  the daglig-leder/AS role gets a populated resources array instead of an
+  empty one.
+}
+
+script:pre-request {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  bru.setVar("role", td.roles.dagligLeder.code);
+  bru.setVar("variant", td.roles.dagligLeder.variant);
+}
+
+tests {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  test("AND includeResources=true returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the known package carries a populated resources array", function() {
+    const data = res.getBody();
+    const pkg = data.find(p => p.id === td.roles.dagligLeder.packageWithResources.id);
+    expect(pkg, "expected the package with resources in the role package list").to.exist;
+    expect(pkg.resources).to.be.an("array").that.is.not.empty;
+  });
+}

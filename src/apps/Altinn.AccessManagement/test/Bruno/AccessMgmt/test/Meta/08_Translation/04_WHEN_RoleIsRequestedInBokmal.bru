@@ -1,0 +1,43 @@
+meta {
+  name: 04_WHEN_RoleIsRequestedInBokmal
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/roles/:id
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{roleId}}
+}
+
+headers {
+  Accept-Language: nb
+}
+
+docs {
+  WHEN a role is requested with Accept-Language nb, THEN the name is
+  returned in Bokmål.
+}
+
+script:pre-request {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  bru.setVar("roleId", td.roles.deltakerDeltAnsvar.id);
+}
+
+tests {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  test("WHEN Accept-Language is nb, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the role name is in Bokmål", function() {
+    const data = res.getBody();
+    expect(data[0].name).to.equal(td.roles.deltakerDeltAnsvar.name);
+  });
+}

@@ -1,0 +1,20 @@
+meta {
+  name: 02_PackageHierarchy
+  seq: 2
+}
+
+docs {
+  Scenario: The package hierarchy can be walked from the group level down
+
+    When the group list is fetched
+    And a group is fetched by id
+    And that group's areas are fetched
+    And an area is fetched by id
+    And that area's packages are fetched
+    And the export endpoint returns the same hierarchy
+    When an unknown group id is requested, the response is 404
+    When an unknown area id is requested, the response is 404
+
+  The hierarchy is group -> area -> package. The scenario is read only and
+  needs no cleanup.
+}

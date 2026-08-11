@@ -1,0 +1,32 @@
+meta {
+  name: 07_WHEN_UnknownPackageUrnReturnsNotFound
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/package/urn/:urnValue
+  body: none
+  auth: none
+}
+
+params:path {
+  urnValue: urn:altinn:accesspackage:does-not-exist
+}
+
+docs {
+  WHEN an unknown package urn is requested, THEN the response is 404 with a
+  standard problem body.
+}
+
+tests {
+  test("WHEN the package urn is unknown, the request returns 404", function() {
+    expect(res.status).to.equal(404);
+  });
+
+  test("THEN the response carries a problem body", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("status", 404);
+    expect(body).to.have.property("title");
+  });
+}

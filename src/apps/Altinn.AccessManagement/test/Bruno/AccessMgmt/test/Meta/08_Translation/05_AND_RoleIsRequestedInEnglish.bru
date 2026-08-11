@@ -1,0 +1,44 @@
+meta {
+  name: 05_AND_RoleIsRequestedInEnglish
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/roles/:id
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{roleId}}
+}
+
+headers {
+  Accept-Language: en
+}
+
+docs {
+  AND the same role requested with Accept-Language en comes back with a
+  different, English name.
+}
+
+script:pre-request {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  bru.setVar("roleId", td.roles.deltakerDeltAnsvar.id);
+}
+
+tests {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  test("AND Accept-Language en returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the role name is translated to English", function() {
+    const data = res.getBody();
+    expect(data[0].name).to.equal(td.roles.deltakerDeltAnsvar.enName);
+    expect(data[0].name).to.not.equal(td.roles.deltakerDeltAnsvar.name);
+  });
+}

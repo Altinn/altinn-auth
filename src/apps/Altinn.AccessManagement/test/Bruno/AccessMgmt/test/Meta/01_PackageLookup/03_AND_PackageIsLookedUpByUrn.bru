@@ -1,0 +1,41 @@
+meta {
+  name: 03_AND_PackageIsLookedUpByUrn
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/package/urn/:urnValue
+  body: none
+  auth: none
+}
+
+params:path {
+  urnValue: {{urnValue}}
+}
+
+docs {
+  AND the same package is looked up by urn, THEN it resolves to the same id
+  and name as the id lookup.
+}
+
+script:pre-request {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  bru.setVar("urnValue", td.packages.skattegrunnlag.urn);
+}
+
+tests {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  test("AND the urn lookup returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the same package is returned", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("id", td.packages.skattegrunnlag.id);
+    expect(body).to.have.property("name", td.packages.skattegrunnlag.name);
+    expect(body).to.have.property("urn", td.packages.skattegrunnlag.urn);
+  });
+}

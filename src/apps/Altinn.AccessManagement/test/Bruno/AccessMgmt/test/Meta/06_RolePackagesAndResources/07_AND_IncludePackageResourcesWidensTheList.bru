@@ -1,0 +1,42 @@
+meta {
+  name: 07_AND_IncludePackageResourcesWidensTheList
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/roles/resources?role={{role}}&variant={{variant}}&includePackageResources=true
+  body: none
+  auth: none
+}
+
+params:query {
+  role: {{role}}
+  variant: {{variant}}
+  includePackageResources: true
+}
+
+docs {
+  AND includePackageResources adds the resources reachable through the
+  role's packages on top of the resources the role holds directly, so the
+  list grows compared to the default query.
+}
+
+script:pre-request {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  bru.setVar("role", td.roles.dagligLeder.code);
+  bru.setVar("variant", td.roles.dagligLeder.variant);
+}
+
+tests {
+  test("AND includePackageResources=true returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN more resources are returned than without the flag", function() {
+    const data = res.getBody();
+    const directResourceCount = Number(bru.getVar("directResourceCount"));
+    expect(data.length).to.be.greaterThan(directResourceCount);
+  });
+}
