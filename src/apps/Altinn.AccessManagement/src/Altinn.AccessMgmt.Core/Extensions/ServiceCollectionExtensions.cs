@@ -36,7 +36,7 @@ public static class ServiceCollectionExtensions
     /// </summary>
     public static MeterProviderBuilder AddCoreTelemetry(this MeterProviderBuilder builder) =>
         builder.AddMeter(CoreTelemetry.SourceName);
-    
+
     /// <summary>
     /// Enables Core Telemetry.
     /// </summary>
@@ -51,7 +51,6 @@ public static class ServiceCollectionExtensions
     {
         services.AddCoreOtel();
         services.AddHostedService<RegisterHostedService>();
-        services.AddHostedService<ConsentMigrationHostedService>();
         services.AddHostedService<OutboxHandlerJob>();
         services.AddHostedService<OutboxReaperJob>();
         services.AddScoped<RegisterHostedService>();
@@ -104,18 +103,9 @@ public static class ServiceCollectionExtensions
         services.AddOptions<CoreAppsettings>()
             .Configure(configureAppsettings);
 
-        // Consent Migration - Configuration
-        services.AddOptions<ConsentMigrationSettings>()
-                .ValidateDataAnnotations()
-                .ValidateOnStart()
-                .BindConfiguration("ConsentMigration");
-
         // Resource Owner Delegation - Configuration
         services.AddOptions<ServiceOwnerDelegationSettings>()
                 .BindConfiguration("ServiceOwnerDelegation");
-
-        // Consent Migration - Services (Core - Scoped)
-        services.AddScoped<IConsentMigrationService, ConsentMigrationService>();
 
         AddJobs(services);
         return services;
@@ -126,6 +116,5 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IPartySyncService, PartySyncService>();
         services.AddSingleton<IRoleSyncService, RoleSyncService>();
         services.AddSingleton<IResourceSyncService, ResourceSyncService>();
-        services.AddSingleton<IConsentMigrationSyncService, ConsentMigrationSyncService>();
     }
 }

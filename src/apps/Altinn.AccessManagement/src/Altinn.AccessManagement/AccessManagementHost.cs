@@ -105,7 +105,6 @@ internal static partial class AccessManagementHost
 
         builder.Services.AddSingleton<AuthorizedPartiesTelemetry>();
         builder.Services.ConfigureOpenTelemetryMeterProvider(provider => provider
-            .AddMeter("Altinn.AccessManagement.ConsentMigration")
             .AddMeter(AuthorizedPartiesTelemetry.MeterName));
 
         var connectionStrings = GetConnectionStrings(builder.Configuration);

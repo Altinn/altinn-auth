@@ -16,7 +16,6 @@ db_compute_sku   = "D2"
 configuration = {
   consent = {
     events_page_size      = 5
-    only_expired_consents = false
   }
   core = {
     request_notify_request_approved_in_seconds = 30

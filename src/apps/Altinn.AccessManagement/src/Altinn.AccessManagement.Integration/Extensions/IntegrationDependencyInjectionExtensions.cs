@@ -50,13 +50,6 @@ public static class IntegrationDependencyInjectionExtensions
                 c.Retry.ShouldHandle = static _ => ValueTask.FromResult(false);
                 c.AttemptTimeout.Timeout = TimeSpan.FromSeconds(15);
             });
-        builder.Services.AddHttpClient<IAltinn2ConsentClient, Altinn2ConsentClient>()
-            .ReplaceResilienceHandler(static c =>
-            {
-                c.Retry.ShouldHandle = static _ => ValueTask.FromResult(false);
-                c.CircuitBreaker.SamplingDuration = TimeSpan.FromSeconds(60);
-                c.AttemptTimeout.Timeout = TimeSpan.FromSeconds(30);
-            });
 
         return builder;
     }
