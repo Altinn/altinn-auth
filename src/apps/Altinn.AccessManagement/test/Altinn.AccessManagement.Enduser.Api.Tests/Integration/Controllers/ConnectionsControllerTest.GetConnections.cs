@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Security.Claims;
 using System.Text.Json;
 using Altinn.AccessManagement.Api.Enduser.Controllers;
@@ -21,10 +21,13 @@ public partial class ConnectionsControllerTest
     /// <remarks>
     /// <para>
     /// Seed Data:
-    /// - Nordis AS → Verdiq AS: Rightholder and Accountant assignments
-    /// - Verdiq AS → Paula and Ørjan: Agent assignments
-    /// - Nordis AS → Paula: Agent assignment
-    /// - AssignmentPackage linking Nordis→Verdiq Rightholder to DocumentBasedSupervision
+    /// - Nordis AS -> Verdiq AS: Rightholder and Accountant assignments
+    /// - Verdiq AS -> Paula and Ørjan: Agent assignments
+    /// - Nordis AS -> Paula: Agent assignment
+    /// - AssignmentPackage linking Nordis->Verdiq Rightholder to DocumentBasedSupervision
+    /// - A dedicated client delegation chain on its own parties: Bekkelia Regnskapsklient AS (client) -> Fjordheim
+    ///   Regnskap AS (facilitator, Accountant) -> Kasper Bekk (agent, Agent), with the Mattilsynet bakery resource
+    ///   delegated to the agent through an AssignmentResource on the client-side assignment
     /// </para>
     /// <para>
     /// The tests verify bidirectional scope enforcement: from-others read scope is required when
@@ -37,6 +40,10 @@ public partial class ConnectionsControllerTest
     [Collection(ConnectionsReadOnlyCollection.Name)]
     public class GetConnections
     {
+        private static readonly Guid ClientDelegationClient = Guid.Parse("0196b100-0000-7000-8000-000000000001");
+        private static readonly Guid ClientDelegationFacilitator = Guid.Parse("0196b100-0000-7000-8000-000000000002");
+        private static readonly Guid ClientDelegationAgent = Guid.Parse("0196b100-0000-7000-8000-000000000003");
+
         public GetConnections(ApiFixture fixture)
         {
             Fixture = fixture;
@@ -88,6 +95,84 @@ public partial class ConnectionsControllerTest
                 db.Assignments.Add(agentFromNordisToPaula);
 
                 db.SaveChanges();
+
+                db.Entities.AddRange(
+                    new Entity()
+                    {
+                        Id = ClientDelegationClient,
+                        Name = "Bekkelia Regnskapsklient AS",
+                        TypeId = EntityTypeConstants.Organization,
+                        VariantId = EntityVariantConstants.AS,
+                        OrganizationIdentifier = "399950001",
+                        RefId = "399950001",
+                        PartyId = 50950001,
+                    },
+                    new Entity()
+                    {
+                        Id = ClientDelegationFacilitator,
+                        Name = "Fjordheim Regnskap AS",
+                        TypeId = EntityTypeConstants.Organization,
+                        VariantId = EntityVariantConstants.AS,
+                        OrganizationIdentifier = "399950002",
+                        RefId = "399950002",
+                        PartyId = 50950002,
+                    },
+                    new Entity()
+                    {
+                        Id = ClientDelegationAgent,
+                        Name = "Kasper Bekk",
+                        TypeId = EntityTypeConstants.Person,
+                        VariantId = EntityVariantConstants.Person,
+                        PersonIdentifier = "17019099931",
+                        RefId = "17019099931",
+                        PartyId = 50950003,
+                        UserId = 50950003,
+                        DateOfBirth = new DateOnly(1990, 1, 17),
+                    });
+
+                db.SaveChanges();
+
+                var accountantFromClientToFacilitator = new Assignment()
+                {
+                    FromId = ClientDelegationClient,
+                    ToId = ClientDelegationFacilitator,
+                    RoleId = RoleConstants.Accountant,
+                };
+
+                var agentFromFacilitatorToKasper = new Assignment()
+                {
+                    FromId = ClientDelegationFacilitator,
+                    ToId = ClientDelegationAgent,
+                    RoleId = RoleConstants.Agent,
+                };
+
+                var assignmentResourceForClient = new AssignmentResource()
+                {
+                    AssignmentId = accountantFromClientToFacilitator.Id,
+                    ResourceId = TestData.MattilsynetBakeryService.Id,
+                    PolicyPath = "mattilsynet-baker-konditorvare/50950001/p50950003/delegationpolicy.xml",
+                    PolicyVersion = "1.0",
+                };
+
+                var delegationToKasper = new AccessMgmt.PersistenceEF.Models.Delegation()
+                {
+                    FromId = accountantFromClientToFacilitator.Id,
+                    ToId = agentFromFacilitatorToKasper.Id,
+                    FacilitatorId = ClientDelegationFacilitator,
+                };
+
+                db.Assignments.Add(accountantFromClientToFacilitator);
+                db.Assignments.Add(agentFromFacilitatorToKasper);
+                db.AssignmentResources.Add(assignmentResourceForClient);
+                db.Delegations.Add(delegationToKasper);
+                db.DelegationResources.Add(new DelegationResource()
+                {
+                    DelegationId = delegationToKasper.Id,
+                    ResourceId = TestData.MattilsynetBakeryService.Id,
+                    AssignmentResourceId = assignmentResourceForClient.Id,
+                });
+
+                db.SaveChanges();
             });
         }
 
@@ -98,6 +183,18 @@ public partial class ConnectionsControllerTest
             var client = Fixture.Server.CreateClient();
             var token = TestTokenGenerator.CreateToken(new ClaimsIdentity("mock"), claims =>
             {
+                claims.Add(new Claim("scope", string.Join(" ", scopes)));
+            });
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            return client;
+        }
+
+        private HttpClient CreateClient(Guid partyUuid, params string[] scopes)
+        {
+            var client = Fixture.Server.CreateClient();
+            var token = TestTokenGenerator.CreateToken(new ClaimsIdentity("mock"), claims =>
+            {
+                claims.Add(new Claim(AltinnCoreClaimTypes.PartyUuid, partyUuid.ToString()));
                 claims.Add(new Claim("scope", string.Join(" ", scopes)));
             });
             client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
@@ -192,6 +289,81 @@ public partial class ConnectionsControllerTest
             var response = await client.GetAsync($"{Route}?party={TestEntities.OrganizationVerdiqAS.Id}&from={TestEntities.OrganizationVerdiqAS}&to={TestEntities.SystemUserStandard.Id}", TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        }
+
+        /// <summary>
+        /// Kasper, agent of the facilitator Fjordheim Regnskap, lists his incoming connections with client delegations included.
+        /// The client Bekkelia Regnskapsklient is reached only through the client delegation, so it must be present.
+        /// </summary>
+        [Fact]
+        public async Task ListConnections_WithClientDelegationsIncluded_Returns200WithClientDelegatedConnection()
+        {
+            var client = CreateClient(ClientDelegationAgent, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
+
+            var response = await client.GetAsync($"{Route}?party={ClientDelegationAgent}&to={ClientDelegationAgent}&includeClientDelegations=true", TestContext.Current.CancellationToken);
+
+            var data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {data}");
+
+            var result = JsonSerializer.Deserialize<PaginatedResult<ConnectionDto>>(data, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            Assert.Contains(result.Items, c => c.Party.Id == ClientDelegationClient);
+        }
+
+        /// <summary>
+        /// Same query with resources requested: the resource delegated through the client delegation is included on the connection.
+        /// </summary>
+        [Fact]
+        public async Task ListConnections_WithClientDelegationsAndResourcesIncluded_Returns200WithClientDelegatedResource()
+        {
+            var client = CreateClient(ClientDelegationAgent, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
+
+            var response = await client.GetAsync($"{Route}?party={ClientDelegationAgent}&to={ClientDelegationAgent}&includeClientDelegations=true&includeResources=true", TestContext.Current.CancellationToken);
+
+            var data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {data}");
+
+            var result = JsonSerializer.Deserialize<PaginatedResult<ConnectionDto>>(data, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            var connection = Assert.Single(result.Items, c => c.Party.Id == ClientDelegationClient);
+            Assert.Contains(connection.Resources, r => r.Id == TestData.MattilsynetBakeryService.Id);
+        }
+
+        /// <summary>
+        /// Without resources requested the client delegated connection is still returned, but carries no resources.
+        /// </summary>
+        [Fact]
+        public async Task ListConnections_WithClientDelegationsIncludedWithoutResources_Returns200WithConnectionWithoutResources()
+        {
+            var client = CreateClient(ClientDelegationAgent, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
+
+            var response = await client.GetAsync($"{Route}?party={ClientDelegationAgent}&to={ClientDelegationAgent}&includeClientDelegations=true&includeResources=false", TestContext.Current.CancellationToken);
+
+            var data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {data}");
+
+            var result = JsonSerializer.Deserialize<PaginatedResult<ConnectionDto>>(data, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            var connection = Assert.Single(result.Items, c => c.Party.Id == ClientDelegationClient);
+            Assert.Empty(connection.Resources);
+        }
+
+        /// <summary>
+        /// With client delegations excluded the client is not reachable for the agent at all.
+        /// </summary>
+        [Fact]
+        public async Task ListConnections_WithClientDelegationsExcluded_Returns200WithoutClientDelegatedConnection()
+        {
+            var client = CreateClient(ClientDelegationAgent, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
+
+            var response = await client.GetAsync($"{Route}?party={ClientDelegationAgent}&to={ClientDelegationAgent}&includeClientDelegations=false&includeResources=true", TestContext.Current.CancellationToken);
+
+            var data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {data}");
+
+            var result = JsonSerializer.Deserialize<PaginatedResult<ConnectionDto>>(data, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            Assert.DoesNotContain(result.Items, c => c.Party.Id == ClientDelegationClient);
         }
     }
 }

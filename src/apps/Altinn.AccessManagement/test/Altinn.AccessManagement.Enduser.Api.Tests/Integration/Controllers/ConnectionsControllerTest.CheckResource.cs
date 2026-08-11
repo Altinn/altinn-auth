@@ -24,7 +24,7 @@ public partial class ConnectionsControllerTest
     /// <remarks>
     /// <para>
     /// Seed Data:
-    /// - Assignment: Nordis AS → Verdiq AS (Rightholder)
+    /// - Assignment: Nordis AS -> Verdiq AS (Rightholder)
     /// </para>
     /// <para>
     /// Pre-seeded via <see cref="TestDataSeeds"/>:
@@ -49,6 +49,10 @@ public partial class ConnectionsControllerTest
     [IntegrationTest]
     public class CheckResource : IClassFixture<ApiFixture>
     {
+        private static readonly Guid ClientDelegationClient = Guid.Parse("0196b130-0000-7000-8000-000000000001");
+        private static readonly Guid ClientDelegationFacilitator = Guid.Parse("0196b130-0000-7000-8000-000000000002");
+        private static readonly Guid ClientDelegationAgent = Guid.Parse("0196b130-0000-7000-8000-000000000003");
+
         public CheckResource(ApiFixture fixture)
         {
             Fixture = fixture;
@@ -66,6 +70,84 @@ public partial class ConnectionsControllerTest
                 };
 
                 db.Assignments.Add(rightholderFromNordisToVerdiq);
+                db.SaveChanges();
+
+                db.Entities.AddRange(
+                    new Entity()
+                    {
+                        Id = ClientDelegationClient,
+                        Name = "Havna Fiskemat AS",
+                        TypeId = EntityTypeConstants.Organization,
+                        VariantId = EntityVariantConstants.AS,
+                        OrganizationIdentifier = "399950061",
+                        RefId = "399950061",
+                        PartyId = 50950061,
+                    },
+                    new Entity()
+                    {
+                        Id = ClientDelegationFacilitator,
+                        Name = "Sundet Regnskap AS",
+                        TypeId = EntityTypeConstants.Organization,
+                        VariantId = EntityVariantConstants.AS,
+                        OrganizationIdentifier = "399950062",
+                        RefId = "399950062",
+                        PartyId = 50950062,
+                    },
+                    new Entity()
+                    {
+                        Id = ClientDelegationAgent,
+                        Name = "Jonas Sundet",
+                        TypeId = EntityTypeConstants.Person,
+                        VariantId = EntityVariantConstants.Person,
+                        PersonIdentifier = "23019099937",
+                        RefId = "23019099937",
+                        PartyId = 50950063,
+                        UserId = 50950063,
+                        DateOfBirth = new DateOnly(1990, 1, 23),
+                    });
+
+                db.SaveChanges();
+
+                var accountantFromClientToFacilitator = new Assignment()
+                {
+                    FromId = ClientDelegationClient,
+                    ToId = ClientDelegationFacilitator,
+                    RoleId = RoleConstants.Accountant,
+                };
+
+                var agentFromFacilitatorToJonas = new Assignment()
+                {
+                    FromId = ClientDelegationFacilitator,
+                    ToId = ClientDelegationAgent,
+                    RoleId = RoleConstants.Agent,
+                };
+
+                var assignmentResourceForClient = new AssignmentResource()
+                {
+                    AssignmentId = accountantFromClientToFacilitator.Id,
+                    ResourceId = TestData.SiriusSkattemelding.Id,
+                    PolicyPath = "sirius-skattemelding-v1/50083510/p50155461/delegationpolicy.xml",
+                    PolicyVersion = "1.0",
+                };
+
+                var delegationToJonas = new AccessMgmt.PersistenceEF.Models.Delegation()
+                {
+                    FromId = accountantFromClientToFacilitator.Id,
+                    ToId = agentFromFacilitatorToJonas.Id,
+                    FacilitatorId = ClientDelegationFacilitator,
+                };
+
+                db.Assignments.Add(accountantFromClientToFacilitator);
+                db.Assignments.Add(agentFromFacilitatorToJonas);
+                db.AssignmentResources.Add(assignmentResourceForClient);
+                db.Delegations.Add(delegationToJonas);
+                db.DelegationResources.Add(new DelegationResource()
+                {
+                    DelegationId = delegationToJonas.Id,
+                    ResourceId = TestData.SiriusSkattemelding.Id,
+                    AssignmentResourceId = assignmentResourceForClient.Id,
+                });
+
                 db.SaveChanges();
             });
         }
@@ -207,6 +289,33 @@ public partial class ConnectionsControllerTest
             Assert.NotEmpty(signRight.ReasonCodes);
             Assert.Contains(signRight.ReasonCodes, r => r.Equals(DelegationCheckReasonCode.MissingRoleAccess));
             Assert.Contains(signRight.ReasonCodes, r => r.Equals(DelegationCheckReasonCode.MissingDelegationAccess));
+        }
+
+        /// <summary>
+        /// Jonas is an agent who reaches Havna Fiskemat's Skattemelding only through a client delegation.
+        /// Holding a resource that way lets him use it, but never delegate it onward, so the delegation check
+        /// must deny every right. This pins the delegation check against the client delegated holdings the
+        /// read endpoints report.
+        /// </summary>
+        [Fact]
+        public async Task CheckResource_AsAgentHoldingResourceOnlyByClientDelegation_Returns200WithAllRightsDeniedForMissingDelegationAccess()
+        {
+            HttpClient client = CreateClient(ClientDelegationAgent, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE);
+            HttpResponseMessage response = await client.GetAsync($"{Route}/resources/delegationcheck?party={ClientDelegationClient}&resource=app_skd_sirius-skattemelding-v1", TestContext.Current.CancellationToken);
+
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {responseContent}");
+
+            ResourceCheckDto result = JsonSerializer.Deserialize<ResourceCheckDto>(responseContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            Assert.NotNull(result);
+            Assert.NotEmpty(result.Rights);
+            Assert.DoesNotContain(result.Rights, r => r.Result == true);
+
+            foreach (RightCheckDto right in result.Rights)
+            {
+                Assert.Contains(right.ReasonCodes, r => r.Equals(DelegationCheckReasonCode.MissingDelegationAccess));
+                Assert.DoesNotContain(right.ReasonCodes, r => r.Equals(DelegationCheckReasonCode.DelegationAccess));
+            }
         }
 
         /// <summary>

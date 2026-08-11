@@ -11,8 +11,11 @@ using Altinn.AccessManagement.TestUtils.Data;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
+using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
+using Altinn.Authorization.ProblemDetails;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers;
@@ -31,7 +34,10 @@ public partial class ConnectionsControllerTest
     /// <remarks>
     /// <para>
     /// Seed Data:
-    /// - Assignment: Dumbo Adventures → Mille Hundefrisør (Rightholder)
+    /// - Assignment: Dumbo Adventures -> Mille Hundefrisør (Rightholder)
+    /// - Two dedicated client delegation chains on their own parties, one used for the revocation guard and one used
+    ///   for the cascade check, each shaped client -> facilitator (Accountant) -> agent (Agent) with the Mattilsynet
+    ///   bakery resource delegated to the agent
     /// </para>
     /// <para>
     /// Pre-seeded via <see cref="TestDataSeeds"/>:
@@ -57,6 +63,15 @@ public partial class ConnectionsControllerTest
     [IntegrationTest]
     public class RemoveResource : IClassFixture<ApiFixture>
     {
+        private static readonly Guid GuardClient = Guid.Parse("0196b120-0000-7000-8000-000000000001");
+        private static readonly Guid GuardFacilitator = Guid.Parse("0196b120-0000-7000-8000-000000000002");
+        private static readonly Guid GuardAgent = Guid.Parse("0196b120-0000-7000-8000-000000000003");
+        private static readonly Guid CascadeClient = Guid.Parse("0196b120-0000-7000-8000-000000000011");
+        private static readonly Guid CascadeFacilitator = Guid.Parse("0196b120-0000-7000-8000-000000000012");
+        private static readonly Guid CascadeAgent = Guid.Parse("0196b120-0000-7000-8000-000000000013");
+        private static readonly Guid CascadeClientAssignment = Guid.Parse("0196b120-0000-7000-8000-000000000021");
+        private static readonly Guid CascadeDelegationResource = Guid.Parse("0196b120-0000-7000-8000-000000000022");
+
         public RemoveResource(ApiFixture fixture)
         {
             Fixture = fixture;
@@ -76,7 +91,135 @@ public partial class ConnectionsControllerTest
 
                 db.Assignments.Add(rightholderFromDumboToMille);
                 db.SaveChanges();
+
+                db.Entities.AddRange(
+                    new Entity()
+                    {
+                        Id = GuardClient,
+                        Name = "Lysaker Blomster AS",
+                        TypeId = EntityTypeConstants.Organization,
+                        VariantId = EntityVariantConstants.AS,
+                        OrganizationIdentifier = "399950031",
+                        RefId = "399950031",
+                        PartyId = 50950031,
+                    },
+                    new Entity()
+                    {
+                        Id = GuardFacilitator,
+                        Name = "Storli Regnskap AS",
+                        TypeId = EntityTypeConstants.Organization,
+                        VariantId = EntityVariantConstants.AS,
+                        OrganizationIdentifier = "399950032",
+                        RefId = "399950032",
+                        PartyId = 50950032,
+                    },
+                    new Entity()
+                    {
+                        Id = GuardAgent,
+                        Name = "Tuva Storli",
+                        TypeId = EntityTypeConstants.Person,
+                        VariantId = EntityVariantConstants.Person,
+                        PersonIdentifier = "20019099934",
+                        RefId = "20019099934",
+                        PartyId = 50950033,
+                        UserId = 50950033,
+                        DateOfBirth = new DateOnly(1990, 1, 20),
+                    },
+                    new Entity()
+                    {
+                        Id = CascadeClient,
+                        Name = "Rusten Sykkelverksted AS",
+                        TypeId = EntityTypeConstants.Organization,
+                        VariantId = EntityVariantConstants.AS,
+                        OrganizationIdentifier = "399950041",
+                        RefId = "399950041",
+                        PartyId = 50950041,
+                    },
+                    new Entity()
+                    {
+                        Id = CascadeFacilitator,
+                        Name = "Vollen Regnskap AS",
+                        TypeId = EntityTypeConstants.Organization,
+                        VariantId = EntityVariantConstants.AS,
+                        OrganizationIdentifier = "399950042",
+                        RefId = "399950042",
+                        PartyId = 50950042,
+                    },
+                    new Entity()
+                    {
+                        Id = CascadeAgent,
+                        Name = "Even Vollen",
+                        TypeId = EntityTypeConstants.Person,
+                        VariantId = EntityVariantConstants.Person,
+                        PersonIdentifier = "21019099935",
+                        RefId = "21019099935",
+                        PartyId = 50950043,
+                        UserId = 50950043,
+                        DateOfBirth = new DateOnly(1990, 1, 21),
+                    });
+
+                db.SaveChanges();
+
+                SeedClientDelegation(db, GuardClient, GuardFacilitator, GuardAgent, clientAssignmentId: null, delegationResourceId: null, policyPath: "mattilsynet-baker-konditorvare/50950031/p50950033/delegationpolicy.xml");
+                SeedClientDelegation(db, CascadeClient, CascadeFacilitator, CascadeAgent, clientAssignmentId: CascadeClientAssignment, delegationResourceId: CascadeDelegationResource, policyPath: "mattilsynet-baker-konditorvare/50950041/p50950043/delegationpolicy.xml");
+
+                db.SaveChanges();
             });
+        }
+
+        private static void SeedClientDelegation(AppDbContext db, Guid clientId, Guid facilitatorId, Guid agentId, Guid? clientAssignmentId, Guid? delegationResourceId, string policyPath)
+        {
+            var accountantFromClientToFacilitator = new Assignment()
+            {
+                FromId = clientId,
+                ToId = facilitatorId,
+                RoleId = RoleConstants.Accountant,
+            };
+
+            if (clientAssignmentId.HasValue)
+            {
+                accountantFromClientToFacilitator.Id = clientAssignmentId.Value;
+            }
+
+            var agentFromFacilitatorToAgent = new Assignment()
+            {
+                FromId = facilitatorId,
+                ToId = agentId,
+                RoleId = RoleConstants.Agent,
+            };
+
+            var assignmentResourceForClient = new AssignmentResource()
+            {
+                AssignmentId = accountantFromClientToFacilitator.Id,
+                ResourceId = TestData.MattilsynetBakeryService.Id,
+                PolicyPath = policyPath,
+                PolicyVersion = "1.0",
+            };
+
+            var delegation = new AccessMgmt.PersistenceEF.Models.Delegation()
+            {
+                FromId = accountantFromClientToFacilitator.Id,
+                ToId = agentFromFacilitatorToAgent.Id,
+                FacilitatorId = facilitatorId,
+            };
+
+            var delegationResource = new DelegationResource()
+            {
+                DelegationId = delegation.Id,
+                ResourceId = TestData.MattilsynetBakeryService.Id,
+                AssignmentResourceId = assignmentResourceForClient.Id,
+            };
+
+            if (delegationResourceId.HasValue)
+            {
+                delegationResource.Id = delegationResourceId.Value;
+            }
+
+            db.Assignments.Add(accountantFromClientToFacilitator);
+            db.Assignments.Add(agentFromFacilitatorToAgent);
+            db.AssignmentResources.Add(assignmentResourceForClient);
+            db.Delegations.Add(delegation);
+            db.DelegationResources.Add(delegationResource);
         }
 
         public ApiFixture Fixture { get; }
@@ -153,7 +296,7 @@ public partial class ConnectionsControllerTest
         }
 
         /// <summary>
-        /// Thea (MD of Mille Hundefrisør) removes all resource rights for nav_sykepenger_sykmelding from the Dumbo → Mille connection,
+        /// Thea (MD of Mille Hundefrisør) removes all resource rights for nav_sykepenger_sykmelding from the Dumbo -> Mille connection,
         /// acting as receiver (from-others direction). Expects 204 NoContent.
         /// </summary>
         [Fact]
@@ -171,6 +314,64 @@ public partial class ConnectionsControllerTest
 
             string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.True(response.StatusCode == HttpStatusCode.NoContent, $"Expected NoContent but got {response.StatusCode}. Response body: {responseContent}");
+        }
+
+        /// <summary>
+        /// Lysaker Blomster tries to revoke a resource its agent Tuva holds only through a client delegation.
+        /// The endpoint does not revoke client delegated access, so the attempt is rejected.
+        /// </summary>
+        [Fact]
+        public async Task RemoveResource_ForClientDelegatedResourceOnly_Returns400WithClientDelegationNotRevocableError()
+        {
+            HttpClient client = CreateClient(GuardClient, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE);
+            HttpResponseMessage response = await client.DeleteAsync(
+                $"{Route}/resources?party={GuardClient}&from={GuardClient}&to={GuardAgent}&resource=app_mat_mattilsynet-baker-konditorvare",
+                TestContext.Current.CancellationToken);
+
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.BadRequest, $"Expected BadRequest but got {response.StatusCode}. Response body: {responseContent}");
+
+            AltinnProblemDetails problemDetails = JsonSerializer.Deserialize<AltinnProblemDetails>(responseContent, new JsonSerializerOptions(JsonSerializerDefaults.Web));
+            Assert.NotNull(problemDetails);
+            Assert.True(problemDetails.Extensions.TryGetValue("validationErrors", out object errorsValue), $"Expected validationErrors in the problem details. Response body: {responseContent}");
+            JsonElement errors = Assert.IsType<JsonElement>(errorsValue);
+
+            Assert.Equal("AM.VLD-00035", errors[0].GetProperty("code").GetString());
+
+            await Fixture.QueryDb(async db =>
+            {
+                bool delegationResourceStillExists = await db.DelegationResources
+                    .AnyAsync(dr => dr.Delegation.From.FromId == GuardClient && dr.Delegation.To.ToId == GuardAgent, TestContext.Current.CancellationToken);
+
+                Assert.True(delegationResourceStillExists);
+            });
+        }
+
+        /// <summary>
+        /// Removing the client-side assignment that carries the delegated resource cascades all the way down:
+        /// the delegation and its delegation resource go with it.
+        /// </summary>
+        [Fact]
+        public async Task RemoveResource_WhenClientAssignmentIsDeleted_RemovesDelegationResourceByCascade()
+        {
+            await Fixture.QueryDb(async db =>
+            {
+                Assignment clientAssignment = await db.Assignments.FirstAsync(a => a.Id == CascadeClientAssignment, TestContext.Current.CancellationToken);
+                db.Assignments.Remove(clientAssignment);
+                await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+            });
+
+            await Fixture.QueryDb(async db =>
+            {
+                bool delegationResourceExists = await db.DelegationResources
+                    .AnyAsync(dr => dr.Id == CascadeDelegationResource, TestContext.Current.CancellationToken);
+
+                bool delegationExists = await db.Delegations
+                    .AnyAsync(d => d.FacilitatorId == CascadeFacilitator, TestContext.Current.CancellationToken);
+
+                Assert.False(delegationResourceExists);
+                Assert.False(delegationExists);
+            });
         }
 
         /// <summary>

@@ -25,8 +25,11 @@ public partial class ConnectionsControllerTest
     /// Seed Data:
     /// - ResourceType "Test"
     /// - Resource "Skattemelding" (app_skd_skattemelding) and "MVA-melding" (app_skd_mva-melding)
-    /// - Assignment: Dumbo Adventures → Mille Hundefrisør (Rightholder)
+    /// - Assignment: Dumbo Adventures -> Mille Hundefrisør (Rightholder)
     /// - AssignmentResource linking both resources to the assignment above
+    /// - A dedicated client delegation chain on its own parties: Solvang Kaffebar AS (client) -> Nordbo Regnskap AS
+    ///   (facilitator, Accountant) -> Selma Nordbo (agent, Agent), with the Mattilsynet bakery resource delegated
+    ///   to the agent through an AssignmentResource on the client-side assignment
     /// </para>
     /// <para>
     /// Actors:
@@ -43,6 +46,10 @@ public partial class ConnectionsControllerTest
     [Collection(ConnectionsReadOnlyCollection.Name)]
     public class GetResources
     {
+        private static readonly Guid ClientDelegationClient = Guid.Parse("0196b101-0000-7000-8000-000000000001");
+        private static readonly Guid ClientDelegationFacilitator = Guid.Parse("0196b101-0000-7000-8000-000000000002");
+        private static readonly Guid ClientDelegationAgent = Guid.Parse("0196b101-0000-7000-8000-000000000003");
+
         public GetResources(ApiFixture fixture)
         {
             Fixture = fixture;
@@ -68,6 +75,84 @@ public partial class ConnectionsControllerTest
                 {
                     AssignmentId = rightholderFromDumboToMille.Id,
                     ResourceId = TestData.MvaResource.Id,
+                });
+
+                db.SaveChanges();
+
+                db.Entities.AddRange(
+                    new Entity()
+                    {
+                        Id = ClientDelegationClient,
+                        Name = "Solvang Kaffebar AS",
+                        TypeId = EntityTypeConstants.Organization,
+                        VariantId = EntityVariantConstants.AS,
+                        OrganizationIdentifier = "399950011",
+                        RefId = "399950011",
+                        PartyId = 50950011,
+                    },
+                    new Entity()
+                    {
+                        Id = ClientDelegationFacilitator,
+                        Name = "Nordbo Regnskap AS",
+                        TypeId = EntityTypeConstants.Organization,
+                        VariantId = EntityVariantConstants.AS,
+                        OrganizationIdentifier = "399950012",
+                        RefId = "399950012",
+                        PartyId = 50950012,
+                    },
+                    new Entity()
+                    {
+                        Id = ClientDelegationAgent,
+                        Name = "Selma Nordbo",
+                        TypeId = EntityTypeConstants.Person,
+                        VariantId = EntityVariantConstants.Person,
+                        PersonIdentifier = "18019099932",
+                        RefId = "18019099932",
+                        PartyId = 50950013,
+                        UserId = 50950013,
+                        DateOfBirth = new DateOnly(1990, 1, 18),
+                    });
+
+                db.SaveChanges();
+
+                var accountantFromClientToFacilitator = new Assignment()
+                {
+                    FromId = ClientDelegationClient,
+                    ToId = ClientDelegationFacilitator,
+                    RoleId = RoleConstants.Accountant,
+                };
+
+                var agentFromFacilitatorToSelma = new Assignment()
+                {
+                    FromId = ClientDelegationFacilitator,
+                    ToId = ClientDelegationAgent,
+                    RoleId = RoleConstants.Agent,
+                };
+
+                var assignmentResourceForClient = new AssignmentResource()
+                {
+                    AssignmentId = accountantFromClientToFacilitator.Id,
+                    ResourceId = TestData.MattilsynetBakeryService.Id,
+                    PolicyPath = "mattilsynet-baker-konditorvare/50950011/p50950013/delegationpolicy.xml",
+                    PolicyVersion = "1.0",
+                };
+
+                var delegationToSelma = new AccessMgmt.PersistenceEF.Models.Delegation()
+                {
+                    FromId = accountantFromClientToFacilitator.Id,
+                    ToId = agentFromFacilitatorToSelma.Id,
+                    FacilitatorId = ClientDelegationFacilitator,
+                };
+
+                db.Assignments.Add(accountantFromClientToFacilitator);
+                db.Assignments.Add(agentFromFacilitatorToSelma);
+                db.AssignmentResources.Add(assignmentResourceForClient);
+                db.Delegations.Add(delegationToSelma);
+                db.DelegationResources.Add(new DelegationResource()
+                {
+                    DelegationId = delegationToSelma.Id,
+                    ResourceId = TestData.MattilsynetBakeryService.Id,
+                    AssignmentResourceId = assignmentResourceForClient.Id,
                 });
 
                 db.SaveChanges();
@@ -202,6 +287,46 @@ public partial class ConnectionsControllerTest
             HttpResponseMessage response = await client.GetAsync($"{Route}/resources?party={TestData.DumboAdventures.Id}&to={TestData.DumboAdventures.Id}&from={TestData.MilleHundefrisor.Id}", TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        }
+
+        /// <summary>
+        /// Solvang Kaffebar lists the resources its agent Selma holds. The resource is held only through the
+        /// client delegation, and the endpoint has no opt-in flag, so it must be returned.
+        /// </summary>
+        [Fact]
+        public async Task GetResources_ToOthersDirectionForClientDelegatedResource_Returns200WithClientDelegatedResource()
+        {
+            HttpClient client = CreateClient(ClientDelegationClient, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
+
+            HttpResponseMessage response = await client.GetAsync($"{Route}/resources?party={ClientDelegationClient}&from={ClientDelegationClient}&to={ClientDelegationAgent}", TestContext.Current.CancellationToken);
+
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {responseContent}");
+
+            List<ResourcePermissionDto> result = JsonSerializer.Deserialize<List<ResourcePermissionDto>>(responseContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            Assert.NotNull(result);
+            Assert.Contains(result, r => r.Resource.Id == TestData.MattilsynetBakeryService.Id);
+        }
+
+        /// <summary>
+        /// Selma lists the resources she has received from the client Solvang Kaffebar, seen from her own side.
+        /// The client delegated resource must be returned there as well.
+        /// </summary>
+        [Fact]
+        public async Task GetResources_FromOthersDirectionForClientDelegatedResource_Returns200WithClientDelegatedResource()
+        {
+            HttpClient client = CreateClient(ClientDelegationAgent, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
+
+            HttpResponseMessage response = await client.GetAsync($"{Route}/resources?party={ClientDelegationAgent}&from={ClientDelegationClient}&to={ClientDelegationAgent}", TestContext.Current.CancellationToken);
+
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {responseContent}");
+
+            List<ResourcePermissionDto> result = JsonSerializer.Deserialize<List<ResourcePermissionDto>>(responseContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            Assert.NotNull(result);
+            Assert.Contains(result, r => r.Resource.Id == TestData.MattilsynetBakeryService.Id);
         }
 
         /// <summary>

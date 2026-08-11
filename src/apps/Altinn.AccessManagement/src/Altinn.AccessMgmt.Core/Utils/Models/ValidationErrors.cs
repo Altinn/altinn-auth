@@ -147,4 +147,10 @@ public static class ValidationErrors
     /// </summary>
     public static ValidationErrorDescriptor PolicyClearFailed { get; }
         = _factory.Create(34, "Failed to clear delegation policy rules.");
+
+    /// <summary>
+    /// Gets a validation error descriptor for when a resource is held through a client delegation and cannot be revoked on this endpoint.
+    /// </summary>
+    public static ValidationErrorDescriptor ResourceNotRevocableViaClientDelegation { get; }
+        = _factory.Create(35, "Resource is delegated through a client delegation.");
 }
