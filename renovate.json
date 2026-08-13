@@ -105,6 +105,12 @@
       ],
       "groupName": ".NET Images",
       "groupSlug": "dotnet-images"
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "matchPackageNames": ["github/codeql-action"],
+      "groupName": "CodeQL Action",
+      "groupSlug": "codeql-action"
     }
   ]
 }
