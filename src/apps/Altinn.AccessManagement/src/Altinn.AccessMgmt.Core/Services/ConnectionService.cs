@@ -2088,6 +2088,8 @@ public partial class ConnectionService
                 From = t.Assignment.From,
                 To = t.Assignment.To,
                 Role = t.Assignment.Role,
+                Via = null,
+                ViaRole = null,
                 PolicyPath = t.PolicyPath,
                 PolicyVersion = t.PolicyVersion,
                 Reason = AccessReasonFlag.Direct
@@ -2107,7 +2109,7 @@ public partial class ConnectionService
                     From = c,
                     To = ar.Assignment.To,
                     Role = ar.Assignment.Role,
-                    Via = null, // c.Parent
+                    Via = ar.Assignment.From,
                     ViaRole = null,
                     PolicyPath = ar.PolicyPath,
                     PolicyVersion = ar.PolicyVersion
@@ -2120,6 +2122,8 @@ public partial class ConnectionService
                 From = t.From,
                 To = t.To,
                 Role = t.Role,
+                Via = t.Via,
+                ViaRole = t.ViaRole,
                 PolicyPath = t.PolicyPath,
                 PolicyVersion = t.PolicyVersion,
                 Reason = AccessReasonFlag.Parent
@@ -2152,6 +2156,8 @@ public partial class ConnectionService
                From = t.From,
                To = t.To,
                Role = t.Role,
+               Via = t.Via,
+               ViaRole = t.ViaRole,
                PolicyPath = t.PolicyPath,
                PolicyVersion = t.PolicyVersion,
                Reason = AccessReasonFlag.KeyRole
@@ -2191,17 +2197,20 @@ public partial class ConnectionService
                 From = t.From,
                 To = t.To,
                 Role = t.Role,
+                Via = t.Via,
+                ViaRole = t.ViaRole,
                 PolicyPath = t.PolicyPath,
                 PolicyVersion = t.PolicyVersion,
                 Reason = AccessReasonFlag.Parent | AccessReasonFlag.KeyRole
             });
 
-        var query = direct
-            .Union(childResult)
-            .Union(keyRoleResult)
-            .Union(keyRoleSubUnit);
-
-        var res = await query.ToListAsync(cancellationToken);
+        // EF cannot translate a set operation over projections that mix entity references and null
+        // constants in the Via/ViaRole members, so the branches run as separate queries. The same
+        // right can surface from several branches, but each branch stamps a distinct Reason flag,
+        // so the rows are never identical and duplicate elimination has nothing to remove.
+        var res = await direct.ToListAsync(cancellationToken);
+        res.AddRange(await childResult.ToListAsync(cancellationToken));
+        res.AddRange(await keyRoleResult.Union(keyRoleSubUnit).ToListAsync(cancellationToken));
 
         // Client delegation. Only the read endpoints ask for these rows: holding a resource through a client
         // delegation must not confer authority to delegate it onward, so the delegation check callers leave
@@ -2342,6 +2351,8 @@ public partial class ConnectionService
                 From = t.Assignment.From,
                 To = t.Assignment.To,
                 Role = t.Assignment.Role,
+                Via = null,
+                ViaRole = null,
                 InstanceId = t.InstanceId,
                 PolicyPath = t.PolicyPath,
                 PolicyVersion = t.PolicyVersion,
@@ -2388,15 +2399,18 @@ public partial class ConnectionService
                From = t.From,
                To = t.To,
                Role = t.Role,
+               Via = t.Via,
+               ViaRole = t.ViaRole,
                InstanceId = t.InstanceId,
                PolicyPath = t.PolicyPath,
                PolicyVersion = t.PolicyVersion,
                Reason = AccessReasonFlag.KeyRole
            });
-        var query = direct
-            .Union(keyRoleResult);
-
-        var res = await query.ToListAsync(cancellationToken);
+        // Separate queries for the same reason as in GetResourceRights: the direct branch's null
+        // Via/ViaRole constants cannot be part of a set operation with the key role branch's
+        // entity references.
+        var res = await direct.ToListAsync(cancellationToken);
+        res.AddRange(await keyRoleResult.ToListAsync(cancellationToken));
 
         #endregion
 
@@ -2447,6 +2461,12 @@ public partial class ConnectionService
                             Permissions = new List<PermissionDto>(),
                         };
                         instanceRight.Rights.Add(right);
+                    }
+                    else
+                    {
+                        // A right key can be held through several paths at once. Keep every contributing reason
+                        // so callers see all of them, not only the one that happened to be resolved first.
+                        right.Reason = right.Reason | assignmentInstance.Reason;
                     }
 
                     if (!right.Permissions.Any(p =>

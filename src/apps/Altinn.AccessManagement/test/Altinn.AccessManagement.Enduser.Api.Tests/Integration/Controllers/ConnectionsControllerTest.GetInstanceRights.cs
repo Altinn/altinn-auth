@@ -9,6 +9,7 @@ using Altinn.AccessManagement.TestUtils.Data;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
+using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -50,6 +51,45 @@ public partial class ConnectionsControllerTest
             Fixture.ConfigureServices(services =>
             {
                 services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
+            });
+            Fixture.EnsureSeedOnce<GetInstanceRights>(db =>
+            {
+                // Thea holds the SiriusSkattemelding instance both directly from Kaos and through her
+                // ManagingDirector key role at Mille Hundefrisor, which holds the same instance from Kaos.
+                var rightholderFromKaosToMille = new Assignment()
+                {
+                    Id = Guid.Parse("019849b1-0001-7001-8001-000000000001"),
+                    FromId = TestData.KaosMagicDesignAndArts.Id,
+                    ToId = TestData.MilleHundefrisor.Id,
+                    RoleId = RoleConstants.Rightholder,
+                };
+                var rightholderFromKaosToThea = new Assignment()
+                {
+                    Id = Guid.Parse("019849b1-0001-7001-8001-000000000002"),
+                    FromId = TestData.KaosMagicDesignAndArts.Id,
+                    ToId = TestData.Thea.Id,
+                    RoleId = RoleConstants.Rightholder,
+                };
+                db.Assignments.Add(rightholderFromKaosToMille);
+                db.Assignments.Add(rightholderFromKaosToThea);
+
+                db.AssignmentInstances.Add(new AssignmentInstance()
+                {
+                    AssignmentId = rightholderFromKaosToMille.Id,
+                    ResourceId = TestData.SiriusSkattemelding.Id,
+                    InstanceId = SiriusInstanceId,
+                    PolicyPath = "sirius-skattemelding-v1/50315678/p5049963/delegationpolicy.xml",
+                    PolicyVersion = "1.0",
+                });
+                db.AssignmentInstances.Add(new AssignmentInstance()
+                {
+                    AssignmentId = rightholderFromKaosToThea.Id,
+                    ResourceId = TestData.SiriusSkattemelding.Id,
+                    InstanceId = SiriusInstanceId,
+                    PolicyPath = "sirius-skattemelding-v1/50315678/p5049963/delegationpolicy.xml",
+                    PolicyVersion = "1.0",
+                });
+                db.SaveChanges();
             });
         }
 
@@ -152,6 +192,58 @@ public partial class ConnectionsControllerTest
             Assert.Equal("app_mat_mattilsynet-baker-konditorvare", result.Resource.RefId);
             Assert.NotEmpty(result.DirectRights);
             Assert.Empty(result.IndirectRights);
+        }
+
+        /// <summary>
+        /// Thea holds the SiriusSkattemelding instance rights both directly from Kaos and through her
+        /// ManagingDirector key role at Mille Hundefrisor, which Kaos delegated the same instance to.
+        /// Both holdings must be visible: the direct permission under DirectRights and the key role
+        /// permission, carrying via and via role, under IndirectRights.
+        /// </summary>
+        [Fact]
+        public async Task GetInstanceRights_ForInstanceHeldDirectlyAndViaKeyRole_WithToOthersScope_ReturnsOkWithBothHoldingsReported()
+        {
+            HttpClient client = CreateClient(TestData.JinxArcane.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
+
+            HttpResponseMessage response = await client.GetAsync(
+                $"{Route}/resources/instances/rights?party={TestData.KaosMagicDesignAndArts.Id}&from={TestData.KaosMagicDesignAndArts.Id}&to={TestData.Thea.Id}&resource=app_skd_sirius-skattemelding-v1&instance={SiriusInstanceId}",
+                TestContext.Current.CancellationToken);
+
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {responseContent}");
+
+            ExtInstanceRightDto result = await response.Content.ReadFromJsonAsync<ExtInstanceRightDto>(TestContext.Current.CancellationToken);
+
+            Assert.NotNull(result);
+            Assert.NotEmpty(result.DirectRights);
+            Assert.NotEmpty(result.IndirectRights);
+
+            // Both delegations use the same policy, so the same right keys must appear under both headings.
+            Assert.Equal(
+                result.DirectRights.Select(r => r.Right.Key).OrderBy(k => k),
+                result.IndirectRights.Select(r => r.Right.Key).OrderBy(k => k));
+
+            foreach (var right in result.DirectRights)
+            {
+                Assert.True(right.Reason.Flag.Equals(AccessReasonFlag.Direct), $"Expected Direct but got {right.Reason.Flag}.");
+                PermissionDto permission = Assert.Single(right.Permissions);
+                Assert.True(permission.From.Id == TestData.KaosMagicDesignAndArts.Id);
+                Assert.True(permission.To.Id == TestData.Thea.Id);
+                Assert.True(permission.Role.Id == RoleConstants.Rightholder, $"Expected Rightholder role but got {permission.Role.Id}.");
+                Assert.Null(permission.Via);
+                Assert.Null(permission.ViaRole);
+            }
+
+            foreach (var right in result.IndirectRights)
+            {
+                Assert.True(right.Reason.Flag.Equals(AccessReasonFlag.KeyRole), $"Expected KeyRole but got {right.Reason.Flag}.");
+                PermissionDto permission = Assert.Single(right.Permissions);
+                Assert.True(permission.From.Id == TestData.KaosMagicDesignAndArts.Id);
+                Assert.True(permission.To.Id == TestData.Thea.Id);
+                Assert.True(permission.Role.Id == RoleConstants.Rightholder, $"Expected Rightholder role but got {permission.Role.Id}.");
+                Assert.Equal(TestData.MilleHundefrisor.Id, permission.Via.Id);
+                Assert.Equal(RoleConstants.ManagingDirector.Id, permission.ViaRole.Id);
+            }
         }
 
         /// <summary>

@@ -319,6 +319,7 @@ public partial class ConnectionsControllerTest
                 Assert.True(permission.Reason.Flag.Equals(AccessReasonFlag.Direct), $"Expected Direct but got {permission.Reason.Flag}.");
                 Assert.True(permission.Role.Id == RoleConstants.Rightholder, $"Expected Rightholder role but got {permission.Role.Id}.");
                 Assert.Null(permission.Via);
+                Assert.Null(permission.ViaRole);
             }
 
             Assert.Equal("app_skd_sirius-skattemelding-v1", resourceRightsDto.Resource.RefId);
@@ -358,6 +359,7 @@ public partial class ConnectionsControllerTest
                 Assert.True(permission.Reason.Flag.Equals(AccessReasonFlag.Direct), $"Expected Direct but got {permission.Reason.Flag}.");
                 Assert.True(permission.Role.Id == RoleConstants.Rightholder, $"Expected Rightholder role but got {permission.Role.Id}.");
                 Assert.Null(permission.Via);
+                Assert.Null(permission.ViaRole);
             }
 
             Assert.Equal("app_skd_sirius-skattemelding-v1", resourceRightsDto.Resource.RefId);
@@ -397,7 +399,8 @@ public partial class ConnectionsControllerTest
                 Assert.True(permission.From.Id == TestData.DumboAdventures.Id);
                 Assert.True(permission.Reason.Flag.Equals(AccessReasonFlag.KeyRole), $"Expected KeyRole but got {permission.Reason.Flag}.");
                 Assert.True(permission.Role.Id == RoleConstants.Rightholder, $"Expected Rightholder role but got {permission.Role.Id}.");
-                Assert.Null(permission.Via);
+                Assert.Equal(TestData.MilleHundefrisor.Id, permission.Via.Id);
+                Assert.Equal(RoleConstants.ManagingDirector.Id, permission.ViaRole.Id);
             }
 
             Assert.Equal("app_skd_sirius-skattemelding-v1", resourceRightsDto.Resource.RefId);
@@ -437,7 +440,8 @@ public partial class ConnectionsControllerTest
                 Assert.True(permission.From.Id == TestData.DumboAdventures.Id);
                 Assert.True(permission.Reason.Flag.Equals(AccessReasonFlag.KeyRole), $"Expected KeyRole but got {permission.Reason.Flag}.");
                 Assert.True(permission.Role.Id == RoleConstants.Rightholder, $"Expected Rightholder role but got {permission.Role.Id}.");
-                Assert.Null(permission.Via);
+                Assert.Equal(TestData.MilleHundefrisor.Id, permission.Via.Id);
+                Assert.Equal(RoleConstants.ChairOfTheBoard.Id, permission.ViaRole.Id);
             }
 
             Assert.Equal("app_skd_sirius-skattemelding-v1", resourceRightsDto.Resource.RefId);
@@ -478,7 +482,8 @@ public partial class ConnectionsControllerTest
                 Assert.True(permission.From.Id == TestData.DumboAdventures.Id);
                 Assert.True(permission.Reason.Flag.Equals(AccessReasonFlag.KeyRole), $"Expected KeyRole but got {permission.Reason.Flag}.");
                 Assert.True(permission.Role.Id == RoleConstants.Rightholder, $"Expected Rightholder role but got {permission.Role.Id}.");
-                Assert.Null(permission.Via);
+                Assert.Equal(TestData.MilleHundefrisor.Id, permission.Via.Id);
+                Assert.Equal(RoleConstants.ManagingDirector.Id, permission.ViaRole.Id);
             }
 
             Assert.Equal("app_skd_sirius-skattemelding-v1", resourceRightsDto.Resource.RefId);
@@ -566,6 +571,7 @@ public partial class ConnectionsControllerTest
             PermissionDto directPermission = Assert.Single(directShared.Permissions);
             Assert.Equal(RoleConstants.Rightholder.Id, directPermission.Role.Id);
             Assert.Null(directPermission.Via);
+            Assert.Null(directPermission.ViaRole);
             Assert.True(directPermission.Reason.Flag.Equals(AccessReasonFlag.Direct), $"Expected Direct but got {directPermission.Reason.Flag}.");
 
             RightPermission indirectShared = Assert.Single(resourceRightsDto.IndirectRights, r => r.Right.Key == sharedKey);
