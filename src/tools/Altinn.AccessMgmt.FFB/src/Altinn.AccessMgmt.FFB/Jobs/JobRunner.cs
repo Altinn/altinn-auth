@@ -58,6 +58,7 @@ public sealed class JobRunner(
     INotificationService notifications) : IJobRunner
 {
     private static readonly string Origin = $"{Environment.UserName}@{Environment.MachineName}";
+
     public JobRun StartAssignmentSync(string environment, AssignmentSyncOptions opts)
     {
         var run = CreateRun(AssignmentSyncJob.JobName, environment);
@@ -245,6 +246,7 @@ public sealed class JobRunner(
     }
 
     // ── Core fire-and-forget wrapper ─────────────────────────────────────────
+
     /// <summary>
     /// Runs <paramref name="work"/> on the thread pool. Handles status transitions,
     /// exception logging and notification dispatch for every job uniformly.
@@ -326,6 +328,7 @@ public sealed class JobRunner(
          .Replace(">", "&gt;");
 
     // ── Helpers ──────────────────────────────────────────────────────────────
+
     /// <summary>AccessMgmt only — for jobs that don't need the Register database.</summary>
     private DuoRepo CreateAccRepo(string environment)
     {

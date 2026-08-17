@@ -1,14 +1,7 @@
 @page "/tools/resource-cleanup"
-@using Altinn.AccessMgmt.FFB.Jobs
-@using Altinn.AccessMgmt.FFB.Jobs.Models
-@using Altinn.AccessMgmt.FFB.Services
 @using Altinn.AccessMgmt.PersistenceEF.Constants
-@using Altinn.AccessMgmt.PersistenceEF.Models
 @inject IJobRunner JobRunner
-@inject IJobRunStore RunStore
-@inject IEnvironmentDbContextFactory EnvFactory
 @inject IDialogService DialogService
-@implements IDisposable
 
 <PageTitle>Resource Cleanup</PageTitle>
 
@@ -65,18 +58,7 @@
 
         @* Environment *@
         <MudItem xs="12">
-            <MudText Typo="Typo.body2" Class="mb-2 mud-text-secondary">Miljø:</MudText>
-            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
-                @foreach (var env in EnvFactory.Environments)
-                {
-                    var envName = env;
-                    var configured = EnvFactory.IsConfigured(envName);
-                    <MudCheckBox @bind-Value="_selected[envName]"
-                                 Label="@envName"
-                                 Disabled="@(!configured)"
-                                 Color="Color.Primary" />
-                }
-            </MudStack>
+            <EnvironmentMultiSelect @bind-Selection="_selected" />
         </MudItem>
 
         @* Buttons *@
@@ -93,29 +75,22 @@
 </MudPaper>
 
 @* ── Runs ─────────────────────────────────────────────────────────────────── *@
-@if (_runs.Count > 0)
-{
-    <MudText Typo="Typo.h6" Class="mb-3">Kjøringer</MudText>
-    @foreach (var run in _runs)
-    {
-        <JobRunCard Run="@run">
-            <ExtraActions>
-                @if (run.Status == JobStatus.Completed &&
-                     run.SqlOutput.Count > 0 &&
-                     run.JobName == ResourceCleanupJob.JobName)
-                {
-                    <MudButton Variant="Variant.Filled"
-                               Color="Color.Error"
-                               Size="Size.Small"
-                               StartIcon="@Icons.Material.Filled.DeleteForever"
-                               OnClick="@(() => ConfirmAndExecute(run))">
-                        Kjør SQL (@run.SqlOutput.Count statements)
-                    </MudButton>
-                }
-            </ExtraActions>
-        </JobRunCard>
-    }
-}
+<JobRunList @ref="_runList" JobName="@ResourceCleanupJob.JobName">
+    <ExtraActions Context="run">
+        @if (run.Status == JobStatus.Completed &&
+             run.SqlOutput.Count > 0 &&
+             run.JobName == ResourceCleanupJob.JobName)
+        {
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Error"
+                       Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.DeleteForever"
+                       OnClick="@(() => ConfirmAndExecute(run))">
+                Kjør SQL (@run.SqlOutput.Count statements)
+            </MudButton>
+        }
+    </ExtraActions>
+</JobRunList>
 
 @code {
     private static readonly IReadOnlyList<ConstantDefinition<Entity>> SystemEntities =
@@ -123,22 +98,16 @@
             .OrderBy(e => e.Entity.RefId)
             .ToList();
 
-    private readonly Dictionary<string, bool> _selected = new();
-    private readonly HashSet<Guid> _subscribed = [];
-
+    private Dictionary<string, bool> _selected = new();
     private string _resourceRefId = "";
     private string _operationId = "";
     private Guid _systemAccountId = SystemEntityConstants.DBA.Id;
     private bool _removeEmptyAssignments = true;
-    private List<JobRun> _runs = [];
+    private JobRunList _runList = default!;
 
-    protected override void OnInitialized()
-    {
-        foreach (var env in EnvFactory.Environments)
-            _selected[env] = false;
-
-        RefreshRuns();
-    }
+    private bool CanRun =>
+        !string.IsNullOrWhiteSpace(_resourceRefId) &&
+        _selected.Values.Any(v => v);
 
     private void StartPreview()
     {
@@ -151,12 +120,10 @@
         foreach (var (env, selected) in _selected)
         {
             if (!selected) continue;
-            var run = JobRunner.StartResourceCleanup(env, opts);
-            Subscribe(run);
-            _runs.Insert(0, run);
+            JobRunner.StartResourceCleanup(env, opts);
         }
 
-        StateHasChanged();
+        _runList.Refresh();
     }
 
     private async Task ConfirmAndExecute(JobRun previewRun)
@@ -164,54 +131,17 @@
         var arCount = previewRun.SqlOutput.Count(s => s.Contains("assignmentresource"));
         var aCount = previewRun.SqlOutput.Count(s => s.Contains("\"assignment\""));
 
-        var parameters = new DialogParameters<ConfirmDialog>
-        {
-            { x => x.ContentText,
-                $"Dette vil kjøre {previewRun.SqlOutput.Count} SQL-statements mot {previewRun.Environment} i en transaksjon.\n" +
-                $"Sletter AssignmentResource-rader: ~{arCount}, Assignment-rader: ~{aCount}.\nKan ikke angres." },
-            { x => x.ButtonText, "Kjør SQL" },
-            { x => x.Color, Color.Error },
-        };
+        var confirmed = await Confirm.ShowAsync(
+            DialogService,
+            "Bekreft sletting",
+            $"Dette vil kjøre {previewRun.SqlOutput.Count} SQL-statements mot {previewRun.Environment} i en transaksjon.\n" +
+            $"Sletter AssignmentResource-rader: ~{arCount}, Assignment-rader: ~{aCount}.\nKan ikke angres.",
+            "Kjør SQL");
 
-        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Bekreft sletting", parameters);
-        var result = await dialog.Result;
-
-        if (result is { Canceled: false })
+        if (confirmed)
         {
-            var run = JobRunner.StartResourceCleanupExecute(previewRun.Id, previewRun.Environment);
-            Subscribe(run);
-            _runs.Insert(0, run);
-            StateHasChanged();
+            JobRunner.StartResourceCleanupExecute(previewRun.Id, previewRun.Environment);
+            _runList.Refresh();
         }
     }
-
-    private void Subscribe(JobRun run)
-    {
-        if (_subscribed.Add(run.Id))
-            run.OnUpdated += () => InvokeAsync(RefreshAndRender);
-    }
-
-    private void RefreshRuns()
-    {
-        var preview = RunStore.GetForJob(ResourceCleanupJob.JobName).ToList();
-        var execute = RunStore.GetForJob($"{ResourceCleanupJob.JobName}:Execute").ToList();
-        _runs = preview.Concat(execute)
-            .OrderByDescending(r => r.StartedAt)
-            .ToList();
-
-        foreach (var run in _runs)
-            Subscribe(run);
-    }
-
-    private void RefreshAndRender()
-    {
-        RefreshRuns();
-        StateHasChanged();
-    }
-
-    private bool CanRun =>
-        !string.IsNullOrWhiteSpace(_resourceRefId) &&
-        _selected.Values.Any(v => v);
-
-    public void Dispose() { }
 }

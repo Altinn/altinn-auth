@@ -5,6 +5,9 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+    <!-- NU1507: the repo uses two package sources without source mapping (repo-level nuget.config concern).
+         CS8669: nullable-annotation noise in razor-generated code (e.g. MudSelect T="string?"). -->
+    <NoWarn>$(NoWarn);NU1507;CS8669</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>

@@ -60,7 +60,7 @@
 
         <MudCardContent Class="pa-0">
             @* Log *@
-            <div style="height:220px;overflow-y:auto;font-family:monospace;font-size:.78rem;padding:.5rem 1rem;"
+            <div class="mono" style="height:220px;overflow-y:auto;font-size:.78rem;padding:.5rem 1rem;"
                  id="log-@Run.Id">
                 @foreach (var entry in _log)
                 {
@@ -77,7 +77,7 @@
                 <MudDivider />
                 <MudExpansionPanels Elevation="0">
                     <MudExpansionPanel Text="@($"SQL output ({_sql.Count} statements)")" Dense="true">
-                        <div style="max-height:200px;overflow-y:auto;font-family:monospace;font-size:.75rem;padding:.5rem 1rem;">
+                        <div class="mono" style="max-height:200px;overflow-y:auto;font-size:.75rem;padding:.5rem 1rem;">
                             @foreach (var stmt in _sql.Take(200))
                             {
                                 <div>@stmt</div>

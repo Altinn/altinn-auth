@@ -1,0 +1,4 @@
+# FFB pairs a result record (or options/models) with its service/job in one file
+# by convention, so the file-name-must-match-first-type rule is disabled here.
+[*.cs]
+dotnet_diagnostic.SA1649.severity = none

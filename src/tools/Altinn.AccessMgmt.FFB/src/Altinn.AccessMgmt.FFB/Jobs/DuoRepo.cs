@@ -72,6 +72,7 @@ public sealed class AssignmentGroupCountKeyComparer : IEqualityComparer<Assignme
 public sealed class DuoRepo(string accConnString, string? regConnString = null)
 {
     // ── Known filter GUIDs (AccessMgmt) ──────────────────────────────────────
+
     /// <summary>Provider IDs whose roles are included in assignment sync (Altinn 3 role providers).</summary>
     private const string SyncProviderA = "0195ea92-2080-758b-89db-7735c4f68320";
     private const string SyncProviderB = "019bbcab-449f-749a-bc13-4218549b8e93";
@@ -379,6 +380,7 @@ public sealed class DuoRepo(string accConnString, string? regConnString = null)
     }
 
     // ── History tables ────────────────────────────────────────────────────────
+
     /// <summary>Returns all distinct entity IDs that have at least one expired history row.</summary>
     public async Task<IReadOnlyList<Guid>> GetHistoryEntityIds(
         string tableName,
@@ -416,6 +418,7 @@ public sealed class DuoRepo(string accConnString, string? regConnString = null)
     }
 
     // ── Generic query / execute ───────────────────────────────────────────────
+
     /// <summary>Executes a single SQL statement against AccessMgmt.</summary>
     public async Task<int> ExecuteSql(string sql, CancellationToken ct = default)
     {

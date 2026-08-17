@@ -1,14 +1,7 @@
 @page "/jobs/assignment-instance-cleanup"
-@using Altinn.AccessMgmt.FFB.Jobs
-@using Altinn.AccessMgmt.FFB.Jobs.Models
-@using Altinn.AccessMgmt.FFB.Services
 @using Altinn.AccessMgmt.PersistenceEF.Constants
-@using Altinn.AccessMgmt.PersistenceEF.Models
 @inject IJobRunner JobRunner
-@inject IJobRunStore RunStore
-@inject IEnvironmentDbContextFactory EnvFactory
 @inject IDialogService DialogService
-@implements IDisposable
 
 <PageTitle>Assignment Instance Cleanup</PageTitle>
 
@@ -86,18 +79,7 @@
 
         @* Environment *@
         <MudItem xs="12">
-            <MudText Typo="Typo.body2" Class="mb-2 mud-text-secondary">Miljø:</MudText>
-            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
-                @foreach (var env in EnvFactory.Environments)
-                {
-                    var envName = env;
-                    var configured = EnvFactory.IsConfigured(envName);
-                    <MudCheckBox @bind-Value="_selected[envName]"
-                                 Label="@envName"
-                                 Disabled="@(!configured)"
-                                 Color="Color.Primary" />
-                }
-            </MudStack>
+            <EnvironmentMultiSelect @bind-Selection="_selected" />
         </MudItem>
 
         @* Buttons *@
@@ -114,14 +96,7 @@
 </MudPaper>
 
 @* ── Runs ─────────────────────────────────────────────────────────────────── *@
-@if (_runs.Count > 0)
-{
-    <MudText Typo="Typo.h6" Class="mb-3">Kjøringer</MudText>
-    @foreach (var run in _runs)
-    {
-        <JobRunCard Run="@run" OnChanged="@RefreshAndRender" />
-    }
-}
+<JobRunList @ref="_runList" JobName="@AssignmentInstanceCleanupJob.JobName" IncludeExecuteRuns="false" />
 
 @code {
     private static readonly IReadOnlyList<ConstantDefinition<Entity>> SystemEntities =
@@ -129,8 +104,7 @@
             .OrderBy(e => e.Entity.RefId)
             .ToList();
 
-    private readonly Dictionary<string, bool> _selected = new();
-    private readonly HashSet<Guid> _subscribed = [];
+    private Dictionary<string, bool> _selected = new();
 
     private Guid _changedBySystemId = SystemEntityConstants.DBA.Id;
     private string _oldRole = "";
@@ -138,35 +112,27 @@
     private string _operationId = "";
     private int _limit = 1000;
     private int _loopLimit = 100;
-    private List<JobRun> _runs = [];
+    private JobRunList _runList = default!;
 
-    protected override void OnInitialized()
-    {
-        foreach (var env in EnvFactory.Environments)
-        {
-            _selected[env] = false;
-        }
+    private bool CanRun =>
+        !string.IsNullOrWhiteSpace(_oldRole) &&
+        !string.IsNullOrWhiteSpace(_newRole) &&
+        !string.IsNullOrWhiteSpace(_operationId) &&
+        _selected.Values.Any(v => v);
 
-        RefreshRuns();
-    }
-
+    // Single-phase destructive one-off job — intentionally not schedulable (no JobTypes entry).
     private async Task ConfirmAndStart()
     {
         var selectedEnvs = _selected.Where(kv => kv.Value).Select(kv => kv.Key).ToList();
 
-        var parameters = new DialogParameters<ConfirmDialog>
-        {
-            { x => x.ContentText,
-                $"Dette flytter inntil {_limit} AssignmentInstance-rader (rolle '{_oldRole}') mot " +
-                $"{string.Join(", ", selectedEnvs)} og kan ikke angres." },
-            { x => x.ButtonText, "Start migrering" },
-            { x => x.Color, Color.Error },
-        };
+        var confirmed = await Confirm.ShowAsync(
+            DialogService,
+            "Bekreft migrering",
+            $"Dette flytter inntil {_limit} AssignmentInstance-rader (rolle '{_oldRole}') mot " +
+            $"{string.Join(", ", selectedEnvs)} og kan ikke angres.",
+            "Start migrering");
 
-        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Bekreft migrering", parameters);
-        var result = await dialog.Result;
-
-        if (result is not { Canceled: false })
+        if (!confirmed)
         {
             return;
         }
@@ -181,45 +147,9 @@
 
         foreach (var env in selectedEnvs)
         {
-            var run = JobRunner.StartAssignmentInstanceCleanup(env, opts);
-            Subscribe(run);
-            _runs.Insert(0, run);
+            JobRunner.StartAssignmentInstanceCleanup(env, opts);
         }
 
-        StateHasChanged();
+        _runList.Refresh();
     }
-
-    private void Subscribe(JobRun run)
-    {
-        if (_subscribed.Add(run.Id))
-        {
-            run.OnUpdated += () => InvokeAsync(RefreshAndRender);
-        }
-    }
-
-    private void RefreshRuns()
-    {
-        _runs = RunStore.GetForJob(AssignmentInstanceCleanupJob.JobName)
-            .OrderByDescending(r => r.StartedAt)
-            .ToList();
-
-        foreach (var run in _runs)
-        {
-            Subscribe(run);
-        }
-    }
-
-    private void RefreshAndRender()
-    {
-        RefreshRuns();
-        StateHasChanged();
-    }
-
-    private bool CanRun =>
-        !string.IsNullOrWhiteSpace(_oldRole) &&
-        !string.IsNullOrWhiteSpace(_newRole) &&
-        !string.IsNullOrWhiteSpace(_operationId) &&
-        _selected.Values.Any(v => v);
-
-    public void Dispose() { }
 }

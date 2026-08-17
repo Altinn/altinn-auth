@@ -1,7 +1,4 @@
-@using Altinn.AccessMgmt.PersistenceEF.Models
-@using Microsoft.EntityFrameworkCore
-@using Altinn.AccessMgmt.FFB.Services
-@inject IEnvironmentDbContextFactory DbFactory
+@inject EntitySearchService SearchService
 @inject EnvironmentState EnvState
 
 <MudAutocomplete T="Entity"
@@ -18,6 +15,8 @@
                  Placeholder="Navn, org.nr, party-id..." />
 
 @code {
+    private const int MaxSuggestions = 20;
+
     [Parameter] public string Label { get; set; } = "Entity";
     [Parameter] public Guid? Value { get; set; }
     [Parameter] public EventCallback<Guid?> ValueChanged { get; set; }
@@ -39,20 +38,11 @@
 
         try
         {
-            using var db = DbFactory.CreateContext(EnvState.Current);
-            return await db.Entities
-                .AsNoTracking()
-                .Include(e => e.Type)
-                .Where(e =>
-                    EF.Functions.ILike(e.Name, $"%{text}%") ||
-                    e.OrganizationIdentifier == text ||
-                    (e.PartyId != null && e.PartyId.ToString() == text))
-                .OrderBy(e => e.Name)
-                .Take(20)
-                .ToListAsync(ct);
+            return await SearchService.SearchAsync(EnvState.Current, text.Trim(), includeDeleted: true, MaxSuggestions, ct);
         }
         catch
         {
+            // The picker is a helper input — an unreachable environment should not break the page.
             return [];
         }
     }

@@ -1,7 +1,7 @@
 ﻿using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Microsoft.EntityFrameworkCore;
 
-namespace Altinn.AccessMgmt.FFB.Components.Pages.Tools;
+namespace Altinn.AccessMgmt.FFB.Services.Tools;
 
 public sealed class TableDefinition
 {
@@ -84,6 +84,7 @@ public static class TableRegistry
     // ── Registry ─────────────────────────────────────────────────────────────
     private static List<TableDefinition> Build() =>
     [
+
         // ── Entiteter ──────────────────────────────────────────────────────
         new()
         {
@@ -409,7 +410,7 @@ public static class TableRegistry
                         .Select(g => new { g.Key.DayOfWeek, Count = g.Count() })
                         .ToListAsync();
                     return raw
-                        .OrderBy(g => ((int)g.DayOfWeek + 6) % 7)   // Monday-first (DayOfWeek has Sunday = 0)
+                        .OrderBy(g => ((int)g.DayOfWeek + 6) % 7) // Monday-first (DayOfWeek has Sunday = 0)
                         .Select(g => new TableGroupRow($"{g.DayOfWeek}", g.Count))
                         .ToList();
                 }),

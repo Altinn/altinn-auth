@@ -1,14 +1,6 @@
 @page "/jobs/ingest-cleanup"
-@using Altinn.AccessMgmt.FFB.Jobs
-@using Altinn.AccessMgmt.FFB.Jobs.Models
-@using Altinn.AccessMgmt.FFB.Config
-@using Altinn.AccessMgmt.FFB.Services
-@using System.Text.Json
 @inject IJobRunner JobRunner
-@inject IJobRunStore RunStore
-@inject IEnvironmentDbContextFactory EnvFactory
 @inject IDialogService DialogService
-@implements IDisposable
 
 <PageTitle>Ingest Cleanup</PageTitle>
 
@@ -24,18 +16,7 @@
 
     <MudGrid>
         <MudItem xs="12">
-            <MudText Typo="Typo.body2" Class="mb-2 mud-text-secondary">Kjør på miljø:</MudText>
-            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" Class="mb-2">
-                @foreach (var env in EnvFactory.Environments)
-                {
-                    var envName = env;
-                    var configured = EnvFactory.IsConfigured(envName);
-                    <MudCheckBox @bind-Value="_selected[envName]"
-                                 Label="@envName"
-                                 Disabled="@(!configured)"
-                                 Color="Color.Primary" />
-                }
-            </MudStack>
+            <EnvironmentMultiSelect @bind-Selection="_selected" Label="Kjør på miljø:" />
         </MudItem>
 
         <MudItem xs="12">
@@ -95,29 +76,24 @@
 </MudPaper>
 
 @* ── Runs ─────────────────────────────────────────────────────────────────── *@
-@if (_runs.Count > 0)
-{
-    <MudText Typo="Typo.h6" Class="mb-3">Kjøringer</MudText>
-    @foreach (var run in _runs)
-    {
-        <JobRunCard Run="@run" OnChanged="@RefreshAndRender">
-            <ExtraActions>
-                @if (run.Status == JobStatus.Completed &&
-                     run.SqlOutput.Count > 0 &&
-                     run.JobName == IngestCleanupJob.JobName)
-                {
-                    <MudButton Variant="Variant.Filled"
-                               Color="Color.Error"
-                               Size="Size.Small"
-                               StartIcon="@Icons.Material.Filled.DeleteForever"
-                               OnClick="@(() => ConfirmAndExecute(run))">
-                        Kjør DROP (@run.SqlOutput.Count tabeller, @_runners runner@(_runners > 1 ? "s" : ""))
-                    </MudButton>
-                }
-            </ExtraActions>
-        </JobRunCard>
-    }
-}
+<JobRunList @ref="_runList" JobName="@IngestCleanupJob.JobName" MatchByPrefix="true">
+    <ExtraActions Context="run">
+        @* Scan runs are named "IngestCleanup:{filter}"; execute runs contain ":Execute". *@
+        @if (run.Status == JobStatus.Completed &&
+             run.SqlOutput.Count > 0 &&
+             run.JobName.StartsWith($"{IngestCleanupJob.JobName}:", StringComparison.Ordinal) &&
+             !run.JobName.Contains(":Execute", StringComparison.Ordinal))
+        {
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Error"
+                       Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.DeleteForever"
+                       OnClick="@(() => ConfirmAndExecute(run))">
+                Kjør DROP (@run.SqlOutput.Count tabeller, @_runners runner@(_runners > 1 ? "s" : ""))
+            </MudButton>
+        }
+    </ExtraActions>
+</JobRunList>
 
 @code {
     private static readonly (string Key, string Label)[] FilterTypes =
@@ -127,23 +103,14 @@
         ("provider", "provider"),
     ];
 
-    private readonly Dictionary<string, bool> _selected = new();
+    private Dictionary<string, bool> _selected = new();
     private readonly Dictionary<string, bool> _selectedTypes = FilterTypes.ToDictionary(t => t.Key, _ => true);
-    private readonly HashSet<Guid> _subscribed = [];
     private int _size = 10000;
     private int _runners = 1;
     private bool _executeImmediately;
-    private List<JobRun> _runs = [];
+    private JobRunList _runList = default!;
 
-    protected override void OnInitialized()
-    {
-        foreach (var env in EnvFactory.Environments)
-        {
-            _selected[env] = false;
-        }
-
-        RefreshRuns();
-    }
+    private bool AnySelected => _selected.Values.Any(v => v) && _selectedTypes.Values.Any(v => v);
 
     private void StartJobs()
     {
@@ -160,71 +127,29 @@
                     Execute: _executeImmediately,
                     Runners: _runners);
 
-                var run = JobRunner.StartIngestCleanup(env, opts);
-                Subscribe(run);
-                _runs.Insert(0, run);
+                JobRunner.StartIngestCleanup(env, opts);
             }
         }
 
-        StateHasChanged();
+        _runList.Refresh();
     }
 
     private async Task ConfirmAndExecute(JobRun previewRun)
     {
         var count = previewRun.SqlOutput.Count;
         var runnerText = _runners > 1 ? $" fordelt på {_runners} runners" : string.Empty;
-        var parameters = new DialogParameters<ConfirmDialog>
+        var confirmed = await Confirm.ShowAsync(
+            DialogService,
+            "Bekreft DROP",
+            $"Dette vil droppe {count} tabeller fra ingest-skjemaet på {previewRun.Environment}{runnerText}. Kan ikke angres.",
+            $"Dropp {count} tabeller");
+
+        if (confirmed)
         {
-            { x => x.ContentText, $"Dette vil droppe {count} tabeller fra ingest-skjemaet på {previewRun.Environment}{runnerText}. Kan ikke angres." },
-            { x => x.ButtonText, $"Dropp {count} tabeller" },
-            { x => x.Color, Color.Error }
-        };
-
-        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Bekreft DROP", parameters);
-        var result = await dialog.Result;
-
-        if (result is { Canceled: false })
-        {
-            var runs = JobRunner.StartIngestExecute(previewRun.Id, previewRun.Environment, _runners);
-            foreach (var run in runs)
-            {
-                Subscribe(run);
-                _runs.Insert(0, run);
-            }
-
-            StateHasChanged();
+            JobRunner.StartIngestExecute(previewRun.Id, previewRun.Environment, _runners);
+            _runList.Refresh();
         }
     }
-
-    private void Subscribe(JobRun run)
-    {
-        if (_subscribed.Add(run.Id))
-        {
-            run.OnUpdated += () => InvokeAsync(RefreshAndRender);
-        }
-    }
-
-    private void RefreshRuns()
-    {
-        var scan = RunStore.GetForJob(IngestCleanupJob.JobName).ToList();
-        var execute = RunStore.GetForJobPrefix($"{IngestCleanupJob.JobName}:Execute").ToList();
-        _runs = scan.Concat(execute)
-            .OrderByDescending(r => r.StartedAt)
-            .ToList();
-
-        foreach (var run in _runs)
-        {
-            Subscribe(run);
-        }
-    }
-
-    private void RefreshAndRender()
-    {
-        RefreshRuns();
-        StateHasChanged();
-    }
-
-    private bool AnySelected => _selected.Values.Any(v => v) && _selectedTypes.Values.Any(v => v);
 
     private async Task OpenScheduleDialog()
     {
@@ -237,7 +162,7 @@
             select new JobScheduleEntry
             {
                 Id = $"ingest-{env.ToLowerInvariant()}-{filterKey}",
-                JobType = "IngestCleanup",
+                JobType = JobTypes.IngestCleanup,
                 Environment = env,
                 Cron = "0 */4 * * *",
                 Enabled = true,
@@ -259,6 +184,4 @@
         await DialogService.ShowAsync<ScheduleConfigDialog>("Generer plan-konfig", parameters,
             new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true });
     }
-
-    public void Dispose() { }
 }

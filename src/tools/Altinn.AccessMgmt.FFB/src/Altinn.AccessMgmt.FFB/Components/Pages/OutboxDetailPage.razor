@@ -1,19 +1,14 @@
 @page "/tools/outbox/{Id:guid}"
-@using Altinn.AccessMgmt.PersistenceEF.Models
+@inherits EnvironmentPageBase
 @using Altinn.AccessMgmt.PersistenceEF.Models.Base
 @using Microsoft.EntityFrameworkCore
 @using System.Text.Json
-@using Altinn.AccessMgmt.FFB.Services
 @inject IEnvironmentDbContextFactory DbFactory
-@inject EnvironmentState EnvState
-@inject NavigationManager Nav
-@implements IDisposable
 
 <PageTitle>Outbox @Id.ToString()[..8]</PageTitle>
 
 <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4" Spacing="2">
-    <MudIconButton Icon="@Icons.Material.Filled.ArrowBack"
-                   OnClick="@(() => Nav.NavigateTo("/tools/outbox"))" />
+    <BackButton FallbackHref="/tools/outbox" />
     <MudText Typo="Typo.h5">Outbox-melding</MudText>
     @if (_message is not null)
     {
@@ -23,13 +18,13 @@
     }
 </MudStack>
 
-@if (_loading)
+@if (Loading)
 {
     <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-4" />
 }
-@if (_error is not null)
+@if (Error is not null)
 {
-    <MudAlert Severity="Severity.Error" Class="mb-4">@_error</MudAlert>
+    <MudAlert Severity="Severity.Error" Class="mb-4">@Error</MudAlert>
 }
 
 @if (_message is not null)
@@ -111,7 +106,7 @@
         }
         else
         {
-            <div style="overflow-x:auto;overflow-y:auto;max-height:500px;font-family:monospace;font-size:.82rem;padding:.5rem">
+            <div class="mono" style="overflow-x:auto;overflow-y:auto;max-height:500px;font-size:.82rem;padding:.5rem">
                 <JsonTree Element="_jsonDoc.RootElement" Depth="0" />
             </div>
         }
@@ -137,7 +132,7 @@
                 </HeaderContent>
                 <RowTemplate>
                     <MudTd DataLabel="Tidspunkt">
-                        <MudText Typo="Typo.caption" Style="font-family:monospace">
+                        <MudText Typo="Typo.caption" Class="mono">
                             @context.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss")
                         </MudText>
                     </MudTd>
@@ -145,7 +140,7 @@
                         <MudText Typo="Typo.body2">@context.Attempt</MudText>
                     </MudTd>
                     <MudTd DataLabel="Melding">
-                        <MudText Typo="Typo.body2" Style="white-space:pre-wrap;font-family:monospace;font-size:.8rem">
+                        <MudText Typo="Typo.body2" Class="mono" Style="white-space:pre-wrap;font-size:.8rem">
                             @context.Log
                         </MudText>
                     </MudTd>
@@ -169,65 +164,33 @@
     private JsonDocument? _jsonDoc;
     private string _prettyJson = string.Empty;
     private bool _showRawJson;
-    private bool _loading;
-    private string? _error;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
-    protected override async Task OnInitializedAsync()
-    {
-        EnvState.OnChange += OnEnvChanged;
-        await LoadMessage();
-    }
+    protected override Task OnParametersSetAsync() => RunAsync(LoadMessage);
 
-    protected override async Task OnParametersSetAsync()
-    {
-        await LoadMessage();
-    }
-
-    public void Dispose()
-    {
-        EnvState.OnChange -= OnEnvChanged;
-        _jsonDoc?.Dispose();
-    }
-
-    private void OnEnvChanged()
-    {
-        InvokeAsync(async () =>
-        {
-            await LoadMessage();
-            StateHasChanged();
-        });
-    }
+    protected override Task OnEnvironmentChangedAsync() => RunAsync(LoadMessage);
 
     // ── Query ─────────────────────────────────────────────────────────────────
 
-    private async Task LoadMessage()
+    private async Task LoadMessage(CancellationToken ct)
     {
-        _error = null;
-        _loading = true;
+        using var db = DbFactory.CreateContext(EnvState.Current);
+        _message = await db.OutboxMessages
+            .AsNoTracking()
+            .Include(m => m.OutboxMessageLogs)
+            .FirstOrDefaultAsync(m => m.Id == Id, ct);
 
-        try
+        if (_message is not null)
         {
-            using var db = DbFactory.CreateContext(EnvState.Current);
-            _message = await db.OutboxMessages
-                .AsNoTracking()
-                .Include(m => m.OutboxMessageLogs)
-                .FirstOrDefaultAsync(m => m.Id == Id);
+            ParseJson(_message.Data);
+        }
+    }
 
-            if (_message is not null)
-            {
-                ParseJson(_message.Data);
-            }
-        }
-        catch (Exception ex)
-        {
-            _error = $"Databasefeil: {ex.Message}";
-        }
-        finally
-        {
-            _loading = false;
-        }
+    public override void Dispose()
+    {
+        base.Dispose();
+        _jsonDoc?.Dispose();
     }
 
     private void ParseJson(string raw)

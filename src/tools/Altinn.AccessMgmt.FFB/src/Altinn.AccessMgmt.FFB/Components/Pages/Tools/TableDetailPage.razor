@@ -1,24 +1,21 @@
 @page "/tools/tables/{Key}"
-@using Altinn.AccessMgmt.FFB.Services
+@inherits EnvironmentPageBase
 @inject IEnvironmentDbContextFactory DbFactory
-@inject EnvironmentState EnvState
-@inject NavigationManager Nav
 
 <PageTitle>@(_table?.DisplayName ?? Key) – Tabeller</PageTitle>
 
 @if (_table is null)
 {
     <MudAlert Severity="Severity.Error">Ukjent tabell: @Key</MudAlert>
-    <MudButton Class="mt-4" Variant="Variant.Text" OnClick="@(() => Nav.NavigateTo("/tools/tables"))">
+    <MudButton Class="mt-4" Variant="Variant.Text" Href="/tools/tables">
         ← Tilbake
     </MudButton>
 }
 else
 {
     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-1">
-        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack"
-                       OnClick="@(() => Nav.NavigateTo("/tools/tables"))" />
-        <MudText Typo="Typo.h4" Style="font-family:monospace">@_table.DisplayName</MudText>
+        <BackButton FallbackHref="/tools/tables" />
+        <MudText Typo="Typo.h4" Class="mono">@_table.DisplayName</MudText>
         <MudChip T="string" Size="Size.Small" Color="Color.Default">@_table.Category</MudChip>
     </MudStack>
 
@@ -51,15 +48,20 @@ else
     <MudButton Variant="Variant.Filled"
                Color="Color.Primary"
                StartIcon="@Icons.Material.Filled.QueryStats"
-               Disabled="_running"
+               Disabled="Loading"
                OnClick="FetchStats"
                Class="mb-6">
-        @(_running ? "Henter..." : "Hent stats")
+        @(Loading ? "Henter..." : "Hent stats")
     </MudButton>
 
-    @if (_running)
+    @if (Loading)
     {
         <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-6" />
+    }
+
+    @if (Error is not null)
+    {
+        <MudAlert Severity="Severity.Error" Class="mb-4">@Error</MudAlert>
     }
 
     @if (_statsLoaded)
@@ -102,7 +104,7 @@ else
                                         @foreach (var row in rows.Take(30))
                                         {
                                             <tr>
-                                                <td style="font-family:monospace;font-size:.8125rem">
+                                                <td class="mono" style="font-size:.8125rem">
                                                     @row.Key
                                                 </td>
                                                 <td style="text-align:right;font-size:.8125rem">
@@ -128,43 +130,46 @@ else
         }
     }
 
-    @if (_error is not null)
-    {
-        <MudAlert Severity="Severity.Error" Class="mt-4">@_error</MudAlert>
-    }
 }
 
 @code {
     [Parameter] public string Key { get; set; } = "";
 
     private TableDefinition? _table;
-    private bool _running;
     private bool _statsLoaded;
     private int _totalCount;
     private List<(TableGrouping Grouping, List<TableGroupRow> Rows)> _groupResults = [];
     private DateTimeOffset? _fetchedAt;
-    private string? _error;
 
     protected override void OnParametersSet()
     {
         _table = TableRegistry.Find(Key);
+        ClearStats();
+    }
+
+    protected override Task OnEnvironmentChangedAsync()
+    {
+        // Stats belong to the previous environment.
+        ClearStats();
+        return Task.CompletedTask;
+    }
+
+    private void ClearStats()
+    {
         _statsLoaded = false;
         _totalCount = 0;
         _groupResults = [];
-        _error = null;
+        Error = null;
     }
 
     private async Task FetchStats()
     {
         if (_table is null) return;
 
-        _running = true;
-        _statsLoaded = false;
-        _error = null;
-        StateHasChanged();
-
-        try
+        await RunAsync(async ct =>
         {
+            _statsLoaded = false;
+
             // Count and all groupings each get their own context — safe for Task.WhenAll
             var countTask = Task.Run(async () =>
             {
@@ -181,19 +186,14 @@ else
 
             await Task.WhenAll([countTask, .. groupTasks]);
 
+            // TableRegistry delegates cannot take the token, so the queries run to
+            // completion — but a cancelled (superseded) run must not publish them.
+            ct.ThrowIfCancellationRequested();
+
             _totalCount = await countTask;
             _groupResults = (await Task.WhenAll(groupTasks)).ToList();
             _fetchedAt = DateTimeOffset.Now;
             _statsLoaded = true;
-        }
-        catch (Exception ex)
-        {
-            _error = ex.Message;
-        }
-        finally
-        {
-            _running = false;
-            StateHasChanged();
-        }
+        });
     }
 }

@@ -1,0 +1,33 @@
+<MudCard Elevation="1">
+    <MudCardHeader>
+        <CardHeaderContent>
+            @if (HeaderActions is null)
+            {
+                <MudText Typo="Typo.h6">@Title</MudText>
+            }
+            else
+            {
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                    <MudText Typo="Typo.h6">@Title</MudText>
+                    @HeaderActions
+                </MudStack>
+            }
+        </CardHeaderContent>
+    </MudCardHeader>
+    <MudCardContent Class="pa-0">
+        <MudSimpleTable Dense="true" Hover="false" Bordered="false">
+            <tbody>
+                @ChildContent
+            </tbody>
+        </MudSimpleTable>
+    </MudCardContent>
+</MudCard>
+
+@code {
+    [Parameter] public string Title { get; set; } = "Summary";
+
+    /// <summary>Optional actions rendered next to the title (e.g. an open-in-new link).</summary>
+    [Parameter] public RenderFragment? HeaderActions { get; set; }
+
+    [Parameter, EditorRequired] public RenderFragment ChildContent { get; set; } = default!;
+}

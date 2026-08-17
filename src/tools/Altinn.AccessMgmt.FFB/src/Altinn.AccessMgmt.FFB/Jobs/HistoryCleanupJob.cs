@@ -37,7 +37,6 @@ public sealed class HistoryMerge
 // ──────────────────────────────────────────────
 // Job
 // ──────────────────────────────────────────────
-
 public static class HistoryCleanupJob
 {
     public const string JobName = "HistoryCleanup";

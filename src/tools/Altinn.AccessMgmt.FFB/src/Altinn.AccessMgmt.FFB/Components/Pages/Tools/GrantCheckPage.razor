@@ -1,9 +1,7 @@
 @page "/tools/grant-check"
-@using Altinn.AccessMgmt.FFB.Services
 @using Altinn.AccessMgmt.PersistenceEF.Extensions
-@using Dapper
-@using Microsoft.EntityFrameworkCore
-@inject IEnvironmentDbContextFactory DbFactory
+@inherits EnvironmentPageBase
+@inject GrantCheckService GrantService
 
 <PageTitle>Grant Check</PageTitle>
 
@@ -18,19 +16,7 @@
 <MudPaper Elevation="1" Class="pa-4 mb-6">
     <MudGrid Spacing="3">
         <MudItem xs="12">
-            <MudText Typo="Typo.body2" Class="mb-1 mud-text-secondary">Miljø:</MudText>
-            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
-                @foreach (var env in DbFactory.Environments)
-                {
-                    var e = env;
-                    var configured = DbFactory.IsConfigured(e);
-                    <MudCheckBox @bind-Value="_envSelected[e]"
-                                 Label="@e"
-                                 Disabled="@(!configured)"
-                                 Color="Color.Primary"
-                                 Dense="true" />
-                }
-            </MudStack>
+            <EnvironmentMultiSelect @bind-Selection="_envSelected" Dense="true" />
         </MudItem>
 
         <MudItem xs="12" md="4">
@@ -70,22 +56,22 @@
             <MudButton Variant="Variant.Filled"
                        Color="Color.Primary"
                        StartIcon="@Icons.Material.Filled.PlayArrow"
-                       Disabled="@(_running || !CanRun)"
+                       Disabled="@(Loading || !CanRun)"
                        OnClick="RunCheck">
-                @(_running ? "Sjekker..." : "Kjør sjekk")
+                @(Loading ? "Sjekker..." : "Kjør sjekk")
             </MudButton>
         </MudItem>
     </MudGrid>
 </MudPaper>
 
-@if (_running)
+@if (Loading)
 {
     <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-4" />
 }
 
-@if (_error is not null)
+@if (Error is not null)
 {
-    <MudAlert Severity="Severity.Error" Class="mb-4">@_error</MudAlert>
+    <MudAlert Severity="Severity.Error" Class="mb-4">@Error</MudAlert>
 }
 
 @foreach (var (env, message) in _envErrors)
@@ -93,7 +79,7 @@
     <MudAlert Severity="Severity.Warning" Class="mb-2"><b>@env:</b> @message</MudAlert>
 }
 
-@if (_checkedAt is not null && _error is null && _environmentsChecked > 0)
+@if (_checkedAt is not null && Error is null && _environmentsChecked > 0)
 {
     var unfixedCount = _missing.Count(r => !r.IsFixed);
 
@@ -144,7 +130,7 @@
                             <MudIcon Icon="@Icons.Material.Filled.Error" Color="Color.Error" Size="Size.Small" />
                         }
                         <MudChip T="string" Size="Size.Small" Color="Color.Default">@result.Environment</MudChip>
-                        <MudText Typo="Typo.subtitle1" Style="font-family:monospace">@($"{result.Schema}.{result.Table}")</MudText>
+                        <MudText Typo="Typo.subtitle1" Class="mono">@($"{result.Schema}.{result.Table}")</MudText>
                         <MudSpacer />
                         @if (result.IsFixed)
                         {
@@ -170,16 +156,16 @@
                             <MudText Typo="Typo.subtitle2" Color="Color.Error" Class="mb-2">Mangler:</MudText>
                             @foreach (var m in result.Missing)
                             {
-                                <MudText Typo="Typo.body2" Style="font-family:monospace">@m.Role — @m.Privilege</MudText>
+                                <MudText Typo="Typo.body2" Class="mono">@m.Role — @m.Privilege</MudText>
                             }
                         }
                         @if (result.Missing.Count > 0)
                         {
                             <MudText Typo="Typo.subtitle2" Class="mb-2 mt-3">SQL som kjøres:</MudText>
                             <div style="background:var(--mud-palette-background-grey);border-radius:4px;padding:8px 10px">
-                                @foreach (var stmt in GrantStatements(result))
+                                @foreach (var stmt in GrantCheckService.GrantStatements(result))
                                 {
-                                    <MudText Typo="Typo.caption" Style="font-family:monospace;white-space:pre-wrap;user-select:text">@stmt</MudText>
+                                    <MudText Typo="Typo.caption" Class="mono" Style="white-space:pre-wrap;user-select:text">@stmt</MudText>
                                 }
                             </div>
                         }
@@ -199,9 +185,9 @@
             <MudText Typo="Typo.subtitle2" Color="Color.Warning" Class="mb-2">
                 Tabeller i modellen som ikke finnes i DB (ikke sjekket for grants):
             </MudText>
-            @foreach (var (env, schema, table) in _missingFromDb)
+            @foreach (var t in _missingFromDb)
             {
-                <MudText Typo="Typo.body2" Style="font-family:monospace">@($"[{env}] {schema}.{table}")</MudText>
+                <MudText Typo="Typo.body2" Class="mono">@($"[{t.Environment}] {t.Schema}.{t.Table}")</MudText>
             }
         </MudPaper>
     }
@@ -217,20 +203,13 @@
     private Dictionary<string, bool> _envSelected = new(StringComparer.Ordinal);
     private Dictionary<string, bool> _schemaSelected = new(StringComparer.Ordinal);
 
-    private bool _running;
     private bool _fixingAll;
     private DateTimeOffset? _checkedAt;
-    private string? _error;
     private int _okCount;
     private int _environmentsChecked;
     private List<TableGrant> _missing = [];
-    private List<(string Env, string Schema, string Table)> _missingFromDb = [];
+    private List<MissingTable> _missingFromDb = [];
     private List<(string Env, string Message)> _envErrors = [];
-
-    // Roles/privileges captured at the time of the last check — used for the GRANT preview and fix so
-    // they stay consistent even if the user toggles the checkboxes afterwards.
-    private List<string> _checkedRoles = [];
-    private List<string> _checkedPrivileges = [];
 
     private bool CanRun =>
         _envSelected.Values.Any(v => v) &&
@@ -240,164 +219,50 @@
 
     protected override void OnInitialized()
     {
-        _envSelected = DbFactory.Environments.ToDictionary(e => e, _ => false, StringComparer.Ordinal);
+        base.OnInitialized();
 
         // Schema options come from the (environment-independent) EF model.
-        var modelEnv = DbFactory.Environments.FirstOrDefault(DbFactory.IsConfigured);
-        try
-        {
-            using var db = DbFactory.CreateContext(modelEnv!);
-            var schemas = db.Model.GetEntityTypes()
-                .Select(t => t.GetSchema())
-                .Where(s => !string.IsNullOrEmpty(s))
-                .Select(s => s!)
-                .Distinct(StringComparer.Ordinal)
-                .OrderBy(s => s, StringComparer.Ordinal)
-                .ToList();
-
-            _schemaSelected = schemas.ToDictionary(
-                s => s,
-                s => string.Equals(s, "dbo", StringComparison.OrdinalIgnoreCase),
-                StringComparer.Ordinal);
-        }
-        catch
-        {
-            // No configured environment — fall back to the known schemas.
-            _schemaSelected = new(StringComparer.Ordinal) { ["dbo"] = true, ["dbo_history"] = false };
-        }
+        _schemaSelected = GrantService.GetModelSchemas().ToDictionary(
+            s => s,
+            s => string.Equals(s, "dbo", StringComparison.OrdinalIgnoreCase),
+            StringComparer.Ordinal);
     }
 
-    private async Task RunCheck()
+    private async Task RunCheck() => await RunAsync(async ct =>
     {
-        _running = true;
-        _error = null;
         _missing = [];
         _missingFromDb = [];
         _envErrors = [];
         _okCount = 0;
         _environmentsChecked = 0;
         _checkedAt = null;
-        _checkedRoles = Roles.Where(r => _roleSelected[r]).ToList();
-        _checkedPrivileges = AllPrivileges.Where(p => _privilegeSelected[p]).ToList();
+
+        // Snapshot the selections so all environments in this run use the same
+        // roles/privileges even if the user toggles checkboxes mid-run.
+        var roles = Roles.Where(r => _roleSelected[r]).ToList();
+        var privileges = AllPrivileges.Where(p => _privilegeSelected[p]).ToList();
         var envs = _envSelected.Where(kv => kv.Value).Select(kv => kv.Key).ToList();
         var schemas = _schemaSelected.Where(kv => kv.Value).Select(kv => kv.Key).ToList();
-        StateHasChanged();
 
-        try
+        foreach (var env in envs)
         {
-            var missing = new List<TableGrant>();
-            var missingFromDb = new List<(string Env, string Schema, string Table)>();
-            var envErrors = new List<(string Env, string Message)>();
-            var okCount = 0;
-            var checkedCount = 0;
-
-            foreach (var env in envs)
+            try
             {
-                try
-                {
-                    okCount += await CheckEnvironment(env, schemas, missing, missingFromDb);
-                    checkedCount++;
-                }
-                catch (Exception ex)
-                {
-                    envErrors.Add((env, ex.Message));
-                }
+                var result = await GrantService.CheckEnvironmentAsync(env, schemas, roles, privileges, ct);
+                _okCount += result.OkCount;
+                _missing.AddRange(result.Missing);
+                _missingFromDb.AddRange(result.MissingFromDb);
+                _environmentsChecked++;
             }
-
-            _missing = missing;
-            _missingFromDb = missingFromDb;
-            _envErrors = envErrors;
-            _okCount = okCount;
-            _environmentsChecked = checkedCount;
-            _checkedAt = DateTimeOffset.Now;
-        }
-        catch (Exception ex)
-        {
-            _error = ex.Message;
-        }
-        finally
-        {
-            _running = false;
-            StateHasChanged();
-        }
-    }
-
-    /// <summary>Checks one environment and appends its findings. Returns the number of OK tables.</summary>
-    private async Task<int> CheckEnvironment(
-        string env,
-        List<string> schemas,
-        List<TableGrant> missing,
-        List<(string Env, string Schema, string Table)> missingFromDb)
-    {
-        using var db = DbFactory.CreateContext(env);
-        var conn = db.Database.GetDbConnection();
-
-        // has_table_privilege throws if a role does not exist — verify up front.
-        var existingRoles = (await conn.QueryAsync<string>(
-            "SELECT rolname FROM pg_roles WHERE rolname = ANY(@roles)", new { roles = _checkedRoles }))
-            .ToHashSet(StringComparer.Ordinal);
-
-        var missingRoles = _checkedRoles.Where(r => !existingRoles.Contains(r)).ToList();
-        if (missingRoles.Count > 0)
-        {
-            throw new InvalidOperationException($"Rollene finnes ikke i databasen: {string.Join(", ", missingRoles)}.");
-        }
-
-        var okCount = 0;
-
-        foreach (var schema in schemas)
-        {
-            var modelTables = db.Model.GetEntityTypes()
-                .Where(t => string.Equals(t.GetSchema(), schema, StringComparison.OrdinalIgnoreCase))
-                .Select(t => t.GetTableName())
-                .Where(t => !string.IsNullOrEmpty(t))
-                .Select(t => t!)
-                .Distinct(StringComparer.Ordinal)
-                .OrderBy(t => t, StringComparer.Ordinal)
-                .ToList();
-
-            if (modelTables.Count == 0)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                continue;
+                // Cancellation must reach RunAsync instead of becoming a per-env error.
+                _envErrors.Add((env, ErrorText.Flatten(ex)));
             }
-
-            // Only check tables that actually exist in the DB — model may be ahead of the environment.
-            var dbTables = (await conn.QueryAsync<string>(
-                "SELECT tablename FROM pg_tables WHERE schemaname = @schema", new { schema }))
-                .ToHashSet(StringComparer.Ordinal);
-
-            var toCheck = modelTables.Where(dbTables.Contains).ToList();
-            missingFromDb.AddRange(modelTables.Where(t => !dbTables.Contains(t)).Select(t => (env, schema, t)));
-
-            if (toCheck.Count == 0)
-            {
-                continue;
-            }
-
-            // Npgsql binds arrays natively, so pass tables/roles/privileges as parameters.
-            const string sql = """
-                SELECT t.tbl AS "Table", r.role AS "Role", p.priv AS "Privilege"
-                FROM unnest(@tables::text[]) AS t(tbl)
-                CROSS JOIN unnest(@roles::text[]) AS r(role)
-                CROSS JOIN unnest(@privs::text[]) AS p(priv)
-                WHERE NOT has_table_privilege(r.role, format('%I.%I', @schema, t.tbl), p.priv)
-                ORDER BY t.tbl, r.role, p.priv
-                """;
-
-            var rows = (await conn.QueryAsync<GrantRow>(
-                sql,
-                new { tables = toCheck, roles = _checkedRoles, privs = _checkedPrivileges, schema })).ToList();
-            var byTable = rows.GroupBy(r => r.Table, StringComparer.Ordinal)
-                .ToDictionary(g => g.Key, g => g.Select(r => (r.Role, r.Privilege)).ToList(), StringComparer.Ordinal);
-
-            missing.AddRange(toCheck
-                .Where(byTable.ContainsKey)
-                .Select(t => new TableGrant { Environment = env, Schema = schema, Table = t, Missing = byTable[t] }));
-            okCount += toCheck.Count - byTable.Count;
         }
 
-        return okCount;
-    }
+        _checkedAt = DateTimeOffset.Now;
+    });
 
     private async Task FixTable(TableGrant result)
     {
@@ -406,20 +271,14 @@
 
         try
         {
-            using var db = DbFactory.CreateContext(result.Environment);
-            var conn = db.Database.GetDbConnection();
-            foreach (var statement in GrantStatements(result))
-            {
-                await conn.ExecuteAsync(statement);
-            }
-
+            await GrantService.FixTableAsync(result);
             result.Missing = [];
             result.IsFixed = true;
             result.Error = null;
         }
         catch (Exception ex)
         {
-            result.Error = ex.Message;
+            result.Error = ErrorText.Flatten(ex);
         }
         finally
         {
@@ -440,49 +299,5 @@
 
         _fixingAll = false;
         StateHasChanged();
-    }
-
-    // ── Helpers ──────────────────────────────────────────────────────────────
-    // One GRANT per role, listing only the privileges that were actually missing for that role.
-    private static IEnumerable<string> GrantStatements(TableGrant result) =>
-        result.Missing
-            .GroupBy(m => m.Role, StringComparer.Ordinal)
-            .Select(g => GrantSql(
-                result.Schema,
-                result.Table,
-                g.Key,
-                g.Select(m => m.Privilege).Distinct(StringComparer.Ordinal)));
-
-    private static string GrantSql(string schema, string table, string role, IEnumerable<string> privileges) =>
-        $"GRANT {string.Join(", ", privileges)} ON TABLE {Quote(schema)}.{Quote(table)} TO {Quote(role)};";
-
-    private static string Quote(string identifier) =>
-        $"\"{identifier.Replace("\"", "\"\"")}\"";
-
-    // ── Models ────────────────────────────────────────────────────────────────
-    private sealed class GrantRow
-    {
-        public string Table { get; set; } = "";
-
-        public string Role { get; set; } = "";
-
-        public string Privilege { get; set; } = "";
-    }
-
-    private sealed class TableGrant
-    {
-        public string Environment { get; set; } = "";
-
-        public string Schema { get; set; } = "";
-
-        public string Table { get; set; } = "";
-
-        public List<(string Role, string Privilege)> Missing { get; set; } = [];
-
-        public bool IsFixing { get; set; }
-
-        public bool IsFixed { get; set; }
-
-        public string? Error { get; set; }
     }
 }

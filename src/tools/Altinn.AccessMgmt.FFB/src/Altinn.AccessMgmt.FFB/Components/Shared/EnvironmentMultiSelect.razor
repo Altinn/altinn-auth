@@ -1,0 +1,44 @@
+@inject IEnvironmentDbContextFactory EnvFactory
+
+<MudText Typo="Typo.body2" Class="mb-2 mud-text-secondary">@Label</MudText>
+<MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+    @foreach (var env in EnvFactory.Environments)
+    {
+        var e = env;
+        var configured = EnvFactory.IsConfigured(e);
+        <MudCheckBox T="bool"
+                     Value="@Selection[e]"
+                     ValueChanged="@(v => SetSelection(e, v))"
+                     Label="@e"
+                     Disabled="@(!configured)"
+                     Color="Color.Primary"
+                     Dense="@Dense" />
+    }
+</MudStack>
+
+@code {
+    [Parameter, EditorRequired] public Dictionary<string, bool> Selection { get; set; } = default!;
+
+    /// <summary>
+    /// Raised when a checkbox toggles. Pages bind with @bind-Selection so they re-render
+    /// and re-evaluate derived state (e.g. disabled Start buttons) on every toggle.
+    /// </summary>
+    [Parameter] public EventCallback<Dictionary<string, bool>> SelectionChanged { get; set; }
+
+    [Parameter] public string Label { get; set; } = "Miljø:";
+    [Parameter] public bool Dense { get; set; }
+
+    protected override void OnInitialized()
+    {
+        foreach (var env in EnvFactory.Environments)
+        {
+            Selection.TryAdd(env, false);
+        }
+    }
+
+    private Task SetSelection(string env, bool value)
+    {
+        Selection[env] = value;
+        return SelectionChanged.InvokeAsync(Selection);
+    }
+}

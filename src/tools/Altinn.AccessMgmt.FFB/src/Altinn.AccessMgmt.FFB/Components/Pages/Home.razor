@@ -17,12 +17,10 @@
             <MudText Typo="Typo.overline" Class="mud-text-secondary">Verktøy</MudText>
             <MudDivider Class="my-2" />
             <MudStack Spacing="3">
-                @ToolRow("/entity-search",        Icons.Material.Filled.ManageSearch,   "Entity-søk",         "Søk på entities via RefId, navn eller ID direkte mot databasen.")
-                @ToolRow("/tools/tables",          Icons.Material.Filled.TableChart,      "Tabeller",           "Radantall og grupperingsanalyse for alle tabeller i skjemaet.")
-                @ToolRow("/tools/connection-query",Icons.Material.Filled.AccountTree,     "Connection Query",   "Kjør forhåndsdefinerte EF-spørringer på tvers av tabeller.")
-                @ToolRow("/tools/outbox",          Icons.Material.Filled.Outbox,          "Outbox",             "Overvåk outbox-meldinger — se pending, prosesserte og feilede.")
-                @ToolRow("/tools/constants-check", Icons.Material.Filled.FactCheck,       "Constants Check",    "Sammenligner hardkodede konstanter i kode mot faktisk DB-innhold. Fikser avvik med INSERT/UPDATE/DELETE.")
-                @ToolRow("/tools/resource-cleanup",Icons.Material.Filled.DeleteSweep,     "Resource Cleanup",   "Finn og rydd opp foreldreløse resource-rader basert på et RefId-prefix.")
+                @foreach (var entry in NavRegistry.All.Where(e => e.Group == NavGroup.Tool))
+                {
+                    @ToolRow(entry)
+                }
             </MudStack>
         </MudPaper>
 
@@ -30,12 +28,10 @@
             <MudText Typo="Typo.overline" Class="mud-text-secondary">Bakgrunnsjobber</MudText>
             <MudDivider Class="my-2" />
             <MudStack Spacing="3">
-                @ToolRow("/jobs/runs",            Icons.Material.Filled.PlayCircle,      "Kjøringer",           "Sanntidsoversikt over alle aktive og avsluttede jobbkjøringer.")
-                @ToolRow("/jobs/assignment-sync", Icons.Material.Filled.CompareArrows,   "Assignment Sync",     "To-pass diff mellom AccessMgmt og Register. Genererer INSERT/DELETE SQL for assignments.")
-                @ToolRow("/jobs/entity-sync",     Icons.Material.Filled.People,          "Entity Sync",         "To-pass diff for entities. Genererer korrigeringsskript mot Register.")
-                @ToolRow("/jobs/ingest-cleanup",  Icons.Material.Filled.CleaningServices,"Ingest Cleanup",      "Identifiserer stale tabeller i ingest-skjemaet. Genererer og kan kjøre DROP-statements.")
-                @ToolRow("/jobs/history-cleanup", Icons.Material.Filled.History,         "History Cleanup",     "Slår sammen og rydder utløpte historikkrader (audit_validto IS NOT NULL).")
-                @ToolRow("/jobs/schedules",       Icons.Material.Filled.Schedule,        "Planlagte kjøringer", "Cron-baserte planer konfigurert i appsettings.json. Kjør manuelt eller se neste tidspunkt.")
+                @foreach (var entry in NavRegistry.All.Where(e => e.Group == NavGroup.Job))
+                {
+                    @ToolRow(entry)
+                }
             </MudStack>
         </MudPaper>
     </MudItem>
@@ -46,22 +42,29 @@
             <MudText Typo="Typo.overline" Class="mud-text-secondary">Legge til et nytt verktøy</MudText>
             <MudDivider Class="my-2" />
             <MudText Typo="Typo.body2" Class="mb-3 mud-text-secondary">
-                Et verktøy er en vanlig Blazor-side med direkte DB-tilgang via EF Core.
+                Et verktøy er en tynn Blazor-side som kaller en tjeneste. All DB-logikk
+                ligger i tjenesten; siden holder kun UI-state.
             </MudText>
             <ol class="ffb-guide">
                 <li>
-                    Opprett <code>Components/Pages/Tools/MinSide.razor</code><br />
-                    med <code>@@page "/tools/min-side"</code>
+                    Opprett tjenesten <code>Services/Tools/MinSideService.cs</code> med signaturen
+                    <code>RunAsync(string environment, ..., CancellationToken ct = default)</code>.
+                    Den registreres automatisk i DI.
                 </li>
                 <li>
-                    Bruk disse to injeksjonene for DB-tilgang:
-                    <pre class="ffb-pre">@@inject IEnvironmentDbContextFactory DbFactory
-@@inject EnvironmentState EnvState
-
-using var db = DbFactory.CreateContext(EnvState.Current);</pre>
+                    Opprett <code>Components/Pages/Tools/MinSide.razor</code> med
+                    <code>@@inherits EnvironmentPageBase</code> og kjør arbeid via
+                    <code>RunAsync(...)</code> — basen gir <code>Loading</code>/<code>Error</code>
+                    og miljøbytte-håndtering (overstyr <code>OnEnvironmentChangedAsync</code>).
                 </li>
-                <li>Legg til nav-lenke i <code>Components/Layout/NavMenu.razor</code> under «Verktøy».</li>
+                <li>
+                    Legg til én oppføring i <code>Components/Layout/NavRegistry.cs</code> —
+                    siden dukker opp både i menyen og her på Hjem.
+                </li>
             </ol>
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                Fullstendig oppskrift med kodeeksempler: <code>README.md</code> i prosjektrota.
+            </MudText>
         </MudPaper>
 
         <MudPaper Elevation="1" Class="pa-4 mb-4">
@@ -73,36 +76,31 @@ using var db = DbFactory.CreateContext(EnvState.Current);</pre>
             </MudText>
             <ol class="ffb-guide">
                 <li>
-                    Opprett <code>Jobs/MinNyJob.cs</code>:
-                    <pre class="ffb-pre">public static class MinNyJob
-{
-    public const string JobName = "MinNyJob";
-
-    public static async Task RunAsync(
-        DuoRepo repo, JobRun run,
-        MinNyJobOptions opts, CancellationToken ct = default)
-    {
-        run.AddLog("Starter...");
-        var rows = await repo.QueryAccAsync&lt;MyDto&gt;(sql, ct: ct);
-        run.AddSql(rows.Select(r => $"-- {r.Id}"));
-    }
-}</pre>
+                    Opprett <code>Jobs/MinNyJob.cs</code> — statisk klasse med
+                    <code>JobName</code>-konstant, <code>RunAsync(DuoRepo, JobRun, opts, ct)</code>
+                    og options-record i samme fil.
                 </li>
                 <li>
-                    Legg til <code>StartMinNyJob(...)</code> i <code>IJobRunner</code>
+                    Legg til <code>StartMinNy(...)</code> i <code>IJobRunner</code>
                     og implementer i <code>JobRunner.cs</code> via <code>FireAndForget</code>.
                 </li>
                 <li>
-                    Opprett <code>Components/Pages/Jobs/MinNyJob.razor</code>.
-                    Følg mønsteret fra <code>EntitySync.razor</code> (start-panel + <code>&lt;JobRunCard&gt;</code>).
+                    Opprett <code>Components/Pages/Jobs/MinNyJob.razor</code> etter mønsteret
+                    fra <code>AssignmentSync.razor</code>: <code>&lt;EnvironmentMultiSelect&gt;</code>,
+                    <code>&lt;JobRunList&gt;</code> (kall <code>Refresh()</code> etter start) og
+                    <code>Confirm.ShowAsync</code> før destruktive steg.
                 </li>
-                <li>Legg til nav-lenke i <code>NavMenu.razor</code> under «Jobber».</li>
+                <li>Legg til én oppføring i <code>NavRegistry.cs</code>.</li>
                 <li>
-                    <em>Valgfritt — planlegging:</em> Legg til konstant i <code>JobTypes</code>
-                    (<code>Config/JobSchedulesConfig.cs</code>) og en <code>case</code> i
-                    <code>JobSchedulerService.FireSchedule</code>.
+                    <em>Valgfritt — planlegging:</em> krever <code>JobTypes</code>-konstant,
+                    <code>ScheduledMinNyOptions</code> + property på <code>JobScheduleEntry</code>,
+                    og <code>case</code> + mapper i <code>JobSchedulerService.FireSchedule</code>.
                 </li>
             </ol>
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                Fullstendig oppskrift, inkludert kjørenavn-grammatikken som
+                <code>JobRunList</code> matcher på: <code>README.md</code> i prosjektrota.
+            </MudText>
         </MudPaper>
 
         <MudPaper Elevation="1" Class="pa-4">
@@ -153,12 +151,12 @@ using var db = DbFactory.CreateContext(EnvState.Current);</pre>
 </style>
 
 @code {
-    private RenderFragment ToolRow(string href, string icon, string label, string description) =>
+    private RenderFragment ToolRow(NavEntry entry) =>
         @<MudStack Row="true" AlignItems="AlignItems.Start" Spacing="2">
-            <MudIcon Icon="@icon" Size="Size.Small" Class="mt-1 mud-text-secondary" />
+            <MudIcon Icon="@entry.Icon" Size="Size.Small" Class="mt-1 mud-text-secondary" />
             <div>
-                <MudLink Href="@href" Typo="Typo.body2">@label</MudLink>
-                <MudText Typo="Typo.caption" Class="mud-text-secondary">@description</MudText>
+                <MudLink Href="@entry.Href" Typo="Typo.body2">@entry.Title</MudLink>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">@entry.Description</MudText>
             </div>
         </MudStack>;
 }

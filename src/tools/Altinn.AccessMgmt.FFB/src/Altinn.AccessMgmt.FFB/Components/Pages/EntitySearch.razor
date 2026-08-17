@@ -1,10 +1,6 @@
 @page "/entity-search"
-@using Altinn.AccessMgmt.PersistenceEF.Models
-@using Microsoft.EntityFrameworkCore
-@using Altinn.AccessMgmt.FFB.Services
-@inject IEnvironmentDbContextFactory DbFactory
-@inject EnvironmentState EnvState
-@implements IDisposable
+@inherits EnvironmentPageBase
+@inject EntitySearchService SearchService
 
 <PageTitle>Entity-søk – Access Management</PageTitle>
 
@@ -40,23 +36,23 @@
     </MudGrid>
 </MudPaper>
 
-@if (_loading)
+@if (Loading)
 {
     <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-4" />
 }
 
-@if (_error is not null)
+@if (Error is not null)
 {
-    <MudAlert Severity="Severity.Error" Class="mb-4">@_error</MudAlert>
+    <MudAlert Severity="Severity.Error" Class="mb-4">@Error</MudAlert>
 }
 
 @if (_results is not null)
 {
     <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
         <MudText Typo="Typo.body2" Class="mud-text-secondary">
-            @if (_results.Count == MaxResults)
+            @if (_results.Count == EntitySearchService.MaxResults)
             {
-                <span>Viser de første @MaxResults treffene – prøv et mer spesifikt søk</span>
+                <span>Viser de første @EntitySearchService.MaxResults treffene – prøv et mer spesifikt søk</span>
             }
             else
             {
@@ -118,81 +114,31 @@
 }
 
 @code {
-    private const int MaxResults = 50;
-
     private string _searchTerm = string.Empty;
     private bool _includeDeleted;
-    private bool _loading;
-    private string? _error;
     private List<Entity>? _results;
 
-    protected override void OnInitialized()
+    protected override Task OnEnvironmentChangedAsync()
     {
-        EnvState.OnChange += OnEnvironmentChanged;
-    }
-
-    public void Dispose()
-    {
-        EnvState.OnChange -= OnEnvironmentChanged;
-    }
-
-    private void OnEnvironmentChanged()
-    {
+        // Results belong to the previous environment.
         _results = null;
-        _error = null;
-        InvokeAsync(StateHasChanged);
+        Error = null;
+        return Task.CompletedTask;
     }
 
     private async Task Search()
     {
-        _error = null;
         _results = null;
 
         var term = _searchTerm.Trim();
-
         if (term.Length < 2)
         {
-            _error = "Skriv minst 2 tegn for å søke.";
+            Error = "Skriv minst 2 tegn for å søke.";
             return;
         }
 
-        _loading = true;
-
-        try
-        {
-            using var db = DbFactory.CreateContext(EnvState.Current);
-
-            var query = db.Entities
-                .AsNoTracking()
-                .Include(e => e.Type)
-                .Include(e => e.Variant)
-                .AsQueryable();
-
-            if (!_includeDeleted)
-            {
-                query = query.Where(e => !e.IsDeleted);
-            }
-
-            query = query.Where(e =>
-                EF.Functions.ILike(e.Name, $"%{term}%") ||
-                e.OrganizationIdentifier == term ||
-                (e.Username != null && EF.Functions.ILike(e.Username, $"%{term}%")) ||
-                (e.PartyId != null && e.PartyId.ToString() == term) ||
-                (e.PersonIdentifier != null && e.PersonIdentifier.StartsWith(term)));
-
-            _results = await query
-                .OrderBy(e => e.Name)
-                .Take(MaxResults)
-                .ToListAsync();
-        }
-        catch (Exception ex)
-        {
-            _error = $"Databasefeil: {ex.Message}";
-        }
-        finally
-        {
-            _loading = false;
-        }
+        await RunAsync(async ct =>
+            _results = await SearchService.SearchAsync(EnvState.Current, term, _includeDeleted, ct: ct));
     }
 
     private async Task OnKeyDown(KeyboardEventArgs e)

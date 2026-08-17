@@ -17,10 +17,16 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddMudServices();
 
+// Environment infrastructure
 builder.Services.Configure<EnvironmentsConfig>(builder.Configuration);
 builder.Services.AddSingleton<IEnvironmentDbContextFactory, EnvironmentDbContextFactory>();
 builder.Services.AddScoped<EnvironmentState>();
 
+// Tool and page data services (Services/Tools + Services/PageData) are registered
+// by convention — see ServiceCollectionExtensions.AddPageServices.
+builder.Services.AddPageServices();
+
+// Job infrastructure
 builder.Services.AddSingleton<IJobRunStore, JobRunStore>();
 
 builder.Services.Configure<NotificationsConfig>(builder.Configuration.GetSection("Notifications"));
