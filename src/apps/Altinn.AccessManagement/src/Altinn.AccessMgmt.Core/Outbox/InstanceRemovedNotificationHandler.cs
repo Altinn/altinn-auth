@@ -45,6 +45,20 @@ public class InstanceRemovedNotificationHandler(
             return OutboxStatus.Completed;
         }
 
+        if (to.TypeId != EntityTypeConstants.Person && to.TypeId != EntityTypeConstants.Organization)
+        {
+            db.OutboxMessageLogs.Add(message, $"to entity type must be of type <Person | Organization>, not {to.Name}");
+            await db.SaveChangesAsync(cancellationToken);
+            return OutboxStatus.Completed;
+        }
+
+        if (from.TypeId != EntityTypeConstants.Person && from.TypeId != EntityTypeConstants.Organization)
+        {
+            db.OutboxMessageLogs.Add(message, $"from entity type must be of type <Person | Organization>, not {from.Name}");
+            await db.SaveChangesAsync(cancellationToken);
+            return OutboxStatus.Completed;
+        }
+
         var content = new NotificationOrderChainRequestExt()
         {
             IdempotencyId = idempotencyId,
@@ -186,7 +200,7 @@ public class InstanceRemovedNotificationHandler(
             };
         }
 
-        throw new InvalidOperationException("to entity type must be of type <Person | Organization>");
+        throw new UnreachableException();
     }
 
     private static string MailContent(Entity from, Entity to, IEnumerable<Instance> instances)

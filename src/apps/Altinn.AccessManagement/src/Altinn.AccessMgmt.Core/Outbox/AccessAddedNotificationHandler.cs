@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
 using Altinn.AccessMgmt.Core.Extensions;
@@ -33,7 +33,7 @@ public class AccessAddedNotificationHandler(
             return OutboxStatus.Completed;
         }
 
-        var (recipient, requester, resources, packages, idempotencyId) = await UnwrapMessage(message, cancellationToken);
+        var (from, to, resources, packages, idempotencyId) = await UnwrapMessage(message, cancellationToken);
 
         if (!packages.Any() && !resources.Any())
         {
@@ -42,11 +42,25 @@ public class AccessAddedNotificationHandler(
             return OutboxStatus.Completed;
         }
 
+        if (to.TypeId != EntityTypeConstants.Person && to.TypeId != EntityTypeConstants.Organization)
+        {
+            db.OutboxMessageLogs.Add(message, $"to entity type must be of type <Person | Organization>, not {to.Name}");
+            await db.SaveChangesAsync(cancellationToken);
+            return OutboxStatus.Completed;
+        }
+
+        if (from.TypeId != EntityTypeConstants.Person && from.TypeId != EntityTypeConstants.Organization)
+        {
+            db.OutboxMessageLogs.Add(message, $"from entity type must be of type <Person | Organization>, not {from.Name}");
+            await db.SaveChangesAsync(cancellationToken);
+            return OutboxStatus.Completed;
+        }
+
         var content = new NotificationOrderChainRequestExt()
         {
             IdempotencyId = idempotencyId,
             SendersReference = idempotencyId,
-            Recipient = CreateRecipient(recipient, requester, resources, packages),
+            Recipient = CreateRecipient(from, to, resources, packages),
         };
 
         var response = await notification.Send(content, cancellationToken);
@@ -89,7 +103,7 @@ public class AccessAddedNotificationHandler(
         return OutboxStatus.Completed;
     }
 
-    private async Task<(Entity Recipient, Entity Requester, IEnumerable<Resource> Resources, IEnumerable<Package> Packages, string IdempotencyId)> UnwrapMessage(OutboxMessage message, CancellationToken cancellationToken)
+    private async Task<(Entity From, Entity To, IEnumerable<Resource> Resources, IEnumerable<Package> Packages, string IdempotencyId)> UnwrapMessage(OutboxMessage message, CancellationToken cancellationToken)
     {
         var content = JsonSerializer.Deserialize<AccessAddedNotificationMessage>(message.Data);
         if (content is null)
@@ -190,7 +204,7 @@ public class AccessAddedNotificationHandler(
             };
         }
 
-        throw new InvalidOperationException("to entity type must be of type <Person | Organization>");
+        throw new UnreachableException();
     }
 
     private static string MailContent(Entity from, Entity to, IEnumerable<Resource> resources, IEnumerable<Package> packages)
