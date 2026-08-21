@@ -179,9 +179,8 @@ namespace Altinn.AccessManagement.Integration.Clients
                 string consentTemplatesString = await response.Content.ReadAsStringAsync();
                 List<ConsentTemplate> consentTemplates = JsonSerializer.Deserialize<List<ConsentTemplate>>(consentTemplatesString, _serializerOptions);
 
-                // Cache for 1 hour
-                var cacheEntryOptions = new MemoryCacheEntryOptions()
-                    .SetAbsoluteExpiration(TimeSpan.FromHours(1));
+                // Cache sliding for 4 hours
+                var cacheEntryOptions = new MemoryCacheEntryOptions().SetSlidingExpiration(TimeSpan.FromHours(4));
 
                 _memoryCache.Set(cacheKey, consentTemplates, cacheEntryOptions);
 
