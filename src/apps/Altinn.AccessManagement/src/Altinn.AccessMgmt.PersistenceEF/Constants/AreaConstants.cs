@@ -255,7 +255,7 @@ public static class AreaConstants
             KeyValuePair.Create("Name", "Manage Access"),
             KeyValuePair.Create("Description", "This authorization area includes access packages related to managing access.")),
         NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Administrere tilgongar"),
+            KeyValuePair.Create("Name", "Administrere tilgangar"),
             KeyValuePair.Create("Description", "Dette fullmaktsområdet omfattar tilgangspakkar knytt til administrering av tilgongar.")),
     };
 
@@ -429,7 +429,7 @@ public static class AreaConstants
             KeyValuePair.Create("Name", "Energy, Water, Sewage and Waste"),
             KeyValuePair.Create("Description", "This authorization area includes access packages related to energy, water, sewage and waste.")),
         NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Energi, vann, avløp og avfall"),
+            KeyValuePair.Create("Name", "Energi, vatn, avløp og avfall"),
             KeyValuePair.Create("Description", "Dette fullmaktsområdet omfattar tilgangspakkar knytt til energi, vann, avløp og avfall.")),
     };
 
@@ -487,7 +487,7 @@ public static class AreaConstants
             KeyValuePair.Create("Name", "Culture and Volunteering"),
             KeyValuePair.Create("Description", "This authorization area includes access packages related to culture and volunteering.")),
         NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Kultur og frivillighet"),
+            KeyValuePair.Create("Name", "Kultur og frivilligheit"),
             KeyValuePair.Create("Description", "Dette fullmaktsområdet omfattar tilgangspakkar knytt til kultur og frivillighet.")),
     };
 
@@ -632,7 +632,7 @@ public static class AreaConstants
             KeyValuePair.Create("Name", "Authorizations for Bankruptcy Estates"),
             KeyValuePair.Create("Description", "This authorization area includes access packages related to authorizations for bankruptcy estates.")),
         NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Fullmakter for konkursbo"),
+            KeyValuePair.Create("Name", "Fullmakter for konkursbu"),
             KeyValuePair.Create("Description", "Dette fullmaktsområdet omfattar tilgangspakkar knytt til fullmakter for konkursbo.")),
     };
 
@@ -661,7 +661,7 @@ public static class AreaConstants
             KeyValuePair.Create("Name", "Authorizations for Bussineses"),
             KeyValuePair.Create("Description", "This authorization area includes access packages related to authorizations for bussineses.")),
         NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Fullmakter for forretningsfører"),
+            KeyValuePair.Create("Name", "Fullmakter for forretningsførar"),
             KeyValuePair.Create("Description", "Dette fullmaktsområdet omfattar tilgangspakkar knytt til fullmakter for forretningsfører.")),
     };
 
