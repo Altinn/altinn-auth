@@ -217,7 +217,7 @@ public class AuthorizedPartiesController(
         }
 
         var consumerUrn = OrgUtil.GetAuthenticatedParty(User);
-        if (consumerUrn.IsOrganizationId(out var organizationId))
+        if (consumerUrn is not null && consumerUrn.IsOrganizationId(out var organizationId))
         {
             Provider provider = await providerService.GetProviderByOrganizationId(organizationId.ToString(), ct);
             if (orgCode.Equals(provider?.Code, StringComparison.OrdinalIgnoreCase))

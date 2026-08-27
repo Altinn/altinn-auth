@@ -71,7 +71,7 @@ namespace Altinn.Authorization.Tests.MockServices
                 return Task.FromResult(true);
             }
 
-            _logger.LogWarning("Policy not found for full path" + fullpath);
+            _logger.LogWarning("Policy not found for full path: {FullPath}", fullpath.Replace("\r", string.Empty, StringComparison.Ordinal).Replace("\n", string.Empty, StringComparison.Ordinal));
 
             return Task.FromResult(false);
         }

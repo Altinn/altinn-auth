@@ -49,7 +49,7 @@ namespace Altinn.AccessManagement.Integration.Clients
         /// <inheritdoc/>
         public async Task<ServiceResource> GetResource(string resourceId, CancellationToken cancellationToken = default)
         {
-            string endpointUrl = $"v1/resource/{resourceId}";
+            string endpointUrl = $"v1/resource/{Uri.EscapeDataString(resourceId)}";
 
             HttpResponseMessage response = await _httpClient.GetAsync(endpointUrl, cancellationToken);
             if (response.StatusCode == HttpStatusCode.OK)
@@ -140,7 +140,7 @@ namespace Altinn.AccessManagement.Integration.Clients
         {
             try
             {
-                string endpointUrl = $"v2/resource/{resource}/policy/rights";
+                string endpointUrl = $"v2/resource/{Uri.EscapeDataString(resource)}/policy/rights";
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, endpointUrl);
                 request.Headers.Add(TranslationConstants.AcceptLanguageHeader, languageCode);
 

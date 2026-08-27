@@ -36,6 +36,24 @@ namespace Altinn.AccessManagement.Core.Helpers.Extensions
         }
 
         /// <summary>
+        /// Sanitize the input for use as a value in a log entry. Line breaks are removed, as they would
+        /// otherwise let a caller forge additional entries in the log.
+        /// </summary>
+        /// <param name="input">The input variable to be sanitized</param>
+        /// <returns>The input without carriage return and line feed characters</returns>
+        public static string AsLogValue(this string input)
+        {
+            if (input is null)
+            {
+                return null;
+            }
+
+            return input
+                .Replace("\r", string.Empty, StringComparison.Ordinal)
+                .Replace("\n", string.Empty, StringComparison.Ordinal);
+        }
+
+        /// <summary>
         /// Compare to strings doing a loose compare ignoring case and diacritics
         /// </summary>
         /// <param name="text1">First text</param>
