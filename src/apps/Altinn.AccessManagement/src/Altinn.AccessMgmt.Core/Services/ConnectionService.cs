@@ -701,7 +701,16 @@ public partial class ConnectionService(
             cancellationToken
         );
 
-        await dbContext.SaveChangesAsync(cancellationToken);
+        await dbContext.SaveChangesWithOutboxRetry(
+            () => AccessAddedNotification.Upsert(
+                dbContext,
+                fromId,
+                toId,
+                null,
+                packageId,
+                appsettings?.Value?.Notifications?.AccessAddedNotifyInSeconds ?? AccessAddedNotification.DefaultNotifyInSeconds,
+                cancellationToken),
+            cancellationToken);
 
         return DtoMapper.Convert(newAssignmentPackage);
     }
@@ -1326,7 +1335,16 @@ public partial class ConnectionService(
                 cancellationToken
             );
 
-            await dbContext.SaveChangesAsync(cancellationToken);
+            await dbContext.SaveChangesWithOutboxRetry(
+                () => AccessAddedNotification.Upsert(
+                    dbContext,
+                    from.Id,
+                    to.Id,
+                    resourceObj.Id,
+                    null,
+                    appsettings?.Value?.Notifications?.AccessAddedNotifyInSeconds ?? AccessAddedNotification.DefaultNotifyInSeconds,
+                    cancellationToken),
+                cancellationToken);
         }
 
         return true;

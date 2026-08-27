@@ -688,7 +688,14 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
             appsettings?.Value?.Notifications?.AgentAddedNotifyInSeconds ?? AgentAddedNotification.DefaultNotifyInSeconds,
             cancellationToken
         );
-        await db.SaveChangesAsync(cancellationToken);
+        await db.SaveChangesWithOutboxRetry(
+            () => AgentAddedNotification.Upsert(
+                db,
+                partyUuid,
+                toUuid,
+                appsettings?.Value?.Notifications?.AgentAddedNotifyInSeconds ?? AgentAddedNotification.DefaultNotifyInSeconds,
+                cancellationToken),
+            cancellationToken);
 
         return DtoMapper.Convert(assignment);
     }
@@ -759,7 +766,15 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
             cancellationToken
         );
 
-        await db.SaveChangesAsync(cancellationToken);
+        await db.SaveChangesWithOutboxRetry(
+            () => ClientRemovedNotification.Upsert(
+                db,
+                partyUuid,
+                fromUuid,
+                toUuid,
+                appsettings?.Value?.Notifications?.ClientRemovedNotifyInSeconds ?? ClientRemovedNotification.DefaultNotifyInSeconds,
+                cancellationToken),
+            cancellationToken);
         return null;
     }
 
@@ -831,7 +846,14 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         );
 
         db.Assignments.Remove(existingAssignment);
-        await db.SaveChangesAsync(cancellationToken);
+        await db.SaveChangesWithOutboxRetry(
+            () => AgentRemovedNotification.Upsert(
+                db,
+                partyUuid,
+                toUuid,
+                appsettings?.Value?.Notifications?.AgentRemovedNotifyInSeconds ?? AgentRemovedNotification.DefaultNotifyInSeconds,
+                cancellationToken),
+            cancellationToken);
         return null;
     }
 
@@ -1333,7 +1355,15 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
             return errorResult;
         }
 
-        await db.SaveChangesAsync(cancellationToken);
+        await db.SaveChangesWithOutboxRetry(
+            () => ClientAddedNotification.Upsert(
+                db,
+                partyId,
+                fromId,
+                toId,
+                appsettings.Value.Notifications.ClientAddedNotifyInSeconds,
+                cancellationToken),
+            cancellationToken);
 
         return result;
     }
@@ -1816,7 +1846,15 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
             }
         }
 
-        await db.SaveChangesAsync(cancellationToken);
+        await db.SaveChangesWithOutboxRetry(
+            () => ClientRemovedNotification.Upsert(
+                db,
+                partyUuid,
+                fromUuid,
+                toUuid,
+                appsettings?.Value?.Notifications?.AgentRemovedNotifyInSeconds ?? ClientRemovedNotification.DefaultNotifyInSeconds,
+                cancellationToken),
+            cancellationToken);
 
         return result;
     }

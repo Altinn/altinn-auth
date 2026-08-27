@@ -1,8 +1,9 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text.Json;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Models.Base;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Extensions;
 
@@ -138,14 +139,21 @@ public static class DbSetExtensions
         ArgumentException.ThrowIfNullOrEmpty(refId);
         ArgumentNullException.ThrowIfNull(addValueFactory);
 
-        var message = await dbset
-            .AsTracking()
-            .FirstOrDefaultAsync(
-                o =>
-                o.RefId == refId &&
-                o.Handler == handler &&
-                o.Status == OutboxStatus.Pending,
-                cancellationToken);
+        // Check local (in-memory) tracker first to avoid duplicate inserts within the same transaction.
+        // A second upsert call with the same refId in the same SaveChanges scope won't find the first
+        // entity via a DB query (it's not committed yet), so we check Local first.
+        var message = dbset.Local.FirstOrDefault(o =>
+            o.RefId == refId &&
+            o.Handler == handler &&
+            o.Status == OutboxStatus.Pending)
+            ?? await dbset
+                .AsTracking()
+                .FirstOrDefaultAsync(
+                    o =>
+                    o.RefId == refId &&
+                    o.Handler == handler &&
+                    o.Status == OutboxStatus.Pending,
+                    cancellationToken);
 
         UpsertOutbox(dbset, refId, handler, addValueFactory, updateValueFactory, message);
     }
@@ -201,14 +209,50 @@ public static class DbSetExtensions
         ArgumentException.ThrowIfNullOrEmpty(refId);
         ArgumentNullException.ThrowIfNull(addValueFactory);
 
-        var message = dbset
-            .AsTracking()
-            .FirstOrDefault(o =>
-                o.RefId == refId &&
-                o.Handler == handler &&
-                o.Status == OutboxStatus.Pending);
+        var message = dbset.Local.FirstOrDefault(o =>
+            o.RefId == refId &&
+            o.Handler == handler &&
+            o.Status == OutboxStatus.Pending)
+            ?? dbset
+                .AsTracking()
+                .FirstOrDefault(o =>
+                    o.RefId == refId &&
+                    o.Handler == handler &&
+                    o.Status == OutboxStatus.Pending);
 
         UpsertOutbox(dbset, refId, handler, addValueFactory, updateValueFactory, message);
+    }
+
+    /// <summary>
+    /// Returns true if the exception was caused by a unique constraint violation on the outbox message refid index.
+    /// </summary>
+    public static bool IsOutboxUniqueConstraintViolation(this DbUpdateException ex)
+        => ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: "uq_outboxmessage_refid_pending" };
+
+    /// <summary>
+    /// Saves all changes and, if a concurrent request already committed an outbox message with the same
+    /// refId, detaches the conflicting Added entry and retries the upsert against the now-committed row.
+    /// </summary>
+    public static async Task<int> SaveChangesWithOutboxRetry(
+        this DbContext db,
+        Func<Task> reUpsert,
+        CancellationToken ct = default)
+    {
+        try
+        {
+            return await db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateException ex) when (ex.IsOutboxUniqueConstraintViolation())
+        {
+            foreach (var entry in db.ChangeTracker.Entries<OutboxMessage>()
+                .Where(e => e.State == EntityState.Added).ToList())
+            {
+                entry.State = EntityState.Detached;
+            }
+
+            await reUpsert();
+            return await db.SaveChangesAsync(ct);
+        }
     }
 
     private static void UpsertOutbox<T>(

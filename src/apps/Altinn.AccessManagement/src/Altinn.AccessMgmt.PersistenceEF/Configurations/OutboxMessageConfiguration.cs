@@ -13,7 +13,10 @@ public class OutboxMessageConfiguration : IEntityTypeConfiguration<OutboxMessage
         builder.ToDefaultTable();
 
         builder.HasKey(p => p.Id);
-        builder.HasIndex(p => p.RefId);
+        builder.HasIndex(p => p.RefId)
+            .IsUnique()
+            .HasFilter("status = 'Pending'")
+            .HasDatabaseName("uq_outboxmessage_refid_pending");
 
         builder.Property(p => p.CompletedAt);
         builder.Property(p => p.CorrelationId);
@@ -37,7 +40,7 @@ public class OutboxMessageConfiguration : IEntityTypeConfiguration<OutboxMessage
             .IsRequired()
             .HasDefaultValueSql("NOW()")
             .ValueGeneratedOnAdd();
-
+        
         builder.Property(b => b.Status)
             .HasConversion<string>()
             .HasDefaultValue(OutboxStatus.Pending)
