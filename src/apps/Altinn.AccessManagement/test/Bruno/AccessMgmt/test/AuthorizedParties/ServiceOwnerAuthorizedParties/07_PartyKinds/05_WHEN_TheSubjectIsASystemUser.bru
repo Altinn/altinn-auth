@@ -1,0 +1,60 @@
+meta {
+  name: 05_WHEN_TheSubjectIsASystemUser
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeRoles=true&includeAccessPackages=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeRoles: true
+  includeAccessPackages: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:systemuser:uuid",
+    "value": "{{subjectSystemUserUuid}}"
+  }
+}
+
+docs {
+  WHEN the subject is a system user, looked up by its system user uuid, the organisation the
+  system user was created for is returned with the access the system user has been given.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectSystemUserUuid", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser_tilgangsstyrer.partyUuid);
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  const firm = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER;
+
+  test("WHEN the subject is a system user, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the organisation the system user belongs to is returned with its access", function() {
+    const party = findParty(res.getBody(), firm.partyUuid);
+    expect(party, `expected the organisation ${firm.name} the system user was created for`).to.not.be.undefined;
+    expect(party.authorizedAccessPackages, "the system user has been given access packages").to.not.be.empty;
+  });
+}

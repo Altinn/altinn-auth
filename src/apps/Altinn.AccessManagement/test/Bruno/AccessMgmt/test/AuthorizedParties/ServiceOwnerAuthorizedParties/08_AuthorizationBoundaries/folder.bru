@@ -1,0 +1,15 @@
+meta {
+  name: 08_AuthorizationBoundaries
+  seq: 8
+}
+
+docs {
+  Scenario: The authorization boundaries of the service owner endpoint
+
+    When the request carries no token
+    Then it fails with 401
+    When the request carries a token whose scope the policy does not accept
+    Then it fails with 403
+    When the request carries the resource owner scope, or the admin scope
+    Then it succeeds, since the policy accepts either
+}

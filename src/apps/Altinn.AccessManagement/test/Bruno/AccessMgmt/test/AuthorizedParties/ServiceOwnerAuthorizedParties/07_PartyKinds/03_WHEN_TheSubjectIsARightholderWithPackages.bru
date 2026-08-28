@@ -1,0 +1,68 @@
+meta {
+  name: 03_WHEN_TheSubjectIsARightholderWithPackages
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeRoles=true&includeAccessPackages=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeRoles: true
+  includeAccessPackages: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{subjectPersonId}}"
+  }
+}
+
+docs {
+  WHEN the subject is a person who is a rightholder of the accounting firm, the firm is returned
+  with the packages delegated to that person, and the firm's subunit inherits them.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectPersonId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.employee_rightholderWithPackages.pid);
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  const firm = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER;
+  const rightholder = firm.employee_rightholderWithPackages;
+
+  test("WHEN the subject is a rightholder with packages, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the firm is returned with the packages delegated to the rightholder", function() {
+    const party = findParty(res.getBody(), firm.partyUuid);
+    expect(party, `expected the firm ${firm.name} in the party list`).to.not.be.undefined;
+    expect(party.authorizedAccessPackages).to.include(rightholder.directPackageToDelegate);
+  });
+
+  test("THEN the firm's subunit inherits the delegated packages", function() {
+    const party = findParty(res.getBody(), firm.partyUuid);
+    const subunit = party.subunits.find(item => item.partyUuid.toLowerCase() === firm.subunit.partyUuid.toLowerCase());
+    expect(subunit, `expected the firm subunit ${firm.subunit.name} nested under the firm`).to.not.be.undefined;
+    expect(subunit.authorizedAccessPackages).to.include(rightholder.directPackageToDelegate);
+  });
+}

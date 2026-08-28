@@ -1,0 +1,19 @@
+meta {
+  name: 03_KeyRoleFilter
+  seq: 3
+}
+
+docs {
+  Scenario: The key role party filter controls whether the subject's key role parties are returned
+
+    Given a service owner lists the daily leader of an accounting firm, whose clients are
+    reached through the firm's key role
+    When key role parties are included, the clients are in the list
+    When key role parties are excluded, those clients drop out, while the firm itself and a
+    party that delegated directly to the person stay
+
+  This folder covers only includePartiesViaKeyRoles, which the service applies deterministically.
+  includeSubParties and includeInactiveParties are left for a later slice: the subunit filter
+  is a known defect (#3522, the filter is resolved but never applied) and the inactive window
+  is already covered by 09_DeletedParties.
+}

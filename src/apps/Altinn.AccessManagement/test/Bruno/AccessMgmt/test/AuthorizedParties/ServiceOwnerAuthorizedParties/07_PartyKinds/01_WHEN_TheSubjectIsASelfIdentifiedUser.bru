@@ -1,0 +1,64 @@
+meta {
+  name: 01_WHEN_TheSubjectIsASelfIdentifiedUser
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeRoles=true&includeAccessPackages=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeRoles: true
+  includeAccessPackages: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:userid",
+    "value": "{{subjectUserId}}"
+  }
+}
+
+docs {
+  WHEN the subject is a self identified user, looked up by user id since such a user has no
+  national identity number, the only party returned is the user's own, typed as self identified.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectUserId", String(testdata.a2BrunoSIUser.userId));
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+
+  const user = testdata.a2BrunoSIUser;
+
+  test("WHEN the subject is a self identified user, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the user's own party is the only party returned", function() {
+    const parties = res.getBody();
+    expect(parties.map(party => party.partyUuid.toLowerCase())).to.have.members([user.partyUuid.toLowerCase()]);
+  });
+
+  test("THEN the party is typed as self identified", function() {
+    const party = res.getBody()[0];
+    expect(party.type).to.equal("SelfIdentified");
+    expect(party.personId, "a self identified user has no national identity number").to.be.null;
+  });
+}

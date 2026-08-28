@@ -1,0 +1,18 @@
+meta {
+  name: 09_DeletedParties
+  seq: 9
+}
+
+docs {
+  Scenario: The retention window for a deleted sole proprietorship client
+
+    Given an accounting firm with three sole proprietorship clients: one active, one deleted
+    inside the retention window, and one deleted outside it
+    When a service owner lists the daily leader's authorized parties
+    Then the owner of the active sole proprietorship is present
+    And the owner of the sole proprietorship deleted inside the retention window is present
+    And the owner of the sole proprietorship deleted outside the retention window is absent
+
+  The window is asserted from the deletion date and the configured retention years, not from
+  a fixed calendar date, so the scenario stays correct as time passes.
+}

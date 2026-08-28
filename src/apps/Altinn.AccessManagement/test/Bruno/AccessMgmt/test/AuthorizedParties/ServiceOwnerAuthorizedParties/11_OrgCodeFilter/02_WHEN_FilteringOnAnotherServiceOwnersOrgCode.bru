@@ -1,0 +1,55 @@
+meta {
+  name: 02_WHEN_FilteringOnAnotherServiceOwnersOrgCode
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeAccessPackages=true&orgCode=skd
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeAccessPackages: true
+  orgCode: skd
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{subjectPersonId}}"
+  }
+}
+
+docs {
+  WHEN a service owner with only the resource owner scope filters on an org code belonging to
+  another service owner, the request is rejected. The caller may only ask on behalf of the org
+  code it owns.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner, scopes } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectPersonId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.pid);
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir, scopes.authorizedPartiesResourceOwner);
+}
+
+tests {
+  test("WHEN filtering on another service owner's org code, the request is rejected with 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN the problem body names the org code that was refused", function() {
+    const body = res.getBody();
+    expect(JSON.stringify(body), "expected the refused org code in the problem body").to.contain("skd");
+  });
+}

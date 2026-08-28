@@ -1,0 +1,67 @@
+meta {
+  name: 01_WHEN_FilteringOnAResourceTheSubjectHolds
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeResources=true&anyOfResourceIds={{resourceId}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeResources: true
+  anyOfResourceIds: {{resourceId}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{subjectPersonId}}"
+  }
+}
+
+docs {
+  WHEN the list is filtered on a single resource the subject holds on one client, that client
+  is returned and the only resource left on it is the one filtered on. A client the subject
+  reaches without that resource drops out. anyOfResourceIds is a query parameter on this endpoint.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectPersonId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.pid);
+  bru.setVar("resourceId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_rightholderOrg2.resourceIdDelegatedToPerson);
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  const firm = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER;
+  const resourceId = firm.client_rightholderOrg2.resourceIdDelegatedToPerson;
+
+  test("WHEN filtering on a resource the subject holds, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the client that carries the resource is returned with only that resource", function() {
+    const party = findParty(res.getBody(), firm.client_rightholderOrg2.partyUuid);
+    expect(party, "expected the client that carries the filtered resource").to.not.be.undefined;
+    expect(party.authorizedResources).to.have.members([resourceId]);
+  });
+
+  test("THEN a client the subject reaches without that resource is not returned", function() {
+    expect(findParty(res.getBody(), firm.client_USENSUELL_UVIRKSOM_TIGER.partyUuid), "the accountant client does not carry the filtered resource").to.be.undefined;
+  });
+}

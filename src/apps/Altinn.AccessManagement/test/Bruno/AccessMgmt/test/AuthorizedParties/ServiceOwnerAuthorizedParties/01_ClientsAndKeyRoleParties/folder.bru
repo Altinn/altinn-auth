@@ -1,0 +1,15 @@
+meta {
+  name: 01_ClientsAndKeyRoleParties
+  seq: 1
+}
+
+docs {
+  Scenario: A service owner lists the authorized parties of an accounting firm's daily leader
+
+    When a service owner lists the authorized parties for the daily leader of the accounting firm
+    Then the response is a bare array of parties, each carrying the full set of party fields
+    And the accounting firm itself appears as a key role party with its subunit
+    And the client organisations appear with the packages held through the accountant role
+    And the owner of a sole proprietorship client appears as a person party
+    And no party appears twice anywhere in the response
+}

@@ -1,0 +1,16 @@
+meta {
+  name: 04_PartyFilter
+  seq: 4
+}
+
+docs {
+  Scenario: The party filter narrows the subject's list without widening it
+
+    When a service owner lists a subject's parties filtered on a client main unit
+    Then only that main unit is returned, without its subunits, since the filter is on the
+    party and not on the hierarchy
+    When the filter is on a subunit
+    Then the subunit is returned nested under its main unit, which carries no access of its own
+    When the filter is on a party the subject has no access to
+    Then the request still succeeds and the list is empty
+}

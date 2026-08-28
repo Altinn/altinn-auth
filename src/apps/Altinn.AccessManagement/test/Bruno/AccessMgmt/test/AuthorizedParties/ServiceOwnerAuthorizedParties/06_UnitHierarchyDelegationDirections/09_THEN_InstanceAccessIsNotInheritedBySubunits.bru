@@ -1,0 +1,67 @@
+meta {
+  name: 09_THEN_InstanceAccessIsNotInheritedBySubunits
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeRoles=true&includeAccessPackages=true&includeResources=true&includeInstances=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeRoles: true
+  includeAccessPackages: true
+  includeResources: true
+  includeInstances: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{subjectPersonId}}"
+  }
+}
+
+docs {
+  THEN across every direction the same rule holds: access packages and resources a main unit
+  holds extend to its subunits, but instance access does not. An instance is delegated to one
+  party and stays there.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectPersonId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.pid);
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir);
+}
+
+tests {
+  test("THEN the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN no subunit carries an instance that its main unit holds", function() {
+    for (const party of res.getBody()) {
+      const mainUnitInstances = (party.authorizedInstances || []).map(instance => instance.instanceId);
+      if (mainUnitInstances.length === 0) {
+        continue;
+      }
+
+      for (const subunit of party.subunits || []) {
+        const subunitInstances = (subunit.authorizedInstances || []).map(instance => instance.instanceId);
+        const overlap = mainUnitInstances.filter(instance => subunitInstances.includes(instance));
+        expect(overlap, `subunit ${subunit.partyUuid} inherited instances from ${party.partyUuid}: ${overlap.join(", ")}`).to.be.empty;
+      }
+    }
+  });
+}

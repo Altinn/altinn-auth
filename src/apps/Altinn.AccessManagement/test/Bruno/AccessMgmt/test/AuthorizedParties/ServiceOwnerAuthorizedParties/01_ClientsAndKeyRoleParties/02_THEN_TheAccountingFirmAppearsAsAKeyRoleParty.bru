@@ -1,0 +1,68 @@
+meta {
+  name: 02_THEN_TheAccountingFirmAppearsAsAKeyRoleParty
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeRoles=true&includeAccessPackages=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeRoles: true
+  includeAccessPackages: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{subjectPersonId}}"
+  }
+}
+
+docs {
+  THEN the accounting firm the daily leader is a key role in appears in the list, with its
+  own subunit nested under it.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectPersonId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.pid);
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  const firm = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER;
+
+  test("THEN the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the accounting firm appears as a key role party", function() {
+    const party = findParty(res.getBody(), firm.partyUuid);
+    expect(party, `expected the accounting firm ${firm.name} in the party list`).to.not.be.undefined;
+    expect(party.organizationNumber).to.equal(firm.orgno);
+    expect(party.type).to.equal("Organization");
+  });
+
+  test("AND the accounting firm's subunit is nested under it", function() {
+    const party = findParty(res.getBody(), firm.partyUuid);
+    const subunit = party.subunits.find(item => item.partyUuid.toLowerCase() === firm.subunit.partyUuid.toLowerCase());
+    expect(subunit, `expected the firm subunit ${firm.subunit.name} nested under the firm`).to.not.be.undefined;
+    expect(subunit.organizationNumber).to.equal(firm.subunit.orgno);
+  });
+}

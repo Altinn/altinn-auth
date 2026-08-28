@@ -1,0 +1,52 @@
+meta {
+  name: ServiceOwnerAuthorizedParties
+  seq: 4
+}
+
+auth {
+  mode: inherit
+}
+
+docs {
+  # Service owner authorized parties scenarios
+
+  BDD scenarios for `POST /accessmanagement/api/v1/resourceowner/authorizedparties` and its
+  `serviceowner` mount.
+
+  Each subfolder is one scenario. The files inside are the scenario steps, named
+  `NN_GIVEN|WHEN|THEN|AND|CLEANUP_...` and ordered by `seq`. Scenarios are independent of
+  each other and can run standalone, and anything a scenario creates it removes again, so
+  the whole folder can run repeatedly against a shared environment.
+
+  ## Request and response shape
+
+  The subject to look up is sent in the request body as `{ "type": ..., "value": ... }`, so
+  the caller and the party whose parties are requested are separate: the token identifies the
+  calling service owner, the body identifies the subject. Unlike the enduser endpoint this one
+  returns a bare array of parties, not a paginated envelope, so every step reads the list from
+  `res.getBody()` directly.
+
+  A party carries `partyUuid`, `name`, `organizationNumber`, `parentId`, `personId`,
+  `dateOfBirth`, `partyId`, `emailId`, `type`, `unitType`, `isDeleted`,
+  `onlyHierarchyElementWithNoAccess`, `authorizedAccessPackages`, `authorizedResources`,
+  `authorizedRoles`, `authorizedInstances` and `subunits`. Subunits are nested under their
+  main unit rather than listed at the top level.
+
+  ## Authorization
+
+  The endpoint is behind the resource owner policy, which accepts the
+  `altinn:accessmanagement/authorizedparties.resourceowner` scope and the
+  `altinn:accessmanagement/authorizedparties.admin` scope. The admin scope additionally allows
+  the `orgCode` filter to name any service owner, where a plain resource owner is limited to
+  its own org code. The caller is the enterprise identified by the token.
+
+  ## Personas and fixtures
+
+  - `test/AuthorizedParties/testdata/<env>.js`: the accounting firm tree around
+    REGN_ULASTELIG_RETTFERDIG_TIGER, its clients, rightholders and deleted sole
+    proprietorships. The same fixture the enduser suite uses, looked up here as a service owner.
+
+  ## Environments
+
+  Runs against AT22.
+}

@@ -1,0 +1,56 @@
+meta {
+  name: 01_GIVEN_APersonLookedUpByNationalIdentityNumber
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeAccessPackages=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeAccessPackages: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{subjectValue}}"
+  }
+}
+
+docs {
+  GIVEN a person is looked up by national identity number, the party list this returns is the
+  baseline the other identifier forms are compared against.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectValue", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.pid);
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir);
+}
+
+tests {
+  const { partyUuids } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  test("GIVEN a person looked up by national identity number, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the person has a non empty party list to compare the other forms against", function() {
+    expect(res.getBody()).to.be.an("array").that.is.not.empty;
+  });
+
+  bru.setVar("personPartyUuids", JSON.stringify(partyUuids(res.getBody()).sort()));
+}
