@@ -13,11 +13,23 @@ namespace Altinn.Authorization.Tests.Integration
     /// counter with the <c>pdp.api.kind</c> dimension set according to which PDP API served
     /// the request: <c>internal</c> for <c>authorization/api/v1/decision</c> and
     /// <c>external</c> for <c>authorization/api/v1/authorize</c>.
+    /// <para>
+    /// Also verifies the <c>pdp.caller.kind</c> dimension, which separates decisions that should be
+    /// billed to the resource owner from those requested by a consumer evaluating access to someone
+    /// else's resource.
+    /// </para>
     /// </summary>
     [IntegrationTest]
     public class PdpDecisionTelemetryTests : IClassFixture<AuthorizationApiFixture>
     {
         private const string ApiKindTag = "pdp.api.kind";
+        private const string CallerKindTag = "pdp.caller.kind";
+
+        /// <summary>
+        /// Digdir's organization number, the same in test and production. Callers on this number
+        /// evaluate access to resources owned by others on behalf of the formidlingstjenester.
+        /// </summary>
+        private const string DigdirOrgNumber = "991825827";
 
         private readonly AuthorizationApiFixture _fixture;
 
@@ -45,6 +57,9 @@ namespace Altinn.Authorization.Tests.Integration
             Assert.All(
                 measurements,
                 tags => Assert.Equal(DecisionTelemetry.InternalApiDimensionValue, tags[ApiKindTag]));
+            Assert.All(
+                measurements,
+                tags => Assert.Equal(DecisionTelemetry.InternalCallerDimensionValue, tags[CallerKindTag]));
         }
 
         [Fact]
@@ -66,6 +81,38 @@ namespace Altinn.Authorization.Tests.Integration
             Assert.All(
                 measurements,
                 tags => Assert.Equal(DecisionTelemetry.ExternalApiDimensionValue, tags[ApiKindTag]));
+
+            // skd owns the resource being evaluated, so the decision is billed to the owner as before.
+            Assert.All(
+                measurements,
+                tags => Assert.Equal(DecisionTelemetry.OwnerCallerDimensionValue, tags[CallerKindTag]));
+        }
+
+        [Fact]
+        public async Task PDP_ExternalAuthorizeApi_DigdirConsumer_RecordsDecisionMetric_WithDigdirCallerKind()
+        {
+            string token = PrincipalUtil.GetOrgToken("digdir", DigdirOrgNumber, "altinn:authorization/authorize");
+            HttpClient client = _fixture.BuildClient();
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
+
+            using var collector = new PdpDecisionMetricCollector(_fixture.Services);
+
+            HttpRequestMessage request = TestSetupUtil.CreateXacmlRequestExternal("AltinnApps0008");
+            HttpResponseMessage response = await client.SendAsync(request);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+            IReadOnlyList<IReadOnlyDictionary<string, object?>> measurements = collector.Measurements;
+            Assert.NotEmpty(measurements);
+
+            // The resource is still owned by someone else; only the caller dimension changes, so that
+            // the billing query can exclude these without losing the owner attribution.
+            Assert.All(
+                measurements,
+                tags => Assert.Equal(DecisionTelemetry.ExternalApiDimensionValue, tags[ApiKindTag]));
+            Assert.All(
+                measurements,
+                tags => Assert.Equal(DecisionTelemetry.DigdirCallerDimensionValue, tags[CallerKindTag]));
         }
 
         /// <summary>
