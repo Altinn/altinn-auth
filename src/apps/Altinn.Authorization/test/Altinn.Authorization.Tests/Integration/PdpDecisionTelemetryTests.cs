@@ -1,4 +1,4 @@
-using System.Diagnostics.Metrics;
+﻿using System.Diagnostics.Metrics;
 using System.Net;
 using System.Net.Http.Headers;
 using Altinn.Authorization.Tests.Fixtures;
@@ -48,7 +48,7 @@ namespace Altinn.Authorization.Tests.Integration
             using var collector = new PdpDecisionMetricCollector(_fixture.Services);
 
             HttpRequestMessage request = TestSetupUtil.CreateXacmlRequest("AltinnApps0001");
-            HttpResponseMessage response = await client.SendAsync(request);
+            HttpResponseMessage response = await client.SendAsync(request, TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -72,7 +72,7 @@ namespace Altinn.Authorization.Tests.Integration
             using var collector = new PdpDecisionMetricCollector(_fixture.Services);
 
             HttpRequestMessage request = TestSetupUtil.CreateXacmlRequestExternal("AltinnApps0008");
-            HttpResponseMessage response = await client.SendAsync(request);
+            HttpResponseMessage response = await client.SendAsync(request, TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -98,7 +98,7 @@ namespace Altinn.Authorization.Tests.Integration
             using var collector = new PdpDecisionMetricCollector(_fixture.Services);
 
             HttpRequestMessage request = TestSetupUtil.CreateXacmlRequestExternal("AltinnApps0008");
-            HttpResponseMessage response = await client.SendAsync(request);
+            HttpResponseMessage response = await client.SendAsync(request, TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
