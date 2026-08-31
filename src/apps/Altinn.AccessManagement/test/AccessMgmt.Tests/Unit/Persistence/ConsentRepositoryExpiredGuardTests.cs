@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.Core.Models.Consent;
+﻿using Altinn.AccessManagement.Core.Models.Consent;
 using Altinn.AccessManagement.Persistence.Configuration;
 using Altinn.AccessManagement.Persistence.Consent;
 using Microsoft.Extensions.Options;
@@ -84,7 +84,7 @@ public class ConsentRepositoryExpiredGuardTests
 
         // Persistable values pass the guard and reach the unreachable data source, which fails to connect.
         // The guard's InvalidOperationException must not be what surfaces.
-        Exception thrown = await Record.ExceptionAsync(() => repository.CreateRequest(request, ConsentPartyUrn.PartyUuid.Create(Guid.NewGuid())));
+        Exception thrown = await Record.ExceptionAsync(() => repository.CreateRequest(request, ConsentPartyUrn.PartyUuid.Create(Guid.NewGuid()), TestContext.Current.CancellationToken));
 
         thrown.Should().NotBeNull();
         (thrown is InvalidOperationException invalid && invalid.Message.Contains("cannot be persisted")).Should().BeFalse();
