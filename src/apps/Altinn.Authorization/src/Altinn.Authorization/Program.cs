@@ -374,8 +374,8 @@ static string GetXmlCommentsPathForControllers()
 
 static void AddAuthorizationDbDataSource(IServiceCollection services, IConfiguration config)
 {
-    PostgreSQLSettings pgSettings = config.GetSection("PostgreSQLSettings").Get<PostgreSQLSettings>() ?? new PostgreSQLSettings();
-    string connectionString = string.Format(pgSettings.ConnectionString ?? string.Empty, pgSettings.AuthorizationDbPwd);
+    PostgreSQLSettings settings = config.GetSection("PostgreSQLSettings").Get<PostgreSQLSettings>() ?? new PostgreSQLSettings();
+    string connectionString = string.Format(settings.ConnectionString ?? string.Empty, settings.AuthorizationDbPwd);
     services.AddNpgsqlDataSource(
         connectionString,
         builder => builder.MapEnum<DelegationChangeType>("delegation.delegationchangetype"));
