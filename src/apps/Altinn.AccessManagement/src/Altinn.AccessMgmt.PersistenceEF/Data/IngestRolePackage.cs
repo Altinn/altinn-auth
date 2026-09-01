@@ -33,7 +33,6 @@ public static partial class StaticDataIngest
         var roleRegn = RoleConstants.Accountant.Id;
         var roleRevi = RoleConstants.Auditor.Id;
         var roleFfor = RoleConstants.BusinessManager.Id;
-        var roleContNuf = RoleConstants.ContactPersonNUF.Id;
         var roleNufRepr = RoleConstants.NorwegianRepresentativeForeignEntity.Id;
 
         var packageKA = PackageConstants.ClientAdministrator.Id;
@@ -370,6 +369,8 @@ public static partial class StaticDataIngest
             new RolePackage() { RoleId = roleBest, PackageId = PackageConstants.Salary.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roleBobe, PackageId = PackageConstants.Salary.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roleHadm, PackageId = PackageConstants.Salary.Id, EntityVariantId = null, CanDelegate = true, HasAccess = false },
+            new RolePackage() { RoleId = roleKnuf, PackageId = PackageConstants.Salary.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roleNufRepr, PackageId = PackageConstants.Salary.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
 
             new RolePackage() { RoleId = roleDagl, PackageId = PackageConstants.Pension.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roleLede, PackageId = PackageConstants.Pension.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
@@ -729,7 +730,7 @@ public static partial class StaticDataIngest
             new RolePackage() { RoleId = roleBobe, PackageId = PackageConstants.DelegableMaskinportenScopes.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roleHadm, PackageId = PackageConstants.DelegableMaskinportenScopes.Id, EntityVariantId = null, CanDelegate = true, HasAccess = false },
 
-            new RolePackage() { RoleId = roleContNuf, PackageId = PackageConstants.DelegableMaskinportenScopesNUF.Id, EntityVariantId = EntityVariantConstants.NUF.Id, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roleKnuf, PackageId = PackageConstants.DelegableMaskinportenScopesNUF.Id, EntityVariantId = EntityVariantConstants.NUF.Id, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roleHadm, PackageId = PackageConstants.DelegableMaskinportenScopesNUF.Id, EntityVariantId = EntityVariantConstants.NUF.Id, CanDelegate = true, HasAccess = false },
 
             new RolePackage() { RoleId = roleDagl, PackageId = PackageConstants.MachineReadableEventsIntegration.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
