@@ -36,12 +36,12 @@
             </MudRadioGroup>
         </MudItem>
 
-        @* Entity pickers *@
+        @* Entity uuid fields — paste a uuid directly, or find one via the lookup drawer *@
         <MudItem xs="12" sm="6">
-            <EntityPicker Label="Fra" @bind-Value="_fromId" />
+            <EntityLookupField Label="Fra" @bind-Value="_fromId" />
         </MudItem>
         <MudItem xs="12" sm="6">
-            <EntityPicker Label="Til" @bind-Value="_toId" />
+            <EntityLookupField Label="Til" @bind-Value="_toId" />
         </MudItem>
 
         @* Role autocomplete — searches locally against roles loaded from DB *@

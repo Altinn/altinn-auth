@@ -1,0 +1,159 @@
+@inject EntitySearchService SearchService
+@inject EnvironmentState EnvState
+@implements IDisposable
+
+@* Uuid-first entity input: paste a uuid and it binds immediately; the adornment opens
+   an EntityLookupDrawer for finding the uuid when you don't have it. A valid uuid is
+   resolved to a name shown as helper text — informational only, never blocking. *@
+<MudTextField T="string"
+              Value="@_text"
+              ValueChanged="OnTextChangedAsync"
+              Label="@Label"
+              Variant="Variant.Outlined"
+              Margin="Margin.Dense"
+              Immediate="true"
+              Clearable="true"
+              Placeholder="Lim inn UUID..."
+              Error="@_invalid"
+              ErrorText="Ugyldig UUID"
+              HelperText="@_hint"
+              Adornment="Adornment.End"
+              AdornmentIcon="@Icons.Material.Filled.ManageSearch"
+              AdornmentAriaLabel="Søk opp entitet"
+              OnAdornmentClick="OpenDrawer" />
+
+<EntityLookupDrawer @bind-Open="_drawerOpen" OnEntitySelected="OnEntityPickedAsync" />
+
+@code {
+    [Parameter] public string Label { get; set; } = "Entity";
+    [Parameter] public Guid? Value { get; set; }
+    [Parameter] public EventCallback<Guid?> ValueChanged { get; set; }
+
+    private string _text = string.Empty;
+    private bool _invalid;
+    private string? _hint;
+    private bool _drawerOpen;
+    private int _resolveVersion;
+
+    protected override void OnInitialized()
+    {
+        EnvState.OnChange += HandleEnvironmentChanged;
+    }
+
+    public void Dispose()
+    {
+        EnvState.OnChange -= HandleEnvironmentChanged;
+    }
+
+    protected override void OnParametersSet()
+    {
+        // Sync only when the parent set Value to something else than our own last change.
+        var current = Guid.TryParse(_text.Trim(), out var parsed) ? parsed : (Guid?)null;
+        if (Value != current)
+        {
+            _text = Value?.ToString() ?? string.Empty;
+            _invalid = false;
+            _hint = null;
+            _resolveVersion++;
+            if (Value is { } id)
+            {
+                _ = ResolveAsync(id);
+            }
+        }
+    }
+
+    private async Task OnTextChangedAsync(string text)
+    {
+        _text = text ?? string.Empty;
+        var trimmed = _text.Trim();
+
+        if (trimmed.Length == 0)
+        {
+            _invalid = false;
+            _hint = null;
+            _resolveVersion++;
+            await SetValueAsync(null);
+            return;
+        }
+
+        if (Guid.TryParse(trimmed, out var id))
+        {
+            _invalid = false;
+            await SetValueAsync(id);
+            _ = ResolveAsync(id);
+        }
+        else
+        {
+            _invalid = true;
+            _hint = null;
+            _resolveVersion++;
+            await SetValueAsync(null);
+        }
+    }
+
+    private async Task SetValueAsync(Guid? value)
+    {
+        if (Value != value)
+        {
+            Value = value;
+            await ValueChanged.InvokeAsync(value);
+        }
+    }
+
+    private async Task ResolveAsync(Guid id)
+    {
+        var version = ++_resolveVersion;
+        try
+        {
+            var hits = await SearchService.SearchAsync(
+                EnvState.Current, id.ToString(), includeDeleted: true, EntitySearchKind.Uuid, maxResults: 1);
+
+            if (version != _resolveVersion)
+            {
+                return;
+            }
+
+            _hint = hits.FirstOrDefault() is { } entity
+                ? EntityHint(entity)
+                : $"Ikke funnet i {EnvState.Current}";
+        }
+        catch
+        {
+            // The name lookup is a convenience — an unreachable environment must not break the field.
+            if (version != _resolveVersion)
+            {
+                return;
+            }
+
+            _hint = null;
+        }
+
+        StateHasChanged();
+    }
+
+    private void HandleEnvironmentChanged()
+    {
+        // The resolved name belongs to the previous environment; look it up again.
+        if (Guid.TryParse(_text.Trim(), out var id))
+        {
+            _ = ResolveAsync(id);
+        }
+    }
+
+    private void OpenDrawer() => _drawerOpen = true;
+
+    private async Task OnEntityPickedAsync(Entity entity)
+    {
+        _text = entity.Id.ToString();
+        _invalid = false;
+        _resolveVersion++;
+        _hint = EntityHint(entity);
+        await SetValueAsync(entity.Id);
+    }
+
+    private static string EntityHint(Entity e)
+    {
+        var hint = $"{e.Name} ({e.Type?.Name ?? "?"})";
+        return e.IsDeleted ? hint + " – slettet" : hint;
+    }
+}

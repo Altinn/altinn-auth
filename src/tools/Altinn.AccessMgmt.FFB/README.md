@@ -16,7 +16,7 @@ publish leses `appsettings.json` fra mappen ved siden av exe-fila.
 | Mappe | Innhold |
 |---|---|
 | `Components/Pages` | Tynne sider: markup + UI-state. All DB-logikk ligger i tjenester. |
-| `Components/Shared` | `EnvironmentPageBase`, `BackButton`, `SummaryCard`/`SummaryRow`, `EnvironmentMultiSelect`, `Confirm`/`ConfirmDialog`, `EntityPicker`, `JsonTree` |
+| `Components/Shared` | `EnvironmentPageBase`, `BackButton`, `SummaryCard`/`SummaryRow`, `EnvironmentMultiSelect`, `Confirm`/`ConfirmDialog`, `EntityLookupField`/`EntityLookupDrawer`, `JsonTree` |
 | `Components/Jobs` | `JobRunList`, `JobRunCard` |
 | `Components/Layout` | `MainLayout`, `NavMenu`, `NavRegistry` (én kilde for meny + Hjem-kort) |
 | `Services/PageData` | Én tjeneste per side (spørringer). Auto-registrert i DI. |

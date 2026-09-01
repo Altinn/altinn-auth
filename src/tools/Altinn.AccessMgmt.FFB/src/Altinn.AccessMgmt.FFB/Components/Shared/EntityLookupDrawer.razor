@@ -1,0 +1,202 @@
+@inject EntitySearchService SearchService
+@inject EnvironmentState EnvState
+@implements IDisposable
+
+@* Right-hand temporary drawer for finding an entity (and its uuid) via typed search.
+   Reusable: bind Open and handle OnEntitySelected. *@
+<MudDrawer Open="@Open"
+           OpenChanged="HandleOpenChanged"
+           Anchor="Anchor.End"
+           Variant="DrawerVariant.Temporary"
+           Elevation="8"
+           Width="560px"
+           Overlay="true">
+    <MudStack Class="pa-4" Spacing="3">
+
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+            <MudText Typo="Typo.h6">Finn entitet</MudText>
+            <MudIconButton Icon="@Icons.Material.Filled.Close"
+                           Size="Size.Small"
+                           aria-label="Lukk"
+                           OnClick="@(() => HandleOpenChanged(false))" />
+        </MudStack>
+
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">
+            Søketermen tolkes som UUID, organisasjonsnummer, fødselsnummer, party-id eller navn.
+        </MudText>
+
+        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+            <MudTextField @bind-Value="_searchTerm"
+                          Label="Søk"
+                          Variant="Variant.Outlined"
+                          Margin="Margin.Dense"
+                          Placeholder="Navn, UUID, org.nr, fødselsnr, party-id..."
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          OnKeyDown="OnKeyDown"
+                          Immediate="false"
+                          FullWidth="true" />
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       Disabled="@_loading"
+                       OnClick="SearchAsync">
+                Søk
+            </MudButton>
+        </MudStack>
+
+        @if (_loading)
+        {
+            <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
+        }
+
+        @if (_error is not null)
+        {
+            <MudAlert Severity="Severity.Error" Dense="true">@_error</MudAlert>
+        }
+
+        @if (_results is not null)
+        {
+            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                    @if (_results.Count == EntitySearchService.MaxResults)
+                    {
+                        <span>Viser de første @EntitySearchService.MaxResults treffene</span>
+                    }
+                    else
+                    {
+                        <span>@_results.Count treff</span>
+                    }
+                </MudText>
+                @if (_usedKind is not null)
+                {
+                    <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined">
+                        Søkte på @EntitySearchKindText.Label(_usedKind.Value)
+                    </MudChip>
+                }
+            </MudStack>
+
+            <MudTable Items="_results" Hover="true" Dense="true" Elevation="0">
+                <HeaderContent>
+                    <MudTh>Navn</MudTh>
+                    <MudTh>Type</MudTh>
+                    <MudTh>Identifikator</MudTh>
+                    <MudTh></MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Navn">
+                        <MudText Typo="Typo.body2">@context.Name</MudText>
+                        @if (context.IsDeleted)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Error">Slettet</MudChip>
+                        }
+                    </MudTd>
+                    <MudTd DataLabel="Type">
+                        <MudText Typo="Typo.body2">@(context.Type?.Name ?? "–")</MudText>
+                    </MudTd>
+                    <MudTd DataLabel="Identifikator">
+                        <MudText Typo="Typo.body2">@IdentifierText(context)</MudText>
+                    </MudTd>
+                    <MudTd Style="text-align:right">
+                        <MudButton Variant="Variant.Outlined"
+                                   Size="Size.Small"
+                                   Color="Color.Primary"
+                                   OnClick="@(() => SelectAsync(context))">
+                            Velg
+                        </MudButton>
+                    </MudTd>
+                </RowTemplate>
+                <NoRecordsContent>
+                    <MudText Class="pa-4 mud-text-secondary">Ingen treff – prøv et annet søkeord.</MudText>
+                </NoRecordsContent>
+            </MudTable>
+        }
+
+    </MudStack>
+</MudDrawer>
+
+@code {
+    [Parameter] public bool Open { get; set; }
+    [Parameter] public EventCallback<bool> OpenChanged { get; set; }
+    [Parameter] public EventCallback<Entity> OnEntitySelected { get; set; }
+
+    private string _searchTerm = string.Empty;
+    private bool _loading;
+    private string? _error;
+    private EntitySearchKind? _usedKind;
+    private List<Entity>? _results;
+
+    protected override void OnInitialized()
+    {
+        EnvState.OnChange += HandleEnvironmentChanged;
+    }
+
+    public void Dispose()
+    {
+        EnvState.OnChange -= HandleEnvironmentChanged;
+    }
+
+    private void HandleEnvironmentChanged()
+    {
+        // Results belong to the previous environment.
+        _results = null;
+        _usedKind = null;
+        _error = null;
+        StateHasChanged();
+    }
+
+    private Task HandleOpenChanged(bool open) => OpenChanged.InvokeAsync(open);
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await SearchAsync();
+        }
+    }
+
+    private async Task SearchAsync()
+    {
+        _results = null;
+        _usedKind = null;
+        _error = null;
+
+        var term = _searchTerm.Trim();
+        if (term.Length < 2)
+        {
+            _error = "Skriv minst 2 tegn for å søke.";
+            return;
+        }
+
+        _loading = true;
+        try
+        {
+            var kind = EntitySearchService.DetectKind(term);
+            _results = await SearchService.SearchAsync(EnvState.Current, term, includeDeleted: true, kind);
+            _usedKind = kind;
+        }
+        catch (Exception ex)
+        {
+            _error = ErrorText.Flatten(ex);
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private async Task SelectAsync(Entity entity)
+    {
+        await OnEntitySelected.InvokeAsync(entity);
+        await HandleOpenChanged(false);
+    }
+
+    private static string IdentifierText(Entity e) =>
+        e.OrganizationIdentifier is not null ? $"org.nr {e.OrganizationIdentifier}"
+        : e.PersonIdentifier is not null ? $"fnr {MaskPersonIdentifier(e.PersonIdentifier)}"
+        : e.PartyId is not null ? $"party {e.PartyId}"
+        : e.Username is not null ? $"bruker {e.Username}"
+        : e.Id.ToString()[..8] + "…";
+
+    private static string MaskPersonIdentifier(string fnr) =>
+        fnr.Length == 11 ? fnr[..6] + "*****" : fnr;
+}
