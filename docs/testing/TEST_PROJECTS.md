@@ -66,7 +66,7 @@ prior empty shell was removed when the indirect-coverage approach was adopted.
 ### Unit/Integration layout and the `Category` trait
 
 Every test class is tagged `[UnitTest]` or `[IntegrationTest]` (markers defined
-in `src/testing/TestCategories.cs`, compiled into every test assembly), which
+in `eng/testing/TestCategories.cs`, compiled into every test assembly), which
 emits a `Category` trait. CI runs the two as separate lanes; filter locally
 with `dotnet test -- --filter-trait "Category=Unit"` (or `Category=Integration`).
 

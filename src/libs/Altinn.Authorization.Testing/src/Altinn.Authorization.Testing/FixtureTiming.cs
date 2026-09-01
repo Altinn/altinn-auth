@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 
 namespace Altinn.Authorization.Testing;
 
@@ -6,8 +6,8 @@ namespace Altinn.Authorization.Testing;
 /// Measures where time goes while integration tests set themselves up, so it is clear
 /// what is worth optimising. It adds up the setup time in four buckets: building each
 /// test class's web host, provisioning each test's database, the per-test database
-/// clone, and the one-time build of the shared template database. Compiled into the
-/// same test assemblies as <see cref="PostgresTestEngine"/>.
+/// clone, and the one-time build of the shared template database. Ships alongside
+/// <see cref="PostgresTestEngine"/>, which is what records into it.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -34,7 +34,7 @@ namespace Altinn.Authorization.Testing;
 /// <see cref="Time{T}(Phase, Func{T})"/> call then just runs the work without timing it.
 /// </para>
 /// </remarks>
-internal static class FixtureTiming
+public static class FixtureTiming
 {
     private static readonly bool Enabled =
         !string.Equals(Environment.GetEnvironmentVariable("FIXTURE_TIMING"), "off", StringComparison.OrdinalIgnoreCase);
@@ -55,7 +55,7 @@ internal static class FixtureTiming
     private static int _exitHooked;
 
     /// <summary>Setup phase being measured.</summary>
-    internal enum Phase
+    public enum Phase
     {
         /// <summary>Per-fixture <c>WebApplicationFactory</c> host build (DI graph, EF model, middleware).</summary>
         HostBuild,

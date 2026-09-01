@@ -1,4 +1,4 @@
-using Npgsql;
+﻿using Npgsql;
 using Testcontainers.PostgreSql;
 
 namespace Altinn.Authorization.Testing;
@@ -13,10 +13,9 @@ namespace Altinn.Authorization.Testing;
 /// <para>
 /// The engine is vertical-agnostic: callers supply how the template is built
 /// (EF migrations + seed, Yuniql SQL, …) through
-/// <see cref="PostgresTestEngineOptions.BuildTemplateAsync"/>. It is shared into
-/// test assemblies as linked source (see <c>src/Directory.Build.targets</c>), so
-/// each assembly gets its own static instance and container — no cross-vertical
-/// project reference.
+/// <see cref="PostgresTestEngineOptions.BuildTemplateAsync"/>. Each test assembly
+/// runs in its own process, so every one of them gets its own instance and its
+/// own container.
 /// </para>
 /// <para>
 /// <strong>Docker-skip:</strong> when no container runtime is available the engine

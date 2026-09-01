@@ -27,6 +27,9 @@ for (const v of verticals) {
 
 pathsFilters["shared"] = [
   ".github/**",
+  // Test infrastructure that every test assembly compiles in as linked source
+  // (see src/Directory.Build.targets), so a change here rebuilds every vertical.
+  "eng/testing/**",
   "src/Directory.Build.props",
   "src/Directory.Build.targets",
   "src/Directory.Packages.props",

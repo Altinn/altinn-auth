@@ -213,7 +213,7 @@ jobs:
       #   --ignore-exit-code 8  treat "no tests ran" as success. The integration
       #                         lane also passes -p:TestLane=Integration so that
       #                         assemblies declaring HasIntegrationTests=false are
-      #                         skipped outright (src/testing/IntegrationLaneGate.targets)
+      #                         skipped outright (eng/testing/IntegrationLaneGate.targets)
       #                         instead of producing a zero-test run that MTP logs
       #                         as "Failed! ... Total: 0" — the flag fixes the exit
       #                         code but not that log line. The flag stays for the

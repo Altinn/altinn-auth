@@ -8,7 +8,7 @@
         <!-- The only integration tests here are permanently [Skip]ped (they need a real
              storage account), so the CI integration lane skips this assembly instead of
              reporting an all-skipped run as failed
-             (see src/testing/IntegrationLaneGate.targets). -->
+             (see eng/testing/IntegrationLaneGate.targets). -->
         <HasIntegrationTests>false</HasIntegrationTests>
     </PropertyGroup>
 

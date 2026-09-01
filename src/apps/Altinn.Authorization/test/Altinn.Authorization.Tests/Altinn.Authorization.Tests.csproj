@@ -5,10 +5,6 @@
              dotnet test routes to the Microsoft Testing Platform (required for xUnit v3). -->
         <TargetFramework></TargetFramework>
         <TargetFrameworks>net10.0</TargetFrameworks>
-        <!-- Link the shared PostgreSQL test engine (src/testing/PostgresTestEngine.cs). -->
-        <IncludePostgresTestEngine>true</IncludePostgresTestEngine>
-        <!-- Link the shared auth/token test doubles (src/testing/AuthTestInfra/*.cs). -->
-        <IncludeAuthTestInfra>true</IncludeAuthTestInfra>
     </PropertyGroup>
 
     <ItemGroup>
@@ -19,6 +15,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\Altinn.Authorization\Altinn.Authorization.csproj" />
+        <ProjectReference Include="..\..\..\..\libs\Altinn.Authorization.Testing\src\Altinn.Authorization.Testing\Altinn.Authorization.Testing.csproj" />
     </ItemGroup>
 
     <ItemGroup>

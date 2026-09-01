@@ -56,61 +56,18 @@
                  into every test assembly (linked, so no project reference needed).
                  Only meaningful for xUnit v3 (ITraitAttribute). -->
             <ItemGroup Condition=" '$(IsTestProject)' == 'true' And '$(XUnitVersion)' == 'v3' ">
-                <Compile Include="$(MSBuildThisFileDirectory)testing\TestCategories.cs">
+                <Compile Include="$(MSBuildThisFileDirectory)..\eng\testing\TestCategories.cs">
                     <Link>Properties\TestCategories.cs</Link>
                 </Compile>
                 <!-- Fails the build if any test method lacks a Category trait, so it
                      can't be silently skipped by the unit/integration lane filters. -->
-                <Compile Include="$(MSBuildThisFileDirectory)testing\TestCategoryGuard.cs">
+                <Compile Include="$(MSBuildThisFileDirectory)..\eng\testing\TestCategoryGuard.cs">
                     <Link>Properties\TestCategoryGuard.cs</Link>
                 </Compile>
                 <Using Include="Altinn.Authorization.Testing" />
                 <!-- Exposes the lane declaration to TestCategoryGuard, which fails the
                      run when it doesn't match the assembly's actual tests. -->
                 <AssemblyMetadata Include="HasIntegrationTests" Value="$(HasIntegrationTests)" />
-            </ItemGroup>
-
-            <!-- Shared PostgreSQL test engine (template-clone provisioning + the
-                 correct xUnit v3 Docker-skip). Opt-in because it pulls Testcontainers
-                 + Npgsql: set <IncludePostgresTestEngine>true</IncludePostgresTestEngine>
-                 in projects that provision a real PostgreSQL for tests (they must
-                 already reference Testcontainers.PostgreSql and Npgsql). Linked
-                 source, like the category markers above — no project reference. -->
-            <ItemGroup Condition=" '$(IncludePostgresTestEngine)' == 'true' ">
-                <Compile Include="$(MSBuildThisFileDirectory)testing\PostgresTestEngine.cs">
-                    <Link>Properties\PostgresTestEngine.cs</Link>
-                </Compile>
-                <!-- Setup-timing for the engine + fixtures (#3379 measurement): compiled in
-                     with the engine, disabled at runtime via the FIXTURE_TIMING=off env var. -->
-                <Compile Include="$(MSBuildThisFileDirectory)testing\FixtureTiming.cs">
-                    <Link>Properties\FixtureTiming.cs</Link>
-                </Compile>
-            </ItemGroup>
-
-            <!-- Shared auth/token test doubles (JWT minting + the JwtCookie /
-                 access-token validation stubs that pair with it, all backed by the
-                 in-memory TestSigningCertificate). Opt-in because it pulls the
-                 AltinnCore.Authentication.JwtCookie and Altinn.Common.AccessToken
-                 packages: set <IncludeAuthTestInfra>true</IncludeAuthTestInfra> in
-                 projects that authenticate requests against the test host (they must
-                 already reference those packages). Linked source in the shared
-                 Altinn.Authorization.Testing namespace - no project reference. -->
-            <ItemGroup Condition=" '$(IncludeAuthTestInfra)' == 'true' ">
-                <Compile Include="$(MSBuildThisFileDirectory)testing\AuthTestInfra\TestSigningCertificate.cs">
-                    <Link>Properties\AuthTestInfra\TestSigningCertificate.cs</Link>
-                </Compile>
-                <Compile Include="$(MSBuildThisFileDirectory)testing\AuthTestInfra\ConfigurationManagerStub.cs">
-                    <Link>Properties\AuthTestInfra\ConfigurationManagerStub.cs</Link>
-                </Compile>
-                <Compile Include="$(MSBuildThisFileDirectory)testing\AuthTestInfra\JwtCookiePostConfigureOptionsStub.cs">
-                    <Link>Properties\AuthTestInfra\JwtCookiePostConfigureOptionsStub.cs</Link>
-                </Compile>
-                <Compile Include="$(MSBuildThisFileDirectory)testing\AuthTestInfra\PublicSigningKeyProviderMock.cs">
-                    <Link>Properties\AuthTestInfra\PublicSigningKeyProviderMock.cs</Link>
-                </Compile>
-                <Compile Include="$(MSBuildThisFileDirectory)testing\AuthTestInfra\JwtTokenMock.cs">
-                    <Link>Properties\AuthTestInfra\JwtTokenMock.cs</Link>
-                </Compile>
             </ItemGroup>
 
             <ItemGroup Condition=" '$(IsTestLibrary)' == 'true' ">
@@ -160,7 +117,7 @@
          InvokeTestingPlatform target.
          Must be conditional on the import — a same-named target with a false Condition
          would still replace the package's target and just be skipped. -->
-    <Import Project="$(MSBuildThisFileDirectory)testing\IntegrationLaneGate.targets"
+    <Import Project="$(MSBuildThisFileDirectory)..\eng\testing\IntegrationLaneGate.targets"
             Condition=" '$(TestLane)' == 'Integration' And '$(IsTestProject)' == 'true' And '$(XUnitVersion)' == 'v3' And '$(HasIntegrationTests)' == 'false' " />
 
 </Project>
