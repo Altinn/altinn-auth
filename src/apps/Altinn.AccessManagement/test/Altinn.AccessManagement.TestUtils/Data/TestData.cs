@@ -1182,9 +1182,31 @@ public static class TestData
             ParentId = null,
             PartyId = 50300005,
             PersonIdentifier = "21078942743",
-            RefId = "07108640094",
+            RefId = "21078942743",
             TypeId = EntityTypeConstants.Person,
             UserId = 20300005,
+            Username = null,
+            VariantId = EntityVariantConstants.Person,
+        }
+    };
+
+    public static ConstantDefinition<Entity> PadmeAmidala { get; } = new("86dd9f82-4e6e-469a-82c0-46d5e65b7790")
+    {
+        Entity = new()
+        {
+            DateOfBirth = new(1967, 5, 13),
+            DateOfDeath = new(1992, 7, 15),
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "Padmé Amidala",
+            OrganizationIdentifier = null,
+            Parent = null,
+            ParentId = null,
+            PartyId = 50300006,
+            PersonIdentifier = "13056740095",
+            RefId = "13056740095",
+            TypeId = EntityTypeConstants.Person,
+            UserId = 20300006,
             Username = null,
             VariantId = EntityVariantConstants.Person,
         }

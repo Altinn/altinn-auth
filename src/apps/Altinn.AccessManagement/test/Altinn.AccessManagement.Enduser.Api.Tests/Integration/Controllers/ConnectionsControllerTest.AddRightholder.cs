@@ -138,6 +138,32 @@ public partial class ConnectionsControllerTest
         }
 
         /// <summary>
+        /// Han Solo adds Padmé Amidala as rightholder via PersonInput body (SSN + last name "Amidala").
+        /// The mock UserProfileLookupService resolves Padme by SSN; expects BadRequest as this person is dead.
+        /// </summary>
+        [Fact]
+        public async Task AddRightholder_AsManagingDirectorForDeadPersonViaPersonInput_ReturnsBadRequest()
+        {
+            HttpClient client = CreateClient(TestData.HanSolo.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE);
+
+            PersonInput personInput = new() { PersonIdentifier = TestData.PadmeAmidala.Entity.PersonIdentifier, LastName = "Amidala" };
+            StringContent content = new(JsonSerializer.Serialize(personInput), Encoding.UTF8, "application/json");
+
+            HttpResponseMessage response = await client.PostAsync($"{Route}?party={TestData.HanSoloEnterprise.Id}", content, TestContext.Current.CancellationToken);
+
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            
+            Assert.True(response.StatusCode == HttpStatusCode.BadRequest, $"Expected BadRequest but got {response.StatusCode}. Response body: {responseContent}");
+            AltinnValidationProblemDetails result = JsonSerializer.Deserialize<AltinnValidationProblemDetails>(responseContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            Assert.NotNull(result);
+            Assert.Single(result.Errors);
+            Assert.Equal("AM.VLD-00034", result.Errors.First().ErrorCode.ToString());
+            string extendedinfo = result.Errors.First().Extensions["personInput"]?.ToString();
+            Assert.Equal("Person not available for delegation (deceased).", extendedinfo);
+        }
+
+        /// <summary>
         /// Malin uses from-others read scope on an endpoint that requires to-others write scope.
         /// Expects 403 Forbidden.
         /// </summary>

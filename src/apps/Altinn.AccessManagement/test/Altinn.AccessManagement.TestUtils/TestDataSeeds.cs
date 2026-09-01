@@ -53,7 +53,8 @@ public static class TestDataSeeds
             TestEntities.MainUnitKarlstad,
             TestEntities.SubunitKarlstad,
             TestEntities.OrganizationOrsta,
-            TestEntities.PersonKasper
+            TestEntities.PersonKasper,
+            TestEntities.PersonMargit
         ]);
         #endregion
 
@@ -64,6 +65,7 @@ public static class TestDataSeeds
             TestData.BenSolo,
             TestData.LeiaOrgana,
             TestData.LukeSkyWalker,
+            TestData.PadmeAmidala,
             TestData.BakerJohnsen,
             TestData.SvendsenAutomobil,
             TestData.FredriksonsFabrikk,
