@@ -143,6 +143,13 @@ public partial class DtoMapper : IDtoMapper
             return new ConnectionDto()
             {
                 Party = Convert(connection.From),
+                ViaRoles = res
+                    .Where(t => t.FromId == connection.FromId)
+                    .Select(t => ConvertCompactRole(t.ViaRole))
+                    .Where(vr => vr is not null)
+                    .DistinctBy(t => t.Id)
+                    .OrderBy(t => t.Code, StringComparer.Ordinal)
+                    .ToList(),
                 Roles = res
                     .Where(t => t.AssignmentId.HasValue && t.FromId == connection.FromId)
                     .Select(t => ConvertCompactRole(t.Role))
@@ -188,6 +195,13 @@ public partial class DtoMapper : IDtoMapper
             return new ConnectionDto()
             {
                 Party = Convert(connection.To),
+                ViaRoles = res
+                    .Where(t => t.ToId == connection.ToId)
+                    .Select(t => ConvertCompactRole(t.ViaRole))
+                    .Where(vr => vr is not null)
+                    .DistinctBy(t => t.Id)
+                    .OrderBy(t => t.Code, StringComparer.Ordinal)
+                    .ToList(),
                 Roles = res
                     .Where(t => t.AssignmentId.HasValue && t.ToId == connection.ToId && t.Role != null)
                     .Select(t => ConvertCompactRole(t.Role))
