@@ -1017,7 +1017,7 @@ public static class RoleConstants
     };
 
     /// <summary>
-    /// Represents the 'Bobestyrer' role.
+    /// Represents the 'Bostyrer' role.
     /// </summary>
     /// <remarks>
     /// - <c>Id:</c> 2cacfb35-2346-4a8d-95f6-b6fa4206881c
@@ -1030,7 +1030,7 @@ public static class RoleConstants
     {
         Entity = new()
         {
-            Name = "Bobestyrer",
+            Name = "Bostyrer",
             Code = "bostyrer",
             Description = "Bestyrer av et konkursbo eller dødsbo som er under offentlig skiftebehandling",
             Urn = "urn:altinn:external-role:ccr:bostyrer",
@@ -1047,7 +1047,7 @@ public static class RoleConstants
             KeyValuePair.Create("Description", "Administrator of a bankruptcy or probate estate under public administration")
         ),
         NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Bobestyrar"),
+            KeyValuePair.Create("Name", "Bostyrar"),
             KeyValuePair.Create("Description", "Bestyrar av eit konkursbo eller dødsbo som er under offentleg skiftehandtering")
         ),
     };
