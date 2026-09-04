@@ -62,7 +62,7 @@ namespace Altinn.ResourceRegistry.Core.Helpers
         /// <summary>
         /// Method to validate service resource
         /// </summary>
-        public static bool ValidateResource(ServiceResource serviceResource, bool isNew, out Dictionary<string, List<string>> validationMessages)
+        public static bool ValidateResource(ServiceResource serviceResource, string orgCodeFromCDN, bool isNew, out Dictionary<string, List<string>> validationMessages)
         {
             bool isValid = true;
             validationMessages = new Dictionary<string, List<string>>();
@@ -86,9 +86,9 @@ namespace Altinn.ResourceRegistry.Core.Helpers
                 isValid = false;
             }
 
-            if (!ValidateResourceOwner(serviceResource))
+            if (!ValidateResourceOwner(serviceResource, orgCodeFromCDN))
             {
-                AddValidationMessage(validationMessages, "HasCompetentAuthority.Organization", "HasCompetentAuthority needs to be set with valid organization number");
+                AddValidationMessage(validationMessages, "HasCompetentAuthority.Organization", "HasCompetentAuthority needs to be set with valid organization number and orgcode");
                 isValid = false;
             }
 
@@ -241,7 +241,7 @@ namespace Altinn.ResourceRegistry.Core.Helpers
             }
 
             // Validates that orgs that is not TTD needs to have orgnumber set.
-            static bool ValidateResourceOwner(ServiceResource serviceResource)
+            static bool ValidateResourceOwner(ServiceResource serviceResource, string orgCode)
             {
                 if (serviceResource.HasCompetentAuthority == null)
                 {
@@ -254,7 +254,14 @@ namespace Altinn.ResourceRegistry.Core.Helpers
                     return true;
                 }
 
-                if (string.IsNullOrWhiteSpace(serviceResource.HasCompetentAuthority.Organization))
+                // Validate that the competent authority has both organization and orgcode set
+                if (string.IsNullOrWhiteSpace(serviceResource.HasCompetentAuthority.Organization) || string.IsNullOrWhiteSpace(serviceResource.HasCompetentAuthority.Orgcode))
+                {
+                    return false;
+                }
+
+                // Validate that the orgcode in the resource matches the orgcode of the user creating/updating the resource
+                if (!serviceResource.HasCompetentAuthority.Orgcode.Equals(orgCode, StringComparison.OrdinalIgnoreCase))
                 {
                     return false;
                 }

@@ -396,6 +396,165 @@ namespace Altinn.ResourceRegistry.Tests
         }
 
         [Fact]
+        public async Task CreateAppResource_WithEmptyOrgCode()
+        {
+            var client = CreateClient();
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            ServiceResource resource = new ServiceResource()
+            {
+                Identifier = "app_skd_flyttemelding",
+                HasCompetentAuthority = new CompetentAuthority()
+                {
+                    Organization = "974761076",
+                    Orgcode = "", // Empty orgcode, should be "skd"
+                },
+                ResourceType = ResourceType.AltinnApp,
+                ResourceReferences = new()
+                {
+                    new ()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn3,
+                        ReferenceType = ReferenceType.ApplicationId,
+                        Reference = "skd/flyttemelding"
+                    }
+                },
+                Title = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+                Description = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+                RightDescription = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+                ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
+            };
+
+            string requestUri = "resourceregistry/api/v1/Resource/";
+
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+            {
+                Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
+            };
+
+            httpRequestMessage.Headers.Add("Accept", "application/json");
+            httpRequestMessage.Headers.Add("ContentType", "application/json");
+
+            HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+            string responseContent = await response.Content.ReadAsStringAsync();
+
+            ValidationProblemDetails? errordetails = JsonSerializer.Deserialize<ValidationProblemDetails>(responseContent, new JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }) as ValidationProblemDetails;
+
+            Assert.NotNull(errordetails);
+
+            Assert.Equal(2, errordetails.Errors.Count);
+            Assert.Contains(errordetails.Errors, e => e.Key == "HasCompetentAuthority.Organization");
+            Assert.Contains(errordetails.Errors, e => e.Key == "ResourceReferences");
+        }
+
+        [Fact]
+        public async Task CreateAppResource_WithWrongOrgNr()
+        {
+            var client = CreateClient();
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            ServiceResource resource = new ServiceResource()
+            {
+                Identifier = "app_skd_flyttemelding",
+                HasCompetentAuthority = new CompetentAuthority()
+                {
+                    Organization = "994598759", // Wrong orgnr, should be "974761076"
+                    Orgcode = "skd",
+                },
+                ResourceType = ResourceType.AltinnApp,
+                ResourceReferences = new()
+                {
+                    new ()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn3,
+                        ReferenceType = ReferenceType.ApplicationId,
+                        Reference = "skd/flyttemelding"
+                    }
+                },
+                Title = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+                Description = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+                RightDescription = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+                ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
+            };
+
+            string requestUri = "resourceregistry/api/v1/Resource/";
+
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+            {
+                Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
+            };
+
+            httpRequestMessage.Headers.Add("Accept", "application/json");
+            httpRequestMessage.Headers.Add("ContentType", "application/json");
+
+            HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+            string responseContent = await response.Content.ReadAsStringAsync();
+
+            ValidationProblemDetails? errordetails = JsonSerializer.Deserialize<ValidationProblemDetails>(responseContent, new JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }) as ValidationProblemDetails;
+
+            Assert.NotNull(errordetails);
+            Assert.Single(errordetails.Errors);
+            Assert.Contains(errordetails.Errors, e => e.Key == "HasCompetentAuthority.Organization");
+        }
+
+        [Fact]
+        public async Task CreateAppResource_WithEmptyOrgNr()
+        {
+            var client = CreateClient();
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            ServiceResource resource = new ServiceResource()
+            {
+                Identifier = "app_skd_flyttemelding",
+                HasCompetentAuthority = new CompetentAuthority()
+                {
+                    Organization = "", // Empty orgnr, should be "974761076"
+                    Orgcode = "skd",
+                },
+                ResourceType = ResourceType.AltinnApp,
+                ResourceReferences = new()
+                {
+                    new ()
+                    {
+                        ReferenceSource = ReferenceSource.Altinn3,
+                        ReferenceType = ReferenceType.ApplicationId,
+                        Reference = "skd/flyttemelding"
+                    }
+                },
+                Title = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+                Description = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+                RightDescription = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+                ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
+            };
+
+            string requestUri = "resourceregistry/api/v1/Resource/";
+
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+            {
+                Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
+            };
+
+            httpRequestMessage.Headers.Add("Accept", "application/json");
+            httpRequestMessage.Headers.Add("ContentType", "application/json");
+
+            HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+            string responseContent = await response.Content.ReadAsStringAsync();
+
+            ValidationProblemDetails? errordetails = JsonSerializer.Deserialize<ValidationProblemDetails>(responseContent, new JsonSerializerOptions() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase }) as ValidationProblemDetails;
+
+            Assert.NotNull(errordetails);
+            Assert.Single(errordetails.Errors);
+            Assert.Contains(errordetails.Errors, e => e.Key == "HasCompetentAuthority.Organization");
+        }
+
+
+        [Fact]
         public async Task CreateAppResource_WithValidIdentifier()
         {
             var client = CreateClient();
