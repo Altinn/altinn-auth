@@ -43,13 +43,26 @@
           },
         },
       },
+      // HYBELKANIN INNSIKTSFULL, alive in the register. The previous agent, GRANITT KREATIV,
+      // is registered as deceased and lives on as deceasedPerson for the negative tests.
       REGN_Agent: {
-        etternavn: "GRANITT",
-        personidentity: "08919574934",
-        userId: 20600687,
-        partyId: 50485120,
-        userUuid: "7c6617f7-71d2-4235-99bf-c35658ae5161",
+        name: "INNSIKTSFULL HYBELKANIN",
+        etternavn: "HYBELKANIN",
+        personidentity: "14906198453",
+        userId: 20276551,
+        partyId: 50807487,
+        userUuid: "37b157f8-0011-496f-8dcc-cdfbd2594da6",
       },
+    },
+    // GRANITT KREATIV, registered as deceased (2020-12-22). Used only to verify that
+    // agent registration and rightholder registration reject a deceased person.
+    deceasedPerson: {
+      name: "KREATIV GRANITT",
+      etternavn: "GRANITT",
+      personidentity: "08919574934",
+      userId: 20600687,
+      partyId: 50485120,
+      userUuid: "7c6617f7-71d2-4235-99bf-c35658ae5161",
     },
     REVI_Organisasjon: {
       name: "OVERFLADISK LANG TIGER AS",

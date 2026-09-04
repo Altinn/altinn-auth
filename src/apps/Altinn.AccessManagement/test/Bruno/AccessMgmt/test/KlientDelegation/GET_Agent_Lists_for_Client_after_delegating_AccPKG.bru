@@ -64,7 +64,7 @@ tests {
       testdata.REGN_Organisasjon.REGN_Agent.userUuid.toLowerCase()
     );
   
-    expect(agent.name).to.equal("KREATIV GRANITT");
+    expect(agent.name).to.equal(testdata.REGN_Organisasjon.REGN_Agent.name);
     expect(agent.type).to.equal("Person");
   
     const access = entry.access[0];
