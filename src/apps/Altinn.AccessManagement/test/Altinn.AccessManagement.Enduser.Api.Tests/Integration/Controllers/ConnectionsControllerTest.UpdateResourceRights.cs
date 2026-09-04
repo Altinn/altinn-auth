@@ -259,7 +259,7 @@ public partial class ConnectionsControllerTest
         /// Malin (MD of Dumbo Adventures) tries to update resource rights for Josephine who has no rightholder connection.
         /// The service requires an existing connection. Expects 400 BadRequest.
         /// </summary>
-        // [Fact]  // Enable when https://github.com/Altinn/altinn-authorization-tmp/issues/2716 is fixed
+        // [Fact]  // Enable when https://github.com/Altinn/altinn-auth/issues/2716 is fixed
         public async Task UpdateResourceRights_ToPartyWithNoConnection_Returns400BadRequest()
         {
             List<string> rightKeys = await GetDelegatableRightKeys("app_mat_mattilsynet-baker-konditorvare");

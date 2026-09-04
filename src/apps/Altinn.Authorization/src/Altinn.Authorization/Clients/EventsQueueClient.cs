@@ -24,7 +24,7 @@ namespace Altinn.Platform.Authorization.Clients
         private static readonly JsonElement FallbackContextRequestJson = JsonSerializer.SerializeToElement(new
         {
             message = "ContextRequestJson is not available due to size limitations.",
-            info = "See the following link for more details https://github.com/Altinn/altinn-authorization-tmp/issues/1858",
+            info = "See the following link for more details https://github.com/Altinn/altinn-auth/issues/1858",
         });
 
         private readonly QueueStorageSettings _settings;

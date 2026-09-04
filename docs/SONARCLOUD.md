@@ -203,5 +203,5 @@ project-scoped state, not source-controlled.
 - [testing/CI.md](testing/CI.md) — overall pipeline shape.
 - [testing/COVERAGE.md](testing/COVERAGE.md) — local coverage workflow and
   threshold enforcement.
-- [Tracking issue #2936](https://github.com/Altinn/altinn-authorization-tmp/issues/2936)
+- [Tracking issue #2936](https://github.com/Altinn/altinn-auth/issues/2936)
   — open follow-ups for the SonarCloud setup.
