@@ -89,7 +89,7 @@ public static class ActivityLogSchemaJob
     private static string ReadScript(string name)
     {
         var assembly = typeof(ActivityLogSchemaJob).Assembly;
-        var resource = $"Altinn.AccessMgmt.FFB.Jobs.Sql.{name}";
+        var resource = $"Altinn.AccessMgmt.FFB.Jobs.SchemaScripts.{name}";
         using var stream = assembly.GetManifestResourceStream(resource)
             ?? throw new InvalidOperationException($"Embedded script '{resource}' was not found.");
         using var reader = new StreamReader(stream);

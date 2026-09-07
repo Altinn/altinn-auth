@@ -23,11 +23,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Jobs\Sql\activitylog-schema-install.sql">
-      <LogicalName>Altinn.AccessMgmt.FFB.Jobs.Sql.activitylog-schema-install.sql</LogicalName>
+    <EmbeddedResource Include="Jobs\SchemaScripts\activitylog-schema-install.sql">
+      <LogicalName>Altinn.AccessMgmt.FFB.Jobs.SchemaScripts.activitylog-schema-install.sql</LogicalName>
     </EmbeddedResource>
-    <EmbeddedResource Include="Jobs\Sql\activitylog-schema-rollback.sql">
-      <LogicalName>Altinn.AccessMgmt.FFB.Jobs.Sql.activitylog-schema-rollback.sql</LogicalName>
+    <EmbeddedResource Include="Jobs\SchemaScripts\activitylog-schema-rollback.sql">
+      <LogicalName>Altinn.AccessMgmt.FFB.Jobs.SchemaScripts.activitylog-schema-rollback.sql</LogicalName>
     </EmbeddedResource>
   </ItemGroup>
 

@@ -328,7 +328,7 @@ public static class ActivityLogBackfillJob
     /// The per-source condition that makes a version transition an Updated event — must mirror
     /// the Updated branch WHERE clauses in <see cref="Parts"/>.
     /// </summary>
-    private static string UpdatedCondition(string source) => source switch
+    private static string? UpdatedCondition(string source) => source switch
     {
         "assignmentinstance" => "c.next_assignmentid IS DISTINCT FROM c.assignmentid",
         "requestassignmentpackage" or "requestassignmentresource" => "c.next_status IS DISTINCT FROM c.status",
