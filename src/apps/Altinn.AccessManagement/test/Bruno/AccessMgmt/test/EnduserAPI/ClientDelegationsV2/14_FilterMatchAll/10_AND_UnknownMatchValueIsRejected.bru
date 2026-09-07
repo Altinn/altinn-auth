@@ -19,8 +19,9 @@ params:query {
 docs {
   AND a match value outside any and all is rejected.
 
-  Expects 400 with error code STD-00000 and validation error AM.VLD-00007 whose
-  paths point at the match parameter.
+  match is declared as an enum in the api contracts, so model binding rejects the
+  value before the action runs. Expects 400 with a validation error on the match
+  parameter.
 }
 
 script:pre-request {
@@ -38,11 +39,8 @@ tests {
     expect(res.status).to.equal(400);
   });
 
-  test("THEN validation error AM.VLD-00007 points at the match parameter", function() {
+  test("THEN the validation error points at the match parameter", function() {
     const body = res.getBody();
-    expect(body.code).to.equal("STD-00000");
-    const err = body.validationErrors.find(e => e.code === "AM.VLD-00007");
-    expect(err, "expected validation error AM.VLD-00007").to.not.be.undefined;
-    expect(JSON.stringify(err.paths)).to.include("match");
+    expect(JSON.stringify(body.errors)).to.include("match");
   });
 }

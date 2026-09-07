@@ -932,11 +932,11 @@ public class ClientDelegationControllerTest
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
+            // match is declared as an enum in the api contracts, so model binding rejects an
+            // unknown value before the action runs.
             var data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.Contains("match", data);
-            Assert.Contains("'any', 'all'", data);
-            Assert.Contains("AM.VLD-00007", data);
-            Assert.Contains("STD-00000", data);
+            Assert.Contains("sometimes", data);
         }
     }
     #endregion

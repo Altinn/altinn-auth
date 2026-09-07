@@ -174,22 +174,6 @@ internal static class ParameterValidation
             errors.Add(ValidationErrors.InvalidQueryParameter, "$QUERY/instance", [new("instance", ValidationErrorMessageTexts.InvalidInstanceUrnFormat)]);
     };
 
-    /// <summary>
-    /// match must be one of the values accepted by <see cref="FilterMatchValues"/>, or absent.
-    /// </summary>
-    /// <param name="value">Raw query parameter value.</param>
-    /// <returns>A deferred rule expression that yields an error builder when invalid, otherwise null.</returns>
-    internal static RuleExpression FilterMatchMode(string value) => () =>
-    {
-        if (FilterMatchValues.TryParse(value, FilterMatch.Any, out _))
-        {
-            return null;
-        }
-
-        return (ref ValidationErrorBuilder errors) =>
-            errors.Add(ValidationErrors.InvalidQueryParameter, "$QUERY/match", [new("match", ValidationErrorMessageTexts.InvalidFilterMatchValue)]);
-    };
-
     private static RuleExpression ValidateFromOrToParty(string value, string paramName) => () =>
     {
         if (Guid.TryParse(value, out var parsed) && parsed != Guid.Empty)

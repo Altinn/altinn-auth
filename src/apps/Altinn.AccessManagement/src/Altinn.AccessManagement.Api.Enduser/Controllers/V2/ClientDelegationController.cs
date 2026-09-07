@@ -12,6 +12,7 @@ using Altinn.AccessMgmt.Core.Validation;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
+using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 using Altinn.Authorization.ProblemDetails;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
@@ -222,19 +223,11 @@ public class ClientDelegationController(
         [FromQuery(Name = "roles")] List<string>? roles,
         [FromQuery(Name = "packages")] List<string>? packages,
         [FromQuery(Name = "resources")] List<string>? resources,
-        [FromQuery(Name = "match")] string? match,
         [FromQuery, FromHeader] PagingInput paging,
+        [FromQuery(Name = "match")] FilterMatch match = FilterMatch.Any,
         CancellationToken cancellationToken = default)
     {
-        var validationErrors = ValidationComposer.Validate(ParameterValidation.FilterMatchMode(match));
-        if (validationErrors is { })
-        {
-            return validationErrors.ToActionResult();
-        }
-
-        FilterMatchValues.TryParse(match, FilterMatch.Any, out var filterMatch);
-
-        var result = await clientDelegationService.GetClientsV2(party, roles, packages, resources, filterMatch, cancellationToken);
+        var result = await clientDelegationService.GetClientsV2(party, roles, packages, resources, match, cancellationToken);
         if (result.IsProblem)
         {
             return result.Problem.ToActionResult();

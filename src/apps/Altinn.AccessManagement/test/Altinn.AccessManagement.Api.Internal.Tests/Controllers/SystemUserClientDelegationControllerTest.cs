@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Security.Claims;
 using System.Text.Json;
 using Altinn.AccessManagement.Api.Internal.Controllers;
@@ -197,9 +197,11 @@ public class SystemUserClientDelegationControllerTest
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
 
+            // match is declared as an enum in the api contracts, so model binding rejects an
+            // unknown value before the action runs.
             var data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.Contains("match", data);
-            Assert.Contains("any, all", data);
+            Assert.Contains("sometimes", data);
         }
     }
     #endregion
