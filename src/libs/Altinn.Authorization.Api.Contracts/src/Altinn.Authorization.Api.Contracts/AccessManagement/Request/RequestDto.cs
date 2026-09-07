@@ -28,7 +28,7 @@ public class RequestDto
     /// <summary>
     /// Last updated by
     /// </summary>
-    public Guid? LastUpdatedBy { get; set; }
+    public PartyReferenceDto? LastUpdatedBy { get; set; }
 
     /// <summary>
     /// Requested resource

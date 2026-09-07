@@ -9,6 +9,7 @@ using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.AccessMgmt.PersistenceEF.Models.Contracts;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
@@ -34,6 +35,7 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
 
         if (requestResource != null)
         {
+            await ResolveLastUpdatedBy([requestResource], ct);
             return DtoMapper.Convert(requestResource);
         }
 
@@ -47,6 +49,7 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
 
         if (requestPackage != null)
         {
+            await ResolveLastUpdatedBy([requestPackage], ct);
             return DtoMapper.Convert(requestPackage);
         }
 
@@ -498,26 +501,68 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
     {
         ValidateFilter(filter);
 
-        return await BuildRequestAssignmentResourceQuery(filter, status)
+        var requests = await BuildRequestAssignmentResourceQuery(filter, status)
             .Include(r => r.Assignment).ThenInclude(a => a.From)
             .Include(r => r.Assignment).ThenInclude(a => a.To)
             .Include(r => r.Assignment).ThenInclude(a => a.Role)
             .Include(r => r.Assignment).ThenInclude(a => a.By)
             .Include(r => r.Resource)
             .ToListAsync(cancellationToken: ct);
+
+        await ResolveLastUpdatedBy(requests, ct);
+        return requests;
     }
 
     private async Task<IEnumerable<RequestAssignmentPackage>> GetRequestAssignmentPackage(RequestFilter filter, IEnumerable<RequestStatus> status, CancellationToken ct)
     {
         ValidateFilter(filter);
 
-        return await BuildRequestAssignmentPackageQuery(filter, status)
+        var requests = await BuildRequestAssignmentPackageQuery(filter, status)
             .Include(r => r.Assignment).ThenInclude(a => a.From)
             .Include(r => r.Assignment).ThenInclude(a => a.To)
             .Include(r => r.Assignment).ThenInclude(a => a.Role)
             .Include(r => r.Assignment).ThenInclude(a => a.By)
             .Include(r => r.Package)
             .ToListAsync(cancellationToken: ct);
+
+        await ResolveLastUpdatedBy(requests, ct);
+        return requests;
+    }
+
+    /// <summary>
+    /// Fills in <see cref="IHasLastUpdatedBy.LastUpdatedBy"/> from the rows' audit values.
+    /// </summary>
+    /// <remarks>
+    /// Audit_ChangedBy is not a foreign key, so the party is looked up here rather than through
+    /// an EF relationship. One batched query covers the whole result set, and an audit value with
+    /// no matching entity simply leaves the navigation null, which the mapper renders as a bare id.
+    /// </remarks>
+    private async Task ResolveLastUpdatedBy<T>(IReadOnlyCollection<T> requests, CancellationToken ct)
+        where T : IHasLastUpdatedBy
+    {
+        var ids = requests
+            .Select(r => r.Audit_ChangedBy)
+            .OfType<Guid>()
+            .Distinct()
+            .ToList();
+
+        if (ids.Count == 0)
+        {
+            return;
+        }
+
+        var parties = await db.Entities
+            .AsNoTracking()
+            .Where(e => ids.Contains(e.Id))
+            .ToDictionaryAsync(e => e.Id, ct);
+
+        foreach (var request in requests)
+        {
+            if (request.Audit_ChangedBy is { } id && parties.TryGetValue(id, out var party))
+            {
+                request.LastUpdatedBy = party;
+            }
+        }
     }
 
     private async Task<int> GetRequestAssignmentResourceCount(RequestFilter filter, IEnumerable<RequestStatus> status, CancellationToken ct)
