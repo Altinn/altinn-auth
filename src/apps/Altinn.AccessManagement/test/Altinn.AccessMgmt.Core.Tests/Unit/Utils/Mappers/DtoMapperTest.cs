@@ -723,7 +723,7 @@ public class DtoMapperTest
         dto.From!.Id.Should().Be(from.Id);
         dto.To!.Id.Should().Be(to.Id);
         dto.By!.Id.Should().Be(by.Id);
-        dto.LastUpdatedBy.Should().Be(changedBy);
+        dto.LastUpdatedBy!.Id.Should().Be(changedBy);
         dto.Package!.Id.Should().Be(request.PackageId);
     }
 
@@ -750,16 +750,16 @@ public class DtoMapperTest
         dto.Status.Should().Be(RequestStatus.Approved);
         dto.Resource!.Id.Should().Be(request.ResourceId);
         dto.By!.Id.Should().Be(by.Id);
-        dto.LastUpdatedBy.Should().Be(changedBy);
+        dto.LastUpdatedBy!.Id.Should().Be(changedBy);
     }
 
-    // ── RequestMapper — ConvertToPartyEntityDto ────────────────────────────────
+    // ── RequestMapper — ConvertToIdentifiedParty ────────────────────────────────
     [Fact]
-    public void ConvertToPartyEntityDto_MapsKnownTypeAndVariant()
+    public void ConvertToIdentifiedParty_MapsKnownTypeAndVariant()
     {
         var entity = MakeEntity("Test Org");
 
-        var dto = Altinn.AccessMgmt.Core.Utils.DtoMapper.ConvertToPartyEntityDto(entity);
+        var dto = Altinn.AccessMgmt.Core.Utils.DtoMapper.ConvertToIdentifiedParty(entity);
 
         dto.Id.Should().Be(entity.Id);
         dto.Name.Should().Be("Test Org");
@@ -769,7 +769,7 @@ public class DtoMapperTest
     }
 
     [Fact]
-    public void ConvertToPartyEntityDto_UnknownTypeAndVariant_NullTypeAndVariant()
+    public void ConvertToIdentifiedParty_UnknownTypeAndVariant_NullTypeAndVariant()
     {
         var entity = new Entity
         {
@@ -779,19 +779,19 @@ public class DtoMapperTest
             VariantId = Guid.NewGuid(), // not in constants
         };
 
-        var dto = Altinn.AccessMgmt.Core.Utils.DtoMapper.ConvertToPartyEntityDto(entity);
+        var dto = Altinn.AccessMgmt.Core.Utils.DtoMapper.ConvertToIdentifiedParty(entity);
 
         dto.Type.Should().BeNull();
         dto.Variant.Should().BeNull();
     }
 
-    // ── RequestMapper — ConvertToPartyEntityDtoOrStub ──────────────────────────
+    // ── RequestMapper — ConvertToIdentifiedPartyOrStub ──────────────────────────
     [Fact]
-    public void ConvertToPartyEntityDtoOrStub_EntityProvided_DelegatesToFullConversion()
+    public void ConvertToIdentifiedPartyOrStub_EntityProvided_DelegatesToFullConversion()
     {
         var entity = MakeEntity("Real Entity");
 
-        var dto = Altinn.AccessMgmt.Core.Utils.DtoMapper.ConvertToPartyEntityDtoOrStub(entity, fallbackId: Guid.NewGuid());
+        var dto = Altinn.AccessMgmt.Core.Utils.DtoMapper.ConvertToIdentifiedPartyOrStub(entity, fallbackId: Guid.NewGuid());
 
         dto.Should().NotBeNull();
         dto!.Id.Should().Be(entity.Id);
@@ -800,11 +800,11 @@ public class DtoMapperTest
     }
 
     [Fact]
-    public void ConvertToPartyEntityDtoOrStub_NullEntity_WithFallback_ReturnsStubWithFallbackId()
+    public void ConvertToIdentifiedPartyOrStub_NullEntity_WithFallback_ReturnsStubWithFallbackId()
     {
         var fallbackId = Guid.NewGuid();
 
-        var dto = Altinn.AccessMgmt.Core.Utils.DtoMapper.ConvertToPartyEntityDtoOrStub(entity: null, fallbackId);
+        var dto = Altinn.AccessMgmt.Core.Utils.DtoMapper.ConvertToIdentifiedPartyOrStub(entity: null, fallbackId);
 
         dto.Should().NotBeNull();
         dto!.Id.Should().Be(fallbackId);
@@ -813,9 +813,60 @@ public class DtoMapperTest
     }
 
     [Fact]
-    public void ConvertToPartyEntityDtoOrStub_NullEntity_NullFallback_ReturnsNull()
+    public void ConvertToIdentifiedPartyOrStub_NullEntity_NullFallback_ReturnsNull()
     {
-        var dto = Altinn.AccessMgmt.Core.Utils.DtoMapper.ConvertToPartyEntityDtoOrStub(entity: null, fallbackId: null);
+        var dto = Altinn.AccessMgmt.Core.Utils.DtoMapper.ConvertToIdentifiedPartyOrStub(entity: null, fallbackId: null);
+
+        dto.Should().BeNull();
+    }
+
+    // ── RequestMapper — ConvertToPartyReferenceOrStub ───────────────────────
+
+    /// <summary>
+    /// LastUpdatedBy names the access manager who handled a request. The design in #3884 says
+    /// the requester must not be able to identify that individual, so this mapping must never
+    /// carry the identifiers that ConvertToIdentifiedParty does.
+    /// </summary>
+    [Fact]
+    public void ConvertToPartyReferenceOrStub_MapsIdAndName()
+    {
+        var entity = MakeEntity("Selma Blikklag Johansen");
+        entity.PersonIdentifier = "12345678901";
+
+        var dto = Altinn.AccessMgmt.Core.Utils.DtoMapper.ConvertToPartyReferenceOrStub(entity, fallbackId: null);
+
+        dto.Should().NotBeNull();
+        dto!.Id.Should().Be(entity.Id);
+        dto.Name.Should().Be("Selma Blikklag Johansen");
+    }
+
+    /// <summary>
+    /// The guarantee above now rests on the shape of PartyReferenceDto, so keep that shape closed.
+    /// </summary>
+    [Fact]
+    public void PartyReferenceDto_ExposesOnlyIdAndName()
+    {
+        typeof(PartyReferenceDto).GetProperties()
+            .Select(p => p.Name)
+            .Should().BeEquivalentTo("Id", "Name");
+    }
+
+    [Fact]
+    public void ConvertToPartyReferenceOrStub_NullEntity_WithFallback_ReturnsStubWithFallbackId()
+    {
+        var fallbackId = Guid.NewGuid();
+
+        var dto = Altinn.AccessMgmt.Core.Utils.DtoMapper.ConvertToPartyReferenceOrStub(entity: null, fallbackId);
+
+        dto.Should().NotBeNull();
+        dto!.Id.Should().Be(fallbackId);
+        dto.Name.Should().BeNull();
+    }
+
+    [Fact]
+    public void ConvertToPartyReferenceOrStub_NullEntity_NullFallback_ReturnsNull()
+    {
+        var dto = Altinn.AccessMgmt.Core.Utils.DtoMapper.ConvertToPartyReferenceOrStub(entity: null, fallbackId: null);
 
         dto.Should().BeNull();
     }
