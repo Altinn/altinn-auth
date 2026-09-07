@@ -14,6 +14,8 @@ namespace Altinn.AccessManagement.Enduser.Api.Tests.Unit.AuthorizationHelpers;
 [UnitTest]
 public class DecisionHelperTest
 {
+    private const string SystemUserClaimValue = """{"type":"urn:altinn:systemuser","systemuser_id":["f58fe166-bc22-4899-beb7-c3e8e3332f43"]}""";
+
     private static HttpContext CtxWith(params Claim[] claims)
         => new DefaultHttpContext { User = new ClaimsPrincipal(new ClaimsIdentity(claims, "test")) };
 
@@ -216,5 +218,86 @@ public class DecisionHelperTest
             [new Claim("urn:altinn:authlevel", "4")], "test"));
 
         DecisionHelper.ValidatePdpDecision(response, user).Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData("3", true)]
+    [InlineData("4", false)]
+    public void ValidatePdpDecision_SystemUser_EnforcesSystemUserMinAuthLevel(string systemUserMinAuthLevel, bool expected)
+    {
+        // A system user always has authentication level 3, and the token carries no authlevel claim
+        var response = ResponseWithMinAuthLevel("4", systemUserMinAuthLevel);
+
+        var user = new ClaimsPrincipal(new ClaimsIdentity(
+            [new Claim("authorization_details", SystemUserClaimValue)], "test"));
+
+        DecisionHelper.ValidatePdpDecision(response, user).Should().Be(expected);
+    }
+
+    [Fact]
+    public void ValidatePdpDecision_SystemUser_NoSystemUserObligation_EnforcesGeneralMinAuthLevel()
+    {
+        var response = ResponseWithMinAuthLevel("4");
+
+        var user = new ClaimsPrincipal(new ClaimsIdentity(
+            [new Claim("authorization_details", SystemUserClaimValue), new Claim("urn:altinn:authlevel", "3")], "test"));
+
+        DecisionHelper.ValidatePdpDecision(response, user).Should().BeFalse();
+    }
+
+    [Fact]
+    public void ValidatePdpDecision_EndUser_SystemUserMinAuthLevelNotApplied_ReturnsFalse()
+    {
+        var response = ResponseWithMinAuthLevel("4", "2");
+
+        var user = new ClaimsPrincipal(new ClaimsIdentity(
+            [new Claim("urn:altinn:authlevel", "2")], "test"));
+
+        DecisionHelper.ValidatePdpDecision(response, user).Should().BeFalse();
+    }
+
+    private static XacmlJsonResponse ResponseWithMinAuthLevel(string minAuthLevel, string systemUserMinAuthLevel = null)
+    {
+        List<XacmlJsonObligationOrAdvice> obligations =
+        [
+            new()
+            {
+                AttributeAssignment =
+                [
+                    new()
+                    {
+                        Category = "urn:altinn:minimum-authenticationlevel",
+                        Value = minAuthLevel,
+                    },
+                ],
+            },
+        ];
+
+        if (systemUserMinAuthLevel != null)
+        {
+            obligations.Add(new()
+            {
+                AttributeAssignment =
+                [
+                    new()
+                    {
+                        Category = "urn:altinn:minimum-authenticationlevel-systemuser",
+                        Value = systemUserMinAuthLevel,
+                    },
+                ],
+            });
+        }
+
+        return new XacmlJsonResponse
+        {
+            Response =
+            [
+                new()
+                {
+                    Decision = "Permit",
+                    Obligations = obligations,
+                },
+            ],
+        };
     }
 }
