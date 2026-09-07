@@ -404,7 +404,7 @@ public class ClientDelegationControllerTest
     #region GET accessmanagement/api/v2/enduser/clientdelegations/clients
 
     /// <summary>
-    /// <see cref="ClientDelegationController.GetClients(Guid, List{string}?, List{string}?, List{string}?, string?, AccessManagement.Api.Enduser.Models.PagingInput, CancellationToken)"/>
+    /// <see cref="ClientDelegationController.GetClients(Guid, List{string}?, List{string}?, List{string}?, AccessManagement.Api.Enduser.Models.PagingInput, Altinn.Authorization.Api.Contracts.AccessManagement.Enums.FilterMatch, CancellationToken)"/>
     /// </summary>
     [IntegrationTest]
     public class GetClients : IClassFixture<ApiFixture>

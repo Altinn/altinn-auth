@@ -21,7 +21,7 @@ public class SystemUserClientDelegationControllerTest
     #region GET accessmanagement/api/v1/internal/systemuserclientdelegation/clients
 
     /// <summary>
-    /// <see cref="SystemUserClientDelegationController.GetClients(Guid, string[], string[], string, CancellationToken)"/>
+    /// <see cref="SystemUserClientDelegationController.GetClients(Guid, string[], string[], Altinn.Authorization.Api.Contracts.AccessManagement.Enums.FilterMatch, CancellationToken)"/>
     /// </summary>
     [IntegrationTest]
     public class GetClients : IClassFixture<ApiFixture>
