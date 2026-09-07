@@ -73,48 +73,6 @@ public interface IAssignmentService
     Task<bool> AddAssignmentPackage(Guid userId, Guid assignmentId, Guid packageId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Adds a resource to the delegation
-    /// </summary>
-    /// <returns></returns>
-    Task<bool> AddAssignmentResource(Guid userId, Guid assignmentId, Guid resourceId, string policyPath, string policyVersion, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Adds a resource to the delegation
-    /// </summary>
-    /// <returns></returns>
-    Task<bool> AddAssignmentInstance(Guid userId, Guid assignmentId, Guid resourceId, string instanceId, string policyPath, string policyVersion, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Inserts or updates a resource to the delegation
-    /// </summary>
-    /// <returns></returns>
-    Task<bool> UpsertAssignmentResource(Guid userId, Guid assignmentId, Guid resourceId, string policyPath, string policyVersion, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Inserts or updates a resource to the delegation
-    /// </summary>
-    /// <returns></returns>
-    Task<bool> UpsertAssignmentInstance(Guid userId, Guid assignmentId, Guid resourceId, string instanceId, string policyPath, string policyVersion, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Adds a package to the delegation
-    /// </summary>
-    /// <returns></returns>
-    Task<bool> RemoveAssignmentPackage(Guid userId, Guid assignmentId, Guid packageId, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Adds a resource to the delegation
-    /// </summary>
-    /// <returns></returns>
-    Task<bool> RemoveAssignmentResource(Guid userId, Guid assignmentId, Guid resourceId, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Adds a resource to the delegation
-    /// </summary>
-    /// <returns></returns>
-    Task<bool> RemoveAssignmentInstance(Guid userId, Guid assignmentId, Guid resourceId, string instanceId, CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// Fetches assignment.
     /// </summary>
     Task<Assignment> GetAssignment(Guid id, CancellationToken cancellationToken = default);
