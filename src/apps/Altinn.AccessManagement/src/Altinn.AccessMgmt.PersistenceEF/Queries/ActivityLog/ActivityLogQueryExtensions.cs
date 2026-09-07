@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement.ActivityLog;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
@@ -43,6 +44,45 @@ internal static class ActivityLogQueryExtensions
             (t.ToId.HasValue && ids.Contains(t.ToId.Value)) ||
             (t.ViaId.HasValue && ids.Contains(t.ViaId.Value)) ||
             (t.ById.HasValue && ids.Contains(t.ById.Value)));
+    }
+
+    internal static IQueryable<ActivityLog> ActivityTypeKeyContains(this IQueryable<ActivityLog> query, IReadOnlyCollection<ActivityTypeKey> keys)
+    {
+        if (keys is null || keys.Count == 0)
+        {
+            return query;
+        }
+
+        // Each key is a whole conjunction and the keys are OR'ed — the independent value
+        // lists cannot express this without cross-matching, hence the built expression.
+        var parameter = Expression.Parameter(typeof(ActivityLog), "t");
+        Expression body = null;
+
+        foreach (var key in keys)
+        {
+            Expression conjunction = Expression.Equal(
+                Expression.Property(parameter, nameof(ActivityLog.Type)),
+                Expression.Constant(key.Type));
+
+            conjunction = Expression.AndAlso(conjunction, Expression.Equal(
+                Expression.Property(parameter, nameof(ActivityLog.Subtype)),
+                Expression.Constant(key.Subtype, typeof(ActivityLogSubtype?))));
+
+            conjunction = Expression.AndAlso(conjunction, Expression.Equal(
+                Expression.Property(parameter, nameof(ActivityLog.Trigger)),
+                Expression.Constant(key.Trigger)));
+
+            if (key.Status is not null)
+            {
+                conjunction = Expression.AndAlso(conjunction, Expression.Equal(
+                    Expression.Property(parameter, nameof(ActivityLog.Status)),
+                    Expression.Constant(key.Status, typeof(RequestStatus?))));
+            }
+
+            body = body is null ? conjunction : Expression.OrElse(body, conjunction);
+        }
+
+        return query.Where(Expression.Lambda<Func<ActivityLog, bool>>(body, parameter));
     }
 
     internal static IQueryable<ActivityLog> TypeContains(this IQueryable<ActivityLog> query, HashSet<ActivityLogType> values)

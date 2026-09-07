@@ -46,6 +46,21 @@ public partial class DtoMapper : IDtoMapper
         ItemId = entry.ItemId,
         ParentId = entry.ParentId,
         Details = ParseDetails(entry.Details),
+        ActivityTypeId = ActivityTypeConstants.Resolve(entry.Type, entry.Subtype, entry.Trigger, entry.Status)?.Id,
+    };
+
+    /// <summary>
+    /// Maps an activity type catalog constant to its external contract.
+    /// </summary>
+    public static ActivityTypeDto ToActivityTypeDto(ConstantDefinition<ActivityType> definition) => new()
+    {
+        Id = definition.Id,
+        Type = definition.Entity.Type,
+        Subtype = definition.Entity.Subtype,
+        Trigger = definition.Entity.Trigger,
+        Status = definition.Entity.Status,
+        Name = definition.Entity.Name,
+        Description = definition.Entity.Description,
     };
 
     private static string ResolveSystemEntityName(Guid? sourceId)

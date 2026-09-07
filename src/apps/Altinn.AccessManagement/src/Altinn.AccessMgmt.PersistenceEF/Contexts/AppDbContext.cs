@@ -88,6 +88,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<ActivityLogBackfillProgress> ActivityLogBackfillProgress => Set<ActivityLogBackfillProgress>();
 
+    public DbSet<ActivityType> ActivityTypes => Set<ActivityType>();
+
     #endregion
 
     #region Audit
@@ -200,6 +202,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.ApplyConfiguration<AuditRequestAssignment>(new AuditRequestAssignmentConfiguration());
         modelBuilder.ApplyConfiguration<AuditRequestAssignmentPackage>(new AuditRequestAssignmentPackageConfiguration());
         modelBuilder.ApplyConfiguration<AuditRequestAssignmentResource>(new AuditRequestAssignmentResourceConfiguration());
+        modelBuilder.ApplyConfiguration<AuditActivityType>(new AuditActivityTypeConfiguration());
     }
 
     private static void ApplyConfiguration(ModelBuilder modelBuilder)
@@ -239,6 +242,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.ApplyConfiguration<InstanceSourceType>(new InstanceSourceTypeConfiguration());
         modelBuilder.ApplyConfiguration<ActivityLog>(new ActivityLogConfiguration());
         modelBuilder.ApplyConfiguration<ActivityLogBackfillProgress>(new ActivityLogBackfillProgressConfiguration());
+        modelBuilder.ApplyConfiguration<ActivityType>(new ActivityTypeConfiguration());
     }
 
     #region Extensions

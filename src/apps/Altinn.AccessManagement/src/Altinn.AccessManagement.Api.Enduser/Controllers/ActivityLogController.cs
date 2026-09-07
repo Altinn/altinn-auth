@@ -4,6 +4,8 @@ using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.Core.Services.Contracts;
+using Altinn.AccessMgmt.Core.Utils;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Queries;
 using Altinn.Authorization.Api.Contracts.AccessManagement.ActivityLog;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
@@ -32,8 +34,9 @@ public class ActivityLogController(IActivityLogService activityLogService) : Con
     /// Get activity log entries involving the specified party, newest first. All filter
     /// parameters accept multiple values. The optional direction anchors the party on the
     /// from (given), to (received) or via (facilitator) side; without it any involvement
-    /// matches. Paging is page-based via pageSize and pageNo; without them the first
-    /// 100 entries are returned.
+    /// matches. typeId values reference the activity type catalog and expand to whole
+    /// combinations OR'ed together. Paging is page-based via pageSize and pageNo; without
+    /// them the first 100 entries are returned.
     /// </summary>
     [HttpGet]
     [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_ACTIVITYLOG_READ)]
@@ -45,6 +48,7 @@ public class ActivityLogController(IActivityLogService activityLogService) : Con
     public async Task<IActionResult> GetActivityLog(
         [Required][FromQuery(Name = "party")] Guid party,
         [FromQuery(Name = "direction")] ActivityLogDirection? direction = null,
+        [FromQuery(Name = "typeId")] List<Guid> typeId = null,
         [FromQuery(Name = "type")] List<ActivityLogType> type = null,
         [FromQuery(Name = "subtype")] List<ActivityLogSubtype> subtype = null,
         [FromQuery(Name = "trigger")] List<ActivityLogTrigger> trigger = null,
@@ -73,8 +77,25 @@ public class ActivityLogController(IActivityLogService activityLogService) : Con
             return ValidationProblem(ModelState);
         }
 
+        List<ActivityTypeKey> activityTypeKeys = null;
+        if (typeId is { Count: > 0 })
+        {
+            activityTypeKeys = new List<ActivityTypeKey>(typeId.Count);
+            foreach (var id in typeId)
+            {
+                if (!ActivityTypeConstants.TryGetById(id, out var definition))
+                {
+                    ModelState.AddModelError("typeId", $"Unknown activity type id '{id}'.");
+                    return ValidationProblem(ModelState);
+                }
+
+                activityTypeKeys.Add(new ActivityTypeKey(definition.Entity.Type, definition.Entity.Subtype, definition.Entity.Trigger, definition.Entity.Status));
+            }
+        }
+
         var filter = new ActivityLogQueryFilter
         {
+            ActivityTypeKeys = activityTypeKeys,
             Types = type,
             Subtypes = subtype,
             Triggers = trigger,
@@ -108,6 +129,18 @@ public class ActivityLogController(IActivityLogService activityLogService) : Con
 
         return Ok(PaginatedResult.Create(result.Items, result.HasMore ? NextLink(size, page + 1) : null));
     }
+
+    /// <summary>
+    /// Get the activity type catalog: every valid activity log combination with display name
+    /// and description. Static metadata without personal data, hence anonymous; the content
+    /// only changes on deploy.
+    /// </summary>
+    [HttpGet("types")]
+    [AllowAnonymous]
+    [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
+    [ProducesResponseType<List<ActivityTypeDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    public IActionResult GetActivityTypes()
+        => Ok(ActivityTypeConstants.AllEntities().Select(DtoMapper.ToActivityTypeDto).ToList());
 
     private string NextLink(int pageSize, int nextPageNo)
     {

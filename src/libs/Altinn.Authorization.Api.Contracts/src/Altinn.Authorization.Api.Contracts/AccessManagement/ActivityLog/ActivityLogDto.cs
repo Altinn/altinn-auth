@@ -168,4 +168,11 @@ public class ActivityLogDto
     /// Additional event data (previous status, request action, provenance references etc.).
     /// </summary>
     public JsonElement? Details { get; set; }
+
+    /// <summary>
+    /// The activity type catalog entry for the event, resolved with the most-specific-wins
+    /// rule (exact status match, else the status-null fallback). Name and description come
+    /// from the types endpoint.
+    /// </summary>
+    public Guid? ActivityTypeId { get; set; }
 }

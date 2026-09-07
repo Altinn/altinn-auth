@@ -343,4 +343,53 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
             cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(5, deletesOnly.Items.Count);
     }
+
+    [Fact]
+    public async Task ActivityTypeCatalog_IsIngestedIntoTable()
+    {
+        var rows = await _db.ActivityTypes.AsNoTracking().ToListAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal(ActivityTypeConstants.AllEntities().Count, rows.Count);
+        Assert.All(ActivityTypeConstants.AllEntities(), definition =>
+        {
+            var row = Assert.Single(rows, r => r.Id == definition.Id);
+            Assert.Equal(definition.Entity.Name, row.Name);
+            Assert.Equal((definition.Entity.Type, definition.Entity.Subtype, definition.Entity.Trigger, definition.Entity.Status), (row.Type, row.Subtype, row.Trigger, row.Status));
+        });
+    }
+
+    [Fact]
+    public async Task ActivityLogQuery_FiltersOnActivityTypeKeysAsWholeConjunctions()
+    {
+        var (from, _, assignment) = await SeedAssignment();
+        var package = await _db.Packages.AsNoTracking().OrderBy(p => p.Id).FirstAsync(TestContext.Current.CancellationToken);
+
+        var assignmentPackage = new AssignmentPackage { Id = Guid.CreateVersion7(), AssignmentId = assignment.Id, PackageId = package.Id };
+        _db.AssignmentPackages.Add(assignmentPackage);
+        await _db.SaveChangesAsync(Seeder);
+        _db.AssignmentPackages.Remove(assignmentPackage);
+        await _db.SaveChangesAsync(Seeder);
+
+        var filter = new ActivityLogQueryFilter { InvolvedIds = [from.Id] };
+
+        var packageCreatedKey = new ActivityTypeKey(ActivityLogType.Assignment, ActivityLogSubtype.Package, ActivityLogTrigger.Created, null);
+        var assignmentDeletedKey = new ActivityTypeKey(ActivityLogType.Assignment, null, ActivityLogTrigger.Deleted, null);
+
+        var single = await _query.GetAsync(
+            filter with { ActivityTypeKeys = [packageCreatedKey] },
+            100,
+            cancellationToken: TestContext.Current.CancellationToken);
+        var packageCreated = Assert.Single(single.Items);
+        Assert.Equal(assignmentPackage.Id, packageCreated.ItemId);
+
+        // Two keys OR whole conjunctions: package-created plus assignment-deleted must not
+        // leak the cross-combinations (assignment-created, package-deleted).
+        var both = await _query.GetAsync(
+            filter with { ActivityTypeKeys = [packageCreatedKey, assignmentDeletedKey] },
+            100,
+            cancellationToken: TestContext.Current.CancellationToken);
+        var match = Assert.Single(both.Items);
+        Assert.Equal(assignmentPackage.Id, match.ItemId);
+        Assert.Equal(ActivityLogTrigger.Created, match.Trigger);
+    }
 }

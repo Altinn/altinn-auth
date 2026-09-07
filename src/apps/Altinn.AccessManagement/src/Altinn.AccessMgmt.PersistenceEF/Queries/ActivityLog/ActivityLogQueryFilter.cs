@@ -22,6 +22,12 @@ public sealed record ActivityLogQueryFilter
     public IReadOnlyCollection<Guid> AnyPartyIds { get; init; }
 
     /// <summary>
+    /// Gets the collection of activity type catalog keys, each matched as a whole conjunction
+    /// and OR'ed together — unlike the independent value lists below, which cross-combine.
+    /// </summary>
+    public IReadOnlyCollection<ActivityTypeKey> ActivityTypeKeys { get; init; }
+
+    /// <summary>
     /// Gets the collection of main record types.
     /// </summary>
     public IReadOnlyCollection<ActivityLogType> Types { get; init; }
