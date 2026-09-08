@@ -77,23 +77,159 @@ public class ActivityLogController(IActivityLogService activityLogService) : Con
             return ValidationProblem(ModelState);
         }
 
-        List<ActivityTypeKey> activityTypeKeys = null;
-        if (typeId is { Count: > 0 })
+        if (!TryResolveActivityTypeKeys(typeId, out var activityTypeKeys, out var typeIdError))
         {
-            activityTypeKeys = new List<ActivityTypeKey>(typeId.Count);
-            foreach (var id in typeId)
-            {
-                if (!ActivityTypeConstants.TryGetById(id, out var definition))
-                {
-                    ModelState.AddModelError("typeId", $"Unknown activity type id '{id}'.");
-                    return ValidationProblem(ModelState);
-                }
-
-                activityTypeKeys.Add(new ActivityTypeKey(definition.Entity.Type, definition.Entity.Subtype, definition.Entity.Trigger, definition.Entity.Status));
-            }
+            return typeIdError;
         }
 
-        var filter = new ActivityLogQueryFilter
+        var filter = BuildFilter(activityTypeKeys, type, subtype, trigger, status, by, source, operation, from, to, via, role, package, resource, instance, itemId, parentId, after, before);
+
+        var size = Math.Clamp(pageSize ?? DefaultPageSize, 1, MaxPageSize);
+        var page = Math.Max(pageNo ?? 0, 0);
+
+        var result = await activityLogService.GetActivityLog(
+            party,
+            direction,
+            filter,
+            size,
+            page,
+            cancellationToken);
+
+        return Ok(PaginatedResult.Create(result.Items, result.HasMore ? NextLink(size, page + 1) : null));
+    }
+
+    /// <summary>
+    /// Get the values occurring in the party's activity log for one facet field, as (id, name)
+    /// pairs to populate a filter picker. Takes the same filter parameters as the main endpoint
+    /// (the faceted field's own filter values are ignored so more can be added; the party
+    /// anchor never is), pages the same way, and term matches names case-insensitively.
+    /// The same id can recur with different names, since names are point-in-time snapshots.
+    /// </summary>
+    [HttpGet("filters/{field}")]
+    [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_ACTIVITYLOG_READ)]
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_READ)]
+    [ProducesResponseType<PaginatedResult<ActivityLogFacetDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetActivityLogFacet(
+        [FromRoute(Name = "field")] ActivityLogFacetField field,
+        [Required][FromQuery(Name = "party")] Guid party,
+        [FromQuery(Name = "term")] string term = null,
+        [FromQuery(Name = "orderBy")] ActivityLogFacetOrder orderBy = ActivityLogFacetOrder.Name,
+        [FromQuery(Name = "direction")] ActivityLogDirection? direction = null,
+        [FromQuery(Name = "typeId")] List<Guid> typeId = null,
+        [FromQuery(Name = "type")] List<ActivityLogType> type = null,
+        [FromQuery(Name = "subtype")] List<ActivityLogSubtype> subtype = null,
+        [FromQuery(Name = "trigger")] List<ActivityLogTrigger> trigger = null,
+        [FromQuery(Name = "status")] List<RequestStatus> status = null,
+        [FromQuery(Name = "by")] List<Guid> by = null,
+        [FromQuery(Name = "source")] List<Guid> source = null,
+        [FromQuery(Name = "operation")] List<string> operation = null,
+        [FromQuery(Name = "from")] List<Guid> from = null,
+        [FromQuery(Name = "to")] List<Guid> to = null,
+        [FromQuery(Name = "via")] List<Guid> via = null,
+        [FromQuery(Name = "role")] List<Guid> role = null,
+        [FromQuery(Name = "package")] List<Guid> package = null,
+        [FromQuery(Name = "resource")] List<Guid> resource = null,
+        [FromQuery(Name = "instance")] List<string> instance = null,
+        [FromQuery(Name = "itemId")] List<Guid> itemId = null,
+        [FromQuery(Name = "parentId")] List<Guid> parentId = null,
+        [FromQuery(Name = "after")] DateTimeOffset? after = null,
+        [FromQuery(Name = "before")] DateTimeOffset? before = null,
+        [FromQuery(Name = "pageSize")] int? pageSize = null,
+        [FromQuery(Name = "pageNo")] int? pageNo = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (party == Guid.Empty)
+        {
+            ModelState.AddModelError("party", "party must be a non-empty guid.");
+            return ValidationProblem(ModelState);
+        }
+
+        if (!TryResolveActivityTypeKeys(typeId, out var activityTypeKeys, out var typeIdError))
+        {
+            return typeIdError;
+        }
+
+        var filter = BuildFilter(activityTypeKeys, type, subtype, trigger, status, by, source, operation, from, to, via, role, package, resource, instance, itemId, parentId, after, before);
+
+        var size = Math.Clamp(pageSize ?? DefaultPageSize, 1, MaxPageSize);
+        var page = Math.Max(pageNo ?? 0, 0);
+
+        var result = await activityLogService.GetActivityLogFacet(
+            party,
+            direction,
+            field,
+            filter,
+            term,
+            orderBy,
+            size,
+            page,
+            cancellationToken);
+
+        return Ok(PaginatedResult.Create(result.Items, result.HasMore ? NextLink(size, page + 1) : null));
+    }
+
+    /// <summary>
+    /// Get the activity type catalog: every valid activity log combination with display name
+    /// and description. Static metadata without personal data, hence anonymous; the content
+    /// only changes on deploy.
+    /// </summary>
+    [HttpGet("types")]
+    [AllowAnonymous]
+    [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
+    [ProducesResponseType<List<ActivityTypeDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    public IActionResult GetActivityTypes()
+        => Ok(ActivityTypeConstants.AllEntities().Select(DtoMapper.ToActivityTypeDto).ToList());
+
+    private bool TryResolveActivityTypeKeys(List<Guid> typeId, out List<ActivityTypeKey> keys, out IActionResult error)
+    {
+        keys = null;
+        error = null;
+
+        if (typeId is not { Count: > 0 })
+        {
+            return true;
+        }
+
+        keys = new List<ActivityTypeKey>(typeId.Count);
+        foreach (var id in typeId)
+        {
+            if (!ActivityTypeConstants.TryGetById(id, out var definition))
+            {
+                ModelState.AddModelError("typeId", $"Unknown activity type id '{id}'.");
+                error = ValidationProblem(ModelState);
+                keys = null;
+                return false;
+            }
+
+            keys.Add(new ActivityTypeKey(definition.Entity.Type, definition.Entity.Subtype, definition.Entity.Trigger, definition.Entity.Status));
+        }
+
+        return true;
+    }
+
+    private static ActivityLogQueryFilter BuildFilter(
+        List<ActivityTypeKey> activityTypeKeys,
+        List<ActivityLogType> type,
+        List<ActivityLogSubtype> subtype,
+        List<ActivityLogTrigger> trigger,
+        List<RequestStatus> status,
+        List<Guid> by,
+        List<Guid> source,
+        List<string> operation,
+        List<Guid> from,
+        List<Guid> to,
+        List<Guid> via,
+        List<Guid> role,
+        List<Guid> package,
+        List<Guid> resource,
+        List<string> instance,
+        List<Guid> itemId,
+        List<Guid> parentId,
+        DateTimeOffset? after,
+        DateTimeOffset? before) => new()
         {
             ActivityTypeKeys = activityTypeKeys,
             Types = type,
@@ -115,32 +251,6 @@ public class ActivityLogController(IActivityLogService activityLogService) : Con
             After = after,
             Before = before,
         };
-
-        var size = Math.Clamp(pageSize ?? DefaultPageSize, 1, MaxPageSize);
-        var page = Math.Max(pageNo ?? 0, 0);
-
-        var result = await activityLogService.GetActivityLog(
-            party,
-            direction,
-            filter,
-            size,
-            page,
-            cancellationToken);
-
-        return Ok(PaginatedResult.Create(result.Items, result.HasMore ? NextLink(size, page + 1) : null));
-    }
-
-    /// <summary>
-    /// Get the activity type catalog: every valid activity log combination with display name
-    /// and description. Static metadata without personal data, hence anonymous; the content
-    /// only changes on deploy.
-    /// </summary>
-    [HttpGet("types")]
-    [AllowAnonymous]
-    [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
-    [ProducesResponseType<List<ActivityTypeDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
-    public IActionResult GetActivityTypes()
-        => Ok(ActivityTypeConstants.AllEntities().Select(DtoMapper.ToActivityTypeDto).ToList());
 
     private string NextLink(int pageSize, int nextPageNo)
     {

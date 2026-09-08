@@ -392,4 +392,73 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
         Assert.Equal(assignmentPackage.Id, match.ItemId);
         Assert.Equal(ActivityLogTrigger.Created, match.Trigger);
     }
+
+    [Fact]
+    public async Task FacetQuery_ReturnsDistinctPairs_KeepingRenamedSnapshotsAndMatchingTerm()
+    {
+        var (from, to, assignment) = await SeedAssignment();
+        var package = await _db.Packages.AsNoTracking().OrderBy(p => p.Id).FirstAsync(TestContext.Current.CancellationToken);
+
+        var renamed = await _db.Entities.FirstAsync(e => e.Id == to.Id, TestContext.Current.CancellationToken);
+        renamed.Name = "Aktivitetslogg Omdøpt AS";
+        await _db.SaveChangesAsync(Seeder);
+
+        _db.AssignmentPackages.Add(new AssignmentPackage { Id = Guid.CreateVersion7(), AssignmentId = assignment.Id, PackageId = package.Id });
+        await _db.SaveChangesAsync(Seeder);
+
+        var filter = new ActivityLogQueryFilter { InvolvedIds = [from.Id] };
+
+        var pairs = await _query.GetFacetAsync(ActivityLogFacetField.To, filter, term: null, ActivityLogFacetOrder.Name, 100, cancellationToken: TestContext.Current.CancellationToken);
+        Assert.Equal(2, pairs.Items.Count);
+        Assert.All(pairs.Items, p => Assert.Equal(to.Id, p.Id));
+        Assert.Contains(pairs.Items, p => p.Name == "Aktivitetslogg Til AS");
+        Assert.Contains(pairs.Items, p => p.Name == "Aktivitetslogg Omdøpt AS");
+
+        var termMatch = await _query.GetFacetAsync(ActivityLogFacetField.To, filter, term: "omdøpt", ActivityLogFacetOrder.Name, 100, cancellationToken: TestContext.Current.CancellationToken);
+        var single = Assert.Single(termMatch.Items);
+        Assert.Equal("Aktivitetslogg Omdøpt AS", single.Name);
+
+        var newestFirst = await _query.GetFacetAsync(ActivityLogFacetField.To, filter, term: null, ActivityLogFacetOrder.When, 100, cancellationToken: TestContext.Current.CancellationToken);
+        Assert.Equal("Aktivitetslogg Omdøpt AS", newestFirst.Items[0].Name);
+    }
+
+    [Fact]
+    public async Task FacetService_IgnoresOwnFieldFilterButAppliesOthers()
+    {
+        var (from, to, _) = await SeedAssignment();
+        var service = new Altinn.AccessMgmt.Core.Services.ActivityLogService(_query);
+
+        var ownFieldIgnored = await service.GetActivityLogFacet(
+            from.Id, direction: null, ActivityLogFacetField.To,
+            new ActivityLogQueryFilter { ToIds = [Guid.NewGuid()] },
+            term: null, ActivityLogFacetOrder.Name, 100, 0, TestContext.Current.CancellationToken);
+        Assert.Contains(ownFieldIgnored.Items, p => p.Id == to.Id);
+
+        var otherFieldApplies = await service.GetActivityLogFacet(
+            from.Id, direction: null, ActivityLogFacetField.Role,
+            new ActivityLogQueryFilter { ToIds = [Guid.NewGuid()] },
+            term: null, ActivityLogFacetOrder.Name, 100, 0, TestContext.Current.CancellationToken);
+        Assert.Empty(otherFieldApplies.Items);
+    }
+
+    [Fact]
+    public async Task FacetQuery_ResolvesActivityTypeAndSourceFacets()
+    {
+        var (from, _, assignment) = await SeedAssignment();
+        var package = await _db.Packages.AsNoTracking().OrderBy(p => p.Id).FirstAsync(TestContext.Current.CancellationToken);
+
+        _db.AssignmentPackages.Add(new AssignmentPackage { Id = Guid.CreateVersion7(), AssignmentId = assignment.Id, PackageId = package.Id });
+        await _db.SaveChangesAsync(Seeder);
+
+        var filter = new ActivityLogQueryFilter { InvolvedIds = [from.Id] };
+
+        var activityTypes = await _query.GetFacetAsync(ActivityLogFacetField.ActivityType, filter, term: null, ActivityLogFacetOrder.Name, 100, cancellationToken: TestContext.Current.CancellationToken);
+        Assert.Contains(activityTypes.Items, p => p.Id == ActivityTypeConstants.AssignmentCreated.Id && p.Name == ActivityTypeConstants.AssignmentCreated.Entity.Name);
+        Assert.Contains(activityTypes.Items, p => p.Id == ActivityTypeConstants.AssignmentPackageCreated.Id);
+
+        var sources = await _query.GetFacetAsync(ActivityLogFacetField.Source, filter, term: null, ActivityLogFacetOrder.Name, 100, cancellationToken: TestContext.Current.CancellationToken);
+        var sourcePair = Assert.Single(sources.Items);
+        Assert.Equal(SystemEntityConstants.StaticDataIngest.Id, sourcePair.Id);
+        Assert.Equal("StaticDataIngest", sourcePair.Name);
+    }
 }

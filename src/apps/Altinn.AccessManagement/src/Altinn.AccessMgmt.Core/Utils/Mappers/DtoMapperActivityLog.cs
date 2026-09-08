@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
+using Altinn.AccessMgmt.PersistenceEF.Queries;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement.ActivityLog;
 
@@ -47,6 +48,15 @@ public partial class DtoMapper : IDtoMapper
         ParentId = entry.ParentId,
         Details = ParseDetails(entry.Details),
         ActivityTypeId = ActivityTypeConstants.Resolve(entry.Type, entry.Subtype, entry.Trigger, entry.Status)?.Id,
+    };
+
+    /// <summary>
+    /// Maps a facet value to its external contract.
+    /// </summary>
+    public static ActivityLogFacetDto ToActivityLogFacetDto(ActivityLogFacet facet) => new()
+    {
+        Id = facet.Id,
+        Name = facet.Name,
     };
 
     /// <summary>
