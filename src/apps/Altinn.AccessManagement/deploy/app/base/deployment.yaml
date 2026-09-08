@@ -15,27 +15,24 @@ spec:
         app.kubernetes.io/name: access-management
         app.kubernetes.io/part-of: altinn-auth
         azure.workload.identity/use: "true"
-    annotations:
-      cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
-      linkerd.io/inject: enabled
+      annotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+        linkerd.io/inject: enabled
     spec:
       serviceAccountName: access-management
       containers:
-      - name: access-management
-        image: nginxdemos/hello:plain-text
-        ports:
-        - name: http
-          containerPort: 80
-      
-        resources:
-        request:
-          cpu: 100m
-          memory: 128Mi
-
-      envFrom:
-        configMapRef:
-          name: access-management-runtime
-      env:
-        - name: ASPNETCORE_URLS
-          value: http://+:5110
-
+        - name: access-management
+          image: nginxdemos/hello:plain-text
+          ports:
+            - name: http
+              containerPort: 80
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+          envFrom:
+            - configMapRef:
+                name: access-management-runtime
+          env:
+            - name: ASPNETCORE_URLS
+              value: http://+:5110
