@@ -2,12 +2,18 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Text.Json.Serialization;
 
 namespace Altinn.Authorization.Api.Contracts.AccessManagement
 {
     public class BankruptcyEntityDto : CompactEntityDto
     {
+        [JsonConverter(typeof(JsonStringEnumConverter))]
         public BankruptcyEstatePermissions Permissions { get; set; }
+
+        public BankruptcyEntityDto()
+        {
+        }
 
         public BankruptcyEntityDto(CompactEntityDto input, BankruptcyEstatePermissions permissions) 
         {

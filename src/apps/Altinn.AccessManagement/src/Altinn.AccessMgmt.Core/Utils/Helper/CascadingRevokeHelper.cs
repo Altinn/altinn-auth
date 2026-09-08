@@ -9,7 +9,7 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
 {
     public class CascadingRevokeHelper
     {
-        public static async Task<ValidationErrorBuilder> CheckCascadingDependenciesAgentAssignment(AppDbContext db, Assignment existingAssignment, bool cascade, CancellationToken cancellationToken = default)
+        public static async Task<ValidationErrorBuilder> CheckCascadingDependenciesAgentAssignment(AppDbContext db, Assignment existingAssignment, CancellationToken cancellationToken = default)
         {
             ValidationErrorBuilder errorBuilder = default;
 
@@ -55,6 +55,6 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
             }
 
             return errorBuilder;
-        }
+        }        
     }
 }

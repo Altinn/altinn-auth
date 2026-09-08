@@ -789,7 +789,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
 
         if (!cascade)
         { 
-            ValidationErrorBuilder errorBuilder = await CascadingRevokeHelper.CheckCascadingDependenciesAgentAssignment(db, existingAssignment, cascade, cancellationToken);
+            ValidationErrorBuilder errorBuilder = await CascadingRevokeHelper.CheckCascadingDependenciesAgentAssignment(db, existingAssignment, cancellationToken);
 
             if (errorBuilder.TryBuild(out var problem))
             {

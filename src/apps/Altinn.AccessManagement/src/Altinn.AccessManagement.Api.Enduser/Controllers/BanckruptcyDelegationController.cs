@@ -73,7 +73,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
         [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_BANKRUPTCYDELEGATION_WRITE)]
         [Authorize(Policy = AuthzConstants.POLICY_BANKRUPTCYDELEGATION_WRITE)]
         [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType<AssignmaentWithAssignmentPackageDto>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
         [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -115,7 +115,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
                 return result.Problem.ToActionResult();
             }
 
-            return NoContent();
+            return Ok(result.Value);
         }
 
         [HttpDelete("estates/creditors")]
@@ -152,7 +152,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
 
         #endregion
 
-        #region Get agent/admin methods
+        #region Get agent/admin method
 
         [HttpGet("users")]
         [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_BANKRUPTCYDELEGATION_READ)]
@@ -200,6 +200,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
             options =>
             {
                 options.AllowedToEntityTypes = [EntityTypeConstants.Person, EntityTypeConstants.Organization];
+                options.EntitiesToValidateForAnyConnections = [EntityTypeConstants.Person];
             },
             cancellationToken);
 
@@ -249,7 +250,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
         [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_BANKRUPTCYDELEGATION_WRITE)]
         [Authorize(Policy = AuthzConstants.POLICY_BANKRUPTCYDELEGATION_WRITE)]
         [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType<AssignmaentWithAssignmentPackageDto>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
         [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -282,7 +283,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
                 return result.Problem.ToActionResult();
             }
 
-            return NoContent();
+            return Ok(result.Value);
         }
 
         [HttpDelete("users/administrators")]
@@ -310,86 +311,20 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
 
         #endregion
 
-        #region Other methods
+        #region Get bankruptcy estates
 
-        [HttpDelete("users/packages")]
-        [HttpPost("users/packages/delete")]
-        [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_BANKRUPTCYDELEGATION_WRITE)]
-        [Authorize(Policy = AuthzConstants.POLICY_BANKRUPTCYDELEGATION_WRITE)]
-        [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
-        [ProducesResponseType(StatusCodes.Status204NoContent)]
-        [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<IActionResult> DeletePackageFromUserForBankruptcyEstate(
-            [FromQuery(Name = "party")][Required] Guid party,
-            [FromQuery(Name = "user")][Required] Guid user,
-            [FromQuery(Name = "estate")][Required] Guid bankruptcyestate,
-            [FromBody][Required] List<string> packages,
-            CancellationToken cancellationToken = default)
-        {
-            // Check that party has the estate as an active estate
-            var hasConnection = await bankruptcyDelegationService.CheckBankruptcyEstateConnection(party, bankruptcyestate, cancellationToken);
-
-            if (!hasConnection)
-            {
-                return Forbid();
-            }
-
-            var result = await bankruptcyDelegationService.RevokeBankruptcyEstatePackagesFromUser(party, user, bankruptcyestate, packages, ConfigureConnections, cancellationToken);
-
-            if (result.IsProblem)
-            {
-                return result.Problem.ToActionResult();
-            }
-
-            return NoContent();
-        }
-
-        [HttpGet]
-        [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_BANKRUPTCYDELEGATION_READ)]
-        [Authorize(Policy = AuthzConstants.POLICY_BANKRUPTCYDELEGATION_READ)]
-        [ProducesResponseType<PaginatedResult<ClientDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
-        [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
-        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-        [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<IActionResult> GetBankruptcyEstateAssignmentsForParty(
-            [FromQuery(Name = "party")][Required] Guid party,
-            CancellationToken cancellationToken = default)
-        {
-            var result = await bankruptcyDelegationService.GetBankruptcyEstateForParty(party, cancellationToken);
-
-            if (result.IsProblem)
-            {
-                return result.Problem.ToActionResult();
-            }
-
-            return Ok(PaginatedResult.Create(result.Value, null));
-        }
-        
         [HttpGet("estates")]
         [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_BANKRUPTCYDELEGATION_READ)]
         [Authorize(Policy = AuthzConstants.POLICY_BANKRUPTCYDELEGATION_READ)]
-        [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
-        [ProducesResponseType<PaginatedResult<BankruptcyEstateAssignmentsDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+        [ProducesResponseType<PaginatedResult<BankruptcyEntityDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
         [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<IActionResult> GetBankruptcyEstateAssignmentsForEstate(
+        public async Task<IActionResult> GetBankruptcyEstatesForParty(
             [FromQuery(Name = "party")][Required] Guid party,
-            [FromQuery(Name = "estate")][Required] Guid bankruptcyestate,
             CancellationToken cancellationToken = default)
         {
-            // Check that party has the estate as an active estate
-            var hasConnection = await bankruptcyDelegationService.CheckBankruptcyEstateConnection(party, bankruptcyestate, cancellationToken);
-
-            if (!hasConnection)
-            {
-                return Forbid();
-            }
-
-            var result = await bankruptcyDelegationService.GetBankruptcyEstateAssignmentsForEstate(party, bankruptcyestate, cancellationToken);
-
+            var result = await bankruptcyDelegationService.GetBankruptcyEstatesForParty(party, cancellationToken);
             if (result.IsProblem)
             {
                 return result.Problem.ToActionResult();
@@ -398,40 +333,93 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
             return Ok(PaginatedResult.Create(result.Value, null));
         }
 
-        [HttpPost("users/packages")]
-        [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_BANKRUPTCYDELEGATION_WRITE)]
-        [Authorize(Policy = AuthzConstants.POLICY_BANKRUPTCYDELEGATION_WRITE)]
-        [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
-        [ProducesResponseType<PaginatedResult<BankruptcyEstateAssignmentsDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+        #endregion
+
+        #region Bankruptcy estate get add revoke methods
+
+        [HttpGet("estates/users")]
+        [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_BANKRUPTCYDELEGATION_READ)]
+        [Authorize(Policy = AuthzConstants.POLICY_BANKRUPTCYDELEGATION_READ)]
+        [ProducesResponseType<PaginatedResult<BankruptcyEntityDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
         [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<IActionResult> AddPackageToUserForBankruptcyEstate(
+        public async Task<IActionResult> GetBankruptcyEstatesForUser(
             [FromQuery(Name = "party")][Required] Guid party,
-            [FromQuery(Name = "user")][Required] Guid user,
-            [FromQuery(Name = "estate")][Required] Guid bankruptcyestate,
-            [FromBody] List<string> packages,
+            [FromQuery(Name = "user")] Guid user,
+
+            CancellationToken cancellationToken = default)
+        {
+            var result = await bankruptcyDelegationService.GetBankruptcyEstatesForUser(party, user, cancellationToken);
+            if (result.IsProblem)
+            {
+                return result.Problem.ToActionResult();
+            }
+
+            return Ok(PaginatedResult.Create(result.Value, null));
+        }
+
+        [HttpPost("estates/users")]
+        [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_BANKRUPTCYDELEGATION_WRITE)]
+        [Authorize(Policy = AuthzConstants.POLICY_BANKRUPTCYDELEGATION_WRITE)]
+        [ProducesResponseType<PaginatedResult<BankruptcyEntityDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+        [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> AddBankruptcyEstateForUser(
+            [FromQuery(Name = "party")][Required] Guid party,
+            [FromQuery(Name = "estate")] Guid estate,
+            [FromQuery(Name = "user")] Guid user,
             CancellationToken cancellationToken = default)
         {
             // Check that party has the estate as an active estate
-            var hasConnection = await bankruptcyDelegationService.CheckBankruptcyEstateConnection(party, bankruptcyestate, cancellationToken);
+            var hasConnection = await bankruptcyDelegationService.CheckBankruptcyEstateConnection(party, estate, cancellationToken);
 
             if (!hasConnection)
             {
                 return Forbid();
             }
 
-            var result = await bankruptcyDelegationService.AddBankruptcyEstatePackagesToUser(party, user, bankruptcyestate, packages, ConfigureConnections, cancellationToken);
-
+            var result = await bankruptcyDelegationService.AddBankruptcyEstateForUser(party, estate, user, cancellationToken);
             if (result.IsProblem)
             {
                 return result.Problem.ToActionResult();
             }
 
-            return Ok(result.Value);
+            return Ok(PaginatedResult.Create(result.Value, null));
         }
 
-        #endregion                
+        [HttpDelete("estates/users")]
+        [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_BANKRUPTCYDELEGATION_WRITE)]
+        [Authorize(Policy = AuthzConstants.POLICY_BANKRUPTCYDELEGATION_WRITE)]
+        [ProducesResponseType<PaginatedResult<BankruptcyEntityDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+        [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> RevokeBankruptcyEstateForUser(
+            [FromQuery(Name = "party")][Required] Guid party,
+            [FromQuery(Name = "estate")] Guid estate,
+            [FromQuery(Name = "user")] Guid user,
 
+            CancellationToken cancellationToken = default)
+        {
+            // Check that party has the estate as an active estate
+            var hasConnection = await bankruptcyDelegationService.CheckBankruptcyEstateConnection(party, estate, cancellationToken);
+
+            if (!hasConnection)
+            {
+                return Forbid();
+            }
+
+            var result = await bankruptcyDelegationService.RevokeBankruptcyEstateForUser(party, estate, user, cancellationToken);
+            if (result.IsProblem)
+            {
+                return result.Problem.ToActionResult();
+            }
+
+            return Ok(PaginatedResult.Create(result.Value, null));
+        }
+
+        #endregion
     }
 }
