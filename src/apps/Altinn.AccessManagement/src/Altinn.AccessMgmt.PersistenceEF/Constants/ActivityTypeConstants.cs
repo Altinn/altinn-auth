@@ -509,14 +509,14 @@ public static class ActivityTypeConstants
             Subtype = ActivityLogSubtype.Package,
             Trigger = ActivityLogTrigger.Updated,
             Status = RequestStatus.Pending,
-            Name = "Forespørsel om tilgangspakke sendt",
+            Name = "Utkast til forespørsel om tilgangspakke sendt",
             Description = "Utkastet ble bekreftet og forespørselen sendt til mottakeren for behandling.",
         },
         EN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Access package request sent"),
+            KeyValuePair.Create("Name", "Access package request draft sent"),
             KeyValuePair.Create("Description", "The draft was confirmed and the request sent to the recipient for review.")),
         NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Førespurnad om tilgangspakke send"),
+            KeyValuePair.Create("Name", "Utkast til førespurnad om tilgangspakke send"),
             KeyValuePair.Create("Description", "Utkastet vart stadfesta og førespurnaden send til mottakaren for handsaming.")),
     };
 
@@ -704,14 +704,14 @@ public static class ActivityTypeConstants
             Subtype = ActivityLogSubtype.Resource,
             Trigger = ActivityLogTrigger.Updated,
             Status = RequestStatus.Pending,
-            Name = "Forespørsel om enkelttjeneste sendt",
+            Name = "Utkast til forespørsel om enkelttjeneste sendt",
             Description = "Utkastet ble bekreftet og forespørselen sendt til mottakeren for behandling.",
         },
         EN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Single service request sent"),
+            KeyValuePair.Create("Name", "Single service request draft sent"),
             KeyValuePair.Create("Description", "The draft was confirmed and the request sent to the recipient for review.")),
         NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Førespurnad om enkeltteneste send"),
+            KeyValuePair.Create("Name", "Utkast til førespurnad om enkeltteneste send"),
             KeyValuePair.Create("Description", "Utkastet vart stadfesta og førespurnaden send til mottakaren for handsaming.")),
     };
 
