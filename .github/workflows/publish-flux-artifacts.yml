@@ -30,35 +30,44 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  validate:
+    name: Validate manifests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Validate syncroot structure
+        uses: Altinn/altinn-platform/actions/flux/verify-syncroot@3535bba3d301df5778ce420f7adf10edd748cc3f # main
+        with:
+          workdir: ./flux/syncroot
+
+      - name: Check the target environment has an app overlay
+        shell: bash
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+        run: |
+          set -euo pipefail
+          # The syncroot points its Kustomization at ./environments/<env> inside the app
+          # manifests artifact, so the target environment's overlay has to exist.
+          target="${APP_WORKDIR}/environments/${ENVIRONMENT}"
+          if [ ! -f "${target}/kustomization.yaml" ]; then
+            echo "::error::Missing ${target}/kustomization.yaml"
+            exit 1
+          fi
+
+      - name: Validate manifests
+        run: ./.github/scripts/validate-manifests.sh
+
   publish-app-manifests:
     name: Publish app manifests artifact
+    needs: validate
     # The federated credential backing the OIDC login is scoped to refs/heads/main.
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
-
-      - name: Validate app manifests
-        shell: bash
-        env:
-          ENVIRONMENT: ${{ inputs.environment }}
-        run: |
-          set -euo pipefail
-          # The syncroot points its Kustomization at ./environments/<env> inside this
-          # artifact, so the target environment's overlay has to exist.
-          target="${APP_WORKDIR}/environments/${ENVIRONMENT}"
-          if [ ! -f "${target}/kustomization.yaml" ]; then
-            echo "::error::Missing ${target}/kustomization.yaml"
-            exit 1
-          fi
-          # This artifact carries a single tag that every environment reads, so a push
-          # for one environment ships every other environment's overlay along with it.
-          # Render them all, not just the dispatched one.
-          for overlay in "${APP_WORKDIR}"/environments/*/; do
-            kustomize build "${overlay}" > /dev/null
-            echo "Renders: ${overlay}"
-          done
 
       - name: Build and push app manifests artifact
         uses: Altinn/altinn-platform/actions/flux/build-push-image@3535bba3d301df5778ce420f7adf10edd748cc3f # main
@@ -83,31 +92,6 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
-
-      - name: Validate syncroot structure
-        uses: Altinn/altinn-platform/actions/flux/verify-syncroot@3535bba3d301df5778ce420f7adf10edd748cc3f # main
-        with:
-          workdir: ./flux/syncroot
-
-      - name: Validate syncroot environment paths
-        shell: bash
-        run: |
-          set -euo pipefail
-          # base hardcodes a path, so an overlay that forgets to patch it renders a
-          # Kustomization pointing at another environment's manifests. That failure is
-          # silent in-cluster, so assert the path matches the overlay it came from.
-          for dir in ./flux/syncroot/*/; do
-            env="$(basename "${dir}")"
-            if [ "${env}" = "base" ]; then
-              continue
-            fi
-            rendered="$(kustomize build "${dir}")"
-            if ! grep -qE "^ *path: \./environments/${env}\$" <<< "${rendered}"; then
-              echo "::error::${dir} does not select ./environments/${env}"
-              exit 1
-            fi
-            echo "Selects ./environments/${env}: ${dir}"
-          done
 
       - name: Build and push syncroot artifact
         uses: Altinn/altinn-platform/actions/flux/build-push-image@3535bba3d301df5778ce420f7adf10edd748cc3f # main

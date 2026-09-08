@@ -1,0 +1,44 @@
+name: "Pull Request"
+
+# Deliberately not scoped to PRs against main: this repo stacks manifest PRs onto
+# each other, and a stacked PR needs the same validation as one targeting main.
+on:
+  pull_request:
+    paths:
+      - "src/apps/**/deploy/**"
+      - "flux/**"
+      - ".github/scripts/validate-manifests.sh"
+      - ".github/workflows/pull-request.yml"
+      - ".github/workflows/publish-flux-artifacts.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pull-request-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate manifests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Validate syncroot structure
+        uses: Altinn/altinn-platform/actions/flux/verify-syncroot@3535bba3d301df5778ce420f7adf10edd748cc3f # main
+        with:
+          workdir: ./flux/syncroot
+
+      - name: Validate manifests
+        run: ./.github/scripts/validate-manifests.sh
+
+  kustomize-diff:
+    name: Kustomize diff
+    uses: dis-way/actions/.github/workflows/kustomize-diff.yml@45eae05af29ddb403645fc226d22ce63d3ca1ed4 # main
+    with:
+      build-paths: "src/apps/Altinn.AccessManagement/deploy/environments/*,flux/syncroot/*"
+    permissions:
+      contents: read
+      pull-requests: write
