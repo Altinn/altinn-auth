@@ -37,6 +37,33 @@
     </MudText>
     <MudDivider Class="mb-3" />
 
+    @* ── Activity type catalog ─────────────────────────────────────────────── *@
+    <MudText Typo="Typo.subtitle2" Class="mb-1">Hendelsestype</MudText>
+    <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mb-2">
+        Fra aktivitetstype-katalogen — hvert valg filtrerer på hele kombinasjonen av type,
+        subtype, hendelse og status. Hold pekeren over et valg for beskrivelsen.
+    </MudText>
+    @foreach (var typeGroup in ActivityTypeConstants.AllEntities().GroupBy(d => d.Entity.Type).OrderBy(g => g.Key))
+    {
+        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1" AlignItems="AlignItems.Center" Class="mb-1">
+            <MudText Typo="Typo.caption" Class="mud-text-secondary" Style="min-width: 90px;">@typeGroup.Key</MudText>
+            @foreach (var definition in typeGroup)
+            {
+                var d = definition;
+                <MudTooltip Text="@d.Entity.Description">
+                    <MudChip T="string"
+                             Size="Size.Small"
+                             Variant="@(_selectedActivityTypes.Contains(d.Id) ? Variant.Filled : Variant.Outlined)"
+                             Color="@(_selectedActivityTypes.Contains(d.Id) ? Color.Primary : Color.Default)"
+                             OnClick="@(() => ToggleActivityType(d.Id))">
+                        @d.Entity.Name
+                    </MudChip>
+                </MudTooltip>
+            }
+        </MudStack>
+    }
+    <MudDivider Class="my-3" />
+
     <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1" AlignItems="AlignItems.Center">
 
         @foreach (var dim in _active)
@@ -147,10 +174,6 @@
                     </MudStack>
                     break;
 
-                case FilterDim.Type:
-                    @EnumCheckboxes(_types)
-                    break;
-
                 case FilterDim.Subtype:
                     @EnumCheckboxes(_subtypes)
                     break;
@@ -168,21 +191,6 @@
                     break;
 
                 case FilterDim.Source:
-                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
-                        @foreach (var definition in SystemEntityConstants.AllEntities().OrderBy(d => d.Entity.Name))
-                        {
-                            var id = definition.Entity.Id;
-                            var name = definition.Entity.Name;
-                            <MudCheckBox T="bool"
-                                         Value="@GuidValues(FilterDim.Source).Contains(id)"
-                                         ValueChanged="@(on => ToggleSource(id, name, on))"
-                                         Label="@name"
-                                         Color="Color.Primary"
-                                         Dense="true" />
-                        }
-                    </MudStack>
-                    break;
-
                 case FilterDim.Role:
                 case FilterDim.Package:
                 case FilterDim.Resource:
@@ -324,7 +332,6 @@
         Via,
         By,
         Date,
-        Type,
         Subtype,
         Trigger,
         Source,
@@ -341,7 +348,7 @@
     [
         [FilterDim.From, FilterDim.To, FilterDim.Via, FilterDim.By],
         [FilterDim.Date],
-        [FilterDim.Type, FilterDim.Subtype, FilterDim.Trigger, FilterDim.Source],
+        [FilterDim.Subtype, FilterDim.Trigger, FilterDim.Source],
         [FilterDim.Role, FilterDim.Package, FilterDim.Resource, FilterDim.Instance],
         [FilterDim.Operation, FilterDim.Item, FilterDim.Parent],
     ];
@@ -353,7 +360,6 @@
         FilterDim.Via => "Via (fasilitator)",
         FilterDim.By => "Utført av",
         FilterDim.Date => "Dato",
-        FilterDim.Type => "Type",
         FilterDim.Subtype => "Subtype",
         FilterDim.Trigger => "Hendelse",
         FilterDim.Source => "Kilde",
@@ -371,7 +377,6 @@
     {
         FilterDim.From or FilterDim.To or FilterDim.Via => "parter",
         FilterDim.By => "utførere",
-        FilterDim.Type => "typer",
         FilterDim.Subtype => "subtyper",
         FilterDim.Trigger => "hendelser",
         FilterDim.Source => "kilder",
@@ -392,7 +397,6 @@
         FilterDim.Via => "Fasilitatoren delegeringen går via (f.eks. regnskapsfører).",
         FilterDim.By => "Entiteten som utførte endringen — person, systembruker eller internt system.",
         FilterDim.Date => "Avgrenser på hendelsestidspunktet (fra og med / til og med valgt dag).",
-        FilterDim.Type => "Hovedtypen hendelsen gjelder.",
         FilterDim.Subtype => "Undertype på tvers av hovedtypene — Package matcher f.eks. både Assignment-, Delegation- og RequestPackage.",
         FilterDim.Trigger => "Hva som skjedde. Status settes på Request-hendelser: initialstatus ved Created, ny status ved Updated, siste status ved Deleted.",
         FilterDim.Source => "Systemet/kanalen endringen kom gjennom.",
@@ -479,8 +483,7 @@
     private DateTime? _beforeDate;
     private int _pageSize = 200;
 
-    private readonly Dictionary<ActivityLogType, bool> _types =
-        Enum.GetValues<ActivityLogType>().ToDictionary(v => v, _ => false);
+    private readonly HashSet<Guid> _selectedActivityTypes = [];
 
     private readonly Dictionary<ActivityLogSubtype, bool> _subtypes =
         Enum.GetValues<ActivityLogSubtype>().ToDictionary(v => v, _ => false);
@@ -557,9 +560,6 @@
                 _afterDate = null;
                 _beforeDate = null;
                 break;
-            case FilterDim.Type:
-                ResetEnum(_types);
-                break;
             case FilterDim.Subtype:
                 ResetEnum(_subtypes);
                 break;
@@ -587,7 +587,7 @@
         _textValues.Clear();
         _afterDate = null;
         _beforeDate = null;
-        ResetEnum(_types);
+        _selectedActivityTypes.Clear();
         ResetEnum(_subtypes);
         ResetEnum(_triggers);
         ResetEnum(_statuses);
@@ -618,8 +618,6 @@
                     (null, not null) => $"Til {_beforeDate:dd.MM.yy}",
                     _ => DimensionLabel(dim),
                 };
-            case FilterDim.Type:
-                return EnumChipLabel(dim, _types);
             case FilterDim.Subtype:
                 return EnumChipLabel(dim, _subtypes);
             case FilterDim.Trigger:
@@ -789,20 +787,33 @@
         }
     }
 
-    private void ToggleSource(Guid id, string name, bool on)
+    private void ToggleActivityType(Guid id)
     {
-        var list = GuidValues(FilterDim.Source);
-        if (on && !list.Contains(id))
+        if (!_selectedActivityTypes.Add(id))
         {
-            list.Add(id);
-            _names[id] = name;
-        }
-        else if (!on)
-        {
-            list.Remove(id);
+            _selectedActivityTypes.Remove(id);
         }
 
         ScheduleQuery();
+    }
+
+    private IReadOnlyCollection<ActivityTypeKey>? SelectedActivityTypeKeys()
+    {
+        if (_selectedActivityTypes.Count == 0)
+        {
+            return null;
+        }
+
+        var keys = new List<ActivityTypeKey>(_selectedActivityTypes.Count);
+        foreach (var id in _selectedActivityTypes)
+        {
+            if (ActivityTypeConstants.TryGetById(id, out var definition))
+            {
+                keys.Add(new ActivityTypeKey(definition.Entity.Type, definition.Entity.Subtype, definition.Entity.Trigger, definition.Entity.Status));
+            }
+        }
+
+        return keys;
     }
 
     private void AddFacetValue(FilterDim dim, ActivityLogFacet facet)
@@ -943,6 +954,7 @@
         FilterDim.Role => ActivityLogFacetField.Role,
         FilterDim.Package => ActivityLogFacetField.Package,
         FilterDim.Resource => ActivityLogFacetField.Resource,
+        FilterDim.Source => ActivityLogFacetField.Source,
         _ => null,
     };
 
@@ -1048,7 +1060,7 @@
         ToIds = AnchoredOrList(FilterDim.To, PartyDirection.To, excludeDim),
         ViaIds = AnchoredOrList(FilterDim.Via, PartyDirection.Via, excludeDim),
         ByIds = AnchoredOrList(FilterDim.By, PartyDirection.By, excludeDim),
-        SourceIds = ListOrNull(FilterDim.Source),
+        SourceIds = excludeDim == FilterDim.Source ? null : ListOrNull(FilterDim.Source),
         RoleIds = excludeDim == FilterDim.Role ? null : ListOrNull(FilterDim.Role),
         PackageIds = excludeDim == FilterDim.Package ? null : ListOrNull(FilterDim.Package),
         ResourceIds = excludeDim == FilterDim.Resource ? null : ListOrNull(FilterDim.Resource),
@@ -1056,7 +1068,7 @@
         ParentIds = ListOrNull(FilterDim.Parent),
         InstanceIds = TextListOrNull(FilterDim.Instance),
         OperationIds = TextListOrNull(FilterDim.Operation),
-        Types = Checked(_types),
+        ActivityTypeKeys = SelectedActivityTypeKeys(),
         Subtypes = Checked(_subtypes),
         Triggers = Checked(_triggers),
         Statuses = Checked(_statuses),
