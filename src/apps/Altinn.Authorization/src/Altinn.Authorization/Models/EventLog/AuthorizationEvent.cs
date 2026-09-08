@@ -79,5 +79,10 @@ namespace Altinn.Platform.Authorization.Models.EventLog
         /// The party uuid
         /// </summary>
         public string? SubjectPartyUuid { get; set; }
+
+        /// <summary>
+        /// The trace id 
+        /// </summary>
+        public string? TraceId { get; set; }
     }
 }
