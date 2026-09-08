@@ -1,0 +1,40 @@
+meta {
+  name: 11_CLEANUP_CcrClientRightholderRelationIsRemoved
+  type: http
+  seq: 11
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{clientA}}&from={{clientA}}&to={{party}}&cascade=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{clientA}}
+  from: {{clientA}}
+  to: {{party}}
+  cascade: true
+}
+
+docs {
+  CLEANUP the rightholder relation between the CCR client and the facilitator is
+  removed, including the package grant hanging on it. The CCR relation through the
+  regnskapsforer role stays.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("clientA", td.REGN_Organisasjon.REGN_Org_Clients.client_A.partyUuid);
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+
+  await loginAs(td.REGN_Organisasjon.REGN_Org_Clients.client_A.dagligleder);
+}
+
+tests {
+  test("CLEANUP the CCR client rightholder relation is removed, the delete returns 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

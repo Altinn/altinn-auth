@@ -1,0 +1,62 @@
+meta {
+  name: 08_THEN_FilterMatchAllReturnsOnlyClientHoldingBothPackages
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/clients?party={{party}}&packages={{rolePackage}}&packages={{grantedPackage}}&match=all
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  packages: {{rolePackage}}
+  packages: {{grantedPackage}}
+  match: all
+}
+
+docs {
+  THEN the same filter with match=all returns only the CCR client. It covers
+  both packages across both ways in: the lonn package through the regnskapsforer
+  role and the skattegrunnlag package through the grant on its rightholder relation.
+  The rightholder client holds only the granted package and drops out.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("rolePackage", td.clientDelegationV2.packages.regnskapsforerLonn);
+  bru.setVar("grantedPackage", td.clientDelegationV2.packages.skattegrunnlag);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+
+  test("THEN the all mode client list request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the CCR client is returned and the rightholder client is not", function() {
+    const data = res.getBody().data;
+    const clientA = td.REGN_Organisasjon.REGN_Org_Clients.client_A.partyUuid.toLowerCase();
+    const clientB = td.REGN_Organisasjon.REGN_Org_Clients.client_B.partyUuid.toLowerCase();
+    expect(data.some(item => item.client.id.toLowerCase() === clientA), "expected the CCR client in the all mode list").to.be.true;
+    expect(data.some(item => item.client.id.toLowerCase() === clientB), "the rightholder client holds only one of the packages").to.be.false;
+  });
+
+  test("AND every returned client holds both filter packages", function() {
+    const rolePackage = td.clientDelegationV2.packages.regnskapsforerLonn;
+    const grantedPackage = td.clientDelegationV2.packages.skattegrunnlag;
+    res.getBody().data.forEach(item => {
+      const urns = item.access.flatMap(a => a.packages.map(p => p.urn));
+      expect(urns, `expected ${item.client.name} to hold ${rolePackage}`).to.include(rolePackage);
+      expect(urns, `expected ${item.client.name} to hold ${grantedPackage}`).to.include(grantedPackage);
+    });
+  });
+}
