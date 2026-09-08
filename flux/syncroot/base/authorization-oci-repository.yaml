@@ -6,6 +6,6 @@ metadata:
 spec:
   interval: 10m
   provider: azure
-  url: oci://altinncr.azurecr.io/altinn/altinn-auth
+  url: oci://altinncr.azurecr.io/authorization/altinn-auth
   ref:
     tag: main
