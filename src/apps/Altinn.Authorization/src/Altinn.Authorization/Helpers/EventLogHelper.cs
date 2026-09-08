@@ -1,5 +1,6 @@
 ﻿#nullable enable
 
+using System.Diagnostics;
 using System.Text.Json;
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
@@ -41,6 +42,7 @@ namespace Altinn.Platform.Authorization.Helpers
                 ContextRequestJson = JsonSerializer.SerializeToElement(contextRequest, JsonSerializerOptions.Web),
                 Decision = contextRespsonse.Results?.FirstOrDefault()?.Decision,
                 SubjectPartyUuid = partyUuid,
+                TraceId = Activity.Current?.TraceId.ToString() ?? context.TraceIdentifier,
             };
 
             return authorizationEvent;
