@@ -18,7 +18,6 @@ using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
-using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 using Altinn.Authorization.ProblemDetails;
 using Altinn.Urn;
 using Altinn.Urn.Json;
@@ -153,7 +152,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery,
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<SystemuserClientDto>> GetClients(Guid toId, string[] roles, string[] packages, FilterMatch filterMatch, bool rolesFromCaller, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<SystemuserClientDto>> GetClients(Guid toId, string[] roles, string[] packages, CancellationToken cancellationToken = default)
     {
         // Fetch role metadata
         var roleResult = QueryWrapper.WrapQueryResponse(await db.Roles.AsNoTracking().Where(t => roles.Contains(t.Code)).ToListAsync(cancellationToken));
@@ -197,14 +196,10 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery,
             }
         }
 
-        // A roles filter the caller did not set is the full set of valid client roles, which is a
-        // narrowing of the query rather than something the client is matched against.
-        var filterRoles = rolesFromCaller ? roles : [];
-
-        return await GetFilteredClientsFromAssignments(clients, assignmentPackageResult, roleResult, packageResult, rolePackageResult, packages, filterRoles, filterMatch, cancellationToken);
+        return await GetFilteredClientsFromAssignments(clients, assignmentPackageResult, roleResult, packageResult, rolePackageResult, packages, cancellationToken);
     }
 
-    private async Task<List<SystemuserClientDto>> GetFilteredClientsFromAssignments(IEnumerable<Assignment> assignments, IEnumerable<AssignmentPackage> assignmentPackages, QueryResponse<Role> roles, QueryResponse<Package> packages, QueryResponse<RolePackage> rolePackages, string[] filterPackages, string[] filterRoles, FilterMatch filterMatch, CancellationToken cancellationToken)
+    private async Task<List<SystemuserClientDto>> GetFilteredClientsFromAssignments(IEnumerable<Assignment> assignments, IEnumerable<AssignmentPackage> assignmentPackages, QueryResponse<Role> roles, QueryResponse<Package> packages, QueryResponse<RolePackage> rolePackages, string[] filterPackages, CancellationToken cancellationToken)
     {
         Dictionary<Guid, SystemuserClientDto> clients = new();
 
@@ -263,33 +258,18 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery,
             }
         }
 
-        // Return the clients matching every filter the caller set. The packages a client holds
-        // through a role and the packages delegated directly to the facilitator are one set here,
-        // so a client can cover the packages filter through a combination of both.
+        // Return only clients having all required filterpackages
         List<SystemuserClientDto> result = new();
         foreach (var client in clients.Keys)
         {
             var allClientPackages = clients[client].Access.SelectMany(rp => rp.Packages).Distinct();
-            var allClientRoles = clients[client].Access.Select(rp => rp.Role).Distinct();
-            if (MatchesFilter(filterPackages, allClientPackages, filterMatch) && MatchesFilter(filterRoles, allClientRoles, filterMatch))
+            if (filterPackages.All(allClientPackages.Contains))
             {
                 result.Add(clients[client]);
             }
         }
 
         return result;
-    }
-
-    private static bool MatchesFilter(string[] filterValues, IEnumerable<string> clientValues, FilterMatch filterMatch)
-    {
-        if (filterValues.Length == 0)
-        {
-            return true;
-        }
-
-        return filterMatch == FilterMatch.All
-            ? filterValues.All(clientValues.Contains)
-            : filterValues.Any(clientValues.Contains);
     }
 
     /// <inheritdoc/>

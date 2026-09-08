@@ -3,7 +3,6 @@ using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
-using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 using Altinn.Authorization.ProblemDetails;
 
 namespace Altinn.AccessMgmt.Core.Services.Contracts;
@@ -151,14 +150,8 @@ public interface IAssignmentService
     /// <summary>
     /// Fetches Client assignments.
     /// </summary>
-    /// <param name="toId">The facilitator the clients are connected to</param>
-    /// <param name="roles">The role codes to filter the client assignments by</param>
-    /// <param name="packages">The package identifiers to filter the clients by</param>
-    /// <param name="filterMatch">Whether a client has to match any or every value in the filters the caller set</param>
-    /// <param name="rolesFromCaller">Whether <paramref name="roles"/> came from the caller rather than being filled in with the valid client roles. Only a caller set filter takes part in <paramref name="filterMatch"/></param>
-    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns></returns>
-    Task<IEnumerable<SystemuserClientDto>> GetClients(Guid toId, string[] roles, string[] packages, FilterMatch filterMatch, bool rolesFromCaller, CancellationToken cancellationToken = default);
+    Task<IEnumerable<SystemuserClientDto>> GetClients(Guid toId, string[] roles, string[] packages, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Fetches all assignment packages or role packages for a given assignments.

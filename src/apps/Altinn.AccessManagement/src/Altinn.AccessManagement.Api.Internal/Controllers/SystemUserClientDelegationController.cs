@@ -1,12 +1,10 @@
 ﻿using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessMgmt.Core.Audit;
-using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Persistence.Services.Models;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
-using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -41,16 +39,14 @@ public class SystemUserClientDelegationController(
     /// <param name="party">The party the authenticated user is performing client administration on behalf of</param>
     /// <param name="roles"> The list of role codes to filter the connections by</param>
     /// <param name="packages"> The list of package identifiers to filter the connections by</param>
-    /// <param name="match">Whether a client has to match any or every value in the filters given. The filters on this endpoint select the clients matching every requested value unless the caller asks for 'any'</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>List of Clients<seealso cref="SystemuserClientDto"/></returns>
     [HttpGet("clients")]
     [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_READ)]
     [Authorize(Policy = AuthzConstants.POLICY_CLIENTDELEGATION_READ)]
-    public async Task<ActionResult<IEnumerable<SystemuserClientDto>>> GetClients([FromQuery] Guid party, [FromQuery] string[] roles = null, [FromQuery] string[] packages = null, [FromQuery] FilterMatch match = FilterMatch.All, CancellationToken cancellationToken = default)
+    public async Task<ActionResult<IEnumerable<SystemuserClientDto>>> GetClients([FromQuery] Guid party, [FromQuery] string[] roles = null, [FromQuery] string[] packages = null, CancellationToken cancellationToken = default)
     {
-        var rolesFromCaller = roles != null && roles.Length > 0;
-        if (rolesFromCaller)
+        if (roles != null && roles.Length > 0)
         {
             var invalidRoles = roles.Where(role => !validClientRoles.Contains(role));
             if (invalidRoles.Any())
@@ -68,7 +64,7 @@ public class SystemUserClientDelegationController(
             packages = [];
         }
 
-        var clients = await assignmentService.GetClients(party, roles, packages, match, rolesFromCaller, cancellationToken);
+        var clients = await assignmentService.GetClients(party, roles, packages, cancellationToken);
 
         return Ok(clients);
     }
