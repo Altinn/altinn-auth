@@ -1,0 +1,21 @@
+meta {
+  name: 14_FilterMatchAll
+  seq: 14
+}
+
+docs {
+  Scenario: match=all only returns clients holding every filter package
+
+    Given the CCR client and the rightholder client both grant the facilitator the
+      skattegrunnlag package on a rightholder relation
+    When the client list is filtered by the regnskapsforer-lonn and skattegrunnlag
+      packages
+    Then both clients are returned in the default any mode
+    And match=all returns only the CCR client, which holds the lonn package
+      through its role and the skattegrunnlag package through the delegation
+
+  The CCR client is the one case that needs both ways in at once: the lonn package
+  comes from the regnskapsforer role, the skattegrunnlag package from the grant the
+  scenario sets up. The rightholder client only holds skattegrunnlag and drops out
+  of the all mode. The scenario removes both rightholder relations it created.
+}

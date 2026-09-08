@@ -1,0 +1,49 @@
+meta {
+  name: 07_WHEN_ClientListIsFilteredByTwoPackages
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/clients?party={{party}}&packages={{rolePackage}}&packages={{grantedPackage}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  packages: {{rolePackage}}
+  packages: {{grantedPackage}}
+}
+
+docs {
+  WHEN the client list is filtered by two packages without a match value,
+  THEN both clients are returned: each holds at least one of them.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("rolePackage", td.clientDelegationV2.packages.regnskapsforerLonn);
+  bru.setVar("grantedPackage", td.clientDelegationV2.packages.skattegrunnlag);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+
+  test("WHEN the two package filtered client list request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN both clients are returned in the default any mode", function() {
+    const data = res.getBody().data;
+    const clientA = td.REGN_Organisasjon.REGN_Org_Clients.client_A.partyUuid.toLowerCase();
+    const clientB = td.REGN_Organisasjon.REGN_Org_Clients.client_B.partyUuid.toLowerCase();
+    expect(data.some(item => item.client.id.toLowerCase() === clientA), "expected the CCR client in the list").to.be.true;
+    expect(data.some(item => item.client.id.toLowerCase() === clientB), "expected the rightholder client in the list").to.be.true;
+  });
+}
