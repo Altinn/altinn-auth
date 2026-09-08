@@ -115,8 +115,9 @@
                 case FilterDim.To:
                 case FilterDim.Via:
                 case FilterDim.By:
-                    <MudStack Spacing="2" Style="max-width: 480px;">
-                        <EntityLookupField Label="Legg til part (UUID)" @bind-Value="_entityDraft" />
+                    <MudStack Spacing="2" Style="max-width: 560px;">
+                        @FacetSearch(editing)
+                        <EntityLookupField Label="Eller lim inn part (UUID)" @bind-Value="_entityDraft" />
                         <MudStack Row="true" Spacing="2">
                             <MudButton Variant="Variant.Outlined"
                                        Size="Size.Small"
@@ -186,39 +187,7 @@
                 case FilterDim.Package:
                 case FilterDim.Resource:
                     <MudStack Spacing="2" Style="max-width: 560px;">
-                        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
-                            <MudTextField @bind-Value="_catalogTerm"
-                                          Label="Søk"
-                                          Variant="Variant.Outlined"
-                                          Margin="Margin.Dense"
-                                          Placeholder="Navn eller kode..."
-                                          Adornment="Adornment.Start"
-                                          AdornmentIcon="@Icons.Material.Filled.Search"
-                                          OnKeyDown="OnCatalogKeyDown"
-                                          Immediate="false"
-                                          FullWidth="true" />
-                            <MudButton Variant="Variant.Filled"
-                                       Color="Color.Primary"
-                                       Disabled="@_catalogLoading"
-                                       OnClick="SearchCatalogAsync">
-                                Søk
-                            </MudButton>
-                        </MudStack>
-                        @if (_catalogResults is not null)
-                        {
-                            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
-                                @foreach (var item in _catalogResults.Where(r => !GuidValues(editing).Contains(r.Id)))
-                                {
-                                    var hit = item;
-                                    <MudChip T="string"
-                                             Size="Size.Small"
-                                             Variant="Variant.Outlined"
-                                             OnClick="@(() => AddCatalogValue(editing, hit))">
-                                        @hit.Name
-                                    </MudChip>
-                                }
-                            </MudStack>
-                        }
+                        @FacetSearch(editing)
                         @SelectedGuidChips(editing)
                     </MudStack>
                     break;
@@ -492,8 +461,8 @@
         _ => null,
     };
 
-    private IReadOnlyCollection<Guid>? AnchoredOrList(FilterDim dim, PartyDirection direction) =>
-        _partyId is { } party && _direction == direction ? [party] : ListOrNull(dim);
+    private IReadOnlyCollection<Guid>? AnchoredOrList(FilterDim dim, PartyDirection direction, FilterDim? excludeDim = null) =>
+        _partyId is { } party && _direction == direction ? [party] : (dim == excludeDim ? null : ListOrNull(dim));
 
     private readonly Dictionary<FilterDim, List<Guid>> _guidValues = [];
     private readonly Dictionary<FilterDim, List<string>> _textValues = [];
@@ -501,9 +470,10 @@
 
     private Guid? _entityDraft;
     private string? _textDraft;
-    private string? _catalogTerm;
-    private bool _catalogLoading;
-    private List<CatalogItem>? _catalogResults;
+    private string? _facetTerm;
+    private bool _facetLoading;
+    private bool _facetHasMore;
+    private List<ActivityLogFacet>? _facetResults;
 
     private DateTime? _afterDate;
     private DateTime? _beforeDate;
@@ -533,7 +503,8 @@
         _items = null;
         _pageNo = 0;
         _hasMore = false;
-        _catalogResults = null;
+        _facetResults = null;
+        _facetHasMore = false;
         _names.Clear();
         Error = null;
         return Task.CompletedTask;
@@ -567,8 +538,9 @@
         _editing = dim;
         _entityDraft = null;
         _textDraft = null;
-        _catalogTerm = null;
-        _catalogResults = null;
+        _facetTerm = null;
+        _facetResults = null;
+        _facetHasMore = false;
     }
 
     private void RemoveDimension(FilterDim dim)
@@ -833,16 +805,73 @@
         ScheduleQuery();
     }
 
-    private void AddCatalogValue(FilterDim dim, CatalogItem item)
+    private void AddFacetValue(FilterDim dim, ActivityLogFacet facet)
     {
         var list = GuidValues(dim);
-        if (!list.Contains(item.Id))
+        if (!list.Contains(facet.Id))
         {
-            list.Add(item.Id);
-            _names[item.Id] = item.Name;
+            list.Add(facet.Id);
+            if (facet.Name is not null)
+            {
+                _names[facet.Id] = facet.Name;
+            }
+
             ScheduleQuery();
         }
     }
+
+    private const int FacetPageSize = 20;
+
+    private RenderFragment FacetSearch(FilterDim dim) => __builder =>
+    {
+        @if (!HasFilter)
+        {
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                Legg til et avgrensende filter først (party, part, dato, operasjon eller id) —
+                da kan du søke blant verdier som faktisk forekommer i loggen.
+            </MudText>
+        }
+        else
+        {
+            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                <MudTextField @bind-Value="_facetTerm"
+                              Label="Søk i forekommende verdier"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Placeholder="Tomt søk viser alle, alfabetisk..."
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search"
+                              OnKeyDown="OnFacetKeyDown"
+                              Immediate="false"
+                              FullWidth="true" />
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           Disabled="@_facetLoading"
+                           OnClick="SearchFacetAsync">
+                    Søk
+                </MudButton>
+            </MudStack>
+            @if (_facetResults is not null)
+            {
+                <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
+                    @foreach (var hit in _facetResults.Where(r => !GuidValues(dim).Contains(r.Id)))
+                    {
+                        var facet = hit;
+                        <MudChip T="string"
+                                 Size="Size.Small"
+                                 Variant="Variant.Outlined"
+                                 OnClick="@(() => AddFacetValue(dim, facet))">
+                            @(facet.Name ?? facet.Id.ToString()[..8])
+                        </MudChip>
+                    }
+                </MudStack>
+                @if (_facetHasMore)
+                {
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Flere treff finnes — søk smalere.</MudText>
+                }
+            }
+        }
+    };
 
     private RenderFragment SelectedGuidChips(FilterDim dim) => __builder =>
     {
@@ -878,27 +907,22 @@
 
     // ── Catalog search (roles, packages, resources) ───────────────────────────
 
-    private Task OnCatalogKeyDown(KeyboardEventArgs e) =>
-        e.Key == "Enter" ? SearchCatalogAsync() : Task.CompletedTask;
+    private Task OnFacetKeyDown(KeyboardEventArgs e) =>
+        e.Key == "Enter" ? SearchFacetAsync() : Task.CompletedTask;
 
-    private async Task SearchCatalogAsync()
+    private async Task SearchFacetAsync()
     {
-        if (_editing is not { } dim || string.IsNullOrWhiteSpace(_catalogTerm))
+        if (_editing is not { } dim || FacetFieldFor(dim) is not { } field || !HasFilter)
         {
             return;
         }
 
-        _catalogLoading = true;
+        _facetLoading = true;
         try
         {
-            var term = _catalogTerm.Trim();
-            _catalogResults = dim switch
-            {
-                FilterDim.Role => await PageService.SearchRolesAsync(EnvState.Current, term),
-                FilterDim.Package => await PageService.SearchPackagesAsync(EnvState.Current, term),
-                FilterDim.Resource => await PageService.SearchResourcesAsync(EnvState.Current, term),
-                _ => null,
-            };
+            var page = await PageService.FacetAsync(EnvState.Current, field, BuildFilter(excludeDim: dim), _facetTerm, FacetPageSize);
+            _facetResults = [.. page.Items];
+            _facetHasMore = page.HasMore;
         }
         catch (Exception ex)
         {
@@ -906,9 +930,21 @@
         }
         finally
         {
-            _catalogLoading = false;
+            _facetLoading = false;
         }
     }
+
+    private static ActivityLogFacetField? FacetFieldFor(FilterDim dim) => dim switch
+    {
+        FilterDim.From => ActivityLogFacetField.From,
+        FilterDim.To => ActivityLogFacetField.To,
+        FilterDim.Via => ActivityLogFacetField.Via,
+        FilterDim.By => ActivityLogFacetField.By,
+        FilterDim.Role => ActivityLogFacetField.Role,
+        FilterDim.Package => ActivityLogFacetField.Package,
+        FilterDim.Resource => ActivityLogFacetField.Resource,
+        _ => null,
+    };
 
     private async Task ResolveEntityNameAsync(Guid id)
     {
@@ -1005,17 +1041,17 @@
         _hasMore = page.HasMore;
     });
 
-    private ActivityLogQueryFilter BuildFilter() => new()
+    private ActivityLogQueryFilter BuildFilter(FilterDim? excludeDim = null) => new()
     {
         AnyPartyIds = _partyId is { } party && _direction == PartyDirection.All ? [party] : null,
-        FromIds = AnchoredOrList(FilterDim.From, PartyDirection.From),
-        ToIds = AnchoredOrList(FilterDim.To, PartyDirection.To),
-        ViaIds = AnchoredOrList(FilterDim.Via, PartyDirection.Via),
-        ByIds = AnchoredOrList(FilterDim.By, PartyDirection.By),
+        FromIds = AnchoredOrList(FilterDim.From, PartyDirection.From, excludeDim),
+        ToIds = AnchoredOrList(FilterDim.To, PartyDirection.To, excludeDim),
+        ViaIds = AnchoredOrList(FilterDim.Via, PartyDirection.Via, excludeDim),
+        ByIds = AnchoredOrList(FilterDim.By, PartyDirection.By, excludeDim),
         SourceIds = ListOrNull(FilterDim.Source),
-        RoleIds = ListOrNull(FilterDim.Role),
-        PackageIds = ListOrNull(FilterDim.Package),
-        ResourceIds = ListOrNull(FilterDim.Resource),
+        RoleIds = excludeDim == FilterDim.Role ? null : ListOrNull(FilterDim.Role),
+        PackageIds = excludeDim == FilterDim.Package ? null : ListOrNull(FilterDim.Package),
+        ResourceIds = excludeDim == FilterDim.Resource ? null : ListOrNull(FilterDim.Resource),
         ItemIds = ListOrNull(FilterDim.Item),
         ParentIds = ListOrNull(FilterDim.Parent),
         InstanceIds = TextListOrNull(FilterDim.Instance),
