@@ -10,7 +10,15 @@ The activity log is an event log over every access change in Access Management �
 
 ### Storage and partitioning
 
-One range-partitioned table (`dbo.activitylog`) on the event timestamp, with denormalized name snapshots (from/to/via/performed by, role, package/resource) — queries need no joins, and names read as they were when the event happened. Partitions are yearly for backfilled history (2000–2025) and monthly from 2026 and 24 months ahead; a maintenance function creates new months continuously, and a default partition guarantees a business transaction can never fail on a missing partition. Old partitions can be detached/archived cheaply later. Operation id and parent id are stored on the rows for future event grouping.
+One range-partitioned table (`dbo.activitylog`) on the event timestamp, with denormalized name snapshots (from/to/via/performed by, role, package/resource) — queries need no joins, and names read as they were when the event happened. Operation id and parent id are stored on the rows for future event grouping.
+
+The partition layout has three parts:
+
+- **Yearly partitions 2000–2025** carry the backfilled history. That data is written once by the backfill and never changes, and historical queries are rare — monthly granularity here would mean 300+ partitions with nothing gained; yearly gives 26.
+- **Monthly partitions from 2026-01** carry live data. Most queries hit recent time ranges, so partition pruning keeps them on a few small partitions, per-partition indexes stay small, and future archiving can detach one month at a time.
+- **A default partition** catches anything outside the created ranges, so a business transaction can never fail because a partition is missing.
+
+The migration creates all of this up front, including monthly partitions 24 months ahead. Ongoing maintenance is the `dbo.activitylog_ensure_month_partitions(months_ahead)` function (SECURITY DEFINER, executable by the app role), which creates any missing months up to the horizon. The FFB job `ActivityLogPartitions` calls it: it can be run manually from the backfill page or put on a recurring schedule via the FFB job scheduler, and it only ever *creates* partitions. Retention is unlimited for now, so there is deliberately no cleanup/detach job — that comes together with a retention decision. Should maintenance ever be forgotten, writes simply land in the default partition (nothing fails), but those months would then have to be moved out of it manually before their partitions can be created — which is why the job should be on a schedule well before the 24-month runway runs out.
 
 ### Activity type catalog
 

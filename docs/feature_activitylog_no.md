@@ -10,7 +10,15 @@ Aktivitetsloggen er en hendelseslogg over alle tilgangsendringer i Access Manage
 
 ### Lagring og partisjonering
 
-Én range-partisjonert tabell (`dbo.activitylog`) på hendelsestidspunktet, med denormaliserte navnesnapshots (fra/til/via/utført av, rolle, pakke/ressurs) — spørringer trenger ingen joins, og navnene leses slik de var da hendelsen skjedde. Partisjonene er årlige for backfillet historikk (2000–2025) og månedlige fra 2026 og 24 måneder frem; en vedlikeholdsfunksjon oppretter nye måneder fortløpende, og en default-partisjon garanterer at en forretningstransaksjon aldri kan feile på manglende partisjon. Gamle partisjoner kan detaches/arkiveres billig senere. Operasjons-id og parent-id lagres på radene for fremtidig gruppering av hendelser.
+Én range-partisjonert tabell (`dbo.activitylog`) på hendelsestidspunktet, med denormaliserte navnesnapshots (fra/til/via/utført av, rolle, pakke/ressurs) — spørringer trenger ingen joins, og navnene leses slik de var da hendelsen skjedde. Operasjons-id og parent-id lagres på radene for fremtidig gruppering av hendelser.
+
+Partisjonsoppsettet har tre deler:
+
+- **Årlige partisjoner 2000–2025** bærer backfillet historikk. Disse dataene skrives én gang av backfillen og endres aldri, og historiske spørringer er sjeldne — månedlig granularitet her ville gitt 300+ partisjoner uten gevinst; årlig gir 26.
+- **Månedlige partisjoner fra 2026-01** bærer levende data. De fleste spørringer treffer nyere tidsintervaller, så partition pruning holder dem på noen få små partisjoner, indeksene per partisjon forblir små, og fremtidig arkivering kan detache én måned om gangen.
+- **En default-partisjon** fanger alt utenfor de opprettede intervallene, slik at en forretningstransaksjon aldri kan feile på manglende partisjon.
+
+Migreringen oppretter alt dette på forhånd, inkludert månedlige partisjoner 24 måneder frem. Løpende vedlikehold er funksjonen `dbo.activitylog_ensure_month_partitions(months_ahead)` (SECURITY DEFINER, kjørbar av app-rollen), som oppretter manglende måneder frem til horisonten. FFB-jobben `ActivityLogPartitions` kaller den: den kan kjøres manuelt fra backfill-siden eller settes opp som gjentakende via FFB-jobbplanleggeren, og den *oppretter* bare partisjoner. Retention er ubegrenset inntil videre, så det finnes bevisst ingen opprydnings-/detach-jobb — den kommer sammen med en retention-beslutning. Skulle vedlikeholdet bli glemt, lander skrivinger bare i default-partisjonen (ingenting feiler), men de månedene må da flyttes ut av den manuelt før partisjonene deres kan opprettes — derfor bør jobben stå på en plan i god tid før 24-månedersbufferen løper ut.
 
 ### Hendelsestypekatalogen
 
