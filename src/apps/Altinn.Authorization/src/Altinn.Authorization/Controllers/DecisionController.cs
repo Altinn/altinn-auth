@@ -633,10 +633,16 @@ namespace Altinn.Platform.Authorization.Controllers
             }
 
             // Look up delegations from (cached) AccessManagement PIP API
+            // The cache is scoped per instance (in addition to subject/party/resource) so that a decision request for
+            // an instance not seen before always misses the cache and fetches a fresh delegation list, instead of
+            // reusing a list cached for a different instance under the same resource that predates the delegation
+            // being checked here. See https://github.com/Altinn/altinn-platform-validation-tests/issues/532
+            string instanceCacheKeyPart = resourceAttributes.ResourceInstanceValue ?? resourceAttributes.AppInstanceIdValue;
+
             IEnumerable<DelegationChangeExternal> delegations = new List<DelegationChangeExternal>();
             if (IsTypeApp(resourceAttributes))
             {
-                delegations = await GetAllCachedDelegationChanges(cancellationToken, WithDefaultGetAllDelegationChangesInput(resourceAttributes, decisionRequest), input => input.Resource = new List<AttributeMatch>()
+                delegations = await GetAllCachedDelegationChanges(instanceCacheKeyPart, cancellationToken, WithDefaultGetAllDelegationChangesInput(resourceAttributes, decisionRequest), input => input.Resource = new List<AttributeMatch>()
                 {
                     new(AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute, resourceAttributes.OrgValue),
                     new(AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute, resourceAttributes.AppValue),
@@ -645,7 +651,7 @@ namespace Altinn.Platform.Authorization.Controllers
 
             if (IsTypeResource(resourceAttributes))
             {
-                delegations = await GetAllCachedDelegationChanges(cancellationToken, WithDefaultGetAllDelegationChangesInput(resourceAttributes, decisionRequest), input => input.Resource = new List<AttributeMatch>()
+                delegations = await GetAllCachedDelegationChanges(instanceCacheKeyPart, cancellationToken, WithDefaultGetAllDelegationChangesInput(resourceAttributes, decisionRequest), input => input.Resource = new List<AttributeMatch>()
                 {
                     new(AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistry, resourceAttributes.ResourceRegistryId)
                 });
@@ -686,7 +692,7 @@ namespace Altinn.Platform.Authorization.Controllers
             return await ProcessDelegationResult(decisionRequest, delegations, resourcePolicy, cancellationToken);
         }
 
-        private async Task<IEnumerable<DelegationChangeExternal>> GetAllCachedDelegationChanges(CancellationToken cancellationToken = default, params Action<DelegationChangeInput>[] actions)
+        private async Task<IEnumerable<DelegationChangeExternal>> GetAllCachedDelegationChanges(string instanceCacheKeyPart, CancellationToken cancellationToken = default, params Action<DelegationChangeInput>[] actions)
         {
             var delegation = new DelegationChangeInput();
             foreach (var action in actions)
@@ -698,7 +704,8 @@ namespace Altinn.Platform.Authorization.Controllers
                 $"s:{delegation.Subject.Id}:{delegation.Subject.Value}",
                 $"p:{delegation.Party.Value}",
                 $"a:{delegation.Resource.FirstOrDefault(r => r.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute)?.Value}/{delegation.Resource.FirstOrDefault(r => r.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute)?.Value}",
-                $"r:{delegation.Resource.FirstOrDefault(r => r.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistry)?.Value}");
+                $"r:{delegation.Resource.FirstOrDefault(r => r.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistry)?.Value}",
+                $"i:{instanceCacheKeyPart}");
 
             if (!_memoryCache.TryGetValue(cacheKey, out IEnumerable<DelegationChangeExternal> result))
             {
