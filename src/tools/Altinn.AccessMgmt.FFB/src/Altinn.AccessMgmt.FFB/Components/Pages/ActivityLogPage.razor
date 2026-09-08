@@ -4,6 +4,7 @@
 @using Altinn.Authorization.Api.Contracts.AccessManagement.ActivityLog
 @using Altinn.Authorization.Api.Contracts.AccessManagement.Request
 @using PersistedActivityLog = Altinn.AccessMgmt.PersistenceEF.Models.ActivityLog
+@using PersistenceActivityType = Altinn.AccessMgmt.PersistenceEF.Models.ActivityType
 @inherits EnvironmentPageBase
 @inject ActivityLogPageService PageService
 @inject EntitySearchService SearchService
@@ -38,29 +39,138 @@
     <MudDivider Class="mb-3" />
 
     @* ── Activity type catalog ─────────────────────────────────────────────── *@
-    <MudText Typo="Typo.subtitle2" Class="mb-1">Hendelsestype</MudText>
-    <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mb-2">
-        Fra aktivitetstype-katalogen — hvert valg filtrerer på hele kombinasjonen av type,
-        subtype, hendelse og status. Hold pekeren over et valg for beskrivelsen.
-    </MudText>
-    @foreach (var typeGroup in ActivityTypeConstants.AllEntities().GroupBy(d => d.Entity.Type).OrderBy(g => g.Key))
+    <div class="d-flex align-center justify-space-between mb-1">
+        <div>
+            <MudText Typo="Typo.subtitle2">Hendelsestype</MudText>
+            <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">
+                Hvert valg filtrerer på hele kombinasjonen av type, subtype, hendelse og status.
+                Velg en gruppe for å ta alt under den; ingen valg betyr alle hendelsestyper.
+            </MudText>
+        </div>
+        <MudToggleGroup T="CatalogView" Value="_catalogView" ValueChanged="v => _catalogView = v"
+                        Size="Size.Small" Color="Color.Primary" Outlined="true" Delimiters="true" Dense="true">
+            <MudToggleItem Value="CatalogView.Tabs" Text="Faner" />
+            <MudToggleItem Value="CatalogView.Tree" Text="Tre" />
+        </MudToggleGroup>
+    </div>
+
+    @if (_catalogView == CatalogView.Tabs)
     {
-        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1" AlignItems="AlignItems.Center" Class="mb-1">
-            <MudText Typo="Typo.caption" Class="mud-text-secondary" Style="min-width: 90px;">@typeGroup.Key</MudText>
-            @foreach (var definition in typeGroup)
+        <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pt-2">
+            @foreach (var typeGroup in CatalogByType)
             {
-                var d = definition;
-                <MudTooltip Text="@d.Entity.Description">
-                    <MudChip T="string"
-                             Size="Size.Small"
-                             Variant="@(_selectedActivityTypes.Contains(d.Id) ? Variant.Filled : Variant.Outlined)"
-                             Color="@(_selectedActivityTypes.Contains(d.Id) ? Color.Primary : Color.Default)"
-                             OnClick="@(() => ToggleActivityType(d.Id))">
-                        @d.Entity.Name
-                    </MudChip>
-                </MudTooltip>
+                var mainType = typeGroup.Key;
+                var subtypeGroups = typeGroup.GroupBy(d => d.Entity.Subtype).ToList();
+                var columnWidth = 12 / Math.Max(subtypeGroups.Count, 1);
+                <MudTabPanel Text="@MainTypeLabel(mainType)" BadgeData="@TabBadge(mainType)" BadgeColor="Color.Primary">
+                    <MudCheckBox T="bool?"
+                                 Value="@GroupState(typeGroup.Select(d => d.Id))"
+                                 ValueChanged="@(_ => ToggleGroup(typeGroup.Select(d => d.Id).ToList()))"
+                                 Dense="true"
+                                 Color="Color.Primary"
+                                 Label="@($"Alle {MainTypeLabel(mainType).ToLowerInvariant()}shendelser")" />
+                    <MudGrid Spacing="2" Class="mt-0">
+                        @foreach (var subtypeGroup in subtypeGroups)
+                        {
+                            var members = subtypeGroup.ToList();
+                            <MudItem xs="12" sm="6" md="@columnWidth">
+                                <MudCheckBox T="bool?"
+                                             Value="@GroupState(members.Select(d => d.Id))"
+                                             ValueChanged="@(_ => ToggleGroup(members.Select(d => d.Id).ToList()))"
+                                             Dense="true"
+                                             Color="Color.Primary">
+                                    <MudText Typo="Typo.body2" Class="fw-bold">@SubtypeLabel(mainType, subtypeGroup.Key)</MudText>
+                                </MudCheckBox>
+                                <div class="pl-4">
+                                    @foreach (var definition in members)
+                                    {
+                                        var d = definition;
+                                        <div class="d-flex align-start mb-1">
+                                            <MudCheckBox T="bool"
+                                                         Value="@_selectedActivityTypes.Contains(d.Id)"
+                                                         ValueChanged="@(on => SetActivityType(d.Id, on))"
+                                                         Dense="true"
+                                                         Size="Size.Small"
+                                                         Color="Color.Primary" />
+                                            <div class="ml-1 cursor-pointer" @onclick="@(() => ToggleActivityTypeRow(d.Id))">
+                                                <MudText Typo="Typo.body2">@d.Entity.Name</MudText>
+                                                <MudText Typo="Typo.caption" Class="mud-text-secondary">@d.Entity.Description</MudText>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </MudItem>
+                        }
+                    </MudGrid>
+                </MudTabPanel>
             }
-        </MudStack>
+        </MudTabs>
+    }
+    else
+    {
+        <MudPaper Outlined="true" Class="py-1 px-2">
+            @foreach (var typeGroup in CatalogByType)
+            {
+                var mainType = typeGroup.Key;
+                var typeIds = typeGroup.Select(d => d.Id).ToList();
+                var typeSelected = typeIds.Count(_selectedActivityTypes.Contains);
+                <div class="d-flex align-center cursor-pointer" @onclick="@(() => ToggleTypeNode(mainType))">
+                    <MudIcon Icon="@(IsTypeExpanded(mainType) ? Icons.Material.Filled.ExpandMore : Icons.Material.Filled.ChevronRight)"
+                             Size="Size.Small" Class="mud-text-secondary" />
+                    <div @onclick:stopPropagation="true">
+                        <MudCheckBox T="bool?"
+                                     Value="@GroupState(typeIds)"
+                                     ValueChanged="@(_ => ToggleGroup(typeIds))"
+                                     Dense="true"
+                                     Color="Color.Primary" />
+                    </div>
+                    <MudText Typo="Typo.body2" Class="fw-bold">@MainTypeLabel(mainType)</MudText>
+                    @if (typeSelected > 0)
+                    {
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary ml-2">@typeSelected av @typeIds.Count valgt</MudText>
+                    }
+                </div>
+                @if (IsTypeExpanded(mainType))
+                {
+                    @foreach (var subtypeGroup in typeGroup.GroupBy(d => d.Entity.Subtype))
+                    {
+                        var members = subtypeGroup.ToList();
+                        var nodeKey = $"{mainType}:{subtypeGroup.Key}";
+                        <div class="d-flex align-center cursor-pointer ml-6" @onclick="@(() => ToggleSubtypeNode(nodeKey))">
+                            <MudIcon Icon="@(IsSubtypeExpanded(nodeKey) ? Icons.Material.Filled.ExpandMore : Icons.Material.Filled.ChevronRight)"
+                                     Size="Size.Small" Class="mud-text-secondary" />
+                            <div @onclick:stopPropagation="true">
+                                <MudCheckBox T="bool?"
+                                             Value="@GroupState(members.Select(d => d.Id))"
+                                             ValueChanged="@(_ => ToggleGroup(members.Select(d => d.Id).ToList()))"
+                                             Dense="true"
+                                             Color="Color.Primary" />
+                            </div>
+                            <MudText Typo="Typo.body2">@SubtypeLabel(mainType, subtypeGroup.Key)</MudText>
+                        </div>
+                        @if (IsSubtypeExpanded(nodeKey))
+                        {
+                            @foreach (var definition in members)
+                            {
+                                var d = definition;
+                                <div class="d-flex align-center cursor-pointer ml-14" @onclick="@(() => ToggleActivityTypeRow(d.Id))">
+                                    <div @onclick:stopPropagation="true">
+                                        <MudCheckBox T="bool"
+                                                     Value="@_selectedActivityTypes.Contains(d.Id)"
+                                                     ValueChanged="@(on => SetActivityType(d.Id, on))"
+                                                     Dense="true"
+                                                     Size="Size.Small"
+                                                     Color="Color.Primary" />
+                                    </div>
+                                    <MudText Typo="Typo.body2" Style="min-width: 280px;">@d.Entity.Name</MudText>
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary ml-3">@d.Entity.Description</MudText>
+                                </div>
+                            }
+                        }
+                    }
+                }
+            }
+        </MudPaper>
     }
     <MudDivider Class="my-3" />
 
@@ -174,22 +284,6 @@
                     </MudStack>
                     break;
 
-                case FilterDim.Subtype:
-                    @EnumCheckboxes(_subtypes)
-                    break;
-
-                case FilterDim.Trigger:
-                    <MudStack Spacing="1">
-                        @EnumCheckboxes(_triggers)
-                        <MudText Typo="Typo.caption" Class="mud-text-secondary mt-2">
-                            Forespørselsstatus (kun Request-hendelser)
-                        </MudText>
-                        <div class="pl-4">
-                            @EnumCheckboxes(_statuses)
-                        </div>
-                    </MudStack>
-                    break;
-
                 case FilterDim.Source:
                 case FilterDim.Role:
                 case FilterDim.Package:
@@ -283,7 +377,7 @@
 {
     <MudStack Row="true" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Spacing="3" Class="mb-2">
         <MudText Typo="Typo.body2" Class="mud-text-secondary">
-            @(_hasMore ? $"Mer enn {_items.Count} hendelser" : $"{_items.Count} hendelser")
+            @(_hasMore ? $"Mer enn {_items.Count} hendelser" : _items.Count == 1 ? "1 hendelse" : $"{_items.Count} hendelser")
         </MudText>
         <MudSpacer />
         <MudText Typo="Typo.caption" Class="mud-text-secondary">Gruppering</MudText>
@@ -332,8 +426,6 @@
         Via,
         By,
         Date,
-        Subtype,
-        Trigger,
         Source,
         Role,
         Package,
@@ -348,7 +440,7 @@
     [
         [FilterDim.From, FilterDim.To, FilterDim.Via, FilterDim.By],
         [FilterDim.Date],
-        [FilterDim.Subtype, FilterDim.Trigger, FilterDim.Source],
+        [FilterDim.Source],
         [FilterDim.Role, FilterDim.Package, FilterDim.Resource, FilterDim.Instance],
         [FilterDim.Operation, FilterDim.Item, FilterDim.Parent],
     ];
@@ -360,8 +452,6 @@
         FilterDim.Via => "Via (fasilitator)",
         FilterDim.By => "Utført av",
         FilterDim.Date => "Dato",
-        FilterDim.Subtype => "Subtype",
-        FilterDim.Trigger => "Hendelse",
         FilterDim.Source => "Kilde",
         FilterDim.Role => "Rolle",
         FilterDim.Package => "Pakke",
@@ -377,8 +467,6 @@
     {
         FilterDim.From or FilterDim.To or FilterDim.Via => "parter",
         FilterDim.By => "utførere",
-        FilterDim.Subtype => "subtyper",
-        FilterDim.Trigger => "hendelser",
         FilterDim.Source => "kilder",
         FilterDim.Role => "roller",
         FilterDim.Package => "pakker",
@@ -397,8 +485,6 @@
         FilterDim.Via => "Fasilitatoren delegeringen går via (f.eks. regnskapsfører).",
         FilterDim.By => "Entiteten som utførte endringen — person, systembruker eller internt system.",
         FilterDim.Date => "Avgrenser på hendelsestidspunktet (fra og med / til og med valgt dag).",
-        FilterDim.Subtype => "Undertype på tvers av hovedtypene — Package matcher f.eks. både Assignment-, Delegation- og RequestPackage.",
-        FilterDim.Trigger => "Hva som skjedde. Status settes på Request-hendelser: initialstatus ved Created, ny status ved Updated, siste status ved Deleted.",
         FilterDim.Source => "Systemet/kanalen endringen kom gjennom.",
         FilterDim.Role => "Hendelser der tilgangen gjelder valgt(e) rolle(r).",
         FilterDim.Package => "Hendelser som gjelder valgt(e) tilgangspakke(r).",
@@ -485,14 +571,117 @@
 
     private readonly HashSet<Guid> _selectedActivityTypes = [];
 
-    private readonly Dictionary<ActivityLogSubtype, bool> _subtypes =
-        Enum.GetValues<ActivityLogSubtype>().ToDictionary(v => v, _ => false);
+    private enum CatalogView
+    {
+        Tabs,
+        Tree,
+    }
 
-    private readonly Dictionary<ActivityLogTrigger, bool> _triggers =
-        Enum.GetValues<ActivityLogTrigger>().ToDictionary(v => v, _ => false);
+    private CatalogView _catalogView = CatalogView.Tree;
+    private readonly HashSet<ActivityLogType> _expandedTypes = [];
+    private readonly HashSet<string> _collapsedSubtypes = [];
 
-    private readonly Dictionary<RequestStatus, bool> _statuses =
-        Enum.GetValues<RequestStatus>().Where(s => s != RequestStatus.None).ToDictionary(v => v, _ => false);
+    private static readonly IReadOnlyList<IGrouping<ActivityLogType, ConstantDefinition<PersistenceActivityType>>> CatalogByType =
+        ActivityTypeConstants.AllEntities().GroupBy(d => d.Entity.Type).OrderBy(g => g.Key).ToList();
+
+    private static string MainTypeLabel(ActivityLogType type) => type switch
+    {
+        ActivityLogType.Assignment => "Tildeling",
+        ActivityLogType.Delegation => "Delegering",
+        ActivityLogType.Request => "Forespørsel",
+        _ => type.ToString(),
+    };
+
+    private static string SubtypeLabel(ActivityLogType type, ActivityLogSubtype? subtype) => subtype switch
+    {
+        null => type switch
+        {
+            ActivityLogType.Assignment => "Selve tildelingen",
+            ActivityLogType.Delegation => "Selve delegeringen",
+            ActivityLogType.Request => "Selve forespørselen",
+            _ => "Hovedrad",
+        },
+        ActivityLogSubtype.Package => "Tilgangspakke",
+        ActivityLogSubtype.Resource => "Enkelttjeneste",
+        ActivityLogSubtype.Instance => "Instans",
+        _ => subtype.ToString(),
+    };
+
+    private bool IsTypeExpanded(ActivityLogType type) => _expandedTypes.Contains(type);
+
+    private void ToggleTypeNode(ActivityLogType type)
+    {
+        if (!_expandedTypes.Remove(type))
+        {
+            _expandedTypes.Add(type);
+        }
+    }
+
+    private bool IsSubtypeExpanded(string nodeKey) => !_collapsedSubtypes.Contains(nodeKey);
+
+    private void ToggleSubtypeNode(string nodeKey)
+    {
+        if (!_collapsedSubtypes.Remove(nodeKey))
+        {
+            _collapsedSubtypes.Add(nodeKey);
+        }
+    }
+
+    private void ToggleActivityTypeRow(Guid id)
+        => SetActivityType(id, !_selectedActivityTypes.Contains(id));
+
+    private object? TabBadge(ActivityLogType type)
+    {
+        var count = CatalogByType.First(g => g.Key == type).Count(d => _selectedActivityTypes.Contains(d.Id));
+        return count > 0 ? count : null;
+    }
+
+    private bool? GroupState(IEnumerable<Guid> ids)
+    {
+        var all = true;
+        var any = false;
+        foreach (var id in ids)
+        {
+            if (_selectedActivityTypes.Contains(id))
+            {
+                any = true;
+            }
+            else
+            {
+                all = false;
+            }
+        }
+
+        return all && any ? true : any ? null : false;
+    }
+
+    private void ToggleGroup(IReadOnlyCollection<Guid> ids)
+    {
+        if (ids.All(_selectedActivityTypes.Contains))
+        {
+            _selectedActivityTypes.ExceptWith(ids);
+        }
+        else
+        {
+            _selectedActivityTypes.UnionWith(ids);
+        }
+
+        ScheduleQuery();
+    }
+
+    private void SetActivityType(Guid id, bool selected)
+    {
+        if (selected)
+        {
+            _selectedActivityTypes.Add(id);
+        }
+        else
+        {
+            _selectedActivityTypes.Remove(id);
+        }
+
+        ScheduleQuery();
+    }
 
     // ── Data ──────────────────────────────────────────────────────────────────
 
@@ -560,13 +749,6 @@
                 _afterDate = null;
                 _beforeDate = null;
                 break;
-            case FilterDim.Subtype:
-                ResetEnum(_subtypes);
-                break;
-            case FilterDim.Trigger:
-                ResetEnum(_triggers);
-                ResetEnum(_statuses);
-                break;
             case FilterDim.Instance:
             case FilterDim.Operation:
                 _textValues.Remove(dim);
@@ -588,22 +770,10 @@
         _afterDate = null;
         _beforeDate = null;
         _selectedActivityTypes.Clear();
-        ResetEnum(_subtypes);
-        ResetEnum(_triggers);
-        ResetEnum(_statuses);
         _debounce?.Cancel();
         _items = null;
         _pageNo = 0;
         _hasMore = false;
-    }
-
-    private static void ResetEnum<T>(Dictionary<T, bool> values)
-        where T : notnull
-    {
-        foreach (var key in values.Keys.ToList())
-        {
-            values[key] = false;
-        }
     }
 
     private string ChipLabel(FilterDim dim)
@@ -618,33 +788,6 @@
                     (null, not null) => $"Til {_beforeDate:dd.MM.yy}",
                     _ => DimensionLabel(dim),
                 };
-            case FilterDim.Subtype:
-                return EnumChipLabel(dim, _subtypes);
-            case FilterDim.Trigger:
-            {
-                var triggers = _triggers.Where(kv => kv.Value).Select(kv => kv.Key.ToString()).ToList();
-                var statuses = _statuses.Where(kv => kv.Value).Select(kv => kv.Key.ToString()).ToList();
-                var parts = new List<string>();
-                if (triggers.Count == 1)
-                {
-                    parts.Add(triggers[0]);
-                }
-                else if (triggers.Count > 1)
-                {
-                    parts.Add($"{triggers.Count} hendelser");
-                }
-
-                if (statuses.Count == 1)
-                {
-                    parts.Add(statuses[0]);
-                }
-                else if (statuses.Count > 1)
-                {
-                    parts.Add($"{statuses.Count} statuser");
-                }
-
-                return parts.Count > 0 ? string.Join(" · ", parts) : DimensionLabel(dim);
-            }
             case FilterDim.Instance:
             case FilterDim.Operation:
                 var texts = TextValues(dim);
@@ -663,18 +806,6 @@
                     _ => $"{ids.Count} {PluralLabel(dim)}",
                 };
         }
-    }
-
-    private string EnumChipLabel<T>(FilterDim dim, Dictionary<T, bool> values)
-        where T : notnull
-    {
-        var selected = values.Where(kv => kv.Value).Select(kv => kv.Key.ToString()).ToList();
-        return selected.Count switch
-        {
-            0 => DimensionLabel(dim),
-            1 => selected[0]!,
-            _ => $"{selected.Count} {PluralLabel(dim)}",
-        };
     }
 
     private string NameOrShortId(Guid id) =>
@@ -787,16 +918,6 @@
         }
     }
 
-    private void ToggleActivityType(Guid id)
-    {
-        if (!_selectedActivityTypes.Add(id))
-        {
-            _selectedActivityTypes.Remove(id);
-        }
-
-        ScheduleQuery();
-    }
-
     private IReadOnlyCollection<ActivityTypeKey>? SelectedActivityTypeKeys()
     {
         if (_selectedActivityTypes.Count == 0)
@@ -899,24 +1020,7 @@
         </MudStack>
     };
 
-    private RenderFragment EnumCheckboxes<T>(Dictionary<T, bool> values)
-        where T : notnull => __builder =>
-    {
-        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
-            @foreach (var key in values.Keys.ToList())
-            {
-                var k = key;
-                <MudCheckBox T="bool"
-                             Value="@values[k]"
-                             ValueChanged="@(on => { values[k] = on; ScheduleQuery(); })"
-                             Label="@k.ToString()"
-                             Color="Color.Primary"
-                             Dense="true" />
-            }
-        </MudStack>
-    };
-
-    // ── Catalog search (roles, packages, resources) ───────────────────────────
+    // ── Facet search (occurring values) ───────────────────────────────────────
 
     private Task OnFacetKeyDown(KeyboardEventArgs e) =>
         e.Key == "Enter" ? SearchFacetAsync() : Task.CompletedTask;
@@ -1069,9 +1173,6 @@
         InstanceIds = TextListOrNull(FilterDim.Instance),
         OperationIds = TextListOrNull(FilterDim.Operation),
         ActivityTypeKeys = SelectedActivityTypeKeys(),
-        Subtypes = Checked(_subtypes),
-        Triggers = Checked(_triggers),
-        Statuses = Checked(_statuses),
         After = _afterDate is not null ? new DateTimeOffset(_afterDate.Value.Date, TimeSpan.Zero) : null,
         Before = _beforeDate is not null ? new DateTimeOffset(_beforeDate.Value.Date.AddDays(1), TimeSpan.Zero) : null,
     };
@@ -1086,13 +1187,6 @@
     {
         var list = TextValues(dim);
         return list.Count > 0 ? list : null;
-    }
-
-    private static IReadOnlyCollection<T>? Checked<T>(Dictionary<T, bool> values)
-        where T : notnull
-    {
-        var selected = values.Where(kv => kv.Value).Select(kv => kv.Key).ToList();
-        return selected.Count > 0 ? selected : null;
     }
 
     // ── Grouping and results ──────────────────────────────────────────────────
