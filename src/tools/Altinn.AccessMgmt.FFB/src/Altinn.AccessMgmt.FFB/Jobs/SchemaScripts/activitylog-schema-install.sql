@@ -1903,3 +1903,121 @@ ON CONFLICT (source) DO NOTHING;
 
 COMMIT;
 
+START TRANSACTION;
+CREATE TABLE dbo.activitytype (
+    id uuid NOT NULL,
+    audit_changedby uuid,
+    audit_changedbysystem uuid,
+    audit_changeoperation text,
+    audit_validfrom timestamp with time zone NOT NULL,
+    type integer NOT NULL,
+    subtype integer,
+    trigger integer NOT NULL,
+    status integer,
+    name text NOT NULL,
+    description text NOT NULL,
+    CONSTRAINT pk_activitytype PRIMARY KEY (id)
+);
+
+CREATE OR REPLACE FUNCTION dbo.audit_activitytype_insert_fn() returns TRIGGER language plpgsql AS $$
+BEGIN
+DECLARE
+changed_by UUID;
+changed_by_system UUID;
+change_operation_id text;
+BEGIN
+SELECT current_setting('app.changed_by', false) INTO changed_by;
+SELECT current_setting('app.changed_by_system', false) INTO changed_by_system;
+SELECT current_setting('app.change_operation_id', false) INTO change_operation_id;
+IF NEW.audit_changedby IS NULL THEN NEW.audit_changedby := changed_by; END IF;
+IF NEW.audit_changedbysystem IS NULL THEN NEW.audit_changedbysystem := changed_by_system; END IF;
+IF NEW.audit_changeoperation IS NULL THEN NEW.audit_changeoperation := change_operation_id; END IF;
+IF NEW.audit_validfrom IS NULL THEN NEW.audit_validfrom := now(); END IF;
+RETURN NEW;
+END;
+END;
+$$;
+DO $$ BEGIN IF NOT EXISTS (SELECT * FROM pg_trigger t WHERE t.tgname ILIKE 'audit_activitytype_insert_trg' AND t.tgrelid = to_regclass('dbo.activitytype')) THEN
+CREATE OR REPLACE TRIGGER audit_activitytype_insert_trg BEFORE INSERT OR UPDATE ON dbo.activitytype
+FOR EACH ROW EXECUTE FUNCTION dbo.audit_activitytype_insert_fn();
+END IF; END $$;
+
+
+CREATE OR REPLACE FUNCTION dbo.audit_activitytype_update_fn()
+RETURNS TRIGGER AS $$
+BEGIN
+INSERT INTO dbo_history.auditactivitytype (
+description,id,name,status,subtype,trigger,type,
+audit_validfrom, audit_validto,
+audit_changedby, audit_changedbysystem, audit_changeoperation
+) VALUES (
+OLD.description,OLD.id,OLD.name,OLD.status,OLD.subtype,OLD.trigger,OLD.type,
+OLD.audit_validfrom, now(),
+OLD.audit_changedby, OLD.audit_changedbysystem, OLD.audit_changeoperation
+);
+RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+DO $$ BEGIN IF NOT EXISTS (SELECT * FROM pg_trigger t WHERE t.tgname ILIKE 'audit_activitytype_update_trg' AND t.tgrelid = to_regclass('dbo.activitytype')) THEN
+CREATE OR REPLACE TRIGGER audit_activitytype_update_trg AFTER UPDATE ON dbo.activitytype
+FOR EACH ROW EXECUTE FUNCTION dbo.audit_activitytype_update_fn();
+END IF; END $$;
+
+
+CREATE OR REPLACE FUNCTION dbo.audit_activitytype_delete_fn()
+RETURNS TRIGGER AS $$
+DECLARE ctx RECORD;
+BEGIN
+SELECT * INTO ctx FROM session_audit_context LIMIT 1;
+INSERT INTO dbo_history.auditactivitytype (
+description,id,name,status,subtype,trigger,type,
+audit_validfrom, audit_validto,
+audit_changedby, audit_changedbysystem, audit_changeoperation,
+audit_deletedby, audit_deletedbysystem, audit_deleteoperation
+) VALUES (
+OLD.description,OLD.id,OLD.name,OLD.status,OLD.subtype,OLD.trigger,OLD.type,
+OLD.audit_validfrom, now(),
+OLD.audit_changedby, OLD.audit_changedbysystem, OLD.audit_changeoperation,
+ctx.changed_by, ctx.changed_by_system, ctx.change_operation_id
+);
+RETURN OLD;
+END;
+$$ LANGUAGE plpgsql;
+DO $$ BEGIN IF NOT EXISTS (SELECT * FROM pg_trigger t WHERE t.tgname ILIKE 'audit_activitytype_delete_trg' AND t.tgrelid = to_regclass('dbo.activitytype')) THEN
+CREATE OR REPLACE TRIGGER audit_activitytype_delete_trg AFTER DELETE ON dbo.activitytype
+FOR EACH ROW EXECUTE FUNCTION dbo.audit_activitytype_delete_fn();
+END IF; END $$;
+
+
+GRANT SELECT, INSERT, UPDATE, DELETE, TRIGGER, REFERENCES ON TABLE dbo.activitytype TO platform_authorization;
+GRANT SELECT, INSERT, UPDATE, DELETE, TRIGGER, REFERENCES ON TABLE dbo.activitytype TO platform_authorization_admin;
+
+
+CREATE TABLE dbo_history.auditactivitytype (
+    audit_validfrom timestamp with time zone NOT NULL,
+    id uuid NOT NULL,
+    audit_validto timestamp with time zone NOT NULL,
+    audit_deletedby uuid,
+    audit_deletedbysystem uuid,
+    audit_deleteoperation text,
+    audit_changedby uuid,
+    audit_changedbysystem uuid,
+    audit_changeoperation text,
+    type integer NOT NULL,
+    subtype integer,
+    trigger integer NOT NULL,
+    status integer,
+    name text,
+    description text,
+    CONSTRAINT pk_auditactivitytype PRIMARY KEY (id, audit_validfrom, audit_validto)
+);
+
+GRANT SELECT, INSERT, UPDATE, DELETE, TRIGGER, REFERENCES ON TABLE dbo_history.auditactivitytype TO platform_authorization;
+GRANT SELECT, INSERT, UPDATE, DELETE, TRIGGER, REFERENCES ON TABLE dbo_history.auditactivitytype TO platform_authorization_admin;
+
+
+CREATE UNIQUE INDEX ix_activitytype_type_subtype_trigger_status ON dbo.activitytype (type, subtype, trigger, status) NULLS NOT DISTINCT;
+
+
+COMMIT;
+

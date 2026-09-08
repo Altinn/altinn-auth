@@ -6,12 +6,16 @@ namespace Altinn.AccessMgmt.FFB.Jobs;
 
 /// <summary>
 /// Manually installs or rolls back the activity log schema in a test environment, using the SQL
-/// generated from the ActivityLog EF migration but without the <c>__EFMigrationsHistory</c>
-/// bookkeeping — EF still considers the migration unapplied. Intended for trying the triggers,
-/// analysis and backfill in larger environments before the real migration ships. Guards refuse
-/// both operations in any environment where EF has applied the migration, and the install
-/// refuses when dbo.activitylog already exists — so an EF-managed environment can never be
-/// touched. Roll back before the real migration runs, since the migration is not idempotent.
+/// generated from the ActivityLog and ActivityTypeCatalog EF migrations but without the
+/// <c>__EFMigrationsHistory</c> bookkeeping — EF still considers the migrations unapplied.
+/// Intended for trying the triggers, analysis and backfill in larger environments before the
+/// real migrations ship. The dbo.activitytype catalog table is created but left unseeded
+/// (seeding happens via StaticDataIngest when the release deploys); the runtime resolves the
+/// catalog from ActivityTypeConstants in memory, so nothing depends on the table content.
+/// Guards refuse both operations in any environment where EF has applied the migrations, and
+/// the install refuses when dbo.activitylog already exists — so an EF-managed environment can
+/// never be touched. Roll back before the real migrations run, since they are not idempotent.
+/// The embedded scripts must be regenerated whenever an activity log migration changes.
 /// </summary>
 public static class ActivityLogSchemaJob
 {

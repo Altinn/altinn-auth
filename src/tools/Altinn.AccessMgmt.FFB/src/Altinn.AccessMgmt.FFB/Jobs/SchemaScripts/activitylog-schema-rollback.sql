@@ -1,4 +1,12 @@
 START TRANSACTION;
+DROP TABLE dbo.activitytype;
+
+DROP TABLE dbo_history.auditactivitytype;
+
+
+COMMIT;
+
+START TRANSACTION;
 DROP TRIGGER IF EXISTS activitylog_assignment_insert_trg ON dbo.assignment;
 DROP TRIGGER IF EXISTS activitylog_assignment_delete_trg ON dbo.assignment;
 DROP TRIGGER IF EXISTS activitylog_assignmentpackage_insert_trg ON dbo.assignmentpackage;
