@@ -3,6 +3,7 @@ using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 
@@ -10,7 +11,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 /// The ConnectionQuery class provides methods for querying connections between entities based on assignments, delegations, and other relationships.
 /// It supports filtering, enrichment of results with related data, and checking for the existence of connections between two parties.
 /// </summary>
-public class ConnectionQuery(AppDbContext db)
+public class ConnectionQuery(AppDbContext db, ILogger<ConnectionQuery> logger)
 {
     private readonly ConnectionBaseQueryBuilder _baseQueryBuilder = new();
     
@@ -216,7 +217,7 @@ public class ConnectionQuery(AppDbContext db)
 
             if (filter.EnrichEntities)
             {
-                var enricher = new ConnectionEntityEnricher(db);
+                var enricher = new ConnectionEntityEnricher(db, logger);
                 result = await enricher.EnrichAsync(
                     result,
                     filter,

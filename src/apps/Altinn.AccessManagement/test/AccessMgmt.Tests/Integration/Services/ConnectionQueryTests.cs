@@ -7,6 +7,7 @@ using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 using DelegationPackage = Altinn.AccessMgmt.PersistenceEF.Models.DelegationPackage;
 using DelegationResource = Altinn.AccessMgmt.PersistenceEF.Models.DelegationResource;
 
@@ -28,7 +29,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
             .Options;
 
         _db = new AppDbContext(options);
-        _query = new ConnectionQuery(_db);
+        _query = new ConnectionQuery(_db, NullLogger<ConnectionQuery>.Instance);
     }
 
     /// <inheritdoc />

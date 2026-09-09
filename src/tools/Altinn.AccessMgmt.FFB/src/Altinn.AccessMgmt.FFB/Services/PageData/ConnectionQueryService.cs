@@ -10,7 +10,7 @@ namespace Altinn.AccessMgmt.FFB.Services.PageData;
 /// Runs ConnectionQuery against an environment and loads the role list
 /// for the connection query page.
 /// </summary>
-public sealed class ConnectionQueryService(IEnvironmentDbContextFactory dbFactory)
+public sealed class ConnectionQueryService(IEnvironmentDbContextFactory dbFactory, ILogger<ConnectionQuery> logger)
 {
     public async Task<List<Role>> GetRolesAsync(string environment, CancellationToken ct = default)
     {
@@ -28,7 +28,7 @@ public sealed class ConnectionQueryService(IEnvironmentDbContextFactory dbFactor
         CancellationToken ct = default)
     {
         using var db = dbFactory.CreateContext(environment);
-        var query = new ConnectionQuery(db);
+        var query = new ConnectionQuery(db, logger);
 
         return direction == ConnectionQueryDirection.FromOthers
             ? await query.GetConnectionsFromOthersAsync(filter, ct: ct)
