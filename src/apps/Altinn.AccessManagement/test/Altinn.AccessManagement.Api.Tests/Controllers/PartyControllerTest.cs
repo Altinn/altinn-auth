@@ -8,7 +8,6 @@ using Altinn.Authorization.Api.Contracts.Party;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.IdentityModel.Tokens;
 using Moq;
 using ValidationErrors = Altinn.AccessMgmt.Core.Utils.Models.ValidationErrors;
 

@@ -12,17 +12,17 @@ using Altinn.AccessManagement.Core.Models.Rights;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Enums;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.Authorization.ABAC;
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
-using Altinn.Platform.Register.Enums;
-using Altinn.Platform.Register.Models;
 using Altinn.Urn;
 using Altinn.Urn.Json;
-using Authorization.Platform.Authorization.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.FeatureManagement;
+using DbModels = Altinn.AccessMgmt.PersistenceEF.Models;
 
 namespace Altinn.AccessManagement.Core.Services
 {
@@ -37,6 +37,7 @@ namespace Altinn.AccessManagement.Core.Services
         private readonly IDelegationMetadataRepository _delegationRepository;
         private readonly IContextRetrievalService _contextRetrievalService;
         private readonly IProfileClient _profile;
+        private readonly IFeatureManager _featureManager;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PolicyInformationPoint"/> class.
@@ -47,7 +48,8 @@ namespace Altinn.AccessManagement.Core.Services
         /// <param name="contextRetrievalService">Service for retrieving context information</param>
         /// <param name="profile">Service for retrieving user profile information</param>
         /// <param name="dbContext">The database context</param>
-        public PolicyInformationPoint(ILogger<IPolicyInformationPoint> logger, IPolicyRetrievalPoint policyRetrievalPoint, IDelegationMetadataRepository delegationRepository, IContextRetrievalService contextRetrievalService, IProfileClient profile, AppDbContext dbContext)
+        /// <param name="featureManager">The feature manager</param>
+        public PolicyInformationPoint(ILogger<IPolicyInformationPoint> logger, IPolicyRetrievalPoint policyRetrievalPoint, IDelegationMetadataRepository delegationRepository, IContextRetrievalService contextRetrievalService, IProfileClient profile, AppDbContext dbContext, IFeatureManager featureManager)
         {
             _logger = logger;
             _prp = policyRetrievalPoint;
@@ -55,6 +57,7 @@ namespace Altinn.AccessManagement.Core.Services
             _contextRetrievalService = contextRetrievalService;
             _profile = profile;
             _dbContext = dbContext;
+            _featureManager = featureManager;
         }
 
         /// <inheritdoc/>
@@ -74,94 +77,6 @@ namespace Altinn.AccessManagement.Core.Services
             return rules;
         }
 
-        /// <inheritdoc/>
-        public async Task<List<Right>> GetRights(RightsQuery rightsQuery, bool returnAllPolicyRights = false, bool getDelegableRights = false, CancellationToken cancellationToken = default)
-        {
-            Dictionary<string, Right> result = new Dictionary<string, Right>();
-            XacmlPolicy policy = null;
-
-            if (rightsQuery.Type != RightsQueryType.User)
-            {
-                return result.Values.ToList();
-            }
-
-            // TODO: Caching??
-
-            // Verify resource
-            if (!DelegationHelper.TryGetResourceFromAttributeMatch(rightsQuery.Resource.AuthorizationReference, out ResourceAttributeMatchType resourceMatchType, out string resourceId, out string org, out string app, out _, out _)
-                || resourceMatchType == ResourceAttributeMatchType.None)
-            {
-                throw new ValidationException($"RightsQuery must specify a valid Resource. Valid resource can either be a single resource from the Altinn resource registry ({AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute}) or an Altinn app (identified by both {AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute} and {AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute})");
-            }
-
-            if (resourceMatchType == ResourceAttributeMatchType.ResourceRegistry)
-            {
-                policy = await _prp.GetPolicyAsync(resourceId, cancellationToken);
-            }
-            else if (resourceMatchType == ResourceAttributeMatchType.AltinnAppId)
-            {
-                policy = await _prp.GetPolicyAsync(org, app, cancellationToken);
-            }
-
-            if (policy == null)
-            {
-                throw new ValidationException($"No valid policy found for the specified resource");
-            }
-
-            // Verify From/OfferedBy
-            if (!DelegationHelper.TryGetPartyIdFromAttributeMatch(rightsQuery.From, out int offeredByPartyId))
-            {
-                throw new ValidationException($"Rights query currently only support lookup of rights FROM partyid ({AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute})");
-            }
-
-            // Verify To/CoveredBy
-            if (!DelegationHelper.TryGetUserIdFromAttributeMatch(rightsQuery.To, out int coveredByUserId))
-            {
-                throw new ValidationException($"Rights query currently only support lookup of rights TO a userid: ({AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute})");
-            }
-
-            // Policy Rights
-            List<Role> userRoles;
-            if (getDelegableRights)
-            {
-                userRoles = await _contextRetrievalService.GetRolesForDelegation(coveredByUserId, offeredByPartyId, cancellationToken);
-            }
-            else
-            {
-                userRoles = await _contextRetrievalService.GetDecisionPointRolesForUser(coveredByUserId, offeredByPartyId, cancellationToken);
-            }
-
-            int minimumAuthenticationLevel = PolicyHelper.GetMinimumAuthenticationLevelFromXacmlPolicy(policy);
-            if (userRoles.Any() || returnAllPolicyRights || getDelegableRights)
-            {
-                List<AttributeMatch> userRoleAttributeMatches = RightsHelper.GetRoleAttributeMatches(userRoles);
-                RightSourceType policyType = resourceMatchType == ResourceAttributeMatchType.ResourceRegistry ? RightSourceType.ResourceRegistryPolicy : RightSourceType.AppPolicy;
-                EnrichRightsDictionaryWithRightsFromPolicy(result, policy, policyType, userRoleAttributeMatches, minimumAuthenticationLevel: minimumAuthenticationLevel, returnAllPolicyRights: returnAllPolicyRights, getDelegableRights: getDelegableRights);
-            }
-
-            // Delegation Policy Rights
-            List<DelegationChange> delegations = await FindAllDelegations(coveredByUserId, 0, Guid.Empty, UuidType.NotSpecified, offeredByPartyId, resourceId, resourceMatchType, cancellationToken: cancellationToken);
-
-            foreach (DelegationChange delegation in delegations)
-            {
-                XacmlPolicy delegationPolicy = await _prp.GetPolicyVersionAsync(delegation.BlobStoragePolicyPath, delegation.BlobStorageVersionId, cancellationToken);
-                List<AttributeMatch> subjects = RightsHelper.GetDelegationSubjectAttributeMatches(delegation);
-                EnrichRightsDictionaryWithRightsFromPolicy(result, delegationPolicy, RightSourceType.DelegationPolicy, subjects, minimumAuthenticationLevel: minimumAuthenticationLevel, delegationOfferedByPartyId: delegation.OfferedByPartyId, getDelegableRights: getDelegableRights);
-            }
-
-            if (returnAllPolicyRights)
-            {
-                return result.Values.ToList();
-            }
-
-            if (getDelegableRights)
-            {
-                return result.Values.Where(r => r.CanDelegate.HasValue && r.CanDelegate.Value).ToList();
-            }
-
-            return result.Values.Where(r => r.HasPermit.HasValue && r.HasPermit.Value).ToList();
-        }
-
         /// <inheritdoc />
         public async Task<List<Right>> GetDelegableRightsByApp(RightsQuery rightsQuery, CancellationToken cancellationToken = default)
         {
@@ -178,24 +93,6 @@ namespace Altinn.AccessManagement.Core.Services
             EnrichRightsDictionaryWithRightsFromPolicy(result, policy, policyType, rightsQuery.To, minimumAuthenticationLevel: minimumAuthenticationLevel, returnAllPolicyRights: false, getDelegableRights: true);
 
             return result.Values.Where(r => r.CanDelegate.HasValue && r.CanDelegate.Value).ToList();
-        }
-
-        /// <inheritdoc />
-        public async Task<List<DelegationChange>> GetNextPageAppDelegationChanges(long appRightFeedId = 1, CancellationToken cancellationToken = default)
-        {
-            return await _delegationRepository.GetNextPageAppDelegationChanges(appRightFeedId, cancellationToken);
-        }
-
-        /// <inheritdoc />
-        public async Task<List<DelegationChange>> GetNextPageResourceDelegationChanges(long appRightFeedId = 1, CancellationToken cancellationToken = default)
-        {
-            return await _delegationRepository.GetNextPageResourceDelegationChanges(appRightFeedId, cancellationToken);
-        }
-
-        /// <inheritdoc />
-        public async Task<List<InstanceDelegationChange>> GetNextPageInstanceDelegationChanges(long instanceRightFeedId = 1, CancellationToken cancellationToken = default)
-        {
-            return await _delegationRepository.GetNextPageInstanceDelegationChanges(instanceRightFeedId, cancellationToken);
         }
 
         private async Task<XacmlPolicy> GetPolicy(List<AttributeMatch> resource, CancellationToken cancellationToken)
@@ -224,52 +121,6 @@ namespace Altinn.AccessManagement.Core.Services
             }
 
             return policy;
-        }
-
-        /// <inheritdoc/>
-        public async Task<IEnumerable<DelegationChange>> GetReceivedDelegationFromRepository(int partyId, CancellationToken cancellationToken = default)
-        {
-            var party = await _contextRetrievalService.GetPartyAsync(partyId, cancellationToken);
-
-            if (party?.PartyTypeName == PartyType.Person)
-            {
-                var user = await _profile.GetUser(new() { Ssn = party.SSN }, cancellationToken);
-
-                var keyRoles = await _contextRetrievalService.GetKeyRolePartyIds(user.UserId, cancellationToken);
-                return await _delegationRepository.GetAllDelegationChangesForAuthorizedParties(user.UserId.SingleToList(), keyRoles, cancellationToken);
-            }
-
-            if (party?.PartyTypeName == PartyType.Organisation)
-            {
-                return await _delegationRepository.GetAllDelegationChangesForAuthorizedParties(null, party.PartyId.SingleToList(), cancellationToken);
-            }
-
-            throw new ArgumentException($"failed to handle party with id '{partyId}'");
-        }
-
-        /// <inheritdoc/>
-        public async Task<IEnumerable<DelegationChange>> GetOfferedDelegationsFromRepository(int partyId, CancellationToken cancellationToken = default)
-        {
-            var party = await _contextRetrievalService.GetPartyAsync(partyId, cancellationToken);
-
-            if (party.PartyTypeName == PartyType.Person)
-            {
-                return await _delegationRepository.GetOfferedDelegations(partyId.SingleToList(), cancellationToken);
-            }
-
-            if (party.PartyTypeName == PartyType.Organisation)
-            {
-                var mainUnits = await _contextRetrievalService.GetMainUnits(party.PartyId.SingleToList(), cancellationToken);
-                var parties = party.PartyId.SingleToList();
-                if (mainUnits?.FirstOrDefault() is var mainUnit && mainUnit?.PartyId != null)
-                {
-                    parties.Add((int)mainUnit.PartyId);
-                }
-
-                return await _delegationRepository.GetOfferedDelegations(parties, cancellationToken);
-            }
-
-            throw new ArgumentException($"failed to handle party with id '{partyId}'");
         }
 
         /// <inheritdoc/>
@@ -410,15 +261,17 @@ namespace Altinn.AccessManagement.Core.Services
 
             Guid? fromParty = null;
             List<Guid> toParties = null;
+            HashSet<Guid> toAppControlledRightholders = null;
 
             var from = await _dbContext.Entities
-                    .AsNoTracking()
+                    .AsNoTracking() 
                     .Where(e => e.PartyId == reporteePartyId)
                     .FirstOrDefaultAsync(cancellationToken);
             if (includeInstanceDelegations)
             {
                 fromParty = from?.Id;
                 toParties = new List<Guid>();
+                toAppControlledRightholders = [];
             }
 
             // Check if mainunit exists
@@ -485,6 +338,24 @@ namespace Altinn.AccessManagement.Core.Services
                     coveredByPartyIds.AddRange(keyRoleSubUnits.Where(s => s.PartyId.HasValue).Select(s => s.PartyId.Value));
                     coveredByPartyUuids = keyRoleAssignments.Select(t => t.FromId).Distinct().ToList();
                     coveredByPartyUuids.AddRange(keyRoleSubUnits.Select(s => s.Id).ToList());
+
+                    if (includeInstanceDelegations)
+                    {
+                        // Fetch all the parties the subject user has the CompanyRepresentativeFormTasks package for, and add them to separate list of toPartiesRuntimeDelegated to verify only AltinnApp instance delegations.
+                        var representativeFormTasks = await _dbContext.Assignments
+                            .AsNoTracking()
+                            .Where(t => t.ToId == subject.Id)
+                            .Join(_dbContext.AssignmentPackages, a => a.Id, p => p.AssignmentId, (a, p) => new { Assignment = a, AssignmentPackage = p })
+                            .Where(t => t.AssignmentPackage.PackageId == PackageConstants.CompanyRepresentativeFormTasks)
+                            .ToListAsync(cancellationToken);
+                        var representativeFormTasksSubUnits = await _dbContext.Entities
+                            .AsNoTracking()
+                            .Where(e => e.ParentId.HasValue && representativeFormTasks.Select(k => k.Assignment.FromId).Distinct().Contains(e.ParentId.Value))
+                            .ToListAsync(cancellationToken);
+
+                        toAppControlledRightholders.UnionWith(representativeFormTasks.Select(t => t.Assignment.FromId));
+                        toAppControlledRightholders.UnionWith(representativeFormTasksSubUnits.Select(s => s.Id));
+                    }
                 }
             }
 
@@ -504,8 +375,8 @@ namespace Altinn.AccessManagement.Core.Services
                 }
             }
 
-            // 3. Get all instance delegations of the resource both directly delegated to user and indirectly through keyrole units
-            if (includeInstanceDelegations && fromParty.HasValue && toParties.Count > 0)
+            // 3. Get all instance delegations of the resource both directly delegated to user and indirectly through keyrole units and runtime-delegated signing packages
+            if (includeInstanceDelegations && fromParty.HasValue && (toParties.Count > 0 || toAppControlledRightholders.Count > 0))
             {
                 if (resourceMatchType == ResourceAttributeMatchType.AltinnAppId)
                 {
@@ -513,15 +384,22 @@ namespace Altinn.AccessManagement.Core.Services
                     resourceIds = $"app_{resourceOrgApp[0]}_{resourceOrgApp[1]}".SingleToList();
                 }
 
-                delegations.AddRange(await GetInstanceDelegations(resourceIds, fromParty.Value, toParties, cancellationToken));
+                delegations.AddRange(await GetInstanceDelegations(resourceIds, fromParty.Value, toParties.ToList(), toAppControlledRightholders.ToList(), cancellationToken));
+            }
+
+            // 4. Client-delegated resources (v2)
+            if (await _featureManager.IsEnabledAsync("AccessManagement.Pip.IncludeClientDelegatedResources", cancellationToken))
+            {
+                var clientDelegations = await GetClientDelegatedResources(subjectUserId, subjectUuid, subjectUuidType, from, resourceId, resourceMatchType, cancellationToken);
+                delegations.AddRange(clientDelegations);
             }
 
             return delegations;
         }
 
-        private async Task<IEnumerable<DelegationChange>> GetInstanceDelegations(List<string> resourceIds, Guid from, List<Guid> to, CancellationToken cancellationToken = default)
+        private async Task<IEnumerable<DelegationChange>> GetInstanceDelegations(List<string> resourceIds, Guid from, List<Guid> to, List<Guid> toAppControlledRightholders, CancellationToken cancellationToken = default)
         {
-            IEnumerable<InstanceDelegationChange> instanceDelegations = await _delegationRepository.GetActiveInstanceDelegations(resourceIds, from, to, cancellationToken);
+            IEnumerable<InstanceDelegationChange> instanceDelegations = await _delegationRepository.GetActiveInstanceDelegations(resourceIds, from, to, toAppControlledRightholders, cancellationToken);
             return from InstanceDelegationChange instanceDelegation in instanceDelegations
                    let delegationChange = new DelegationChange
                    {
@@ -539,6 +417,112 @@ namespace Altinn.AccessManagement.Core.Services
                        Created = instanceDelegation.Created
                    }
                    select delegationChange;
+        }
+
+        private async Task<List<DelegationChange>> GetClientDelegatedResources(int subjectUserId, Guid subjectUuid, UuidType subjectUuidType, DbModels.Entity fromEntity, string resourceId, ResourceAttributeMatchType resourceMatchType, CancellationToken cancellationToken)
+        {
+            if (fromEntity == null)
+            {
+                return [];
+            }
+
+            // Resolve subject entity UUID
+            Guid? subjectEntityId = null;
+            if (subjectUserId > 0)
+            {
+                var subjectEntity = await _dbContext.Entities
+                    .AsNoTracking()
+                    .Where(e => e.UserId == subjectUserId)
+                    .FirstOrDefaultAsync(cancellationToken);
+                subjectEntityId = subjectEntity?.Id;
+            }
+            else if (subjectUuidType == UuidType.SystemUser)
+            {
+                subjectEntityId = subjectUuid;
+            }
+
+            if (!subjectEntityId.HasValue)
+            {
+                return [];
+            }
+
+            // Build list of offering entity IDs (reportee + parent/main unit)
+            List<Guid> offeringEntityIds = [fromEntity.Id];
+            if (fromEntity.ParentId.HasValue)
+            {
+                offeringEntityIds.Add(fromEntity.ParentId.Value);
+            }
+
+            // Resolve the resource RefId to match against
+            string resourceRefId = resourceId;
+            if (resourceMatchType == ResourceAttributeMatchType.AltinnAppId)
+            {
+                string[] resourceOrgApp = resourceId.Split('/');
+                resourceRefId = $"app_{resourceOrgApp[0]}_{resourceOrgApp[1]}";
+            }
+
+            // Query v2 DelegationResources where:
+            // - The delegation's "from" assignment's FromId matches the reportee (offering party)
+            // - The delegation's "to" assignment's ToId matches the subject (direct match only)
+            // - The resource RefId matches the requested resource
+            var clientDelegationResults = await _dbContext.DelegationResources
+                .AsNoTracking()
+                .Include(dr => dr.Delegation)
+                    .ThenInclude(d => d.From)
+                        .ThenInclude(a => a.From)
+                .Include(dr => dr.Delegation)
+                    .ThenInclude(d => d.Facilitator)
+                .Include(dr => dr.AssignmentResource)
+                .Include(dr => dr.Resource)
+                .Where(dr => offeringEntityIds.Contains(dr.Delegation.From.FromId))
+                .Where(dr => dr.Delegation.To.ToId == subjectEntityId.Value)
+                .Where(dr => dr.Resource.RefId == resourceRefId)
+                .ToListAsync(cancellationToken);
+
+            // Map to DelegationChange objects
+            // The viaParty org is mapped as the covered-by party, matching the pattern used for keyrole-inherited delegations.
+            // The delegation policy blob has the viaParty org as the subject match, so the DecisionController's
+            // context enrichment needs CoveredByPartyId/ToUuid to add the org's party attributes to the XACML request.
+            return clientDelegationResults.Select(dr =>
+            {
+                var fromEntity = dr.Delegation.From.From;
+                var viaParty = dr.Delegation.Facilitator
+                    ?? throw new InvalidOperationException($"Delegation {dr.DelegationId} is missing its Facilitator entity. FacilitatorId is required.");
+
+                return new DelegationChange
+                {
+                    ResourceId = dr.Resource.RefId,
+                    DelegationChangeType = DelegationChangeType.Grant,
+                    BlobStoragePolicyPath = dr.AssignmentResource.PolicyPath,
+                    BlobStorageVersionId = dr.AssignmentResource.PolicyVersion,
+                    OfferedByPartyId = fromEntity.PartyId ?? 0,
+                    FromUuid = fromEntity.Id,
+                    FromUuidType = MapEntityTypeToUuidType(fromEntity.TypeId),
+                    CoveredByPartyId = viaParty.PartyId,
+                    ToUuid = viaParty.Id,
+                    ToUuidType = UuidType.Organization,
+                };
+            }).ToList();
+        }
+
+        private static UuidType MapEntityTypeToUuidType(Guid entityTypeId)
+        {
+            if (entityTypeId == EntityTypeConstants.Person)
+            {
+                return UuidType.Person;
+            }
+
+            if (entityTypeId == EntityTypeConstants.Organization)
+            {
+                return UuidType.Organization;
+            }
+
+            if (entityTypeId == EntityTypeConstants.SystemUser)
+            {
+                return UuidType.SystemUser;
+            }
+
+            return UuidType.NotSpecified;
         }
 
         private static List<Rule> GetRulesFromPolicyAndDelegationChange(ICollection<XacmlRule> xacmlRules, DelegationChange delegationChange)

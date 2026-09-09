@@ -1,10 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using Altinn.Authorization.ABAC.Constants;
-using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.Tests.Data;
 using Altinn.Authorization.Tests.MockServices;
 using Altinn.Authorization.Tests.Util;
@@ -19,11 +12,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
-using Xunit;
 
 namespace Altinn.Authorization.Tests.Unit
 {
-    [Collection("PolicyAdministrationPointTest")]
+    [Collection(PolicyAdministrationPointCollection.Name)]
     [UnitTest]
     public class PolicyAdministrationPointTest
     {

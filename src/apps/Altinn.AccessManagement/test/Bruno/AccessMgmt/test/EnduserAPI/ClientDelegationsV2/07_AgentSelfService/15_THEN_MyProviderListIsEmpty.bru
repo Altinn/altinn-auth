@@ -1,0 +1,37 @@
+meta {
+  name: 15_THEN_MyProviderListIsEmpty
+  type: http
+  seq: 15
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/my/clientproviders
+  body: none
+  auth: inherit
+}
+
+docs {
+  THEN the my provider list no longer contains the facilitator after the agent
+  left the provider.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs, scopes } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  await loginAs(td.REGN_Organisasjon.REGN_Agent, scopes.myclientsRead);
+}
+
+tests {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+
+  test("THEN the provider list request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the facilitator is no longer in the provider list", function() {
+    const providerUuid = td.REGN_Organisasjon.partyUuid.toLowerCase();
+    const entry = res.getBody().data.find(item => item.provider.id.toLowerCase() === providerUuid);
+    expect(entry, "expected the facilitator to be gone from the provider list").to.be.undefined;
+  });
+}

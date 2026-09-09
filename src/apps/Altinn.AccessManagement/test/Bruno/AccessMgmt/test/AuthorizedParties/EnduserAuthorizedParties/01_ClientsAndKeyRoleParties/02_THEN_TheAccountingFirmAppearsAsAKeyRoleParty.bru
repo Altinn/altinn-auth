@@ -1,0 +1,79 @@
+meta {
+  name: 02_THEN_TheAccountingFirmAppearsAsAKeyRoleParty
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeRoles=true&includeAccessPackages=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeRoles: true
+  includeAccessPackages: true
+}
+
+docs {
+  THEN the accounting firm the caller is daily leader for appears as a top level party
+  with the daily leader role, and its subunit is nested under it with the same access.
+
+  The number of access packages a daily leader holds follows the access package
+  catalogue, so the step asserts membership of the packages the scenario is about
+  rather than a total.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty, lower } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  const firm = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER;
+
+  test("THEN the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the accounting firm appears as a top level party with its registry fields", function() {
+    const party = res.getBody().data.find(item => item.partyUuid.toLowerCase() === firm.partyUuid.toLowerCase());
+    expect(party, `expected ${firm.name} as a top level party`).to.not.be.undefined;
+    expect(party.name).to.equal(firm.name);
+    expect(party.organizationNumber).to.equal(firm.orgno);
+    expect(party.partyId).to.equal(firm.partyId);
+    expect(party.type).to.equal("Organization");
+    expect(party.unitType).to.equal("AS");
+    expect(party.isDeleted).to.be.false;
+    expect(party.onlyHierarchyElementWithNoAccess).to.be.false;
+    expect(party.parentId, "a main unit has no parent").to.be.null;
+    expect(party.personId).to.be.null;
+    expect(party.emailId).to.be.null;
+  });
+
+  test("AND the daily leader holds the party through the daily leader role", function() {
+    const party = findParty(res.getBody().data, firm.partyUuid);
+    expect(lower(party.authorizedRoles)).to.include("dagl");
+    expect(party.authorizedAccessPackages, "a daily leader holds access packages on the firm").to.not.be.empty;
+  });
+
+  test("AND the firm's subunit is nested under it with the same access packages", function() {
+    const party = findParty(res.getBody().data, firm.partyUuid);
+    const subunit = party.subunits.find(item => item.partyUuid.toLowerCase() === firm.subunit.partyUuid.toLowerCase());
+    expect(subunit, `expected ${firm.subunit.name} nested under the firm`).to.not.be.undefined;
+    expect(subunit.organizationNumber).to.equal(firm.subunit.orgno);
+    expect(subunit.partyId).to.equal(firm.subunit.partyId);
+    expect(subunit.unitType).to.equal("BEDR");
+    expect(subunit.authorizedAccessPackages).to.include.members(party.authorizedAccessPackages);
+  });
+
+  test("AND subunits are only returned nested, never as top level parties", function() {
+    const topLevel = res.getBody().data.map(item => item.partyUuid.toLowerCase());
+    expect(topLevel).to.not.include(firm.subunit.partyUuid.toLowerCase());
+  });
+}

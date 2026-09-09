@@ -1,7 +1,6 @@
 using System.Collections.Concurrent;
 using System.Xml;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
-using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.Authorization.ABAC.Utils;
 using Altinn.Authorization.ABAC.Xacml;
 using Microsoft.AspNetCore.Http;

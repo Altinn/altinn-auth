@@ -1,13 +1,6 @@
 @page "/jobs/history-cleanup"
-@using Altinn.AccessMgmt.FFB.Jobs
-@using Altinn.AccessMgmt.FFB.Jobs.Models
-@using Altinn.AccessMgmt.FFB.Config
-@using Altinn.AccessMgmt.FFB.Services
 @inject IJobRunner JobRunner
-@inject IJobRunStore RunStore
-@inject IEnvironmentDbContextFactory EnvFactory
 @inject IDialogService DialogService
-@implements IDisposable
 
 <PageTitle>History Cleanup</PageTitle>
 
@@ -24,18 +17,7 @@
 
     <MudGrid>
         <MudItem xs="12">
-            <MudText Typo="Typo.body2" Class="mb-2 mud-text-secondary">Kjør på miljø:</MudText>
-            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" Class="mb-2">
-                @foreach (var env in EnvFactory.Environments)
-                {
-                    var envName = env;
-                    var configured = EnvFactory.IsConfigured(envName);
-                    <MudCheckBox @bind-Value="_selected[envName]"
-                                 Label="@envName"
-                                 Disabled="@(!configured)"
-                                 Color="Color.Primary" />
-                }
-            </MudStack>
+            <EnvironmentMultiSelect @bind-Selection="_selected" Label="Kjør på miljø:" />
         </MudItem>
 
         <MudItem xs="12">
@@ -89,53 +71,31 @@
 </MudPaper>
 
 @* ── Runs ─────────────────────────────────────────────────────────────────── *@
-@if (_runs.Count > 0)
-{
-    <MudText Typo="Typo.h6" Class="mb-3">Kjøringer</MudText>
-    @foreach (var run in _runs)
-    {
-        <JobRunCard Run="@run" OnChanged="@RefreshAndRender">
-            <ExtraActions>
-                @if (run.Status == JobStatus.Completed &&
-                     run.SqlOutput.Count > 0 &&
-                     run.JobName == HistoryCleanupJob.JobName)
-                {
-                    <MudButton Variant="Variant.Filled"
-                               Color="Color.Error"
-                               Size="Size.Small"
-                               StartIcon="@Icons.Material.Filled.Edit"
-                               OnClick="@(() => ConfirmAndExecute(run))">
-                        Kjør SQL (@run.SqlOutput.Count statements)
-                    </MudButton>
-                }
-            </ExtraActions>
-        </JobRunCard>
-    }
-}
+<JobRunList @ref="_runList" JobName="@HistoryCleanupJob.JobName">
+    <ExtraActions Context="run">
+        @if (run.Status == JobStatus.Completed &&
+             run.SqlOutput.Count > 0 &&
+             run.JobName == HistoryCleanupJob.JobName)
+        {
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Error"
+                       Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.Edit"
+                       OnClick="@(() => ConfirmAndExecute(run))">
+                Kjør SQL (@run.SqlOutput.Count statements)
+            </MudButton>
+        }
+    </ExtraActions>
+</JobRunList>
 
 @code {
-    private readonly Dictionary<string, bool> _selected = new();
+    private Dictionary<string, bool> _selected = new();
     private readonly Dictionary<string, bool> _selectedTables =
         HistoryCleanupJob.KnownTables.Keys.ToDictionary(k => k, _ => true);
-    private readonly HashSet<Guid> _subscribed = [];
     private bool _executeImmediately;
-    private List<JobRun> _runs = [];
+    private JobRunList _runList = default!;
 
-    protected override void OnInitialized()
-    {
-        foreach (var env in EnvFactory.Environments)
-        {
-            _selected[env] = false;
-        }
-
-        RefreshRuns();
-    }
-
-    private void Subscribe(JobRun run)
-    {
-        if (_subscribed.Add(run.Id))
-            run.OnUpdated += () => InvokeAsync(RefreshAndRender);
-    }
+    private bool AnySelected => _selected.Values.Any(v => v) && _selectedTables.Values.Any(v => v);
 
     private void StartJobs()
     {
@@ -147,56 +107,28 @@
             foreach (var tableKey in selectedTables)
             {
                 var opts = new HistoryCleanupOptions(Table: tableKey, Execute: _executeImmediately);
-                var run = JobRunner.StartHistoryCleanup(env, opts);
-                Subscribe(run);
-                _runs.Insert(0, run);
+                JobRunner.StartHistoryCleanup(env, opts);
             }
         }
 
-        StateHasChanged();
+        _runList.Refresh();
     }
 
     private async Task ConfirmAndExecute(JobRun previewRun)
     {
         var count = previewRun.SqlOutput.Count;
-        var parameters = new DialogParameters<ConfirmDialog>
-        {
-            { x => x.ContentText, $"Dette vil kjøre {count} SQL-statements (DELETE/UPDATE) mot {previewRun.Environment}. Kan ikke angres." },
-            { x => x.ButtonText, $"Kjør {count} statements" },
-            { x => x.Color, Color.Error }
-        };
+        var confirmed = await Confirm.ShowAsync(
+            DialogService,
+            "Bekreft kjøring",
+            $"Dette vil kjøre {count} SQL-statements (DELETE/UPDATE) mot {previewRun.Environment}. Kan ikke angres.",
+            $"Kjør {count} statements");
 
-        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Bekreft kjøring", parameters);
-        var result = await dialog.Result;
-
-        if (result is { Canceled: false })
+        if (confirmed)
         {
-            var run = JobRunner.StartHistoryExecute(previewRun.Id, previewRun.Environment);
-            Subscribe(run);
-            _runs.Insert(0, run);
-            StateHasChanged();
+            JobRunner.StartHistoryExecute(previewRun.Id, previewRun.Environment);
+            _runList.Refresh();
         }
     }
-
-    private void RefreshRuns()
-    {
-        var preview = RunStore.GetForJob(HistoryCleanupJob.JobName).ToList();
-        var execute = RunStore.GetForJob($"{HistoryCleanupJob.JobName}:Execute").ToList();
-        _runs = preview.Concat(execute)
-            .OrderByDescending(r => r.StartedAt)
-            .ToList();
-
-        foreach (var run in _runs)
-            Subscribe(run);
-    }
-
-    private void RefreshAndRender()
-    {
-        RefreshRuns();
-        StateHasChanged();
-    }
-
-    private bool AnySelected => _selected.Values.Any(v => v) && _selectedTables.Values.Any(v => v);
 
     private async Task OpenScheduleDialog()
     {
@@ -209,7 +141,7 @@
             select new JobScheduleEntry
             {
                 Id = $"history-{env.ToLowerInvariant()}-{tableKey.ToLowerInvariant()}",
-                JobType = "HistoryCleanup",
+                JobType = JobTypes.HistoryCleanup,
                 Environment = env,
                 Cron = "0 3 * * *",
                 Enabled = true,
@@ -229,6 +161,4 @@
         await DialogService.ShowAsync<ScheduleConfigDialog>("Generer plan-konfig", parameters,
             new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true });
     }
-
-    public void Dispose() { /* subscriptions are managed by JobRunCard.Dispose() */ }
 }

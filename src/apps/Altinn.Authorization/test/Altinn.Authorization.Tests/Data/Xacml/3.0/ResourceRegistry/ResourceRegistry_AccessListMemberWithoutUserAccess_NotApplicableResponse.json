@@ -1,0 +1,12 @@
+{
+  "Response": [
+    {
+      "Decision": "NotApplicable",
+      "Status": {
+        "StatusCode": {
+          "Value": "urn:oasis:names:tc:xacml:1.0:status:ok"
+        }
+      }
+    }
+  ]
+}

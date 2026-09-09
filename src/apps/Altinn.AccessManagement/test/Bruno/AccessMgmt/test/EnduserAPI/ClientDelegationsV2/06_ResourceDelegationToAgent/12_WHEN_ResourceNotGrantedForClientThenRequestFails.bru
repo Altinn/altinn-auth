@@ -1,0 +1,60 @@
+meta {
+  name: 12_WHEN_ResourceNotGrantedForClientThenRequestFails
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents/resources?party={{party}}&client={{clientA}}&agent={{agent}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  client: {{clientA}}
+  agent: {{agent}}
+}
+
+body:json {
+  {
+    "values": [
+      {
+        "role": "regnskapsforer",
+        "resources": ["{{resource}}"]
+      }
+    ]
+  }
+}
+
+docs {
+  WHEN a resource the facilitator does not hold for a client is delegated the
+  request fails. The resource was granted on the client_B relation only, so
+  delegating it for client_A is rejected.
+
+  Expects 400 with validation error AM.VLD-00026.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("clientA", td.REGN_Organisasjon.REGN_Org_Clients.client_A.partyUuid);
+  bru.setVar("agent", td.REGN_Organisasjon.REGN_Agent.userUuid);
+  bru.setVar("resource", td.clientDelegationV2.singleResource);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  test("WHEN a resource not granted for the client is delegated, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN the error body flags the missing resource grant with AM.VLD-00026", function() {
+    const body = res.getBody();
+    expect(body.code).to.equal("STD-00000");
+    expect(body.validationErrors.some(e => e.code === "AM.VLD-00026")).to.be.true;
+  });
+}

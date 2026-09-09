@@ -1,0 +1,37 @@
+meta {
+  name: 05_WHEN_AgentIsRemoved
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents?party={{party}}&agent={{agent}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  agent: {{agent}}
+}
+
+docs {
+  WHEN the facilitator removes the agent. The agent has no delegations, so the
+  removal succeeds without cascade.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("agent", td.REGN_Organisasjon.REGN_Agent.userUuid);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  test("WHEN the agent is removed, the request returns 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

@@ -1,30 +1,26 @@
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
+using System.Text;
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.Tests.MockServices;
-using Altinn.Authorization.Tests.Util;
 using Altinn.Platform.Authorization.Configuration;
+using Altinn.Platform.Authorization.Repositories.Interface;
 using Altinn.Platform.Authorization.Services.Implementation;
 using Altinn.Platform.Authorization.Services.Interface;
-using Azure;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
-using Xunit;
 
 namespace Altinn.Authorization.Tests.Unit
 {
-    [Collection("Our Test Collection #1")]
+    [Collection(PolicyTestCollection.Name)]
     [UnitTest]
     public class PolicyRetrievalPointTest
     {
         private const string ORG = "ttd";
         private const string APP = "repository-test-app";
+        private const string POLICYPATH = "ttd/repository-test-app/policy.xml";
 
         private readonly IPolicyRetrievalPoint _prp;
 
@@ -158,6 +154,177 @@ namespace Altinn.Authorization.Tests.Unit
             // Act & Assert
             await Assert.ThrowsAsync<ArgumentException>(() => _prp.GetPolicyAsync(org, app));
         }
+
+        /// <summary>
+        /// Test case: Get the policy for the same org and app twice.
+        /// Expected: Both calls return the policy and the repository is read once.
+        /// </summary>
+        [Fact]
+        public async Task GetPolicyAsync_SameOrgAppRequestedTwice_ReturnsPolicyAndReadsRepositoryOnce()
+        {
+            // Arrange
+            (PolicyRetrievalPoint prp, Mock<IPolicyRepository> repository) = CreatePolicyRetrievalPointWithMockedRepository();
+            repository
+                .Setup(r => r.GetPolicyAsync(POLICYPATH, It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(GetPolicyStream("current")));
+
+            // Act
+            XacmlPolicy first = await prp.GetPolicyAsync(ORG, APP);
+            XacmlPolicy second = await prp.GetPolicyAsync(ORG, APP);
+
+            // Assert
+            first.PolicyId.ToString().Should().Be("urn:altinn:policyid:current");
+            second.PolicyId.ToString().Should().Be("urn:altinn:policyid:current");
+            repository.Verify(r => r.GetPolicyAsync(POLICYPATH, It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        /// <summary>
+        /// Test case: Get the same policy version twice.
+        /// Expected: Both calls return the version and the repository is read once.
+        /// </summary>
+        [Fact]
+        public async Task GetPolicyVersionAsync_SameVersionRequestedTwice_ReturnsPolicyAndReadsRepositoryOnce()
+        {
+            // Arrange
+            (PolicyRetrievalPoint prp, Mock<IPolicyRepository> repository) = CreatePolicyRetrievalPointWithMockedRepository();
+            repository
+                .Setup(r => r.GetPolicyVersionAsync(POLICYPATH, "v1", It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(GetPolicyStream("v1")));
+
+            // Act
+            XacmlPolicy first = await prp.GetPolicyVersionAsync(POLICYPATH, "v1", TestContext.Current.CancellationToken);
+            XacmlPolicy second = await prp.GetPolicyVersionAsync(POLICYPATH, "v1", TestContext.Current.CancellationToken);
+
+            // Assert
+            first.PolicyId.ToString().Should().Be("urn:altinn:policyid:v1");
+            second.PolicyId.ToString().Should().Be("urn:altinn:policyid:v1");
+            repository.Verify(r => r.GetPolicyVersionAsync(POLICYPATH, "v1", It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        /// <summary>
+        /// Test case: Get two different versions of the same policy, then the first version again.
+        /// Expected: Each version is returned as stored and each is read from the repository once.
+        /// </summary>
+        [Fact]
+        public async Task GetPolicyVersionAsync_DifferentVersionsOfSamePolicy_ReturnsEachVersionAndCachesThemSeparately()
+        {
+            // Arrange
+            (PolicyRetrievalPoint prp, Mock<IPolicyRepository> repository) = CreatePolicyRetrievalPointWithMockedRepository();
+            repository
+                .Setup(r => r.GetPolicyVersionAsync(POLICYPATH, "v1", It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(GetPolicyStream("v1")));
+            repository
+                .Setup(r => r.GetPolicyVersionAsync(POLICYPATH, "v2", It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(GetPolicyStream("v2")));
+
+            // Act
+            XacmlPolicy v1 = await prp.GetPolicyVersionAsync(POLICYPATH, "v1", TestContext.Current.CancellationToken);
+            XacmlPolicy v2 = await prp.GetPolicyVersionAsync(POLICYPATH, "v2", TestContext.Current.CancellationToken);
+            XacmlPolicy v1Again = await prp.GetPolicyVersionAsync(POLICYPATH, "v1", TestContext.Current.CancellationToken);
+
+            // Assert
+            v1.PolicyId.ToString().Should().Be("urn:altinn:policyid:v1");
+            v2.PolicyId.ToString().Should().Be("urn:altinn:policyid:v2");
+            v1Again.PolicyId.ToString().Should().Be("urn:altinn:policyid:v1");
+            repository.Verify(r => r.GetPolicyVersionAsync(POLICYPATH, "v1", It.IsAny<CancellationToken>()), Times.Once);
+            repository.Verify(r => r.GetPolicyVersionAsync(POLICYPATH, "v2", It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        /// <summary>
+        /// Test case: Clear the rules on a returned policy and then read the same version again.
+        /// Expected: The second read returns a separate policy with the original rules, still without reading the repository again.
+        /// </summary>
+        [Fact]
+        public async Task GetPolicyVersionAsync_CallerClearedRulesOnPreviousResult_ReturnsPolicyWithOriginalRules()
+        {
+            // Arrange
+            (PolicyRetrievalPoint prp, Mock<IPolicyRepository> repository) = CreatePolicyRetrievalPointWithMockedRepository();
+            repository
+                .Setup(r => r.GetPolicyVersionAsync(POLICYPATH, "v1", It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult(GetPolicyStream("v1")));
+
+            // Act
+            XacmlPolicy first = await prp.GetPolicyVersionAsync(POLICYPATH, "v1", TestContext.Current.CancellationToken);
+            first.Rules.Should().ContainSingle();
+            first.Rules.Clear();
+
+            XacmlPolicy second = await prp.GetPolicyVersionAsync(POLICYPATH, "v1", TestContext.Current.CancellationToken);
+
+            // Assert
+            second.Should().NotBeSameAs(first);
+            second.Rules.Should().ContainSingle().Which.RuleId.Should().Be("urn:altinn:ruleid:v1");
+            repository.Verify(r => r.GetPolicyVersionAsync(POLICYPATH, "v1", It.IsAny<CancellationToken>()), Times.Once);
+        }
+
+        /// <summary>
+        /// Test case: Get a policy version that does not exist, twice.
+        /// Expected: Both calls return null and the repository is read both times.
+        /// </summary>
+        [Fact]
+        public async Task GetPolicyVersionAsync_VersionMissingThenRequestedAgain_ReturnsNullAndReadsRepositoryAgain()
+        {
+            // Arrange
+            (PolicyRetrievalPoint prp, Mock<IPolicyRepository> repository) = CreatePolicyRetrievalPointWithMockedRepository();
+            repository
+                .Setup(r => r.GetPolicyVersionAsync(POLICYPATH, "v9", It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult<Stream>(new MemoryStream()));
+
+            // Act
+            XacmlPolicy first = await prp.GetPolicyVersionAsync(POLICYPATH, "v9", TestContext.Current.CancellationToken);
+            XacmlPolicy second = await prp.GetPolicyVersionAsync(POLICYPATH, "v9", TestContext.Current.CancellationToken);
+
+            // Assert
+            first.Should().BeNull();
+            second.Should().BeNull();
+            repository.Verify(r => r.GetPolicyVersionAsync(POLICYPATH, "v9", It.IsAny<CancellationToken>()), Times.Exactly(2));
+        }
+
+        /// <summary>
+        /// Test case: Get a policy version whose document is not a valid policy, twice.
+        /// Expected: Both calls throw and the repository is read both times.
+        /// </summary>
+        [Fact]
+        public async Task GetPolicyVersionAsync_DocumentFailsToParse_ThrowsAndReadsRepositoryAgain()
+        {
+            // Arrange
+            (PolicyRetrievalPoint prp, Mock<IPolicyRepository> repository) = CreatePolicyRetrievalPointWithMockedRepository();
+            repository
+                .Setup(r => r.GetPolicyVersionAsync(POLICYPATH, "v8", It.IsAny<CancellationToken>()))
+                .Returns(() => Task.FromResult<Stream>(new MemoryStream(Encoding.UTF8.GetBytes("<not-a-policy>"))));
+
+            // Act
+            Func<Task> first = () => prp.GetPolicyVersionAsync(POLICYPATH, "v8", TestContext.Current.CancellationToken);
+            Func<Task> second = () => prp.GetPolicyVersionAsync(POLICYPATH, "v8", TestContext.Current.CancellationToken);
+
+            // Assert
+            await first.Should().ThrowAsync<Exception>();
+            await second.Should().ThrowAsync<Exception>();
+            repository.Verify(r => r.GetPolicyVersionAsync(POLICYPATH, "v8", It.IsAny<CancellationToken>()), Times.Exactly(2));
+        }
+
+        private static (PolicyRetrievalPoint Prp, Mock<IPolicyRepository> Repository) CreatePolicyRetrievalPointWithMockedRepository()
+        {
+            Mock<IPolicyRepository> repository = new Mock<IPolicyRepository>(MockBehavior.Strict);
+
+            PolicyRetrievalPoint prp = new PolicyRetrievalPoint(
+                repository.Object,
+                new MemoryCache(new MemoryCacheOptions()),
+                Options.Create(new GeneralSettings { PolicyCacheTimeout = 1 }),
+                new ResourceRegistryMock());
+
+            return (prp, repository);
+        }
+
+        private static Stream GetPolicyStream(string id) =>
+            new MemoryStream(Encoding.UTF8.GetBytes($"""
+                <?xml version="1.0" encoding="utf-8"?>
+                <xacml:Policy xmlns:xacml="urn:oasis:names:tc:xacml:3.0:core:schema:wd-17" PolicyId="urn:altinn:policyid:{id}" Version="1.0" RuleCombiningAlgId="urn:oasis:names:tc:xacml:3.0:rule-combining-algorithm:deny-overrides">
+                  <xacml:Target />
+                  <xacml:Rule RuleId="urn:altinn:ruleid:{id}" Effect="Permit">
+                    <xacml:Target />
+                  </xacml:Rule>
+                </xacml:Policy>
+                """));
 
         private List<XacmlContextAttributes> GetXacmlContextAttributesWithOrgAndApp(bool existingApp = true)
         {

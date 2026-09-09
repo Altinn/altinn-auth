@@ -4,6 +4,8 @@
     package_urn: "urn:altinn:accesspackage:skattegrunnlag",
     invalid_pkg: "12345",
     innbygger_pacakage_urn: "urn:altinn:accesspackage:innbygger-straffesak",
+    skatteforhold_priv:
+      "urn:altinn:accesspackage:innbygger-skatteforhold-privatpersoner",
   },
   vassen_riktig_tiger_as: {
     orgno: "311013823",

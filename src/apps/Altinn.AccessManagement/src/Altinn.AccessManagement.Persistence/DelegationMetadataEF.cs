@@ -14,7 +14,7 @@ using ResourceRegistryResourceType = Altinn.AccessManagement.Core.Models.Resourc
 namespace Altinn.AccessMgmt.Core.Services.Legacy;
 
 /// <inheritdoc/>
-public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbContext, DelegationMetadataRepo LegacyRepo) : IDelegationMetadataRepository
+public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbContext) : IDelegationMetadataRepository
 {
     private string ConvertFromAppResourceId(string resourceId)
     {
@@ -757,16 +757,35 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<InstanceDelegationChange>> GetActiveInstanceDelegations(List<string> resourceIds, Guid from, List<Guid> to, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<InstanceDelegationChange>> GetActiveInstanceDelegations(List<string> resourceIds, Guid from, List<Guid> to, List<Guid> toAppControlledRightholders, CancellationToken cancellationToken = default)
     {
-        var result = await DbContext.AssignmentInstances.AsNoTracking()
-           .Include(t => t.Assignment).ThenInclude(t => t.From)
-           .Include(t => t.Assignment).ThenInclude(t => t.To)
-           .Include(t => t.Resource).ThenInclude(t => t.Type)
-           .Where(t => t.Assignment.FromId == from)
-           .Where(t => resourceIds.Contains(t.Resource.RefId))
-           .Where(t => to.Contains(t.Assignment.ToId))
-           .ToListAsync(cancellationToken);
+        HashSet<AssignmentInstance> result = [];
+
+        if (to is { Count: > 0 })
+        {
+            result.UnionWith(await DbContext.AssignmentInstances.AsNoTracking()
+                .Include(t => t.Assignment).ThenInclude(t => t.From)
+                .Include(t => t.Assignment).ThenInclude(t => t.To)
+                .Include(t => t.Resource).ThenInclude(t => t.Type)
+                .Where(t => t.Assignment.FromId == from)
+                .Where(t => resourceIds.Contains(t.Resource.RefId))
+                .Where(t => to.Contains(t.Assignment.ToId))
+                .ToListAsync(cancellationToken));
+        }
+
+        if (toAppControlledRightholders != null && toAppControlledRightholders.Any())
+        {
+            result.UnionWith(await DbContext.AssignmentInstances.AsNoTracking()
+               .Include(t => t.Assignment).ThenInclude(t => t.From)
+               .Include(t => t.Assignment).ThenInclude(t => t.To)
+               .Include(t => t.Resource).ThenInclude(t => t.Type)
+               .Where(t => t.Assignment.FromId == from)
+               .Where(t => t.Assignment.RoleId == RoleConstants.AppControlledRightholder.Id)
+               .Where(t => resourceIds.Contains(t.Resource.RefId))
+               .Where(t => t.InstanceSourceTypeId == InstanceSourceTypeConstants.AltinnApp.Id)
+               .Where(t => toAppControlledRightholders.Contains(t.Assignment.ToId))
+               .ToListAsync(cancellationToken));
+        }
 
         return result.Select(Convert).ToList();
     }
@@ -957,18 +976,6 @@ public class DelegationMetadataEF(IAuditAccessor AuditAccessor, AppDbContext DbC
 
         return result.Select(ConvertForAuthorizedParties).ToList();
     }
-
-    /// <inheritdoc/>
-    public Task<List<DelegationChange>> GetNextPageAppDelegationChanges(long startFeedIndex, CancellationToken cancellationToken)
-        => LegacyRepo.GetNextPageAppDelegationChanges(startFeedIndex, cancellationToken);
-
-    /// <inheritdoc/>
-    public Task<List<DelegationChange>> GetNextPageResourceDelegationChanges(long startFeedIndex, CancellationToken cancellationToken)
-        => LegacyRepo.GetNextPageResourceDelegationChanges(startFeedIndex, cancellationToken);
-
-    /// <inheritdoc/>
-    public Task<List<InstanceDelegationChange>> GetNextPageInstanceDelegationChanges(long startFeedIndex, CancellationToken cancellationToken)
-        => LegacyRepo.GetNextPageInstanceDelegationChanges(startFeedIndex, cancellationToken);
 
     private static string MapResourceTypeToResourceTypeName(ResourceRegistryResourceType resourceType)
     {

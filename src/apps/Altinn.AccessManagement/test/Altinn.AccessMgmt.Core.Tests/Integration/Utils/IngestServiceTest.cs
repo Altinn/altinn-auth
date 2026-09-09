@@ -129,6 +129,52 @@ public class IngestServiceTest : IClassFixture<ApiFixture>
         Assert.Contains("Failed to execute merge statement", ex.Message);
     }
 
+    [Fact]
+    public async Task DropTempData_RemovesOrphanedIngestTable_WhenMergeNeverRan()
+    {
+        var id = Guid.CreateVersion7();
+        var provider = NewProvider(id, $"IngestServiceTest drop {id}", refId: "999000004");
+
+        using var scope = Fixture.Services.CreateEFScope(SystemEntityConstants.StaticDataIngest);
+        var ingest = scope.ServiceProvider.GetRequiredService<IIngestService>();
+
+        var ingestId = Guid.CreateVersion7();
+
+        // Ingest without merging leaves a temp table behind, exactly as a failure between
+        // ingest and merge would.
+        await ingest.IngestTempData([provider], ingestId, TestContext.Current.CancellationToken);
+        Assert.True(await IngestTableExists<Provider>(ingestId));
+
+        await ingest.DropTempData<Provider>(ingestId, TestContext.Current.CancellationToken);
+        Assert.False(await IngestTableExists<Provider>(ingestId));
+    }
+
+    [Fact]
+    public async Task DropTempData_IsNoOp_WhenTableDoesNotExist()
+    {
+        using var scope = Fixture.Services.CreateEFScope(SystemEntityConstants.StaticDataIngest);
+        var ingest = scope.ServiceProvider.GetRequiredService<IIngestService>();
+
+        // No table was ever created for this id; the drop must not throw.
+        await ingest.DropTempData<Provider>(Guid.CreateVersion7(), TestContext.Current.CancellationToken);
+    }
+
+    private async Task<bool> IngestTableExists<T>(Guid ingestId)
+    {
+        var ingestTableName = "ingest." + typeof(T).Name.ToLower() + "_" + ingestId.ToString("N");
+
+        var exists = false;
+        await Fixture.QueryDb(async db =>
+        {
+            var rows = await db.Database
+                .SqlQueryRaw<bool>($"SELECT (to_regclass('{ingestTableName}') IS NOT NULL) AS \"Value\"")
+                .ToListAsync(TestContext.Current.CancellationToken);
+            exists = rows.FirstOrDefault();
+        });
+
+        return exists;
+    }
+
     private static Provider NewProvider(Guid id, string name, string refId, string? code = null) => new()
     {
         Id = id,

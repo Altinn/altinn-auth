@@ -1,0 +1,82 @@
+@inject IJobRunStore RunStore
+@implements IDisposable
+
+@if (_runs.Count > 0)
+{
+    <MudText Typo="Typo.h6" Class="mb-3">Kjøringer</MudText>
+    @foreach (var run in _runs)
+    {
+        <JobRunCard Run="@run" OnChanged="@Refresh" ExtraActions="@(ExtraActions?.Invoke(run))" />
+    }
+}
+
+@code {
+    [Parameter, EditorRequired] public string JobName { get; set; } = default!;
+
+    /// <summary>Also include runs stored under "{JobName}:Execute".</summary>
+    [Parameter] public bool IncludeExecuteRuns { get; set; } = true;
+
+    /// <summary>
+    /// Also include every run whose name starts with "{JobName}:", for jobs that encode
+    /// variants into the run name (e.g. "IngestCleanup:{filter}" and
+    /// "IngestCleanup:{filter}:Execute [1/2]"). Makes IncludeExecuteRuns redundant.
+    /// </summary>
+    [Parameter] public bool MatchByPrefix { get; set; }
+
+    /// <summary>Per-run extra action buttons, rendered inside the run card.</summary>
+    [Parameter] public RenderFragment<JobRun>? ExtraActions { get; set; }
+
+    private readonly Dictionary<Guid, JobRun> _subscribed = [];
+    private List<JobRun> _runs = [];
+
+    protected override void OnInitialized() => RefreshRuns();
+
+    public void Dispose()
+    {
+        // JobRun instances live in the singleton store; without this the handlers
+        // (and the component they capture) would outlive the page.
+        foreach (var run in _subscribed.Values)
+        {
+            run.OnUpdated -= HandleRunUpdated;
+        }
+
+        _subscribed.Clear();
+    }
+
+    /// <summary>Re-queries the store and re-renders. Pages call this after starting new runs.</summary>
+    public void Refresh()
+    {
+        RefreshRuns();
+        StateHasChanged();
+    }
+
+    private void RefreshRuns()
+    {
+        IEnumerable<JobRun> runs = RunStore.GetForJob(JobName);
+        if (MatchByPrefix)
+        {
+            runs = runs.Concat(RunStore.GetForJobPrefix($"{JobName}:"));
+        }
+        else if (IncludeExecuteRuns)
+        {
+            runs = runs.Concat(RunStore.GetForJob($"{JobName}:Execute"));
+        }
+
+        _runs = runs.OrderByDescending(r => r.StartedAt).ToList();
+
+        foreach (var run in _runs)
+        {
+            Subscribe(run);
+        }
+    }
+
+    private void Subscribe(JobRun run)
+    {
+        if (_subscribed.TryAdd(run.Id, run))
+        {
+            run.OnUpdated += HandleRunUpdated;
+        }
+    }
+
+    private void HandleRunUpdated() => _ = InvokeAsync(Refresh);
+}

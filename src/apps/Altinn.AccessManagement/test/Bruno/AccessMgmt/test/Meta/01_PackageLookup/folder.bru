@@ -1,0 +1,22 @@
+meta {
+  name: 01_PackageLookup
+  seq: 1
+}
+
+docs {
+  Scenario: A package can be looked up by id or by urn
+
+    When a package is requested without an Authorization header, the request
+    still succeeds
+    When a package is looked up by id, the full DTO is returned
+    And the same package is looked up by urn
+    And an assignable package is flagged assignable
+    And a non assignable package is flagged not assignable
+    When an unknown package id is requested, the response is 404
+    When an unknown package urn is requested, the response is 404
+
+  The metadata API takes no token, so every step in this suite sends no
+  Authorization header. This scenario also carries the one explicit check
+  that the contract holds: the API answers without a header at all. The
+  scenario is read only and needs no cleanup.
+}

@@ -1,0 +1,42 @@
+meta {
+  name: 06_THEN_AgentListNoLongerContainsAgent
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+docs {
+  THEN the agent list no longer contains the removed agent.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+
+  test("THEN the agent list request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the removed agent is no longer in the agent list", function() {
+    const agentUuid = td.REGN_Organisasjon.REGN_Agent.userUuid.toLowerCase();
+    const entry = res.getBody().data.find(item => item.agent.id.toLowerCase() === agentUuid);
+    expect(entry, "expected the agent to be gone from the agent list").to.be.undefined;
+  });
+}

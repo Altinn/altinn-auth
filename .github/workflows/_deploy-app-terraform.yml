@@ -38,13 +38,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
       - name: Terraform Set TFVARS
         run: echo "TF_VARS_FILE=$(echo ${{ inputs.environment }} | tr '[:upper:]' '[:lower:]').tfvars" >> $GITHUB_ENV
 
       - name: Terraform Plan
-        uses: altinn/altinn-platform/actions/terraform/plan@384452615f2f15683070d184a07f8c5eea67bd3c # main
+        uses: altinn/altinn-platform/actions/terraform/plan@470eaf98af2ab545e7e840055a538d73e40c3c80 # main
         with:
           working_directory: ${{ inputs.working_dir }}
           oidc_type: environment
@@ -63,13 +63,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
 
       - name: Install .NET # For Running CLI
-        uses: actions/setup-dotnet@9a946fdbd5fb07b82b2f5a4466058b876ab72bb2 # v5
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
 
       - name: Azure CLI Login
-        uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
+        uses: azure/login@7184910d9eb2b1c5e48f7073824a90609bb9b6d6 # v2
         with:
           client-id: ${{ vars.ARM_PGSQLSRV_CLIENT_ID }}
           tenant-id: ${{ vars.ARM_TENANT_ID }}
@@ -98,7 +98,7 @@ jobs:
           sudo resolvectl flush-caches
 
       - name: Terraform Apply
-        uses: altinn/altinn-platform/actions/terraform/apply@384452615f2f15683070d184a07f8c5eea67bd3c # main
+        uses: altinn/altinn-platform/actions/terraform/apply@470eaf98af2ab545e7e840055a538d73e40c3c80 # main
         id: apply
         with:
           working_directory: ${{ inputs.working_dir }}

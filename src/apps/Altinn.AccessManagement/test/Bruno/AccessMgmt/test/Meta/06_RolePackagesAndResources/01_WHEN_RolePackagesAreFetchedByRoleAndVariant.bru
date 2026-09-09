@@ -1,0 +1,43 @@
+meta {
+  name: 01_WHEN_RolePackagesAreFetchedByRoleAndVariant
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/roles/packages?role={{role}}&variant={{variant}}
+  body: none
+  auth: none
+}
+
+params:query {
+  role: {{role}}
+  variant: {{variant}}
+}
+
+docs {
+  WHEN the packages held by the revisor role in the ENK variant are fetched
+  through the role and variant query, THEN the expected two packages are
+  returned.
+}
+
+script:pre-request {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  bru.setVar("role", td.roles.revisor.code);
+  bru.setVar("variant", td.roles.revisor.variant);
+}
+
+tests {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  test("WHEN the role packages query returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the two known packages are returned", function() {
+    const data = res.getBody();
+    expect(data.map(p => p.name)).to.have.members(td.roles.revisor.packageNames);
+    expect(data).to.have.length(td.roles.revisor.packageNames.length);
+  });
+}

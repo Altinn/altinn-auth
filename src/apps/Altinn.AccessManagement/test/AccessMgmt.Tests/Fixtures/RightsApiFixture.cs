@@ -3,7 +3,6 @@ using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.TestUtils.Mocks;
-using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
 using AltinnCore.Authentication.JwtCookie;
 using Microsoft.Extensions.DependencyInjection;
@@ -14,16 +13,14 @@ namespace Altinn.AccessManagement.Tests.Fixtures;
 
 /// <summary>
 /// Profile fixture shared by the controller tests that mock the policy / delegation
-/// data layer and exercise the legacy <c>PdpPermitMock</c> PDP with issuer-cert
-/// signing — <c>RightsInternalController</c> and <c>AppsInstanceDelegationController</c>
-/// tests. Bakes the configuration those classes previously registered per-class so
-/// they can share one host via a collection fixture.
+/// data layer and exercise the legacy <c>PdpPermitMock</c> PDP, currently the
+/// <c>AppsInstanceDelegationController</c> tests and the ID-porten authorization
+/// fixture that derives from this one. Bakes the configuration those classes would
+/// otherwise register per-class so they can share one host via a collection fixture.
 /// </summary>
 /// <remarks>
 /// All baked services are stateless mock implementations, so a single shared host is
-/// safe. The <c>IAuthenticationClient</c> / <c>IAccessListsAuthorizationClient</c> mocks
-/// are only used by the RightsInternal tests; registering them here is harmless for the
-/// AppsInstanceDelegation tests that do not resolve them.
+/// safe. Registering a mock here is harmless for member classes that never resolve it.
 /// </remarks>
 public class RightsApiFixture : AccessMgmtApiFixture
 {
@@ -32,11 +29,6 @@ public class RightsApiFixture : AccessMgmtApiFixture
     {
         ConfigureServices(services =>
         {
-            // These tests sign tokens via PrincipalUtil.GetAccessToken, which needs the
-            // issuer-cert-backed SigningKeyResolverMock rather than the default.
-            services.RemoveAll<IPublicSigningKeyProvider>();
-            services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
-
             services.RemoveAll<IPDP>();
             services.AddSingleton<IPDP, PdpPermitMock>();
 

@@ -1,5 +1,3 @@
-using System;
-
 namespace Altinn.Platform.Authorization.Models
 {
     /// <summary>

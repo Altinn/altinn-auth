@@ -162,11 +162,6 @@ public class CustomMigrationsSqlGenerator : NpgsqlMigrationsSqlGenerator
 
         foreach (var entityType in effectiveModel.GetEntityTypes())
         {
-            if (entityType.FindAnnotation(AuditExtensions.AnnotationName) is null)
-            {
-                continue;
-            }
-
             var table = entityType.GetTableName();
             var schema = entityType.GetSchema();
 
@@ -224,22 +219,25 @@ public class CustomMigrationsSqlGenerator : NpgsqlMigrationsSqlGenerator
             return;
         }
 
-        if (entityType.FindAnnotation(AuditExtensions.AnnotationName) is null)
+        var schema = entityType.GetSchema();
+        var table = entityType.GetTableName();
+
+        if (string.IsNullOrWhiteSpace(table) || string.IsNullOrWhiteSpace(schema))
         {
             return;
         }
 
-        var schema = entityType.GetSchema();
-        var table = entityType.GetTableName();
+        if (entityType.FindAnnotation(AuditExtensions.AnnotationName) is not null)
+        {
+            builder.AppendLine(GenerateAuditInsertFunctionAndTrigger(schema!, table!, columns));
+            builder.EndCommand();
 
-        builder.AppendLine(GenerateAuditInsertFunctionAndTrigger(schema!, table!, columns));
-        builder.EndCommand();
+            builder.AppendLine(GenerateAuditUpdateFunctionAndTrigger(schema!, table!, columns));
+            builder.EndCommand();
 
-        builder.AppendLine(GenerateAuditUpdateFunctionAndTrigger(schema!, table!, columns));
-        builder.EndCommand();
-
-        builder.AppendLine(GenerateAuditDeleteFunctionAndTrigger(schema!, table!, columns));
-        builder.EndCommand();
+            builder.AppendLine(GenerateAuditDeleteFunctionAndTrigger(schema!, table!, columns));
+            builder.EndCommand();
+        }
 
         builder.AppendLine(GenerateGrants(schema!, table!));
         builder.EndCommand();
@@ -386,7 +384,12 @@ public class CustomMigrationsSqlGenerator : NpgsqlMigrationsSqlGenerator
     private static string GenerateGrants(string schema, string table)
     {
         var sb = new StringBuilder();
-        sb.AppendLine($"GRANT SELECT, INSERT, UPDATE, DELETE, TRIGGER, REFERENCES ON TABLE {schema}.{table} TO platform_authorization;");
+        var privileges = string.Join(", ", TableGrantConstants.Privileges);
+        foreach (var role in TableGrantConstants.Roles)
+        {
+            sb.AppendLine($"GRANT {privileges} ON TABLE {schema}.{table} TO {role};");
+        }
+
         return sb.ToString();
     }
 }

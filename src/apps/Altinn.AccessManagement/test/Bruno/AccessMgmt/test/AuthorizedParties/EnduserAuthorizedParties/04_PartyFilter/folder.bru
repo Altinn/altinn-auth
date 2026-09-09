@@ -1,0 +1,18 @@
+meta {
+  name: 04_PartyFilter
+  seq: 4
+}
+
+docs {
+  Scenario: Narrowing the party list with partyFilter
+
+    Given the unfiltered list contains both a main unit and its subunit
+    When the list is filtered on the main unit
+    Then only that main unit is returned
+    When the list is filtered on the subunit
+    Then the subunit is returned nested under its main unit
+    When the list is filtered on both
+    Then the whole hierarchy is returned
+    When the list is filtered on a party the caller has no access to
+    Then the party list is empty
+}

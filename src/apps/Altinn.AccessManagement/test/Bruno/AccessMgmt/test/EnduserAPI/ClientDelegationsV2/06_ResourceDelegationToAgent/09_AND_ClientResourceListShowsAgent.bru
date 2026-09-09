@@ -1,0 +1,46 @@
+meta {
+  name: 09_AND_ClientResourceListShowsAgent
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/clients/resources?party={{party}}&client={{clientB}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  client: {{clientB}}
+}
+
+docs {
+  AND the client resource list shows the agent with the delegated resource.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("clientB", td.REGN_Organisasjon.REGN_Org_Clients.client_B.partyUuid);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+
+  test("AND the client resource list request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the agent appears with the delegated resource", function() {
+    const agentUuid = td.REGN_Organisasjon.REGN_Agent.userUuid.toLowerCase();
+    const resourceRefId = td.clientDelegationV2.singleResource;
+    const entry = res.getBody().data.find(item => item.agent.id.toLowerCase() === agentUuid);
+    expect(entry, "expected the agent in the client resource list").to.not.be.undefined;
+    expect(entry.access.some(a => a.resources.some(r => r.refId === resourceRefId))).to.be.true;
+  });
+}

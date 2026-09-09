@@ -39,12 +39,6 @@ public interface IDelegationService
     Task<bool> AddPackageToDelegation(Guid userId, Guid delegationId, Guid packageId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Adds a resource to the delegation
-    /// </summary>
-    /// <returns></returns>
-    Task<bool> AddResourceToDelegation(Guid userId, Guid delegationId, Guid resourceId, CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// Create a delegation and required assignments for system agent flow
     /// </summary>
     Task<IEnumerable<CreateDelegationResponseDto>> CreateClientDelegation(CreateSystemDelegationRequestDto request, Guid facilitatorPartyId, CancellationToken cancellationToken = default);

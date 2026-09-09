@@ -1,0 +1,34 @@
+meta {
+  name: 07_AND_ResourceProviderCodeFiltersOutOtherProviders
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/search?term={{term}}&resourceProviderCode={{resourceProviderCode}}
+  body: none
+  auth: none
+}
+
+params:query {
+  term: {{term}}
+  resourceProviderCode: {{resourceProviderCode}}
+}
+
+docs {
+  AND a term that otherwise matches returns nothing once it is filtered to a
+  resource provider code that holds no matching resource.
+}
+
+script:pre-request {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  bru.setVar("term", td.packages.skattNaering.name.split(" ")[0]);
+  bru.setVar("resourceProviderCode", "ZZZ");
+}
+
+tests {
+  test("AND filtering by an unrelated resourceProviderCode returns 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

@@ -6,11 +6,11 @@ terraform {
     }
     tls = {
       source  = "hashicorp/tls"
-      version = "4.2.1"
+      version = "4.4.0"
     }
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "4.73.0"
+      version = "4.81.0"
     }
     static = {
       source  = "tiwood/static"
@@ -18,7 +18,7 @@ terraform {
     }
     azuread = {
       source  = "hashicorp/azuread"
-      version = "3.8.0"
+      version = "3.9.0"
     }
   }
 

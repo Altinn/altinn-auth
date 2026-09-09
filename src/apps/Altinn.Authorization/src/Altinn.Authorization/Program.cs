@@ -44,7 +44,6 @@ using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Npgsql;
-using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using Swashbuckle.AspNetCore.Filters;
 
@@ -191,7 +190,6 @@ async Task ConnectToKeyVaultAndSetApplicationInsights(ConfigurationManager confi
 void ConfigureServices(IServiceCollection services, IConfiguration config)
 {
     logger.LogInformation("Startup // ConfigureServices");
-    services.AddAutoMapper(typeof(Program));
     services.AddControllers().AddXmlSerializerFormatters();
     services.AddHealthChecks().AddCheck<HealthCheck>("authorization_health_check");
     services.AddSingleton(config);
@@ -376,8 +374,8 @@ static string GetXmlCommentsPathForControllers()
 
 static void AddAuthorizationDbDataSource(IServiceCollection services, IConfiguration config)
 {
-    PostgreSQLSettings pgSettings = config.GetSection("PostgreSQLSettings").Get<PostgreSQLSettings>() ?? new PostgreSQLSettings();
-    string connectionString = string.Format(pgSettings.ConnectionString ?? string.Empty, pgSettings.AuthorizationDbPwd);
+    PostgreSQLSettings settings = config.GetSection("PostgreSQLSettings").Get<PostgreSQLSettings>() ?? new PostgreSQLSettings();
+    string connectionString = string.Format(settings.ConnectionString ?? string.Empty, settings.AuthorizationDbPwd);
     services.AddNpgsqlDataSource(
         connectionString,
         builder => builder.MapEnum<DelegationChangeType>("delegation.delegationchangetype"));

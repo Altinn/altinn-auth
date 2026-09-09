@@ -1,0 +1,59 @@
+meta {
+  name: 03_AND_PackageIsDelegatedToAgent
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents/accesspackages?party={{party}}&client={{client}}&agent={{agent}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  client: {{client}}
+  agent: {{agent}}
+}
+
+body:json {
+  {
+    "values": [
+      {
+        "role": "regnskapsforer",
+        "packages": ["{{package}}"]
+      }
+    ]
+  }
+}
+
+docs {
+  AND the facilitator delegates the client package to the agent, so the agent has
+  an access to manage through the my endpoints.
+
+  Expects 200 with a single delegation row where changed is true.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("client", td.REGN_Organisasjon.REGN_Org_Clients.client_A.partyUuid);
+  bru.setVar("agent", td.REGN_Organisasjon.REGN_Agent.userUuid);
+  bru.setVar("package", td.clientDelegationV2.packages.regnskapsforerLonn);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  test("AND the package delegation returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the delegation reports one changed row", function() {
+    const body = res.getBody();
+    expect(body).to.be.an("array").with.lengthOf(1);
+    expect(body[0].changed).to.equal(true);
+  });
+}

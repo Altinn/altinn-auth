@@ -1,0 +1,32 @@
+meta {
+  name: 06_WHEN_UnknownPackageIdReturnsNotFound
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/package/:id
+  body: none
+  auth: none
+}
+
+params:path {
+  id: 00000000-0000-0000-0000-000000000000
+}
+
+docs {
+  WHEN an unknown package id is requested, THEN the response is 404 with a
+  standard problem body.
+}
+
+tests {
+  test("WHEN the package id is unknown, the request returns 404", function() {
+    expect(res.status).to.equal(404);
+  });
+
+  test("THEN the response carries a problem body", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("status", 404);
+    expect(body).to.have.property("title");
+  });
+}

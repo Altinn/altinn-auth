@@ -11,7 +11,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Register;
 /// <see cref="OrganizationNumber.CreateUnchecked"/>.
 /// </summary>
 [UnitTest]
-[Collection("Models Test")]
+[Collection(ModelsCollection.Name)]
 public class OrganizationNumberTest
 {
     private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };

@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 using System.Net;
 using System.Reflection;
+using Altinn.AccessManagement.Core.Helpers.Extensions;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Azure;
 using Azure.Storage.Blobs.Models;
@@ -82,7 +83,7 @@ namespace Altinn.AccessManagement.TestUtils.Mocks
                 return Task.FromResult(true);
             }
 
-            Logger.LogWarning("Policy not found for full path" + fullpath);
+            Logger.LogWarning("Policy not found for full path: {FullPath}", fullpath.AsLogValue());
 
             return Task.FromResult(false);
         }

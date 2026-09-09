@@ -1,7 +1,5 @@
 ﻿#nullable enable
 
-using System;
-using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using Altinn.Authorization.Models.Register;
 

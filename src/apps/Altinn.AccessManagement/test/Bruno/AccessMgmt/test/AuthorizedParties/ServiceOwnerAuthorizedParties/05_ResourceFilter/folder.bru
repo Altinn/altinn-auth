@@ -1,0 +1,14 @@
+meta {
+  name: 05_ResourceFilter
+  seq: 5
+}
+
+docs {
+  Scenario: The resource filter narrows the list to parties where the subject holds the resource
+
+    When a service owner lists a subject filtered on a resource the subject holds on one client
+    Then that client is returned carrying only the filtered resource, and clients reached
+    without that resource drop out
+    When the subject is one that does not hold that resource
+    Then the client that carries it for someone else is not returned
+}

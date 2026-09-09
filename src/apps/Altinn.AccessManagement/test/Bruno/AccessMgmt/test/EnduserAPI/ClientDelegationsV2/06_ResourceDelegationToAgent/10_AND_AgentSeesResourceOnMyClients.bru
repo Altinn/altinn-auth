@@ -1,0 +1,45 @@
+meta {
+  name: 10_AND_AgentSeesResourceOnMyClients
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/my/clients
+  body: none
+  auth: inherit
+}
+
+docs {
+  AND the agent sees the resource on the my clients endpoint: the facilitator
+  appears as provider, the client appears under it, and the client's access
+  contains the resource under the rettighetshaver role.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs, scopes } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  await loginAs(td.REGN_Organisasjon.REGN_Agent, scopes.myclientsRead);
+}
+
+tests {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+
+  test("AND the my clients request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the client's access under the facilitator contains the delegated resource", function() {
+    const providerUuid = td.REGN_Organisasjon.partyUuid.toLowerCase();
+    const clientUuid = td.REGN_Organisasjon.REGN_Org_Clients.client_B.partyUuid.toLowerCase();
+    const resourceRefId = td.clientDelegationV2.singleResource;
+    const providerEntry = res.getBody().data.find(item => item.provider.id.toLowerCase() === providerUuid);
+    expect(providerEntry, "expected the facilitator as provider on my clients").to.not.be.undefined;
+    const clientEntry = providerEntry.clients.find(c => c.client.id.toLowerCase() === clientUuid);
+    expect(clientEntry, "expected the client under the facilitator").to.not.be.undefined;
+    const access = clientEntry.access.find(a => a.role.code === "rettighetshaver");
+    expect(access, "expected a rettighetshaver access element").to.not.be.undefined;
+    expect(access.resources.some(r => r.refId === resourceRefId)).to.be.true;
+  });
+}

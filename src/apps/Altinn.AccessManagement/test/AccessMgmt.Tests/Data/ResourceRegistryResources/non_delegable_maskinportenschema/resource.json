@@ -17,10 +17,11 @@
   "validFrom": "2022-09-20T06:46:07.598Z",
   "identifier": "non_delegable_maskinportenschema",
   "isComplete": true,
+  "delegable": false,
   "description": {
-    "en": "A MaskinportenSchema with a RoleRequirement (NOPE) to a role which does not exist and so cannot be delegated",
-    "nb-no": "A MaskinportenSchema with a RoleRequirement (NOPE) to a role which does not exist and so cannot be delegated",
-    "nn-no": "A MaskinportenSchema with a RoleRequirement (NOPE) to a role which does not exist and so cannot be delegated"
+    "en": "A MaskinportenSchema resource with delegable set to false in the Resource Registry",
+    "nb-no": "A MaskinportenSchema resource with delegable set to false in the Resource Registry",
+    "nn-no": "A MaskinportenSchema resource with delegable set to false in the Resource Registry"
   },
   "resourceType": "MaskinportenSchema",
   "thematicArea": "http://publications.europa.eu/resource/authority/eurovoc/2468",

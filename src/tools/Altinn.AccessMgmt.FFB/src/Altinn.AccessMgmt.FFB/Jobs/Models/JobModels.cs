@@ -204,10 +204,14 @@ public sealed class JobRunStore : IJobRunStore
         lock (_lock)
         {
             if (!_idIndex.TryGetValue(runId, out var run))
+            {
                 return;
+            }
 
             if (_runs.TryGetValue(run.JobName, out var list))
+            {
                 list.Remove(run);
+            }
 
             _idIndex.Remove(runId);
         }

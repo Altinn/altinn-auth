@@ -1,0 +1,40 @@
+meta {
+  name: 05_AND_NoAgentRegistered
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents?party={{party}}&agent={{agent}}&cascade=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  agent: {{agent}}
+  cascade: true
+}
+
+docs {
+  AND the facilitator has no agent registration for the agent person.
+
+  Reset step: removes any leftover agent assignment from earlier runs, including
+  delegations hanging on it. The delete is idempotent and returns 204 either way.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("agent", td.REGN_Organisasjon.REGN_Agent.userUuid);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  test("AND the facilitator has no registered agent, the reset delete returns 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

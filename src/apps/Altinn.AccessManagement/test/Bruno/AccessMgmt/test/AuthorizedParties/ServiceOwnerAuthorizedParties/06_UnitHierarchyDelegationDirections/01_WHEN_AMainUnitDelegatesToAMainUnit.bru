@@ -1,0 +1,70 @@
+meta {
+  name: 01_WHEN_AMainUnitDelegatesToAMainUnit
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeRoles=true&includeAccessPackages=true&includeResources=true&includeInstances=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeRoles: true
+  includeAccessPackages: true
+  includeResources: true
+  includeInstances: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{subjectPersonId}}"
+  }
+}
+
+docs {
+  WHEN main unit A has delegated to main unit B, a lookup of B's daily leader returns main unit
+  A with the delegated access, and the access B received extends to A's subunit.
+}
+
+script:pre-request {
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectPersonId", testdata.authParties_hovedenhetB.dagligleder.pid);
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir);
+}
+
+tests {
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  const delegator = testdata.authParties_hovedenhetA;
+
+  test("WHEN a main unit delegates to a main unit, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the delegating main unit is in the receiving side's list with access", function() {
+    const party = findParty(res.getBody(), delegator.partyuuid);
+    expect(party, `expected ${delegator.name} in the party list`).to.not.be.undefined;
+    expect(party.organizationNumber).to.equal(delegator.org_no);
+    expect(party.onlyHierarchyElementWithNoAccess, "the delegating main unit holds the access itself").to.be.false;
+  });
+
+  test("AND the received access extends to the delegating unit's subunit", function() {
+    const party = findParty(res.getBody(), delegator.partyuuid);
+    const subunit = party.subunits.find(item => item.partyUuid.toLowerCase() === delegator.authParties_underenhetA.partyuuid.toLowerCase());
+    expect(subunit, `expected ${delegator.authParties_underenhetA.name} nested under the main unit`).to.not.be.undefined;
+    expect(subunit.authorizedAccessPackages).to.include.members(party.authorizedAccessPackages);
+  });
+}

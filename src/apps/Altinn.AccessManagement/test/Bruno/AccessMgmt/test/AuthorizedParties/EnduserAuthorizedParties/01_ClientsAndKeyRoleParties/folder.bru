@@ -1,0 +1,15 @@
+meta {
+  name: 01_ClientsAndKeyRoleParties
+  seq: 1
+}
+
+docs {
+  Scenario: The accounting firm's daily leader lists authorized parties
+
+    When the daily leader of the accounting firm lists authorized parties
+    Then the response is a paginated envelope with a party list
+    And the accounting firm itself appears as a key role party with its subunit
+    And the client organisations appear with the packages held through the client role
+    And the owner of a sole proprietorship client appears as a person party
+    And no party appears twice anywhere in the response
+}

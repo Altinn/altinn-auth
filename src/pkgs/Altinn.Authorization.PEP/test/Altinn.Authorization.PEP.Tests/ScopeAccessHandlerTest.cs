@@ -1,13 +1,9 @@
-using System.Collections.Generic;
 using System.Reflection.Metadata;
 using System.Security.Claims;
-using System.Threading.Tasks;
 
 using Altinn.Common.PEP.Authorization;
 
 using Microsoft.AspNetCore.Authorization;
-
-using Xunit;
 
 namespace Altinn.Authorization.PEP.Tests
 {

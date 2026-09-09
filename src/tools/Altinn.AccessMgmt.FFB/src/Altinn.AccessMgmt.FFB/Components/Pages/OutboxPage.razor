@@ -1,14 +1,9 @@
 @page "/tools/outbox"
-@using Altinn.AccessMgmt.PersistenceEF.Contexts
-@using Altinn.AccessMgmt.PersistenceEF.Models
+@inherits EnvironmentPageBase
 @using Altinn.AccessMgmt.PersistenceEF.Models.Base
-@using Microsoft.EntityFrameworkCore
-@using Altinn.AccessMgmt.FFB.Services
-@inject IEnvironmentDbContextFactory DbFactory
-@inject EnvironmentState EnvState
+@inject OutboxService OutboxService
 @inject NavigationManager Nav
 @inject IDialogService DialogService
-@implements IDisposable
 
 <PageTitle>Outbox</PageTitle>
 
@@ -43,7 +38,7 @@
                        Margin="Margin.Dense"
                        Clearable="true">
                 <MudSelectItem T="string?" Value="@((string?)null)">Alle</MudSelectItem>
-                @foreach (var h in KnownHandlers)
+                @foreach (var h in OutboxHandlerRegistry.KnownHandlers)
                 {
                     var hv = h;
                     <MudSelectItem T="string?" Value="@hv">@hv</MudSelectItem>
@@ -54,7 +49,7 @@
         @* ── Per-handler data model + filters ──────────────────────────────── *@
         @if (_handler is not null)
         {
-            @if (HandlerSchemas.TryGetValue(_handler, out var schema))
+            @if (OutboxHandlerRegistry.Schemas.TryGetValue(_handler, out var schema))
             {
                 <MudItem xs="12">
                     <MudExpansionPanel Text="Datamodell (JSON)">
@@ -65,7 +60,7 @@
                 </MudItem>
             }
 
-            @if (HandlerFilterFields.TryGetValue(_handler, out var fields))
+            @if (OutboxHandlerRegistry.FilterFields.TryGetValue(_handler, out var fields))
             {
                 @foreach (var (label, jsonKey) in fields)
                 {
@@ -104,7 +99,7 @@
             <MudButton Variant="Variant.Filled"
                        Color="Color.Primary"
                        StartIcon="@Icons.Material.Filled.Search"
-                       Disabled="_loading"
+                       Disabled="Loading"
                        OnClick="Load">
                 Hent meldinger
             </MudButton>
@@ -119,13 +114,13 @@
 </MudPaper>
 
 @* ── Status ────────────────────────────────────────────────────────────────── *@
-@if (_loading || _resetting)
+@if (Loading || _resetting)
 {
     <MudProgressLinear Color="@(_resetting ? Color.Warning : Color.Primary)" Indeterminate="true" Class="mb-4" />
 }
-@if (_error is not null)
+@if (Error is not null)
 {
-    <MudAlert Severity="Severity.Error" Class="mb-4">@_error</MudAlert>
+    <MudAlert Severity="Severity.Error" Class="mb-4">@Error</MudAlert>
 }
 @if (_resetMessage is not null)
 {
@@ -148,7 +143,7 @@
                    Color="Color.Warning"
                    Size="Size.Small"
                    StartIcon="@Icons.Material.Filled.RestartAlt"
-                   Disabled="_resetting || _loading"
+                   Disabled="_resetting || Loading"
                    OnClick="ConfirmReset">
             Tilbakestill til pending
         </MudButton>
@@ -167,7 +162,7 @@
 
             <TemplateColumn Title="ID" SortBy="@(x => x.Id)">
                 <CellTemplate>
-                    <MudText Typo="Typo.caption" Style="font-family:monospace">
+                    <MudText Typo="Typo.caption" Class="mono">
                         @context.Item.Id.ToString()[..8]…
                     </MudText>
                 </CellTemplate>
@@ -195,7 +190,7 @@
 
             <TemplateColumn Title="RefId" SortBy="@(x => x.RefId ?? string.Empty)">
                 <CellTemplate>
-                    <MudText Typo="Typo.caption" Style="font-family:monospace">
+                    <MudText Typo="Typo.caption" Class="mono">
                         @(context.Item.RefId ?? "–")
                     </MudText>
                 </CellTemplate>
@@ -233,48 +228,6 @@
 
     private static readonly OutboxStatus[] AllStatuses = Enum.GetValues<OutboxStatus>();
 
-    private static readonly string[] KnownHandlers =
-    [
-        "access_added", "access_removed",
-        "agent_added", "agent_removed",
-        "client_added", "client_removed",
-        "rightholder_added", "rightholder_removed",
-        "instance_added", "instance_removed",
-        "request_reviewed", "request_pending",
-    ];
-
-    private static readonly Dictionary<string, (string Label, string JsonKey)[]> HandlerFilterFields = new()
-    {
-        ["access_added"]        = [("Fra (FromId)", "FromId"),       ("Til (ToId)", "ToId")],
-        ["access_removed"]      = [("Fra (FromId)", "FromId"),       ("Til (ToId)", "ToId")],
-        ["agent_added"]         = [("Agent (AgentId)", "AgentId"),   ("Provider (ProviderId)", "ProviderId")],
-        ["agent_removed"]       = [("Agent (AgentId)", "AgentId"),   ("Provider (ProviderId)", "ProviderId")],
-        ["client_added"]        = [("Agent (AgentId)", "AgentId"),   ("Provider (ProviderId)", "ProviderId")],
-        ["client_removed"]      = [("Agent (AgentId)", "AgentId"),   ("Provider (ProviderId)", "ProviderId")],
-        ["rightholder_added"]   = [("Fra (FromId)", "FromId"),       ("Til (ToId)", "ToId")],
-        ["rightholder_removed"] = [("Fra (FromId)", "FromId"),       ("Til (ToId)", "ToId")],
-        ["instance_added"]      = [("Fra (FromId)", "FromId"),       ("Til (ToId)", "ToId")],
-        ["instance_removed"]    = [("Fra (FromId)", "FromId"),       ("Til (ToId)", "ToId")],
-        ["request_reviewed"]    = [("Reviewer", "ReviewerId"),       ("Mottaker (RecipientId)", "RecipientId")],
-        ["request_pending"]     = [("Requester (RequesterId)", "RequesterId"), ("Mottaker (RecipientId)", "RecipientId")],
-    };
-
-    private static readonly Dictionary<string, string> HandlerSchemas = new()
-    {
-        ["access_added"]        = "{\n  \"FromId\": \"<guid>\",\n  \"ToId\": \"<guid>\",\n  \"PackageIds\": [\"<guid>\"],\n  \"ResourceIds\": [\"<guid>\"],\n  \"Updated\": 1\n}",
-        ["access_removed"]      = "{\n  \"FromId\": \"<guid>\",\n  \"ToId\": \"<guid>\",\n  \"PackageIds\": [\"<guid>\"],\n  \"ResourceIds\": [\"<guid>\"],\n  \"Updated\": 1\n}",
-        ["agent_added"]         = "{\n  \"AgentId\": \"<guid>\",\n  \"ProviderId\": \"<guid>\"\n}",
-        ["agent_removed"]       = "{\n  \"AgentId\": \"<guid>\",\n  \"ProviderId\": \"<guid>\"\n}",
-        ["client_added"]        = "{\n  \"AgentId\": \"<guid>\",\n  \"ProviderId\": \"<guid>\",\n  \"Clients\": [\"<guid>\"],\n  \"Updated\": 1\n}",
-        ["client_removed"]      = "{\n  \"AgentId\": \"<guid>\",\n  \"ProviderId\": \"<guid>\",\n  \"Clients\": [\"<guid>\"],\n  \"Updated\": 1\n}",
-        ["rightholder_added"]   = "{\n  \"FromId\": \"<guid>\",\n  \"ToId\": \"<guid>\"\n}",
-        ["rightholder_removed"] = "{\n  \"FromId\": \"<guid>\",\n  \"ToId\": \"<guid>\"\n}",
-        ["instance_added"]      = "{\n  \"FromId\": \"<guid>\",\n  \"ToId\": \"<guid>\",\n  \"Instances\": [{\"InstanceIds\": [\"<string>\"], \"ResourceId\": \"<guid>\"}],\n  \"Updated\": 1\n}",
-        ["instance_removed"]    = "{\n  \"FromId\": \"<guid>\",\n  \"ToId\": \"<guid>\",\n  \"Instances\": [{\"InstanceIds\": [\"<string>\"], \"ResourceId\": \"<guid>\"}],\n  \"Updated\": 1\n}",
-        ["request_reviewed"]    = "{\n  \"ReviewerId\": \"<guid>\",\n  \"RecipientId\": \"<guid>\",\n  \"Resources\": [{\"Ref\": \"<guid>\", \"IsApproved\": true}],\n  \"Packages\": [{\"Ref\": \"<guid>\", \"IsApproved\": true}],\n  \"Updated\": 1\n}",
-        ["request_pending"]     = "{\n  \"RequesterId\": \"<guid>\",\n  \"RecipientId\": \"<guid>\",\n  \"ResourceIds\": [\"<guid>\"],\n  \"PackageIds\": [\"<guid>\"],\n  \"Updated\": 1\n}",
-    };
-
     // ── Filter state ──────────────────────────────────────────────────────────
 
     private DateTime? _from = DateTime.Today.AddDays(-1);
@@ -287,28 +240,20 @@
     // ── Data ──────────────────────────────────────────────────────────────────
 
     private List<OutboxMessage>? _results;
-    private bool _loading;
     private bool _resetting;
-    private string? _error;
     private string? _resetMessage;
 
     // ── Lifecycle ─────────────────────────────────────────────────────────────
 
-    protected override async Task OnInitializedAsync()
-    {
-        EnvState.OnChange += OnEnvChanged;
-        await Load();
-    }
+    protected override Task OnInitializedAsync() => Load();
 
-    public void Dispose()
+    protected override Task OnEnvironmentChangedAsync()
     {
-        EnvState.OnChange -= OnEnvChanged;
-    }
-
-    private void OnEnvChanged()
-    {
+        // Results belong to the previous environment.
         _results = null;
-        InvokeAsync(StateHasChanged);
+        _resetMessage = null;
+        Error = null;
+        return Task.CompletedTask;
     }
 
     private void OnHandlerChanged(string? value)
@@ -319,78 +264,25 @@
 
     // ── Query ─────────────────────────────────────────────────────────────────
 
-    private IQueryable<OutboxMessage> BuildQuery(AppDbContext db)
-    {
-        var activeStatuses = _selectedStatuses
-            .Where(kv => kv.Value)
-            .Select(kv => kv.Key)
-            .ToList();
-
-        var fromUtc = (_from ?? DateTime.Today.AddDays(-1)).ToUniversalTime();
-        var toUtc = (_to ?? DateTime.Today.AddDays(1)).AddDays(1).ToUniversalTime();
-
-        var query = db.OutboxMessages
-            .Where(m => m.CreatedAt >= fromUtc && m.CreatedAt < toUtc)
-            .Where(m => activeStatuses.Contains(m.Status))
-            .AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(_handler))
-        {
-            query = query.Where(m => m.Handler == _handler);
-        }
-
-        foreach (var (jsonKey, value) in _dataFilters)
-        {
-            if (!string.IsNullOrWhiteSpace(value))
-            {
-                var pattern = $"%\"{jsonKey}\":\"{value}\"%";
-                query = query.Where(m => EF.Functions.Like(m.Data, pattern));
-            }
-        }
-
-        return query;
-    }
-
     private async Task Load()
     {
-        _error = null;
         _resetMessage = null;
-        _loading = true;
-        StateHasChanged();
 
-        try
-        {
-            using var db = DbFactory.CreateContext(EnvState.Current);
-
-            _results = await BuildQuery(db)
-                .AsNoTracking()
-                .OrderByDescending(m => m.CreatedAt)
-                .Take(MaxRows)
-                .ToListAsync();
-        }
-        catch (Exception ex)
-        {
-            _error = $"Databasefeil: {ex.Message}";
-        }
-        finally
-        {
-            _loading = false;
-        }
+        await RunAsync(async ct =>
+            _results = await OutboxService.SearchAsync(
+                EnvState.Current, _from, _to, _handler, ActiveStatuses(), _dataFilters, MaxRows, ct));
     }
 
     private async Task ConfirmReset()
     {
-        var parameters = new DialogParameters<ConfirmDialog>
-        {
-            { x => x.ContentText, $"Sett Status = Pending og Retries = 0 for alle {_results!.Count} meldinger i gjeldende resultat?" },
-            { x => x.ButtonText, "Tilbakestill" },
-            { x => x.Color, Color.Warning },
-        };
+        var confirmed = await Confirm.ShowAsync(
+            DialogService,
+            "Tilbakestill til pending",
+            $"Sett Status = Pending og Retries = 0 for alle {_results!.Count} meldinger i gjeldende resultat?",
+            "Tilbakestill",
+            Color.Warning);
 
-        var dialog = await DialogService.ShowAsync<ConfirmDialog>("Tilbakestill til pending", parameters);
-        var result = await dialog.Result;
-
-        if (result is { Canceled: false })
+        if (confirmed)
         {
             await ResetStatus();
         }
@@ -398,28 +290,22 @@
 
     private async Task ResetStatus()
     {
-        _error = null;
+        Error = null;
         _resetMessage = null;
         _resetting = true;
         StateHasChanged();
 
         try
         {
-            using var db = DbFactory.CreateContext(EnvState.Current);
+            var count = await OutboxService.ResetToPendingAsync(
+                EnvState.Current, _from, _to, _handler, ActiveStatuses(), _dataFilters);
 
-            var count = await BuildQuery(db)
-                .ExecuteUpdateAsync(s => s
-                    .SetProperty(m => m.Status, OutboxStatus.Pending)
-                    .SetProperty(m => m.Retries, 0)
-                    .SetProperty(m => m.StartedAt, (DateTime?)null)
-                    .SetProperty(m => m.CompletedAt, (DateTime?)null));
-
-            _resetMessage = $"{count} melding(er) tilbakestilt til Pending.";
             await Load();
+            _resetMessage = $"{count} melding(er) tilbakestilt til Pending.";
         }
         catch (Exception ex)
         {
-            _error = $"Feil ved tilbakestilling: {ex.Message}";
+            Error = $"Feil ved tilbakestilling: {ErrorText.Flatten(ex)}";
         }
         finally
         {
@@ -436,6 +322,12 @@
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private List<OutboxStatus> ActiveStatuses() =>
+        _selectedStatuses
+            .Where(kv => kv.Value)
+            .Select(kv => kv.Key)
+            .ToList();
 
     private static Color StatusColor(OutboxStatus status) => status switch
     {

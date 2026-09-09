@@ -1,0 +1,55 @@
+meta {
+  name: 03_AND_TheOwnerLosesAccessOutsideTheRetentionWindow
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeAccessPackages=true&includeInactiveParties=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeAccessPackages: true
+  includeInactiveParties: true
+}
+
+docs {
+  AND the owner of a sole proprietorship deleted before the retention window is no longer
+  an authorized party, even though the sole proprietorship itself is still returned.
+
+  The step derives the expectation from the deletion date in the fixture and the retention
+  window, so it asserts the rule rather than a calendar date.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty, isInsideRetentionWindow } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  const client = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_DELETED_2023_11_01_NoInnehaverAccess;
+  const insideWindow = isInsideRetentionWindow(client.deletedDate, testdata.deletedPartyRetentionYears);
+
+  test("AND the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the owner is not an authorized party once the deletion is outside the retention window", function() {
+    expect(insideWindow, `${client.name} was deleted on ${client.deletedDate}, which is inside the retention window of ${testdata.deletedPartyRetentionYears} years, so this fixture no longer covers the outside case`).to.be.false;
+    const owner = findParty(res.getBody().data, client.innehaver.partyUuid);
+    expect(owner, `the owner ${client.innehaver.name} should have lost access with the sole proprietorship`).to.be.undefined;
+  });
+
+  test("AND the sole proprietorship itself is still returned for the accounting firm", function() {
+    const party = findParty(res.getBody().data, client.partyUuid);
+    expect(party, `expected the deleted sole proprietorship ${client.name}`).to.not.be.undefined;
+    expect(party.isDeleted).to.be.true;
+  });
+}

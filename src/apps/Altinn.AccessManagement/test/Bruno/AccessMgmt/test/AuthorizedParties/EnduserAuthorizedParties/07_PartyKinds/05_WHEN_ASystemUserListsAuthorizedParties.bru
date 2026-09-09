@@ -1,0 +1,54 @@
+meta {
+  name: 05_WHEN_ASystemUserListsAuthorizedParties
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeAccessPackages=true&includeResources=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeAccessPackages: true
+  includeResources: true
+}
+
+docs {
+  WHEN a system user lists authorized parties, the caller is resolved from the system user
+  uuid rather than from a user id claim, and the organisation the system user was created
+  for is returned with the access it has been given.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAsSystemUser } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  const firm = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER;
+  await loginAsSystemUser(firm.systemuser_tilgangsstyrer, firm.orgno);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  const firm = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER;
+
+  test("WHEN a system user lists authorized parties, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the organisation the system user belongs to is returned with its access", function() {
+    const party = findParty(res.getBody().data, firm.partyUuid);
+    expect(party, `expected ${firm.name} in the party list`).to.not.be.undefined;
+    expect(party.type).to.equal("Organization");
+    expect(party.organizationNumber).to.equal(firm.orgno);
+    expect(party.authorizedAccessPackages, "the system user has been given access packages").to.not.be.empty;
+  });
+
+  test("THEN the system user reaches nothing beyond its own organisation's hierarchy", function() {
+    const topLevel = res.getBody().data.map(item => item.partyUuid.toLowerCase());
+    expect(topLevel).to.have.members([firm.partyUuid.toLowerCase()]);
+  });
+}

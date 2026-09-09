@@ -1,0 +1,37 @@
+meta {
+  name: 09_CLEANUP_AgentIsRemoved
+  type: http
+  seq: 9
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents?party={{party}}&agent={{agent}}&cascade=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  agent: {{agent}}
+  cascade: true
+}
+
+docs {
+  CLEANUP: the agent registration for the NUF facilitator is removed.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.clientDelegationV2.forretningsforerNuf.facilitator.partyUuid);
+  bru.setVar("agent", td.REGN_Organisasjon.REGN_Agent.userUuid);
+
+  await loginAs(td.clientDelegationV2.forretningsforerNuf.facilitator.dagligleder);
+}
+
+tests {
+  test("CLEANUP the agent removal returns 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

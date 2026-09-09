@@ -1,0 +1,79 @@
+meta {
+  name: 02_WHEN_FilteringOnASubunit
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeAccessPackages=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeAccessPackages: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{subjectPersonId}}",
+    "partyFilter": [
+      {
+        "type": "urn:altinn:party:uuid",
+        "value": "{{clientSubunit}}"
+      }
+    ]
+  }
+}
+
+docs {
+  WHEN the filter is on a subunit, the subunit is returned nested under its main unit, since
+  a subunit is never returned at the top level. The main unit itself is only a hierarchy
+  carrier with no access information of its own.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectPersonId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.pid);
+  bru.setVar("clientSubunit", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_USENSUELL_UVIRKSOM_TIGER.subunit.partyUuid);
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  const client = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_USENSUELL_UVIRKSOM_TIGER;
+
+  test("WHEN filtering on a subunit, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the subunit is returned nested under its main unit and not at the top level", function() {
+    const top = res.getBody().map(party => party.partyUuid.toLowerCase());
+    expect(top, "the subunit is never a top level party").to.not.include(client.subunit.partyUuid.toLowerCase());
+    expect(top, "the main unit carries the filtered subunit").to.include(client.partyUuid.toLowerCase());
+
+    const subunit = findParty(res.getBody(), client.subunit.partyUuid);
+    expect(subunit, `expected the subunit ${client.subunit.name} nested under its main unit`).to.not.be.undefined;
+  });
+
+  test("AND the main unit is only a hierarchy carrier with no access info of its own", function() {
+    const mainUnit = res.getBody().find(party => party.partyUuid.toLowerCase() === client.partyUuid.toLowerCase());
+    expect(mainUnit.onlyHierarchyElementWithNoAccess, "the main unit did not match the filter").to.be.true;
+    expect(mainUnit.authorizedRoles).to.be.empty;
+    expect(mainUnit.authorizedAccessPackages).to.be.empty;
+    expect(mainUnit.authorizedResources).to.be.empty;
+    expect(mainUnit.authorizedInstances).to.be.empty;
+  });
+}

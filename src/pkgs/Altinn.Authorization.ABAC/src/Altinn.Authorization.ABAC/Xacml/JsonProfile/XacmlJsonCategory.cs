@@ -1,6 +1,4 @@
-using System.Collections.Generic;
-
-namespace Altinn.Authorization.ABAC.Xacml.JsonProfile
+﻿namespace Altinn.Authorization.ABAC.Xacml.JsonProfile
 {
     /// <summary>
     /// The Category object corresponds to the XML <Attributes /> element. Just like the <Attributes /> element is specific to a given XACML

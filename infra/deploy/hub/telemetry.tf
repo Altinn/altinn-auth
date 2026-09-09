@@ -19,7 +19,7 @@ resource "azurerm_dashboard_grafana" "grafana" {
   location              = azurerm_resource_group.hub.location
   resource_group_name   = azurerm_resource_group.hub.name
   sku                   = "Standard"
-  grafana_major_version = 11
+  grafana_major_version = 12
   identity {
     type = "SystemAssigned"
   }

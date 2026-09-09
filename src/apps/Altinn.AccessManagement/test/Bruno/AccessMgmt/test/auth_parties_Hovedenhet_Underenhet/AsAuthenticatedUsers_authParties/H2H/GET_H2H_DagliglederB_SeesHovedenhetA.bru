@@ -98,7 +98,10 @@ tests {
   
    
   });
-  
+  // TODO: Re-enable this test once Inbox Delegation supports instance delegations to organizations.
+  // At the moment, app-controlled instance delegations are not included in the Authorized Parties response,
+  // making this test case irrelevant.
+  /*
   test(requestName + '|Step3: HovedenhetA has delegated instance access only', function() {
   
     const hovedenhet = (body || []).find(
@@ -120,7 +123,7 @@ tests {
   
     expect(underenhet.authorizedInstances || [])
       .to.have.length(0);
-  });
+  });*/
   
   // ── Step 4: No duplicate parties ──
   test(requestName + '|Step4: No duplicate parties in response', function() {

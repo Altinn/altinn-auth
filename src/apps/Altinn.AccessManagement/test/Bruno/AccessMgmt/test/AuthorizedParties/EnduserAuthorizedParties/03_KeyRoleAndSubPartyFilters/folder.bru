@@ -1,0 +1,23 @@
+meta {
+  name: 03_KeyRoleAndSubPartyFilters
+  seq: 3
+}
+
+docs {
+  Scenario: The three include filters in their true, false and auto settings
+
+    Given the daily leader lists authorized parties with key role parties included
+    Then the firm's clients are part of the result
+    When key role parties are excluded
+    Then only the parties the user reaches personally are left
+    And auto follows the user's own profile setting
+    When subunits are excluded
+    Then the subunits come back anyway
+    When inactive parties are excluded
+    Then the deleted parties come back anyway
+
+  `includeSubParties` and `includeInactiveParties` are read by the service and resolved
+  from the user profile when set to auto, but the resolved value is never applied to the
+  query, so neither parameter has any effect. The two false steps assert that as the
+  behaviour of the day and name #3522, which tracks completing the filters.
+}

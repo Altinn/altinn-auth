@@ -987,21 +987,6 @@ namespace Altinn.AccessManagement.Core.Helpers
         /// </summary>
         /// <param name="rules">The rules output from a delegation to convert</param>
         /// <returns>List of RightDelegationResult</returns>
-        public static List<RightDelegationResult> GetRightDelegationResultsFromRules(List<Rule> rules)
-        {
-            return rules.Select(rule => new RightDelegationResult
-            {
-                Resource = rule.Resource,
-                Action = rule.Action,
-                Status = rule.CreatedSuccessfully ? DelegationStatus.Delegated : DelegationStatus.NotDelegated
-            }).ToList();
-        }
-
-        /// <summary>
-        /// Gets the list of Rules as a list of RightDelegationResult
-        /// </summary>
-        /// <param name="rules">The rules output from a delegation to convert</param>
-        /// <returns>List of RightDelegationResult</returns>
         public static IEnumerable<InstanceRightDelegationResult> GetRightDelegationResultsFromInstanceRules(InstanceRight rules)
         {
             return rules.InstanceRules.Select(rule => new InstanceRightDelegationResult
@@ -1025,21 +1010,6 @@ namespace Altinn.AccessManagement.Core.Helpers
                 Action = rule.Action,
                 Status = rule.CreatedSuccessfully ? RevokeStatus.Revoked : RevokeStatus.NotRevoked
             });
-        }
-
-        /// <summary>
-        /// Gets the list of Rights as a list of RightDelegationResult
-        /// </summary>
-        /// <param name="rights">The rights to convert</param>
-        /// <returns>List of RightDelegationResult</returns>
-        public static List<RightDelegationResult> GetRightDelegationResultsFromFailedRights(List<Right> rights)
-        {
-            return rights.Select(right => new RightDelegationResult
-            {
-                Resource = right.Resource,
-                Action = right.Action,
-                Status = DelegationStatus.NotDelegated
-            }).ToList();
         }
 
         /// <summary>

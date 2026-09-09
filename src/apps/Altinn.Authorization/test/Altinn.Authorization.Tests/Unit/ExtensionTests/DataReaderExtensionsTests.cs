@@ -1,9 +1,6 @@
-using System;
 using System.Data;
 
 using Altinn.Platform.Authorization.Extensions;
-
-using Xunit;
 
 namespace Altinn.Authorization.Tests.Unit.ExtensionTests
 {

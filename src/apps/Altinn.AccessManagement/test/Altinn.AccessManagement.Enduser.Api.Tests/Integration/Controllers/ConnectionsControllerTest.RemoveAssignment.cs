@@ -1,5 +1,4 @@
 ﻿using System.Net;
-using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text.Json;
 using Altinn.AccessManagement.Api.Enduser.Controllers;
@@ -8,7 +7,6 @@ using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.TestUtils;
 using Altinn.AccessManagement.TestUtils.Data;
 using Altinn.AccessManagement.TestUtils.Fixtures;
-using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
@@ -51,7 +49,6 @@ public partial class ConnectionsControllerTest
         public RemoveAssignment(ApiFixture fixture)
         {
             Fixture = fixture;
-            Fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.Altinn2RoleRevoke);
             Fixture.EnsureSeedOnce<RemoveAssignment>(db =>
             {
                 // Create a clean rightholder for basic remove test
@@ -246,8 +243,7 @@ public partial class ConnectionsControllerTest
 
         /// <summary>
         /// When revoking a rightholder assignment (HanSoloEnterprise -> BenSolo),
-        /// the Altinn2RoleRevoke feature flag is enabled and BenSolo already has
-        /// an Altinn2 ReporterSender role assigned by HanSoloEnterprise.
+        /// BenSolo already has an Altinn2 ReporterSender role assigned by HanSoloEnterprise.
         /// Expects 204 NoContent, and verifies that the Altinn2 role assignment
         /// is also deleted from the database along with the rightholder assignment.
         /// </summary>
@@ -292,7 +288,7 @@ public partial class ConnectionsControllerTest
             // Remove the rightholder assignment
             HttpClient client = CreateClient(TestData.HanSolo.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE);
             HttpResponseMessage response = await client.DeleteAsync(
-                $"{Route}?party={TestData.HanSoloEnterprise.Id}&from={TestData.HanSoloEnterprise.Id}&to={TestData.BenSolo.Id}",
+                $"{Route}?party={TestData.HanSoloEnterprise.Id}&from={TestData.HanSoloEnterprise.Id}&to={TestData.BenSolo.Id}&cascade=true",
                 TestContext.Current.CancellationToken);
 
             string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
@@ -324,9 +320,9 @@ public partial class ConnectionsControllerTest
         /// <summary>
         /// When revoking a rightholder assignment (HanSoloEnterprise -> LeiaOrgana),
         /// LeiaOrgana has a ChairOfTheBoard role which is a CCR (CentralCoordinatingRegister)
-        /// role — NOT an Altinn2 role. The Altinn2RoleRevoke feature flag is enabled, but
-        /// only Altinn2 roles should be revoked. Expects 204 NoContent, and verifies that
-        /// the CCR ChairOfTheBoard role assignment is NOT deleted from the database.
+        /// role — NOT an Altinn2 role. Only Altinn2 roles should be revoked.
+        /// Expects 204 NoContent, and verifies that the CCR ChairOfTheBoard role
+        /// assignment is NOT deleted from the database.
         /// </summary>
         [Fact]
         public async Task RemoveAssignment_WithNonAltinn2RolePresent_DoesNotRevokeNonAltinn2Role()

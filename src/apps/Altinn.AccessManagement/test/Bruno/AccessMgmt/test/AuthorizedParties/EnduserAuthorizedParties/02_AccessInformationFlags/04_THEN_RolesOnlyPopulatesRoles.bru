@@ -1,0 +1,49 @@
+meta {
+  name: 04_THEN_RolesOnlyPopulatesRoles
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeRoles=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeRoles: true
+}
+
+docs {
+  THEN asking for roles alone populates the role collection and leaves access packages,
+  resources and instances empty.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { flatten, findParty, lower } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  test("THEN the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the roles of the accounting firm are returned", function() {
+    const party = findParty(res.getBody().data, testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid);
+    expect(lower(party.authorizedRoles)).to.include("dagl");
+  });
+
+  test("THEN access packages, resources and instances stay empty", function() {
+    for (const party of flatten(res.getBody().data)) {
+      expect(party.authorizedAccessPackages, `access packages returned for ${party.partyUuid}`).to.be.empty;
+      expect(party.authorizedResources, `resources returned for ${party.partyUuid}`).to.be.empty;
+      expect(party.authorizedInstances, `instances returned for ${party.partyUuid}`).to.be.empty;
+    }
+  });
+}

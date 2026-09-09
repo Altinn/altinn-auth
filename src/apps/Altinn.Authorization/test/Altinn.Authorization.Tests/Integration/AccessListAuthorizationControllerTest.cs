@@ -1,14 +1,9 @@
-﻿using System;
-using System.IO;
-using System.Net;
-using System.Net.Http;
+﻿using System.Net;
 using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Altinn.Authorization.Tests.Fixtures;
 using Altinn.Authorization.Tests.Util;
 using Altinn.Platform.Authorization.Models;
-using Xunit;
 
 namespace Altinn.Authorization.Tests.Integration;
 
@@ -44,6 +39,28 @@ public class AccessListAuthorizationControllerTest : IClassFixture<Authorization
     {
         string testCase = "Permit_WithoutActionFilter";
         AccessListAuthorizationResponse expected = GetExpectedResponse("Permit_WithoutActionFilter");
+
+        // Act
+        HttpResponseMessage response = await _client.SendAsync(GetPostRequestMessage(testCase, PrincipalUtil.GetAccessToken("access-management", "platform")), TestContext.Current.CancellationToken);
+        string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        AccessListAuthorizationResponse actual = JsonSerializer.Deserialize<AccessListAuthorizationResponse>(responseContent, _serializerOptions);
+        AssertionUtil.AssertEqual(expected, actual);
+    }
+
+    /// <summary>
+    /// Tests the scenario where the subject organization does NOT have access to the resource 'ttd-accesslist-resource' through any access list membership.
+    /// Mirrors the Bruno AccessList_AC3_Deny scenario. Pairs with <see cref="AccessList_Authorization_Permit_WithoutActionFilter"/>: same resource,
+    /// no action filter on either side, so the only discriminating fact between the two tests is access list membership.
+    /// </summary>
+    [Fact]
+    public async Task AccessList_Authorization_NotAuthorized_WithoutAccessListMembership()
+    {
+        string testCase = "NotAuthorized_NotAccessListMember";
+        AccessListAuthorizationResponse expected = GetExpectedResponse(testCase);
 
         // Act
         HttpResponseMessage response = await _client.SendAsync(GetPostRequestMessage(testCase, PrincipalUtil.GetAccessToken("access-management", "platform")), TestContext.Current.CancellationToken);

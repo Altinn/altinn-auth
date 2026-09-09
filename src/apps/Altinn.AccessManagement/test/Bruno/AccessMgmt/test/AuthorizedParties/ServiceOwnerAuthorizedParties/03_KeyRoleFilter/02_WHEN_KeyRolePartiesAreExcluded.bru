@@ -1,0 +1,71 @@
+meta {
+  name: 02_WHEN_KeyRolePartiesAreExcluded
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includePartiesViaKeyRoles=false&includeAccessPackages=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includePartiesViaKeyRoles: false
+  includeAccessPackages: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{subjectPersonId}}"
+  }
+}
+
+docs {
+  WHEN key role parties are excluded, the clients the subject only reaches because the
+  accounting firm has access to them drop out. The firm itself stays, and so does a party
+  that delegated something to the person directly.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectPersonId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.pid);
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  const firm = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER;
+
+  test("WHEN key role parties are excluded, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the clients the subject only reaches through the firm are gone", function() {
+    expect(findParty(res.getBody(), firm.client_USENSUELL_UVIRKSOM_TIGER.partyUuid), "the accountant client should not be reachable without key role parties").to.be.undefined;
+    expect(findParty(res.getBody(), firm.client_WITHOUT_CLIENTDELEGATION.partyUuid), "the client without a client delegation should not be reachable without key role parties").to.be.undefined;
+  });
+
+  test("THEN the firm the subject is daily leader for is still returned", function() {
+    const party = findParty(res.getBody(), firm.partyUuid);
+    expect(party, "expected the accounting firm itself").to.not.be.undefined;
+  });
+
+  test("THEN a party that delegated directly to the person is still returned", function() {
+    const party = findParty(res.getBody(), firm.client_rightholderOrg2.partyUuid);
+    expect(party, "expected the party that delegated directly to the person").to.not.be.undefined;
+    expect(party.authorizedAccessPackages).to.include(firm.client_rightholderOrg2.packageDelegatedToPerson);
+  });
+}

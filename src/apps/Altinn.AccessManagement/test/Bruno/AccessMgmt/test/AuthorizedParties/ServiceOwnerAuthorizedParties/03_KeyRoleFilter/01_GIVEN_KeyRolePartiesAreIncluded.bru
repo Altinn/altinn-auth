@@ -1,0 +1,58 @@
+meta {
+  name: 01_GIVEN_KeyRolePartiesAreIncluded
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includePartiesViaKeyRoles=true&includeAccessPackages=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includePartiesViaKeyRoles: true
+  includeAccessPackages: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{subjectPersonId}}"
+  }
+}
+
+docs {
+  GIVEN key role parties are included, the clients the subject reaches through the accounting
+  firm's key role are part of the list. This is the baseline the exclude step is compared against.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectPersonId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.pid);
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  const firm = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER;
+
+  test("GIVEN key role parties are included, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN a client reached through the firm's key role is present", function() {
+    expect(findParty(res.getBody(), firm.client_USENSUELL_UVIRKSOM_TIGER.partyUuid), "the accountant client is reachable via the key role").to.not.be.undefined;
+  });
+}

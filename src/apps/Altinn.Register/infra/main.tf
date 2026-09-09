@@ -2,7 +2,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "4.73.0"
+      version = "4.81.0"
     }
     static = {
       source  = "tiwood/static"
@@ -10,7 +10,7 @@ terraform {
     }
     time = {
       source  = "hashicorp/time"
-      version = "0.13.1"
+      version = "0.14.1"
     }
   }
 
@@ -352,6 +352,10 @@ module "appsettings" {
           "Altinn:MaskinPorten:Clients:register-freg:Scope"    = { value = var.config.maskinporten.scope }
         } : {},
         // ccr client config
+        {
+          for client_key, client in var.config.ccr.clients :
+          "Altinn:register:Ccr:Clients:${client_key}:Federate" => { value = client.federate }
+        },
         merge([
           for client_key, client in var.config.ccr.clients : {
             for network_index, network_value in client.networks :

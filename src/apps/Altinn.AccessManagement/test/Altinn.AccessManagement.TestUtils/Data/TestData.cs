@@ -25,6 +25,16 @@ public static class TestData
         Name = "CorrespondenceService",
     };
 
+    /// <summary>
+    /// The resource type for MaskinportenSchema resources. The name must match the real
+    /// resource type name, which the maskinporten supplier delegation flow checks against.
+    /// </summary>
+    public static ResourceType MaskinportenSchemaResourceType { get; } = new()
+    {
+        Id = Guid.Parse("019d95d1-95c7-7887-91cc-30fc9af97192"),
+        Name = "MaskinportenSchema",
+    };
+
     #endregion
 
     #region Resources
@@ -37,6 +47,20 @@ public static class TestData
         RefId = "ttd-migratedcorrespondence-4471-1",
         TypeId = TestData.CorrespondenceResourceType.Id,
         ProviderId = ProviderConstants.Altinn2.Id,
+    };
+
+    /// <summary>
+    /// MaskinportenSchema resource marked delegable=false in the resource registry mock data
+    /// (<c>Data/ResourceRegistryResources/non_delegable_maskinportenschema</c>).
+    /// </summary>
+    public static readonly Resource NonDelegableMaskinportenSchema = new()
+    {
+        Id = Guid.Parse("019d95d3-92d5-750f-a594-a8b08e756a4b"),
+        Name = "MaskinportenSchema that cannot be delegated",
+        Description = "MaskinportenSchema resource with delegable set to false in the Resource Registry",
+        RefId = "non_delegable_maskinportenschema",
+        TypeId = TestData.MaskinportenSchemaResourceType.Id,
+        ProviderId = ProviderConstants.ResourceRegistry.Id,
     };
 
     public static readonly Resource MattilsynetBakeryService = new()
@@ -706,6 +730,31 @@ public static class TestData
 
     #endregion
 
+    #region Systembruker  - Kaos Magic Design and Arts
+
+    public static ConstantDefinition<Entity> MinSystemBruker { get; } = new("afb94d9d-8621-4700-a252-20269196097f")
+    {
+        Entity = new()
+        {
+            DateOfBirth = null,
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "Sharpest knife",
+            OrganizationIdentifier = null,
+            Parent = null,
+            ParentId = null,
+            PartyId = null,
+            RefId = "afb94d9d-8621-4700-a252-20269196097f",
+            TypeId = EntityTypeConstants.SystemUser,
+            UserId = null,
+            Username = null,
+            VariantId = EntityVariantConstants.StandardSystem,
+        }
+    };
+
+    #endregion
+
     #region Personer - Fredriksons Fabrikk
 
     public static ConstantDefinition<Entity> SiljeHaugen { get; } = new("10000007-aaaa-4bbb-8ccc-ddddeeee0007")
@@ -1133,9 +1182,31 @@ public static class TestData
             ParentId = null,
             PartyId = 50300005,
             PersonIdentifier = "21078942743",
-            RefId = "07108640094",
+            RefId = "21078942743",
             TypeId = EntityTypeConstants.Person,
             UserId = 20300005,
+            Username = null,
+            VariantId = EntityVariantConstants.Person,
+        }
+    };
+
+    public static ConstantDefinition<Entity> PadmeAmidala { get; } = new("86dd9f82-4e6e-469a-82c0-46d5e65b7790")
+    {
+        Entity = new()
+        {
+            DateOfBirth = new(1967, 5, 13),
+            DateOfDeath = new(1992, 7, 15),
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "Padmé Amidala",
+            OrganizationIdentifier = null,
+            Parent = null,
+            ParentId = null,
+            PartyId = 50300006,
+            PersonIdentifier = "13056740095",
+            RefId = "13056740095",
+            TypeId = EntityTypeConstants.Person,
+            UserId = 20300006,
             Username = null,
             VariantId = EntityVariantConstants.Person,
         }
@@ -1199,6 +1270,7 @@ public static class TestData
 
     // Kaos Magic Design and Arts - rettighetshavere
     public static readonly Guid AssignKaosJosephineRightholder = Guid.Parse("0196a0b1-0001-7001-8001-000000000053");
+    public static readonly Guid AssignKaosSvendsenAutomobilRightholder = Guid.Parse("0196a0b1-0001-7001-8001-000000000054");
 
     // Dumbo Adventures - org-til-org
     private static readonly Guid AssignDumboAdventuresKaosAuditor = Guid.Parse("0196a0b1-0001-7001-8001-000000000052");
@@ -1276,6 +1348,7 @@ public static class TestData
 
         // Kaos Magic Design and Arts - rettighetshavere
         new Assignment() { Id = AssignKaosJosephineRightholder, FromId = KaosMagicDesignAndArts, ToId = JosephineYvonnesdottir, RoleId = RoleConstants.Rightholder },
+        new Assignment() { Id = AssignKaosSvendsenAutomobilRightholder, FromId = KaosMagicDesignAndArts, ToId = SvendsenAutomobil, RoleId = RoleConstants.Rightholder },
 
         // Dumbo Adventures - org-til-org (Kaos is auditor for Dumbo)
         new Assignment() { Id = AssignDumboAdventuresKaosAuditor, FromId = DumboAdventures, ToId = KaosMagicDesignAndArts, RoleId = RoleConstants.Auditor },

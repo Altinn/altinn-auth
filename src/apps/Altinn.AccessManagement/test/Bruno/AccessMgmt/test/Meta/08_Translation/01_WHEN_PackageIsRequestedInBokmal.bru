@@ -1,0 +1,43 @@
+meta {
+  name: 01_WHEN_PackageIsRequestedInBokmal
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/package/:id
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{packageId}}
+}
+
+headers {
+  Accept-Language: nb
+}
+
+docs {
+  WHEN a package is requested with Accept-Language nb, THEN the name is
+  returned in Bokmål, the base language entities are stored in.
+}
+
+script:pre-request {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  bru.setVar("packageId", td.packages.kunstOgUnderholdning.id);
+}
+
+tests {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  test("WHEN Accept-Language is nb, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the name is in Bokmål", function() {
+    const body = res.getBody();
+    expect(body.name).to.equal(td.packages.kunstOgUnderholdning.name);
+  });
+}

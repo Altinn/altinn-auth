@@ -1,0 +1,46 @@
+meta {
+  name: 04_AND_ClientGrantsResourceToFacilitator
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources/rights?party={{clientB}}&to={{party}}&resource={{resource}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{clientB}}
+  to: {{party}}
+  resource: {{resource}}
+}
+
+body:json {
+  {
+    "DirectRightKeys": ["{{cdv2_resourceReadRightKey}}"]
+  }
+}
+
+docs {
+  AND the client grants the facilitator the read right on the single resource
+  through the v1 connections API, using the right key captured from the
+  delegation check. Expects 201.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("clientB", td.REGN_Organisasjon.REGN_Org_Clients.client_B.partyUuid);
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("resource", td.clientDelegationV2.singleResource);
+
+  await loginAs(td.REGN_Organisasjon.REGN_Org_Clients.client_B.dagligleder);
+}
+
+tests {
+  test("AND the client grants the facilitator the resource, the request returns 201", function() {
+    expect(res.status).to.equal(201);
+  });
+}

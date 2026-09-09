@@ -10,6 +10,7 @@
         <PackageReference Include="Altinn.Authorization.ServiceDefaults" />
         <PackageReference Include="Altinn.Common.AccessToken" />
         <PackageReference Include="Altinn.Urn.Swashbuckle" />
+        <PackageReference Include="Asp.Versioning.Mvc.ApiExplorer" />
         <PackageReference Include="AutoMapper" />
         <PackageReference Include="Azure.Identity" />
         <PackageReference Include="JWTCookieAuthentication" />

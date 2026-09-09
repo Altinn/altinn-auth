@@ -1,0 +1,16 @@
+meta {
+  name: 08_SystemUserAgent
+  seq: 8
+}
+
+docs {
+  Scenario: The facilitator delegates a client package to an agent system user
+
+    Given the system user has no agent assignment
+    When a client package is delegated to the system user
+    Then the system user appears as agent
+    And the system user package list shows the client
+    And the person is not registered as agent for the facilitator
+    When a package is delegated to an unregistered person the request fails
+    And the delegation and the agent assignment are cleaned up
+}

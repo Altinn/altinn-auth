@@ -1,0 +1,59 @@
+meta {
+  name: 03_WHEN_FilteringOnAPartyTheSubjectCannotAccess
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeAccessPackages=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeAccessPackages: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{subjectPersonId}}",
+    "partyFilter": [
+      {
+        "type": "urn:altinn:party:uuid",
+        "value": "{{unreachableParty}}"
+      }
+    ]
+  }
+}
+
+docs {
+  WHEN the filter is on the uuid of a party the subject has no access to, the request still
+  succeeds and the party list is empty. Filtering never widens what the subject may see.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectPersonId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.pid);
+  bru.setVar("unreachableParty", testdata.idportenEmailUser.partyUuid);
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir);
+}
+
+tests {
+  test("WHEN filtering on an unreachable party, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the party list is empty", function() {
+    expect(res.getBody(), "the service owner endpoint returns a bare array").to.be.an("array").that.is.empty;
+  });
+}

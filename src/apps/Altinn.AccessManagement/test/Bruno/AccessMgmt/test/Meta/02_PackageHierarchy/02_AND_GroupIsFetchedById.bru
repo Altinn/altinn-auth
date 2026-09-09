@@ -1,0 +1,40 @@
+meta {
+  name: 02_AND_GroupIsFetchedById
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/group/:id
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{groupId}}
+}
+
+docs {
+  AND the Bransje group is fetched by id, THEN its name and description are
+  returned.
+}
+
+script:pre-request {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  bru.setVar("groupId", td.groups.bransje.id);
+}
+
+tests {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  test("AND the group by id request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the group name matches", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("id", td.groups.bransje.id);
+    expect(body).to.have.property("name", td.groups.bransje.name);
+  });
+}

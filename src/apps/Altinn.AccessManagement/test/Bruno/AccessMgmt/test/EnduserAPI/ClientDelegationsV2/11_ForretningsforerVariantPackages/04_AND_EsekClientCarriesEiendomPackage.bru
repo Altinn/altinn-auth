@@ -1,0 +1,49 @@
+meta {
+  name: 04_AND_EsekClientCarriesEiendomPackage
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/clients?party={{party}}&roles=forretningsforer
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  roles: forretningsforer
+}
+
+docs {
+  AND the ESEK client carries the eiendom package through the forretningsforer
+  role.
+}
+
+script:pre-request {
+  const su = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", su.regnskapsforer.partyuuid);
+
+  await loginAs(su.regnskapsforer.dagl);
+}
+
+tests {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const su = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+
+  test("AND the role filtered client list request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the ESEK client carries the eiendom package", function() {
+    const esek = su.esek_type_client_org.partyuuid.toLowerCase();
+    const entry = res.getBody().data.find(item => item.client.id.toLowerCase() === esek);
+    expect(entry, "expected the ESEK client in the forretningsforer client list").to.not.be.undefined;
+    expect(entry.client.variant).to.equal("ESEK");
+    const roleAccess = entry.access.find(a => a.role.code === "forretningsforer");
+    expect(roleAccess, "expected a forretningsforer access element").to.not.be.undefined;
+    expect(roleAccess.packages.map(p => p.urn)).to.include(td.clientDelegationV2.packages.forretningsforerEiendom);
+  });
+}

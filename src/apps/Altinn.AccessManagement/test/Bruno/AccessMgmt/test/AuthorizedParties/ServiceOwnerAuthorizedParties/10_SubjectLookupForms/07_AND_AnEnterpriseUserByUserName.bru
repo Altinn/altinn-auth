@@ -1,0 +1,52 @@
+meta {
+  name: 07_AND_AnEnterpriseUserByUserName
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeAccessPackages=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeAccessPackages: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:enterpriseuser:username",
+    "value": "{{subjectValue}}"
+  }
+}
+
+docs {
+  AND an enterprise user can be the subject, looked up by user name. The party list this returns
+  is the baseline for the enterprise user uuid form.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectValue", testdata.a2BrunoECUser.username);
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir);
+}
+
+tests {
+  const { partyUuids } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  test("AND an enterprise user looked up by user name returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  bru.setVar("enterpriseUserPartyUuids", JSON.stringify(partyUuids(res.getBody()).sort()));
+}

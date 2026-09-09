@@ -1,6 +1,5 @@
 ﻿using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Models;
-using Altinn.AccessMgmt.Core.Utils;
 using Altinn.Authorization.Api.Contracts.Register;
 
 namespace Altinn.AccessManagement.Utilities;

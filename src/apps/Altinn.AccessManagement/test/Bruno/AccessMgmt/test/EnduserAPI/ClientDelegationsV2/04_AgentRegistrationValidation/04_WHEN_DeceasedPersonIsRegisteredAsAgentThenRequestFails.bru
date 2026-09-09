@@ -1,0 +1,56 @@
+meta {
+  name: 04_WHEN_DeceasedPersonIsRegisteredAsAgentThenRequestFails
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents?party={{party}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+body:json {
+  {
+    "personIdentifier": "{{agentPid}}",
+    "lastName": "{{agentLastName}}"
+  }
+}
+
+docs {
+  WHEN the facilitator tries to register a person who is registered as deceased
+  as agent, by person number and last name.
+
+  Expects 400 with validation error AM.VLD-00034 on the person input, carrying
+  the text "Person not available for delegation (deceased).". Mirrors the
+  AddAgent_PermittedEntityTypePerson_Returns400WhenReceiversDead integration test.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("agentPid", td.deceasedPerson.personidentity);
+  bru.setVar("agentLastName", td.deceasedPerson.etternavn);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  test("WHEN a deceased person is registered as agent, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN the error body reports validation error AM.VLD-00034 for a deceased person", function() {
+    const body = res.getBody();
+    expect(body.code).to.equal("STD-00000");
+    const err = body.validationErrors.find(e => e.code === "AM.VLD-00034");
+    expect(err, "expected validation error AM.VLD-00034").to.not.be.undefined;
+    expect(JSON.stringify(err)).to.include("deceased");
+  });
+}

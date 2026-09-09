@@ -1,0 +1,48 @@
+meta {
+  name: 07_THEN_AgentPackageListShowsRightholderClient
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents/accesspackages?party={{party}}&agent={{agent}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  agent: {{agent}}
+}
+
+docs {
+  THEN the agent package list shows the rightholder client with the delegated
+  skattegrunnlag package on the rettighetshaver role.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("agent", td.REGN_Organisasjon.REGN_Agent.userUuid);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+
+  test("THEN the agent package list request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the rightholder client appears with the delegated package", function() {
+    const clientUuid = td.REGN_Organisasjon.REGN_Org_Clients.client_B.partyUuid.toLowerCase();
+    const entry = res.getBody().data.find(item => item.client.id.toLowerCase() === clientUuid);
+    expect(entry, "expected the rightholder client in the agent package list").to.not.be.undefined;
+    const access = entry.access.find(a => a.role.code === "rettighetshaver");
+    expect(access, "expected an access element with the rettighetshaver role").to.not.be.undefined;
+    expect(access.packages.map(p => p.urn)).to.include(td.clientDelegationV2.packages.skattegrunnlag);
+  });
+}

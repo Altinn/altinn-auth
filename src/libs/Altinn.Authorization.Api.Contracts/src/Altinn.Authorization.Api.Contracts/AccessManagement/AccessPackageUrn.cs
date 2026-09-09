@@ -1,5 +1,4 @@
-﻿using System.Globalization;
-using Altinn.Urn;
+﻿using Altinn.Urn;
 
 namespace Altinn.Authorization.Api.Contracts.AccessManagement
 {

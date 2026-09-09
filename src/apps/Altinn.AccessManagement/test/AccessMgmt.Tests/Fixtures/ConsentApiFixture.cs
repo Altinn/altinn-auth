@@ -3,7 +3,6 @@ using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.Tests.Moqdata;
 using Altinn.AccessManagement.TestUtils.Mocks;
-using Altinn.Common.AccessToken.Services;
 using Altinn.Common.PEP.Interfaces;
 using AltinnCore.Authentication.JwtCookie;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,8 +14,9 @@ namespace Altinn.AccessManagement.Tests.Fixtures;
 
 /// <summary>
 /// Profile fixture for the consent controller tests: <see cref="LegacyApiFixture"/>
-/// (which overlays the Yuniql consent schema) plus the DI configuration every consent
-/// test class shares — issuer-cert signing, the legacy <c>PdpPermitMock</c> PDP, a
+/// (the consent schema comes from EF Core; the fixture also overlays the Yuniql
+/// accessmanagement/delegation schemas) plus the DI configuration every consent
+/// test class shares — the legacy <c>PdpPermitMock</c> PDP, a
 /// mocked policy retrieval point, the JWT-cookie stub, and a shared
 /// <c>IAmPartyRepository</c> mock populated from <see cref="MockParyRepositoryPopulator"/>.
 /// </summary>
@@ -36,11 +36,6 @@ public class ConsentApiFixture : LegacyApiFixture
 
         ConfigureServices(services =>
         {
-            // PlatformAccessToken / maskinporten tokens are signed by {issuer}-org.pem;
-            // the default PublicSigningKeyProviderMock only accepts the static test key.
-            services.RemoveAll<IPublicSigningKeyProvider>();
-            services.AddSingleton<IPublicSigningKeyProvider, SigningKeyResolverMock>();
-
             // Legacy PdpPermitMock flavour used by the consent tests.
             services.RemoveAll<IPDP>();
             services.AddSingleton<IPDP, PdpPermitMock>();

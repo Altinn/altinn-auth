@@ -1,11 +1,7 @@
-using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
-using System.Threading.Tasks;
 using Altinn.Platform.Authorization.Extensions;
 using Altinn.Platform.Authorization.Models;
 using Altinn.Platform.Authorization.Repositories.Interface;
-using Microsoft.Extensions.Logging;
 using Npgsql;
 
 namespace Altinn.Platform.Authorization.Repositories

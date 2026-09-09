@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text.Json;
 using Altinn.AccessMgmt.Core.Extensions;
 using Altinn.AccessMgmt.Core.Notifications;
@@ -31,16 +31,16 @@ public class RightholderRemovedNotificationHandler(AppDbContext db,
         }
 
         var (from, to, idempotencyId) = await UnwrapMessage(message, cancellationToken);
-        if (to.TypeId != EntityTypeConstants.Person)
+        if (to.TypeId != EntityTypeConstants.Person && to.TypeId != EntityTypeConstants.Organization)
         {
-            db.OutboxMessageLogs.Add(message, "to entity type is not of type <Person>");
+            db.OutboxMessageLogs.Add(message, $"to entity type must be of type <Person | Organization>, not {to.Name}");
             await db.SaveChangesAsync(cancellationToken);
             return OutboxStatus.Completed;
         }
 
         if (from.TypeId != EntityTypeConstants.Person && from.TypeId != EntityTypeConstants.Organization)
         {
-            db.OutboxMessageLogs.Add(message, "from entity type is not of type <Person | Organization>");
+            db.OutboxMessageLogs.Add(message, $"from entity type must be of type <Person | Organization>, not {from.Name}");
             await db.SaveChangesAsync(cancellationToken);
             return OutboxStatus.Completed;
         }
@@ -165,7 +165,7 @@ public class RightholderRemovedNotificationHandler(AppDbContext db,
             };
         }
 
-        throw new InvalidOperationException("to entity type must be of type <Person | Organization>");
+        throw new UnreachableException();
     }
 
     private static string MailContent(Entity from, Entity to)
@@ -246,7 +246,7 @@ public class RightholderRemovedNotificationHandler(AppDbContext db,
             ";
         }
 
-        throw new InvalidOperationException("from and to entity type must be of type <Person | Organization>");
+        throw new UnreachableException();
     }
 }
 

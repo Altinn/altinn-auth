@@ -1,5 +1,4 @@
 ﻿using Altinn.AccessManagement.Core.Models;
-using Altinn.AccessMgmt.Core.Appsettings;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
@@ -8,11 +7,12 @@ using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.FeatureManagement;
 
 namespace Altinn.AccessMgmt.Core.Services;
 
 /// <inheritdoc/>
-public class AuthorizedPartyRepoServiceEf(AppDbContext db, ConnectionQuery connectionQuery) : IAuthorizedPartyRepoServiceEf
+public class AuthorizedPartyRepoServiceEf(AppDbContext db, ConnectionQuery connectionQuery, IFeatureManager featureManager) : IAuthorizedPartyRepoServiceEf
 {
     /// <inheritdoc/>
     public async Task<Entity?> GetEntity(Guid id, CancellationToken ct = default) =>
@@ -109,6 +109,9 @@ public class AuthorizedPartyRepoServiceEf(AppDbContext db, ConnectionQuery conne
         bool enrichEntities = false,
         CancellationToken ct = default)
     {
+        var includeResources = filters?.IncludeResources == true || filters?.ResourceFilter?.Keys?.Count > 0;
+        var includeDelegationResources = includeResources && await featureManager.IsEnabledAsync(AccessMgmtFeatureFlags.IncludeClientDelegationResourcesInConnectionQuery);
+
         return await connectionQuery.GetConnectionsAsync(
         new ConnectionQueryFilter()
         {
@@ -120,40 +123,13 @@ public class AuthorizedPartyRepoServiceEf(AppDbContext db, ConnectionQuery conne
             IncludeMainUnitConnections = true,
             IncludeDelegation = true,
             IncludePackages = filters?.IncludeAccessPackages == true || filters?.PackageFilter?.Keys?.Count > 0,
-            IncludeResources = filters?.IncludeResources == true || filters?.ResourceFilter?.Keys?.Count > 0,
+            IncludeResources = includeResources,
+            IncludeDelegationResources = includeDelegationResources,
             IncludeInstances = filters?.IncludeInstances == true || filters?.ResourceFilter?.Keys?.Count > 0,
             EnrichPackageResources = false,
             ExcludeDeleted = false
         },
         ConnectionQueryDirection.FromOthers,
-        useNewQuery: true,
-        ct);
-    }
-
-    /// <inheritdoc />
-    public async Task<List<ConnectionQueryExtendedRecord>> GetConnectionsFromOthersOld(
-        Guid toId,
-        AuthorizedPartiesFilters filters = null,
-        CancellationToken ct = default)
-    {
-        return await connectionQuery.GetConnectionsAsync(
-        new ConnectionQueryFilter()
-        {
-            ToIds = [toId],
-            FromIds = filters?.PartyFilter?.Keys.ToList(),
-            PackageIds = filters?.PackageFilter?.Keys.ToList(),
-            EnrichEntities = false,
-            IncludeSubConnections = true,
-            IncludeKeyRole = filters?.IncludePartiesViaKeyRoles == AuthorizedPartiesIncludeFilter.True ? true : false,
-            IncludeMainUnitConnections = true,
-            IncludeDelegation = true,
-            IncludePackages = filters?.IncludeAccessPackages == true || filters?.PackageFilter?.Keys?.Count > 0,
-            IncludeResources = false,
-            EnrichPackageResources = false,
-            ExcludeDeleted = false
-        },
-        ConnectionQueryDirection.FromOthers,
-        useNewQuery: true,
         ct);
     }
 
@@ -180,7 +156,6 @@ public class AuthorizedPartyRepoServiceEf(AppDbContext db, ConnectionQuery conne
                 ExcludeDeleted = false
             },
             ConnectionQueryDirection.FromOthers,
-            useNewQuery: true,
             ct);
     }
 

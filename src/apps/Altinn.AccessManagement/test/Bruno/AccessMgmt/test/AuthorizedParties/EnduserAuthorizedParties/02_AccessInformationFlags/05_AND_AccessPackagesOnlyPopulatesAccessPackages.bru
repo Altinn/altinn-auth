@@ -1,0 +1,49 @@
+meta {
+  name: 05_AND_AccessPackagesOnlyPopulatesAccessPackages
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeAccessPackages=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeAccessPackages: true
+}
+
+docs {
+  AND asking for access packages alone populates the access package collection and leaves
+  roles, resources and instances empty.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { flatten, findParty } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  test("AND the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the client packages of the client organisation are returned", function() {
+    const party = findParty(res.getBody().data, testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_USENSUELL_UVIRKSOM_TIGER.partyUuid);
+    expect(party.authorizedAccessPackages).to.include("regnskapsforer-lonn");
+  });
+
+  test("AND roles, resources and instances stay empty", function() {
+    for (const party of flatten(res.getBody().data)) {
+      expect(party.authorizedRoles, `roles returned for ${party.partyUuid}`).to.be.empty;
+      expect(party.authorizedResources, `resources returned for ${party.partyUuid}`).to.be.empty;
+      expect(party.authorizedInstances, `instances returned for ${party.partyUuid}`).to.be.empty;
+    }
+  });
+}

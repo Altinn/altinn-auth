@@ -1,11 +1,5 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
+﻿using System.Net;
 using System.Net.Http.Headers;
-using System.Threading.Tasks;
-using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.Tests.Data;
 using Altinn.Authorization.Tests.Fixtures;
 using Altinn.Authorization.Tests.MockServices;
@@ -15,11 +9,10 @@ using Altinn.Platform.Authorization.Models;
 using Altinn.Platform.Authorization.Services.Interface;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
-using Xunit;
 
 namespace Altinn.Authorization.Tests.Integration
 {
-    [Collection("Our Test Collection #1")]
+    [Collection(PolicyTestCollection.Name)]
     [IntegrationTest]
     public class PolicyControllerTest : IClassFixture<AuthorizationApiFixture>
     {

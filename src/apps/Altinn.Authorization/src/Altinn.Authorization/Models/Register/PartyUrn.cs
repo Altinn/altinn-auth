@@ -1,6 +1,5 @@
 ﻿#nullable enable
 
-using System;
 using Altinn.Urn;
 
 namespace Altinn.Authorization.Models.Register;

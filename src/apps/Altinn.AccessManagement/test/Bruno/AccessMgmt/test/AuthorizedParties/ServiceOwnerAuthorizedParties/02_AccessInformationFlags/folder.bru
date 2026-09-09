@@ -1,0 +1,13 @@
+meta {
+  name: 02_AccessInformationFlags
+  seq: 2
+}
+
+docs {
+  Scenario: The access information flags control which access collections are populated
+
+    When a service owner requests every access information flag on
+    Then the party access collections are populated
+    When a service owner requests every access information flag off
+    Then the parties are still returned but every access collection is empty
+}

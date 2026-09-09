@@ -1,0 +1,303 @@
+@page "/tools/grant-check"
+@using Altinn.AccessMgmt.PersistenceEF.Extensions
+@inherits EnvironmentPageBase
+@inject GrantCheckService GrantService
+
+<PageTitle>Grant Check</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Grant Check</MudText>
+<MudText Typo="Typo.body1" Class="mb-6 mud-text-secondary">
+    Går gjennom alle tabellene i DbContext-modellen for de valgte schemaene og sjekker at de valgte
+    rollene har de valgte privilegiene på hver tabell, i hvert valgte miljø. Manglende grants kan fikses
+    ved å kjøre <code>GRANT</code>-scriptet direkte.
+</MudText>
+
+@* ── Input panel ──────────────────────────────────────────────────────────── *@
+<MudPaper Elevation="1" Class="pa-4 mb-6">
+    <MudGrid Spacing="3">
+        <MudItem xs="12">
+            <EnvironmentMultiSelect @bind-Selection="_envSelected" Dense="true" />
+        </MudItem>
+
+        <MudItem xs="12" md="4">
+            <MudText Typo="Typo.body2" Class="mb-1 mud-text-secondary">Schema:</MudText>
+            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                @foreach (var schema in _schemaSelected.Keys)
+                {
+                    var s = schema;
+                    <MudCheckBox @bind-Value="_schemaSelected[s]" Label="@s" Color="Color.Primary" Dense="true" />
+                }
+            </MudStack>
+        </MudItem>
+
+        <MudItem xs="12" md="4">
+            <MudText Typo="Typo.body2" Class="mb-1 mud-text-secondary">Roller:</MudText>
+            <MudStack Wrap="Wrap.Wrap" Spacing="0">
+                @foreach (var role in Roles)
+                {
+                    var r = role;
+                    <MudCheckBox @bind-Value="_roleSelected[r]" Label="@r" Color="Color.Primary" Dense="true" />
+                }
+            </MudStack>
+        </MudItem>
+
+        <MudItem xs="12" md="4">
+            <MudText Typo="Typo.body2" Class="mb-1 mud-text-secondary">Privilegier:</MudText>
+            <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2">
+                @foreach (var priv in AllPrivileges)
+                {
+                    var p = priv;
+                    <MudCheckBox @bind-Value="_privilegeSelected[p]" Label="@p" Color="Color.Primary" Dense="true" />
+                }
+            </MudStack>
+        </MudItem>
+
+        <MudItem xs="12">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.PlayArrow"
+                       Disabled="@(Loading || !CanRun)"
+                       OnClick="RunCheck">
+                @(Loading ? "Sjekker..." : "Kjør sjekk")
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@if (Loading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-4" />
+}
+
+@if (Error is not null)
+{
+    <MudAlert Severity="Severity.Error" Class="mb-4">@Error</MudAlert>
+}
+
+@foreach (var (env, message) in _envErrors)
+{
+    <MudAlert Severity="Severity.Warning" Class="mb-2"><b>@env:</b> @message</MudAlert>
+}
+
+@if (_checkedAt is not null && Error is null && _environmentsChecked > 0)
+{
+    var unfixedCount = _missing.Count(r => !r.IsFixed);
+
+    <MudStack Row="true" Spacing="2" Class="mb-4" AlignItems="AlignItems.Center">
+        <MudChip T="string" Color="Color.Success" Icon="@Icons.Material.Filled.CheckCircle">@_okCount ok</MudChip>
+        @if (unfixedCount > 0)
+        {
+            <MudChip T="string" Color="Color.Error" Icon="@Icons.Material.Filled.Error">@unfixedCount mangler grants</MudChip>
+        }
+        @if (_missingFromDb.Count > 0)
+        {
+            <MudChip T="string" Color="Color.Warning" Icon="@Icons.Material.Filled.Warning">@_missingFromDb.Count i modell, ikke i DB</MudChip>
+        }
+        <MudText Typo="Typo.caption" Class="mud-text-secondary">@_checkedAt?.ToString("HH:mm:ss")</MudText>
+        <MudSpacer />
+        @if (_missing.Any(r => !r.IsFixed && r.Error is null))
+        {
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Error"
+                       Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.Build"
+                       Disabled="_fixingAll"
+                       OnClick="FixAll">
+                @(_fixingAll ? "Fikser..." : "Fiks alle")
+            </MudButton>
+        }
+    </MudStack>
+
+    @if (unfixedCount == 0 && _missingFromDb.Count == 0)
+    {
+        <MudAlert Severity="Severity.Success">
+            Alle @_okCount tabeller har korrekte grants for de valgte rollene.
+        </MudAlert>
+    }
+
+    @foreach (var result in _missing)
+    {
+        <MudPaper Elevation="1" Class="mb-3">
+            <MudExpansionPanel Dense="true">
+                <TitleContent>
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                        @if (result.IsFixed)
+                        {
+                            <MudIcon Icon="@Icons.Material.Filled.CheckCircle" Color="Color.Success" Size="Size.Small" />
+                        }
+                        else
+                        {
+                            <MudIcon Icon="@Icons.Material.Filled.Error" Color="Color.Error" Size="Size.Small" />
+                        }
+                        <MudChip T="string" Size="Size.Small" Color="Color.Default">@result.Environment</MudChip>
+                        <MudText Typo="Typo.subtitle1" Class="mono">@($"{result.Schema}.{result.Table}")</MudText>
+                        <MudSpacer />
+                        @if (result.IsFixed)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Success" Icon="@Icons.Material.Filled.Check">Fikset</MudChip>
+                        }
+                        else
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Error">@result.Missing.Count mangler</MudChip>
+                            <MudButton Size="Size.Small"
+                                       Variant="Variant.Outlined"
+                                       Color="Color.Error"
+                                       Disabled="@result.IsFixing"
+                                       OnClick="@(() => FixTable(result))">
+                                @(result.IsFixing ? "..." : "Kjør GRANT")
+                            </MudButton>
+                        }
+                    </MudStack>
+                </TitleContent>
+                <ChildContent>
+                    <div class="pa-4">
+                        @if (result.Missing.Count > 0)
+                        {
+                            <MudText Typo="Typo.subtitle2" Color="Color.Error" Class="mb-2">Mangler:</MudText>
+                            @foreach (var m in result.Missing)
+                            {
+                                <MudText Typo="Typo.body2" Class="mono">@m.Role — @m.Privilege</MudText>
+                            }
+                        }
+                        @if (result.Missing.Count > 0)
+                        {
+                            <MudText Typo="Typo.subtitle2" Class="mb-2 mt-3">SQL som kjøres:</MudText>
+                            <div style="background:var(--mud-palette-background-grey);border-radius:4px;padding:8px 10px">
+                                @foreach (var stmt in GrantCheckService.GrantStatements(result))
+                                {
+                                    <MudText Typo="Typo.caption" Class="mono" Style="white-space:pre-wrap;user-select:text">@stmt</MudText>
+                                }
+                            </div>
+                        }
+                        @if (result.Error is not null)
+                        {
+                            <MudAlert Severity="Severity.Error" Dense="true" Class="mt-3">@result.Error</MudAlert>
+                        }
+                    </div>
+                </ChildContent>
+            </MudExpansionPanel>
+        </MudPaper>
+    }
+
+    @if (_missingFromDb.Count > 0)
+    {
+        <MudPaper Elevation="0" Class="pa-4 mt-4" Style="border:1px solid var(--mud-palette-warning)">
+            <MudText Typo="Typo.subtitle2" Color="Color.Warning" Class="mb-2">
+                Tabeller i modellen som ikke finnes i DB (ikke sjekket for grants):
+            </MudText>
+            @foreach (var t in _missingFromDb)
+            {
+                <MudText Typo="Typo.body2" Class="mono">@($"[{t.Environment}] {t.Schema}.{t.Table}")</MudText>
+            }
+        </MudPaper>
+    }
+}
+
+@code {
+    // Shared with the migration SQL generator so the two never drift apart.
+    private static readonly IReadOnlyList<string> Roles = TableGrantConstants.Roles;
+    private static readonly IReadOnlyList<string> AllPrivileges = TableGrantConstants.Privileges;
+
+    private readonly Dictionary<string, bool> _roleSelected = Roles.ToDictionary(r => r, _ => true);
+    private readonly Dictionary<string, bool> _privilegeSelected = AllPrivileges.ToDictionary(p => p, _ => true);
+    private Dictionary<string, bool> _envSelected = new(StringComparer.Ordinal);
+    private Dictionary<string, bool> _schemaSelected = new(StringComparer.Ordinal);
+
+    private bool _fixingAll;
+    private DateTimeOffset? _checkedAt;
+    private int _okCount;
+    private int _environmentsChecked;
+    private List<TableGrant> _missing = [];
+    private List<MissingTable> _missingFromDb = [];
+    private List<(string Env, string Message)> _envErrors = [];
+
+    private bool CanRun =>
+        _envSelected.Values.Any(v => v) &&
+        _schemaSelected.Values.Any(v => v) &&
+        _roleSelected.Values.Any(v => v) &&
+        _privilegeSelected.Values.Any(v => v);
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        // Schema options come from the (environment-independent) EF model.
+        _schemaSelected = GrantService.GetModelSchemas().ToDictionary(
+            s => s,
+            s => string.Equals(s, "dbo", StringComparison.OrdinalIgnoreCase),
+            StringComparer.Ordinal);
+    }
+
+    private async Task RunCheck() => await RunAsync(async ct =>
+    {
+        _missing = [];
+        _missingFromDb = [];
+        _envErrors = [];
+        _okCount = 0;
+        _environmentsChecked = 0;
+        _checkedAt = null;
+
+        // Snapshot the selections so all environments in this run use the same
+        // roles/privileges even if the user toggles checkboxes mid-run.
+        var roles = Roles.Where(r => _roleSelected[r]).ToList();
+        var privileges = AllPrivileges.Where(p => _privilegeSelected[p]).ToList();
+        var envs = _envSelected.Where(kv => kv.Value).Select(kv => kv.Key).ToList();
+        var schemas = _schemaSelected.Where(kv => kv.Value).Select(kv => kv.Key).ToList();
+
+        foreach (var env in envs)
+        {
+            try
+            {
+                var result = await GrantService.CheckEnvironmentAsync(env, schemas, roles, privileges, ct);
+                _okCount += result.OkCount;
+                _missing.AddRange(result.Missing);
+                _missingFromDb.AddRange(result.MissingFromDb);
+                _environmentsChecked++;
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                // Cancellation must reach RunAsync instead of becoming a per-env error.
+                _envErrors.Add((env, ErrorText.Flatten(ex)));
+            }
+        }
+
+        _checkedAt = DateTimeOffset.Now;
+    });
+
+    private async Task FixTable(TableGrant result)
+    {
+        result.IsFixing = true;
+        StateHasChanged();
+
+        try
+        {
+            await GrantService.FixTableAsync(result);
+            result.Missing = [];
+            result.IsFixed = true;
+            result.Error = null;
+        }
+        catch (Exception ex)
+        {
+            result.Error = ErrorText.Flatten(ex);
+        }
+        finally
+        {
+            result.IsFixing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task FixAll()
+    {
+        _fixingAll = true;
+        StateHasChanged();
+
+        foreach (var result in _missing.Where(r => !r.IsFixed && r.Error is null).ToList())
+        {
+            await FixTable(result);
+        }
+
+        _fixingAll = false;
+        StateHasChanged();
+    }
+}

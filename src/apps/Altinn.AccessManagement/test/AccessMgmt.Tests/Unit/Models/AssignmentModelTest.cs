@@ -3,7 +3,7 @@
 namespace Altinn.AccessManagement.Tests.Unit.Models
 {
     [UnitTest]
-    [Collection("Models Test")]
+    [Collection(ModelsCollection.Name)]
     public class AssignmentModelTest
     {
         [Fact]

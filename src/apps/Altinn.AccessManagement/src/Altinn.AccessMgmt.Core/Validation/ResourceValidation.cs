@@ -1,5 +1,4 @@
-﻿using Altinn.AccessManagement.Core.Errors;
-using Altinn.AccessMgmt.PersistenceEF.Constants;
+﻿using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.ProblemDetails;
@@ -107,6 +106,21 @@ public static class ResourceValidation
         }
 
         return null;
+    };
+
+    internal static RuleExpression ResourceNotRevocableViaClientDelegation(bool hasClientDelegatedResource, string paramName = "resource") => () =>
+    {
+        ArgumentException.ThrowIfNullOrEmpty(paramName);
+
+        if (!hasClientDelegatedResource)
+        {
+            return null;
+        }
+
+        return (ref ValidationErrorBuilder errors) =>
+        {
+            errors.Add(ValidationErrors.ResourceNotRevocableViaClientDelegation, $"QUERY/{paramName}", [new(paramName, "Resources delegated through a client delegation cannot be revoked on this endpoint. Use the client delegation API to revoke them.")]);
+        };
     };
 
     internal static RuleExpression ResourceTypeIs(Resource resource, string expectedTypeName, string paramName = "resource") => () =>

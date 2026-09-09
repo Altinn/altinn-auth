@@ -1,7 +1,4 @@
-using System.CodeDom.Compiler;
-using System.Diagnostics.Metrics;
 using Altinn.Authorization.Host.Lease.StorageAccount;
-using Microsoft.AspNetCore.OutputCaching;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Altinn.Authorization.Host.Lease.Tests

@@ -1,4 +1,3 @@
-using System;
 using System.Xml;
 
 using Altinn.Authorization.ABAC.Constants;

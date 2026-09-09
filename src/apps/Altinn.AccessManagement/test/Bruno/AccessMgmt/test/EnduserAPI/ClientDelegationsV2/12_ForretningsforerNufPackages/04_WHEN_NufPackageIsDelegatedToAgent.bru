@@ -1,0 +1,61 @@
+meta {
+  name: 04_WHEN_NufPackageIsDelegatedToAgent
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents/accesspackages?party={{party}}&client={{client}}&agent={{agent}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  client: {{client}}
+  agent: {{agent}}
+}
+
+body:json {
+  {
+    "values": [
+      {
+        "role": "forretningsforer",
+        "packages": ["{{package}}"]
+      }
+    ]
+  }
+}
+
+docs {
+  WHEN the NUF services package is delegated to the agent for the NUF client.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.clientDelegationV2.forretningsforerNuf.facilitator.partyUuid);
+  bru.setVar("client", td.clientDelegationV2.forretningsforerNuf.nufClient.partyUuid);
+  bru.setVar("agent", td.REGN_Organisasjon.REGN_Agent.userUuid);
+  bru.setVar("package", td.clientDelegationV2.packages.tjenesterNuf);
+
+  await loginAs(td.clientDelegationV2.forretningsforerNuf.facilitator.dagligleder);
+}
+
+tests {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+
+  test("WHEN the NUF services package is delegated, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the delegation row connects the NUF client to the agent through the facilitator", function() {
+    const body = res.getBody();
+    expect(body).to.be.an("array").with.lengthOf(1);
+    expect(body[0].changed).to.be.true;
+    expect(body[0].fromId.toLowerCase()).to.equal(td.clientDelegationV2.forretningsforerNuf.nufClient.partyUuid.toLowerCase());
+    expect(body[0].viaId.toLowerCase()).to.equal(td.clientDelegationV2.forretningsforerNuf.facilitator.partyUuid.toLowerCase());
+    expect(body[0].toId.toLowerCase()).to.equal(td.REGN_Organisasjon.REGN_Agent.userUuid.toLowerCase());
+  });
+}

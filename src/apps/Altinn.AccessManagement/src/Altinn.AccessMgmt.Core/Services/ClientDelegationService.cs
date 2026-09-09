@@ -1,8 +1,8 @@
 ﻿using System.Collections.Immutable;
-using System.Data.Common;
 using System.Diagnostics;
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessMgmt.Core.Appsettings;
+using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Core.Notifications;
 using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
@@ -10,9 +10,11 @@ using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
+using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using ContractsV2 = Altinn.Authorization.Api.Contracts.AccessManagement.V2;
 
 namespace Altinn.AccessMgmt.Core.Services;
 
@@ -137,6 +139,141 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
             .ToList();
     }
 
+    /// <inheritdoc/>
+    public async Task<Result<List<ContractsV2.MyClientDto>>> GetMyClientsV2(Guid agentUuid, List<Guid> providerUuids, CancellationToken cancellationToken = default)
+    {
+        providerUuids ??= [];
+        var connectionsQuery = db.Assignments
+            .AsNoTracking()
+            .Where(a => a.ToId == agentUuid && a.RoleId == RoleConstants.Agent)
+            .WhereIf(providerUuids.Count > 0, a => providerUuids.Contains(a.FromId))
+            .Join(
+                db.Entities,
+                a => a.FromId,
+                e => e.Id,
+                (a, e) => new { Assignment = a, ProviderEntity = e }
+            )
+            .GroupJoin(
+                db.Delegations,
+                a => a.Assignment.Id,
+                d => d.ToId,
+                (a, d) => new { Provider = a.ProviderEntity, Delegations = d }
+            )
+            .SelectMany(d => d.Delegations.DefaultIfEmpty(), (a, d) => new { a.Provider, Delegation = d, })
+            .GroupJoin(
+                db.Assignments,
+                x => x.Delegation.FromId,
+                a => a.Id,
+                (x, a) => new { x.Provider, x.Delegation, FromAssignments = a, }
+            )
+            .SelectMany(x => x.FromAssignments.DefaultIfEmpty(), (x, a) => new { x.Provider, x.Delegation, a.Role, Client = a.From });
+
+        // Packages and resources are fetched as separate row sets to avoid a
+        // packages x resources product per delegation.
+        var packageRows = connectionsQuery
+            .GroupJoin(
+                db.DelegationPackages,
+                x => x.Delegation.Id,
+                dp => dp.DelegationId,
+                (x, dp) => new
+                {
+                    x.Provider,
+                    x.Client,
+                    x.Role,
+                    Packages = dp,
+                }
+            )
+            .SelectMany(x => x.Packages.DefaultIfEmpty(), (x, dp) => new { x.Client, x.Provider, x.Role, PackageId = dp != null ? dp.PackageId : Guid.Empty });
+
+        var resourceRows = connectionsQuery
+            .Join(
+                db.DelegationResources,
+                x => x.Delegation.Id,
+                dr => dr.DelegationId,
+                (x, dr) => new { x.Client, x.Provider, x.Role, dr.ResourceId }
+            );
+
+        // Group by provider in memory to avoid the very expensive SQL "order by" clause EF
+        // generates for grouped queries.
+        var packageRowsList = await packageRows.ToListAsync(cancellationToken);
+        var resourceRowsList = await resourceRows.ToListAsync(cancellationToken);
+        var executedQuery = packageRowsList
+            .Select(x => new { x.Client, x.Provider, x.Role, x.PackageId, ResourceId = Guid.Empty })
+            .Concat(resourceRowsList.Select(x => new { x.Client, x.Provider, x.Role, PackageId = Guid.Empty, x.ResourceId }))
+            .GroupBy(x => x.Provider.Id)
+            .ToList();
+
+        var packageIds = executedQuery.SelectMany(q => q).Select(q => q.PackageId).Where(id => id != Guid.Empty).Distinct().ToList();
+        List<Package> packagesRaw = packageIds.Count > 0
+            ? await db.Packages.AsNoTracking()
+                .Where(p => packageIds.Contains(p.Id))
+                .ToListAsync(cancellationToken)
+            : [];
+        SortedList<Guid, CompactPackageDto> packages = new SortedList<Guid, CompactPackageDto>(packagesRaw.Count);
+        foreach (var package in packagesRaw)
+        {
+            packages.Add(package.Id, DtoMapper.ConvertCompactPackage(package));
+        }
+
+        var resourceIds = executedQuery.SelectMany(q => q).Select(q => q.ResourceId).Where(id => id != Guid.Empty).Distinct().ToList();
+        List<Resource> resourcesRaw = resourceIds.Count > 0
+            ? await db.Resources.AsNoTracking()
+                .Where(r => resourceIds.Contains(r.Id))
+                .ToListAsync(cancellationToken)
+            : [];
+        SortedList<Guid, CompactResourceDto> resourcesMap = new(resourcesRaw.Count);
+        foreach (var resource in resourcesRaw)
+        {
+            resourcesMap.Add(resource.Id, DtoMapper.ConvertCompactResource(resource));
+        }
+
+        return executedQuery
+            .Select(providerGroup =>
+            {
+                var provider = providerGroup.First().Provider;
+
+                var clients = providerGroup
+                    .Where(x => x.Client is not null)
+                    .GroupBy(x => x.Client.Id)
+                    .Select(clientGroup =>
+                    {
+                        var client = clientGroup.First().Client;
+
+                        var access = clientGroup
+                            .Where(x => x.Role is not null)
+                            .GroupBy(x => x.Role.Id)
+                            .Select(roleGroup => new ContractsV2.RoleAccess
+                            {
+                                Role = DtoMapper.ConvertCompactRole(roleGroup.First().Role),
+                                Packages = roleGroup
+                                    .Where(p => p.PackageId != Guid.Empty)
+                                    .Select(x => packages[x.PackageId])
+                                    .DistinctBy(p => p.Id)
+                                    .ToList(),
+                                Resources = roleGroup
+                                    .Where(r => r.ResourceId != Guid.Empty)
+                                    .Select(x => resourcesMap[x.ResourceId])
+                                    .DistinctBy(r => r.Id)
+                                    .ToList(),
+                            })
+                            .ToList();
+
+                        return new ContractsV2.ClientDto
+                        {
+                            Client = DtoMapper.Convert(client),
+                            Access = access
+                        };
+                    });
+
+                return new ContractsV2.MyClientDto
+                {
+                    Provider = DtoMapper.Convert(provider),
+                    Clients = clients
+                };
+            })
+            .ToList();
+    }
+
     public async Task<Result<List<AgentDto>>> GetMyProviders(Guid partyUuid, CancellationToken cancellationToken = default)
     {
         var query = await db.Assignments
@@ -153,10 +290,27 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
                 Access = [
                     new()
                     {
-                        Role = DtoMapper.ConvertCompactRole(a.Role),
+                        Role = DtoMapper.ConvertCompactRole(RoleConstants.Agent.Entity),
                         Packages = [],
                     }
                 ]
+            }).ToList();
+    }
+
+    /// <inheritdoc/>
+    public async Task<Result<List<ContractsV2.MyClientProviderDto>>> GetMyProvidersV2(Guid agentUuid, CancellationToken cancellationToken = default)
+    {
+        var query = await db.Assignments
+            .AsNoTracking()
+            .Include(a => a.From)
+            .Where(a => a.ToId == agentUuid && a.RoleId == RoleConstants.Agent)
+            .ToListAsync(cancellationToken);
+
+        return query
+            .Select(a => new ContractsV2.MyClientProviderDto
+            {
+                Provider = DtoMapper.Convert(a.From),
+                ProviderAddedAt = a.Audit_ValidFrom,
             }).ToList();
     }
 
@@ -167,9 +321,15 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
     }
 
     /// <inheritdoc/>
-    public async Task<Result<List<DelegationDto>>> DeleteMyClient(Guid partyUuid, Guid providerUuid, Guid fromUuid, DelegationBatchInputDto payload, CancellationToken cancellationToken = default)
+    public async Task<Result<List<DelegationDto>>> DeleteMyClient(Guid partyUuid, Guid providerUuid, Guid fromUuid, DelegationBatchInputDto payload, ClientDelegationParameterNames parameterNames, CancellationToken cancellationToken = default)
     {
-        return await RemoveAgentDelegation(providerUuid, fromUuid, partyUuid, payload, cancellationToken);
+        return await RemoveAgentDelegation(providerUuid, fromUuid, partyUuid, payload, parameterNames, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<Result<List<ContractsV2.ResourceDelegationDto>>> DeleteMyClientResources(Guid partyUuid, Guid providerUuid, Guid fromUuid, ContractsV2.ResourceDelegationBatchInputDto payload, ClientDelegationParameterNames parameterNames, CancellationToken cancellationToken = default)
+    {
+        return await RemoveAgentResourceDelegation(providerUuid, fromUuid, partyUuid, payload, parameterNames, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -241,7 +401,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
             )
             .Where(x => x.RolePackage != null || x.AssignmentPackage != null)
             .WhereIf(roleFilter.Count > 0, x => roleFilter.Contains(x.Role.Id))
-            .WhereIf(packageFilter.Count > 0, x => (x.RolePackage != null && packageFilter.Contains(x.RolePackage.Id)) || (x.AssignmentPackage != null && packageFilter.Contains(x.AssignmentPackage.Id)))
+            .WhereIf(packageFilter.Count > 0, x => (x.RolePackage != null && (x.RolePackageEntityVariantId == null || x.RolePackageEntityVariantId == x.From.VariantId) && packageFilter.Contains(x.RolePackage.Id)) || (x.AssignmentPackage != null && packageFilter.Contains(x.AssignmentPackage.Id)))
             .GroupBy(x => x.From.Id)
             .ToListAsync(cancellationToken);
 
@@ -267,6 +427,196 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
     }
 
     /// <inheritdoc/>
+    public async Task<Result<List<ContractsV2.ClientDto>>> GetClientsV2(Guid partyUuid, List<string>? roles, List<string>? packages, List<string>? resources, FilterMatch filterMatch, CancellationToken cancellationToken = default)
+    {
+        roles ??= [];
+        packages ??= [];
+        resources ??= [];
+        var roleFilter = new List<Guid>();
+        var packageFilter = new List<Guid>();
+
+        foreach (var r in roles)
+        {
+            if (RoleConstants.TryGetByAll(r, out var role))
+            {
+                roleFilter.Add(role.Id);
+            }
+        }
+
+        foreach (var p in packages)
+        {
+            if (PackageConstants.TryGetByUrn(p, out var package))
+            {
+                packageFilter.Add(package.Id);
+            }
+        }
+
+        // Filter values are resource registry ids matched exactly against Resource.RefId.
+        List<Guid> resourceFilter = resources.Count > 0
+            ? await db.Resources
+                .AsNoTracking()
+                .Where(r => resources.Contains(r.RefId))
+                .Select(r => r.Id)
+                .ToListAsync(cancellationToken)
+            : [];
+
+        if (roleFilter.Count == 0 && roles.Count > 0)
+        {
+            return new List<ContractsV2.ClientDto>();
+        }
+
+        if (packageFilter.Count == 0 && packages.Count > 0)
+        {
+            return new List<ContractsV2.ClientDto>();
+        }
+
+        if (resourceFilter.Count == 0 && resources.Count > 0)
+        {
+            return new List<ContractsV2.ClientDto>();
+        }
+
+        // The roles filter is the primary filter and narrows the client assignments themselves. The
+        // packages and resources filters behave alike: each selects the clients that hold a match
+        // and trims its own access list, without affecting the other list.
+        var clientAssignments = db.Assignments
+            .AsNoTracking()
+            .Where(a => a.ToId == partyUuid && !ExcludeClientRoles.Contains(a.RoleId))
+            .WhereIf(roleFilter.Count > 0, r => roleFilter.Contains(r.RoleId));
+
+        // In all mode a client also has to carry an assignment for every filter role. The row sets
+        // below only hold assignments that have packages or resources, so role coverage is counted
+        // on the assignments themselves.
+        HashSet<Guid>? roleClientIds = null;
+        if (roleFilter.Count > 1 && filterMatch == FilterMatch.All)
+        {
+            var roleRows = await clientAssignments
+                .Select(a => new { ClientId = a.FromId, a.RoleId })
+                .Distinct()
+                .ToListAsync(cancellationToken);
+
+            roleClientIds = roleRows
+                .GroupBy(x => x.ClientId)
+                .Where(g => roleFilter.All(r => g.Any(x => x.RoleId == r)))
+                .Select(g => g.Key)
+                .ToHashSet();
+        }
+
+        var packageRows = await clientAssignments
+            .GroupJoin(
+                db.AssignmentPackages,
+                a => a.Id,
+                ap => ap.AssignmentId,
+                (a, aps) => new { Assignment = a, AssignmentPackages = aps }
+            )
+            .SelectMany(
+                x => x.AssignmentPackages.DefaultIfEmpty(),
+                (x, ap) => new { x.Assignment, AssignmentPackage = ap }
+            )
+            .GroupJoin(
+                db.RolePackages,
+                x => x.Assignment.RoleId,
+                rp => rp.RoleId,
+                (x, rps) => new { x.Assignment, x.AssignmentPackage, RolePackages = rps }
+            )
+            .SelectMany(
+                x => x.RolePackages.DefaultIfEmpty(),
+                (x, rp) => new
+                {
+                    x.Assignment.From,
+                    x.Assignment.Role,
+                    AssignmentPackage = x.AssignmentPackage.Package,
+                    RolePackage = rp.Package,
+                    RolePackageEntityVariantId = rp.EntityVariantId
+                }
+            )
+            .Where(x => x.RolePackage != null || x.AssignmentPackage != null)
+            .WhereIf(packageFilter.Count > 0, x => (x.RolePackage != null && (x.RolePackageEntityVariantId == null || x.RolePackageEntityVariantId == x.From.VariantId) && packageFilter.Contains(x.RolePackage.Id)) || (x.AssignmentPackage != null && packageFilter.Contains(x.AssignmentPackage.Id)))
+            .ToListAsync(cancellationToken);
+
+        // Resources are fetched as their own row set to avoid a packages x resources product per
+        // assignment.
+        var resourceRows = await clientAssignments
+            .Join(
+                db.AssignmentResources,
+                a => a.Id,
+                ar => ar.AssignmentId,
+                (a, ar) => new { a.From, a.Role, ar.Resource }
+            )
+            .WhereIf(resourceFilter.Count > 0, x => resourceFilter.Contains(x.Resource.Id))
+            .ToListAsync(cancellationToken);
+
+        // A client is included when it matches every active filter: a matching package somewhere in
+        // its assignments when the packages filter is set, and a matching delegated resource when
+        // the resources filter is set. The row sets are already trimmed to the matches, so in any
+        // mode the client sets fall out of them directly. In all mode the client also has to cover
+        // every value of each filter, counting role packages and directly delegated packages as one
+        // set across all of its assignments.
+        HashSet<Guid> packageClientIds = packageFilter.Count switch
+        {
+            0 => null,
+            _ when filterMatch == FilterMatch.Any => packageRows.Select(x => x.From.Id).ToHashSet(),
+            _ => packageRows
+                .GroupBy(x => x.From.Id)
+                .Where(g => packageFilter.All(p => g.Any(row => HoldsPackage(row.AssignmentPackage, row.RolePackage, row.RolePackageEntityVariantId, row.From.VariantId, p))))
+                .Select(g => g.Key)
+                .ToHashSet()
+        };
+        HashSet<Guid> resourceClientIds = resourceFilter.Count switch
+        {
+            0 => null,
+            _ when filterMatch == FilterMatch.Any => resourceRows.Select(x => x.From.Id).ToHashSet(),
+            _ => resourceRows
+                .GroupBy(x => x.From.Id)
+                .Where(g => resourceFilter.All(r => g.Any(row => row.Resource.Id == r)))
+                .Select(g => g.Key)
+                .ToHashSet()
+        };
+
+        var query = packageRows
+            .Select(x => new { x.From, x.Role, x.AssignmentPackage, x.RolePackage, x.RolePackageEntityVariantId, Resource = (Resource)null })
+            .Concat(resourceRows.Select(x => new { x.From, x.Role, AssignmentPackage = (Package)null, RolePackage = (Package)null, RolePackageEntityVariantId = (Guid?)null, x.Resource }))
+            .GroupBy(x => x.From.Id)
+            .Where(g => roleClientIds is null || roleClientIds.Contains(g.Key))
+            .Where(g => packageClientIds is null || packageClientIds.Contains(g.Key))
+            .Where(g => resourceClientIds is null || resourceClientIds.Contains(g.Key))
+            .ToList();
+
+        return query
+            .Select(access =>
+            new ContractsV2.ClientDto()
+            {
+                Client = DtoMapper.Convert(access.First().From),
+                Access = access.GroupBy(r => r.Role.Id).Select(r => new ContractsV2.RoleAccess
+                {
+                    Role = DtoMapper.ConvertCompactRole(r.First().Role),
+                    Packages = [
+                        .. r.Where(p => p.AssignmentPackage is { } && p.AssignmentPackage.IsDelegable)
+                            .Where(p => packageFilter.Count == 0 || packageFilter.Contains(p.AssignmentPackage.Id))
+                            .Select(p => DtoMapper.ConvertCompactPackage(p.AssignmentPackage))
+                            .DistinctBy(p => p.Id),
+                        .. r.Where(p => p.RolePackage is { } && p.RolePackage.IsDelegable)
+                            .Where(p => p.RolePackageEntityVariantId == null || p.RolePackageEntityVariantId == p.From.VariantId)
+                            .Where(p => packageFilter.Count == 0 || packageFilter.Contains(p.RolePackage.Id))
+                            .Select(p => DtoMapper.ConvertCompactPackage(p.RolePackage))
+                            .DistinctBy(p => p.Id),
+                    ],
+                    Resources = [
+                        .. r.Where(p => p.Resource is { }).Select(p => DtoMapper.ConvertCompactResource(p.Resource)).DistinctBy(x => x.Id)
+                    ]
+                }).ToList(),
+            }).ToList();
+    }
+
+    /// <summary>
+    /// Tells whether a single client access row gives the client the package <paramref name="packageId"/>.
+    /// Mirrors the row level packages filter: a role package only counts when its entity variant
+    /// scope covers the client.
+    /// </summary>
+    private static bool HoldsPackage(Package? assignmentPackage, Package? rolePackage, Guid? rolePackageEntityVariantId, Guid clientVariantId, Guid packageId)
+        => (assignmentPackage is { } && assignmentPackage.Id == packageId)
+        || (rolePackage is { } && rolePackage.Id == packageId && (rolePackageEntityVariantId is null || rolePackageEntityVariantId == clientVariantId));
+
+    /// <inheritdoc/>
     public async Task<Result<List<AgentDto>>> GetAgents(Guid partyUuid, CancellationToken cancellationToken = default)
     {
         var query = await db.Assignments
@@ -289,7 +639,51 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
     }
 
     /// <inheritdoc/>
-    public async Task<Result<AssignmentDto>> AddAgent(Guid partyUuid, Guid toUuid, CancellationToken cancellationToken = default)
+    public async Task<Result<List<ContractsV2.AgentDto>>> GetAgentsV2(Guid partyUuid, CancellationToken cancellationToken = default)
+    {
+        var query = await db.Assignments
+            .AsNoTracking()
+            .Where(a => a.FromId == partyUuid && a.RoleId == RoleConstants.Agent)
+            .Include(a => a.To)
+            .ToListAsync(cancellationToken);
+
+        // Resources delegated to each agent via the party, grouped by the role of the client assignment.
+        var resourceRows = await db.Delegations
+            .AsNoTracking()
+            .Where(d => d.FacilitatorId == partyUuid && d.To.FromId == partyUuid && d.To.RoleId == RoleConstants.Agent)
+            .Join(
+                db.DelegationResources,
+                d => d.Id,
+                dr => dr.DelegationId,
+                (d, dr) => new { AgentId = d.To.ToId, d.From.Role, dr.Resource })
+            .ToListAsync(cancellationToken);
+
+        return query.Select(a => new ContractsV2.AgentDto()
+        {
+            Agent = DtoMapper.Convert(a.To),
+            AgentAddedAt = a.Audit_ValidFrom,
+            Access = [
+                new()
+                {
+                    Role = DtoMapper.ConvertCompactRole(RoleConstants.Agent.Entity),
+                    Packages = [],
+                    Resources = [],
+                },
+                .. resourceRows
+                    .Where(r => r.AgentId == a.ToId)
+                    .GroupBy(r => r.Role.Id)
+                    .Select(roleGroup => new ContractsV2.RoleAccess
+                    {
+                        Role = DtoMapper.ConvertCompactRole(roleGroup.First().Role),
+                        Packages = [],
+                        Resources = roleGroup.Select(x => DtoMapper.ConvertCompactResource(x.Resource)).DistinctBy(r => r.Id).ToList(),
+                    }),
+            ]
+        }).ToList();
+    }
+
+    /// <inheritdoc/>
+    public async Task<Result<AssignmentDto>> AddAgent(Guid partyUuid, Guid toUuid, ClientDelegationParameterNames parameterNames, CancellationToken cancellationToken = default)
     {
         ValidationErrorBuilder errorBuilder = default;
 
@@ -310,7 +704,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
             var supportedToTypeNames = string.Join(", ", SupportedToTypes.Select(t => t.Entity.Name));
             errorBuilder.Add(
                 ValidationErrors.DisallowedEntityType,
-                "$QUERY/to",
+                $"$QUERY/{parameterNames.Agent}",
                 [new($"{entity.TypeId}", $"Entity type is not supported as an agent. Supported types: <{supportedToTypeNames}>.")]
             );
         }
@@ -319,7 +713,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         {
             errorBuilder.Add(
                 ValidationErrors.DisallowedEntityType,
-                "$QUERY/to",
+                $"$QUERY/{parameterNames.Agent}",
                 [new($"{toUuid}", $"System user with id '{toUuid}' is not created for client delegation.")]
             );
         }
@@ -344,13 +738,20 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
             appsettings?.Value?.Notifications?.AgentAddedNotifyInSeconds ?? AgentAddedNotification.DefaultNotifyInSeconds,
             cancellationToken
         );
-        await db.SaveChangesAsync(cancellationToken);
+        await db.SaveChangesWithOutboxRetry(
+            () => AgentAddedNotification.Upsert(
+                db,
+                partyUuid,
+                toUuid,
+                appsettings?.Value?.Notifications?.AgentAddedNotifyInSeconds ?? AgentAddedNotification.DefaultNotifyInSeconds,
+                cancellationToken),
+            cancellationToken);
 
         return DtoMapper.Convert(assignment);
     }
 
     /// <inheritdoc/>
-    public async Task<ValidationProblemInstance?> RemoveAnAgentsClient(Guid partyUuid, Guid fromUuid, Guid toUuid, bool cascade, CancellationToken cancellationToken = default)
+    public async Task<ValidationProblemInstance?> RemoveClientFromAgent(Guid partyUuid, Guid fromUuid, Guid toUuid, bool cascade, CancellationToken cancellationToken = default)
     {
         ValidationErrorBuilder errorBuilder = default;
 
@@ -362,11 +763,28 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
                 d.From.ToId == partyUuid && d.From.FromId == fromUuid)
             .Include(d => d.DelegationPackages)
             .ThenInclude(d => d.Package)
+            .Include(d => d.DelegationResources)
+            .ThenInclude(d => d.Resource)
+            .AsSplitQuery()
             .FirstOrDefaultAsync(cancellationToken);
 
         if (existingDelegation is null)
         {
             return null;
+        }
+
+        foreach (var delegationResource in existingDelegation.DelegationResources)
+        {
+            if (!cascade)
+            {
+                errorBuilder.Add(
+                    ValidationErrors.DelegationHasActiveConnections,
+                    "$QUERY/cascade",
+                    [
+                        new($"{delegationResource.ResourceId}", $"Cannot remove delegation '{delegationResource.DelegationId}' because party '{toUuid}' still has active delegated resources '{delegationResource.Resource?.Name ?? delegationResource.ResourceId.ToString()}' from '{fromUuid}'.")
+                    ]
+                );
+            }
         }
 
         foreach (var delegationPackage in existingDelegation.DelegationPackages)
@@ -398,7 +816,15 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
             cancellationToken
         );
 
-        await db.SaveChangesAsync(cancellationToken);
+        await db.SaveChangesWithOutboxRetry(
+            () => ClientRemovedNotification.Upsert(
+                db,
+                partyUuid,
+                fromUuid,
+                toUuid,
+                appsettings?.Value?.Notifications?.ClientRemovedNotifyInSeconds ?? ClientRemovedNotification.DefaultNotifyInSeconds,
+                cancellationToken),
+            cancellationToken);
         return null;
     }
 
@@ -421,35 +847,38 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
             .AsNoTracking()
             .Where(p => p.ToId == existingAssignment.Id)
             .Include(p => p.DelegationPackages)
-            .Join(db.DelegationPackages, d => d.Id, dp => dp.DelegationId, (d, dp) => new
-            {
-                Delegation = d,
-                DelegationPackage = dp,
-            })
-            .GroupBy(d => d.Delegation.Id)
+            .Include(p => p.DelegationResources)
+            .Where(p => p.DelegationPackages.Any() || p.DelegationResources.Any())
+            .AsSplitQuery()
             .ToListAsync(cancellationToken);
 
         foreach (var existingDelegation in existingDelegations)
         {
-            var first = existingDelegation.FirstOrDefault();
-
-            if (first is null)
-            {
-                continue;
-            }
-
-            var pkgs = string.Join(", ", existingDelegation.Select(p => p.DelegationPackage.PackageId));
-            var fromId = first.Delegation.FromId;
-
             if (!cascade)
             {
-                errorBuilder.Add(
-                    ValidationErrors.DelegationHasActiveConnections,
-                    "$QUERY/cascade",
-                    [
-                        new($"{first.Delegation.Id}", $"Cannot remove delegation '{first.Delegation.Id}' because party '{toUuid}' still has active delegated packages <{pkgs}> from party '{fromId}'.")
-                    ]
-                );
+                if (existingDelegation.DelegationPackages.Count > 0)
+                {
+                    var pkgs = string.Join(", ", existingDelegation.DelegationPackages.Select(p => p.PackageId));
+                    errorBuilder.Add(
+                        ValidationErrors.DelegationHasActiveConnections,
+                        "$QUERY/cascade",
+                        [
+                            new($"{existingDelegation.Id}", $"Cannot remove delegation '{existingDelegation.Id}' because party '{toUuid}' still has active delegated packages <{pkgs}> from party '{existingDelegation.FromId}'.")
+                        ]
+                    );
+                }
+
+                if (existingDelegation.DelegationResources.Count > 0)
+                {
+                    var resources = string.Join(", ", existingDelegation.DelegationResources.Select(r => r.ResourceId));
+                    errorBuilder.Add(
+                        ValidationErrors.DelegationHasActiveConnections,
+                        "$QUERY/cascade",
+                        [
+                            new($"{existingDelegation.Id}", $"Cannot remove delegation '{existingDelegation.Id}' because party '{toUuid}' still has active delegated resources <{resources}> from party '{existingDelegation.FromId}'.")
+                        ]
+                    );
+                }
             }
         }
 
@@ -467,7 +896,14 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         );
 
         db.Assignments.Remove(existingAssignment);
-        await db.SaveChangesAsync(cancellationToken);
+        await db.SaveChangesWithOutboxRetry(
+            () => AgentRemovedNotification.Upsert(
+                db,
+                partyUuid,
+                toUuid,
+                appsettings?.Value?.Notifications?.AgentRemovedNotifyInSeconds ?? AgentRemovedNotification.DefaultNotifyInSeconds,
+                cancellationToken),
+            cancellationToken);
         return null;
     }
 
@@ -489,6 +925,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
                 x.Delegation.To.To,
                 x.Delegation.From.Role,
                 x.DelegationPackage.Package,
+                AgentAddedAt = x.Delegation.To.Audit_ValidFrom,
             })
             .GroupBy(x => x.To.Id)
             .ToListAsync(cancellationToken);
@@ -498,11 +935,87 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
             new AgentDto()
             {
                 Agent = DtoMapper.Convert(e.First().To),
-                AgentAddedAt = e.First().To.Audit_ValidFrom,
+                AgentAddedAt = e.First().AgentAddedAt,
                 Access = e.GroupBy(r => r.Role.Id).Select(r => new AgentDto.AgentRoleAccessPackages
                 {
                     Role = DtoMapper.ConvertCompactRole(r.First().Role),
                     Packages = r.Select(r => DtoMapper.ConvertCompactPackage(r.Package)).DistinctBy(p => p.Id).ToArray(),
+                }).ToList(),
+            }).ToList();
+
+        return result;
+    }
+
+    /// <inheritdoc/>
+    public async Task<Result<List<ContractsV2.AgentPackagesDto>>> GetDelegatedAccessPackagesFromClientsViaPartyV2(Guid partyUuid, Guid fromUuid, CancellationToken cancellationToken = default)
+    {
+        var query = await db.Delegations
+            .AsNoTracking()
+            .Include(d => d.From)
+            .Include(d => d.To).ThenInclude(a => a.To)
+            .Where(d => d.FacilitatorId == partyUuid && d.From.FromId == fromUuid)
+            .Join(
+                db.DelegationPackages,
+                d => d.Id,
+                dp => dp.DelegationId,
+                (d, dp) => new { Delegation = d, DelegationPackage = dp })
+            .Select(x => new
+            {
+                x.Delegation.To.To,
+                x.Delegation.From.Role,
+                x.DelegationPackage.Package,
+                AgentAddedAt = x.Delegation.To.Audit_ValidFrom,
+            })
+            .GroupBy(x => x.To.Id)
+            .ToListAsync(cancellationToken);
+
+        var result = query
+            .Select(e =>
+            new ContractsV2.AgentPackagesDto()
+            {
+                Agent = DtoMapper.Convert(e.First().To),
+                AgentAddedAt = e.First().AgentAddedAt,
+                Access = e.GroupBy(r => r.Role.Id).Select(r => new ContractsV2.PackageAccess
+                {
+                    Role = DtoMapper.ConvertCompactRole(r.First().Role),
+                    Packages = r.Select(r => DtoMapper.ConvertCompactPackage(r.Package)).DistinctBy(p => p.Id).ToList(),
+                }).ToList(),
+            }).ToList();
+
+        return result;
+    }
+
+    /// <inheritdoc/>
+    public async Task<Result<List<ContractsV2.AgentResourcesDto>>> GetDelegatedResourcesFromClientsViaPartyV2(Guid partyUuid, Guid fromUuid, CancellationToken cancellationToken = default)
+    {
+        var query = await db.Delegations
+            .AsNoTracking()
+            .Include(d => d.From)
+            .Include(d => d.To).ThenInclude(a => a.To)
+            .Where(d => d.FacilitatorId == partyUuid && d.From.FromId == fromUuid)
+            .Join(
+                db.DelegationResources,
+                d => d.Id,
+                dr => dr.DelegationId,
+                (d, dr) => new { Delegation = d, DelegationResource = dr })
+            .Select(x => new
+            {
+                x.Delegation.To.To,
+                x.Delegation.From.Role,
+                x.DelegationResource.Resource,
+            })
+            .GroupBy(x => x.To.Id)
+            .ToListAsync(cancellationToken);
+
+        var result = query
+            .Select(e =>
+            new ContractsV2.AgentResourcesDto()
+            {
+                Agent = DtoMapper.Convert(e.First().To),
+                Access = e.GroupBy(r => r.Role.Id).Select(r => new ContractsV2.ResourceAccess
+                {
+                    Role = DtoMapper.ConvertCompactRole(r.First().Role),
+                    Resources = r.Select(r => DtoMapper.ConvertCompactResource(r.Resource)).DistinctBy(p => p.Id).ToList(),
                 }).ToList(),
             }).ToList();
 
@@ -547,11 +1060,86 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
     }
 
     /// <inheritdoc/>
+    public async Task<Result<List<ContractsV2.ClientPackagesDto>>> GetDelegatedAccessPackagesToAgentsViaPartyV2(Guid partyUuid, Guid toUuid, CancellationToken cancellationToken = default)
+    {
+        var query = await db.Delegations
+            .AsNoTracking()
+            .Include(d => d.To)
+            .Include(d => d.From).ThenInclude(a => a.From)
+            .Where(d => d.FacilitatorId == partyUuid && d.To.ToId == toUuid)
+            .Join(
+                db.DelegationPackages,
+                d => d.Id,
+                dp => dp.DelegationId,
+                (d, dp) => new { Delegation = d, DelegationPackage = dp })
+            .Select(x => new
+            {
+                x.Delegation.From.From,
+                x.Delegation.From.Role,
+                x.DelegationPackage.Package
+            })
+            .GroupBy(x => x.From.Id)
+            .ToListAsync(cancellationToken);
+
+        var result = query
+            .Select(e =>
+            new ContractsV2.ClientPackagesDto()
+            {
+                Client = DtoMapper.Convert(e.First().From),
+                Access = e.GroupBy(r => r.Role.Id).Select(r => new ContractsV2.PackageAccess
+                {
+                    Role = DtoMapper.ConvertCompactRole(r.First().Role),
+                    Packages = r.Select(r => DtoMapper.ConvertCompactPackage(r.Package)).DistinctBy(p => p.Id).ToList(),
+                }).ToList(),
+            }).ToList();
+
+        return result;
+    }
+
+    /// <inheritdoc/>
+    public async Task<Result<List<ContractsV2.ClientResourcesDto>>> GetDelegatedResourcesToAgentsViaPartyV2(Guid partyUuid, Guid toUuid, CancellationToken cancellationToken = default)
+    {
+        var query = await db.Delegations
+            .AsNoTracking()
+            .Include(d => d.To)
+            .Include(d => d.From).ThenInclude(a => a.From)
+            .Where(d => d.FacilitatorId == partyUuid && d.To.ToId == toUuid)
+            .Join(
+                db.DelegationResources,
+                d => d.Id,
+                dr => dr.DelegationId,
+                (d, dr) => new { Delegation = d, DelegationResource = dr })
+            .Select(x => new
+            {
+                x.Delegation.From.From,
+                x.Delegation.From.Role,
+                x.DelegationResource.Resource
+            })
+            .GroupBy(x => x.From.Id)
+            .ToListAsync(cancellationToken);
+
+        var result = query
+            .Select(e =>
+            new ContractsV2.ClientResourcesDto()
+            {
+                Client = DtoMapper.Convert(e.First().From),
+                Access = e.GroupBy(r => r.Role.Id).Select(r => new ContractsV2.ResourceAccess
+                {
+                    Role = DtoMapper.ConvertCompactRole(r.First().Role),
+                    Resources = r.Select(r => DtoMapper.ConvertCompactResource(r.Resource)).DistinctBy(p => p.Id).ToList(),
+                }).ToList(),
+            }).ToList();
+
+        return result;
+    }
+
+    /// <inheritdoc/>
     public async Task<Result<List<DelegationDto>>> DelegateAccessPackageToAgent(
         Guid partyId,
         Guid fromId,
         Guid toId,
         DelegationBatchInputDto payload,
+        ClientDelegationParameterNames parameterNames,
         CancellationToken cancellationToken = default)
     {
         ValidationErrorBuilder errorBuilder = default;
@@ -626,7 +1214,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         {
             errorBuilder.Add(
                 ValidationErrors.EntityNotExists,
-                $"$QUERY/from",
+                $"$QUERY/{parameterNames.Client}",
                 [new($"{fromId}", "entity do not exist.")]
             );
         }
@@ -635,7 +1223,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         {
             errorBuilder.Add(
                 ValidationErrors.EntityNotExists,
-                $"$QUERY/to",
+                $"$QUERY/{parameterNames.Agent}",
                 [new($"{toId}", "entity do not exist.")]
             );
         }
@@ -655,7 +1243,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
             {
                 errorBuilder.Add(
                     ValidationErrors.MissingAssignment,
-                    $"$QUERY/to",
+                    $"$QUERY/{parameterNames.Agent}",
                     [new(RoleConstants.Agent.Entity.Urn, $"Role is not assigned to '{toId}' from '{partyId}'.")]
                 );
             }
@@ -677,7 +1265,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
             var supportedToTypeNames = string.Join(", ", SupportedToTypes.Select(t => t.Entity.Name));
             errorBuilder.Add(
                 ValidationErrors.DisallowedEntityType,
-                "$QUERY/to",
+                $"$QUERY/{parameterNames.Agent}",
                 [new($"{to.TypeId}", $"entity type is not supported as agent, only <{supportedToTypeNames}>.")]
             );
         }
@@ -686,7 +1274,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         {
             errorBuilder.Add(
                 ValidationErrors.DisallowedEntityType,
-                "$QUERY/to",
+                $"$QUERY/{parameterNames.Agent}",
                 [new($"{to.Id}", $"system user '{to.Id}' is not created for client delegation.")]
             );
         }
@@ -817,6 +1405,270 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
             return errorResult;
         }
 
+        await db.SaveChangesWithOutboxRetry(
+            () => ClientAddedNotification.Upsert(
+                db,
+                partyId,
+                fromId,
+                toId,
+                appsettings.Value.Notifications.ClientAddedNotifyInSeconds,
+                cancellationToken),
+            cancellationToken);
+
+        return result;
+    }
+
+    /// <inheritdoc/>
+    public async Task<Result<List<ContractsV2.ResourceDelegationDto>>> DelegateResourceToAgent(
+        Guid partyId,
+        Guid fromId,
+        Guid toId,
+        ContractsV2.ResourceDelegationBatchInputDto payload,
+        CancellationToken cancellationToken = default)
+    {
+        ValidationErrorBuilder errorBuilder = default;
+
+        // Input resources are resource registry ids matched exactly against Resource.RefId and
+        // resolved to internal resource ids in a single lookup.
+        var requestedRefIds = payload.Values.SelectMany(v => v.Resources).Distinct().ToList();
+        Dictionary<string, Guid> resourceIdsByRefId = requestedRefIds.Count > 0
+            ? await db.Resources
+                .AsNoTracking()
+                .Where(r => requestedRefIds.Contains(r.RefId))
+                .Select(r => new { r.RefId, r.Id })
+                .ToDictionaryAsync(r => r.RefId, r => r.Id, cancellationToken)
+            : new Dictionary<string, Guid>();
+
+        var inputs = payload.Values
+            .Select((r, idx) =>
+            {
+                RoleConstants.TryGetByAll(r.Role, out var role);
+                var resources = r.Resources.Select((refId, resourceIdx) => new
+                {
+                    InputResource = refId,
+                    ResourceId = refId is { } && resourceIdsByRefId.TryGetValue(refId, out var resourceId) ? resourceId : Guid.Empty,
+                    ResourceIdx = resourceIdx,
+                });
+
+                return new
+                {
+                    RoleIdx = idx,
+                    InputRole = r.Role,
+                    Role = role,
+                    Resources = resources,
+                };
+            }).ToList();
+
+        foreach (var input in inputs)
+        {
+            if (input.Role is null)
+            {
+                errorBuilder.Add(
+                    ValidationErrors.InvalidRole,
+                    $"/values[{input.RoleIdx}]/role",
+                    [new($"{input.InputRole}", "Role does not exist.")]
+                );
+            }
+
+            foreach (var inputResource in input.Resources)
+            {
+                if (inputResource.ResourceId == Guid.Empty)
+                {
+                    errorBuilder.Add(
+                        ValidationErrors.ResourceNotExists,
+                        $"/values[{input.RoleIdx}]/resources[{inputResource.ResourceIdx}]",
+                        [new($"{inputResource.InputResource}", "Resource does not exist.")]
+                    );
+                }
+            }
+        }
+
+        var entities = await db.Entities.Where(e => e.Id == partyId || e.Id == fromId || e.Id == toId).ToDictionaryAsync(e => e.Id, cancellationToken);
+        if (!entities.ContainsKey(partyId))
+        {
+            throw new UnreachableException();
+        }
+
+        if (!entities.ContainsKey(fromId))
+        {
+            errorBuilder.Add(
+                ValidationErrors.EntityNotExists,
+                $"$QUERY/client",
+                [new($"{fromId}", $"'{fromId}' is not a valid existing Client for '{partyId}'.")]
+            );
+        }
+
+        if (!entities.ContainsKey(toId))
+        {
+            errorBuilder.Add(
+                ValidationErrors.EntityNotExists,
+                $"$QUERY/agent",
+                [new($"{toId}", "entity does not exist.")]
+            );
+        }
+
+        if (errorBuilder.TryBuild(out var errorResult))
+        {
+            return errorResult;
+        }
+
+        var agentAssignment = await db.Assignments
+            .FirstOrDefaultAsync(a => a.FromId == partyId && a.ToId == toId && a.RoleId == RoleConstants.Agent.Id, cancellationToken: cancellationToken);
+
+        if (agentAssignment is null)
+        {
+            entities.TryGetValue(toId, out var toEntity);
+            if (toEntity.TypeId != EntityTypeConstants.SystemUser)
+            {
+                errorBuilder.Add(
+                    ValidationErrors.MissingAssignment,
+                    $"$QUERY/agent",
+                    [new(RoleConstants.Agent.Entity.Urn, $"The user '{toId}' is not a valid registered Agent for '{partyId}'.")]
+                );
+            }
+            else
+            {
+                agentAssignment = new Assignment()
+                {
+                    FromId = partyId,
+                    ToId = toId,
+                    RoleId = RoleConstants.Agent.Id,
+                };
+                await db.Assignments.AddAsync(agentAssignment, cancellationToken);
+            }
+        }
+
+        var to = entities[toId];
+        if (!SupportedToTypes.Any(e => e.Id == to.TypeId))
+        {
+            var supportedToTypeNames = string.Join(", ", SupportedToTypes.Select(t => t.Entity.Name));
+            errorBuilder.Add(
+                ValidationErrors.DisallowedEntityType,
+                "$QUERY/agent",
+                [new($"{to.TypeId}", $"entity type is not supported as agent, only <{supportedToTypeNames}>.")]
+            );
+        }
+
+        if (to.TypeId == EntityTypeConstants.SystemUser && to.VariantId != EntityVariantConstants.AgentSystem)
+        {
+            errorBuilder.Add(
+                ValidationErrors.DisallowedEntityType,
+                "$QUERY/agent",
+                [new($"{to.Id}", $"system user '{to.Id}' is not supported, client delegation only supports system users of the '{EntityVariantConstants.AgentSystem.Entity.Name}' variant.")]
+            );
+        }
+
+        if (errorBuilder.TryBuild(out errorResult))
+        {
+            return errorResult;
+        }
+
+        var result = new List<ContractsV2.ResourceDelegationDto>();
+
+        // The batch can repeat a role across values or a resource within a value. Rows added to the
+        // change tracker are invisible to the database lookups, so created delegations and delegation
+        // resources are tracked locally to keep repeated entries idempotent instead of colliding with
+        // the unique indexes at save time.
+        var createdDelegations = new Dictionary<Guid, Delegation>();
+        var addedDelegationResources = new HashSet<(Guid DelegationId, Guid ResourceId)>();
+        foreach (var input in inputs)
+        {
+            var resourceIds = input.Resources.Select(r => r.ResourceId).Distinct().ToList();
+            var clientAssignment = await db.Assignments.AsNoTracking().FirstOrDefaultAsync(t => t.FromId == fromId && t.ToId == partyId && t.RoleId == input.Role.Id, cancellationToken);
+
+            if (clientAssignment is null)
+            {
+                errorBuilder.Add(
+                    ValidationErrors.MissingAssignment,
+                    $"/values[{input.RoleIdx}]/role",
+                    [new($"{input.Role.Entity.Urn}", $"Role is not assigned to '{partyId}' from '{fromId}'.")]
+                );
+
+                continue;
+            }
+
+            var assignmentResources = await db.AssignmentResources.AsNoTracking().Where(ar => ar.AssignmentId == clientAssignment.Id && resourceIds.Contains(ar.ResourceId)).ToListAsync(cancellationToken);
+
+            var delegation = createdDelegations.TryGetValue(clientAssignment.Id, out var createdDelegation)
+                ? createdDelegation
+                : await db.Delegations.AsNoTracking().FirstOrDefaultAsync(t => t.FromId == clientAssignment.Id && t.ToId == agentAssignment.Id && t.FacilitatorId == partyId, cancellationToken);
+            if (delegation is null)
+            {
+                delegation = new Delegation()
+                {
+                    FromId = clientAssignment.Id,
+                    ToId = agentAssignment.Id,
+                    FacilitatorId = partyId
+                };
+
+                db.Delegations.Add(delegation);
+                createdDelegations[clientAssignment.Id] = delegation;
+                await ClientAddedNotification.Upsert(
+                    db,
+                    partyId,
+                    fromId,
+                    toId,
+                    appsettings.Value.Notifications.ClientAddedNotifyInSeconds,
+                    cancellationToken
+                );
+            }
+
+            // A delegation created in this batch has no persisted rows yet, so the lookup only runs
+            // for pre-existing delegations, once per input value.
+            List<DelegationResource> existingDelegationResources = createdDelegations.ContainsKey(clientAssignment.Id)
+                ? []
+                : await db.DelegationResources
+                    .AsNoTracking()
+                    .Where(t => t.DelegationId == delegation.Id && resourceIds.Contains(t.ResourceId))
+                    .ToListAsync(cancellationToken);
+            foreach (var resource in input.Resources)
+            {
+                // Only resources the facilitator received as a single resource assignment from the client
+                // may be delegated onward. Resources held through an access package have no AssignmentResource
+                // and are rejected here.
+                var assignmentResource = assignmentResources.FirstOrDefault(ar => ar.ResourceId == resource.ResourceId);
+                if (assignmentResource is null)
+                {
+                    errorBuilder.Add(
+                        ValidationErrors.UserNotAuthorized,
+                        $"/values[{input.RoleIdx}]/resources[{resource.ResourceIdx}]",
+                        [new($"{resource.ResourceId}", $"Can't delegate resource from client '{fromId}' as it hasn't been delegated to '{partyId}' as a single resource through role '{input.Role.Entity.Urn}'.")]
+                    );
+
+                    continue;
+                }
+
+                var delegationResourceExist = addedDelegationResources.Contains((delegation.Id, resource.ResourceId))
+                    || existingDelegationResources.Any(t => t.ResourceId == resource.ResourceId && t.AssignmentResourceId == assignmentResource.Id);
+
+                if (!delegationResourceExist)
+                {
+                    db.DelegationResources.Add(new DelegationResource()
+                    {
+                        ResourceId = resource.ResourceId,
+                        DelegationId = delegation.Id,
+                        AssignmentResourceId = assignmentResource.Id,
+                    });
+                    addedDelegationResources.Add((delegation.Id, resource.ResourceId));
+                }
+
+                result.Add(new()
+                {
+                    FromId = fromId,
+                    ToId = toId,
+                    ViaId = partyId,
+                    RoleId = input.Role,
+                    ResourceId = resource.ResourceId,
+                    Changed = !delegationResourceExist,
+                });
+            }
+        }
+
+        if (errorBuilder.TryBuild(out errorResult))
+        {
+            return errorResult;
+        }
+
         await db.SaveChangesAsync(cancellationToken);
 
         return result;
@@ -828,6 +1680,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         Guid fromUuid,
         Guid toUuid,
         DelegationBatchInputDto payload,
+        ClientDelegationParameterNames parameterNames,
         CancellationToken cancellationToken = default)
     {
         ValidationErrorBuilder errorBuilder = default;
@@ -889,7 +1742,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         {
             errorBuilder.Add(
                 ValidationErrors.EntityNotExists,
-                "$QUERY/party",
+                $"$QUERY/{parameterNames.Party}",
                 [new($"{partyUuid}", "entity do not exist.")]
             );
         }
@@ -898,7 +1751,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         {
             errorBuilder.Add(
                 ValidationErrors.EntityNotExists,
-                $"$QUERY/from",
+                $"$QUERY/{parameterNames.Client}",
                 [new($"{fromUuid}", "entity do not exist.")]
             );
         }
@@ -907,7 +1760,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         {
             errorBuilder.Add(
                 ValidationErrors.EntityNotExists,
-                $"$QUERY/to",
+                $"$QUERY/{parameterNames.Agent}",
                 [new($"{toUuid}", "entity do not exist.")]
             );
         }
@@ -919,7 +1772,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         {
             errorBuilder.Add(
                 ValidationErrors.MissingAssignment,
-                $"$QUERY/to",
+                $"$QUERY/{parameterNames.Agent}",
                 [new(RoleConstants.Agent.Entity.Urn, $"Role is not assigned to '{toUuid}' from '{partyUuid}'.")]
             );
         }
@@ -935,6 +1788,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         }
 
         var result = new List<DelegationDto>();
+        var scheduledDeletedPackagesByDelegation = new Dictionary<Guid, HashSet<Guid>>();
         foreach (var input in inputs)
         {
             var pkgIds = input.Packages.Select(p => p.Package).Select(p => p.Id).Distinct();
@@ -944,9 +1798,6 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
             {
                 continue;
             }
-
-            var rolePackages = await db.RolePackages.AsNoTracking().Where(t => t.RoleId == input.Role.Id && pkgIds.Contains(t.PackageId)).ToListAsync(cancellationToken);
-            var assignmentPackages = await db.AssignmentPackages.AsNoTracking().Where(t => t.AssignmentId == clientAssignment.Id && pkgIds.Contains(t.PackageId)).ToListAsync(cancellationToken);
 
             var delegation = await db.Delegations.AsNoTracking().FirstOrDefaultAsync(t => t.FromId == clientAssignment.Id && t.ToId == agentAssignment.Id && t.FacilitatorId == partyUuid, cancellationToken);
             if (delegation is null)
@@ -967,19 +1818,22 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
             var existingDelegationPackages = await db.DelegationPackages.AsTracking().Where(t => t.DelegationId == delegation.Id).ToListAsync(cancellationToken);
             foreach (var pkgId in pkgIds)
             {
-                var rolePackageId = rolePackages.FirstOrDefault(r => r.PackageId == pkgId)?.Id;
-                var assignmentPackageId = assignmentPackages.FirstOrDefault(t => t.PackageId == pkgId)?.Id;
-
-                var toRemove = existingDelegationPackages.FirstOrDefault(
-                    t =>
-                    t.DelegationId == delegation.Id &&
-                    t.PackageId == pkgId &&
-                    t.RolePackageId == rolePackageId &&
-                    t.AssignmentPackageId == assignmentPackageId);
+                // (DelegationId, PackageId) is unique and the delegation is resolved from the
+                // caller's client assignment, agent assignment and facilitator for this role,
+                // so the package id alone identifies the row to remove regardless of which
+                // RolePackage or AssignmentPackage row backed the delegation.
+                var toRemove = existingDelegationPackages.FirstOrDefault(t => t.PackageId == pkgId);
 
                 if (toRemove is { })
                 {
                     db.DelegationPackages.Remove(toRemove);
+                    if (!scheduledDeletedPackagesByDelegation.TryGetValue(delegation.Id, out var scheduledForDelegation))
+                    {
+                        scheduledForDelegation = [];
+                        scheduledDeletedPackagesByDelegation[delegation.Id] = scheduledForDelegation;
+                    }
+
+                    scheduledForDelegation.Add(pkgId);
                 }
 
                 result.Add(new()
@@ -1009,16 +1863,19 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
                     Packages = dp,
                     AnyPackages = dp.Any(),
                     DelegationId = d.Id,
+                    HasResources = d.DelegationResources.Any(),
                 }
             )
             .ToListAsync(cancellationToken);
 
-        // Remove delegation if all delegation packages are removed from client.
+        // Remove delegation if all delegation packages are removed from client and no delegated resources remain.
+        // Scheduled removals are compared per delegation so one role in the batch cannot affect
+        // the deletion decision for a delegation belonging to another role.
         foreach (var delegation in delegations)
         {
-            var scheduledDeletedPackages = result.Where(r => r.Changed).Select(p => p.PackageId).ToHashSet();
-            var currentPackages = delegation.Packages.Select(p => p.PackageId).ToHashSet() ?? [];
-            var shouldDeleteDelegation = scheduledDeletedPackages.SetEquals(currentPackages);
+            HashSet<Guid> scheduledDeletedPackages = scheduledDeletedPackagesByDelegation.TryGetValue(delegation.DelegationId, out var scheduled) ? scheduled : [];
+            var currentPackages = delegation.Packages.Select(p => p.PackageId).ToHashSet();
+            var shouldDeleteDelegation = !delegation.HasResources && scheduledDeletedPackages.SetEquals(currentPackages);
 
             if (shouldDeleteDelegation)
             {
@@ -1036,6 +1893,237 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
                 );
 
                 db.Delegations.Remove(deleteDelegation);
+            }
+        }
+
+        await db.SaveChangesWithOutboxRetry(
+            () => ClientRemovedNotification.Upsert(
+                db,
+                partyUuid,
+                fromUuid,
+                toUuid,
+                appsettings?.Value?.Notifications?.AgentRemovedNotifyInSeconds ?? ClientRemovedNotification.DefaultNotifyInSeconds,
+                cancellationToken),
+            cancellationToken);
+
+        return result;
+    }
+
+    /// <inheritdoc/>
+    public async Task<Result<List<ContractsV2.ResourceDelegationDto>>> RemoveAgentResourceDelegation(
+        Guid partyUuid,
+        Guid fromUuid,
+        Guid toUuid,
+        ContractsV2.ResourceDelegationBatchInputDto payload,
+        ClientDelegationParameterNames parameterNames,
+        CancellationToken cancellationToken = default)
+    {
+        ValidationErrorBuilder errorBuilder = default;
+
+        // Input resources are resource registry ids matched exactly against Resource.RefId and
+        // resolved to internal resource ids in a single lookup.
+        var requestedRefIds = payload.Values.SelectMany(v => v.Resources).Distinct().ToList();
+        Dictionary<string, Guid> resourceIdsByRefId = requestedRefIds.Count > 0
+            ? await db.Resources
+                .AsNoTracking()
+                .Where(r => requestedRefIds.Contains(r.RefId))
+                .Select(r => new { r.RefId, r.Id })
+                .ToDictionaryAsync(r => r.RefId, r => r.Id, cancellationToken)
+            : new Dictionary<string, Guid>();
+
+        var inputs = payload.Values
+            .Select((r, idx) =>
+            {
+                RoleConstants.TryGetByAll(r.Role, out var role);
+                var inputResources = r.Resources.Select((refId, resourceIdx) => new
+                {
+                    InputResource = refId,
+                    ResourceId = refId is { } && resourceIdsByRefId.TryGetValue(refId, out var resourceId) ? resourceId : Guid.Empty,
+                    ResourceIdx = resourceIdx,
+                }).ToList();
+
+                return new
+                {
+                    RoleIdx = idx,
+                    InputRole = r.Role,
+                    Role = role,
+                    InputResources = inputResources,
+                    Resources = inputResources.Select(x => x.ResourceId).Distinct().ToList(),
+                };
+            }).ToList();
+
+        foreach (var input in inputs)
+        {
+            if (input.Role is null)
+            {
+                errorBuilder.Add(
+                    ValidationErrors.InvalidRole,
+                    $"/values[{input.RoleIdx}]/role",
+                    [new($"{input.InputRole}", "Role does not exist.")]
+                );
+            }
+
+            foreach (var inputResource in input.InputResources)
+            {
+                if (inputResource.ResourceId == Guid.Empty)
+                {
+                    errorBuilder.Add(
+                        ValidationErrors.ResourceNotExists,
+                        $"/values[{input.RoleIdx}]/resources[{inputResource.ResourceIdx}]",
+                        [new($"{inputResource.InputResource}", "Resource does not exist.")]
+                    );
+                }
+            }
+        }
+
+        var entities = await db.Entities.Where(e => e.Id == partyUuid || e.Id == fromUuid || e.Id == toUuid).ToDictionaryAsync(e => e.Id, cancellationToken);
+        if (!entities.ContainsKey(partyUuid))
+        {
+            errorBuilder.Add(
+                ValidationErrors.EntityNotExists,
+                $"$QUERY/{parameterNames.Party}",
+                [new($"{partyUuid}", "entity does not exist.")]
+            );
+        }
+
+        if (!entities.ContainsKey(fromUuid))
+        {
+            errorBuilder.Add(
+                ValidationErrors.EntityNotExists,
+                $"$QUERY/{parameterNames.Client}",
+                [new($"{fromUuid}", $"'{fromUuid}' is not a valid existing Client for '{partyUuid}'.")]
+            );
+        }
+
+        if (!entities.ContainsKey(toUuid))
+        {
+            errorBuilder.Add(
+                ValidationErrors.EntityNotExists,
+                $"$QUERY/{parameterNames.Agent}",
+                [new($"{toUuid}", "entity does not exist.")]
+            );
+        }
+
+        var agentAssignment = await db.Assignments
+            .FirstOrDefaultAsync(a => a.FromId == partyUuid && a.ToId == toUuid && a.RoleId == RoleConstants.Agent.Id, cancellationToken: cancellationToken);
+
+        if (agentAssignment is null)
+        {
+            errorBuilder.Add(
+                ValidationErrors.MissingAssignment,
+                $"$QUERY/{parameterNames.Agent}",
+                [new(RoleConstants.Agent.Entity.Urn, $"The user '{toUuid}' is not a valid registered Agent for '{partyUuid}'.")]
+            );
+        }
+
+        if (errorBuilder.TryBuild(out var errorResult))
+        {
+            return errorResult;
+        }
+
+        if (agentAssignment is null)
+        {
+            return new List<ContractsV2.ResourceDelegationDto>();
+        }
+
+        var result = new List<ContractsV2.ResourceDelegationDto>();
+        var scheduledDeletedResourcesByDelegation = new Dictionary<Guid, HashSet<Guid>>();
+        foreach (var input in inputs)
+        {
+            var clientAssignment = await db.Assignments.AsNoTracking().FirstOrDefaultAsync(t => t.FromId == fromUuid && t.ToId == partyUuid && t.RoleId == input.Role.Id, cancellationToken);
+
+            if (clientAssignment is null)
+            {
+                continue;
+            }
+
+            var delegation = await db.Delegations.AsNoTracking().FirstOrDefaultAsync(t => t.FromId == clientAssignment.Id && t.ToId == agentAssignment.Id && t.FacilitatorId == partyUuid, cancellationToken);
+            if (delegation is null)
+            {
+                result.AddRange(input.Resources.Select(resourceId => new ContractsV2.ResourceDelegationDto()
+                {
+                    FromId = fromUuid,
+                    ResourceId = resourceId,
+                    RoleId = input.Role,
+                    ToId = toUuid,
+                    ViaId = partyUuid,
+                    Changed = false,
+                }));
+
+                continue;
+            }
+
+            var existingDelegationResources = await db.DelegationResources.AsTracking().Where(t => t.DelegationId == delegation.Id).ToListAsync(cancellationToken);
+            foreach (var resourceId in input.Resources)
+            {
+                var toRemove = existingDelegationResources.FirstOrDefault(t => t.ResourceId == resourceId);
+
+                if (toRemove is { })
+                {
+                    db.DelegationResources.Remove(toRemove);
+                    if (!scheduledDeletedResourcesByDelegation.TryGetValue(delegation.Id, out var scheduledForDelegation))
+                    {
+                        scheduledForDelegation = [];
+                        scheduledDeletedResourcesByDelegation[delegation.Id] = scheduledForDelegation;
+                    }
+
+                    scheduledForDelegation.Add(resourceId);
+                }
+
+                result.Add(new()
+                {
+                    FromId = fromUuid,
+                    ToId = toUuid,
+                    ViaId = partyUuid,
+                    RoleId = input.Role,
+                    ResourceId = resourceId,
+                    Changed = toRemove is { }
+                });
+            }
+        }
+
+        // Get all delegation from client to agent via party.
+        var uniqueRoleIds = inputs.Select(p => p.Role.Id).Distinct();
+        var delegations = await db.Delegations
+            .Where(d => d.FacilitatorId == partyUuid)
+            .Where(d => d.From.FromId == fromUuid && d.From.ToId == partyUuid && uniqueRoleIds.Contains(d.From.RoleId))
+            .Where(d => d.To.ToId == toUuid && d.To.FromId == partyUuid && d.To.RoleId == RoleConstants.Agent)
+            .Select(d => new
+            {
+                DelegationId = d.Id,
+                HasPackages = d.DelegationPackages.Any(),
+                ResourceIds = d.DelegationResources.Select(r => r.ResourceId).ToList(),
+            })
+            .ToListAsync(cancellationToken);
+
+        // Remove delegation if all delegated resources are removed from client and no delegated packages remain.
+        // Scheduled removals are compared per delegation so one role in the batch cannot affect
+        // the deletion decision for a delegation belonging to another role.
+        foreach (var delegation in delegations)
+        {
+            HashSet<Guid> scheduledDeletedResources = scheduledDeletedResourcesByDelegation.TryGetValue(delegation.DelegationId, out var scheduled) ? scheduled : [];
+            var currentResources = delegation.ResourceIds.ToHashSet();
+            var shouldDeleteDelegation = !delegation.HasPackages && scheduledDeletedResources.SetEquals(currentResources);
+
+            if (shouldDeleteDelegation)
+            {
+                var deleteDelegation = await db.Delegations
+                    .AsTracking()
+                    .FirstOrDefaultAsync(d => d.Id == delegation.DelegationId, cancellationToken);
+
+                if (deleteDelegation is { })
+                {
+                    await ClientRemovedNotification.Upsert(
+                        db,
+                        partyUuid,
+                        fromUuid,
+                        toUuid,
+                        appsettings?.Value?.Notifications?.ClientRemovedNotifyInSeconds ?? ClientRemovedNotification.DefaultNotifyInSeconds,
+                        cancellationToken
+                    );
+
+                    db.Delegations.Remove(deleteDelegation);
+                }
             }
         }
 
@@ -1062,10 +2150,27 @@ public interface IClientDelegationService
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Gets clients available to the authenticated agent, grouped by provider,
+    /// including delegated roles, packages and resources.
+    /// </summary>
+    Task<Result<List<ContractsV2.MyClientDto>>> GetMyClientsV2(
+        Guid agentUuid,
+        List<Guid> providerUuids,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Gets providers that have assigned the Agent role to the given user/party.
     /// </summary>
     Task<Result<List<AgentDto>>> GetMyProviders(
         Guid partyUuid,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets providers that have assigned the Agent role to the authenticated agent,
+    /// seen from the agent's perspective.
+    /// </summary>
+    Task<Result<List<ContractsV2.MyClientProviderDto>>> GetMyProvidersV2(
+        Guid agentUuid,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1084,6 +2189,18 @@ public interface IClientDelegationService
         Guid providerUuid,
         Guid fromUuid,
         DelegationBatchInputDto payload,
+        ClientDelegationParameterNames parameterNames,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Removes delegated single resources from a client relationship.
+    /// </summary>
+    Task<Result<List<ContractsV2.ResourceDelegationDto>>> DeleteMyClientResources(
+        Guid partyUuid,
+        Guid providerUuid,
+        Guid fromUuid,
+        ContractsV2.ResourceDelegationBatchInputDto payload,
+        ClientDelegationParameterNames parameterNames,
         CancellationToken cancellationToken = default);
 
     #endregion
@@ -1101,9 +2218,31 @@ public interface IClientDelegationService
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Gets clients that have assigned roles to the party,
+    /// including delegable packages and delegated resources.
+    /// Optional role, package and resource filters can be applied.
+    /// <paramref name="filterMatch"/> decides whether a client has to match any or every value in
+    /// each of those filters.
+    /// </summary>
+    Task<Result<List<ContractsV2.ClientDto>>> GetClientsV2(
+        Guid partyUuid,
+        List<string>? roles,
+        List<string>? packages,
+        List<string>? resources,
+        FilterMatch filterMatch,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Gets agents assigned by the party.
     /// </summary>
     Task<Result<List<AgentDto>>> GetAgents(
+        Guid partyUuid,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets agents assigned by the party.
+    /// </summary>
+    Task<Result<List<ContractsV2.AgentDto>>> GetAgentsV2(
         Guid partyUuid,
         CancellationToken cancellationToken = default);
 
@@ -1113,6 +2252,7 @@ public interface IClientDelegationService
     Task<Result<AssignmentDto>> AddAgent(
         Guid partyUuid,
         Guid toUuid,
+        ClientDelegationParameterNames parameterNames,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1129,12 +2269,28 @@ public interface IClientDelegationService
     /// Removes an a client from an agent.
     /// If <paramref name="cascade"/> is false, removal fails when active delegations exist.
     /// </summary>
-    Task<ValidationProblemInstance?> RemoveAnAgentsClient(Guid partyUuid, Guid fromUuid, Guid toUuid, bool cascade, CancellationToken cancellationToken = default);
+    Task<ValidationProblemInstance?> RemoveClientFromAgent(Guid partyUuid, Guid fromUuid, Guid toUuid, bool cascade, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets packages delegated from a specific client via the party, grouped by agent.
     /// </summary>
     Task<Result<List<AgentDto>>> GetDelegatedAccessPackagesFromClientsViaParty(
+        Guid partyUuid,
+        Guid fromUuid,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets packages delegated from a specific client via the party, grouped by agent.
+    /// </summary>
+    Task<Result<List<ContractsV2.AgentPackagesDto>>> GetDelegatedAccessPackagesFromClientsViaPartyV2(
+        Guid partyUuid,
+        Guid fromUuid,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets resources delegated from a specific client via the party, grouped by agent.
+    /// </summary>
+    Task<Result<List<ContractsV2.AgentResourcesDto>>> GetDelegatedResourcesFromClientsViaPartyV2(
         Guid partyUuid,
         Guid fromUuid,
         CancellationToken cancellationToken = default);
@@ -1148,6 +2304,22 @@ public interface IClientDelegationService
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Gets packages delegated to a specific agent via the party, grouped by client.
+    /// </summary>
+    Task<Result<List<ContractsV2.ClientPackagesDto>>> GetDelegatedAccessPackagesToAgentsViaPartyV2(
+        Guid partyUuid,
+        Guid toUuid,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets resources delegated to a specific agent via the party, grouped by client.
+    /// </summary>
+    Task<Result<List<ContractsV2.ClientResourcesDto>>> GetDelegatedResourcesToAgentsViaPartyV2(
+        Guid partyUuid,
+        Guid toUuid,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Delegates access packages from a client through the party to an agent.
     /// Performs validation of roles, packages, assignments and entity types.
     /// </summary>
@@ -1156,6 +2328,7 @@ public interface IClientDelegationService
         Guid fromUuid,
         Guid toUuid,
         DelegationBatchInputDto payload,
+        ClientDelegationParameterNames parameterNames,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -1166,7 +2339,51 @@ public interface IClientDelegationService
         Guid fromUuid,
         Guid toUuid,
         DelegationBatchInputDto payload,
+        ClientDelegationParameterNames parameterNames,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Delegates single resources from a client through the party to an agent.
+    /// Only resources the party received as single resource assignments from the client are delegable.
+    /// </summary>
+    Task<Result<List<ContractsV2.ResourceDelegationDto>>> DelegateResourceToAgent(
+        Guid partyUuid,
+        Guid fromUuid,
+        Guid toUuid,
+        ContractsV2.ResourceDelegationBatchInputDto payload,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Removes previously delegated single resources from a client to an agent.
+    /// </summary>
+    Task<Result<List<ContractsV2.ResourceDelegationDto>>> RemoveAgentResourceDelegation(
+        Guid partyUuid,
+        Guid fromUuid,
+        Guid toUuid,
+        ContractsV2.ResourceDelegationBatchInputDto payload,
+        ClientDelegationParameterNames parameterNames,
         CancellationToken cancellationToken = default);
 
     #endregion
+}
+
+/// <summary>
+/// Names of the query parameters a client delegation endpoint exposes for the party,
+/// client and agent entities. Validation error pointers are built from these names,
+/// so each API version points at the parameters present on its own routes.
+/// </summary>
+/// <param name="Party">Name of the query parameter holding the facilitator party.</param>
+/// <param name="Client">Name of the query parameter holding the client entity.</param>
+/// <param name="Agent">Name of the query parameter holding the agent entity.</param>
+public sealed record ClientDelegationParameterNames(string Party, string Client, string Agent)
+{
+    /// <summary>
+    /// Parameter names exposed by the v1 endpoints.
+    /// </summary>
+    public static ClientDelegationParameterNames V1 { get; } = new("party", "from", "to");
+
+    /// <summary>
+    /// Parameter names exposed by the v2 endpoints.
+    /// </summary>
+    public static ClientDelegationParameterNames V2 { get; } = new("party", "client", "agent");
 }

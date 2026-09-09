@@ -36,6 +36,6 @@ await $`dotnet publish ${source} --os linux-musl -t:PublishContainer -p:Containe
   true
 );
 
-const fullImage = `ghcr.io/altinn/altinn-authorization-tmp/${imgCfg.name}:${tag}`;
+const fullImage = `ghcr.io/altinn/altinn-auth/${imgCfg.name}:${tag}`;
 actions.setOutput("image", fullImage);
 actions.setOutput("tag", tag);

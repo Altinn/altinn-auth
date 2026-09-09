@@ -1,6 +1,4 @@
-using System.Collections.Generic;
-
-namespace Altinn.Authorization.ABAC.Xacml.JsonProfile
+﻿namespace Altinn.Authorization.ABAC.Xacml.JsonProfile
 {
     /// <summary>
     /// A JSON object that refernces a policy or policy set.

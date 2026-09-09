@@ -8,8 +8,6 @@
              discovered). -->
         <IsTestProject>false</IsTestProject>
         <IsTestLibrary>true</IsTestLibrary>
-        <!-- Link the shared PostgreSQL test engine (src/testing/PostgresTestEngine.cs). -->
-        <IncludePostgresTestEngine>true</IncludePostgresTestEngine>
     </PropertyGroup>
 
     <ItemGroup>
@@ -26,6 +24,10 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\Altinn.AccessManagement\Altinn.AccessManagement.csproj" />
+        <!-- TestUtils is the single reference site for the AccessManagement test graph;
+             every AccessManagement test project references it, so they all see the
+             shared Altinn.Authorization.Testing types. -->
+        <ProjectReference Include="..\..\..\..\libs\Altinn.Authorization.Testing\src\Altinn.Authorization.Testing\Altinn.Authorization.Testing.csproj" />
     </ItemGroup>
 
     <ItemGroup>

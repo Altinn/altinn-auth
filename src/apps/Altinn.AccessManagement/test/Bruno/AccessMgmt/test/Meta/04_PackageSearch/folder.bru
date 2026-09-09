@@ -1,0 +1,21 @@
+meta {
+  name: 04_PackageSearch
+  seq: 4
+}
+
+docs {
+  Scenario: Packages can be searched by name and by resource content
+
+    When a search term matches a package by its full name
+    And a partial term also matches
+    And the strict switch requires every token in the term to match
+    And the simpleSearch switch changes which packages are found
+    And the resourceProviderCode filter restricts matches to that provider
+    And searchInResources finds a package through one of its resource names
+    When a term with no hits returns 204
+
+  The search action falls back to Problem(string), which the framework turns
+  into a 500, when typeName does not resolve to a known type. That case is
+  intentionally left out of this scenario; see the PR description. The
+  scenario is read only and needs no cleanup.
+}

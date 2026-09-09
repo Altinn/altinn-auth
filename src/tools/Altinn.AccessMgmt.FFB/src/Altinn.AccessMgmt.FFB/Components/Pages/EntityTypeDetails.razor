@@ -1,69 +1,48 @@
 @page "/entity-type/{Id:guid}"
-@using Altinn.AccessMgmt.PersistenceEF.Models
-@using Microsoft.EntityFrameworkCore
-@using Altinn.AccessMgmt.FFB.Services
-@inject IEnvironmentDbContextFactory DbFactory
-@inject EnvironmentState EnvState
-@inject IJSRuntime JS
-@implements IDisposable
+@inherits EnvironmentPageBase
+@inject EntityTypeDetailsService DataService
 
-<PageTitle>EntityType – @(_entityType?.Name ?? Id.ToString())</PageTitle>
+<PageTitle>EntityType – @(_data?.EntityType.Name ?? Id.ToString())</PageTitle>
 
-@if (_loading)
+@if (Loading)
 {
     <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
 }
-else if (_entityType is null)
+else if (Error is not null)
+{
+    <MudAlert Severity="Severity.Error">@Error</MudAlert>
+}
+else if (_data is null)
 {
     <MudAlert Severity="Severity.Error">EntityType not found: @Id</MudAlert>
 }
 else
 {
     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-6">
-        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack"
-                       Color="Color.Default"
-                       OnClick="@(async () => await JS.InvokeVoidAsync("history.go", -1))" />
-        <MudText Typo="Typo.h4">@_entityType.Name</MudText>
+        <BackButton />
+        <MudText Typo="Typo.h4">@_data.EntityType.Name</MudText>
     </MudStack>
 
     <MudGrid>
         <MudItem xs="12" md="6">
-            <MudCard Elevation="1">
-                <MudCardHeader>
-                    <CardHeaderContent><MudText Typo="Typo.h6">Summary</MudText></CardHeaderContent>
-                </MudCardHeader>
-                <MudCardContent Class="pa-0">
-                    <MudSimpleTable Dense="true" Hover="false" Bordered="false">
-                        <tbody>
-                            <tr>
-                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">Id</td>
-                                <td style="font-family:monospace;font-size:.8125rem">@_entityType.Id</td>
-                            </tr>
-                            <tr>
-                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">Name</td>
-                                <td style="font-size:.8125rem">@_entityType.Name</td>
-                            </tr>
-                            <tr>
-                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">Provider</td>
-                                <td style="font-size:.8125rem">
-                                    <MudLink Href="@($"/provider/{_entityType.ProviderId}")">
-                                        @(_entityType.Provider?.Name ?? _entityType.ProviderId.ToString())
-                                    </MudLink>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </MudSimpleTable>
-                </MudCardContent>
-            </MudCard>
+            <SummaryCard>
+                <SummaryRow Label="Id" Monospace="true">@_data.EntityType.Id</SummaryRow>
+                <SummaryRow Label="Name">@_data.EntityType.Name</SummaryRow>
+                <SummaryRow Label="Provider">
+                    <MudLink Href="@($"/provider/{_data.EntityType.ProviderId}")">
+                        @(_data.EntityType.Provider?.Name ?? _data.EntityType.ProviderId.ToString())
+                    </MudLink>
+                </SummaryRow>
+            </SummaryCard>
         </MudItem>
     </MudGrid>
 
     <MudText Typo="Typo.h5" Class="mt-8 mb-3">Variants &amp; Roles</MudText>
     <MudTabs Elevation="1" Rounded="false" ApplyEffectsToContainer="true">
 
-        <MudTabPanel Text="@($"Variants ({_variants.Count})")"
+        <MudTabPanel Text="@($"Variants ({_data.Variants.Count})")"
                      Icon="@Icons.Material.Filled.Category">
-            <MudTable Items="_variants" Hover="true" Dense="true" Class="pa-0">
+            <MudTable Items="_data.Variants" Hover="true" Dense="true" Class="pa-0">
                 <HeaderContent>
                     <MudTh>Name</MudTh>
                     <MudTh>Description</MudTh>
@@ -88,9 +67,9 @@ else
             </MudTable>
         </MudTabPanel>
 
-        <MudTabPanel Text="@($"Roles for this type ({_roles.Count})")"
+        <MudTabPanel Text="@($"Roles for this type ({_data.Roles.Count})")"
                      Icon="@Icons.Material.Filled.Badge">
-            <MudTable Items="_roles" Hover="true" Dense="true" Class="pa-0">
+            <MudTable Items="_data.Roles" Hover="true" Dense="true" Class="pa-0">
                 <HeaderContent>
                     <MudTh>Role</MudTh>
                     <MudTh>URN</MudTh>
@@ -103,7 +82,7 @@ else
                         <MudLink Href="@($"/role/{context.Id}")">@context.Name</MudLink>
                     </MudTd>
                     <MudTd DataLabel="URN">
-                        <MudText Typo="Typo.caption" Style="font-family:monospace">@(context.Urn ?? "–")</MudText>
+                        <MudText Typo="Typo.caption" Class="mono">@(context.Urn ?? "–")</MudText>
                     </MudTd>
                     <MudTd DataLabel="IsKeyRole">
                         <MudIcon Icon="@(context.IsKeyRole ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)"
@@ -125,9 +104,9 @@ else
             </MudTable>
         </MudTabPanel>
 
-        <MudTabPanel Text="@($"Variant-specific roles ({_variantRoles.Count})")"
+        <MudTabPanel Text="@($"Variant-specific roles ({_data.VariantRoles.Count})")"
                      Icon="@Icons.Material.Filled.Tune">
-            <MudTable Items="_variantRoles" Hover="true" Dense="true" Class="pa-0">
+            <MudTable Items="_data.VariantRoles" Hover="true" Dense="true" Class="pa-0">
                 <HeaderContent>
                     <MudTh>Variant</MudTh>
                     <MudTh>Role</MudTh>
@@ -147,7 +126,7 @@ else
                         </MudLink>
                     </MudTd>
                     <MudTd DataLabel="URN">
-                        <MudText Typo="Typo.caption" Style="font-family:monospace">@(context.Role?.Urn ?? "–")</MudText>
+                        <MudText Typo="Typo.caption" Class="mono">@(context.Role?.Urn ?? "–")</MudText>
                     </MudTd>
                     <MudTd DataLabel="IsKeyRole">
                         <MudIcon Icon="@(context.Role?.IsKeyRole == true ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)"
@@ -170,73 +149,11 @@ else
 @code {
     [Parameter] public Guid Id { get; set; }
 
-    private bool _loading = true;
-    private EntityType? _entityType;
-    private List<EntityVariant> _variants = [];
-    private List<Altinn.AccessMgmt.PersistenceEF.Models.Role> _roles = [];
-    private List<EntityVariantRole> _variantRoles = [];
+    private EntityTypeDetailsData? _data;
 
-    protected override void OnInitialized()
-    {
-        EnvState.OnChange += OnEnvironmentChanged;
-    }
+    protected override Task OnParametersSetAsync() => RunAsync(LoadAsync);
 
-    public void Dispose()
-    {
-        EnvState.OnChange -= OnEnvironmentChanged;
-    }
+    protected override Task OnEnvironmentChangedAsync() => RunAsync(LoadAsync);
 
-    private void OnEnvironmentChanged() => InvokeAsync(async () =>
-    {
-        await LoadDataAsync();
-        StateHasChanged();
-    });
-
-    protected override async Task OnParametersSetAsync() => await LoadDataAsync();
-
-    private async Task LoadDataAsync()
-    {
-        _loading = true;
-        _entityType = null;
-        _variants = [];
-        _roles = [];
-        _variantRoles = [];
-
-        using var db = DbFactory.CreateContext(EnvState.Current);
-
-        _entityType = await db.EntityTypes
-            .AsNoTracking()
-            .Include(et => et.Provider)
-            .FirstOrDefaultAsync(et => et.Id == Id);
-
-        if (_entityType is not null)
-        {
-            _variants = await db.EntityVariants
-                .AsNoTracking()
-                .Where(ev => ev.TypeId == Id)
-                .OrderBy(ev => ev.Name)
-                .ToListAsync();
-
-            // Roles scoped to this entity type via Role.EntityTypeId
-            _roles = await db.Roles
-                .AsNoTracking()
-                .Include(r => r.Provider)
-                .Where(r => r.EntityTypeId == Id)
-                .OrderBy(r => r.Name)
-                .ToListAsync();
-
-            // Variant-specific roles from EntityVariantRole, for all variants of this type
-            var variantIds = _variants.Select(v => v.Id).ToList();
-            _variantRoles = await db.EntityVariantRoles
-                .AsNoTracking()
-                .Include(evr => evr.Variant)
-                .Include(evr => evr.Role)
-                .Where(evr => variantIds.Contains(evr.VariantId))
-                .OrderBy(evr => evr.Variant.Name)
-                .ThenBy(evr => evr.Role.Name)
-                .ToListAsync();
-        }
-
-        _loading = false;
-    }
+    private async Task LoadAsync(CancellationToken ct) => _data = await DataService.GetAsync(EnvState.Current, Id, ct);
 }

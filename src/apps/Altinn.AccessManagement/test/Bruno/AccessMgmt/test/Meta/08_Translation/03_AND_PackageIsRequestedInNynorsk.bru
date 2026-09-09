@@ -1,0 +1,44 @@
+meta {
+  name: 03_AND_PackageIsRequestedInNynorsk
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/package/:id
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{packageId}}
+}
+
+headers {
+  Accept-Language: nn
+}
+
+docs {
+  AND the same package requested with Accept-Language nn comes back with the
+  Nynorsk name, distinct from both the Bokmål and English names.
+}
+
+script:pre-request {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  bru.setVar("packageId", td.packages.kunstOgUnderholdning.id);
+}
+
+tests {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  test("AND Accept-Language nn returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the name is translated to Nynorsk", function() {
+    const body = res.getBody();
+    expect(body.name).to.equal(td.packages.kunstOgUnderholdning.nnName);
+    expect(body.name).to.not.equal(td.packages.kunstOgUnderholdning.name);
+  });
+}

@@ -1,8 +1,4 @@
-﻿using System.Threading;
-using System.Threading.Tasks;
-using Altinn.Authorization.ABAC.Xacml;
-using Altinn.Platform.Authorization.Models.EventLog;
-using Microsoft.AspNetCore.Http;
+﻿using Altinn.Authorization.ABAC.Xacml;
 using Microsoft.FeatureManagement;
 
 namespace Altinn.Platform.Authorization.Services.Interfaces

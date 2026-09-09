@@ -1,0 +1,54 @@
+meta {
+  name: 07_AND_InstancesOnlyPopulatesInstances
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeInstances=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeInstances: true
+}
+
+docs {
+  AND asking for instances alone populates the instance collection and leaves roles,
+  access packages and resources empty.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { flatten, findParty } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  const rightholderClient = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_rightholderOrg2;
+
+  test("AND the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the app instance delegated to the caller is returned on the rightholder client", function() {
+    const party = findParty(res.getBody().data, rightholderClient.partyUuid);
+    const instance = party.authorizedInstances.find(item => item.instanceId === rightholderClient.instanceIdDelegatedToPerson);
+    expect(instance, "expected the app instance delegated to the caller").to.not.be.undefined;
+    expect(instance.resourceId).to.equal(testdata.resources.appInstanceDelegation.resourceId);
+    expect(instance.instanceRef).to.equal(rightholderClient.instanceRefDelegatedToPerson);
+  });
+
+  test("AND roles, access packages and resources stay empty", function() {
+    for (const party of flatten(res.getBody().data)) {
+      expect(party.authorizedRoles, `roles returned for ${party.partyUuid}`).to.be.empty;
+      expect(party.authorizedAccessPackages, `access packages returned for ${party.partyUuid}`).to.be.empty;
+      expect(party.authorizedResources, `resources returned for ${party.partyUuid}`).to.be.empty;
+    }
+  });
+}

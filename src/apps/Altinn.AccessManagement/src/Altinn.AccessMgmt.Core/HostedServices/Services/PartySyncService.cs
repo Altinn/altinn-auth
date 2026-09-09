@@ -190,6 +190,11 @@ public class PartySyncService : BaseSyncService, IPartySyncService
             }
             finally
             {
+                // A successful merge drops its own temp table; these drops guarantee cleanup
+                // when a failure between ingest and merge leaves a temp table orphaned.
+                await ingestService.DropTempData<Entity>(batchIdEntity, cancellationToken);
+                await ingestService.DropTempData<Assignment>(batchIdAssignment, cancellationToken);
+
                 ingestEntities.Clear();
                 ingestAssignments.Clear();
                 seen.Clear();

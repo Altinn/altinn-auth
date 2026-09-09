@@ -1,5 +1,4 @@
 ﻿using Altinn.AccessManagement.Api.Metadata.Controllers;
-using Altinn.Authorization.Api.Contracts.AccessManagement;
 
 namespace Altinn.AccessManagement.Tests.Unit.Controllers.Metadata;
 

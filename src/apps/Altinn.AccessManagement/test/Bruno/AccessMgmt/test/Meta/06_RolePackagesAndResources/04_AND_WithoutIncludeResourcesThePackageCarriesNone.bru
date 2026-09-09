@@ -1,0 +1,43 @@
+meta {
+  name: 04_AND_WithoutIncludeResourcesThePackageCarriesNone
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/roles/packages?role={{role}}&variant={{variant}}
+  body: none
+  auth: none
+}
+
+params:query {
+  role: {{role}}
+  variant: {{variant}}
+}
+
+docs {
+  AND the same query without includeResources leaves the package's
+  resources unset, showing the flag is what makes the difference.
+}
+
+script:pre-request {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  bru.setVar("role", td.roles.dagligLeder.code);
+  bru.setVar("variant", td.roles.dagligLeder.variant);
+}
+
+tests {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  test("AND the default request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the package carries no resources", function() {
+    const data = res.getBody();
+    const pkg = data.find(p => p.id === td.roles.dagligLeder.packageWithResources.id);
+    expect(pkg, "expected the package in the role package list").to.exist;
+    expect(pkg.resources).to.satisfy(r => r === null || r === undefined || r.length === 0);
+  });
+}

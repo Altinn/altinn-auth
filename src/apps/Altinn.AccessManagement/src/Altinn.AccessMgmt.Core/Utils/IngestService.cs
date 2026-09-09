@@ -39,8 +39,7 @@ public class IngestService : IIngestService
 
         string columnStatement = string.Join(',', ingestColumns.Select(t => t.Name));
 
-        var ingestName = ingestId.ToString().Replace("-", string.Empty);
-        string ingestTableName = "ingest." + table.TableName + "_" + ingestName;
+        string ingestTableName = GetIngestTableName(table.TableName, ingestId);
 
         var createIngestTable = $"CREATE UNLOGGED TABLE IF NOT EXISTS {ingestTableName} AS SELECT {columnStatement} FROM {table.SchemaName}.{table.TableName} WITH NO DATA;";
 
@@ -73,8 +72,7 @@ public class IngestService : IIngestService
             ingestColumnsToInsert.RemoveAll(t => ignoreColumnsToInsert.Contains(t.Name));
         }
 
-        var ingestName = ingestId.ToString().Replace("-", string.Empty);
-        string ingestTableName = "ingest." + table.TableName + "_" + ingestName;
+        string ingestTableName = GetIngestTableName(table.TableName, ingestId);
 
         var mergeMatchStatement = string.Join(" AND ", matchColumns.Select(t => $"(target.{t} IS NULL AND source.{t} IS NULL OR target.{t} = source.{t})"));
         var mergeUpdateUnMatchStatement = string.Join(
@@ -108,7 +106,10 @@ public class IngestService : IIngestService
 
         var sb = new StringBuilder();
 
-        sb.AppendLine("BEGIN TRANSACTION;");
+        // NB: No explicit BEGIN/COMMIT here. ExecuteMigrationCommand opens an EF transaction
+        // around this statement; the SET LOCAL audit variables apply within it, and atomicity
+        // is handled by that transaction. Adding manual BEGIN/COMMIT nests transactions and
+        // commits the ambient one out from under EF.
         sb.AppendLine(GetAuditVariables(auditValues));
         sb.AppendLine($"MERGE INTO {table.SchemaName}.{table.TableName} AS target USING {ingestTableName} AS source ON {mergeMatchStatement}");
 
@@ -121,7 +122,6 @@ public class IngestService : IIngestService
         sb.AppendLine($"WHEN NOT MATCHED THEN ");
         //// sb.AppendLine($"INSERT ({insertColumns}) VALUES ({insertValues});");
         sb.AppendLine($"INSERT ({insertColumns},audit_changedby,audit_changedbysystem,audit_changeoperation) VALUES ({insertValues},'{auditValues.ChangedBy}','{auditValues.ChangedBySystem}','{auditValues.OperationId}');");
-        sb.AppendLine("COMMIT TRANSACTION;");
 
         string mergeStatement = sb.ToString();
 
@@ -142,6 +142,20 @@ public class IngestService : IIngestService
             var dropIngestTable = $"DROP TABLE IF EXISTS {ingestTableName};";
             await ExecuteMigrationCommand(dropIngestTable, cancellationToken: cancellationToken);
         }
+    }
+
+    /// <inheritdoc />
+    public async Task DropTempData<T>(Guid ingestId, CancellationToken cancellationToken = default)
+    {
+        if (ingestId.Equals(Guid.Empty))
+        {
+            return;
+        }
+
+        var table = GetTableName<T>(DbContext.Model);
+        var ingestTableName = GetIngestTableName(table.TableName, ingestId);
+        var dropIngestTable = $"DROP TABLE IF EXISTS {ingestTableName};";
+        await ExecuteMigrationCommand(dropIngestTable, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc />
@@ -204,11 +218,13 @@ public class IngestService : IIngestService
         using var t = await DbContext.Database.BeginTransactionAsync(cancellationToken);
         try
         {
-            return await DbContext.Database.ExecuteSqlRawAsync(query, cancellationToken);
+            var result = await DbContext.Database.ExecuteSqlRawAsync(query, cancellationToken);
+            await t.CommitAsync(cancellationToken);
+            return result;
         }
         catch
         {
-            await t.RollbackAsync();
+            await t.RollbackAsync(cancellationToken);
             throw;
         }
     }
@@ -252,6 +268,11 @@ public class IngestService : IIngestService
         return (typeof(T).Name.ToLower(), BaseConfiguration.BaseSchema);
     }
 
+    private static string GetIngestTableName(string tableName, Guid ingestId)
+    {
+        return "ingest." + tableName + "_" + ingestId.ToString().Replace("-", string.Empty);
+    }
+
     private static string GetAuditVariables(AuditValues auditValues)
     {
         return string.Format("SET LOCAL app.changed_by = '{0}'; SET LOCAL app.changed_by_system = '{1}'; SET LOCAL app.change_operation_id = '{2}';", auditValues.ChangedBy, auditValues.ChangedBySystem, auditValues.OperationId);
@@ -277,6 +298,12 @@ public interface IIngestService
     /// Merge data from temp table to original
     /// </summary>
     Task<int> MergeTempData<T>(Guid ingestId, AuditValues auditValues, IEnumerable<string> matchColumns = null, IEnumerable<string> ignoreColumnsToUpdate = null, IEnumerable<string> ignoreColumnsToInsert = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Drop the temp table for the given ingest id, if it exists. Safe to call even when the
+    /// table was never created or was already dropped by a successful merge.
+    /// </summary>
+    Task DropTempData<T>(Guid ingestId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Ingest data to temp table, using original table as template

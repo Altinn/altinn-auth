@@ -1,0 +1,38 @@
+meta {
+  name: 08_CLEANUP_SystemUserAgentIsRemoved
+  type: http
+  seq: 8
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents?party={{party}}&agent={{agent}}&cascade=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  agent: {{agent}}
+  cascade: true
+}
+
+docs {
+  CLEANUP the system user's agent assignment is removed with cascade, leaving
+  the facilitator without the system user as agent. Expects 204.
+}
+
+script:pre-request {
+  const su = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", su.regnskapsforer.partyuuid);
+  bru.setVar("agent", su.regnskapsforer.systemuser.id);
+
+  await loginAs(su.regnskapsforer.dagl);
+}
+
+tests {
+  test("CLEANUP the system user agent removal returns 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

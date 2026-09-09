@@ -1,0 +1,54 @@
+meta {
+  name: 02_WHEN_NoAccessInformationIsRequested
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeRoles=false&includeAccessPackages=false&includeResources=false&includeInstances=false
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeRoles: false
+  includeAccessPackages: false
+  includeResources: false
+  includeInstances: false
+}
+
+docs {
+  WHEN every access information flag is off, the parties are still returned but all four
+  access collections are empty on every party in the tree.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { flatten, findParty } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  test("WHEN no access information is requested, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the parties are still returned", function() {
+    const firm = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER;
+    expect(findParty(res.getBody().data, firm.partyUuid), "expected the accounting firm in the party list").to.not.be.undefined;
+    expect(findParty(res.getBody().data, firm.client_USENSUELL_UVIRKSOM_TIGER.partyUuid), "expected the client in the party list").to.not.be.undefined;
+  });
+
+  test("THEN every party has empty roles, packages, resources and instances", function() {
+    for (const party of flatten(res.getBody().data)) {
+      expect(party.authorizedRoles, `roles returned for ${party.partyUuid}`).to.be.empty;
+      expect(party.authorizedAccessPackages, `access packages returned for ${party.partyUuid}`).to.be.empty;
+      expect(party.authorizedResources, `resources returned for ${party.partyUuid}`).to.be.empty;
+      expect(party.authorizedInstances, `instances returned for ${party.partyUuid}`).to.be.empty;
+    }
+  });
+}

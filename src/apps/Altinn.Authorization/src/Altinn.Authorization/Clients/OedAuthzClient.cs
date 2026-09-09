@@ -1,7 +1,4 @@
-using System;
-using System.Net.Http;
 using System.Net.Http.Headers;
-using System.Threading.Tasks;
 using Altinn.Platform.Authorization.Configuration;
 using Microsoft.Extensions.Options;
 

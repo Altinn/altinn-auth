@@ -9,6 +9,10 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <InternalsVisibleTo Include="Altinn.Authorization.Cli.Tests" />
+    </ItemGroup>
+
+    <ItemGroup>
         <PackageReference Include="Altinn.Authorization.ServiceDefaults.HttpClient.MaskinPorten" />
         <PackageReference Include="Azure.Identity" />
         <PackageReference Include="Azure.Messaging.ServiceBus" />

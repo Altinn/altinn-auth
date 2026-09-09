@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 
 namespace Altinn.Platform.Authorization.Telemetry
@@ -32,9 +33,31 @@ namespace Altinn.Platform.Authorization.Telemetry
         /// </summary>
         public const string ExternalApiDimensionValue = "external";
 
+        /// <summary>
+        /// Caller dimension value for decisions that should be attributed to the resource owner. Note
+        /// that this says where the cost belongs, not that the caller is the owner: it is the value
+        /// used for every external caller that is not a known cross-owner consumer.
+        /// </summary>
+        public const string OwnerCallerDimensionValue = "owner";
+
+        /// <summary>
+        /// Caller dimension value for decisions requested by Digdir, which evaluates access to
+        /// resources owned by others in connection with the formidlingstjenester. These should not be
+        /// billed to the resource owner.
+        /// </summary>
+        public const string DigdirCallerDimensionValue = "digdir";
+
+        /// <summary>
+        /// Caller dimension value for requests on the internal PDP API, which has no external consumer.
+        /// Holding this constant keeps the internal traffic — by far the larger volume — from
+        /// multiplying the number of time series.
+        /// </summary>
+        public const string InternalCallerDimensionValue = "internal";
+
         private const string OwnerOrgTag = "resource.owner.org";
         private const string ResourceIdTag = "resource.id";
         private const string ApiKindTag = "pdp.api.kind";
+        private const string CallerKindTag = "pdp.caller.kind";
 
         private readonly Counter<long> _pdpDecisions;
 
@@ -61,13 +84,25 @@ namespace Altinn.Platform.Authorization.Telemetry
         /// Which PDP API the request arrived on, either <see cref="InternalApiDimensionValue"/> or
         /// <see cref="ExternalApiDimensionValue"/>.
         /// </param>
-        public void RecordDecision(string ownerOrg, string resourceId, string apiKind)
+        /// <param name="callerKind">
+        /// Who the decision should be attributed to, one of <see cref="OwnerCallerDimensionValue"/>,
+        /// <see cref="DigdirCallerDimensionValue"/> or <see cref="InternalCallerDimensionValue"/>.
+        /// Deliberately a small, closed set of values rather than the consumer identity itself, which
+        /// would grow the number of time series with the number of calling organizations.
+        /// </param>
+        public void RecordDecision(string ownerOrg, string resourceId, string apiKind, string callerKind)
         {
-            _pdpDecisions.Add(
-                1,
-                new KeyValuePair<string, object?>(OwnerOrgTag, ownerOrg.ToLowerInvariant()),
-                new KeyValuePair<string, object?>(ResourceIdTag, resourceId.ToLowerInvariant()),
-                new KeyValuePair<string, object?>(ApiKindTag, apiKind));
+            // TagList rather than the params overload: it stores up to eight tags inline, so recording
+            // a decision stays allocation-free on a path that runs for every authorization request.
+            TagList tags = new()
+            {
+                { OwnerOrgTag, ownerOrg.ToLowerInvariant() },
+                { ResourceIdTag, resourceId.ToLowerInvariant() },
+                { ApiKindTag, apiKind },
+                { CallerKindTag, callerKind },
+            };
+
+            _pdpDecisions.Add(1, tags);
         }
     }
 }

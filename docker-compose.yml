@@ -1,18 +1,23 @@
-name: altinn_authorization
+﻿name: altinn_authorization
 services:
-  redis:
-    image: redis:7.4-alpine
-    container_name: altinn_authorization_redis
-    restart: always
+  valkey:
+    image: valkey/valkey:9.0-alpine3.24
+    container_name: altinn_authorization_valkey
     ports:
-      - '8002:6379'
+      - "8002:6379"
     environment:
-      - REDIS_PASSWORD=admin
-      - REDIS_PORT=6379
-      - REDIS_DATABASES=16
+      VALKEY_PASSWORD: admin
+    command: ["sh", "-c", "valkey-server --requirepass $$VALKEY_PASSWORD --appendonly yes"]
+    healthcheck:
+      test: ["CMD-SHELL", "REDISCLI_AUTH=$$VALKEY_PASSWORD valkey-cli ping | grep PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
     volumes:
-      - altinn_authorization_data:/redis
-      - altinn_authorization_data:/redis/redis.conf
+      - valkey_data:/data
+    networks:
+      - auth
+    restart: unless-stopped
   postgres:
     image: postgres
     container_name: altinn_authorization_postgres
@@ -24,7 +29,7 @@ services:
       POSTGRES_PASSWORD: admin
       POSTGRES_DB: postgres
     networks:
-      - postgres
+      - auth
     volumes:
       - altinn_authorization_data:/postgres
   pgadmin:
@@ -36,13 +41,17 @@ services:
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@admin.com
       PGADMIN_DEFAULT_PASSWORD: admin
+    networks:
+      - auth
     volumes:
       - altinn_authorization_data:/pgadmin
 
 networks:
-  postgres:
+  auth:
     driver: bridge
 
 volumes:
   altinn_authorization_data:
+  valkey_data:
+    driver: local
 

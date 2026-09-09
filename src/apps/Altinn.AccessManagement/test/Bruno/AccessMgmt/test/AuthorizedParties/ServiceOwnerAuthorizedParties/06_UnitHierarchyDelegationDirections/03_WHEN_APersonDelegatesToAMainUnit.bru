@@ -1,0 +1,67 @@
+meta {
+  name: 03_WHEN_APersonDelegatesToAMainUnit
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeRoles=true&includeAccessPackages=true&includeResources=true&includeInstances=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeRoles: true
+  includeAccessPackages: true
+  includeResources: true
+  includeInstances: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{subjectPersonId}}"
+  }
+}
+
+docs {
+  WHEN a person has delegated to main unit A, a lookup of A's daily leader returns that person
+  as a party. A person party has no subunits.
+}
+
+script:pre-request {
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectPersonId", testdata.authParties_hovedenhetA.dagligleder.pid);
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir);
+}
+
+tests {
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  const delegator = testdata.authParties_personA;
+
+  test("WHEN a person delegates to a main unit, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the delegating person is in the receiving unit's list", function() {
+    const party = findParty(res.getBody(), delegator.partyuuid);
+    expect(party, `expected the person ${delegator.lastname} in the party list`).to.not.be.undefined;
+    expect(party.type).to.equal("Person");
+  });
+
+  test("AND the person party has no subunits", function() {
+    const party = findParty(res.getBody(), delegator.partyuuid);
+    expect(party.subunits, "a person has no subunits").to.be.empty;
+  });
+}

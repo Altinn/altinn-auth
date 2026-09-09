@@ -1,0 +1,54 @@
+meta {
+  name: 04_WHEN_TheSubjectIsARightholderWithoutPackages
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeRoles=true&includeAccessPackages=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeRoles: true
+  includeAccessPackages: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{subjectPersonId}}"
+  }
+}
+
+docs {
+  WHEN the subject is a person who has been added as a rightholder but given nothing, the
+  request succeeds and the party list is empty. A rightholder relation on its own does not
+  make a party authorized.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectPersonId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.employee_rightholderWithoutPackages.pid);
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir);
+}
+
+tests {
+  test("WHEN the subject is a rightholder without packages, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the party list is empty", function() {
+    expect(res.getBody(), "a rightholder relation on its own authorizes nothing").to.be.an("array").that.is.empty;
+  });
+}

@@ -1,0 +1,64 @@
+meta {
+  name: 03_WHEN_RoleIsUnknownThenDelegationFails
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents/accesspackages?party={{party}}&client={{client}}&agent={{agent}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  client: {{client}}
+  agent: {{agent}}
+}
+
+body:json {
+  {
+    "values": [
+      {
+        "role": "{{roleCode}}",
+        "packages": [
+          "{{packageUrn}}"
+        ]
+      }
+    ]
+  }
+}
+
+docs {
+  WHEN a package is delegated under a role code that does not exist.
+
+  Expects 400 with error code STD-00000 and validation error AM.VLD-00029
+  whose paths point at the role field.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("client", td.REGN_Organisasjon.REGN_Org_Clients.client_A.partyUuid);
+  bru.setVar("agent", td.REGN_Organisasjon.REGN_Agent.userUuid);
+  bru.setVar("roleCode", td.clientDelegationV2.unknown.roleCode);
+  bru.setVar("packageUrn", td.clientDelegationV2.packages.regnskapsforerLonn);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  test("WHEN a package is delegated under an unknown role, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN validation error AM.VLD-00029 points at the role", function() {
+    const body = res.getBody();
+    expect(body.code).to.equal("STD-00000");
+    const err = body.validationErrors.find(e => e.code === "AM.VLD-00029");
+    expect(err, "expected validation error AM.VLD-00029").to.not.be.undefined;
+    expect(JSON.stringify(err.paths)).to.include("role");
+  });
+}

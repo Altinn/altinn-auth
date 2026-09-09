@@ -4,7 +4,7 @@ using Altinn.Authorization.Api.Contracts.Register;
 namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
 {
     [UnitTest]
-    [Collection("Models Test")]
+    [Collection(ModelsCollection.Name)]
     public class OrganizationNumberTest
     {
         private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };

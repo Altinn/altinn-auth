@@ -551,7 +551,7 @@ public static class PackageConstants
         ),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Konkursbu skrivetilgang"),
-            KeyValuePair.Create("Description", "Denne fullmakta gir bostyrar sin medhjelpар tilgang til å jobbe på vegne av bostyrar. Bostyrar delegerer denne fullmakta saman med Konkursbu lesetilgang til medhjelparen for kvart konkursbu.")
+            KeyValuePair.Create("Description", "Denne fullmakta gir bostyrar sin medhjelpar tilgang til å jobbe på vegne av bostyrar. Bostyrar delegerer denne fullmakta saman med Konkursbu lesetilgang til medhjelparen for kvart konkursbu.")
         ),
     };
 
@@ -1583,7 +1583,7 @@ public static class PackageConstants
             KeyValuePair.Create("Description", "This authorization provides access to services for the operation of kindergartens that the kindergarten leader is responsible for. In the event of regulatory changes or the introduction of new digital services, there may be changes in the access that the authorization provides.")
         ),
         NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Barnehageleder"),
+            KeyValuePair.Create("Name", "Barnehageleiar"),
             KeyValuePair.Create("Description", "Denne fullmakta gir tilgang til tenester innan drift av barnehage som barnehageleder er ansvarleg for. Ved regelverksendringar eller innføring av nye digitale tenester kan det bli endringar i tilgangar som fullmakta gir.")
         ),
     };
@@ -1617,7 +1617,7 @@ public static class PackageConstants
             KeyValuePair.Create("Description", "This authorization provides access to services for the operation of kindergartens that the kindergarten owner is responsible for. In the event of regulatory changes or the introduction of new digital services, there may be changes in the access that the authorization provides.")
         ),
         NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Barnehageeigар"),
+            KeyValuePair.Create("Name", "Barnehageeigar"),
             KeyValuePair.Create("Description", "Denne fullmakta gir tilgang til tenester innan drift av barnehage som barnehageeigaren er ansvarleg for. Ved regelverksendringar eller innføring av nye digitale tenester kan det bli endringar i tilgangar som fullmakta gir.")
         ),
     };
@@ -1651,7 +1651,7 @@ public static class PackageConstants
             KeyValuePair.Create("Description", "This authorization provides access to services for the operation of training offices that the training office leader is responsible for. In the event of regulatory changes or the introduction of new digital services, there may be changes in the access that the authorization provides.")
         ),
         NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Opplæringskontorleder"),
+            KeyValuePair.Create("Name", "Opplæringskontorleiar"),
             KeyValuePair.Create("Description", "Denne fullmakta gir tilgang til tenester innan drift av opplæringskontor som opplæringskontorleder er ansvarleg for. Ved regelverksendringar eller innføring av nye digitale tenester kan det bli endringar i tilgangar som fullmakta gir.")
         ),
     };
@@ -1753,7 +1753,7 @@ public static class PackageConstants
             KeyValuePair.Create("Description", "This authorization provides access to services for the operation of schools that the school leader is responsible for. In the event of regulatory changes or the introduction of new digital services, there may be changes in the access that the authorization provides.")
         ),
         NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Skuleleder"),
+            KeyValuePair.Create("Name", "Skuleleiar"),
             KeyValuePair.Create("Description", "Denne fullmakta gir tilgang til tenester innan drift av skule som skuleleder er ansvarleg for. Ved regelverksendringar eller innføring av nye digitale tenester kan det bli endringar i tilgangar som fullmakta gir.")
         ),
     };
@@ -1787,7 +1787,7 @@ public static class PackageConstants
             KeyValuePair.Create("Description", "This authorization provides access to services for the operation of schools that the school owner is responsible for. In the event of regulatory changes or the introduction of new digital services, there may be changes in the access that the authorization provides.")
         ),
         NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Skuleeigаr"),
+            KeyValuePair.Create("Name", "Skuleeigar"),
             KeyValuePair.Create("Description", "Denne fullmakta gir tilgang til tenester innan drift av skule som skuleeigaren er ansvarleg for. Ved regelverksendringar eller innføring av nye digitale tenester kan det bli endringar i tilgangar som fullmakta gir.")
         ),
     };
@@ -2241,7 +2241,7 @@ public static class PackageConstants
             KeyValuePair.Create("Description", "This access package provides authorizations for services related to the operation of amusement establishments. In the event of regulatory changes or the introduction of new digital services, there may be changes in the access that the authorization provides.")
         ),
         NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Fornøyingar"),
+            KeyValuePair.Create("Name", "Fornøyelsar"),
             KeyValuePair.Create("Description", "Denne tilgangspakken gir fullmakter til tenester knytt til drift av fornøyingsetablissementer. Ved regelverksendringar eller innføring av nye digitale tenester kan det bli endringar i tilgangar som fullmakta gir.")
         ),
     };
@@ -3107,7 +3107,7 @@ public static class PackageConstants
             KeyValuePair.Create("Description", "This access package provides authorizations for services related to industries in connection with food, beverages and tobacco. In the event of regulatory changes or the introduction of new digital services, there may be changes in the access that the authorization provides.")
         ),
         NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Næringsmiddel, drikkevarar og tobakk"),
+            KeyValuePair.Create("Name", "Næringsmiddel, drikkevarer og tobakk"),
             KeyValuePair.Create("Description", "Denne tilgangspakken gir fullmakter til tenester knytt til industri i samband med næringsmiddel, drikkevarar og tobakk. Ved regelverksendringar eller innføring av nye digitale tenester kan det bli endringar i tilgangar som fullmakta gir.")
         ),
     };
@@ -3175,7 +3175,7 @@ public static class PackageConstants
             KeyValuePair.Create("Description", "This access package provides authorizations for services related to industries in connection with lumber, wood products and paper goods. In the event of regulatory changes or the introduction of new digital services, there may be changes in the access that the authorization provides.")
         ),
         NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Trelast, trevarar og papirvarar"),
+            KeyValuePair.Create("Name", "Trelast, trevarer og papirvarer"),
             KeyValuePair.Create("Description", "Denne tilgangspakken gir fullmakter til tenester knytt til industri i samband med trelast, trevarar og papirvarar. Ved regelverksendringar eller innføring av nye digitale tenester kan det bli endringar i tilgangar som fullmakta gir.")
         ),
     };
@@ -3209,7 +3209,7 @@ public static class PackageConstants
             KeyValuePair.Create("Description", "This access package provides authorizations for services related to industries in connection with metal products, electrical equipment and machinery. In the event of regulatory changes or the introduction of new digital services, there may be changes in the access that the authorization provides.")
         ),
         NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Metallvarar, elektrisk utstyr og maskiner"),
+            KeyValuePair.Create("Name", "Metallvarer, elektrisk utstyr og maskiner"),
             KeyValuePair.Create("Description", "Denne tilgangspakken gir fullmakter til tenester knytt til industri i samband med metallvarar, elektrisk utstyr og maskiner. Ved regelverksendringar eller innføring av nye digitale tenester kan det bli endringar i tilgangar som fullmakta gir.")
         ),
     };
@@ -3243,7 +3243,7 @@ public static class PackageConstants
             KeyValuePair.Create("Description", "This access package provides authorizations for services related to industries in connection with metals and minerals. In the event of regulatory changes or the introduction of new digital services, there may be changes in the access that the authorization provides.")
         ),
         NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Metallar og mineral"),
+            KeyValuePair.Create("Name", "Metall og mineral"),
             KeyValuePair.Create("Description", "Denne tilgangspakken gir fullmakter til tenester knytt til industri i samband med metallar og mineral. Ved regelverksendringar eller innføring av nye digitale tenester kan det bli endringar i tilgangar som fullmakta gir.")
         ),
     };
@@ -3481,7 +3481,7 @@ public static class PackageConstants
             KeyValuePair.Create("Description", "This access package provides authorizations for services related to industries in connection with textiles, clothing and leather goods. In the event of regulatory changes or the introduction of new digital services, there may be changes in the access that the authorization provides.")
         ),
         NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Tekstilar, klede og lærvarar"),
+            KeyValuePair.Create("Name", "Tekstilar, klede og lærvarer"),
             KeyValuePair.Create("Description", "Denne tilgangspakken gir fullmakter til tenester knytt til industri i samband med tekstilar, klede og lærvarar. Ved regelverksendringar eller innføring av nye digitale tenester kan det bli endringar i tilgangar som fullmakta gir.")
         ),
     };
@@ -7812,6 +7812,45 @@ public static class PackageConstants
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Øvrige - Sal av lausøyre av større verdi"),
             KeyValuePair.Create("Description", "Gjeld sal av lausøyre av større verdi (herunder bil), usedvanleg karakter eller av spesiell interesse for vergehavar eller dennes næraste familie - dette krev samtykke frå statsforvaltaren")
+        ),
+    };
+
+    #endregion
+
+    #region Company Representative Form Tasks
+
+    /// <summary>
+    /// Represents the 'Virksomhetens representant - skjemaoppgaver' access package.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 8cb5c1f8-fad7-4ae0-b02b-8ad4cb2652eb
+    /// - <c>URN:</c> urn:altinn:accesspackage:virksomhetens-representant-skjemaoppgaver
+    /// - <c>Provider:</c> Altinn3
+    /// - <c>Code:</c> virksomhetens-representant-skjemaoppgaver
+    /// - <c>Description:</c> Denne tilgangspakken gir fullmakt til rollen som virksomhetens representant for skjemaoppgaver, Mottakeren av tilgangspakken kan da utføre alle oppgaver applikasjoner har definert at denne virksomheten skal utføre på vegne av virksomheten.
+    /// </remarks>
+    public static ConstantDefinition<Package> CompanyRepresentativeFormTasks { get; } = new ConstantDefinition<Package>("8cb5c1f8-fad7-4ae0-b02b-8ad4cb2652eb")
+    {
+        Entity = new()
+        {
+            Name = "Virksomhetens representant - skjemaoppgaver",
+            Code = "virksomhetens-representant-skjemaoppgaver",
+            Description = "Denne tilgangspakken gir fullmakt til rollen som virksomhetens representant for skjemaoppgaver, Mottakeren av tilgangspakken kan da utføre alle oppgaver applikasjoner har definert at denne virksomheten skal utføre på vegne av virksomheten.",
+            Urn = "urn:altinn:accesspackage:virksomhetens-representant-skjemaoppgaver",
+            IsDelegable = false,
+            IsAssignable = true,
+            IsAvailableForServiceOwners = false,
+            EntityTypeId = EntityTypeConstants.Organization,
+            ProviderId = ProviderConstants.Altinn3,
+            AreaId = AreaConstants.BusinessAffairs,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Company representative - form tasks"),
+            KeyValuePair.Create("Description", "This access package provides the role as the company's representative for form tasks. The recipient of the access package can then perform all tasks that applications have defined for this company to perform on behalf of the company.")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Representant for verksemda - skjemaopp­gåver"),
+            KeyValuePair.Create("Description", "Denne tilgangspakken gir fullmakt til rolla som representant for verksemda for skjemaopp­gåver. Mottakaren av tilgangspakken kan då utføre alle oppgåver applikasjonar har definert at denne verksemda skal utføre på vegne av verksemda.")
         ),
     };
 

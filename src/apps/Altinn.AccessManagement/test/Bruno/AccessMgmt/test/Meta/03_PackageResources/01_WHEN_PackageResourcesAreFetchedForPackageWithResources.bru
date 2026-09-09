@@ -1,0 +1,45 @@
+meta {
+  name: 01_WHEN_PackageResourcesAreFetchedForPackageWithResources
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/package/:id/resources
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{packageId}}
+}
+
+docs {
+  WHEN the resources of a package known to hold resources are fetched, THEN
+  the resource that seeds this package is among them.
+}
+
+script:pre-request {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  bru.setVar("packageId", td.packages.revisorattesterer.id);
+}
+
+tests {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  test("WHEN the package holds resources, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the seeded resource is present with its provider and type", function() {
+    const data = res.getBody();
+    expect(data).to.be.an("array").that.is.not.empty;
+
+    const resource = data.find(r => r.refId === td.packages.revisorattesterer.resourceRefId);
+    expect(resource, "expected the seeded resource among the package resources").to.exist;
+    expect(resource.name).to.equal(td.packages.revisorattesterer.resourceName);
+    expect(resource.provider).to.have.property("id");
+    expect(resource.type).to.have.property("id");
+  });
+}

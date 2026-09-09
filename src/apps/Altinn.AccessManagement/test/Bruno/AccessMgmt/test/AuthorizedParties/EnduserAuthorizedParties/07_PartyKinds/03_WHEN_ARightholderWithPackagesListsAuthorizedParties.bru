@@ -1,0 +1,64 @@
+meta {
+  name: 03_WHEN_ARightholderWithPackagesListsAuthorizedParties
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeAccessPackages=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeAccessPackages: true
+}
+
+docs {
+  WHEN a person who is a rightholder of the accounting firm lists authorized parties, the
+  firm is returned with the packages that were delegated to that person, and its subunit
+  inherits them.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.employee_rightholderWithPackages);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  const firm = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER;
+  const rightholder = firm.employee_rightholderWithPackages;
+
+  test("WHEN a rightholder with packages lists authorized parties, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the firm is returned with the packages delegated to the rightholder", function() {
+    const party = findParty(res.getBody().data, firm.partyUuid);
+    expect(party, `expected ${firm.name} in the party list`).to.not.be.undefined;
+    expect(party.authorizedAccessPackages).to.include.members([
+      rightholder.directPackageToDelegate,
+      rightholder.directPackageTilgangsstyrer,
+    ]);
+  });
+
+  test("THEN the firm's subunit inherits the delegated packages", function() {
+    const party = findParty(res.getBody().data, firm.partyUuid);
+    const subunit = party.subunits.find(item => item.partyUuid.toLowerCase() === firm.subunit.partyUuid.toLowerCase());
+    expect(subunit, `expected ${firm.subunit.name} nested under the firm`).to.not.be.undefined;
+    expect(subunit.authorizedAccessPackages).to.include.members(party.authorizedAccessPackages);
+  });
+
+  test("THEN the rightholder's own person party carries the person fields", function() {
+    const party = findParty(res.getBody().data, rightholder.partyUuid);
+    expect(party, "expected the rightholder's own party").to.not.be.undefined;
+    expect(party.type).to.equal("Person");
+    expect(party.personId).to.equal(rightholder.pid);
+    expect(party.dateOfBirth).to.match(/^\d{4}-\d{2}-\d{2}$/);
+  });
+}

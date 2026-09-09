@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Threading.Tasks;
 using Altinn.Platform.Authorization.Models.Oed;
 
 namespace Altinn.Platform.Authorization.Services.Interface

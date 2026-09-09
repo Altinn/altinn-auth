@@ -1,5 +1,4 @@
-using Altinn.AccessMgmt.Core.Extensions;
-using Altinn.AccessMgmt.PersistenceEF.Models.Base;
+﻿using Altinn.AccessMgmt.Core.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 
 // See: overhaul part-2 step 14

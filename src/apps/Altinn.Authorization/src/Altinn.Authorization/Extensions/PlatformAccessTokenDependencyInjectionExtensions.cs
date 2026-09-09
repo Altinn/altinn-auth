@@ -1,8 +1,6 @@
 ﻿using Altinn.Authorization.Services;
 using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Platform.Authorization.Configuration;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace Altinn.Platform.Authorization.Extensions;
 

@@ -1,0 +1,16 @@
+meta {
+  name: 12_ForretningsforerClients
+  seq: 12
+}
+
+docs {
+  Scenario: A business manager's clients appear with the packages the business manager role carries
+
+    When a service owner looks up the daily leader of a business manager firm
+    Then the housing company clients the firm manages are in the list
+    And the client the firm holds the eiendom package for carries that package
+
+  This carries across the business manager coverage from the folder this replaces. The package
+  set differs by client variant, so the assertion is on membership for the named client rather
+  than on a count.
+}

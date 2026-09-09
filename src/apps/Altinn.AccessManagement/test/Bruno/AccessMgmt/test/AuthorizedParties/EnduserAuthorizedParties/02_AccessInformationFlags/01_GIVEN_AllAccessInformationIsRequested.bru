@@ -1,0 +1,61 @@
+meta {
+  name: 01_GIVEN_AllAccessInformationIsRequested
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeRoles=true&includeAccessPackages=true&includeResources=true&includeInstances=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeRoles: true
+  includeAccessPackages: true
+  includeResources: true
+  includeInstances: true
+}
+
+docs {
+  GIVEN every access information flag is on, all four collections are populated on the
+  parties the scenario uses as reference: roles on the accounting firm, packages on a
+  client, and single resources and app instances on the rightholder client's subunit.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  const firm = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER;
+
+  test("GIVEN all flags are on, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("GIVEN all flags are on, roles and access packages are populated", function() {
+    const party = findParty(res.getBody().data, firm.partyUuid);
+    expect(party.authorizedRoles).to.not.be.empty;
+    expect(party.authorizedAccessPackages).to.not.be.empty;
+  });
+
+  test("GIVEN all flags are on, single resources and instances are populated", function() {
+    const subunit = findParty(res.getBody().data, firm.client_rightholderOrg2.subunit.partyUuid);
+    expect(subunit, "expected the rightholder client's subunit in the party list").to.not.be.undefined;
+    expect(subunit.authorizedResources).to.include.members([
+      firm.client_rightholderOrg2.subunit.resourceIdDelegatedToPerson,
+      firm.client_rightholderOrg2.subunit.resourceIdDelegatedToKeyRoleUnit,
+    ]);
+    expect(subunit.authorizedInstances.map(instance => instance.instanceId)).to.include.members([
+      firm.client_rightholderOrg2.subunit.instanceIdDelegatedToPerson,
+      firm.client_rightholderOrg2.subunit.instanceIdDelegatedToKeyRoleUnit,
+    ]);
+  });
+}

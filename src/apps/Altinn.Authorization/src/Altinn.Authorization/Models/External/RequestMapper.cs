@@ -1,44 +1,31 @@
-﻿using Altinn.Authorization.ABAC.Xacml.JsonProfile;
+using Altinn.Authorization.ABAC.Xacml.JsonProfile;
+using Riok.Mapperly.Abstractions;
 
 namespace Altinn.Platform.Authorization.Models.External
 {
     /// <summary>
-    /// A class that hold access managment mapping
+    /// Maps between the external XACML JSON models exposed by the authorize endpoint
+    /// and the internal XACML JSON profile models.
     /// </summary>
-    public class RequestMapper : AutoMapper.Profile
+    [Mapper(UseDeepCloning = true)]
+    public static partial class RequestMapper
     {
         /// <summary>
-        /// Initializes a new instance of the <see cref="RequestMapper"/> class.
+        /// Maps an external XACML JSON request to the internal representation.
         /// </summary>
-        public RequestMapper()
-        {
-            AllowNullCollections = true;
-            CreateMap<XacmlJsonAttributeExternal, XacmlJsonAttribute>();
+        /// <param name="request">The external request root.</param>
+        /// <returns>The internal request root.</returns>
+        public static partial XacmlJsonRequestRoot ToInternal(this XacmlJsonRequestRootExternal request);
 
-            CreateMap<XacmlJsonIdReferenceExternal, XacmlJsonIdReference>();
-            CreateMap<XacmlJsonMultiRequestsExternal, XacmlJsonMultiRequests>();
+        /// <summary>
+        /// Maps an internal XACML JSON response to the external representation.
+        /// </summary>
+        /// <param name="response">The internal response.</param>
+        /// <returns>The external response.</returns>
+        public static partial XacmlJsonResponseExternal ToExternal(this XacmlJsonResponse response);
 
-            CreateMap<XacmlJsonPolicyIdentifierListExternal, XacmlJsonPolicyIdentifierList>();
-            CreateMap<XacmlJsonRequestExternal, XacmlJsonRequest>();
-            CreateMap<XacmlJsonRequestReferenceExternal, XacmlJsonRequestReference>();
-            CreateMap<XacmlJsonRequestRootExternal, XacmlJsonRequestRoot>();
-            CreateMap<XacmlJsonRequestExternal, XacmlJsonRequest>();
-            CreateMap<XacmlJsonObligationOrAdviceExternal, XacmlJsonObligationOrAdvice>();
-            CreateMap<XacmlJsonCategoryExternal, XacmlJsonCategory>();
-            CreateMap<XacmlJsonStatusCodeExternal, XacmlJsonStatusCode>();
-            CreateMap<XacmlJsonStatusExternal, XacmlJsonStatus>();
-
-            CreateMap<XacmlJsonResponse, XacmlJsonResponseExternal>();
-            CreateMap<XacmlJsonResult, XacmlJsonResultExternal>();
-
-            CreateMap<XacmlJsonObligationOrAdvice, XacmlJsonObligationOrAdviceExternal>();
-            CreateMap<XacmlJsonCategory, XacmlJsonCategoryExternal>();
-            CreateMap<XacmlJsonStatus, XacmlJsonStatusExternal>();
-            CreateMap<XacmlJsonStatusCode, XacmlJsonStatusCodeExternal>();
-            CreateMap<XacmlJsonPolicyIdentifierList, XacmlJsonPolicyIdentifierListExternal>();
-            CreateMap<XacmlJsonAttribute, XacmlJsonAttributeExternal>();
-            CreateMap<XacmlJsonIdReference, XacmlJsonIdReferenceExternal>();
-            CreateMap<XacmlJsonAttributeAssignment, XacmlJsonAttributeAssignmentExternal>();
-        }
+        // XForwardedForHeader is enrichment set from the incoming HTTP request, never part of the request body.
+        [MapperIgnoreTarget(nameof(XacmlJsonRequest.XForwardedForHeader))]
+        private static partial XacmlJsonRequest ToInternal(this XacmlJsonRequestExternal request);
     }
 }

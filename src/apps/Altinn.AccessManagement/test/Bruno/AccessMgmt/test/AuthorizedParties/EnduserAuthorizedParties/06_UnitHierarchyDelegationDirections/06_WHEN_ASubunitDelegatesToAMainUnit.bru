@@ -1,0 +1,61 @@
+meta {
+  name: 06_WHEN_ASubunitDelegatesToAMainUnit
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeAccessPackages=true&includeResources=true&includeInstances=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeAccessPackages: true
+  includeResources: true
+  includeInstances: true
+}
+
+docs {
+  WHEN a subunit has delegated to a main unit, the daily leader of that main unit sees the
+  subunit nested under its own main unit, and that main unit is returned as a hierarchy
+  element with no access of its own.
+}
+
+script:pre-request {
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.authParties_hovedenhetB.dagligleder);
+}
+
+tests {
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+
+  const delegatorMainUnit = testdata.authParties_hovedenhetC;
+  const delegator = delegatorMainUnit.authParties_underenhetC;
+
+  test("WHEN a subunit delegates to a main unit, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the delegating subunit's main unit is a hierarchy element with no access", function() {
+    const party = res.getBody().data.find(item => item.partyUuid.toLowerCase() === delegatorMainUnit.partyuuid.toLowerCase());
+    expect(party, `expected ${delegatorMainUnit.name} as a hierarchy carrier`).to.not.be.undefined;
+    expect(party.onlyHierarchyElementWithNoAccess).to.be.true;
+    expect(party.authorizedAccessPackages).to.be.empty;
+    expect(party.authorizedResources).to.be.empty;
+    expect(party.authorizedRoles).to.be.empty;
+    expect(party.authorizedInstances).to.be.empty;
+  });
+
+  test("THEN the delegating subunit is nested under it with the delegated access", function() {
+    const party = res.getBody().data.find(item => item.partyUuid.toLowerCase() === delegatorMainUnit.partyuuid.toLowerCase());
+    const subunit = party.subunits.find(item => item.partyUuid.toLowerCase() === delegator.partyuuid.toLowerCase());
+    expect(subunit, `expected ${delegator.name} nested under its main unit`).to.not.be.undefined;
+    expect(subunit.organizationNumber).to.equal(delegator.org_no);
+    expect(subunit.onlyHierarchyElementWithNoAccess).to.be.false;
+    expect(subunit.authorizedAccessPackages).to.not.be.empty;
+    expect(subunit.authorizedResources).to.not.be.empty;
+  });
+}

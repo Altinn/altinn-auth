@@ -120,7 +120,6 @@ public class DelegationMetadataRepositoryMock : IDelegationMetadataRepository
 
     public Task<InstanceDelegationChange> InsertInstanceDelegation(InstanceDelegationChange instanceDelegationChange, CancellationToken cancellationToken = default)
     {
-        Random random = new();
         string path = GetDelegationPolicyPathFromInstanceRule(instanceDelegationChange);
         string instanceIdSuffix = ExtractInstanceIdSuffix(instanceDelegationChange.InstanceId);
         InstanceDelegationChange result = instanceIdSuffix switch
@@ -128,7 +127,9 @@ public class DelegationMetadataRepositoryMock : IDelegationMetadataRepository
             "00000000-0000-0000-0000-000000000002" => null,
             _ => new InstanceDelegationChange
                 {
-                    InstanceDelegationChangeId = random.Next(0, 1000),
+                    // PolicyAdministrationPoint treats a change id <= 0 as a failed insert,
+                    // so a mocked successful insert must always return a positive id.
+                    InstanceDelegationChangeId = 1337,
                     DelegationChangeType = instanceDelegationChange.DelegationChangeType,
                     InstanceDelegationMode = instanceDelegationChange.InstanceDelegationMode,
                     InstanceDelegationSource = instanceDelegationChange.InstanceDelegationSource,
@@ -543,7 +544,7 @@ public class DelegationMetadataRepositoryMock : IDelegationMetadataRepository
     }
 
     /// <inheritdoc />
-    public Task<IEnumerable<InstanceDelegationChange>> GetActiveInstanceDelegations(List<string> resourceIds, Guid from, List<Guid> to, CancellationToken cancellationToken = default)
+    public Task<IEnumerable<InstanceDelegationChange>> GetActiveInstanceDelegations(List<string> resourceIds, Guid from, List<Guid> to, List<Guid> toAppControlledRightholders, CancellationToken cancellationToken = default)
     {
         return Task.FromResult<IEnumerable<InstanceDelegationChange>>(new List<InstanceDelegationChange>());
     }
@@ -642,21 +643,6 @@ public class DelegationMetadataRepositoryMock : IDelegationMetadataRepository
     }
 
     public Task<List<DelegationChange>> GetAllDelegationChangesForAuthorizedParties(List<Guid> toPartyUuids, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<List<DelegationChange>> GetNextPageAppDelegationChanges(long startFeedIndex = 1, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<List<DelegationChange>> GetNextPageResourceDelegationChanges(long startFeedIndex = 1, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<List<InstanceDelegationChange>> GetNextPageInstanceDelegationChanges(long startFeedIndex = 1, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException();
     }

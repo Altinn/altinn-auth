@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Altinn.AccessMgmt.Core.Constants;
+﻿namespace Altinn.AccessMgmt.Core.Constants;
 
 /// <summary>
 /// Constants for valid instance URN formats used in delegation.

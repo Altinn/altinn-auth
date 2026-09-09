@@ -1,6 +1,5 @@
 ﻿using System.Buffers.Text;
 using System.IO.Compression;
-using System.Text;
 using System.Text.Json;
 using Altinn.Platform.Authorization.Clients;
 using Altinn.Platform.Authorization.Configuration;

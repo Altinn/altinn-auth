@@ -1,0 +1,32 @@
+meta {
+  name: 09_AND_UnknownVariantReturnsNotFound
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/roles/packages?role={{role}}&variant=DOES-NOT-EXIST
+  body: none
+  auth: none
+}
+
+params:query {
+  role: {{role}}
+  variant: DOES-NOT-EXIST
+}
+
+docs {
+  AND a known role with a variant that does not resolve also returns 404.
+}
+
+script:pre-request {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  bru.setVar("role", td.roles.dagligLeder.code);
+}
+
+tests {
+  test("AND the unknown variant returns 404", function() {
+    expect(res.status).to.equal(404);
+  });
+}

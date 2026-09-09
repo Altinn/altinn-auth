@@ -1,0 +1,44 @@
+meta {
+  name: 03_THEN_SystemUserAppearsAsAgent
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+docs {
+  THEN the system user appears as agent in the facilitator's agent list with
+  the agent role, created automatically by the delegation in the previous step.
+}
+
+script:pre-request {
+  const su = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", su.regnskapsforer.partyuuid);
+
+  await loginAs(su.regnskapsforer.dagl);
+}
+
+tests {
+  const su = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+
+  test("THEN the agent list request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the system user appears in the agent list with the agent role", function() {
+    const systemUserId = su.regnskapsforer.systemuser.id.toLowerCase();
+    const entry = res.getBody().data.find(item => item.agent.id.toLowerCase() === systemUserId);
+    expect(entry, "expected the system user in the agent list").to.not.be.undefined;
+    expect(entry.access.some(a => a.role.code === "agent")).to.be.true;
+  });
+}

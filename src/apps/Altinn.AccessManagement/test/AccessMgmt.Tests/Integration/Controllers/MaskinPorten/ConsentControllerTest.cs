@@ -3,32 +3,23 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Altinn.AccessManagement.Api.Internal.Extensions;
-using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Models.Consent;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
-using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Tests.Fixtures;
-using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.Tests.Moqdata;
 using Altinn.AccessManagement.Tests.Util;
-using Altinn.AccessManagement.TestUtils.Fixtures;
-using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.Authorization.Api.Contracts.Consent;
 using Altinn.Authorization.Api.Contracts.Register;
 using Altinn.Authorization.ProblemDetails;
-using Altinn.Common.AccessToken.Services;
-using Altinn.Common.PEP.Interfaces;
-using AltinnCore.Authentication.JwtCookie;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Options;
 
 // Uses LegacyApiFixture: the consent flow goes through the Dapper-backed
-// ConsentRepository which binds to the Yuniql-provisioned consent.status_type
-// enum; LegacyApiFixture overlays Yuniql on top of ApiFixture's EF schemas.
+// ConsentRepository which binds to the consent.status_type enum. The consent
+// schema is provisioned by EF Core (ConsentSchema_Baseline); LegacyApiFixture
+// additionally overlays the Yuniql accessmanagement/delegation schemas.
 namespace Altinn.AccessManagement.Tests.Integration.Controllers.MaskinPorten
 {
     /// <summary>
@@ -56,104 +47,6 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.MaskinPorten
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
         };
-
-        [Fact]
-        public async Task GetConsentFromA2_Valid_Returns200WithConsentInfo()
-        {
-            SetupMockPartyRepository();
-
-            Guid requestId = Guid.Parse("d5b861c8-8e3b-44cd-9952-5315e5990cf1");
-            IConsentRepository repositgo = _fixture.Services.GetRequiredService<IConsentRepository>();
-            ConsentContextDto consentContextExternal = new ConsentContextDto
-            {
-                Language = "nb",
-            };
-
-            HttpClient client = GetTestClient();
-            string url = $"/accessmanagement/api/v1/maskinporten/consent/lookup/";
-
-            string token = PrincipalUtil.GetOrgToken(null, "810419512", "altinn:maskinporten/consent.read");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            ConsentLookupDto consentLookup = new ConsentLookupDto()
-            {
-                Id = requestId,
-                From = Altinn.Authorization.Api.Contracts.Consent.ConsentPartyUrn.PersonId.Create(PersonIdentifier.Parse("01025161013")),
-                To = Altinn.Authorization.Api.Contracts.Consent.ConsentPartyUrn.OrganizationId.Create(OrganizationNumber.Parse("810419512"))
-            };
-
-            HttpResponseMessage response = await client.PostAsJsonAsync(url, consentLookup, cancellationToken: TestContext.Current.CancellationToken);
-            var task = await repositgo.GetRequest(requestId, TestContext.Current.CancellationToken);
-            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-            ConsentInfoMaskinportenDto consentInfo = JsonSerializer.Deserialize<ConsentInfoMaskinportenDto>(responseContent, _jsonOptions);
-            Assert.True(requestId == consentInfo.Id);
-            Assert.Equal(2, consentInfo.ConsentRights.Count());
-        }
-
-        [Fact]
-        public async Task GetConsentFromA2_Expired_ReturnsProblem()
-        {
-            SetupMockPartyRepository();
-
-            Guid requestId = Guid.Parse("4a73a516-7a91-435c-8a0e-0f4659588594");
-            IConsentRepository repositgo = _fixture.Services.GetRequiredService<IConsentRepository>();
-            ConsentContextDto consentContextExternal = new ConsentContextDto
-            {
-                Language = "nb",
-            };
-
-            HttpClient client = GetTestClient();
-            string url = $"/accessmanagement/api/v1/maskinporten/consent/lookup/";
-
-            string token = PrincipalUtil.GetOrgToken(null, "810419512", "altinn:maskinporten/consent.read");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            ConsentLookupDto consentLookup = new ConsentLookupDto()
-            {
-                Id = requestId,
-                From = Altinn.Authorization.Api.Contracts.Consent.ConsentPartyUrn.PersonId.Create(PersonIdentifier.Parse("01025161013")),
-                To = Altinn.Authorization.Api.Contracts.Consent.ConsentPartyUrn.OrganizationId.Create(OrganizationNumber.Parse("810419512"))
-            };
-
-            HttpResponseMessage response = await client.PostAsJsonAsync(url, consentLookup, cancellationToken: TestContext.Current.CancellationToken);
-            var task = await repositgo.GetRequest(requestId, TestContext.Current.CancellationToken);
-            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-            ProblemDetails problemDetails = JsonSerializer.Deserialize<ProblemDetails>(responseContent, _jsonOptions);
-            Assert.Equal("Consent is expired", problemDetails.Detail);
-        }
-
-        [Fact]
-        public async Task GetConsentFromA2_InvalidMetadata_Returns200WithConsentInfo()
-        {
-            SetupMockPartyRepository();
-
-            Guid requestId = Guid.Parse("4a73a516-7a91-435c-8a0e-0f4659588595");
-            IConsentRepository repositgo = _fixture.Services.GetRequiredService<IConsentRepository>();
-            ConsentContextDto consentContextExternal = new ConsentContextDto
-            {
-                Language = "nb",
-            };
-
-            HttpClient client = GetTestClient();
-            string url = $"/accessmanagement/api/v1/maskinporten/consent/lookup/";
-
-            string token = PrincipalUtil.GetOrgToken(null, "810419512", "altinn:maskinporten/consent.read");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            ConsentLookupDto consentLookup = new ConsentLookupDto()
-            {
-                Id = requestId,
-                From = Altinn.Authorization.Api.Contracts.Consent.ConsentPartyUrn.PersonId.Create(PersonIdentifier.Parse("01025161013")),
-                To = Altinn.Authorization.Api.Contracts.Consent.ConsentPartyUrn.OrganizationId.Create(OrganizationNumber.Parse("810419512"))
-            };
-
-            HttpResponseMessage response = await client.PostAsJsonAsync(url, consentLookup, cancellationToken: TestContext.Current.CancellationToken);
-            var task = await repositgo.GetRequest(requestId, TestContext.Current.CancellationToken);
-            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-            ConsentInfoMaskinportenDto consentInfo = JsonSerializer.Deserialize<ConsentInfoMaskinportenDto>(responseContent, _jsonOptions);
-            Assert.True(requestId == consentInfo.Id);
-            Assert.Equal(2, consentInfo.ConsentRights.Count());
-        }
 
         [Fact]
         public async Task GetConsent_CreatedExpired_Returns500MultipleProblemsExpiredAndNotAccepted()

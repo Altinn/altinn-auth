@@ -65,11 +65,11 @@ lift them into a shared `TestUtils/TestCertificates/` folder rather than copying
 5. Extract common seeding behaviour into a static helper so other projects can
    reuse it.
 
-## FluentAssertions is globally imported
+## Assertion library is globally imported
 
-`FluentAssertions` 7.0.0 is added via `Directory.Build.targets` for every test
+`AwesomeAssertions` is added via `Directory.Build.targets` for every test
 project and test library. It's in `<Using>` so you **don't** need a `using
-FluentAssertions;` directive — just call `.Should()` directly. See
-[FLUENT_ASSERTIONS_GUIDELINES.md](FLUENT_ASSERTIONS_GUIDELINES.md).
+AwesomeAssertions;` directive — just call `.Should()` directly. See
+[AWESOME_ASSERTIONS_GUIDELINES.md](AWESOME_ASSERTIONS_GUIDELINES.md).
 
 ## Next: [WRITING_TESTS.md](WRITING_TESTS.md)

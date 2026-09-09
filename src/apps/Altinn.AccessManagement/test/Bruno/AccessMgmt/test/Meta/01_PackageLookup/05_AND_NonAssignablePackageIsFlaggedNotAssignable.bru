@@ -1,0 +1,40 @@
+meta {
+  name: 05_AND_NonAssignablePackageIsFlaggedNotAssignable
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/package/:id
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{packageId}}
+}
+
+docs {
+  AND a package known to be non assignable is returned with isAssignable
+  false.
+}
+
+script:pre-request {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  bru.setVar("packageId", td.packages.regnskapsforerMedSignering.id);
+}
+
+tests {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  test("AND the non assignable package request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN isAssignable is false", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("id", td.packages.regnskapsforerMedSignering.id);
+    expect(body).to.have.property("isAssignable", false);
+  });
+}

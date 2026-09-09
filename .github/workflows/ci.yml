@@ -9,6 +9,7 @@ on:
 
 permissions:
   contents: read
+  actions: read # the per-vertical CI reads the jobs API to deep-link the failed-test summary
 
 # Cancel a superseded run when a PR is pushed again; let main-push runs finish.
 concurrency:

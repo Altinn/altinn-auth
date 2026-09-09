@@ -1,0 +1,53 @@
+meta {
+  name: 04_WHEN_FilteringOnAResourceTheCallerDoesNotHold
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeResources=true&anyOfResourceIds={{resourceId}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeResources: true
+  anyOfResourceIds: {{resourceId}}
+}
+
+docs {
+  WHEN a rightholder who holds packages on the accounting firm filters on a single
+  resource that is delegated to somebody else, the client that carries that resource for
+  another caller is not returned.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  bru.setVar("resourceId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_rightholderOrg2.resourceIdDelegatedToPerson);
+
+  await loginAs(testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.employee_rightholderWithPackages);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty, flatten } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  const firm = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER;
+  const resourceId = firm.client_rightholderOrg2.resourceIdDelegatedToPerson;
+
+  test("WHEN filtering on a resource the caller does not hold, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the party that carries the resource for another caller is not returned", function() {
+    expect(findParty(res.getBody().data, firm.client_rightholderOrg2.partyUuid), "the rightholder client is not reachable for this caller").to.be.undefined;
+  });
+
+  test("THEN no returned party carries the filtered resource", function() {
+    for (const party of flatten(res.getBody().data)) {
+      expect(party.authorizedResources, `${party.partyUuid} unexpectedly carries the filtered resource`).to.not.include(resourceId);
+    }
+  });
+}

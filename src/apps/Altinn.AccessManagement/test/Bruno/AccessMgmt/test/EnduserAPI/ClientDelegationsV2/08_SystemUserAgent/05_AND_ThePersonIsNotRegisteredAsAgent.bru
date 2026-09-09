@@ -1,0 +1,41 @@
+meta {
+  name: 05_AND_ThePersonIsNotRegisteredAsAgent
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents?party={{party}}&agent={{agent}}&cascade=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  agent: {{agent}}
+  cascade: true
+}
+
+docs {
+  AND the person is not registered as agent for the facilitator.
+
+  Reset step: other suites share these fixtures and may leave an agent
+  registration behind for the person. The delete is idempotent and returns 204
+  either way, so the next step starts from the intended state.
+}
+
+script:pre-request {
+  const su = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", su.regnskapsforer.partyuuid);
+  bru.setVar("agent", su.regnskapsforer.non_systemuser.partyuuid);
+
+  await loginAs(su.regnskapsforer.dagl);
+}
+
+tests {
+  test("AND the person has no agent registration, the reset delete returns 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

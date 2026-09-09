@@ -1,7 +1,4 @@
-﻿using Altinn.AccessManagement.Core.Constants;
-using Altinn.AccessManagement.Core.Models;
-
-namespace Altinn.AccessManagement.Utilities;
+﻿namespace Altinn.AccessManagement.Utilities;
 
 /// <summary>
 /// Hash utility class

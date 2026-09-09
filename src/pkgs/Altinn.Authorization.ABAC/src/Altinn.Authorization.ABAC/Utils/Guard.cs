@@ -1,5 +1,3 @@
-using System;
-
 namespace Altinn.Authorization.ABAC.Utils
 {
     /// <summary>

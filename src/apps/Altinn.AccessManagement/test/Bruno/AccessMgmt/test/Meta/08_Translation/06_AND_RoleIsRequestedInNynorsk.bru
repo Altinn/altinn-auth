@@ -1,0 +1,44 @@
+meta {
+  name: 06_AND_RoleIsRequestedInNynorsk
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/roles/:id
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{roleId}}
+}
+
+headers {
+  Accept-Language: nn
+}
+
+docs {
+  AND the same role requested with Accept-Language nn comes back with the
+  Nynorsk name, distinct from both the Bokmål and English names.
+}
+
+script:pre-request {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  bru.setVar("roleId", td.roles.deltakerDeltAnsvar.id);
+}
+
+tests {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  test("AND Accept-Language nn returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the role name is translated to Nynorsk", function() {
+    const data = res.getBody();
+    expect(data[0].name).to.equal(td.roles.deltakerDeltAnsvar.nnName);
+    expect(data[0].name).to.not.equal(td.roles.deltakerDeltAnsvar.name);
+  });
+}

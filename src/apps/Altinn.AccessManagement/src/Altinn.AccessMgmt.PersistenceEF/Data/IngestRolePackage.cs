@@ -1,6 +1,7 @@
 ﻿using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Data;
 
@@ -32,7 +33,6 @@ public static partial class StaticDataIngest
         var roleRegn = RoleConstants.Accountant.Id;
         var roleRevi = RoleConstants.Auditor.Id;
         var roleFfor = RoleConstants.BusinessManager.Id;
-        var roleContNuf = RoleConstants.ContactPersonNUF.Id;
         var roleNufRepr = RoleConstants.NorwegianRepresentativeForeignEntity.Id;
 
         var packageKA = PackageConstants.ClientAdministrator.Id;
@@ -369,6 +369,8 @@ public static partial class StaticDataIngest
             new RolePackage() { RoleId = roleBest, PackageId = PackageConstants.Salary.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roleBobe, PackageId = PackageConstants.Salary.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roleHadm, PackageId = PackageConstants.Salary.Id, EntityVariantId = null, CanDelegate = true, HasAccess = false },
+            new RolePackage() { RoleId = roleKnuf, PackageId = PackageConstants.Salary.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roleNufRepr, PackageId = PackageConstants.Salary.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
 
             new RolePackage() { RoleId = roleDagl, PackageId = PackageConstants.Pension.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roleLede, PackageId = PackageConstants.Pension.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
@@ -728,7 +730,7 @@ public static partial class StaticDataIngest
             new RolePackage() { RoleId = roleBobe, PackageId = PackageConstants.DelegableMaskinportenScopes.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roleHadm, PackageId = PackageConstants.DelegableMaskinportenScopes.Id, EntityVariantId = null, CanDelegate = true, HasAccess = false },
 
-            new RolePackage() { RoleId = roleContNuf, PackageId = PackageConstants.DelegableMaskinportenScopesNUF.Id, EntityVariantId = EntityVariantConstants.NUF.Id, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roleKnuf, PackageId = PackageConstants.DelegableMaskinportenScopesNUF.Id, EntityVariantId = EntityVariantConstants.NUF.Id, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roleHadm, PackageId = PackageConstants.DelegableMaskinportenScopesNUF.Id, EntityVariantId = EntityVariantConstants.NUF.Id, CanDelegate = true, HasAccess = false },
 
             new RolePackage() { RoleId = roleDagl, PackageId = PackageConstants.MachineReadableEventsIntegration.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
@@ -1458,16 +1460,28 @@ public static partial class StaticDataIngest
             new RolePackage() { RoleId = RoleConstants.NorwegianRepresentativeForeignEntity, PackageId = PackageConstants.ServicesNUF.Id, EntityVariantId = null, CanDelegate = true, CanAssign = true, HasAccess = true },
             new RolePackage() { RoleId = RoleConstants.BusinessManager, PackageId = PackageConstants.ServicesNUF.Id, EntityVariantId = EntityVariantConstants.NUF.Id, CanDelegate = true, CanAssign = true, HasAccess = true },
             new RolePackage() { RoleId = RoleConstants.BusinessManager, PackageId = PackageConstants.BusinessAndAccessManagementNUF.Id, EntityVariantId = EntityVariantConstants.NUF.Id, CanDelegate = true, CanAssign = true, HasAccess = true },
+
+            new RolePackage() { RoleId = roleDagl, PackageId = PackageConstants.CompanyRepresentativeFormTasks.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roleLede, PackageId = PackageConstants.CompanyRepresentativeFormTasks.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roleInnh, PackageId = PackageConstants.CompanyRepresentativeFormTasks.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roleDtso, PackageId = PackageConstants.CompanyRepresentativeFormTasks.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roleDtpr, PackageId = PackageConstants.CompanyRepresentativeFormTasks.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roleKomp, PackageId = PackageConstants.CompanyRepresentativeFormTasks.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roleBest, PackageId = PackageConstants.CompanyRepresentativeFormTasks.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roleBobe, PackageId = PackageConstants.CompanyRepresentativeFormTasks.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roleHadm, PackageId = PackageConstants.CompanyRepresentativeFormTasks.Id, EntityVariantId = null, CanDelegate = true, HasAccess = false },
         };
+
+        // The table only ever holds this seed set, so a single query keyed on the
+        // (RoleId, PackageId, EntityVariantId) triple finds what is missing or changed,
+        // instead of one existence check per row.
+        var existing = await dbContext.RolePackages
+            .AsTracking()
+            .ToDictionaryAsync(t => (t.RoleId, t.PackageId, t.EntityVariantId), cancellationToken);
 
         foreach (var d in data)
         {
-            var obj = dbContext.RolePackages.FirstOrDefault(t => t.RoleId == d.RoleId && t.PackageId == d.PackageId && t.EntityVariantId == d.EntityVariantId);
-            if (obj == null)
-            {
-                dbContext.RolePackages.Add(d);
-            }
-            else
+            if (existing.TryGetValue((d.RoleId, d.PackageId, d.EntityVariantId), out var obj))
             {
                 if (obj.CanAssign != d.CanAssign || obj.CanDelegate != d.CanDelegate || obj.HasAccess != d.HasAccess)
                 {
@@ -1475,6 +1489,10 @@ public static partial class StaticDataIngest
                     obj.CanDelegate = d.CanDelegate;
                     obj.HasAccess = d.HasAccess;
                 }
+            }
+            else
+            {
+                dbContext.RolePackages.Add(d);
             }
         }
 

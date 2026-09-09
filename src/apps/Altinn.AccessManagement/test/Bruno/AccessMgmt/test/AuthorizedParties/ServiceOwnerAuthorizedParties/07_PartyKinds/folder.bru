@@ -1,0 +1,22 @@
+meta {
+  name: 07_PartyKinds
+  seq: 7
+}
+
+docs {
+  Scenario: The kinds of subject the endpoint resolves
+
+    When a service owner looks up a self identified user
+    Then only that user's own party is returned, typed as self identified
+    When the subject is an ID-porten user registered by email
+    Then the party carries the email identifier
+    When the subject is a rightholder with access packages
+    Then the firm is returned with the packages delegated to that person
+    When the subject is a rightholder that has been given nothing
+    Then the list is empty, since a rightholder relation on its own authorizes nothing
+    When the subject is a system user
+    Then the organisation the system user was created for is returned
+
+  On this endpoint the kind is a property of the SUBJECT in the request body, not of the
+  caller. The caller is always the same service owner.
+}

@@ -48,7 +48,7 @@ tests {
     test("POST_EndUser_PackageDelegationRequest_Org_Cannot_Request_HADM", function() {
       const data = res.getBody();
       expect(res.status).to.equal(400);
-      expect(data.validationErrors[0]).to.have.property("Packages", "urn:altinn:accesspackage:hovedadministrator are not assignable to an organization.");
+      expect(data.validationErrors[0]).to.have.property("Packages", "urn:altinn:accesspackage:hovedadministrator are not assignable to the given entitytype in input.");
   });
 }
 

@@ -1,0 +1,59 @@
+meta {
+  name: 10_CLEANUP_BrlDelegationIsRemoved
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents/accesspackages/delete?party={{party}}&client={{client}}&agent={{agent}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  client: {{client}}
+  agent: {{agent}}
+}
+
+body:json {
+  {
+    "values": [
+      {
+        "role": "forretningsforer",
+        "packages": ["{{package}}"]
+      }
+    ]
+  }
+}
+
+docs {
+  CLEANUP: the eiendom delegation for the BRL client is removed at package
+  level. The package is backed by a variant scoped RolePackage row, so the
+  delete must resolve the BRL row for the delegation to be removed.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const su = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", su.regnskapsforer.partyuuid);
+  bru.setVar("client", su.brl_type_client_org.partyuuid);
+  bru.setVar("agent", td.REGN_Organisasjon.REGN_Agent.userUuid);
+  bru.setVar("package", td.clientDelegationV2.packages.forretningsforerEiendom);
+
+  await loginAs(su.regnskapsforer.dagl);
+}
+
+tests {
+  test("CLEANUP removing the eiendom package for the BRL client returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("CLEANUP the delete row reports a change", function() {
+    const body = res.getBody();
+    expect(body).to.be.an("array").with.lengthOf(1);
+    expect(body[0].changed).to.be.true;
+  });
+}

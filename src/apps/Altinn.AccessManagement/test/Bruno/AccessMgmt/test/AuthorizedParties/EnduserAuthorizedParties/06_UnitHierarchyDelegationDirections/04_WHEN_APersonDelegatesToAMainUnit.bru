@@ -1,0 +1,48 @@
+meta {
+  name: 04_WHEN_APersonDelegatesToAMainUnit
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeAccessPackages=true&includeResources=true&includeInstances=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeAccessPackages: true
+  includeResources: true
+  includeInstances: true
+}
+
+docs {
+  WHEN a person has delegated to a main unit, the daily leader of that main unit sees the
+  person as an authorized party with the delegated access.
+}
+
+script:pre-request {
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.authParties_hovedenhetA.dagligleder);
+}
+
+tests {
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+
+  const delegator = testdata.authParties_personA;
+
+  test("WHEN a person delegates to a main unit, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the receiving unit's daily leader sees the person with the delegated access", function() {
+    const party = res.getBody().data.find(item => item.partyUuid.toLowerCase() === delegator.partyuuid.toLowerCase());
+    expect(party, "expected the delegating person in the party list").to.not.be.undefined;
+    expect(party.type).to.equal("Person");
+    expect(party.personId).to.equal(delegator.pid);
+    expect(party.subunits, "a person has no subunits").to.be.empty;
+    expect(party.authorizedResources, "the person delegated single resources").to.not.be.empty;
+  });
+}

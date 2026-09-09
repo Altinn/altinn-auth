@@ -1,129 +1,81 @@
 @page "/role/{Id:guid}"
-@using Altinn.AccessMgmt.PersistenceEF.Models
-@using Microsoft.EntityFrameworkCore
-@using Altinn.AccessMgmt.FFB.Services
-@inject IEnvironmentDbContextFactory DbFactory
-@inject EnvironmentState EnvState
-@inject IJSRuntime JS
-@implements IDisposable
+@inherits EnvironmentPageBase
+@inject RoleDetailsService DataService
 
-<PageTitle>Role – @(_role?.Name ?? Id.ToString())</PageTitle>
+<PageTitle>Role – @(_data?.Role.Name ?? Id.ToString())</PageTitle>
 
-@if (_loading)
+@if (Loading)
 {
     <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
 }
-else if (_role is null)
+else if (Error is not null)
+{
+    <MudAlert Severity="Severity.Error">@Error</MudAlert>
+}
+else if (_data is null)
 {
     <MudAlert Severity="Severity.Error">Role not found: @Id</MudAlert>
 }
 else
 {
     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-1">
-        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack"
-                       Color="Color.Default"
-                       OnClick="@(async () => await JS.InvokeVoidAsync("history.go", -1))" />
-        <MudText Typo="Typo.h4">@_role.Name</MudText>
-        @if (_role.IsKeyRole)
+        <BackButton />
+        <MudText Typo="Typo.h4">@_data.Role.Name</MudText>
+        @if (_data.Role.IsKeyRole)
         {
             <MudChip T="string" Color="Color.Warning" Size="Size.Small">Key role</MudChip>
         }
     </MudStack>
-    <MudText Typo="Typo.body2" Class="mb-6 mud-text-secondary">@_role.Description</MudText>
+    <MudText Typo="Typo.body2" Class="mb-6 mud-text-secondary">@_data.Role.Description</MudText>
 
     <MudGrid>
         <MudItem xs="12" md="6">
-            <MudCard Elevation="1">
-                <MudCardHeader>
-                    <CardHeaderContent><MudText Typo="Typo.h6">Summary</MudText></CardHeaderContent>
-                </MudCardHeader>
-                <MudCardContent Class="pa-0">
-                    <MudSimpleTable Dense="true" Hover="false" Bordered="false">
-                        <tbody>
-                            <tr>
-                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">Id</td>
-                                <td style="font-family:monospace;font-size:.8125rem">@_role.Id</td>
-                            </tr>
-                            <tr>
-                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">Name</td>
-                                <td style="font-size:.8125rem">@_role.Name</td>
-                            </tr>
-                            <tr>
-                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">Code</td>
-                                <td style="font-family:monospace;font-size:.8125rem">@(_role.Code ?? "–")</td>
-                            </tr>
-                            <tr>
-                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">LegacyCode</td>
-                                <td style="font-family:monospace;font-size:.8125rem">@(_role.LegacyCode ?? "–")</td>
-                            </tr>
-                            <tr>
-                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">URN</td>
-                                <td style="font-family:monospace;font-size:.8125rem">@(_role.Urn ?? "–")</td>
-                            </tr>
-                            <tr>
-                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">LegacyUrn</td>
-                                <td style="font-family:monospace;font-size:.8125rem">@(_role.LegacyUrn ?? "–")</td>
-                            </tr>
-                            <tr>
-                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">EntityType</td>
-                                <td style="font-size:.8125rem">
-                                    @if (_role.EntityTypeId.HasValue)
-                                    {
-                                        <MudLink Href="@($"/entity-type/{_role.EntityTypeId}")">
-                                            @(_role.EntityType?.Name ?? _role.EntityTypeId.ToString())
-                                        </MudLink>
-                                    }
-                                    else
-                                    {
-                                        <span>–</span>
-                                    }
-                                </td>
-                            </tr>
-                            <tr>
-                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">Provider</td>
-                                <td style="font-size:.8125rem">
-                                    <MudLink Href="@($"/provider/{_role.ProviderId}")">@(_role.Provider?.Name ?? _role.ProviderId.ToString())</MudLink>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </MudSimpleTable>
-                </MudCardContent>
-            </MudCard>
+            <SummaryCard>
+                <SummaryRow Label="Id" Monospace="true">@_data.Role.Id</SummaryRow>
+                <SummaryRow Label="Name">@_data.Role.Name</SummaryRow>
+                <SummaryRow Label="Code" Monospace="true">@(_data.Role.Code ?? "–")</SummaryRow>
+                <SummaryRow Label="LegacyCode" Monospace="true">@(_data.Role.LegacyCode ?? "–")</SummaryRow>
+                <SummaryRow Label="URN" Monospace="true">@(_data.Role.Urn ?? "–")</SummaryRow>
+                <SummaryRow Label="LegacyUrn" Monospace="true">@(_data.Role.LegacyUrn ?? "–")</SummaryRow>
+                <SummaryRow Label="EntityType">
+                    @if (_data.Role.EntityTypeId.HasValue)
+                    {
+                        <MudLink Href="@($"/entity-type/{_data.Role.EntityTypeId}")">
+                            @(_data.Role.EntityType?.Name ?? _data.Role.EntityTypeId.ToString())
+                        </MudLink>
+                    }
+                    else
+                    {
+                        <span>–</span>
+                    }
+                </SummaryRow>
+                <SummaryRow Label="Provider">
+                    <MudLink Href="@($"/provider/{_data.Role.ProviderId}")">@(_data.Role.Provider?.Name ?? _data.Role.ProviderId.ToString())</MudLink>
+                </SummaryRow>
+            </SummaryCard>
         </MudItem>
 
         <MudItem xs="12" md="6">
-            <MudCard Elevation="1">
-                <MudCardHeader>
-                    <CardHeaderContent><MudText Typo="Typo.h6">Flags</MudText></CardHeaderContent>
-                </MudCardHeader>
-                <MudCardContent Class="pa-0">
-                    <MudSimpleTable Dense="true" Hover="false" Bordered="false">
-                        <tbody>
-                            <tr>
-                                <td style="width:60%;color:var(--mud-palette-text-secondary);font-size:.8125rem">IsKeyRole</td>
-                                <td><MudIcon Icon="@(_role.IsKeyRole ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)" Color="@(_role.IsKeyRole ? Color.Success : Color.Error)" Size="Size.Small" /></td>
-                            </tr>
-                            <tr>
-                                <td style="width:60%;color:var(--mud-palette-text-secondary);font-size:.8125rem">IsAssignable</td>
-                                <td><MudIcon Icon="@(_role.IsAssignable ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)" Color="@(_role.IsAssignable ? Color.Success : Color.Error)" Size="Size.Small" /></td>
-                            </tr>
-                            <tr>
-                                <td style="width:60%;color:var(--mud-palette-text-secondary);font-size:.8125rem">IsAvailableForServiceOwners</td>
-                                <td><MudIcon Icon="@(_role.IsAvailableForServiceOwners ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)" Color="@(_role.IsAvailableForServiceOwners ? Color.Success : Color.Error)" Size="Size.Small" /></td>
-                            </tr>
-                        </tbody>
-                    </MudSimpleTable>
-                </MudCardContent>
-            </MudCard>
+            <SummaryCard Title="Flags">
+                <SummaryRow Label="IsKeyRole">
+                    <MudIcon Icon="@(_data.Role.IsKeyRole ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)" Color="@(_data.Role.IsKeyRole ? Color.Success : Color.Error)" Size="Size.Small" />
+                </SummaryRow>
+                <SummaryRow Label="IsAssignable">
+                    <MudIcon Icon="@(_data.Role.IsAssignable ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)" Color="@(_data.Role.IsAssignable ? Color.Success : Color.Error)" Size="Size.Small" />
+                </SummaryRow>
+                <SummaryRow Label="IsAvailableForServiceOwners">
+                    <MudIcon Icon="@(_data.Role.IsAvailableForServiceOwners ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)" Color="@(_data.Role.IsAvailableForServiceOwners ? Color.Success : Color.Error)" Size="Size.Small" />
+                </SummaryRow>
+            </SummaryCard>
         </MudItem>
     </MudGrid>
 
     <MudText Typo="Typo.h5" Class="mt-8 mb-3">Automatic grants</MudText>
     <MudTabs Elevation="1" Rounded="false" ApplyEffectsToContainer="true">
 
-        <MudTabPanel Text="@($"Resources ({_resources.Count})")"
+        <MudTabPanel Text="@($"Resources ({_data.Resources.Count})")"
                      Icon="@Icons.Material.Filled.Api">
-            <MudTable Items="_resources" Hover="true" Dense="true" Class="pa-0">
+            <MudTable Items="_data.Resources" Hover="true" Dense="true" Class="pa-0">
                 <HeaderContent>
                     <MudTh>Resource</MudTh>
                     <MudTh>Type</MudTh>
@@ -138,7 +90,7 @@ else
                         <MudText Typo="Typo.body2">@(context.Resource?.Type?.Name ?? "–")</MudText>
                     </MudTd>
                     <MudTd DataLabel="RefId">
-                        <MudText Typo="Typo.caption" Style="font-family:monospace">@(context.Resource?.RefId ?? "–")</MudText>
+                        <MudText Typo="Typo.caption" Class="mono">@(context.Resource?.RefId ?? "–")</MudText>
                     </MudTd>
                     <MudTd DataLabel="Provider">
                         <MudLink Href="@($"/provider/{context.Resource?.ProviderId}")">@(context.Resource?.Provider?.Name ?? "–")</MudLink>
@@ -150,9 +102,9 @@ else
             </MudTable>
         </MudTabPanel>
 
-        <MudTabPanel Text="@($"Packages ({_packages.Count})")"
+        <MudTabPanel Text="@($"Packages ({_data.Packages.Count})")"
                      Icon="@Icons.Material.Filled.Inventory2">
-            <MudTable Items="_packages" Hover="true" Dense="true" Class="pa-0">
+            <MudTable Items="_data.Packages" Hover="true" Dense="true" Class="pa-0">
                 <HeaderContent>
                     <MudTh>Package</MudTh>
                     <MudTh>URN</MudTh>
@@ -168,7 +120,7 @@ else
                         </MudLink>
                     </MudTd>
                     <MudTd DataLabel="URN">
-                        <MudText Typo="Typo.caption" Style="font-family:monospace">@(context.Package?.Urn ?? "–")</MudText>
+                        <MudText Typo="Typo.caption" Class="mono">@(context.Package?.Urn ?? "–")</MudText>
                     </MudTd>
                     <MudTd DataLabel="EntityVariant">
                         @if (context.EntityVariantId.HasValue)
@@ -201,10 +153,10 @@ else
             </MudTable>
         </MudTabPanel>
 
-        <MudTabPanel Text="@($"Role maps ({_roleMapsHas.Count + _roleMapsGet.Count})")"
+        <MudTabPanel Text="@($"Role maps ({_data.RoleMapsHas.Count + _data.RoleMapsGet.Count})")"
                      Icon="@Icons.Material.Filled.AccountTree">
             <MudText Typo="Typo.subtitle2" Class="pa-3 mud-text-secondary">Holding this role also grants:</MudText>
-            <MudTable Items="_roleMapsHas" Hover="true" Dense="true" Class="pa-0 mb-4">
+            <MudTable Items="_data.RoleMapsHas" Hover="true" Dense="true" Class="pa-0 mb-4">
                 <HeaderContent>
                     <MudTh>Gets role</MudTh>
                     <MudTh>URN</MudTh>
@@ -216,7 +168,7 @@ else
                         </MudLink>
                     </MudTd>
                     <MudTd DataLabel="URN">
-                        <MudText Typo="Typo.caption" Style="font-family:monospace">@(context.GetRole?.Urn ?? "–")</MudText>
+                        <MudText Typo="Typo.caption" Class="mono">@(context.GetRole?.Urn ?? "–")</MudText>
                     </MudTd>
                 </RowTemplate>
                 <NoRecordsContent>
@@ -224,7 +176,7 @@ else
                 </NoRecordsContent>
             </MudTable>
             <MudText Typo="Typo.subtitle2" Class="pa-3 mud-text-secondary">This role is implied by holding:</MudText>
-            <MudTable Items="_roleMapsGet" Hover="true" Dense="true" Class="pa-0">
+            <MudTable Items="_data.RoleMapsGet" Hover="true" Dense="true" Class="pa-0">
                 <HeaderContent>
                     <MudTh>Has role</MudTh>
                     <MudTh>URN</MudTh>
@@ -236,7 +188,7 @@ else
                         </MudLink>
                     </MudTd>
                     <MudTd DataLabel="URN">
-                        <MudText Typo="Typo.caption" Style="font-family:monospace">@(context.HasRole?.Urn ?? "–")</MudText>
+                        <MudText Typo="Typo.caption" Class="mono">@(context.HasRole?.Urn ?? "–")</MudText>
                     </MudTd>
                 </RowTemplate>
                 <NoRecordsContent>
@@ -251,82 +203,11 @@ else
 @code {
     [Parameter] public Guid Id { get; set; }
 
-    private bool _loading = true;
-    private Altinn.AccessMgmt.PersistenceEF.Models.Role? _role;
-    private List<RoleResource> _resources = [];
-    private List<RolePackage> _packages = [];
-    private List<RoleMap> _roleMapsHas = [];
-    private List<RoleMap> _roleMapsGet = [];
+    private RoleDetailsData? _data;
 
-    protected override void OnInitialized()
-    {
-        EnvState.OnChange += OnEnvironmentChanged;
-    }
+    protected override Task OnParametersSetAsync() => RunAsync(LoadAsync);
 
-    public void Dispose()
-    {
-        EnvState.OnChange -= OnEnvironmentChanged;
-    }
+    protected override Task OnEnvironmentChangedAsync() => RunAsync(LoadAsync);
 
-    private void OnEnvironmentChanged() => InvokeAsync(async () =>
-    {
-        await LoadDataAsync();
-        StateHasChanged();
-    });
-
-    protected override async Task OnParametersSetAsync() => await LoadDataAsync();
-
-    private async Task LoadDataAsync()
-    {
-        _loading = true;
-        _role = null;
-        _resources = [];
-        _packages = [];
-        _roleMapsHas = [];
-        _roleMapsGet = [];
-
-        using var db = DbFactory.CreateContext(EnvState.Current);
-
-        _role = await db.Roles
-            .AsNoTracking()
-            .Include(r => r.EntityType)
-            .Include(r => r.Provider)
-            .FirstOrDefaultAsync(r => r.Id == Id);
-
-        if (_role is not null)
-        {
-            _resources = await db.RoleResources
-                .AsNoTracking()
-                .Include(rr => rr.Resource).ThenInclude(r => r.Type)
-                .Include(rr => rr.Resource).ThenInclude(r => r.Provider)
-                .Where(rr => rr.RoleId == Id)
-                .OrderBy(rr => rr.Resource.Name)
-                .ToListAsync();
-
-            _packages = await db.RolePackages
-                .AsNoTracking()
-                .Include(rp => rp.Package).ThenInclude(p => p.Area)
-                .Include(rp => rp.Package).ThenInclude(p => p.Provider)
-                .Include(rp => rp.EntityVariant)
-                .Where(rp => rp.RoleId == Id)
-                .OrderBy(rp => rp.Package.Name)
-                .ToListAsync();
-
-            _roleMapsHas = await db.RoleMaps
-                .AsNoTracking()
-                .Include(rm => rm.GetRole)
-                .Where(rm => rm.HasRoleId == Id)
-                .OrderBy(rm => rm.GetRole.Name)
-                .ToListAsync();
-
-            _roleMapsGet = await db.RoleMaps
-                .AsNoTracking()
-                .Include(rm => rm.HasRole)
-                .Where(rm => rm.GetRoleId == Id)
-                .OrderBy(rm => rm.HasRole.Name)
-                .ToListAsync();
-        }
-
-        _loading = false;
-    }
+    private async Task LoadAsync(CancellationToken ct) => _data = await DataService.GetAsync(EnvState.Current, Id, ct);
 }

@@ -1,0 +1,41 @@
+meta {
+  name: 01_WHEN_PackageIsRequestedWithoutAuthorizationHeader
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/package/:id
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{packageId}}
+}
+
+docs {
+  WHEN a package is requested with no Authorization header at all, THEN the
+  request still succeeds. The metadata API registers no authentication
+  scheme and none of its controllers carry [Authorize].
+}
+
+script:pre-request {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  bru.setVar("packageId", td.packages.skattegrunnlag.id);
+}
+
+tests {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  test("WHEN no Authorization header is sent, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the package is returned", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("id", td.packages.skattegrunnlag.id);
+    expect(body).to.have.property("urn", td.packages.skattegrunnlag.urn);
+  });
+}

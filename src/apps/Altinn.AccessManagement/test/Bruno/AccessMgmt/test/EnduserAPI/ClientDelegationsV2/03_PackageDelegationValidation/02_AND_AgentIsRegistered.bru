@@ -1,0 +1,55 @@
+meta {
+  name: 02_AND_AgentIsRegistered
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents?party={{party}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+body:json {
+  {
+    "personIdentifier": "{{agentPid}}",
+    "lastName": "{{agentLastName}}"
+  }
+}
+
+docs {
+  AND the agent person is registered as agent by person number and last name.
+
+  Setup step: the validation cases need a registered agent so that only the
+  deliberately invalid part of each request makes it fail.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("agentPid", td.REGN_Organisasjon.REGN_Agent.personidentity);
+  bru.setVar("agentLastName", td.REGN_Organisasjon.REGN_Agent.etternavn);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+
+  test("AND registering the agent returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the assignment connects the facilitator to the agent with the agent role", function() {
+    const body = res.getBody();
+    expect(body.fromId.toLowerCase()).to.equal(td.REGN_Organisasjon.partyUuid.toLowerCase());
+    expect(body.toId.toLowerCase()).to.equal(td.REGN_Organisasjon.REGN_Agent.userUuid.toLowerCase());
+    expect(body.roleId.toLowerCase()).to.equal("ff4c33f5-03f7-4445-85ed-1e60b8aafb30");
+  });
+}

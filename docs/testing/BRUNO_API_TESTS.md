@@ -21,10 +21,10 @@ and known-good seed-data IDs.
 - `bruno.json` / `collection.bru`: collection config and collection-level scripts.
 - `environments/`: one `.bru` per Altinn environment (`AT22`, `AT23`, `AT24`, `TT02`,
   `YT01`, `DEV`, `PROD`); selects `baseUrl`, `tokenEnv`, and other per-env variables.
-- `shared/` and `test/`: requests grouped by API area: `Consent`, `Delegations`,
-  `Enduser`, `InternalAPI`, `Lookup`, `Maskinporten`, `MaskinportenSchema`,
-  `PolicyInformationPoint`, `Resource`, `RightsInternal`, `SystemUserClientDelegation`,
-  `AuthorizedParties`, `AppsInstanceDelegation`, … (`old_SBL_Bridge_tests/` is legacy,
+- `shared/` and `test/`: requests grouped by API area: `Consent`, `Enduser`,
+  `EnduserAPI`, `InternalAPI`, `Lookup`, `Maskinporten`, `PolicyInformationPoint`,
+  `SystemUserClientDelegation`, `AuthorizedParties`, `AppsInstanceDelegation`,
+  `KlientDelegation`, `Virksomhetsdelegering`, … (`old_SBL_Bridge_tests/` is legacy,
   ignore it).
 - `TestToolsTokenGenerator.js` + per-area `testdata/*.js`: generate platform / Maskinporten
   tokens and supply seed-data IDs (org / app / party / instance) at request time.
@@ -41,6 +41,31 @@ tests     { test("…", () => { expect(res.status).to.equal(200); … }) }
 
 The `tests { … }` block is the behavioral assertion (status code, body fields, error
 codes). That is the contract worth mirroring in a C# integration test.
+
+## BDD scenario suites
+
+Newer suites are structured as BDD scenarios instead of flat per-endpoint request lists.
+The reference is `test/EnduserAPI/ClientDelegationsV2/` (v2 client delegation):
+
+- One folder per scenario. `folder.bru` holds the Gherkin text in a `docs` block, and the
+  step files are named `NN_GIVEN|WHEN|THEN|AND|CLEANUP_...` with `seq` matching the step
+  order.
+- Every scenario starts from a known state: the GIVEN steps are idempotent reset requests
+  (deletes that return 204 whether or not anything exists), so leftovers from earlier or
+  crashed runs never break a scenario. Fixtures are shared across suites, so a scenario
+  must not assume the absence of state it did not itself remove.
+- Every scenario removes what it created (CLEANUP steps), so the whole suite can run
+  repeatedly against a shared environment and scenarios can run standalone.
+- Setup that crosses APIs is expressed as explicit GIVEN steps. The client delegation
+  scenarios establish rightholder relations, package grants, and single-resource grants
+  through the v1 connections API before exercising the v2 endpoints, which also documents
+  how the APIs compose.
+- Personas map to testdata entries, and each step mints its own token through a suite
+  `helpers.js` (`loginAs(persona, scopes?)`), so a scenario can switch between the
+  facilitator, the client, and the agent per step. Validation negatives (400) assert the
+  full problem body: status, `code`, `validationErrors[].code`, and the parameter the
+  error points at. Authorization negatives (401/403) assert the status only, since those
+  responses carry no problem body.
 
 ## Using them as a spec for C# tests
 

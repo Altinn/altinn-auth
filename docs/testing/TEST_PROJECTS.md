@@ -14,7 +14,7 @@ Grouped by the production vertical they cover.
 
 | Test project | Covers | Fixture | Needs container |
 |---|---|---|---|
-| `AccessMgmt.Tests` | Legacy controller/integration tests being migrated off Yuniql; `LegacyApiFixture` for the small tail still needing the Yuniql schema, `ApiFixture` for the rest, `EfDatabaseFixture` for no-host EF service/repository tests. | `ApiFixture`, `LegacyApiFixture`, `EfDatabaseFixture` | ✅ |
+| `Altinn.AccessManagement.Tests` | Legacy controller/integration tests being migrated off Yuniql; `LegacyApiFixture` for the small tail still needing the Yuniql schema, `ApiFixture` for the rest, `EfDatabaseFixture` for no-host EF service/repository tests. | `ApiFixture`, `LegacyApiFixture`, `EfDatabaseFixture` | ✅ |
 | `Altinn.AccessManagement.Api.Tests` | Cross-cutting API **unit** tests (controllers via Moq, extensions, helpers) plus an end-to-end request-scenario scaffold. | — (Moq) | ❌ |
 | `Altinn.AccessManagement.Api.Internal.Tests` | Internal API controller (`InternalConnections`) integration test. | `ApiFixture` | ✅ |
 | `Altinn.AccessManagement.Enduser.Api.Tests` | Enduser API controllers (`Connections`, `MaskinportenConsumers/Suppliers`, `Request`, …). | `ApiFixture` + direct Moq unit tests | Partial |
@@ -66,7 +66,7 @@ prior empty shell was removed when the indirect-coverage approach was adopted.
 ### Unit/Integration layout and the `Category` trait
 
 Every test class is tagged `[UnitTest]` or `[IntegrationTest]` (markers defined
-in `src/testing/TestCategories.cs`, compiled into every test assembly), which
+in `eng/testing/TestCategories.cs`, compiled into every test assembly), which
 emits a `Category` trait. CI runs the two as separate lanes; filter locally
 with `dotnet test -- --filter-trait "Category=Unit"` (or `Category=Integration`).
 
@@ -80,7 +80,7 @@ helpers (mocks, fixtures, seed data) stay at the project-root namespace.
 
 It sets `<IsTestProject>true</IsTestProject>` (or `<IsTestLibrary>true</IsTestLibrary>`
 for `TestUtils`) and the xUnit version. The shared `Directory.Build.targets`
-at the root adds `xunit.v3`, `coverlet.collector`, and `FluentAssertions`
+at the root adds `xunit.v3`, `coverlet.collector`, and `AwesomeAssertions`
 automatically based on those flags — individual `.csproj` files stay tiny.
 
 ### `InternalsVisibleTo` is automatic

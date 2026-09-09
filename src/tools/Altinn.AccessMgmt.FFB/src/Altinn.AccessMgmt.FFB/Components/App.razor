@@ -32,6 +32,15 @@
             a.download = filename;
             a.click();
         };
+        // Returns true when it navigated back; false when there is no history
+        // (deep link / new tab) so the caller can navigate to a fallback instead.
+        window.goBackIfPossible = () => {
+            if (history.length > 1) {
+                history.go(-1);
+                return true;
+            }
+            return false;
+        };
     </script>
 </body>
 

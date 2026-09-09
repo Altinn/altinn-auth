@@ -1,0 +1,39 @@
+meta {
+  name: 06_AND_FuzzySearchFindsWhatSimpleSearchMissed
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/search?term={{term}}&simpleSearch=false
+  body: none
+  auth: none
+}
+
+params:query {
+  term: {{term}}
+  simpleSearch: false
+}
+
+docs {
+  AND the same transposed term with simpleSearch false runs FuzzySearch,
+  THEN the package that simpleSearch missed is found.
+}
+
+script:pre-request {
+  bru.setVar("term", "underholdnig");
+}
+
+tests {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  test("AND simpleSearch=false returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the package is found despite the transposed letters", function() {
+    const data = res.getBody();
+    const match = data.find(x => x.object.id === td.packages.kunstOgUnderholdning.id);
+    expect(match, "expected the package to be found by fuzzy search").to.exist;
+  });
+}

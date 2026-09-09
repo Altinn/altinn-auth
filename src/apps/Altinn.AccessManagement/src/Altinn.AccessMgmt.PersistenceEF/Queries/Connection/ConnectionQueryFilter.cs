@@ -5,7 +5,7 @@
 /// </summary>
 /// <remarks>This class provides properties to specify different filtering criteria for connection queries, such
 /// as filtering by IDs of entities involved in the connection, roles, packages, and resources. It also includes options
-/// to control the inclusion of additional data and the uniqueness of results.</remarks>
+/// to control the inclusion of additional data.</remarks>
 public sealed class ConnectionQueryFilter
 {
     /// <summary>
@@ -54,11 +54,6 @@ public sealed class ConnectionQueryFilter
     public IReadOnlyCollection<string> InstanceIds { get; init; }
 
     /// <summary>
-    /// Gets or sets a value indicating whether only unique results should be returned.
-    /// </summary>
-    public bool OnlyUniqueResults { get; set; } = false;
-
-    /// <summary>
     /// Gets or sets a value indicating whether to enrich entities with more details.
     /// </summary>
     public bool EnrichEntities { get; init; } = true;
@@ -72,6 +67,11 @@ public sealed class ConnectionQueryFilter
     /// Gets or sets a value indicating whether to include resources.
     /// </summary>
     public bool IncludeResources { get; init; } = false;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to include delegation resources from client delegations.
+    /// </summary>
+    public bool IncludeDelegationResources { get; init; } = false;
 
     /// <summary>
     /// Gets or sets a value indicating whether to include instances.
@@ -89,7 +89,7 @@ public sealed class ConnectionQueryFilter
     public bool EnrichPackageResources { get; init; } = false;
 
     /// <summary>
-    /// Gets or sets a value indicating whether to include or exclude deleted entities.
+    /// Gets or sets a value indicating whether to include or exclude deleted entities. ToDo: Implementation for this in the ConnectionQuery (see issue #3786).
     /// </summary>
     public bool ExcludeDeleted { get; init; } = false;
 

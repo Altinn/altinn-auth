@@ -4,7 +4,6 @@ using Altinn.Authorization.Integration.Platform.Extensions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
-using Microsoft.VisualBasic;
 using Xunit.Sdk;
 
 namespace Altinn.Authorization.Integration.Tests;
@@ -56,8 +55,7 @@ public class PlatformFixture
         })
         .AddRegister(opts => opts.Endpoint = Appsettings.Platform.Register.Endpoint)
         .AddResourceRegistry(opts => opts.Endpoint = Appsettings.Platform.ResourceRegistry.Endpoint)
-        .AddSblBridge(opts => opts.Endpoint = Appsettings.Platform.SblBridge.Endpoint)
-        .AddAccessManagement(opts => opts.Endpoint = Appsettings.Platform.AccessManagement.Endpoint);
+        .AddSblBridge(opts => opts.Endpoint = Appsettings.Platform.SblBridge.Endpoint);
 
         ServiceProvider = Services.BuildServiceProvider();
     }

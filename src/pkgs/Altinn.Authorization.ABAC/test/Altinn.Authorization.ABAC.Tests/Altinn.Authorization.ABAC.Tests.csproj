@@ -3,10 +3,17 @@
     <PropertyGroup>
         <TargetFrameworks>net10.0</TargetFrameworks>
         <IsPackable>false</IsPackable>
+        <!-- No integration tests: the CI integration lane skips this assembly
+             (see eng/testing/IntegrationLaneGate.targets). -->
+        <HasIntegrationTests>false</HasIntegrationTests>
     </PropertyGroup>
 
     <ItemGroup>
         <ProjectReference Include="..\..\src\Altinn.Authorization.ABAC\Altinn.Authorization.ABAC.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
     </ItemGroup>
 
     <ItemGroup>

@@ -18,10 +18,10 @@ public partial class DtoMapper : IDtoMapper
             Id = request.Id,
             Type = "package",
             LastUpdated = request.Audit_ValidFrom,
-            LastUpdatedBy = request.Audit_ChangedBy,
-            From = ConvertToPartyEntityDto(request.Assignment.From),
-            To = ConvertToPartyEntityDto(request.Assignment.To),
-            By = ConvertToPartyEntityDtoOrStub(request.Assignment.By, request.Assignment.ById),
+            LastUpdatedBy = ConvertToPartyReferenceOrStub(request.LastUpdatedBy, request.Audit_ChangedBy),
+            From = ConvertToIdentifiedParty(request.Assignment.From),
+            To = ConvertToIdentifiedParty(request.Assignment.To),
+            By = ConvertToIdentifiedPartyOrStub(request.Assignment.By, request.Assignment.ById),
             Status = request.Status,
             Package = new RequestReferenceDto() { Id = request.PackageId, ReferenceId = request.Package?.Urn },
         };
@@ -34,16 +34,21 @@ public partial class DtoMapper : IDtoMapper
             Id = request.Id,
             Type = "resource",
             LastUpdated = request.Audit_ValidFrom,
-            LastUpdatedBy = request.Audit_ChangedBy,
-            From = ConvertToPartyEntityDto(request.Assignment.From),
-            To = ConvertToPartyEntityDto(request.Assignment.To),
-            By = ConvertToPartyEntityDtoOrStub(request.Assignment.By, request.Assignment.ById),
+            LastUpdatedBy = ConvertToPartyReferenceOrStub(request.LastUpdatedBy, request.Audit_ChangedBy),
+            From = ConvertToIdentifiedParty(request.Assignment.From),
+            To = ConvertToIdentifiedParty(request.Assignment.To),
+            By = ConvertToIdentifiedPartyOrStub(request.Assignment.By, request.Assignment.ById),
             Status = request.Status,
             Resource = new RequestReferenceDto() { Id = request.ResourceId, ReferenceId = request.Resource?.RefId },
         };
     }
 
-    public static PartyEntityDto ConvertToPartyEntityDto(Entity entity)
+    /// <summary>
+    /// Maps a party the caller is entitled to identify, including its organisation number or
+    /// national identity number. Only use this where the caller is itself a party to what the
+    /// DTO describes; for anyone else use <see cref="ConvertToPartyReferenceOrStub"/>.
+    /// </summary>
+    public static PartyEntityDto ConvertToIdentifiedParty(Entity entity)
     {
         return new PartyEntityDto
         {
@@ -56,13 +61,32 @@ public partial class DtoMapper : IDtoMapper
         };
     }
 
-    public static PartyEntityDto? ConvertToPartyEntityDtoOrStub(Entity? entity, Guid? fallbackId)
+    /// <summary>
+    /// As <see cref="ConvertToIdentifiedParty"/>, but falls back to a bare id when the entity
+    /// was not loaded.
+    /// </summary>
+    public static PartyEntityDto? ConvertToIdentifiedPartyOrStub(Entity? entity, Guid? fallbackId)
     {
         if (entity is not null)
         {
-            return ConvertToPartyEntityDto(entity);
+            return ConvertToIdentifiedParty(entity);
         }
 
         return fallbackId is { } id ? new PartyEntityDto { Id = id } : null;
+    }
+
+    /// <summary>
+    /// Maps a party the caller may see named but must not be able to identify. Used for
+    /// LastUpdatedBy, because the design in #3884 states that whoever sent a request must not
+    /// learn which individual in the receiving organisation is its access manager.
+    /// </summary>
+    public static PartyReferenceDto? ConvertToPartyReferenceOrStub(Entity? entity, Guid? fallbackId)
+    {
+        if (entity is not null)
+        {
+            return new PartyReferenceDto { Id = entity.Id, Name = entity.Name };
+        }
+
+        return fallbackId is { } id ? new PartyReferenceDto { Id = id } : null;
     }
 }

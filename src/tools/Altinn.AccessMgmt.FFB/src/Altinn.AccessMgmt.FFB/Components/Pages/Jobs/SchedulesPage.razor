@@ -61,7 +61,7 @@ else
             </HeaderContent>
             <RowTemplate>
                 <MudTd DataLabel="ID">
-                    <MudText Typo="Typo.caption" Style="font-family:monospace">@context.Id</MudText>
+                    <MudText Typo="Typo.caption" Class="mono">@context.Id</MudText>
                 </MudTd>
                 <MudTd DataLabel="Jobb">
                     <MudChip T="string" Size="Size.Small" Color="@JobColor(context.JobType)">
@@ -72,7 +72,7 @@ else
                     <MudText Typo="Typo.body2">@context.Environment</MudText>
                 </MudTd>
                 <MudTd DataLabel="Cron">
-                    <MudText Typo="Typo.caption" Style="font-family:monospace">@context.Cron</MudText>
+                    <MudText Typo="Typo.caption" Class="mono">@context.Cron</MudText>
                 </MudTd>
                 <MudTd DataLabel="Status">
                     @if (context.Enabled)
@@ -149,7 +149,15 @@ else
 }
 
 @code {
-    private readonly HashSet<Guid> _subscribed = [];
+    private static readonly string[] SchedulableJobs =
+    [
+        JobTypes.IngestCleanup,
+        JobTypes.HistoryCleanup,
+        JobTypes.AssignmentSync,
+        JobTypes.EntitySync,
+    ];
+
+    private readonly Dictionary<Guid, JobRun> _subscribed = [];
     private List<JobRun> _recentRuns = [];
 
     protected override void OnInitialized()
@@ -159,9 +167,11 @@ else
 
     private void Subscribe(JobRun run)
     {
-        if (_subscribed.Add(run.Id))
-            run.OnUpdated += () => InvokeAsync(RefreshAndRender);
+        if (_subscribed.TryAdd(run.Id, run))
+            run.OnUpdated += HandleRunUpdated;
     }
+
+    private void HandleRunUpdated() => _ = InvokeAsync(RefreshAndRender);
 
     private void TriggerNow(JobScheduleEntry entry)
     {
@@ -176,13 +186,11 @@ else
 
     private void RefreshRuns()
     {
-        var allJobNames = new[]
-        {
-            "IngestCleanup", "HistoryCleanup", "AssignmentSync", "EntitySync",
-        };
-
-        _recentRuns = allJobNames
-            .SelectMany(name => RunStore.GetForJob(name))
+        // Prefix match covers variant-named preview runs like "IngestCleanup:{filter}";
+        // execute runs are excluded since the scheduler only ever starts previews.
+        _recentRuns = SchedulableJobs
+            .SelectMany(name => RunStore.GetForJob(name).Concat(RunStore.GetForJobPrefix($"{name}:")))
+            .Where(r => !r.JobName.Contains(":Execute", StringComparison.Ordinal))
             .OrderByDescending(r => r.StartedAt)
             .Take(10)
             .ToList();
@@ -206,5 +214,13 @@ else
         _                        => Color.Default
     };
 
-    public void Dispose() { /* subscriptions managed by JobRunCard.Dispose() */ }
+    public void Dispose()
+    {
+        // JobRun instances live in the singleton store; detach so the handlers
+        // (and this page) don't outlive the visit.
+        foreach (var run in _subscribed.Values)
+            run.OnUpdated -= HandleRunUpdated;
+
+        _subscribed.Clear();
+    }
 }

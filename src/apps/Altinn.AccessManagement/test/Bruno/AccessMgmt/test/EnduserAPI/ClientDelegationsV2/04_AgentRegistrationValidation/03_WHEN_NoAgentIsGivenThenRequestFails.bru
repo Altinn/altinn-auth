@@ -1,0 +1,45 @@
+meta {
+  name: 03_WHEN_NoAgentIsGivenThenRequestFails
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+docs {
+  WHEN the facilitator tries to register an agent without an agent query
+  parameter and without person details in the body.
+
+  Expects 400 with a validation error on the agent input. The error comes from
+  the standard required-field descriptor, so no specific error code is
+  asserted.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  test("WHEN neither agent nor person details are given, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN the error body reports a validation error on the agent input", function() {
+    const errors = res.getBody().validationErrors;
+    expect(errors).to.be.an("array").that.is.not.empty;
+    expect(JSON.stringify(errors.flatMap(e => e.paths))).to.include("agent");
+  });
+}

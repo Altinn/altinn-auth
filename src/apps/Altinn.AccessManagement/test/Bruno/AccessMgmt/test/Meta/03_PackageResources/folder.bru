@@ -1,0 +1,14 @@
+meta {
+  name: 03_PackageResources
+  seq: 3
+}
+
+docs {
+  Scenario: A package's resources can be listed
+
+    When the resources of a package that holds resources are fetched
+    And a package that holds no resources answers 204
+    When an unknown package id is requested, the response is 404
+
+  The scenario is read only and needs no cleanup.
+}

@@ -1,5 +1,4 @@
-﻿using Microsoft.OpenApi.Models;
-using Swashbuckle.AspNetCore.Filters;
+﻿using Swashbuckle.AspNetCore.Filters;
 
 namespace Altinn.AccessManagement.Api.Metadata
 {

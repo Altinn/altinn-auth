@@ -1,7 +1,4 @@
-﻿using System;
-using System.IO;
-using System.Net.Http;
-using Altinn.AccessManagement.Tests.Integration.Controllers;
+﻿using Altinn.AccessManagement.Tests.Integration.Controllers;
 
 namespace Altinn.AccessManagement.Tests.Utils
 {
@@ -43,7 +40,7 @@ namespace Altinn.AccessManagement.Tests.Utils
 
         private static string GetDataBlobPath()
         {
-            string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(DelegationsControllerTest).Assembly.Location).LocalPath);
+            string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(SetupUtils).Assembly.Location).LocalPath);
             return Path.Combine(unitTestFolder, "..", "..", "..", "data", "blobs");
         }
     }

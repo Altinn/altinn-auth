@@ -4,11 +4,8 @@ namespace Altinn.Authorization.ABAC
     using System.Collections.Generic;
     using System.Collections.ObjectModel;
     using System.Linq;
-    using System.Xml;
     using Altinn.Authorization.ABAC.Constants;
-    using Altinn.Authorization.ABAC.Interface;
     using Altinn.Authorization.ABAC.Xacml;
-    using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 
     /// <summary>
     /// This is the Policy Decision Point performing validation of request against policies.
@@ -36,113 +33,95 @@ namespace Altinn.Authorization.ABAC
                 return new XacmlContextResponse(contextResult);
             }
 
-            if (matchingRules == null || matchingRules.Count == 0)
-            {
-                contextResult = new XacmlContextResult(XacmlContextDecision.NotApplicable)
-                {
-                    Status = new XacmlContextStatus(XacmlContextStatusCode.Success),
-                };
+            List<RuleDecision> ruleDecisions = new List<RuleDecision>(matchingRules?.Count ?? 0);
+            bool processingError = false;
 
-                return new XacmlContextResponse(contextResult);
-            }
-
-            XacmlContextDecision overallDecision = XacmlContextDecision.NotApplicable;
-            foreach (XacmlRule rule in matchingRules)
+            foreach (XacmlRule rule in matchingRules ?? Array.Empty<XacmlRule>())
             {
-                XacmlContextDecision decision;
+                RuleDecision decision;
 
                 // Need to authorize based on the information in the Xacml context request
                 XacmlAttributeMatchResult subjectMatchResult = rule.MatchAttributes(decisionRequest, XacmlConstants.MatchAttributeCategory.Subject);
                 if (subjectMatchResult.Equals(XacmlAttributeMatchResult.Match))
                 {
-                    if (rule.Effect.Equals(XacmlEffectType.Permit))
-                    {
-                        decision = XacmlContextDecision.Permit;
-                    }
-                    else
-                    {
-                        decision = XacmlContextDecision.Deny;
-                    }
+                    decision = rule.Effect.Equals(XacmlEffectType.Permit) ? RuleDecision.Permit : RuleDecision.Deny;
                 }
                 else if (subjectMatchResult.Equals(XacmlAttributeMatchResult.RequiredAttributeMissing))
                 {
-                    contextResult = new XacmlContextResult(XacmlContextDecision.Indeterminate)
-                    {
-                        Status = new XacmlContextStatus(XacmlContextStatusCode.Success),
-                    };
-                    return new XacmlContextResponse(contextResult);
+                    ruleDecisions.Add(IndeterminateFor(rule));
+                    continue;
                 }
                 else
                 {
-                    decision = XacmlContextDecision.NotApplicable;
+                    decision = RuleDecision.NotApplicable;
                 }
 
-                if ((decision.Equals(XacmlContextDecision.Deny) || decision.Equals(XacmlContextDecision.Permit)) && rule.Condition != null)
+                if ((decision.Equals(RuleDecision.Deny) || decision.Equals(RuleDecision.Permit)) && rule.Condition != null)
                 {
                     XacmlAttributeMatchResult conditionDidEvaluate = rule.EvaluateCondition(decisionRequest);
 
                     if (conditionDidEvaluate.Equals(XacmlAttributeMatchResult.NoMatch))
                     {
-                        decision = XacmlContextDecision.NotApplicable;
+                        decision = RuleDecision.NotApplicable;
                     }
-                    else if (conditionDidEvaluate.Equals(XacmlAttributeMatchResult.RequiredAttributeMissing))
+                    else if (conditionDidEvaluate.Equals(XacmlAttributeMatchResult.RequiredAttributeMissing)
+                        || conditionDidEvaluate.Equals(XacmlAttributeMatchResult.BagSizeConditionFailed))
                     {
-                        contextResult = new XacmlContextResult(XacmlContextDecision.Indeterminate)
-                        {
-                            Status = new XacmlContextStatus(XacmlContextStatusCode.Success),
-                        };
-                        return new XacmlContextResponse(contextResult);
-                    }
-                    else if (conditionDidEvaluate.Equals(XacmlAttributeMatchResult.BagSizeConditionFailed))
-                    {
-                        contextResult = new XacmlContextResult(XacmlContextDecision.Indeterminate)
-                        {
-                            Status = new XacmlContextStatus(XacmlContextStatusCode.Success),
-                        };
-                        return new XacmlContextResponse(contextResult);
+                        decision = IndeterminateFor(rule);
                     }
                     else if (conditionDidEvaluate.Equals(XacmlAttributeMatchResult.ToManyAttributes))
                     {
-                        contextResult = new XacmlContextResult(XacmlContextDecision.Indeterminate)
-                        {
-                            Status = new XacmlContextStatus(XacmlContextStatusCode.ProcessingError),
-                        };
-                        return new XacmlContextResponse(contextResult);
+                        decision = IndeterminateFor(rule);
+                        processingError = true;
                     }
                 }
 
-                if (!decision.Equals(XacmlContextDecision.NotApplicable))
-                {
-                    if (policy.RuleCombiningAlgId.Equals(XacmlConstants.CombiningAlgorithms.RuleDenyOverrides)
-                        && decision.Equals(XacmlContextDecision.Deny))
-                    {
-                        // Deny-overrides: a single matching Deny is decisive, so return it directly.
-                        // Breaking out of the loop instead would fall through to the post-loop result,
-                        // which rebuilds the response from overallDecision (still NotApplicable here)
-                        // and would silently discard this Deny.
-                        contextResult = new XacmlContextResult(XacmlContextDecision.Deny)
-                        {
-                            Status = new XacmlContextStatus(XacmlContextStatusCode.Success),
-                        };
-                        this.AddRequestAttributes(decisionRequest, contextResult);
-                        return new XacmlContextResponse(contextResult);
-                    }
-                    else if (decision.Equals(XacmlContextDecision.Permit))
-                    {
-                        overallDecision = decision;
-                    }
-                }
+                ruleDecisions.Add(decision);
             }
+
+            RuleDecision combinedDecision = RuleCombiner.Combine(policy.RuleCombiningAlgId, ruleDecisions);
+            bool indeterminate = RuleCombiner.IsIndeterminate(combinedDecision);
+
+            XacmlContextDecision overallDecision = indeterminate ? XacmlContextDecision.Indeterminate : ToContextDecision(combinedDecision);
+            XacmlContextStatusCode statusCode = indeterminate && processingError ? XacmlContextStatusCode.ProcessingError : XacmlContextStatusCode.Success;
 
             contextResult = new XacmlContextResult(overallDecision)
             {
-                Status = new XacmlContextStatus(XacmlContextStatusCode.Success),
+                Status = new XacmlContextStatus(statusCode),
             };
             this.AddObligations(policy, contextResult);
-            this.AddRequestAttributes(decisionRequest, contextResult);
+
+            // The result echoes request attributes only when rules were evaluated and reached a
+            // decision. A policy the request reaches no rule of, and an Indeterminate that stems
+            // from an evaluation error, both report none.
+            if (!indeterminate && ruleDecisions.Count > 0)
+            {
+                this.AddRequestAttributes(decisionRequest, contextResult);
+            }
 
             return new XacmlContextResponse(contextResult);
         }
+
+        /// <summary>
+        /// The extended Indeterminate value of a rule whose evaluation errored. Per XACML 3.0
+        /// section 7.11 the value is given by the effect the rule would have had.
+        /// </summary>
+        /// <param name="rule">The rule that errored.</param>
+        /// <returns>Indeterminate{P} for a Permit rule, Indeterminate{D} for a Deny rule.</returns>
+        private static RuleDecision IndeterminateFor(XacmlRule rule) =>
+            rule.Effect.Equals(XacmlEffectType.Permit) ? RuleDecision.IndeterminatePermit : RuleDecision.IndeterminateDeny;
+
+        /// <summary>
+        /// Maps a combined rule decision that is not Indeterminate to the decision of the context result.
+        /// </summary>
+        /// <param name="decision">The combined rule decision.</param>
+        /// <returns>The context decision.</returns>
+        private static XacmlContextDecision ToContextDecision(RuleDecision decision) => decision switch
+        {
+            RuleDecision.Permit => XacmlContextDecision.Permit,
+            RuleDecision.Deny => XacmlContextDecision.Deny,
+            _ => XacmlContextDecision.NotApplicable,
+        };
 
         /// <summary>
         /// Returns the list of rules that matched the ContextRequest.

@@ -1,0 +1,47 @@
+meta {
+  name: 05_AND_AutoFollowsTheProfileSettingForKeyRoleParties
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includePartiesViaKeyRoles=auto
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includePartiesViaKeyRoles: auto
+}
+
+docs {
+  AND auto resolves from the user's own profile setting for showing client units. The
+  fixture user has that setting turned off, so auto gives the same party list as the
+  explicit false setting, and a strictly smaller one than the explicit true setting.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.regnskapsforerShowClientUnitsFalse.dagligleder);
+}
+
+tests {
+  const { partyUuids } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  test("AND the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND auto gives the same parties as the explicit false setting for this user", function() {
+    const auto = partyUuids(res.getBody().data).sort();
+    expect(auto).to.have.members(JSON.parse(bru.getVar("keyRolesFalsePartyUuids")));
+  });
+
+  test("AND auto gives fewer parties than the explicit true setting for this user", function() {
+    const auto = partyUuids(res.getBody().data);
+    const withKeyRoles = JSON.parse(bru.getVar("keyRolesTruePartyUuids"));
+    expect(auto.length).to.be.lessThan(withKeyRoles.length);
+  });
+}

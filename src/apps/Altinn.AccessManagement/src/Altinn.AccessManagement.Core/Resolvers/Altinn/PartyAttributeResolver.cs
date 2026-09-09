@@ -4,7 +4,6 @@ using Altinn.AccessManagement.Core.Models.Profile;
 using Altinn.AccessManagement.Core.Resolvers;
 using Altinn.AccessManagement.Core.Resolvers.Extensions;
 using Altinn.AccessManagement.Core.Services.Interfaces;
-using Altinn.Platform.Profile.Models;
 
 namespace Altinn.AccessManagement.Resolvers;
 

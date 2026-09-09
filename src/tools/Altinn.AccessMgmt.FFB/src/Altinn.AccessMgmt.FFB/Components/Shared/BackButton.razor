@@ -1,0 +1,24 @@
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+
+<MudIconButton Icon="@Icons.Material.Filled.ArrowBack"
+               Color="Color.Default"
+               OnClick="GoBack" />
+
+@code {
+    /// <summary>
+    /// Target when the page was opened directly (deep link / new tab) and there is
+    /// no browser history to go back to. Deep-linkable pages should set this to
+    /// their natural parent page.
+    /// </summary>
+    [Parameter] public string FallbackHref { get; set; } = "/";
+
+    private async Task GoBack()
+    {
+        var wentBack = await JS.InvokeAsync<bool>("goBackIfPossible");
+        if (!wentBack)
+        {
+            Nav.NavigateTo(FallbackHref);
+        }
+    }
+}

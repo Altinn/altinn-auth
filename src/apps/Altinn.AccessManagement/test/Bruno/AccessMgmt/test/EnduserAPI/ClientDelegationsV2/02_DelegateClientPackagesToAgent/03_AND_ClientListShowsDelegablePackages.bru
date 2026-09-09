@@ -1,0 +1,51 @@
+meta {
+  name: 03_AND_ClientListShowsDelegablePackages
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/clients?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+docs {
+  AND the client list shows the CCR client with its delegable packages.
+
+  Expects 200 and a client list entry for the CCR client with the accountant role
+  and both accountant packages available for delegation.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+
+  test("AND the client list request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the CCR client is listed with both accountant packages delegable", function() {
+    const client = td.REGN_Organisasjon.REGN_Org_Clients.client_A;
+    const entry = res.getBody().data.find(item => item.client.id.toLowerCase() === client.partyUuid.toLowerCase());
+    expect(entry, "expected the CCR client in the client list").to.not.be.undefined;
+    expect(entry.client.organizationIdentifier).to.equal(client.orgno);
+    const access = entry.access.find(a => a.role.code === "regnskapsforer");
+    expect(access, "expected an access element with the regnskapsforer role").to.not.be.undefined;
+    const urns = access.packages.map(p => p.urn);
+    expect(urns).to.include(td.clientDelegationV2.packages.regnskapsforerLonn);
+    expect(urns).to.include(td.clientDelegationV2.packages.regnskapsforerMedSignering);
+  });
+}

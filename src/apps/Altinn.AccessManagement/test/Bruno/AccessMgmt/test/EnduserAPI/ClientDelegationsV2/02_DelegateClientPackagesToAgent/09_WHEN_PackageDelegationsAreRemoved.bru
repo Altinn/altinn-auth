@@ -1,0 +1,63 @@
+meta {
+  name: 09_WHEN_PackageDelegationsAreRemoved
+  type: http
+  seq: 9
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents/accesspackages/delete?party={{party}}&client={{client}}&agent={{agent}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  client: {{client}}
+  agent: {{agent}}
+}
+
+body:json {
+  {
+    "values": [
+      {
+        "role": "regnskapsforer",
+        "packages": [
+          "{{packageLonn}}",
+          "{{packageMedSignering}}"
+        ]
+      }
+    ]
+  }
+}
+
+docs {
+  WHEN the package delegations are removed. Both accountant package delegations
+  are deleted for the agent on the CCR client, and every row reports a change.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("client", td.REGN_Organisasjon.REGN_Org_Clients.client_A.partyUuid);
+  bru.setVar("agent", td.REGN_Organisasjon.REGN_Agent.userUuid);
+  bru.setVar("packageLonn", td.clientDelegationV2.packages.regnskapsforerLonn);
+  bru.setVar("packageMedSignering", td.clientDelegationV2.packages.regnskapsforerMedSignering);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  test("WHEN the package delegations are removed, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN every removal row reports a change", function() {
+    const body = res.getBody();
+    expect(body).to.be.an("array").that.is.not.empty;
+    body.forEach(row => {
+      expect(row.changed).to.be.true;
+    });
+  });
+}

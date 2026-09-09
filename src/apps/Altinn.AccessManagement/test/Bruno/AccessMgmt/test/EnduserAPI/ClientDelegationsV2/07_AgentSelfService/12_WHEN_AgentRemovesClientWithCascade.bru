@@ -1,0 +1,38 @@
+meta {
+  name: 12_WHEN_AgentRemovesClientWithCascade
+  type: http
+  seq: 12
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/my/clients?provider={{party}}&client={{client}}&cascade=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  provider: {{party}}
+  client: {{client}}
+  cascade: true
+}
+
+docs {
+  WHEN the agent removes the client with cascade, the package delegation is
+  removed together with the client connection and the request returns 204.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs, scopes } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("client", td.REGN_Organisasjon.REGN_Org_Clients.client_A.partyUuid);
+
+  await loginAs(td.REGN_Organisasjon.REGN_Agent, scopes.myclientsWrite);
+}
+
+tests {
+  test("WHEN the agent removes the client with cascade, the request returns 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

@@ -1,7 +1,5 @@
 ﻿using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
-using Azure.Storage.Blobs.Models;
-using Moq;
 
 namespace Altinn.AccessManagement.TestUtils.Data;
 
@@ -119,6 +117,28 @@ public static class TestEntities
             UserId = null,
             Username = null,
             VariantId = EntityVariantConstants.BRL,
+        }
+    };
+
+    public static ConstantDefinition<Entity> OrganizationSolsidenSameie { get; } = new("f0d3bd4c-24c9-4a37-9a2e-1b5cc9be80d1")
+    {
+        Entity = new()
+        {
+            DateOfBirth = null,
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "Solsiden Sameie ESEK",
+            OrganizationIdentifier = "815493002",
+            Parent = null,
+            ParentId = null,
+            PartyId = 50068513,
+            PersonIdentifier = null,
+            RefId = "815493002",
+            TypeId = EntityTypeConstants.Organization,
+            UserId = null,
+            Username = null,
+            VariantId = EntityVariantConstants.ESEK,
         }
     };
 
@@ -249,6 +269,28 @@ public static class TestEntities
             RefId = "07124912037",
             TypeId = EntityTypeConstants.Person,
             UserId = 20000490,
+            Username = null,
+            VariantId = EntityVariantConstants.Person,
+        }
+    };
+
+    public static ConstantDefinition<Entity> PersonMargit { get; } = new("ea070162-f1d4-4050-a096-d5999c53f806")
+    {
+        Entity = new()
+        {
+            DateOfBirth = new(1929, 11, 4),
+            DateOfDeath = new(2025, 12, 7),
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "MARGIT BØRSTAD",
+            OrganizationIdentifier = null,
+            Parent = null,
+            ParentId = null,
+            PartyId = 51000001,
+            PersonIdentifier = "04112912083",
+            RefId = "04112912083",
+            TypeId = EntityTypeConstants.Person,
+            UserId = 51000001,
             Username = null,
             VariantId = EntityVariantConstants.Person,
         }

@@ -1,0 +1,68 @@
+meta {
+  name: 07_WHEN_AMainUnitDelegatesToASubunit
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeRoles=true&includeAccessPackages=true&includeResources=true&includeInstances=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeRoles: true
+  includeAccessPackages: true
+  includeResources: true
+  includeInstances: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{subjectPersonId}}"
+  }
+}
+
+docs {
+  WHEN main unit A has delegated to a subunit, the delegating main unit does not show up on
+  the receiving side at all. The correct behaviour is that main unit A appears with the access
+  it delegated.
+
+  This asserts today's behaviour, not the correct one. The delegating party going missing when
+  the receiver is a subunit is tracked by #2952, and this step turns red when the fix lands.
+
+  The direction was switched off with a skipScenario flag in the folder this replaces, so it
+  registered no assertions and always passed. It is asserted for real here.
+}
+
+script:pre-request {
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectPersonId", testdata.authParties_hovedenhetC.dagligleder.pid);
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir);
+}
+
+tests {
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  const delegator = testdata.authParties_hovedenhetA;
+
+  test("WHEN a main unit delegates to a subunit, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the delegating main unit is still missing from the receiving side (#2952)", function() {
+    const party = findParty(res.getBody(), delegator.partyuuid);
+    expect(party, `${delegator.name} has started appearing, so this step needs to be flipped to expect it`).to.be.undefined;
+  });
+}

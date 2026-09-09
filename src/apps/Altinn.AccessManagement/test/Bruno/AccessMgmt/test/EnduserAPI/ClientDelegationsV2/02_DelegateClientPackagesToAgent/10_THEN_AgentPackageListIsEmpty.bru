@@ -1,0 +1,45 @@
+meta {
+  name: 10_THEN_AgentPackageListIsEmpty
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents/accesspackages?party={{party}}&agent={{agent}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  agent: {{agent}}
+}
+
+docs {
+  THEN the agent package list is empty. After the removal the agent's access
+  package list no longer has an entry for the CCR client.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("agent", td.REGN_Organisasjon.REGN_Agent.userUuid);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+
+  test("THEN the agent access package list request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the CCR client is no longer in the agent's access package list", function() {
+    const clientUuid = td.REGN_Organisasjon.REGN_Org_Clients.client_A.partyUuid.toLowerCase();
+    const entry = res.getBody().data.find(item => item.client.id.toLowerCase() === clientUuid);
+    expect(entry, "expected the CCR client to be gone from the agent's access package list").to.be.undefined;
+  });
+}

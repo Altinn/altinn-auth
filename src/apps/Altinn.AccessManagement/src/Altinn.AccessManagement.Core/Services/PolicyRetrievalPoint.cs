@@ -60,29 +60,55 @@ namespace Altinn.AccessManagement.Core.Services
 
         private async Task<XacmlPolicy> GetPolicyInternalAsync(string policyPath, string version = "", CancellationToken cancellationToken = default)
         {
-            if (!_memoryCache.TryGetValue(policyPath + version, out XacmlPolicy policy))
+            string cacheKey = policyPath + version;
+            if (_memoryCache.TryGetValue(cacheKey, out byte[] cachedDocument))
             {
-                Stream policyBlob = string.IsNullOrEmpty(version) ?
-                    await _policyFactory.Create(policyPath).GetPolicyAsync(cancellationToken) :
-                    await _policyFactory.Create(policyPath).GetPolicyVersionAsync(version, cancellationToken);
-                using (policyBlob)
+                return ParsePolicyDocument(cachedDocument);
+            }
+
+            Stream policyBlob = string.IsNullOrEmpty(version) ?
+                await _policyFactory.Create(policyPath).GetPolicyAsync(cancellationToken) :
+                await _policyFactory.Create(policyPath).GetPolicyVersionAsync(version, cancellationToken);
+
+            byte[] policyDocument;
+            using (policyBlob)
+            {
+                if (policyBlob.Length == 0)
                 {
-                    policy = (policyBlob.Length > 0) ? PolicyHelper.ParsePolicy(policyBlob) : null;
+                    // An empty document means the blob or the requested version does not exist. Caching that would
+                    // shadow a version created later in the same cache window.
+                    return null;
                 }
 
-                PutXacmlPolicyInCache(policyPath, policy);
+                policyBlob.Position = 0;
+                using MemoryStream buffer = new MemoryStream();
+                await policyBlob.CopyToAsync(buffer, cancellationToken);
+                policyDocument = buffer.ToArray();
             }
+
+            // Parse before caching, so a document that fails to parse is never cached and the next
+            // read fetches a fresh copy.
+            XacmlPolicy policy = ParsePolicyDocument(policyDocument);
+            PutPolicyDocumentInCache(cacheKey, policyDocument);
 
             return policy;
         }
 
-        private void PutXacmlPolicyInCache(string policyPath, XacmlPolicy policy)
+        // The cache holds the policy document rather than the parsed policy: callers mutate the XacmlPolicy they get
+        // back, so every read needs its own instance.
+        private static XacmlPolicy ParsePolicyDocument(byte[] policyDocument)
+        {
+            using MemoryStream stream = new MemoryStream(policyDocument, writable: false);
+            return PolicyHelper.ParsePolicy(stream);
+        }
+
+        private void PutPolicyDocumentInCache(string cacheKey, byte[] policyDocument)
         {
             var cacheEntryOptions = new MemoryCacheEntryOptions()
                .SetPriority(CacheItemPriority.High)
                .SetAbsoluteExpiration(new TimeSpan(0, _cacheConfig.PolicyCacheTimeout, 0));
 
-            _memoryCache.Set(policyPath, policy, cacheEntryOptions);
+            _memoryCache.Set(cacheKey, policyDocument, cacheEntryOptions);
         }
     }
 }

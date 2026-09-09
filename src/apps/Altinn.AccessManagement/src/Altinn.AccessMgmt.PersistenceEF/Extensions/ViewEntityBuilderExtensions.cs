@@ -1,5 +1,4 @@
-﻿using Altinn.AccessMgmt.PersistenceEF.Models;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Extensions;

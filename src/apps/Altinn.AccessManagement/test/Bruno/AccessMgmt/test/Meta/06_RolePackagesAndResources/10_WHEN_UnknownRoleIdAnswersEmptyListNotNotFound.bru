@@ -1,0 +1,37 @@
+meta {
+  name: 10_WHEN_UnknownRoleIdAnswersEmptyListNotNotFound
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/roles/:id/packages?variant=ENK
+  body: none
+  auth: none
+}
+
+params:query {
+  variant: ENK
+}
+
+params:path {
+  id: 00000000-0000-0000-0000-000000000000
+}
+
+docs {
+  WHEN the {id}/packages route is called with an unknown role id, THEN the
+  response is 200 with an empty list rather than 404. The route only
+  validates the variant; it does not check that the role id resolves to
+  anything.
+}
+
+tests {
+  test("WHEN the role id is unknown, the request still returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the package list is empty", function() {
+    const data = res.getBody();
+    expect(data).to.be.an("array").that.is.empty;
+  });
+}

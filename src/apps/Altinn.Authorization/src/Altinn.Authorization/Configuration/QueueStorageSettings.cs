@@ -1,5 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-
 namespace Altinn.Platform.Authorization.Configuration
 {
     /// <summary>

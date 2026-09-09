@@ -1,0 +1,48 @@
+meta {
+  name: 01_GIVEN_KeyRolePartiesAreIncluded
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includePartiesViaKeyRoles=true&includeAccessPackages=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includePartiesViaKeyRoles: true
+  includeAccessPackages: true
+}
+
+docs {
+  GIVEN key role parties are included, the daily leader sees the parties the accounting
+  firm itself has access to, on top of the parties the person reaches directly.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  const firm = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER;
+
+  test("GIVEN key role parties are included, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("GIVEN key role parties are included, the firm's clients are part of the result", function() {
+    expect(findParty(res.getBody().data, firm.client_USENSUELL_UVIRKSOM_TIGER.partyUuid), "expected the client reached through the firm").to.not.be.undefined;
+    expect(findParty(res.getBody().data, firm.client_rightholderOrg2.partyUuid), "expected the rightholder client reached through the firm").to.not.be.undefined;
+  });
+
+  test("GIVEN key role parties are included, the firm itself is part of the result", function() {
+    expect(findParty(res.getBody().data, firm.partyUuid), "expected the accounting firm itself").to.not.be.undefined;
+  });
+}

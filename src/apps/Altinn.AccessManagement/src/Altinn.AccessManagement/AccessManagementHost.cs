@@ -21,7 +21,6 @@ using Altinn.AccessMgmt.Core.Notifications;
 using Altinn.AccessMgmt.Core.Outbox;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.Authorization.Api.Contracts.Register;
-using Altinn.Authorization.Host;
 using Altinn.Authorization.Host.Database;
 using Altinn.Authorization.Host.Lease;
 using Altinn.Authorization.Host.Startup;
@@ -37,9 +36,9 @@ using Altinn.Common.PEP.Clients;
 using Altinn.Common.PEP.Implementation;
 using Altinn.Common.PEP.Interfaces;
 using AltinnCore.Authentication.JwtCookie;
+using Asp.Versioning;
+using Asp.Versioning.ApiExplorer;
 using Azure.Monitor.OpenTelemetry.AspNetCore;
-using Azure.Monitor.OpenTelemetry.Exporter;
-using Microsoft.AspNetCore.Authentication.OAuth.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.FeatureManagement;
 using Microsoft.IdentityModel.Tokens;
@@ -47,9 +46,9 @@ using Microsoft.OpenApi.Models;
 using Npgsql;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using Swashbuckle.AspNetCore.Filters;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace Altinn.AccessManagement;
 
@@ -96,6 +95,7 @@ internal static partial class AccessManagementHost
                     .WithTracing(tracing =>
                     {
                         tracing
+                            .AddProcessor(sp => new ApiVersionRouteProcessor(sp.GetRequiredService<IHttpContextAccessor>()))
                             .AddProcessor(sp => new NpgsqlProcessor(
                                 TimeSpan.FromMilliseconds(npgsqlMinDurationMs),
                                 sp.GetRequiredService<IHttpContextAccessor>()));
@@ -105,7 +105,6 @@ internal static partial class AccessManagementHost
 
         builder.Services.AddSingleton<AuthorizedPartiesTelemetry>();
         builder.Services.ConfigureOpenTelemetryMeterProvider(provider => provider
-            .AddMeter("Altinn.AccessManagement.ConsentMigration")
             .AddMeter(AuthorizedPartiesTelemetry.MeterName));
 
         var connectionStrings = GetConnectionStrings(builder.Configuration);
@@ -237,9 +236,44 @@ internal static partial class AccessManagementHost
 
     private static void ConfigureOpenAPI(this WebApplicationBuilder builder)
     {
+        builder.Services.AddApiVersioning(options =>
+        {
+            // Existing routes carry a literal "v1" segment and no api version attribute,
+            // so unspecified requests must keep resolving to 1.0. The url segment reader
+            // keeps ?api-version=... query parameters inert on those routes.
+            options.DefaultApiVersion = new ApiVersion(1.0);
+            options.AssumeDefaultVersionWhenUnspecified = true;
+            options.ApiVersionReader = new UrlSegmentApiVersionReader();
+        })
+        .AddMvc()
+        .AddApiExplorer(options =>
+        {
+            // Formats the version as "'v'major[.minor][-status]" so group names
+            // line up with the swagger document names ("v1", "v2", ...).
+            options.GroupNameFormat = "'v'VVV";
+            options.SubstituteApiVersionInUrl = true;
+        });
+
         builder.Services.AddEndpointsApiExplorer();
+
+        var applicationName = builder.Environment.ApplicationName;
+        builder.Services.AddOptions<SwaggerGenOptions>()
+            .Configure((SwaggerGenOptions options, IApiVersionDescriptionProvider provider) =>
+            {
+                // One swagger document per discovered api version. The v1 document keeps
+                // the name and URL of the previous single document, which external APIM
+                // extraction depends on.
+                foreach (var description in provider.ApiVersionDescriptions)
+                {
+                    options.SwaggerDoc(description.GroupName, new OpenApiInfo { Title = applicationName, Version = description.ApiVersion.ToString() });
+                }
+            });
+
         builder.Services.AddSwaggerGen(options =>
         {
+            // Endpoints without a version group (minimal endpoints) belong to the v1 document.
+            options.DocInclusionPredicate((documentName, apiDescription) => (apiDescription.GroupName ?? "v1") == documentName);
+
             options.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
             {
                 Description = "Standard Authorization header using the Bearer scheme. Example: \"bearer {token}\"",
@@ -335,7 +369,6 @@ internal static partial class AccessManagementHost
             .AddPolicy(AuthzConstants.PLATFORM_ACCESSTOKEN_ISSUER_ISPLATFORM, policy => policy.Requirements.Add(new AccessTokenRequirement(AuthzConstants.PLATFORM_ACCESSTOKEN_ISSUER_ISPLATFORM)))
             .AddPolicy(AuthzConstants.PLATFORM_ACCESSTOKEN_ISSUER_BFF, policy => policy.Requirements.Add(new AccessTokenRequirement(AuthzConstants.PLATFORM_ACCESSTOKEN_ISSUER_BFF)))
             .AddPolicy(AuthzConstants.PLATFORM_ACCESSTOKEN_ISSUER_BFF_OR_PLATFORM, policy => policy.Requirements.Add(new AccessTokenRequirement([AuthzConstants.PLATFORM_ACCESSTOKEN_ISSUER_BFF, AuthzConstants.PLATFORM_ACCESSTOKEN_ISSUER_ISPLATFORM])))
-            .AddPolicy(AuthzConstants.ALTINNII_AUTHORIZATION, policy => policy.Requirements.Add(new ClaimAccessRequirement("urn:altinn:app", "sbl.authorization")))
             .AddPolicy(AuthzConstants.INTERNAL_AUTHORIZATION, policy => policy.Requirements.Add(new ClaimAccessRequirement("urn:altinn:app", "internal.authorization")))
             .AddPolicy(AuthzConstants.POLICY_MASKINPORTEN_DELEGATION_READ, policy => policy.Requirements.Add(new ResourceAccessRequirement("read", "altinn_maskinporten_scope_delegation")))
             .AddPolicy(AuthzConstants.POLICY_MASKINPORTEN_DELEGATION_WRITE, policy => policy.Requirements.Add(new ResourceAccessRequirement("write", "altinn_maskinporten_scope_delegation")))
@@ -367,14 +400,22 @@ internal static partial class AccessManagementHost
             .AddPolicy(AuthzConstants.ALTINN_SERVICEOWNER_DELEGATIONREQUESTS_WRITE, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.ALTINN_SERVICEOWNER_DELEGATIONREQUESTS_WRITE])))
             .AddPolicy(AuthzConstants.SCOPE_PORTAL_ENDUSER, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_PORTAL_ENDUSER])))
             .AddPolicy(AuthzConstants.SCOPE_SERVICEOWNER_PACKAGE_DELEGATION_WRITE, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_SERVICEOWNER_PACKAGE_DELEGATION_WRITE])))
-            .AddPolicy(AuthzConstants.POLICY_ENDUSER_CONNECTIONS_BIDRECTIONAL_READ, policy => policy.AddRequirementConditionalScope(
-                new ConditionalScope(ConditionalScope.FromOthers, AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ),
-                new ConditionalScope(ConditionalScope.ToOthers, AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ)
-            ))
-            .AddPolicy(AuthzConstants.POLICY_ENDUSER_CONNECTIONS_BIDIRECTIONAL_WRITE, policy => policy.AddRequirementConditionalScope(
-                new ConditionalScope(ConditionalScope.FromOthers, AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_WRITE),
-                new ConditionalScope(ConditionalScope.ToOthers, AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE)
-            ))
+            .AddPolicy(AuthzConstants.POLICY_ENDUSER_CONNECTIONS_BIDRECTIONAL_READ, policy =>
+            {
+                policy.AddRequirementConditionalScope(
+                    new ConditionalScope(ConditionalScope.FromOthers, AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ),
+                    new ConditionalScope(ConditionalScope.ToOthers, AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ)
+                );
+                policy.Requirements.Add(new PersonAccessManagerRequirement());
+            })
+            .AddPolicy(AuthzConstants.POLICY_ENDUSER_CONNECTIONS_BIDIRECTIONAL_WRITE, policy =>
+            {
+                policy.AddRequirementConditionalScope(
+                    new ConditionalScope(ConditionalScope.FromOthers, AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_WRITE),
+                    new ConditionalScope(ConditionalScope.ToOthers, AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE)
+                );
+                policy.Requirements.Add(new PersonAccessManagerRequirement());
+            })
             .AddPolicy(AuthzConstants.POLICY_ENDUSER_CONNECTIONS_WRITE_TOOTHERS, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE])))
             .AddPolicy(AuthzConstants.POLICY_ENDUSER_REQUESTS_READ, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_REQUESTS_READ])))
             .AddPolicy(AuthzConstants.POLICY_ENDUSER_REQUESTS_WRITE, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_REQUESTS_WRITE])));

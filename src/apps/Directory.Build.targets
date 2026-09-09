@@ -9,7 +9,7 @@
                 <EnableSdkContainerSupport>true</EnableSdkContainerSupport>
                 <LocalRegistry>localhost</LocalRegistry>
                 <ContainerRegistry>ghcr.io</ContainerRegistry>
-                <ContainerRepository>altinn/altinn-authorization-tmp/$(ContainerName)</ContainerRepository>
+                <ContainerRepository>altinn/altinn-auth/$(ContainerName)</ContainerRepository>
             </PropertyGroup>
 
         </When>

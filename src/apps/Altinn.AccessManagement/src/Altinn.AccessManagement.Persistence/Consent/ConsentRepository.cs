@@ -1,17 +1,13 @@
-﻿using Altinn.AccessManagement.Core.Extensions;
-using Altinn.AccessManagement.Core.Models;
+﻿using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.Consent;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Persistence.Configuration;
 using Altinn.AccessManagement.Persistence.Extensions;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.Extensions.Options;
-using Newtonsoft.Json.Linq;
 using Npgsql;
 using NpgsqlTypes;
 using System.Data;
-using System.Globalization;
-using System.Text;
 
 namespace Altinn.AccessManagement.Persistence.Consent
 {
@@ -102,9 +98,36 @@ namespace Altinn.AccessManagement.Persistence.Consent
             await tx.CommitAsync(cancellationToken);
         }
 
+        /// <summary>
+        /// Rejects any attempt to persist the <c>Expired</c> status or event type. <c>Expired</c> is derived at read time
+        /// from the consent's valid-to date and has no matching label in the <c>consent.status_type</c> or
+        /// <c>consent.event_type</c> PostgreSQL enums. Passing it through would otherwise surface as an opaque Npgsql
+        /// enum error deeper in the write.
+        /// </summary>
+        private static void GuardAgainstExpired(ConsentRequest consentRequest)
+        {
+            if (consentRequest.ConsentRequestStatus == ConsentRequestStatusType.Expired)
+            {
+                throw new InvalidOperationException($"Consent request status '{ConsentRequestStatusType.Expired}' is derived at read time and cannot be persisted.");
+            }
+
+            if (consentRequest.ConsentRequestEvents is not null)
+            {
+                foreach (ConsentRequestEvent consentEvent in consentRequest.ConsentRequestEvents)
+                {
+                    if (consentEvent.EventType == ConsentRequestEventType.Expired)
+                    {
+                        throw new InvalidOperationException($"Consent event type '{ConsentRequestEventType.Expired}' is derived at read time and cannot be persisted.");
+                    }
+                }
+            }
+        }
+
         /// <inheritdoc/>
         public async Task<ConsentRequestDetails> CreateRequest(ConsentRequest consentRequest, ConsentPartyUrn performedByParty, CancellationToken cancellationToken = default)
         {
+            GuardAgainstExpired(consentRequest);
+
             DateTimeOffset createdTime = DateTime.UtcNow;
 
             string consentRquestQuery = /*strpsql*/$@"
@@ -544,12 +567,13 @@ namespace Altinn.AccessManagement.Persistence.Consent
             string query = /*strpsql*/@$"
                 SELECT COUNT(*)
                 FROM consent.consentrequest
-                WHERE fromPartyUuid = @fromPartyUuid AND status = @status AND portalviewmode = 'show'
+                WHERE fromPartyUuid = @fromPartyUuid AND status = @status AND portalviewmode = 'show' AND validTo > @now
             ";
 
             await using var pgcom = _db.CreateCommand(query);
             pgcom.Parameters.AddWithValue("fromPartyUuid", NpgsqlDbType.Uuid, fromPartyUuid);
             pgcom.Parameters.Add(new NpgsqlParameter<ConsentRequestStatusType>("status", status));
+            pgcom.Parameters.AddWithValue("now", NpgsqlDbType.TimestampTz, _timeProvider.GetUtcNow().ToOffset(TimeSpan.Zero));
 
             var result = await pgcom.ExecuteScalarAsync(cancellationToken);
             return Convert.ToInt32(result);
@@ -598,7 +622,7 @@ namespace Altinn.AccessManagement.Persistence.Consent
             const string consentChangesQuery = @"WITH reqs AS MATERIALIZED (
                                             SELECT consentrequestid
                                             FROM consent.consentrequest
-                                            WHERE topartyuuid = @partyUuid
+                                            WHERE topartyuuid = @partyUuid OR handledbypartyuuid = @partyUuid
                                         )
                                         SELECT
                                         ce.consentrequestid,

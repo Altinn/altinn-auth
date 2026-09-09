@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using Altinn.AccessManagement.Core.Enums;
 
 namespace Altinn.AccessManagement.Persistence.Policy;

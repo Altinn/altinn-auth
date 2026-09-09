@@ -1,0 +1,43 @@
+meta {
+  name: 05_WHEN_RoleResourcesAreFetchedByRoleAndVariant
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/roles/resources?role={{role}}&variant={{variant}}
+  body: none
+  auth: none
+}
+
+params:query {
+  role: {{role}}
+  variant: {{variant}}
+}
+
+docs {
+  WHEN the resources reachable directly through the daglig-leder/AS role are
+  fetched, THEN each resource carries its provider and type.
+}
+
+script:pre-request {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  bru.setVar("role", td.roles.dagligLeder.code);
+  bru.setVar("variant", td.roles.dagligLeder.variant);
+}
+
+tests {
+  test("WHEN the role resources query returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN each resource carries a provider and a type", function() {
+    const data = res.getBody();
+    expect(data).to.be.an("array").that.is.not.empty;
+    expect(data[0].provider).to.have.property("id");
+    expect(data[0].provider.type).to.have.property("id");
+    expect(data[0].type).to.have.property("id");
+    bru.setVar("directResourceCount", data.length);
+  });
+}

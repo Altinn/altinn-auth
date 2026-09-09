@@ -1,4 +1,3 @@
-using System.Linq;
 using System.Text.Json;
 using Altinn.AccessManagement.Models;
 using Altinn.AccessManagement.Tests.Util;

@@ -1,11 +1,8 @@
-using System;
-using System.Collections.Generic;
 using Altinn.AccessManagement.Core.Asserters;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Resolvers;
 using Microsoft.AspNetCore.Mvc;
-using Xunit;
 
 namespace Altinn.AccessManagement.Tests.Unit.Asserters;
 

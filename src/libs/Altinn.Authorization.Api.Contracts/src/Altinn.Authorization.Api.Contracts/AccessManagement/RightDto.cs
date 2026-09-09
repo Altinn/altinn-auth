@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace Altinn.Authorization.Api.Contracts.AccessManagement
+﻿namespace Altinn.Authorization.Api.Contracts.AccessManagement
 {
     /// <summary>
     /// Represents a data transfer object that defines a right, including its key, display name, associated

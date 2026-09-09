@@ -12,7 +12,6 @@ using Altinn.AccessManagement.Persistence.Consent;
 using Altinn.AccessManagement.Persistence.Policy;
 using Altinn.AccessMgmt.Core.Services.Legacy;
 using Altinn.Authorization.ServiceDefaults.Npgsql.Yuniql;
-using Altinn.Platform.Register.Enums;
 using Azure.Core;
 using Azure.Storage;
 using CommunityToolkit.Diagnostics;
@@ -46,13 +45,9 @@ public static class PersistenceDependencyInjectionExtensions
 
         builder.Services.AddSingleton<Marker>();
 
-        builder.Services.AddScoped<DelegationMetadataRepo>();
         builder.Services.AddScoped<IDelegationMetadataRepository, DelegationMetadataEF>();
 
-        builder.Services.AddSingleton<IResourceMetadataRepository, ResourceMetadataRepo>();
-
         builder.Services.AddSingleton<IConsentRepository, ConsentRepository>();
-        builder.Services.AddSingleton<IAltinn2ConsentClient, Altinn2ConsentClient>();
 
         builder.AddDatabase();
         builder.Services.AddDelegationPolicyRepository(builder.Configuration);
@@ -146,6 +141,9 @@ public static class PersistenceDependencyInjectionExtensions
                 ConsentRequestStatusType.Created => "created",
                 ConsentRequestStatusType.Revoked => "revoked",
                 ConsentRequestStatusType.Deleted => "deleted",
+
+                // Expired is derived at read time and never persisted; consent.status_type has no matching label.
+                // ConsentRepository rejects it before it reaches Postgres. The arm keeps the translator total, which the mapping requires.
                 ConsentRequestStatusType.Expired => "expired",
                 _ => null,
             }))
@@ -156,6 +154,9 @@ public static class PersistenceDependencyInjectionExtensions
                 ConsentRequestEventType.Created => "created",
                 ConsentRequestEventType.Revoked => "revoked",
                 ConsentRequestEventType.Deleted => "deleted",
+
+                // Expired is derived at read time and never persisted; consent.event_type has no matching label.
+                // ConsentRepository rejects it before it reaches Postgres. The arm keeps the translator total, which the mapping requires.
                 ConsentRequestEventType.Expired => "expired",
                 ConsentRequestEventType.Used => "used",
                 _ => null,

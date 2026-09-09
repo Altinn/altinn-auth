@@ -51,7 +51,7 @@ $failed = @()
 $coverageFiles = @()
 
 # Run per-project coverage collection in parallel so the dominant project
-# (e.g. AccessMgmt.Tests at ~2m) sets the wall-clock, instead of the sum
+# (e.g. Altinn.AccessManagement.Tests at ~2m) sets the wall-clock, instead of the sum
 # of all project times. Each project writes to a distinct output + log.
 $configurationLocal = $Configuration
 $resultsDirLocal = $resultsDir
@@ -128,7 +128,7 @@ if ($coverageFiles.Count -eq 0) {
 # Merge per-project cobertura files into a single aggregate before
 # threshold checking. Without this, an assembly touched by multiple
 # test projects (e.g. AccessManagement.Core covered both directly by
-# AccessMgmt.Tests and transitively by Enduser.Api.Tests) shows up
+# Altinn.AccessManagement.Tests and transitively by Enduser.Api.Tests) shows up
 # as multiple separate package entries — the threshold check then
 # trips on whichever per-project view is below the floor, even when
 # the union coverage passes. CI does not hit this because it runs a

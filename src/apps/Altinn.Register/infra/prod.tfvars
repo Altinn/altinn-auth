@@ -6,7 +6,7 @@ aks_federation = [
     service_account = "altinn-register"
   }
 ]
-deploy_app_principal_id = "a9585a64-20f0-4d18-aba6-9930f92b809c" # GitHub: altinn/altinn-authorization-tmp - Prod
+deploy_app_principal_id = "a9585a64-20f0-4d18-aba6-9930f92b809c" # GitHub: altinn/altinn-auth - Prod
 platform_workflow_principal_ids = [
   "e7e7ed66-8178-4737-8196-0b2604811939", # altinn-register-app-prod-aks01
   "8a86d76e-91b1-4e47-a411-e81f8e689882"  # altinn-register-app-prod-aks02
@@ -23,38 +23,45 @@ key_vault_rbac = [{
 
 features = {
   maskinporten = true
-  a2_party_import = {
-    parties  = true
-    user_ids = true
-    profiles = true
-  }
 
   party_import = {
     system_users = true
+
     npr = {
+      enable        = true
       guardianships = true
+    }
+
+    sire = {
+      enable = true
+      listen = true
     }
   }
 
   ccr_proxy = {
-    enable = true
-    record = true
+    enable  = true
+    record  = true
+    process = true
   }
 }
 
 config = {
+  a2_party_import = {
+    max_db_size_in_gib = 100
+  }
+
   maskinporten = {
     client_id = "47a5f435-3201-40fe-82e3-2136c5ad028c"
     scope     = "folkeregister:deling/offentligmedhjemmel skatteetaten:skatteetatenregistrertselskap"
   }
 
-  a2_party_import = {
-    max_db_size_in_gib = 100
+  api_source = {
+    default = "db"
   }
 
   ccr = {
     flatfiles = {
-      enable = false
+      enable = true
       remote = {
         host = "ccr-flatfile-remote-host"
         user = "ccr-flatfile-remote-user"

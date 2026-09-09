@@ -1,5 +1,4 @@
-﻿using System;
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -10,7 +9,6 @@ using Altinn.AccessManagement.Core.Extensions;
 using Altinn.AccessManagement.Core.Models.Authentication;
 using Altinn.AccessManagement.Integration.Configuration;
 using AltinnCore.Authentication.Utils;
-using Azure.Core;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;

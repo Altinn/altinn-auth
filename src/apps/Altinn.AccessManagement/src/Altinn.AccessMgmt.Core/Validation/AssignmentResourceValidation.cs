@@ -14,7 +14,7 @@ public static class AssignmentResourceValidation
         if (resources is { } && resources.Any())
         {
             return (ref ValidationErrorBuilder errors) =>
-                errors.Add(ValidationErrors.AssignmentHasActiveConnections, $"QUERY/{paramName}", [new("resources", $"following resources has active assignments [{string.Join(",", resources.Select(p => p.Id.ToString()))}].")]);
+                errors.Add(ValidationErrors.AssignmentHasActiveConnections, $"QUERY/{paramName}", [new("resources", $"following resources have active assignments [{string.Join(",", resources.Select(p => p.Id.ToString()))}].")]);
         }
 
         return null;

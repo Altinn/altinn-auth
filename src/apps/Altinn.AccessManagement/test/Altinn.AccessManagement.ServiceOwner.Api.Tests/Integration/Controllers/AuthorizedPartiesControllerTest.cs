@@ -116,4 +116,110 @@ public class AuthorizedPartiesControllerTest
             Assert.Contains("dagl", dumbo.AuthorizedRoles);
         }
     }
+
+    /// <summary>
+    /// A provider/resource filter (orgCode or anyOfResourceIds) narrows which parties are returned,
+    /// but must not change how the returned parties are enriched. The include-flags gate enrichment of
+    /// the response fields (authorizedRoles, authorizedAccessPackages, authorizedResources, authorizedInstances)
+    /// and are honored independently of whether a resource filter is present.
+    /// Josephine is a rightholder on Kaos Magic Design and Arts with resource and instance access to
+    /// SiriusSkattemelding, so a filter on that resource returns Kaos.
+    /// </summary>
+    [IntegrationTest]
+    public class GetAuthorizedPartiesWithResourceFilter : IClassFixture<ApiFixture>
+    {
+        public GetAuthorizedPartiesWithResourceFilter(ApiFixture fixture)
+        {
+            Fixture = fixture;
+            Fixture.WithEnabledFeatureFlag(FeatureFlags.RightsDelegationApi);
+        }
+
+        public ApiFixture Fixture { get; }
+
+        private static AuthorizedPartyRequestDto JosephineSubject => new()
+        {
+            Type = "urn:altinn:person:uuid",
+            Value = TestData.JosephineYvonnesdottir.Id.ToString(),
+        };
+
+        [Fact]
+        public async Task GetAuthorizedParties_WithResourceFilterAndIncludeFlagsFalse_Returns200WithPartyButNoEnrichment()
+        {
+            // Arrange: NAV asks on behalf of Josephine, filtering on a resource she has access to on Kaos,
+            // while opting out of every enrichment field.
+            var client = CreateServiceOwnerClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
+
+            var query = $"{OldRoute}?anyOfResourceIds={TestData.SiriusSkattemelding.RefId}" +
+                        "&includeRoles=false&includeAccessPackages=false&includeResources=false&includeInstances=false";
+
+            // Act
+            var response = await client.PostAsJsonAsync(query, JosephineSubject, TestContext.Current.CancellationToken);
+
+            // Assert: the matching party is still returned, but no enrichment fields are populated.
+            var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+            var parties = JsonSerializer.Deserialize<List<AuthorizedPartyDto>>(body, JsonOptions);
+            Assert.NotNull(parties);
+
+            var kaos = parties.FirstOrDefault(p => p.PartyUuid == TestData.KaosMagicDesignAndArts.Id);
+            Assert.NotNull(kaos);
+            Assert.Empty(kaos.AuthorizedRoles);
+            Assert.Empty(kaos.AuthorizedAccessPackages);
+            Assert.Empty(kaos.AuthorizedResources);
+            Assert.Empty(kaos.AuthorizedInstances);
+        }
+
+        [Fact]
+        public async Task GetAuthorizedParties_WithResourceFilterAndIncludeFlagsTrue_Returns200WithPartyAndEnrichment()
+        {
+            // Arrange: same filter, but the caller asks for resource and instance enrichment.
+            var client = CreateServiceOwnerClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
+
+            var query = $"{OldRoute}?anyOfResourceIds={TestData.SiriusSkattemelding.RefId}" +
+                        "&includeRoles=true&includeAccessPackages=true&includeResources=true&includeInstances=true";
+
+            // Act
+            var response = await client.PostAsJsonAsync(query, JosephineSubject, TestContext.Current.CancellationToken);
+
+            // Assert: the party is returned with the requested enrichment populated.
+            var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+            var parties = JsonSerializer.Deserialize<List<AuthorizedPartyDto>>(body, JsonOptions);
+            Assert.NotNull(parties);
+
+            var kaos = parties.FirstOrDefault(p => p.PartyUuid == TestData.KaosMagicDesignAndArts.Id);
+            Assert.NotNull(kaos);
+            Assert.Contains(TestData.SiriusSkattemelding.RefId, kaos.AuthorizedResources);
+            Assert.NotEmpty(kaos.AuthorizedInstances);
+        }
+
+        [Fact]
+        public async Task GetAuthorizedParties_WithResourceFilterAndOnlyIncludeInstances_Returns200WithInstancesButNoResources()
+        {
+            // Arrange: the include-flags must be honored per field, not collapsed to all-or-nothing.
+            var client = CreateServiceOwnerClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
+
+            var query = $"{OldRoute}?anyOfResourceIds={TestData.SiriusSkattemelding.RefId}" +
+                        "&includeRoles=false&includeAccessPackages=false&includeResources=false&includeInstances=true";
+
+            // Act
+            var response = await client.PostAsJsonAsync(query, JosephineSubject, TestContext.Current.CancellationToken);
+
+            // Assert: only instances populated; roles, access packages and resources stay empty.
+            var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+            var parties = JsonSerializer.Deserialize<List<AuthorizedPartyDto>>(body, JsonOptions);
+            Assert.NotNull(parties);
+
+            var kaos = parties.FirstOrDefault(p => p.PartyUuid == TestData.KaosMagicDesignAndArts.Id);
+            Assert.NotNull(kaos);
+            Assert.Empty(kaos.AuthorizedRoles);
+            Assert.Empty(kaos.AuthorizedAccessPackages);
+            Assert.Empty(kaos.AuthorizedResources);
+            Assert.NotEmpty(kaos.AuthorizedInstances);
+        }
+    }
 }

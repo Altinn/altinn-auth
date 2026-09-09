@@ -1,0 +1,56 @@
+meta {
+  name: 10_AND_ResourceFilterReturnsRightholderClient
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/clients?party={{party}}&resources={{resource}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  resources: {{resource}}
+}
+
+docs {
+  AND filtering the client list on the granted single resource returns the
+  rightholder client. The CCR client has no grant for this resource, so it is
+  not in the result.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("resource", td.clientDelegationV2.singleResource);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+
+  test("AND the resource filtered client list request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the rightholder client is returned and the CCR client is not", function() {
+    const data = res.getBody().data;
+    const clientA = td.REGN_Organisasjon.REGN_Org_Clients.client_A.partyUuid.toLowerCase();
+    const clientB = td.REGN_Organisasjon.REGN_Org_Clients.client_B.partyUuid.toLowerCase();
+    expect(data.some(item => item.client.id.toLowerCase() === clientB)).to.be.true;
+    expect(data.some(item => item.client.id.toLowerCase() === clientA)).to.be.false;
+  });
+
+  test("AND every returned client holds the filtered resource", function() {
+    const refId = td.clientDelegationV2.singleResource;
+    res.getBody().data.forEach(item => {
+      const refIds = item.access.flatMap(a => a.resources.map(r => r.refId));
+      expect(refIds, `expected ${item.client.name} to hold ${refId}`).to.include(refId);
+    });
+  });
+}

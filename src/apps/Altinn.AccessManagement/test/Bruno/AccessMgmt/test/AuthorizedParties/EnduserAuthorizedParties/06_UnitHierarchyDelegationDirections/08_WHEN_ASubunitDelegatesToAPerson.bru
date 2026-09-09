@@ -1,0 +1,67 @@
+meta {
+  name: 08_WHEN_ASubunitDelegatesToAPerson
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeAccessPackages=true&includeResources=true&includeInstances=true&partyFilter={{subUnit}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeAccessPackages: true
+  includeResources: true
+  includeInstances: true
+  partyFilter: {{subUnit}}
+}
+
+docs {
+  WHEN a subunit has delegated to a person, that person sees the subunit nested under its
+  main unit, which is returned as a hierarchy element with no access. The step narrows the
+  result with a party filter on the subunit so it asserts on that hierarchy alone.
+}
+
+script:pre-request {
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  bru.setVar("subUnit", testdata.authParties_hovedenhetD.authParties_underenhetD.partyuuid);
+
+  await loginAs(testdata.authParties_personA);
+}
+
+tests {
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { flatten } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  const delegatorMainUnit = testdata.authParties_hovedenhetD;
+  const delegator = delegatorMainUnit.authParties_underenhetD;
+
+  test("WHEN a subunit delegates to a person, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN only the delegating subunit and its main unit are returned", function() {
+    expect(flatten(res.getBody().data).map(party => party.partyUuid.toLowerCase())).to.have.members([
+      delegatorMainUnit.partyuuid.toLowerCase(),
+      delegator.partyuuid.toLowerCase(),
+    ]);
+  });
+
+  test("THEN the main unit is a hierarchy element with no access", function() {
+    const party = res.getBody().data[0];
+    expect(party.onlyHierarchyElementWithNoAccess).to.be.true;
+    expect(party.authorizedAccessPackages).to.be.empty;
+    expect(party.authorizedResources).to.be.empty;
+    expect(party.authorizedInstances).to.be.empty;
+  });
+
+  test("THEN the subunit carries the delegated packages and app instance", function() {
+    const subunit = res.getBody().data[0].subunits[0];
+    expect(subunit.authorizedAccessPackages).to.not.be.empty;
+    const instance = subunit.authorizedInstances.find(item => item.instanceRef === testdata.instancer.underenhetD_instansid);
+    expect(instance, "expected the app instance delegated to the person on the subunit").to.not.be.undefined;
+  });
+}

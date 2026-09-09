@@ -1,0 +1,32 @@
+meta {
+  name: 02_AND_PackageWithNoResourcesReturnsNoContent
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/package/:id/resources
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{packageId}}
+}
+
+docs {
+  AND a package known to hold no resources answers 204, since the package
+  itself exists but carries nothing to list.
+}
+
+script:pre-request {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  bru.setVar("packageId", td.packages.infrastruktur.id);
+}
+
+tests {
+  test("AND the package with no resources returns 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

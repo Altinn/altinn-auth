@@ -1,67 +1,46 @@
 @page "/entity-variant/{Id:guid}"
-@using Altinn.AccessMgmt.PersistenceEF.Models
-@using Microsoft.EntityFrameworkCore
-@using Altinn.AccessMgmt.FFB.Services
-@inject IEnvironmentDbContextFactory DbFactory
-@inject EnvironmentState EnvState
-@inject NavigationManager Nav
-@implements IDisposable
+@inherits EnvironmentPageBase
+@inject EntityVariantDetailsService DataService
 
-<PageTitle>EntityVariant – @(_variant?.Name ?? Id.ToString())</PageTitle>
+<PageTitle>EntityVariant – @(_data?.Variant.Name ?? Id.ToString())</PageTitle>
 
-@if (_loading)
+@if (Loading)
 {
     <MudProgressLinear Color="Color.Primary" Indeterminate="true" />
 }
-else if (_variant is null)
+else if (Error is not null)
+{
+    <MudAlert Severity="Severity.Error">@Error</MudAlert>
+}
+else if (_data is null)
 {
     <MudAlert Severity="Severity.Error">EntityVariant not found: @Id</MudAlert>
 }
 else
 {
     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-1">
-        <MudIconButton Icon="@Icons.Material.Filled.ArrowBack"
-                       Color="Color.Default"
-                       OnClick="@(() => Nav.NavigateTo($"/entity-type/{_variant.TypeId}"))" />
-        <MudText Typo="Typo.h4">@_variant.Name</MudText>
+        <BackButton FallbackHref="@($"/entity-type/{_data.Variant.TypeId}")" />
+        <MudText Typo="Typo.h4">@_data.Variant.Name</MudText>
     </MudStack>
-    <MudText Typo="Typo.body2" Class="mb-6 mud-text-secondary">@_variant.Description</MudText>
+    <MudText Typo="Typo.body2" Class="mb-6 mud-text-secondary">@_data.Variant.Description</MudText>
 
     <MudGrid>
         <MudItem xs="12" md="6">
-            <MudCard Elevation="1">
-                <MudCardHeader>
-                    <CardHeaderContent><MudText Typo="Typo.h6">Summary</MudText></CardHeaderContent>
-                </MudCardHeader>
-                <MudCardContent Class="pa-0">
-                    <MudSimpleTable Dense="true" Hover="false" Bordered="false">
-                        <tbody>
-                            <tr>
-                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">Id</td>
-                                <td style="font-family:monospace;font-size:.8125rem">@_variant.Id</td>
-                            </tr>
-                            <tr>
-                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">Name</td>
-                                <td style="font-size:.8125rem">@_variant.Name</td>
-                            </tr>
-                            <tr>
-                                <td style="width:40%;color:var(--mud-palette-text-secondary);font-size:.8125rem">EntityType</td>
-                                <td style="font-size:.8125rem">
-                                    <MudLink Href="@($"/entity-type/{_variant.TypeId}")">
-                                        @(_variant.Type?.Name ?? _variant.TypeId.ToString())
-                                    </MudLink>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </MudSimpleTable>
-                </MudCardContent>
-            </MudCard>
+            <SummaryCard>
+                <SummaryRow Label="Id" Monospace="true">@_data.Variant.Id</SummaryRow>
+                <SummaryRow Label="Name">@_data.Variant.Name</SummaryRow>
+                <SummaryRow Label="EntityType">
+                    <MudLink Href="@($"/entity-type/{_data.Variant.TypeId}")">
+                        @(_data.Variant.Type?.Name ?? _data.Variant.TypeId.ToString())
+                    </MudLink>
+                </SummaryRow>
+            </SummaryCard>
         </MudItem>
     </MudGrid>
 
-    <MudText Typo="Typo.h5" Class="mt-8 mb-3">Roles for this variant (@_variantRoles.Count)</MudText>
+    <MudText Typo="Typo.h5" Class="mt-8 mb-3">Roles for this variant (@_data.VariantRoles.Count)</MudText>
     <MudPaper Elevation="1">
-        <MudTable Items="_variantRoles" Hover="true" Dense="true" Class="pa-0">
+        <MudTable Items="_data.VariantRoles" Hover="true" Dense="true" Class="pa-0">
             <HeaderContent>
                 <MudTh>Role</MudTh>
                 <MudTh>URN</MudTh>
@@ -76,7 +55,7 @@ else
                     </MudLink>
                 </MudTd>
                 <MudTd DataLabel="URN">
-                    <MudText Typo="Typo.caption" Style="font-family:monospace">@(context.Role?.Urn ?? "–")</MudText>
+                    <MudText Typo="Typo.caption" Class="mono">@(context.Role?.Urn ?? "–")</MudText>
                 </MudTd>
                 <MudTd DataLabel="IsKeyRole">
                     <MudIcon Icon="@(context.Role?.IsKeyRole == true ? Icons.Material.Filled.Check : Icons.Material.Filled.Close)"
@@ -102,51 +81,11 @@ else
 @code {
     [Parameter] public Guid Id { get; set; }
 
-    private bool _loading = true;
-    private EntityVariant? _variant;
-    private List<EntityVariantRole> _variantRoles = [];
+    private EntityVariantDetailsData? _data;
 
-    protected override void OnInitialized()
-    {
-        EnvState.OnChange += OnEnvironmentChanged;
-    }
+    protected override Task OnParametersSetAsync() => RunAsync(LoadAsync);
 
-    public void Dispose()
-    {
-        EnvState.OnChange -= OnEnvironmentChanged;
-    }
+    protected override Task OnEnvironmentChangedAsync() => RunAsync(LoadAsync);
 
-    private void OnEnvironmentChanged() => InvokeAsync(async () =>
-    {
-        await LoadDataAsync();
-        StateHasChanged();
-    });
-
-    protected override async Task OnParametersSetAsync() => await LoadDataAsync();
-
-    private async Task LoadDataAsync()
-    {
-        _loading = true;
-        _variant = null;
-        _variantRoles = [];
-
-        using var db = DbFactory.CreateContext(EnvState.Current);
-
-        _variant = await db.EntityVariants
-            .AsNoTracking()
-            .Include(ev => ev.Type)
-            .FirstOrDefaultAsync(ev => ev.Id == Id);
-
-        if (_variant is not null)
-        {
-            _variantRoles = await db.EntityVariantRoles
-                .AsNoTracking()
-                .Include(evr => evr.Role)
-                .Where(evr => evr.VariantId == Id)
-                .OrderBy(evr => evr.Role.Name)
-                .ToListAsync();
-        }
-
-        _loading = false;
-    }
+    private async Task LoadAsync(CancellationToken ct) => _data = await DataService.GetAsync(EnvState.Current, Id, ct);
 }

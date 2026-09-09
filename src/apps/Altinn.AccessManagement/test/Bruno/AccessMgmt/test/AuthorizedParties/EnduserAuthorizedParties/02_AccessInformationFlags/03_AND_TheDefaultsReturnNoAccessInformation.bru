@@ -1,0 +1,40 @@
+meta {
+  name: 03_AND_TheDefaultsReturnNoAccessInformation
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties
+  body: none
+  auth: inherit
+}
+
+docs {
+  AND the same holds when no query parameters are given at all: all four access
+  information flags default to off.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  await loginAs(testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder);
+}
+
+tests {
+  const { flatten } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  test("AND the request without query parameters returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND every party has empty roles, packages, resources and instances by default", function() {
+    for (const party of flatten(res.getBody().data)) {
+      expect(party.authorizedRoles, `roles returned for ${party.partyUuid}`).to.be.empty;
+      expect(party.authorizedAccessPackages, `access packages returned for ${party.partyUuid}`).to.be.empty;
+      expect(party.authorizedResources, `resources returned for ${party.partyUuid}`).to.be.empty;
+      expect(party.authorizedInstances, `instances returned for ${party.partyUuid}`).to.be.empty;
+    }
+  });
+}

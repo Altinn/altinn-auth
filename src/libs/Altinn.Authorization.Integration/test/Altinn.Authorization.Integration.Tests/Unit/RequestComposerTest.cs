@@ -1,5 +1,4 @@
-﻿using System.Net.Http.Json;
-using System.Text;
+﻿using System.Text;
 using Altinn.Authorization.Integration.Platform;
 
 namespace Altinn.Authorization.Integration.Tests.Unit;

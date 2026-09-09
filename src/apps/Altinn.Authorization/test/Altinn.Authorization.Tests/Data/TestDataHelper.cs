@@ -1,10 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Platform.Authorization.Constants;
 using Altinn.Platform.Authorization.Models;
-using Microsoft.AspNetCore.Mvc.ActionConstraints;
 
 namespace Altinn.Authorization.Tests.Data
 {

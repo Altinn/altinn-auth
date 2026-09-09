@@ -211,54 +211,6 @@ public interface IAssignmentService
     Task<int> ImportAssignmentResourceChange(Guid fromId, Guid toId, string resourceName, string blobStoragePolicyPath, string blobStorageVersionId, int delegationEventId, AuditValues audit, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Revokes access to an imported assignment instance for a specified target entity.
-    /// </summary>
-    /// <param name="fromId">The unique identifier of the entity from which the resource was originally assigned.</param>
-    /// <param name="toId">The unique identifier of the entity whose access to the resource is being revoked.</param>
-    /// <param name="resourceName">The id of the resource to revoke access to. Cannot be null or empty.</param>
-    /// <param name="instanceId">The identifier for the instance the delegation is about</param>
-    /// <param name="audit">The audit information to record for this operation. Cannot be null.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains the number of resources that were
-    /// successfully revoked.</returns>
-    Task<int> RevokeImportedInstanceAssignment(Guid fromId, Guid toId, string resourceName, string instanceId, AuditValues audit, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Takes data from Altinn 2 and imports instance assignment to Altinn 3. This includes creating the assignment if it does not exist, 
-    /// adding the instance as a resource to the assignment and also associating the correct blob storage policy with the instance resource.
-    /// </summary>
-    /// <param name="input">The data to import from Altinn 2.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used to cancel the import operation.</param>
-    /// <returns>true if the assignmentinstance is stored and false if not</returns>
-    Task<Result<bool>> ImportInstanceAssignmentFromAltinn2(InstanceDelegationRequest input, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Revokes an assignment for a specific instance
-    /// </summary>
-    /// <param name="input">An object containing the details of the instance assignment to revoke. Cannot be null.</param>
-    /// <param name="cancellationToken">A token to monitor for cancellation requests. The default value is None.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains a value indicating whether the
-    /// assignment was successfully revoked.</returns>
-    Task<Result<bool>> RevokeInstanceAssignmentFromAltinn2(InstanceRevokeRequest input, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    ///  Imports access to an assignment instance for a specified from, to and audit info.
-    /// </summary>
-    /// <param name="fromId">The unique identifier of the source assignment from which the resource change is imported.</param>
-    /// <param name="toId">The unique identifier of the target assignment to which the resource change is applied.</param>
-    /// <param name="resourceName">The id that identifies the resource being changed. Cannot be null or empty.</param>
-    /// <param name="originalBlobStoragePolicyPath">The path to the original blob storage policy that governs access to the resource data. Cannot be null or empty.</param>
-    /// <param name="blobStorageVersionId">The version identifier of the blob storage object to associate with the resource change. Cannot be null or empty.</param>
-    /// <param name="instanceId">The identifier for the instance the delegation is about</param>
-    /// <param name="delegationEventId">The identifier of the delegation event that triggered this resource change.</param>
-    /// <param name="audit">The audit information to record for this operation. Cannot be null.</param>
-    /// <param name="fromPartyId">partyId to use in construction of the instance urn</param>
-    /// <param name="cancellationToken">A cancellation token that can be used to cancel the import operation.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains the number of resource changes
-    /// imported.</returns>
-    Task<int> ImportInstanceAssignmentChange(Guid fromId, Guid toId, string resourceName, string originalBlobStoragePolicyPath, string blobStorageVersionId, string instanceId, int delegationEventId, AuditValues audit, int fromPartyId, CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// Clears assignments for a dead person.
     /// </summary>
     /// <returns></returns>

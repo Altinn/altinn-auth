@@ -1,0 +1,39 @@
+meta {
+  name: 12_CLEANUP_PackageIsRemovedFromFacilitator
+  type: http
+  seq: 12
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{clientB}}&from={{clientB}}&to={{party}}&package={{package}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{clientB}}
+  from: {{clientB}}
+  to: {{party}}
+  package: {{package}}
+}
+
+docs {
+  CLEANUP: the rightholder client removes the package grant from the facilitator.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("clientB", td.REGN_Organisasjon.REGN_Org_Clients.client_B.partyUuid);
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("package", td.clientDelegationV2.packages.skattegrunnlag);
+
+  await loginAs(td.REGN_Organisasjon.REGN_Org_Clients.client_B.dagligleder);
+}
+
+tests {
+  test("CLEANUP the package grant removal returns 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

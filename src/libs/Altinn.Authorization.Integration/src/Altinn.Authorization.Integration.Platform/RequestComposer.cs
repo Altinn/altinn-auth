@@ -1,12 +1,7 @@
-using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Json;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Web;
-using Altinn.Common.AccessTokenClient.Services;
-using CommunityToolkit.Diagnostics;
 
 namespace Altinn.Authorization.Integration.Platform;
 

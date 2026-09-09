@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using Altinn.Platform.Storage.Interface.Models;
 
 namespace Altinn.Platform.Authorization.Repositories.Interface

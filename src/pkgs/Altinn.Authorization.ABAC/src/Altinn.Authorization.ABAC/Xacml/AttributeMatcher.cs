@@ -1,4 +1,3 @@
-using System;
 using System.Text.RegularExpressions;
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Utils;

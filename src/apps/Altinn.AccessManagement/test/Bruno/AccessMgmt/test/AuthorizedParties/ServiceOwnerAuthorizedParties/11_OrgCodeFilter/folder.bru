@@ -1,0 +1,18 @@
+meta {
+  name: 11_OrgCodeFilter
+  seq: 11
+}
+
+docs {
+  Scenario: The org code filter is limited to the org code the caller owns
+
+    When a service owner filters on its own org code
+    Then the request succeeds
+    When it filters on an org code belonging to another service owner
+    Then the request is rejected
+    When the same filter is used with the admin scope
+    Then it is allowed, since the admin scope may ask on behalf of any org code
+
+  The filter narrows the list to parties where the subject has access to a resource owned by
+  that service owner.
+}

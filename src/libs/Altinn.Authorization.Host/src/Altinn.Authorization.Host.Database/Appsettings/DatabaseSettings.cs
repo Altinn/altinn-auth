@@ -1,5 +1,3 @@
-using System.Diagnostics.CodeAnalysis;
-
 namespace Altinn.Authorization.Host.Database.Appsettings;
 
 /// <summary>

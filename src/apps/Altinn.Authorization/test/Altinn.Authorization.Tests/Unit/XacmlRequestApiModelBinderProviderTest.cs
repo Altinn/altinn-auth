@@ -1,6 +1,5 @@
 ﻿using Altinn.Platform.Authorization.ModelBinding;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Microsoft.AspNetCore.Mvc.ModelBinding.Metadata;
 
 namespace Altinn.Authorization.Tests.Unit;
 

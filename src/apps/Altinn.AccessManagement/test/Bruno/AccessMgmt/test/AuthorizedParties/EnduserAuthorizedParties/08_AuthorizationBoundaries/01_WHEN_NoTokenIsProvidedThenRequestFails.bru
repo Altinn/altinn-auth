@@ -1,0 +1,22 @@
+meta {
+  name: 01_WHEN_NoTokenIsProvidedThenRequestFails
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties
+  body: none
+  auth: none
+}
+
+docs {
+  WHEN no token is provided, the request fails with 401. The request is sent without a
+  bearer token on purpose.
+}
+
+tests {
+  test("WHEN no token is provided, the request returns 401", function() {
+    expect(res.status).to.equal(401);
+  });
+}

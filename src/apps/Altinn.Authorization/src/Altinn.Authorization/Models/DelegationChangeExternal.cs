@@ -1,5 +1,4 @@
 #nullable enable
-using System;
 using System.Text.Json.Serialization;
 using Altinn.Authorization.Enums;
 

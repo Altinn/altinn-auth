@@ -1,6 +1,5 @@
 ﻿using Altinn.AccessManagement.Core.Enums;
 using Altinn.AccessManagement.Core.Models;
-using Altinn.AccessManagement.Core.Models.Register;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Enums;
 
@@ -68,9 +67,10 @@ public interface IDelegationMetadataRepository
     /// <param name="resourceIds">Collection of all resourceIds to lookup</param>
     /// <param name="from">The From party to use for lookup</param>
     /// <param name="to">All To parties to use for lookup</param>
+    /// <param name="toAppControlledRightholders">All To parties where the authenticated user has the role virksomhetens-representant-skjemaoppgaver to check for app controlled instance delegation to this entity</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>The complete InstanceDelegationChange record stored in the database</returns>
-    Task<IEnumerable<InstanceDelegationChange>> GetActiveInstanceDelegations(List<string> resourceIds, Guid from, List<Guid> to, CancellationToken cancellationToken = default);
+    Task<IEnumerable<InstanceDelegationChange>> GetActiveInstanceDelegations(List<string> resourceIds, Guid from, List<Guid> to, List<Guid> toAppControlledRightholders = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets the latest delegation change matching the filter values
@@ -196,33 +196,4 @@ public interface IDelegationMetadataRepository
     /// <param name="toPartyUuids">The party uuids to get received delegation for</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     Task<List<DelegationChange>> GetAllDelegationChangesForAuthorizedParties(List<Guid> toPartyUuids, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Retrieves the next page of application delegation changes starting from the specified feed index.
-    /// </summary>
-    /// <param name="startFeedIndex">The feed index from which to begin retrieving delegation changes. Must be greater than or equal to 1. Defaults
-    /// to 1.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains a list of delegation changes
-    /// starting from the specified feed index. The list will be empty if there are no further changes.</returns>
-    Task<List<DelegationChange>> GetNextPageAppDelegationChanges(long startFeedIndex = 1, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Retrieves the next page of resource registry delegation changes starting from the specified feed index.
-    /// </summary>
-    /// <param name="startFeedIndex">The feed index from which to begin retrieving delegation changes. Must be greater than or equal to 1. Defaults
-    /// to 1.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains a list of delegation changes
-    /// starting from the specified feed index. The list will be empty if there are no further changes.</returns>
-    Task<List<DelegationChange>> GetNextPageResourceDelegationChanges(long startFeedIndex = 1, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Retrieves the next page of instance delegation changes starting from the specified feed index.
-    /// </summary>
-    /// <param name="startFeedIndex">The feed index from which to begin retrieving delegation changes. Must be greater than or equal to 1. Defaults to 1.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used to cancel the asynchronous operation.</param>
-    /// <returns>A task that represents the asynchronous operation. The task result contains a list of delegation changes
-    /// starting from the specified feed index. The list will be empty if there are no further changes.</returns>
-    Task<List<InstanceDelegationChange>> GetNextPageInstanceDelegationChanges(long startFeedIndex = 1, CancellationToken cancellationToken = default);
 }

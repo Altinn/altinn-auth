@@ -130,12 +130,13 @@ flag-enabled client so the decision is actually exercised.
 
 ---
 
-## 3. `LegacyApiFixture` — Yuniql-backed legacy tests
+## 3. `LegacyApiFixture` — legacy-schema tests
 
 **Location:** `AccessMgmt.Tests/Fixtures/LegacyApiFixture.cs`
-**Use for:** Legacy tests that depend on the full Yuniql-migrated schema and
-haven't been rewritten against EF seed data yet.
-**Database:** Yuniql migrations **and** EF schema side-by-side.
+**Use for:** Tests backed by the Dapper / raw-Npgsql `ConsentRepository` on the
+`consent` schema, or by components that depend on the Yuniql-provisioned enum types.
+**Database:** EF Core (the `dbo` and `consent` schemas) **and** the Yuniql
+`accessmanagement` / `delegation` schemas, side-by-side.
 
 This fixture exists as an explicit bridge. New tests should **not** use it —
 prefer `ApiFixture`. The expected outcome is that the last `LegacyApiFixture`
@@ -147,9 +148,8 @@ consumers get rewritten on EF seed data over time and the fixture is retired.
 
 Under the hood, `ApiFixture` delegates database provisioning to
 `EFPostgresFactory`, a thin wrapper over the shared
-[`PostgresTestEngine`](../../src/testing/PostgresTestEngine.cs) (linked into test
-assemblies that set `IncludePostgresTestEngine`, the same mechanism as the
-`[UnitTest]`/`[IntegrationTest]` markers). The strategy:
+[`PostgresTestEngine`](../../src/libs/Altinn.Authorization.Testing/src/Altinn.Authorization.Testing/PostgresTestEngine.cs)
+from the `Altinn.Authorization.Testing` library. The strategy:
 
 1. A **single** PostgreSQL container is shared across every fixture in the
    test run (reference counted).

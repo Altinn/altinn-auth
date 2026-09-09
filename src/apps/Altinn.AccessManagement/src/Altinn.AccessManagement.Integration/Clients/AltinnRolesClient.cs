@@ -82,30 +82,4 @@ public class AltinnRolesClient : IAltinnRolesClient
             throw;
         }
     }
-
-    /// <inheritdoc />
-    public async Task<List<AuthorizedParty>> GetAuthorizedPartiesWithRoles(int userId, bool includePartiesViaKeyRoles, CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            UriBuilder uriBuilder = new UriBuilder($"{_sblBridgeSettings.BaseApiUrl}authorization/api/parties?userid={userId}&includeKeyRoleUnits={includePartiesViaKeyRoles}");
-
-            HttpResponseMessage response = await _client.GetAsync(uriBuilder.Uri, cancellationToken);
-            string content = await response.Content.ReadAsStringAsync(cancellationToken);
-
-            if (response.StatusCode == System.Net.HttpStatusCode.OK)
-            {
-                List<SblAuthorizedParty> sblAuthorizedParties = JsonSerializer.Deserialize<List<SblAuthorizedParty>>(content, _serializerOptions);
-                return sblAuthorizedParties.Select(sblAuthorizedParty => new AuthorizedParty(sblAuthorizedParty)).ToList();
-            }
-
-            _logger.LogError("AccessManagement // AltinnRolesClient // GetAuthorizedPartiesWithRoles // Unexpected HttpStatusCode: {StatusCode} Response: {Content}", response.StatusCode, content);
-            return new();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "AccessManagement // AltinnRolesClient // GetAuthorizedPartiesWithRoles // Exception");
-            throw;
-        }
-    }
 }

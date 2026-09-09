@@ -1,0 +1,43 @@
+meta {
+  name: 06_AND_SameResourcesAreFetchedById
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/roles/:id/resources?variant={{variant}}
+  body: none
+  auth: none
+}
+
+params:query {
+  variant: {{variant}}
+}
+
+params:path {
+  id: {{roleId}}
+}
+
+docs {
+  AND the same resources are reachable through the {id}/resources route.
+}
+
+script:pre-request {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  bru.setVar("roleId", td.roles.dagligLeder.id);
+  bru.setVar("variant", td.roles.dagligLeder.variant);
+}
+
+tests {
+  test("AND the role id resources route returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN resources are returned with a provider and a type", function() {
+    const data = res.getBody();
+    expect(data).to.be.an("array").that.is.not.empty;
+    expect(data[0].provider).to.have.property("id");
+    expect(data[0].type).to.have.property("id");
+  });
+}

@@ -1,7 +1,3 @@
-using System;
-using System.IO;
-using System.Threading.Tasks;
-
 using Altinn.Authorization.Tests.Integration;
 
 using Altinn.Platform.Authorization.Repositories.Interface;

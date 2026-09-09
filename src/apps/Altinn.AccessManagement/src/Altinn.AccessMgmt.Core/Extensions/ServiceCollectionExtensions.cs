@@ -36,7 +36,7 @@ public static class ServiceCollectionExtensions
     /// </summary>
     public static MeterProviderBuilder AddCoreTelemetry(this MeterProviderBuilder builder) =>
         builder.AddMeter(CoreTelemetry.SourceName);
-    
+
     /// <summary>
     /// Enables Core Telemetry.
     /// </summary>
@@ -51,9 +51,6 @@ public static class ServiceCollectionExtensions
     {
         services.AddCoreOtel();
         services.AddHostedService<RegisterHostedService>();
-        services.AddHostedService<AltinnRoleHostedService>();
-        services.AddHostedService<SingleRightsHostedService>();
-        services.AddHostedService<ConsentMigrationHostedService>();
         services.AddHostedService<OutboxHandlerJob>();
         services.AddHostedService<OutboxReaperJob>();
         services.AddScoped<RegisterHostedService>();
@@ -74,13 +71,13 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuthorizedPartyRepoServiceEf, AuthorizedPartyRepoServiceEf>();
         services.AddScoped<IClientDelegationService, ClientDelegationService>();
         services.AddScoped<IRequestService, RequestService>();
-        services.AddKeyedScoped<IAuthorizedPartiesService, AuthorizedPartiesServiceEf>("newConnectionQueryOnlyImplementation");
-        services.AddKeyedScoped<IAuthorizedPartiesService, AuthorizedPartiesServiceEfOld>("oldDelegationMetadataEfImplementation");
+        services.AddScoped<IAuthorizedPartiesService, AuthorizedPartiesServiceEf>();
         services.AddScoped<IServiceOwnerConnectionService, ServiceOwnerConnectionService>();
         services.AddScoped<IConsentDelegationCheckService, ConsentDelegationCheckService>();
 
         services.AddScoped<IAuthorizationScopeProvider, DefaultAuthorizationScopeProvider>();
         services.AddScoped<IAuthorizationHandler, ScopeConditionAuthorizationHandler>();
+        services.AddScoped<IAuthorizationHandler, PersonAccessManagerHandler>();
 
         // NOTE: can be removed once RequestReviewedNotificationHandler is in production.
         services.AddTransient<RightholderAddedNotificationHandler>();
@@ -106,18 +103,9 @@ public static class ServiceCollectionExtensions
         services.AddOptions<CoreAppsettings>()
             .Configure(configureAppsettings);
 
-        // Consent Migration - Configuration
-        services.AddOptions<ConsentMigrationSettings>()
-                .ValidateDataAnnotations()
-                .ValidateOnStart()
-                .BindConfiguration("ConsentMigration");
-
         // Resource Owner Delegation - Configuration
         services.AddOptions<ServiceOwnerDelegationSettings>()
                 .BindConfiguration("ServiceOwnerDelegation");
-
-        // Consent Migration - Services (Core - Scoped)
-        services.AddScoped<IConsentMigrationService, ConsentMigrationService>();
 
         AddJobs(services);
         return services;
@@ -128,14 +116,5 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<IPartySyncService, PartySyncService>();
         services.AddSingleton<IRoleSyncService, RoleSyncService>();
         services.AddSingleton<IResourceSyncService, ResourceSyncService>();
-        services.AddSingleton<IAltinnClientRoleSyncService, AltinnClientRoleSyncService>();
-        services.AddSingleton<IPrivateTaxAffairRoleSyncService, PrivateTaxAffairRoleSyncService>();
-        services.AddSingleton<IAltinnAdminRoleSyncService, AltinnAdminRoleSyncService>();
-        services.AddSingleton<IAltinnBankruptcyEstateRoleSyncService, AltinnBankruptcyEstateRoleSyncService>();
-        services.AddSingleton<IAllAltinnRoleSyncService, AllAltinnRoleSyncService>();
-        services.AddSingleton<ISingleAppRightSyncService, SingleAppRightSyncService>();
-        services.AddSingleton<ISingleResourceRegistryRightSyncService, SingleResourceRegistryRightSyncService>();
-        services.AddSingleton<ISingleInstanceRightSyncService, SingleInstanceRightSyncService>();
-        services.AddSingleton<IConsentMigrationSyncService, ConsentMigrationSyncService>();
     }
 }

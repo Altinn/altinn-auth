@@ -1,0 +1,37 @@
+meta {
+  name: 05_WHEN_TokenCarriesNoPartyThenMyClientsRequestFails
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/my/clients
+  body: none
+  auth: inherit
+}
+
+docs {
+  WHEN the caller uses an enterprise token, the my clients request fails with
+  401. The token carries the correct my clients read scope, but an enterprise
+  token has no party uuid claim, and the my endpoints resolve the acting party
+  from the token.
+}
+
+script:pre-request {
+  const tokenGenerator = require("./TestToolsTokenGenerator.js");
+  const sharedtestdata = require("./testdata/sharedtestdata.js");
+
+  const token = await tokenGenerator.getToken({
+    auth_org: sharedtestdata.serviceOwners.digdir.org,
+    auth_orgNo: sharedtestdata.serviceOwners.digdir.orgno,
+    auth_tokenType: sharedtestdata.authTokenType.enterprise,
+    auth_scopes: sharedtestdata.auth_scopes.myclientsRead,
+  });
+  bru.setVar("bearerToken", token);
+}
+
+tests {
+  test("WHEN the token carries no party, the my clients request returns 401", function() {
+    expect(res.status).to.equal(401);
+  });
+}

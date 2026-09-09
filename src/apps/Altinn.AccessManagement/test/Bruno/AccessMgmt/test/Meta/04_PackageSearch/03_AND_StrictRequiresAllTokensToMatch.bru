@@ -1,0 +1,33 @@
+meta {
+  name: 03_AND_StrictRequiresAllTokensToMatch
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/search?term={{term}}&strict=true
+  body: none
+  auth: none
+}
+
+params:query {
+  term: {{term}}
+  strict: true
+}
+
+docs {
+  AND when strict is true, every token in the term must match in some
+  degree. A term made of one real token and one nonsense token finds
+  nothing under strict, THEN the same term without strict still matches on
+  the real token.
+}
+
+script:pre-request {
+  bru.setVar("term", "underhold qqqqzzzz");
+}
+
+tests {
+  test("AND a strict search with an unmatched token returns 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

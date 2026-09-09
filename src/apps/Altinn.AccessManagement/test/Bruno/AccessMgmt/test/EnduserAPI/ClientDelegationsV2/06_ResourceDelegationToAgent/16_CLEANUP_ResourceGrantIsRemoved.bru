@@ -1,0 +1,40 @@
+meta {
+  name: 16_CLEANUP_ResourceGrantIsRemoved
+  type: http
+  seq: 16
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources?party={{clientB}}&from={{clientB}}&to={{party}}&resource={{resource}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{clientB}}
+  from: {{clientB}}
+  to: {{party}}
+  resource: {{resource}}
+}
+
+docs {
+  CLEANUP the resource grant from the client to the facilitator is removed
+  through the v1 connections API. Expects 204.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("clientB", td.REGN_Organisasjon.REGN_Org_Clients.client_B.partyUuid);
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("resource", td.clientDelegationV2.singleResource);
+
+  await loginAs(td.REGN_Organisasjon.REGN_Org_Clients.client_B.dagligleder);
+}
+
+tests {
+  test("CLEANUP the resource grant is removed with 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

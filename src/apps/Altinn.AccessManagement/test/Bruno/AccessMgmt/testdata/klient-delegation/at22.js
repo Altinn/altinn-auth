@@ -43,13 +43,26 @@
           },
         },
       },
+      // HYBELKANIN INNSIKTSFULL, alive in the register. The previous agent, GRANITT KREATIV,
+      // is registered as deceased and lives on as deceasedPerson for the negative tests.
       REGN_Agent: {
-        etternavn: "GRANITT",
-        personidentity: "08919574934",
-        userId: 20600687,
-        partyId: 50485120,
-        userUuid: "7c6617f7-71d2-4235-99bf-c35658ae5161",
+        name: "INNSIKTSFULL HYBELKANIN",
+        etternavn: "HYBELKANIN",
+        personidentity: "14906198453",
+        userId: 20276551,
+        partyId: 50807487,
+        userUuid: "37b157f8-0011-496f-8dcc-cdfbd2594da6",
       },
+    },
+    // GRANITT KREATIV, registered as deceased (2020-12-22). Used only to verify that
+    // agent registration and rightholder registration reject a deceased person.
+    deceasedPerson: {
+      name: "KREATIV GRANITT",
+      etternavn: "GRANITT",
+      personidentity: "08919574934",
+      userId: 20600687,
+      partyId: 50485120,
+      userUuid: "7c6617f7-71d2-4235-99bf-c35658ae5161",
     },
     REVI_Organisasjon: {
       name: "OVERFLADISK LANG TIGER AS",
@@ -73,5 +86,53 @@
       userId: 20596375,
       partyId: 51177430,
       partyUuid: "7b7bc643-821f-4cb2-b874-9dc6eb58f5c5",
+    },
+    // Fixtures for the v2 client delegation scenarios in test/EnduserAPI/ClientDelegationsV2.
+    clientDelegationV2: {
+      // Single resource whose policy lets a dagligleder delegate it onwards.
+      singleResource: "tilgangspakke_delegering_ressurs",
+      packages: {
+        regnskapsforerLonn: "urn:altinn:accesspackage:regnskapsforer-lonn",
+        regnskapsforerMedSignering: "urn:altinn:accesspackage:regnskapsforer-med-signeringsrettighet",
+        ansvarligRevisor: "urn:altinn:accesspackage:ansvarlig-revisor",
+        klientadministrator: "urn:altinn:accesspackage:klientadministrator",
+        skattegrunnlag: "urn:altinn:accesspackage:skattegrunnlag",
+        forretningsforerEiendom: "urn:altinn:accesspackage:forretningsforer-eiendom",
+        tjenesterNuf: "urn:altinn:accesspackage:tjenester-nuf",
+        fforTilgangsstyrerNufNotDelegable: "urn:altinn:accesspackage:ffor-tilgangsstyrer-nuf",
+      },
+      // Facilitator with forretningsforer relations to NUF clients.
+      forretningsforerNuf: {
+        facilitator: {
+          name: "OPPBLÅST UNG MINK ANS",
+          orgno: "314240200",
+          partyUuid: "41889f4c-48ce-44d9-ac23-aee0f9b1826b",
+          dagligleder: {
+            name: "ANSTENDIG ARTERIE",
+            pid: "15847099396",
+            userId: 20883145,
+            partyId: 50958336,
+            partyUuid: "b82992c6-9f7f-4445-bbe4-33a15873417a",
+          },
+        },
+        nufClient: {
+          name: "SAKTE FRISK STRUTS AB",
+          orgno: "311762966",
+          partyUuid: "56c38c7f-dbfb-4042-8058-bc424610311d",
+        },
+      },
+      // Forretningsforer client of the systemuser-clientdelegation facilitator whose
+      // unit type (BBL) is outside the ESEK/BRL scope of forretningsforer-eiendom.
+      forretningsforerBblClient: {
+        name: "USELVSTENDIG FLAT PUMA BBL",
+        orgno: "210815872",
+        partyUuid: "7f059b2b-f6d2-409b-83fd-194f1aaab90d",
+      },
+      unknown: {
+        partyUuid: "11111111-1111-1111-1111-111111111111",
+        packageUrn: "urn:altinn:accesspackage:bruno-finnes-ikke",
+        resourceRefId: "bruno-finnes-ikke",
+        roleCode: "bruno-finnes-ikke",
+      },
     },
   };

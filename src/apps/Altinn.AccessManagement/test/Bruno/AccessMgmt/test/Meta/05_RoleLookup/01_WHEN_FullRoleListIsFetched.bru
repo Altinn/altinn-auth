@@ -1,0 +1,39 @@
+meta {
+  name: 01_WHEN_FullRoleListIsFetched
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/roles
+  body: none
+  auth: none
+}
+
+docs {
+  WHEN the full role list is fetched, THEN a known role is present with its
+  code, name, urn, legacyRoleCode, isKeyRole and provider block. The action
+  binds no query parameters, so filtering happens client side on the full
+  list here rather than on the server.
+}
+
+tests {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  test("WHEN the role list is fetched, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the known role is present with its fields", function() {
+    const data = res.getBody();
+    const role = data.find(r => r.code === td.roles.deltakerDeltAnsvar.code);
+    expect(role, "expected the role in the full list").to.exist;
+    expect(role.id).to.equal(td.roles.deltakerDeltAnsvar.id);
+    expect(role.name).to.equal(td.roles.deltakerDeltAnsvar.name);
+    expect(role.urn).to.equal(td.roles.deltakerDeltAnsvar.urn);
+    expect(role.legacyRoleCode).to.equal(td.roles.deltakerDeltAnsvar.legacyRoleCode);
+    expect(role.isKeyRole).to.equal(td.roles.deltakerDeltAnsvar.isKeyRole);
+    expect(role.provider).to.have.property("code", td.roles.deltakerDeltAnsvar.providerCode);
+    expect(role.provider).to.have.property("name", td.roles.deltakerDeltAnsvar.providerName);
+  });
+}

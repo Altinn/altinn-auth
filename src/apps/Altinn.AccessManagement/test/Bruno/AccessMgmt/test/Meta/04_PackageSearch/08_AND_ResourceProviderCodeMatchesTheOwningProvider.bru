@@ -1,0 +1,42 @@
+meta {
+  name: 08_AND_ResourceProviderCodeMatchesTheOwningProvider
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/search?term={{term}}&resourceProviderCode={{resourceProviderCode}}
+  body: none
+  auth: none
+}
+
+params:query {
+  term: {{term}}
+  resourceProviderCode: {{resourceProviderCode}}
+}
+
+docs {
+  AND the same term filtered to the provider that actually owns a resource
+  behind the matching package still finds it.
+}
+
+script:pre-request {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  bru.setVar("term", td.packages.skattNaering.name);
+  bru.setVar("resourceProviderCode", td.packages.skattNaering.resourceProviderCode);
+}
+
+tests {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  test("AND filtering by the owning resourceProviderCode returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the package is found", function() {
+    const data = res.getBody();
+    const match = data.find(x => x.object.id === td.packages.skattNaering.id);
+    expect(match, "expected the package filtered to the ttd resource provider").to.exist;
+  });
+}

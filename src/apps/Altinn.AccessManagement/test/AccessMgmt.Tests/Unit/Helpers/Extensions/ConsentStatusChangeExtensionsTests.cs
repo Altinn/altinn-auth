@@ -22,8 +22,8 @@ namespace Altinn.AccessManagement.Tests.Unit.Helpers.Extensions;
 // Conventions used here:
 //  - Test naming follows `MethodUnderTest_Scenario_ExpectedResult`
 //    (docs/testing/TEST_NAMING_CONVENTION.md).
-//  - Assertions use FluentAssertions (`.Should()`); both Xunit and
-//    FluentAssertions are global usings via Directory.Build.targets, so no
+//  - Assertions use AwesomeAssertions (`.Should()`); both Xunit and
+//    AwesomeAssertions are global usings via Directory.Build.targets, so no
 //    `using` directives are needed for them.
 // ---------------------------------------------------------------------------
 [UnitTest]

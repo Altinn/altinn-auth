@@ -1,0 +1,73 @@
+meta {
+  name: 04_WHEN_APersonDelegatesToAPerson
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeRoles=true&includeAccessPackages=true&includeResources=true&includeInstances=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeRoles: true
+  includeAccessPackages: true
+  includeResources: true
+  includeInstances: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{subjectPersonId}}"
+  }
+}
+
+docs {
+  WHEN one person has delegated to another, a lookup of the receiving person returns the
+  delegating person with the access that was delegated.
+}
+
+script:pre-request {
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectPersonId", testdata.authParties_personB.pid);
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir);
+}
+
+tests {
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  const delegator = testdata.authParties_personA;
+
+  test("WHEN a person delegates to a person, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the delegating person is in the receiving person's list", function() {
+    const party = findParty(res.getBody(), delegator.partyuuid);
+    expect(party, `expected the person ${delegator.lastname} in the party list`).to.not.be.undefined;
+    expect(party.type).to.equal("Person");
+  });
+
+  test("AND the delegating person carries the access that was delegated", function() {
+    const party = findParty(res.getBody(), delegator.partyuuid);
+    const access = [
+      ...(party.authorizedAccessPackages || []),
+      ...(party.authorizedResources || []),
+      ...(party.authorizedRoles || []),
+      ...(party.authorizedInstances || []),
+    ];
+    expect(access, `expected some delegated access on ${delegator.lastname}`).to.not.be.empty;
+  });
+}

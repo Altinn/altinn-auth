@@ -3,7 +3,6 @@ using System.Net.Mime;
 using Altinn.AccessManagement.Api.Enduser.Models;
 using Altinn.AccessManagement.Api.Enduser.Validation;
 using Altinn.AccessManagement.Core.Constants;
-using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessMgmt.Core.Audit;
@@ -127,7 +126,7 @@ public class ClientDelegationController(
             return Unauthorized();
         }
 
-        var problem = await clientDelegationService.RemoveAnAgentsClient(provider, from, partyUuid, cascade, cancellationToken);
+        var problem = await clientDelegationService.RemoveClientFromAgent(provider, from, partyUuid, cascade, cancellationToken);
         if (problem is { })
         {
             return problem.ToActionResult();
@@ -155,7 +154,7 @@ public class ClientDelegationController(
             return Unauthorized();
         }
 
-        var result = await clientDelegationService.DeleteMyClient(partyUuid, provider, from, payload, cancellationToken);
+        var result = await clientDelegationService.DeleteMyClient(partyUuid, provider, from, payload, ClientDelegationParameterNames.V1, cancellationToken);
         if (result.IsProblem)
         {
             return result.Problem.ToActionResult();
@@ -242,7 +241,7 @@ public class ClientDelegationController(
             return entity.Problem.ToActionResult();
         }
 
-        var result = await clientDelegationService.AddAgent(party, entity.Value.Id, cancellationToken);
+        var result = await clientDelegationService.AddAgent(party, entity.Value.Id, ClientDelegationParameterNames.V1, cancellationToken);
         if (result.IsProblem)
         {
             return result.Problem.ToActionResult();
@@ -289,7 +288,7 @@ public class ClientDelegationController(
         [FromQuery(Name = "cascade")] bool cascade = false,
         CancellationToken cancellationToken = default)
     {
-        var problem = await clientDelegationService.RemoveAnAgentsClient(party, from, to, cascade, cancellationToken);
+        var problem = await clientDelegationService.RemoveClientFromAgent(party, from, to, cascade, cancellationToken);
         if (problem is { })
         {
             return problem.ToActionResult();
@@ -356,7 +355,7 @@ public class ClientDelegationController(
         [FromBody][Required] DelegationBatchInputDto payload,
         CancellationToken cancellationToken = default)
     {
-        var result = await clientDelegationService.DelegateAccessPackageToAgent(party, from, to, payload, cancellationToken);
+        var result = await clientDelegationService.DelegateAccessPackageToAgent(party, from, to, payload, ClientDelegationParameterNames.V1, cancellationToken);
         if (result.IsProblem)
         {
             return result.Problem.ToActionResult();
@@ -381,7 +380,7 @@ public class ClientDelegationController(
         CancellationToken cancellationToken = default
     )
     {
-        var result = await clientDelegationService.RemoveAgentDelegation(party, from, to, payload, cancellationToken);
+        var result = await clientDelegationService.RemoveAgentDelegation(party, from, to, payload, ClientDelegationParameterNames.V1, cancellationToken);
         if (result.IsProblem)
         {
             return result.Problem.ToActionResult();

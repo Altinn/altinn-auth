@@ -1,0 +1,42 @@
+meta {
+  name: 09_AND_SearchInResourcesFindsPackageByResourceName
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/search?term={{term}}&searchInResources=true
+  body: none
+  auth: none
+}
+
+params:query {
+  term: {{term}}
+  searchInResources: true
+}
+
+docs {
+  AND searching for the name of a resource, with searchInResources set,
+  finds the package that resource belongs to even though the term never
+  appears in the package's own name or description.
+}
+
+script:pre-request {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  bru.setVar("term", td.packages.revisorattesterer.resourceName);
+}
+
+tests {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  test("AND searchInResources returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the package that owns the resource is among the results", function() {
+    const data = res.getBody();
+    const match = data.find(x => x.object.id === td.packages.revisorattesterer.id);
+    expect(match, "expected the package reached through its resource name").to.exist;
+  });
+}

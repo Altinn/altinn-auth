@@ -30,6 +30,7 @@ public static class TestDataSeeds
         #region Resource Types
         db.ResourceTypes.Add(TestData.TestResourceType);
         db.ResourceTypes.Add(TestData.CorrespondenceResourceType);
+        db.ResourceTypes.Add(TestData.MaskinportenSchemaResourceType);
         #endregion
 
         #region Entities
@@ -42,6 +43,7 @@ public static class TestDataSeeds
             TestEntities.SystemUserClient,
             TestEntities.SystemUserStandard,
             TestEntities.OrganizationOkernBorettslag,
+            TestEntities.OrganizationSolsidenSameie,
             TestEntities.OrganizationNufExampleNUF,
             TestEntities.SIUserMarius,
             TestEntities.EmailUserMarius,
@@ -51,7 +53,8 @@ public static class TestDataSeeds
             TestEntities.MainUnitKarlstad,
             TestEntities.SubunitKarlstad,
             TestEntities.OrganizationOrsta,
-            TestEntities.PersonKasper
+            TestEntities.PersonKasper,
+            TestEntities.PersonMargit
         ]);
         #endregion
 
@@ -62,6 +65,7 @@ public static class TestDataSeeds
             TestData.BenSolo,
             TestData.LeiaOrgana,
             TestData.LukeSkyWalker,
+            TestData.PadmeAmidala,
             TestData.BakerJohnsen,
             TestData.SvendsenAutomobil,
             TestData.FredriksonsFabrikk,
@@ -100,7 +104,8 @@ public static class TestDataSeeds
             TestData.Milena,
             TestData.KaosMagicDesignAndArts,
             TestData.JinxArcane,
-            TestData.AlexTheArtist
+            TestData.AlexTheArtist,
+            TestData.MinSystemBruker
         ]);
         #endregion
 
@@ -176,6 +181,7 @@ public static class TestDataSeeds
         db.Resources.Add(TestData.NavSykepengerSykmelding);
         db.Resources.Add(TestData.SkattResource);
         db.Resources.Add(TestData.TestdirektoratetCorrespondenceService);
+        db.Resources.Add(TestData.NonDelegableMaskinportenSchema);
         db.Resources.AddRange(TestData.MvaResource);
 
         #endregion

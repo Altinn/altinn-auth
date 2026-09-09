@@ -1,8 +1,4 @@
-﻿using System;
-using System.Net.Http;
-using System.Threading;
-using System.Threading.Tasks;
-using Altinn.Authorization.ABAC.Xacml;
+﻿using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Authorization.Tests.Fixtures;
 using Altinn.Authorization.Tests.Util;
@@ -13,7 +9,6 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.FeatureManagement;
 using Moq;
-using Xunit;
 
 namespace Altinn.Authorization.Tests.Integration
 {
@@ -463,6 +458,68 @@ namespace Altinn.Authorization.Tests.Integration
 
             // Act
             XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(client, httpRequestMessage);
+
+            // Assert
+            AssertionUtil.AssertEqual(expected, contextResponse);
+        }
+
+        /// <summary>
+        /// Tests the scenario where the subject is DAGL for the reportee, so the decision is Permit for the
+        /// ClientAdministration system resource. Mirrors the Bruno SysRes_ClientAdministration_AsDagl_Permit
+        /// case. Pairs with <see cref="PDP_Decision_ResourceRegistry_SystemResourceClientAdministration_AsAdmai_ReturnsNotApplicable"/>:
+        /// same resource, action and reportee party; the only discriminating fact is the subject's role
+        /// (<see cref="SystemResourceTestData.DaglUserId"/> vs <see cref="SystemResourceTestData.AdmaiUserId"/>).
+        /// </summary>
+        [Fact]
+        public async Task PDP_Decision_ResourceRegistry_SystemResourceClientAdministration_AsDagl_ReturnsPermit()
+        {
+            string testCase = "ResourceRegistry_SystemResourceClientAdministration_Dagl_Permit";
+            HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+
+            // Act
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(_client, httpRequestMessage);
+
+            // Assert
+            AssertionUtil.AssertEqual(expected, contextResponse);
+        }
+
+        /// <summary>
+        /// Tests the scenario where the subject is ADMAI (not one of DAGL/HADM/KLADM) for the reportee, so the
+        /// decision is NotApplicable for the ClientAdministration system resource. Mirrors the Bruno
+        /// SysRes_ClientAdministration_AsAdmai_NotApplicable case. See
+        /// <see cref="PDP_Decision_ResourceRegistry_SystemResourceClientAdministration_AsDagl_ReturnsPermit"/>
+        /// for the Permit counterpart this guards against passing for the wrong reason.
+        /// </summary>
+        [Fact]
+        public async Task PDP_Decision_ResourceRegistry_SystemResourceClientAdministration_AsAdmai_ReturnsNotApplicable()
+        {
+            string testCase = "ResourceRegistry_SystemResourceClientAdministration_Admai_NotApplicable";
+            HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+
+            // Act
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(_client, httpRequestMessage);
+
+            // Assert
+            AssertionUtil.AssertEqual(expected, contextResponse);
+        }
+
+        /// <summary>
+        /// Tests the scenario where the subject is DAGL for the reportee, so the decision is Permit for the
+        /// MainAdmin system resource. Mirrors the Bruno SysRes_MainAdmin_AsDagl_Permit case. A second
+        /// resource's Permit cell reusing the same <see cref="SystemResourceTestData.DaglUserId"/> role
+        /// holder, added cheaply alongside the ClientAdministration pair above.
+        /// </summary>
+        [Fact]
+        public async Task PDP_Decision_ResourceRegistry_SystemResourceMainAdmin_AsDagl_ReturnsPermit()
+        {
+            string testCase = "ResourceRegistry_SystemResourceMainAdmin_Dagl_Permit";
+            HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateJsonProfileXacmlRequest(testCase);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+
+            // Act
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(_client, httpRequestMessage);
 
             // Assert
             AssertionUtil.AssertEqual(expected, contextResponse);

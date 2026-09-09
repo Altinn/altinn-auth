@@ -1,0 +1,48 @@
+meta {
+  name: 04_AND_SystemUserPackageListShowsClient
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents/accesspackages?party={{party}}&agent={{agent}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  agent: {{agent}}
+}
+
+docs {
+  AND the system user's package list shows the client org with the delegated
+  package among its package urns.
+}
+
+script:pre-request {
+  const su = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", su.regnskapsforer.partyuuid);
+  bru.setVar("agent", su.regnskapsforer.systemuser.id);
+
+  await loginAs(su.regnskapsforer.dagl);
+}
+
+tests {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const su = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
+
+  test("AND the system user package list request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the client entry includes the delegated package urn", function() {
+    const clientUuid = su.regnskapsforer.client_org.partyuuid.toLowerCase();
+    const entry = res.getBody().data.find(item => item.client.id.toLowerCase() === clientUuid);
+    expect(entry, "expected the client org in the system user package list").to.not.be.undefined;
+    const packageUrn = td.clientDelegationV2.packages.regnskapsforerMedSignering;
+    expect(entry.access.some(a => a.packages.some(p => p.urn === packageUrn))).to.be.true;
+  });
+}

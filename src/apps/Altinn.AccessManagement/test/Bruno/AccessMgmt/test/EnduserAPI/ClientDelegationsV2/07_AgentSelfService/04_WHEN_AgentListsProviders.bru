@@ -1,0 +1,38 @@
+meta {
+  name: 04_WHEN_AgentListsProviders
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/my/clientproviders
+  body: none
+  auth: inherit
+}
+
+docs {
+  WHEN the agent lists its providers. The facilitator appears as a provider with
+  a timestamp for when the agent was added.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs, scopes } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  await loginAs(td.REGN_Organisasjon.REGN_Agent, scopes.myclientsRead);
+}
+
+tests {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+
+  test("WHEN the agent lists its providers, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the facilitator appears as a provider with an added timestamp", function() {
+    const providerUuid = td.REGN_Organisasjon.partyUuid.toLowerCase();
+    const entry = res.getBody().data.find(item => item.provider.id.toLowerCase() === providerUuid);
+    expect(entry, "expected the facilitator in the provider list").to.not.be.undefined;
+    expect(entry.providerAddedAt).to.be.a("string").that.is.not.empty;
+  });
+}

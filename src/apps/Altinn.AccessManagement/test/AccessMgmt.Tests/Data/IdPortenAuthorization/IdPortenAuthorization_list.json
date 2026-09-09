@@ -1,0 +1,32 @@
+[
+  {
+    "authorization_id": "DDXh0PZpGwXaUHUhdiHsj6KwqWY_McHgwCZhul5hcBtbEcswPQSIgktfp5eul5_5MgFv0G2VeDXcV25uQ2JgTqN5renlPA",
+    "client_id": "democlient_idporten_test",
+    "client_name": "Demoklient for ID-porten test",
+    "client_description": "Democlient ID-porten test",
+    "authorized_at": 1770235450,
+    "expires": 1782471043,
+    "scopes": [
+      {
+        "name": "altinn:instances.read",
+        "description": "Lese innholdet i innboks og arkiv i Altinn",
+        "long_description": "Dette gir applikasjonen tilgang til å lese skjema og meldinger samt vedlegg. Gir ikke tilgang til å slette meldinger eller endre/sende inn skjema.\r\n\r\n**Tilgangen gjelder for deg og alle du har tilgang til å representere i Altinn.  \r\n[Les mer om deling av Altinn API](https://altinn.github.io/docs/api/rest/kom-i-gang/scopes/)**",
+        "requires_user_consent": true,
+        "owner_orgno": "991825827"
+      },
+      {
+        "name": "altinn:instances.write",
+        "description": "Fylle ut, signere og sende inn skjema i Altinn",
+        "long_description": "Dette gir applikasjonen tilgang til å slette og arkivere meldinger samt opprette, fyllte ut, signere og sende inn skjemaer.\r\n\r\n**Tilgangen gjelder for deg og alle du har tilgang til å representere i Altinn.  \r\n[Les mer om deling av Altinn API](https://altinn.github.io/docs/api/rest/kom-i-gang/scopes/)**",
+        "requires_user_consent": true,
+        "owner_orgno": "991825827"
+      }
+    ],
+    "user_agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
+    "consumer": {
+      "authority": "iso6523-actorid-upis",
+      "ID": "0192:991825827",
+      "orgNo": "991825827"
+    }
+  }
+]

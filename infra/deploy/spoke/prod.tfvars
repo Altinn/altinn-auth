@@ -28,6 +28,9 @@ appconfiguration = {
   platform_accessmanagement_endpoint  = "http://altinn-access-management.default.svc.cluster.local"
   platform_sbl_bridge_endpoint        = "https://ai-pr-vip-sblbridge.ai.basefarm.net/sblbridge/"
   maskinporten_endpoint               = "https://maskinporten.no/"
+  idporten_authorization_endpoint     = "https://authorization-api.idporten.no/"
+  idporten_authorization_client_id    = "4717b438-8df8-473b-b305-c5a26df80611"
+  idporten_authorization_environment  = "prod"
 }
 
 services = {

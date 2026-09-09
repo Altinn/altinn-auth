@@ -86,10 +86,7 @@ variable "db_storage_tier" {
 variable "configuration" {
   type = object({
     consent = optional(object({
-      batch_size                = optional(number, 5)
-      only_expired_consents     = optional(bool, true)
-      max_degree_of_parallelism = optional(number, 5)
-      events_page_size          = optional(number, 100)
+      events_page_size = optional(number, 100)
     }), {})
     core = optional(object({
       request_notify_request_approved_in_seconds = optional(number, 60 * 15) # Deprecated

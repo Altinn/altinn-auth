@@ -1,0 +1,18 @@
+meta {
+  name: 13_ForretningsforerPackageFilter
+  seq: 13
+}
+
+docs {
+  Scenario: The packages filter only selects clients that hold the package
+
+    When the client list is filtered by the eiendom package
+    Then the BRL and ESEK clients are returned carrying the eiendom package
+    And the BBL client is not in the list
+
+  The facilitator and its forretningsforer clients come from the register test
+  data behind testdata/systemuser-clientdelegation. The eiendom package is
+  scoped to the ESEK and BRL unit types, so the BBL client never holds it and
+  must not be selected by the filter. The scenario is read only and needs no
+  cleanup.
+}

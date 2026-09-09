@@ -2,7 +2,7 @@
 
 Short, opinionated guide. For naming, see
 [TEST_NAMING_CONVENTION.md](TEST_NAMING_CONVENTION.md). For assertions, see
-[FLUENT_ASSERTIONS_GUIDELINES.md](FLUENT_ASSERTIONS_GUIDELINES.md).
+[AWESOME_ASSERTIONS_GUIDELINES.md](AWESOME_ASSERTIONS_GUIDELINES.md).
 
 ## Pick the right test type
 
@@ -27,7 +27,7 @@ Every test class must carry a category marker:
 - `[UnitTest]` — pure/fast, no fixture.
 - `[IntegrationTest]` — uses `ApiFixture` / a database / the real pipeline.
 
-The markers (`src/testing/TestCategories.cs`) emit a `Category` trait that CI
+The markers (`eng/testing/TestCategories.cs`) emit a `Category` trait that CI
 uses to run unit and integration as separate lanes, so an **untagged test runs
 in neither lane**. Put the marker on the test class (and on each nested test
 class, where that pattern is used).

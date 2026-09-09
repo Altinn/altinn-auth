@@ -7,3 +7,23 @@
 .blazor-error-boundary::after {
     content: "An error has occurred."
 }
+
+/* Monospace text (ids, URNs, codes, SQL) — use instead of inline font-family styles. */
+.mono {
+    font-family: monospace;
+}
+
+/* Label/value rows inside SummaryCard (see Components/Shared/SummaryRow.razor). */
+.summary-label {
+    width: 35%;
+    color: var(--mud-palette-text-secondary);
+    font-size: .8125rem;
+}
+
+.summary-value {
+    font-size: .8125rem;
+}
+
+.summary-value-mono {
+    font-family: monospace;
+}

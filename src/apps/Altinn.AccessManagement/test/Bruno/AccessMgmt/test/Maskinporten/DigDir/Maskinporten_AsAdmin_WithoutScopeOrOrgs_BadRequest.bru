@@ -48,6 +48,6 @@ tests {
   test(requestName + "|HttpStatus.BadRequest and Body.Data with ProblemDetails", function() {
     expect(res.status).to.equal(400);
     assert.equal(body.status, "400");
-    assert.equal(body.title, "Query without parameter; scope, must provide at least one of; supplierOrg, consumerOrg");
+    assert.equal(body.title, "Missing query parameters; provide at least one of: scope, supplierOrg, consumerOrg");
   });
 }

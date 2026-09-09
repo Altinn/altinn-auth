@@ -1,0 +1,38 @@
+meta {
+  name: 07_AND_UnknownProviderFilterReturnsNothing
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/my/clients?provider={{unknownParty}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  provider: {{unknownParty}}
+}
+
+docs {
+  AND filtering the my clients list on an unknown provider returns an empty list.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs, scopes } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("unknownParty", td.clientDelegationV2.unknown.partyUuid);
+
+  await loginAs(td.REGN_Organisasjon.REGN_Agent, scopes.myclientsRead);
+}
+
+tests {
+  test("AND the unknown provider filtered request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the filtered result is empty", function() {
+    expect(res.getBody().data).to.be.an("array").that.is.empty;
+  });
+}

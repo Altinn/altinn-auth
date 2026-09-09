@@ -1,0 +1,15 @@
+meta {
+  name: 02_AccessInformationFlags
+  seq: 2
+}
+
+docs {
+  Scenario: Access information is only returned when it is asked for
+
+    Given the daily leader asks for every kind of access information
+    Then roles, access packages, resources and instances are all populated
+    When no access information is asked for
+    Then all four collections are empty on every party
+    And the same holds when no query parameters are given at all
+    And each flag populates only its own collection
+}

@@ -1,0 +1,42 @@
+meta {
+  name: 05_AND_AreaPackagesAreFetched
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/meta/info/accesspackages/area/:id/packages
+  body: none
+  auth: none
+}
+
+params:path {
+  id: {{areaId}}
+}
+
+docs {
+  AND the packages belonging to the Kultur og frivillighet area are fetched,
+  THEN the Kunst og underholdning package used elsewhere in this suite is
+  among them.
+}
+
+script:pre-request {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  bru.setVar("areaId", td.areas.kulturOgFrivillighet.id);
+}
+
+tests {
+  const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  test("AND the area packages request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the Kunst og underholdning package is present", function() {
+    const data = res.getBody();
+    const pkg = data.find(p => p.id === td.packages.kunstOgUnderholdning.id);
+    expect(pkg, "expected the Kunst og underholdning package in the area").to.exist;
+    expect(pkg.name).to.equal(td.packages.kunstOgUnderholdning.name);
+  });
+}

@@ -1,17 +1,21 @@
-﻿namespace Altinn.Authorization.Api.Contracts.AccessManagement;
+﻿using System.Text.Json.Serialization;
+
+namespace Altinn.Authorization.Api.Contracts.AccessManagement;
 
 /// <summary>
-/// Compact versjon of resource
+/// Compact version of resource
 /// </summary>
 public class CompactResourceDto
 {
     /// <summary>
     /// Unique identifier
     /// </summary>
+    [JsonPropertyName("id")]
     public Guid Id { get; set; }
 
     /// <summary>
-    /// Value
+    /// Reference identifier
     /// </summary>
-    public string Value { get; set; }
+    [JsonPropertyName("refId")]
+    public string RefId { get; set; }
 }

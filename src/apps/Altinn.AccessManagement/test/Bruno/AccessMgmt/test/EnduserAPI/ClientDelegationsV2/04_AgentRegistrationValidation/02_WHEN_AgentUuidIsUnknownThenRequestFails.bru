@@ -1,0 +1,48 @@
+meta {
+  name: 02_WHEN_AgentUuidIsUnknownThenRequestFails
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents?party={{party}}&agent={{agent}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  agent: {{agent}}
+}
+
+docs {
+  WHEN the facilitator tries to register an agent using a party uuid that does
+  not exist.
+
+  Expects 400 with validation error AM.VLD-00006 pointing at the agent
+  parameter.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("agent", td.clientDelegationV2.unknown.partyUuid);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  test("WHEN the agent uuid is unknown, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN the error body reports validation error AM.VLD-00006 on the agent parameter", function() {
+    const body = res.getBody();
+    expect(body.code).to.equal("STD-00000");
+    const err = body.validationErrors.find(e => e.code === "AM.VLD-00006");
+    expect(err, "expected validation error AM.VLD-00006").to.not.be.undefined;
+    expect(JSON.stringify(err.paths)).to.include("agent");
+  });
+}

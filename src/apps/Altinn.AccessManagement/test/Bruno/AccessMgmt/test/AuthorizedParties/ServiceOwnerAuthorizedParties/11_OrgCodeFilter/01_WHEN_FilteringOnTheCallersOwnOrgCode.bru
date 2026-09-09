@@ -1,0 +1,53 @@
+meta {
+  name: 01_WHEN_FilteringOnTheCallersOwnOrgCode
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeAccessPackages=true&orgCode=digdir
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeAccessPackages: true
+  orgCode: digdir
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{subjectPersonId}}"
+  }
+}
+
+docs {
+  WHEN a service owner filters on its own org code, the request succeeds and the list is narrowed
+  to parties where the subject has access to a resource owned by that service owner.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner, scopes } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectPersonId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.pid);
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir, scopes.authorizedPartiesResourceOwner);
+}
+
+tests {
+  test("WHEN filtering on the caller's own org code, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the response is a party list", function() {
+    expect(res.getBody()).to.be.an("array");
+  });
+}

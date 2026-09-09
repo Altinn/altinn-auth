@@ -23,7 +23,6 @@ using Altinn.Platform.Authorization.Services.Interfaces;
 using Altinn.Platform.Authorization.Telemetry;
 using Altinn.Platform.Register.Models;
 using Altinn.Platform.Storage.Interface.Models;
-using AutoMapper;
 using Azure.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -52,9 +51,13 @@ namespace Altinn.Platform.Authorization.Controllers
         private readonly IRegisterService _registerService;
         private readonly IAccessListAuthorization _accessListAuthorization;
         private readonly DecisionTelemetry _decisionTelemetry;
-        private readonly IMapper _mapper;
 
         private readonly SortedDictionary<string, AuthInfo> _appInstanceInfo = new();
+
+        /// <summary>
+        /// Resolved once per request by <see cref="RecordPdpDecisionMetric"/>, see the comment there.
+        /// </summary>
+        private string _callerKind;
 
         private static JsonSerializerOptions jsonSerializerOptions = new()
         {
@@ -79,7 +82,6 @@ namespace Altinn.Platform.Authorization.Controllers
         /// <param name="eventLog">the authorization event logger</param>
         /// <param name="featureManager">the feature manager</param>
         /// <param name="decisionTelemetry">PDP decision metric recorder</param>
-        /// <param name="mapper">The model mapper</param>
         public DecisionController(
             IAccessManagementWrapper accessManagement,
             IResourceRegistry resourceRegistry,
@@ -93,8 +95,7 @@ namespace Altinn.Platform.Authorization.Controllers
             IMemoryCache memoryCache,
             IEventLog eventLog,
             IFeatureManager featureManager,
-            DecisionTelemetry decisionTelemetry,
-            IMapper mapper)
+            DecisionTelemetry decisionTelemetry)
         {
             _pdp = new PolicyDecisionPoint();
             _prp = policyRetrievalPoint;
@@ -109,7 +110,6 @@ namespace Altinn.Platform.Authorization.Controllers
             _registerService = registerService;
             _accessListAuthorization = accessListAuthorization;
             _decisionTelemetry = decisionTelemetry;
-            _mapper = mapper;
         }
 
         /// <summary>
@@ -193,9 +193,9 @@ namespace Altinn.Platform.Authorization.Controllers
         {
             try
             {
-                XacmlJsonRequestRoot jsonRequest = _mapper.Map<XacmlJsonRequestRoot>(authorizationRequest);
+                XacmlJsonRequestRoot jsonRequest = authorizationRequest.ToInternal();
                 XacmlJsonResponse xacmlResponse = await Authorize(jsonRequest.Request, true, cancellationToken);
-                return _mapper.Map<XacmlJsonResponseExternal>(xacmlResponse);
+                return xacmlResponse.ToExternal();
             }
             catch (Exception ex)
             {
@@ -223,7 +223,7 @@ namespace Altinn.Platform.Authorization.Controllers
                 {
                     try
                     {
-                        List<XacmlContextRequest> requestList = GetRequestForLog(_mapper.Map<XacmlJsonRequestRoot>(authorizationRequest).Request);
+                        List<XacmlContextRequest> requestList = GetRequestForLog(authorizationRequest.ToInternal().Request);
                         if (requestList.Count == 1 && logSingleRequest)
                         {
                             await _eventLog.CreateAuthorizationEvent(_featureManager, requestList[0], HttpContext, xacmlContextResponse, cancellationToken);
@@ -242,7 +242,7 @@ namespace Altinn.Platform.Authorization.Controllers
                     }
                 }
 
-                return _mapper.Map<XacmlJsonResponseExternal>(jsonResult);
+                return jsonResult.ToExternal();
             }
         }
 
@@ -420,7 +420,8 @@ namespace Altinn.Platform.Authorization.Controllers
         /// <summary>
         /// Resolves the resource owner and resource identifier for the current decision request and records
         /// a PDP decision counter increment so that PDP usage can be attributed back to the service owner of
-        /// the resource being protected, dimensioned on which PDP API (internal or external) served it.
+        /// the resource being protected, dimensioned on which PDP API (internal or external) served it and
+        /// on what kind of caller requested it.
         /// </summary>
         private async Task RecordPdpDecisionMetric(XacmlContextRequest decisionRequest, bool isExternalRequest, CancellationToken cancellationToken)
         {
@@ -456,7 +457,13 @@ namespace Altinn.Platform.Authorization.Controllers
                     ? DecisionTelemetry.ExternalApiDimensionValue
                     : DecisionTelemetry.InternalApiDimensionValue;
 
-                _decisionTelemetry.RecordDecision(ownerOrg, resourceId, apiKind);
+                // Cached because a multirequest calls Authorize once per sub-request, and the caller is
+                // a property of the HTTP request. The controller instance is per request, so this is safe.
+                _callerKind ??= isExternalRequest
+                    ? PdpCallerHelper.GetExternalCallerKind(HttpContext?.User)
+                    : DecisionTelemetry.InternalCallerDimensionValue;
+
+                _decisionTelemetry.RecordDecision(ownerOrg, resourceId, apiKind, _callerKind);
             }
             catch (Exception ex)
             {
@@ -669,12 +676,12 @@ namespace Altinn.Platform.Authorization.Controllers
                 });
             }
 
-            // trust AccessManagement lookup to not return delegations with coveredByPartyId or organization toUuids unless the subject userId actually has keyrole access to these
-            var keyRolePartyIds = delegations.Where(d => d.CoveredByPartyId.HasValue).Select(d => d.CoveredByPartyId.Value).Distinct().ToList();
-            var keyRolePartyUuids = delegations.Where(d => d.ToUuidType == UuidType.Organization && d.ToUuid.HasValue).Select(d => d.ToUuid.Value).Distinct().ToList();
+            // trust AccessManagement lookup to not return delegations with coveredByPartyId or organization toUuids unless the subject userId actually has keyrole or client-delegated access to these
+            var orgAccessPartyIds = delegations.Where(d => d.CoveredByPartyId.HasValue).Select(d => d.CoveredByPartyId.Value).Distinct().ToList();
+            var orgAccessPartyUuids = delegations.Where(d => d.ToUuidType == UuidType.Organization && d.ToUuid.HasValue).Select(d => d.ToUuid.Value).Distinct().ToList();
 
             XacmlContextAttributes subjectContextAttributes = decisionRequest.GetSubjectAttributes();
-            await _delegationContextHandler.EnrichRequestSubjectAttributes(subjectContextAttributes, keyRolePartyIds, keyRolePartyUuids, isInstanceAccessRequest, cancellationToken);
+            await _delegationContextHandler.EnrichRequestSubjectAttributes(subjectContextAttributes, orgAccessPartyIds, orgAccessPartyUuids, isInstanceAccessRequest, cancellationToken);
 
             return await ProcessDelegationResult(decisionRequest, delegations, resourcePolicy, cancellationToken);
         }

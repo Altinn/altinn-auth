@@ -1,0 +1,45 @@
+meta {
+  name: 05_WHEN_FilteringOnAPartyTheCallerCannotAccess
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeAccessPackages=true&partyFilter={{unreachableParty}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeAccessPackages: true
+  partyFilter: {{unreachableParty}}
+}
+
+docs {
+  WHEN the list is filtered on the uuid of a party the caller has no access to, the
+  request still succeeds and the party list is empty. Filtering never widens what the
+  caller may see.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  bru.setVar("unreachableParty", testdata.idportenEmailUser.partyUuid);
+
+  await loginAs(testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder);
+}
+
+tests {
+  test("WHEN filtering on an unreachable party, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the party list is empty", function() {
+    expect(res.getBody().data).to.be.an("array").that.is.empty;
+  });
+
+  test("THEN the response is still the paginated envelope", function() {
+    expect(res.getBody().links).to.be.an("object");
+  });
+}

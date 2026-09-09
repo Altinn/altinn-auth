@@ -2,7 +2,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "4.73.0"
+      version = "4.81.0"
     }
     static = {
       source  = "tiwood/static"
@@ -10,7 +10,7 @@ terraform {
     }
     time = {
       source  = "hashicorp/time"
-      version = "0.13.1"
+      version = "0.14.1"
     }
   }
 
@@ -194,9 +194,6 @@ module "appsettings" {
   labels = {
     "${var.environment}-access-management" = {
       values = merge({
-        "ConsentMigration:BatchSize"                  = { value = tostring(var.configuration.consent.batch_size) }
-        "ConsentMigration:OnlyExpiredConsents"        = { value = tostring(var.configuration.consent.only_expired_consents) }
-        "ConsentMigration:MaxDegreeOfParallelism"     = { value = tostring(var.configuration.consent.max_degree_of_parallelism) }
         "Consent:EventsPageSize"                      = { value = tostring(var.configuration.consent.events_page_size) }
         "Core:Request:NotifyRequestApprovedInSeconds" = { value = tostring(var.configuration.core.request_notify_request_approved_in_seconds) } # Deprecated
         "Core:Request:NotifyRequestPendingInSeconds"  = { value = tostring(var.configuration.core.request_notify_request_pending_in_seconds) }  # Deprecated
@@ -322,24 +319,6 @@ module "appsettings" {
     {
       name        = "AccessMgmt.Core.HostedServices.Outbox.Reaper"
       description = "Specifies if the outbox reaper should be enabled."
-      label       = "${lower(var.environment)}-access-management"
-      value       = false
-    },
-    {
-      name        = "AccessMgmt.Core.Services.IncludeSingleRightsImportedAssignments"
-      description = "Ignores single rights."
-      label       = "${lower(var.environment)}-access-management"
-      value       = false
-    },
-    {
-      name        = "AccessMgmt.Enduser.Controller.ClientDelegation"
-      description = "Specifies Client Delegation should be enabled in enduser API."
-      label       = "${lower(var.environment)}-access-management"
-      value       = false
-    },
-    {
-      name        = "AccessMgmt.Core.Services.AuthorizedParties.EfEnabled"
-      description = "(EF) Specifies if the AuthorizedParty service re-write to run on mainly EF-services should be used in dependency injection. Will need recycle of pods to take effect."
       label       = "${lower(var.environment)}-access-management"
       value       = false
     },
@@ -476,12 +455,6 @@ module "appsettings" {
       value       = false
     },
     {
-      name        = "AccessMgmt.Core.HostedServices.ConsentMigration"
-      description = "Specifies if consent migration service should start"
-      label       = "${lower(var.environment)}-access-management"
-      value       = false
-    },
-    {
       name        = "AccessMgmt.Controller.RequestAssignment.Resource"
       description = "Enables request assignment resource endpoints in enduser and serviceowner APIs."
       label       = "${lower(var.environment)}-access-management"
@@ -520,6 +493,18 @@ module "appsettings" {
     {
       name        = "AccessManagement.Altinn2CacheInvalidation.Disable"
       description = "Setting this flag to true disables SblBridge calls for invalidating cache in Altinn 2."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
+      name        = "AccessManagement.Pip.IncludeClientDelegatedResources"
+      description = "Specifies if v2 client-delegated resources should be included in PIP GetAllDelegationChanges response."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
+      name        = "AccessManagement.ConnectionQuery.IncludeClientDelegationResources"
+      description = "Specifies if client-delegated resources should be included in ConnectionQuery and AuthorizedParties response."
       label       = "${lower(var.environment)}-access-management"
       value       = false
     },

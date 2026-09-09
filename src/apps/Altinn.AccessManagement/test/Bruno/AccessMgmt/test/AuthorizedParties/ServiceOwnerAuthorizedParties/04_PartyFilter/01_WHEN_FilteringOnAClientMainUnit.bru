@@ -1,0 +1,77 @@
+meta {
+  name: 01_WHEN_FilteringOnAClientMainUnit
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeAccessPackages=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeAccessPackages: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{subjectPersonId}}",
+    "partyFilter": [
+      {
+        "type": "urn:altinn:party:uuid",
+        "value": "{{clientMainUnit}}"
+      }
+    ]
+  }
+}
+
+docs {
+  WHEN the subject's list is filtered on a client main unit, only that main unit is returned.
+  Its subunits are not pulled in, since the filter is on the party and not on the hierarchy.
+  The service owner endpoint takes the party filter in the request body, not as a query parameter.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectPersonId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.pid);
+  bru.setVar("clientMainUnit", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_USENSUELL_UVIRKSOM_TIGER.partyUuid);
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { flatten, findParty } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  const client = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_USENSUELL_UVIRKSOM_TIGER;
+
+  test("WHEN filtering on a client main unit, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN only the filtered main unit is returned at the top level", function() {
+    const top = res.getBody();
+    expect(top.map(party => party.partyUuid.toLowerCase())).to.have.members([client.partyUuid.toLowerCase()]);
+  });
+
+  test("AND the subunit is not pulled in, since the filter is on the party and not the hierarchy", function() {
+    const party = res.getBody().find(item => item.partyUuid.toLowerCase() === client.partyUuid.toLowerCase());
+    expect(party.subunits, "a main unit filter returns the main unit without its subunits").to.be.empty;
+  });
+
+  test("AND the filtered main unit carries the access the subject holds on it", function() {
+    const party = res.getBody().find(item => item.partyUuid.toLowerCase() === client.partyUuid.toLowerCase());
+    expect(party.onlyHierarchyElementWithNoAccess, "the main unit matched the filter and holds access").to.be.false;
+    expect(party.authorizedAccessPackages, "the client is held with the accountant packages").to.not.be.empty;
+  });
+}

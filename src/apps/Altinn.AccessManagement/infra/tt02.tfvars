@@ -6,7 +6,7 @@ aks_federation = [
     service_account = "altinn-access-management"
   }
 ]
-deploy_app_principal_id = "a9585a64-20f0-4d18-aba6-9930f92b809c" # GitHub: altinn/altinn-authorization-tmp - Prod
+deploy_app_principal_id = "a9585a64-20f0-4d18-aba6-9930f92b809c" # GitHub: altinn/altinn-auth - Prod
 platform_workflow_principal_ids = [
   "1f5bc37d-3a69-4fbb-b2f2-c1da190cd0d2", # altinn-access-management-app-tt02-aks01
   "7df20147-fff7-4c9b-a28d-07a0005687d3"  # altinn-access-management-app-tt02-aks02
@@ -14,11 +14,6 @@ platform_workflow_principal_ids = [
 db_max_pool_size = 10
 db_compute_sku   = "D2"
 configuration = {
-  consent = {
-    batch_size                = 5000
-    max_degree_of_parallelism = 10
-    only_expired_consents     = false
-  }
   core = {
     request_notify_request_approved_in_seconds = 600
     request_notify_request_pending_in_seconds  = 960

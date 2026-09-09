@@ -1,14 +1,9 @@
-using System;
 using System.Diagnostics.CodeAnalysis;
 using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
 using Altinn.Platform.Authorization.Clients;
 using Altinn.Platform.Authorization.Services.Interface;
 using Altinn.Platform.Profile.Models;
-using Microsoft.Extensions.Logging;
 
 namespace Altinn.Platform.Authorization.Services.Implementation
 {

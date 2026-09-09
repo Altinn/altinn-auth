@@ -62,7 +62,7 @@ else
 
 @code {
     private List<JobRun> _allRuns = [];
-    private readonly HashSet<Guid> _subscribed = [];
+    private readonly Dictionary<Guid, JobRun> _subscribed = [];
 
     private IReadOnlyList<JobRun> ActiveRuns =>
         _allRuns.Where(r => r.Status is JobStatus.Queued or JobStatus.Running).ToList();
@@ -77,9 +77,11 @@ else
 
     private void Subscribe(JobRun run)
     {
-        if (_subscribed.Add(run.Id))
-            run.OnUpdated += () => InvokeAsync(RefreshAndRender);
+        if (_subscribed.TryAdd(run.Id, run))
+            run.OnUpdated += HandleRunUpdated;
     }
+
+    private void HandleRunUpdated() => _ = InvokeAsync(RefreshAndRender);
 
     private void RefreshRuns()
     {
@@ -104,5 +106,13 @@ else
         StateHasChanged();
     }
 
-    public void Dispose() { /* subscriptions managed by JobRunCard.Dispose() */ }
+    public void Dispose()
+    {
+        // JobRun instances live in the singleton store; detach so the handlers
+        // (and this page) don't outlive the visit.
+        foreach (var run in _subscribed.Values)
+            run.OnUpdated -= HandleRunUpdated;
+
+        _subscribed.Clear();
+    }
 }

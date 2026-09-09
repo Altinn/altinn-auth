@@ -1,0 +1,51 @@
+meta {
+  name: 08_WHEN_RemovingClientFromAgentWithoutCascadeThenRequestFails
+  type: http
+  seq: 8
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/agents/clients?party={{party}}&client={{clientB}}&agent={{agent}}&cascade=false
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  client: {{clientB}}
+  agent: {{agent}}
+  cascade: false
+}
+
+docs {
+  WHEN removing the client from the agent without cascade while the package
+  delegation still exists.
+
+  Expects 400 with validation error AM.VLD-00031, because the delegation must
+  be removed first or the cascade flag must be set.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("clientB", td.REGN_Organisasjon.REGN_Org_Clients.client_B.partyUuid);
+  bru.setVar("agent", td.REGN_Organisasjon.REGN_Agent.userUuid);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  test("WHEN the client is removed from the agent without cascade, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN the error body reports validation error AM.VLD-00031 on the cascade parameter", function() {
+    const body = res.getBody();
+    expect(body.code).to.equal("STD-00000");
+    expect(body.validationErrors.some(e => e.code === "AM.VLD-00031")).to.be.true;
+    const err = body.validationErrors.find(e => e.code === "AM.VLD-00031");
+    expect(JSON.stringify(err.paths)).to.include("cascade");
+  });
+}

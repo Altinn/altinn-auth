@@ -1,0 +1,54 @@
+meta {
+  name: 02_WHEN_FilteringOnAResourceTheCallerHolds
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeResources=true&anyOfResourceIds={{resourceId}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  includeResources: true
+  anyOfResourceIds: {{resourceId}}
+}
+
+docs {
+  WHEN the list is filtered on a single resource the caller holds on one client, that
+  client is returned and the only resource left on it is the one filtered on.
+
+  A client the caller reaches without that resource drops out of the result.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  bru.setVar("resourceId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_rightholderOrg2.resourceIdDelegatedToPerson);
+
+  await loginAs(testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+  const firm = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER;
+  const resourceId = firm.client_rightholderOrg2.resourceIdDelegatedToPerson;
+
+  test("WHEN filtering on a resource the caller holds, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the client that carries the resource is returned with only that resource", function() {
+    const party = findParty(res.getBody().data, firm.client_rightholderOrg2.partyUuid);
+    expect(party, "expected the client that carries the filtered resource").to.not.be.undefined;
+    expect(party.authorizedResources).to.have.members([resourceId]);
+  });
+
+  test("THEN a client the caller reaches without that resource is not returned", function() {
+    expect(findParty(res.getBody().data, firm.client_USENSUELL_UVIRKSOM_TIGER.partyUuid), "the accountant client does not carry the filtered resource").to.be.undefined;
+  });
+}

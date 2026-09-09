@@ -9,6 +9,7 @@ using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.AccessMgmt.PersistenceEF.Models.Contracts;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
@@ -34,6 +35,7 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
 
         if (requestResource != null)
         {
+            await ResolveLastUpdatedBy([requestResource], ct);
             return DtoMapper.Convert(requestResource);
         }
 
@@ -47,6 +49,7 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
 
         if (requestPackage != null)
         {
+            await ResolveLastUpdatedBy([requestPackage], ct);
             return DtoMapper.Convert(requestPackage);
         }
 
@@ -217,6 +220,17 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
                 ResourceId = resourceId
             };
             db.RequestAssignmentResources.Add(request);
+            await UpsertOutboxMessage(ct);
+            if (await db.SaveChangesWithOutboxRetry(() => UpsertOutboxMessage(ct), ct) == 0)
+            {
+                return Problems.RequestCreationFailed;
+            }
+        }
+
+        return await GetRequest(request.Id, ct);
+
+        async Task UpsertOutboxMessage(CancellationToken ct)
+        {
             await RequestPendingNotification.Upsert(
                 db,
                 assignment.FromId,
@@ -226,16 +240,7 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
                 appsettings?.Value?.Request?.NotifyRequestPendingInSeconds ?? 60 * 15,
                 ct
             );
-
-            var res = await db.SaveChangesAsync(ct);
-
-            if (res == 0)
-            {
-                return Problems.RequestCreationFailed;
-            }
         }
-
-        return await GetRequest(request.Id, ct);
     }
 
     private async Task<Result<RequestDto>> CreatePackageRequest(RequestAssignment assignment, string package, RequestStatus initialStatus = RequestStatus.Pending, CancellationToken ct = default)
@@ -260,6 +265,17 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
                 PackageId = packageId,
             };
             db.RequestAssignmentPackages.Add(request);
+            await UpsertOutboxMessage(ct);
+            if (await db.SaveChangesWithOutboxRetry(() => UpsertOutboxMessage(ct), ct) == 0)
+            {
+                return Problems.RequestCreationFailed;
+            }
+        }
+
+        return await GetRequest(request.Id, ct);
+
+        async Task UpsertOutboxMessage(CancellationToken ct)
+        {
             await RequestPendingNotification.Upsert(
                 db,
                 assignment.FromId,
@@ -269,15 +285,7 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
                 appsettings?.Value?.Request?.NotifyRequestPendingInSeconds ?? 60 * 15,
                 ct
             );
-
-            var res = await db.SaveChangesAsync(ct);
-            if (res == 0)
-            {
-                return Problems.RequestCreationFailed;
-            }
         }
-
-        return await GetRequest(request.Id, ct);
     }
 
     private static Result<RequestDto> VerifyRequestStatusUpdate(RequestDto request, Guid partyUuid, RequestStatus status)
@@ -399,8 +407,23 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
 
         if (status == RequestStatus.Approved || status == RequestStatus.Rejected)
         {
-            // ToId: organization / person that request approves / declines request.
-            // FromId: organization / person that request access.
+            await UpsertOutboxMessage(status, request, ct);
+        }
+
+        if (await db.SaveChangesWithOutboxRetry(() => UpsertOutboxMessage(status, request, ct), ct) == 0)
+        {
+            errorBuilder.Add(ValidationErrors.DbNoRowsAffected, nameof(db.RequestAssignmentPackages));
+        }
+
+        if (errorBuilder.TryBuild(out var problems))
+        {
+            return problems;
+        }
+
+        return await GetRequest(id, ct);
+
+        async Task UpsertOutboxMessage(RequestStatus status, RequestAssignmentPackage request, CancellationToken ct)
+        {
             await RequestReviewedNotification.Upsert(
                 db,
                 request.Assignment.ToId,
@@ -412,21 +435,6 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
                 ct
             );
         }
-
-        var res = await db.SaveChangesAsync(ct);
-
-        if (res == 0)
-        {
-            errorBuilder.Add(ValidationErrors.DbNoRowsAffected, nameof(db.RequestAssignmentPackages));
-        }
-
-        errorBuilder.TryBuild(out var problems);
-        if (problems != null)
-        {
-            return problems;
-        }
-
-        return await GetRequest(id, ct);
     }
 
     private async Task<Result<RequestDto>> UpdateResourceRequestStatus(Guid id, RequestStatus status, CancellationToken ct = default)
@@ -459,8 +467,23 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
 
         if (status == RequestStatus.Approved || status == RequestStatus.Rejected)
         {
-            // ToId: organization / person that request approves / declines request.
-            // FromId: organization / person that request access.
+            await UpsertOutboxMessage(status, request, ct);
+        }
+
+        if (await db.SaveChangesWithOutboxRetry(() => UpsertOutboxMessage(status, request, ct), ct) == 0)
+        {
+            errorBuilder.Add(ValidationErrors.DbNoRowsAffected, nameof(db.RequestAssignmentResources));
+        }
+
+        if (errorBuilder.TryBuild(out var problems))
+        {
+            return problems;
+        }
+
+        return await GetRequest(id, ct);
+
+        async Task UpsertOutboxMessage(RequestStatus status, RequestAssignmentResource request, CancellationToken ct)
+        {
             await RequestReviewedNotification.Upsert(
                 db,
                 request.Assignment.ToId,
@@ -472,47 +495,74 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
                 ct
             );
         }
-
-        var res = await db.SaveChangesAsync(ct);
-
-        if (res == 0)
-        {
-            errorBuilder.Add(ValidationErrors.DbNoRowsAffected, nameof(db.RequestAssignmentResources));
-        }
-
-        errorBuilder.TryBuild(out var problems);
-        if (problems != null)
-        {
-            return problems;
-        }
-
-        return await GetRequest(id, ct);
     }
 
     private async Task<IEnumerable<RequestAssignmentResource>> GetRequestAssignmentResource(RequestFilter filter, IEnumerable<RequestStatus> status, CancellationToken ct)
     {
         ValidateFilter(filter);
 
-        return await BuildRequestAssignmentResourceQuery(filter, status)
+        var requests = await BuildRequestAssignmentResourceQuery(filter, status)
             .Include(r => r.Assignment).ThenInclude(a => a.From)
             .Include(r => r.Assignment).ThenInclude(a => a.To)
             .Include(r => r.Assignment).ThenInclude(a => a.Role)
             .Include(r => r.Assignment).ThenInclude(a => a.By)
             .Include(r => r.Resource)
             .ToListAsync(cancellationToken: ct);
+
+        await ResolveLastUpdatedBy(requests, ct);
+        return requests;
     }
 
     private async Task<IEnumerable<RequestAssignmentPackage>> GetRequestAssignmentPackage(RequestFilter filter, IEnumerable<RequestStatus> status, CancellationToken ct)
     {
         ValidateFilter(filter);
 
-        return await BuildRequestAssignmentPackageQuery(filter, status)
+        var requests = await BuildRequestAssignmentPackageQuery(filter, status)
             .Include(r => r.Assignment).ThenInclude(a => a.From)
             .Include(r => r.Assignment).ThenInclude(a => a.To)
             .Include(r => r.Assignment).ThenInclude(a => a.Role)
             .Include(r => r.Assignment).ThenInclude(a => a.By)
             .Include(r => r.Package)
             .ToListAsync(cancellationToken: ct);
+
+        await ResolveLastUpdatedBy(requests, ct);
+        return requests;
+    }
+
+    /// <summary>
+    /// Fills in <see cref="IHasLastUpdatedBy.LastUpdatedBy"/> from the rows' audit values.
+    /// </summary>
+    /// <remarks>
+    /// Audit_ChangedBy is not a foreign key, so the party is looked up here rather than through
+    /// an EF relationship. One batched query covers the whole result set, and an audit value with
+    /// no matching entity simply leaves the navigation null, which the mapper renders as a bare id.
+    /// </remarks>
+    private async Task ResolveLastUpdatedBy<T>(IReadOnlyCollection<T> requests, CancellationToken ct)
+        where T : IHasLastUpdatedBy
+    {
+        var ids = requests
+            .Select(r => r.Audit_ChangedBy)
+            .OfType<Guid>()
+            .Distinct()
+            .ToList();
+
+        if (ids.Count == 0)
+        {
+            return;
+        }
+
+        var parties = await db.Entities
+            .AsNoTracking()
+            .Where(e => ids.Contains(e.Id))
+            .ToDictionaryAsync(e => e.Id, ct);
+
+        foreach (var request in requests)
+        {
+            if (request.Audit_ChangedBy is { } id && parties.TryGetValue(id, out var party))
+            {
+                request.LastUpdatedBy = party;
+            }
+        }
     }
 
     private async Task<int> GetRequestAssignmentResourceCount(RequestFilter filter, IEnumerable<RequestStatus> status, CancellationToken ct)

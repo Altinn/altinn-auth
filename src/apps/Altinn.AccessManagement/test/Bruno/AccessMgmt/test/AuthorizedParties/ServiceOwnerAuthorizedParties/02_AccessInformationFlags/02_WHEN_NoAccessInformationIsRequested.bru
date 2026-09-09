@@ -1,0 +1,69 @@
+meta {
+  name: 02_WHEN_NoAccessInformationIsRequested
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeRoles=false&includeAccessPackages=false&includeResources=false&includeInstances=false
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeRoles: false
+  includeAccessPackages: false
+  includeResources: false
+  includeInstances: false
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{subjectPersonId}}"
+  }
+}
+
+docs {
+  WHEN every access information flag is off, the parties are still returned but all four
+  access collections are empty on every party in the tree.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectPersonId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.pid);
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { flatten, findParty } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  test("WHEN no access information is requested, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the parties are still returned", function() {
+    const firm = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER;
+    expect(findParty(res.getBody(), firm.partyUuid), "expected the accounting firm in the party list").to.not.be.undefined;
+    expect(findParty(res.getBody(), firm.client_USENSUELL_UVIRKSOM_TIGER.partyUuid), "expected the client in the party list").to.not.be.undefined;
+  });
+
+  test("THEN every party has empty roles, packages, resources and instances", function() {
+    for (const party of flatten(res.getBody())) {
+      expect(party.authorizedRoles, `roles returned for ${party.partyUuid}`).to.be.empty;
+      expect(party.authorizedAccessPackages, `access packages returned for ${party.partyUuid}`).to.be.empty;
+      expect(party.authorizedResources, `resources returned for ${party.partyUuid}`).to.be.empty;
+      expect(party.authorizedInstances, `instances returned for ${party.partyUuid}`).to.be.empty;
+    }
+  });
+}

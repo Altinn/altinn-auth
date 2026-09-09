@@ -1,0 +1,69 @@
+meta {
+  name: 02_WHEN_TheSubjectIsAnIdportenEmailUser
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeRoles=true&includeAccessPackages=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeRoles: true
+  includeAccessPackages: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:userid",
+    "value": "{{subjectUserId}}"
+  }
+}
+
+docs {
+  WHEN the subject is an ID-porten user registered by email address, the only party returned is
+  the user's own, carrying the email identifier as its identity.
+
+  The lookup is by user id because the endpoint has no email based subject form. The supported
+  forms are person by national identity number, uuid or user name, enterprise user by user name
+  or uuid, organisation by number or uuid, party id, user id and system user uuid. The email
+  address is asserted on the returned party instead.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectUserId", String(testdata.idportenEmailUser.userId));
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+
+  const user = testdata.idportenEmailUser;
+
+  test("WHEN the subject is an ID-porten email user, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the user's own party is the only party returned", function() {
+    const parties = res.getBody();
+    expect(parties.map(party => party.partyUuid.toLowerCase())).to.have.members([user.partyUuid.toLowerCase()]);
+  });
+
+  test("THEN the party carries the email identifier and no national identity number", function() {
+    const party = res.getBody()[0];
+    expect(party.emailId).to.equal(user.emailId);
+    expect(party.personId, "an email registered user has no national identity number").to.be.null;
+  });
+}

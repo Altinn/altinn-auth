@@ -10,7 +10,7 @@ namespace Altinn.AccessManagement.Tests.Unit.Models.Consent;
 /// parse).
 /// </summary>
 [UnitTest]
-[Collection("Models Test")]
+[Collection(ModelsCollection.Name)]
 public class ConsentPartyUrnTest
 {
     [Fact]

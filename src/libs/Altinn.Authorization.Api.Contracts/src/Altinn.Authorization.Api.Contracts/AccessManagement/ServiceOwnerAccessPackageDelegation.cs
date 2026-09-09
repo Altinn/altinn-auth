@@ -1,7 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
-using Altinn.Authorization.Api.Contracts.Consent;
-
-namespace Altinn.Authorization.Api.Contracts.AccessManagement
+﻿namespace Altinn.Authorization.Api.Contracts.AccessManagement
 {
     /// <summary>
     /// Defines  package delegation between two 
