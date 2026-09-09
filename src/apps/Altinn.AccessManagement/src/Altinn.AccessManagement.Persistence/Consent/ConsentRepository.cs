@@ -621,7 +621,7 @@ namespace Altinn.AccessManagement.Persistence.Consent
             const string consentChangesQuery = @"WITH reqs AS MATERIALIZED (
                                             SELECT consentrequestid
                                             FROM consent.consentrequest
-                                            WHERE topartyuuid = @partyUuid
+                                            WHERE topartyuuid = @partyUuid OR handledbypartyuuid = @partyUuid
                                         )
                                         SELECT
                                         ce.consentrequestid,

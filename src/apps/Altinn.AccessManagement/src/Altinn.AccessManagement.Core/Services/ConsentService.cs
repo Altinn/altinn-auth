@@ -325,14 +325,10 @@ namespace Altinn.AccessManagement.Core.Services
 
             if (performedByParty.IsOrganizationId(out OrganizationNumber organizationNumber))
             {
-                if (details.To.IsOrganizationId(out OrganizationNumber toOrganizationNumber))
-                {
-                    if (!toOrganizationNumber.Equals(organizationNumber))
-                    {
-                        return Problems.NotAuthorizedForConsentRequest;
-                    }
-                }
-                else
+                bool isTo = details.To.IsOrganizationId(out OrganizationNumber toOrganizationNumber) && toOrganizationNumber.Equals(organizationNumber);
+                bool isHandledBy = details.HandledBy != null && details.HandledBy.IsOrganizationId(out OrganizationNumber handledByOrganizationNumber) && handledByOrganizationNumber.Equals(organizationNumber);
+
+                if (!isTo && !isHandledBy)
                 {
                     return Problems.NotAuthorizedForConsentRequest;
                 }
