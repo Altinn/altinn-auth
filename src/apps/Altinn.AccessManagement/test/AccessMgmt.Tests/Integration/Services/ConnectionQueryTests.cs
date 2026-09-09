@@ -473,6 +473,20 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
     }
 
     [Fact]
+    public async Task HasConnection_AdosSubunitHierarchy_AdosInheritanceDisabled_ReturnsFalse()
+    {
+        // With no IFeatureManager the ADOS subunit inheritance flag defaults to off, so the
+        // ADOS subunit must not inherit the mainunit's connection through the hierarchy reason.
+        var subUnitId = TestDataSet.GetEntity("ADOS Subunit").Id;
+        var personId = TestDataSet.GetEntity("AdosPer").Id;
+
+        var (result, reason) = await _query.HasConnection(subUnitId, personId, [ConnectionReason.Hierarchy]);
+
+        Assert.False(result);
+        Assert.Null(reason);
+    }
+
+    [Fact]
     public async Task KeyRole_ToOthers_NonIksWithDeltakerDeltAnsvar_IsIncluded()
     {
         var nonIksId = TestDataSet.GetEntity("Non-IKS Selskap").Id;

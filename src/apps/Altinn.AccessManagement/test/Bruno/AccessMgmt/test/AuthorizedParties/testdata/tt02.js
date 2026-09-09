@@ -1,4 +1,4 @@
-﻿module.exports =
+module.exports =
 {
     "env": "tt02",
     "resources": {
@@ -335,7 +335,7 @@
                 "userId": 2203099,
                 "partyId": 51025583,
                 "partyUuid": "a8dbe5a4-55d9-418b-9a9f-3179b9f48a6f"
-            },
+            }
         }
     },
     "regnskapsforerShowClientUnitsFalse": {
@@ -381,13 +381,12 @@
         "emailId": "am-bruno-automated-tests@mailinator.com",
         "userId": 2680437,
         "partyId": 53440923,
-        "partyUuid": "a28806e7-5e11-4ffa-be5a-56c47dcedf98",
+        "partyUuid": "a28806e7-5e11-4ffa-be5a-56c47dcedf98"
     },
     // ADOS (administrativ enhet - offentlig sektor) main unit with an ADOS subunit.
     // Used to verify that the DAGL (daglig leder) of the ADOS main unit inherits access to
     // the ADOS subunit, mirroring the BEDR/AAFY subunit inheritance behaviour, once the
     // AccessManagement.Subunit.AdosInheritance feature flag is enabled.
-    // TODO: Replace the placeholder identifiers/names below with a real ADOS unit that exists in AT22.
     "adosMainUnit": {
         "name": "UNG GYLDEN BJØRN KOMMUNE",
         "orgno": "311010905",

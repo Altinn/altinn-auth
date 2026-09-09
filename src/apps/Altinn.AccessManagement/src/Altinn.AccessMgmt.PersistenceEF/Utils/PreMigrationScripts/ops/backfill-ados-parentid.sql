@@ -1,4 +1,4 @@
-﻿-- ─────────────────────────────────────────────────────────────────────────────
+-- ─────────────────────────────────────────────────────────────────────────────
 -- Manual backfill: set ParentId for existing ADOS (administrative unit - public
 -- sector) subunits so they inherit mainunit access, equal to BEDR/AAFY.
 --
