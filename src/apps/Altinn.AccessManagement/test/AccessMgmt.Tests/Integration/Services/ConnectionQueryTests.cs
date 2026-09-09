@@ -120,6 +120,60 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
     }
 
     [Fact]
+    public async Task GetConnectionsFromOthers_AdosPer_AdosInheritanceDisabled_ExcludesAdosSubunit()
+    {
+        var mainUnitId = TestDataSet.GetEntity("ADOS Mainunit").Id;
+        var subUnitId = TestDataSet.GetEntity("ADOS Subunit").Id;
+        var personId = TestDataSet.GetEntity("AdosPer").Id;
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { personId },
+            IncludeKeyRole = true,
+            EnrichEntities = true,
+            IncludeDelegation = true,
+            IncludeMainUnitConnections = true,
+            IncludeSubConnections = true,
+            ExcludeDeleted = false,
+            EnrichPackageResources = false,
+            IncludeAdosSubunitInheritance = false,
+        };
+
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+        var connections = DtoMapper.ConvertFromOthers(dbResult, false);
+
+        var mainUnit = connections.Single(t => t.Party.Id == mainUnitId);
+        Assert.DoesNotContain(mainUnit.Connections, t => t.Party.Id == subUnitId);
+    }
+
+    [Fact]
+    public async Task GetConnectionsFromOthers_AdosPer_AdosInheritanceEnabled_IncludesAdosSubunit()
+    {
+        var mainUnitId = TestDataSet.GetEntity("ADOS Mainunit").Id;
+        var subUnitId = TestDataSet.GetEntity("ADOS Subunit").Id;
+        var personId = TestDataSet.GetEntity("AdosPer").Id;
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { personId },
+            IncludeKeyRole = true,
+            EnrichEntities = true,
+            IncludeDelegation = true,
+            IncludeMainUnitConnections = true,
+            IncludeSubConnections = true,
+            ExcludeDeleted = false,
+            EnrichPackageResources = false,
+            IncludeAdosSubunitInheritance = true,
+        };
+
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+        var connections = DtoMapper.ConvertFromOthers(dbResult, false);
+
+        var mainUnit = connections.Single(t => t.Party.Id == mainUnitId);
+        Assert.Contains(mainUnit.Connections, t => t.Party.Id == subUnitId);
+    }
+
+    [Fact]
     public async Task GetConnectionsFromOthers_Nina_ReturnsSkrikFrisorOnly()
     {
         var orgId = TestDataSet.GetEntity("Skrik Frisør").Id;
@@ -1272,8 +1326,10 @@ internal static class TestDataSet
 
         // ADOS subunit test entities (administrative unit - public sector).
         // Mirrors the BEDR "Baker Johnsen" hierarchy: a mainunit, an ADOS subunit whose ParentId points to the mainunit,
-        // and a person with a direct assignment on the mainunit. Used to verify ADOS subunit inheritance is only
-        // applied when ConnectionQueryFilter.IncludeAdosSubunitInheritance is enabled.
+        // and a person (AdosPer) with a direct ManagingDirector assignment on the mainunit (see Assignments below).
+        // Exercised by GetConnectionsFromOthers_AdosPer_AdosInheritanceDisabled_ExcludesAdosSubunit and
+        // GetConnectionsFromOthers_AdosPer_AdosInheritanceEnabled_IncludesAdosSubunit, which verify ADOS subunit
+        // inheritance is only applied when ConnectionQueryFilter.IncludeAdosSubunitInheritance is enabled.
         new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000050"), Name = "ADOS Mainunit", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.ORGL, OrganizationIdentifier = "ORG-ADOS-01", ParentId = null, RefId = "ORG-ADOS-01" },
         new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000051"), Name = "ADOS Subunit", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.ADOS, OrganizationIdentifier = "ORG-ADOS-01-01", ParentId = Guid.Parse("0195efb8-7c80-7a01-8001-000000000050"), RefId = "ORG-ADOS-01-01" },
         new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000052"), Name = "AdosPer", TypeId = EntityTypeConstants.Person, VariantId = EntityVariantConstants.Person, PersonIdentifier = "11018412345", RefId = "11018412345", DateOfBirth = DateOnly.Parse("1984-01-11") },
@@ -1320,6 +1376,10 @@ internal static class TestDataSet
         new Assignment() { Id = Guid.Parse("019f64f8-1c28-7c28-9a1c-daba52081006"), FromId = Entities.First(t => t.Name == "ABC IKS").Id, ToId = Entities.First(t => t.Name == "Kommune 2").Id, RoleId = RoleConstants.ParticipantSharedResponsibility }, // deltaker-delt-ansvar (keyrole) for IKS ABC to Kommune 2
         new Assignment() { Id = Guid.Parse("019f64f8-39fc-79fc-b40f-65f25fa98b92"), FromId = Entities.First(t => t.Name == "ABC IKS").Id, ToId = Entities.First(t => t.Name == "DEF IKS").Id, RoleId = RoleConstants.Auditor }, // Revisor for IKS ABC to DEF IKS
         new Assignment() { Id = Guid.Parse("019f64f8-5c9c-7c9c-9a6e-f2e4f28e439a"), FromId = Entities.First(t => t.Name == "DEF IKS").Id, ToId = Entities.First(t => t.Name == "Kommune 2").Id, RoleId = RoleConstants.ParticipantSharedResponsibility }, // deltaker-delt-ansvar (keyrole) for IKS DEF to Kommune 2
+
+        // ADOS subunit test assignment: AdosPer is Managing Director (DAGL) of the ADOS Mainunit.
+        // The ADOS Subunit inherits this access via ParentId only when ADOS subunit inheritance is enabled.
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000053"), FromId = Entities.First(t => t.Name == "ADOS Mainunit").Id, ToId = Entities.First(t => t.Name == "AdosPer").Id, RoleId = RoleConstants.ManagingDirector }, // Daglig leder
     };
 
     internal static Assignment GetAssignment(string fromName, string toName, Guid roleId)

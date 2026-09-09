@@ -1,0 +1,23 @@
+﻿meta {
+	name: 10_AdosSubunitInheritance
+	seq: 10
+}
+
+docs {
+	Scenario: The daily leader of an ADOS main unit inherits access to its ADOS subunit
+
+		Given an ADOS (administrativ enhet - offentlig sektor) main unit that has an ADOS subunit
+		And a person with the daily leader (DAGL) key role on the ADOS main unit
+		When the daily leader lists authorized parties with subunits included
+		Then the ADOS main unit is returned
+		And the ADOS subunit is nested under the ADOS main unit
+
+	This mirrors the existing BEDR/AAFY subunit inheritance. It verifies the read-side effect
+	of the AccessManagement.Subunit.AdosInheritance feature flag: once the ADOS subunit's
+	ParentId points to the ADOS main unit, a key role on the main unit carries down to the
+	subunit just like for ordinary business subunits.
+
+	Personas come from `testdata/<env>.js` under the `adosMainUnit` key. The ADOS unit and its
+	subunit are part of the seeded environment data (a valid ADOS unit that exists in AT22 and
+	TT02), so the step reads them rather than creating them.
+}
