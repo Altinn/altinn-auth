@@ -283,7 +283,7 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
         return await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    private bool ShouldSetParent(ExternalRoleAssignmentEvent item, bool adosSubunitInheritanceEnabled) =>
+    internal static bool ShouldSetParent(ExternalRoleAssignmentEvent item, bool adosSubunitInheritanceEnabled) =>
         item.RoleIdentifier == RoleConstants.HasAsRegistrationUnitBEDR.Entity.Code
         || item.RoleIdentifier == RoleConstants.HasAsRegistrationUnitAAFY.Entity.Code
         || (adosSubunitInheritanceEnabled && item.RoleIdentifier == RoleConstants.AdministrativeUnitPublicSector.Entity.Code);

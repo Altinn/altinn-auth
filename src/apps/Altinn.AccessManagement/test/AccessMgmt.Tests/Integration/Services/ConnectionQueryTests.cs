@@ -1269,6 +1269,14 @@ internal static class TestDataSet
         new Entity() { Id = Guid.Parse("019f64ec-6579-7579-b961-3277e49293cf"), Name = "ABC IKS", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.IKS, OrganizationIdentifier = "605001815", ParentId = null, RefId = "605001815" },
         new Entity() { Id = Guid.Parse("019f64e1-2ad1-7ad1-b839-9a4265b79b5a"), Name = "DEF IKS", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.IKS, OrganizationIdentifier = "605001793", ParentId = null, RefId = "605001793" },
         new Entity() { Id = Guid.Parse("0195efb8-7c80-7a77-8203-e7ca159053d0"), Name = "Non-IKS Selskap", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.AS, OrganizationIdentifier = "605001777", ParentId = null, RefId = "605001777" },
+
+        // ADOS subunit test entities (administrative unit - public sector).
+        // Mirrors the BEDR "Baker Johnsen" hierarchy: a mainunit, an ADOS subunit whose ParentId points to the mainunit,
+        // and a person with a direct assignment on the mainunit. Used to verify ADOS subunit inheritance is only
+        // applied when ConnectionQueryFilter.IncludeAdosSubunitInheritance is enabled.
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000050"), Name = "ADOS Mainunit", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.ORGL, OrganizationIdentifier = "ORG-ADOS-01", ParentId = null, RefId = "ORG-ADOS-01" },
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000051"), Name = "ADOS Subunit", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.ADOS, OrganizationIdentifier = "ORG-ADOS-01-01", ParentId = Guid.Parse("0195efb8-7c80-7a01-8001-000000000050"), RefId = "ORG-ADOS-01-01" },
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000052"), Name = "AdosPer", TypeId = EntityTypeConstants.Person, VariantId = EntityVariantConstants.Person, PersonIdentifier = "11018412345", RefId = "11018412345", DateOfBirth = DateOnly.Parse("1984-01-11") },
     };
 
 #pragma warning disable SA1401 // Fields should be private
