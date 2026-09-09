@@ -1,4 +1,4 @@
-module.exports =
+﻿module.exports =
 {
     "env": "at22",
     "resources": {
@@ -405,7 +405,7 @@ module.exports =
             "name": "VIS KONGE PANDA",
             "orgno": "313676781",
             "partyId": 51648758,
-            "partyUuid": "747a58fd-153f-469d-b255-bcca7f6854990"
+            "partyUuid": "747a58fd-153f-469d-b255-bcca7f685499"
         }
     },
     "deletedPartyRetentionYears": 2

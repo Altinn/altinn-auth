@@ -144,10 +144,7 @@ public class ConnectionQuery(AppDbContext db, IFeatureManager? featureManager = 
     {
         try
         {
-            if (featureManager is not null)
-            {
-                filter.IncludeAdosSubunitInheritance = await IsAdosSubunitInheritanceEnabledAsync();
-            }
+            filter.IncludeAdosSubunitInheritance = await IsAdosSubunitInheritanceEnabledAsync();
 
             bool delayChildNesting = true;
             bool delayFromFilter = true;

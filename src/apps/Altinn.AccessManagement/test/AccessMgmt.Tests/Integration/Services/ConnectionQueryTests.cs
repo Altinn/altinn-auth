@@ -7,6 +7,8 @@ using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.FeatureManagement;
+using Moq;
 using DelegationPackage = Altinn.AccessMgmt.PersistenceEF.Models.DelegationPackage;
 using DelegationResource = Altinn.AccessMgmt.PersistenceEF.Models.DelegationResource;
 
@@ -126,6 +128,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
         var subUnitId = TestDataSet.GetEntity("ADOS Subunit").Id;
         var personId = TestDataSet.GetEntity("AdosPer").Id;
 
+        // _query is constructed without an IFeatureManager, so ADOS inheritance is always off (reversible default).
         var filter = new ConnectionQueryFilter
         {
             ToIds = new[] { personId },
@@ -136,7 +139,6 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
             IncludeSubConnections = true,
             ExcludeDeleted = false,
             EnrichPackageResources = false,
-            IncludeAdosSubunitInheritance = false,
         };
 
         var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
@@ -153,6 +155,13 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
         var subUnitId = TestDataSet.GetEntity("ADOS Subunit").Id;
         var personId = TestDataSet.GetEntity("AdosPer").Id;
 
+        // The filter value is always derived from the feature flag, so enable it through a feature manager.
+        var featureManager = new Mock<IFeatureManager>();
+        featureManager
+            .Setup(m => m.IsEnabledAsync("AccessManagement.Subunit.AdosInheritance"))
+            .ReturnsAsync(true);
+        var query = new ConnectionQuery(_db, featureManager.Object);
+
         var filter = new ConnectionQueryFilter
         {
             ToIds = new[] { personId },
@@ -163,10 +172,9 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
             IncludeSubConnections = true,
             ExcludeDeleted = false,
             EnrichPackageResources = false,
-            IncludeAdosSubunitInheritance = true,
         };
 
-        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+        var dbResult = await query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
         var connections = DtoMapper.ConvertFromOthers(dbResult, false);
 
         var mainUnit = connections.Single(t => t.Party.Id == mainUnitId);
