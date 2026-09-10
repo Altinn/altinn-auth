@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.TestUtils.Fixtures;
+﻿using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
@@ -9,8 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Altinn.AccessMgmt.Core.Tests.Integration.Services;
 
 /// <summary>
-/// Integration tests for <see cref="Altinn.AccessMgmt.Core.Services.AssignmentService.ClearAssignmentsForDeletedSystemUser"/>
-/// and <see cref="Altinn.AccessMgmt.Core.Services.AssignmentService.ClearAssignmentsForDeletedSystemUsers"/>.
+/// Integration tests for <see cref="Altinn.AccessMgmt.Core.Services.AssignmentService.ClearAssignmentsForDeletedSystemUser"/>.
 /// </summary>
 [IntegrationTest]
 public class AssignmentServiceClearAssignmentsForDeletedSystemUserTest : IClassFixture<ApiFixture>
@@ -169,21 +168,5 @@ public class AssignmentServiceClearAssignmentsForDeletedSystemUserTest : IClassF
         var removed = await ResolveService(scope).ClearAssignmentsForDeletedSystemUser(Guid.CreateVersion7(), TestAudit, TestContext.Current.CancellationToken);
 
         Assert.Equal(0, removed);
-    }
-
-    [Fact]
-    public async Task Cleanup_RemovesAssignmentsToDeletedSystemUsersOnly()
-    {
-        var deletedAssignmentId = await AddAssignment(Organization.Id, DeletedSystemUser.Id, RoleConstants.Rightholder);
-        var activeAssignmentId = await AddAssignment(Organization.Id, ActiveSystemUser.Id, RoleConstants.Rightholder);
-        var personAssignmentId = await AddAssignment(Organization.Id, Person.Id, RoleConstants.Rightholder);
-
-        using var scope = Fixture.Services.CreateScope();
-        var removed = await ResolveService(scope).ClearAssignmentsForDeletedSystemUsers(TestAudit, TestContext.Current.CancellationToken);
-
-        Assert.True(removed >= 1);
-        Assert.Null(await FindAssignment(deletedAssignmentId));
-        Assert.NotNull(await FindAssignment(activeAssignmentId));
-        Assert.NotNull(await FindAssignment(personAssignmentId));
     }
 }

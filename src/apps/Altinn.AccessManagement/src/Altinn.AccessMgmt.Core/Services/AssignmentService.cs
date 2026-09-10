@@ -1156,22 +1156,6 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery,
         return db.SaveChanges(audit);
     }
 
-    /// <inheritdoc />
-    public async Task<int> ClearAssignmentsForDeletedSystemUsers(AuditValues audit, CancellationToken cancellationToken)
-    {
-        List<Assignment> assignments = await db.Assignments.AsNoTracking()
-            .Where(t => t.To.TypeId == EntityTypeConstants.SystemUser.Id && t.To.IsDeleted)
-            .ToListAsync(cancellationToken);
-
-        if (assignments.Count == 0)
-        {
-            return 0;
-        }
-
-        db.Assignments.RemoveRange(assignments);
-        return db.SaveChanges(audit);
-    }
-
     private static void ValidatePartyIsNotNull(Guid id, Entity entity, ref ValidationErrorBuilder errors, string param)
     {
         if (entity is null)

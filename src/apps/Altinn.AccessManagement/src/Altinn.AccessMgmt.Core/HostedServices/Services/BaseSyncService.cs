@@ -48,7 +48,4 @@ public static partial class Log
 
     [LoggerMessage(EventId = 6, Level = LogLevel.Information, Message = "Removed {Count} assignments given to deleted system user {PartyUuid}")]
     internal static partial void DeletedSystemUserAssignmentsCleared(ILogger logger, int count, Guid partyUuid);
-
-    [LoggerMessage(EventId = 7, Level = LogLevel.Information, Message = "One-off cleanup removed {Count} assignments given to previously deleted system users")]
-    internal static partial void DeletedSystemUsersCleanupCompleted(ILogger logger, int count);
 }

@@ -121,7 +121,6 @@ public partial class RegisterHostedService(
 
                 await SyncRegisterParty(lease, cancellationToken);
                 await SyncRegisterRoles(lease, cancellationToken);
-                await ClearAssignmentsForDeletedSystemUsers(lease, cancellationToken);
             }
 
             _logger.LogInformation("Register sync completed!");
@@ -154,18 +153,6 @@ public partial class RegisterHostedService(
         {
             await resourceSyncService.SyncResourceOwners(cancellationToken);
             await resourceSyncService.SyncResources(lease, cancellationToken);
-        }
-        catch (Exception ex)
-        {
-            Log.SyncError(_logger, ex);
-        }
-    }
-
-    private async Task ClearAssignmentsForDeletedSystemUsers(ILease lease, CancellationToken cancellationToken)
-    {
-        try
-        {
-            await partySyncService.ClearAssignmentsForDeletedSystemUsers(lease, cancellationToken);
         }
         catch (Exception ex)
         {

@@ -19,9 +19,4 @@ internal class RegisterLease()
     /// Specifies if current newest data has been written.
     /// </summary>
     public bool IsDbIngested { get; set; }
-
-    /// <summary>
-    /// Specifies if the one-off cleanup of assignments given to already deleted system users has run.
-    /// </summary>
-    public bool IsDeletedSystemUserAssignmentsCleared { get; set; }
 }

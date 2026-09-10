@@ -221,26 +221,6 @@ public class PartySyncService : BaseSyncService, IPartySyncService
         }
     }
 
-    /// <inheritdoc/>
-    public async Task ClearAssignmentsForDeletedSystemUsers(ILease lease, CancellationToken cancellationToken = default)
-    {
-        var leaseData = await lease.Get<RegisterLease>(cancellationToken) ?? new RegisterLease();
-        if (!leaseData.IsDbIngested || leaseData.IsDeletedSystemUserAssignmentsCleared)
-        {
-            return;
-        }
-
-        var options = new AuditValues(SystemEntityConstants.RegisterImportSystem);
-        using IServiceScope scope = _serviceProvider.CreateEFScope(options);
-        IAssignmentService assignmentService = scope.ServiceProvider.GetRequiredService<IAssignmentService>();
-
-        int removed = await assignmentService.ClearAssignmentsForDeletedSystemUsers(options, cancellationToken);
-        Log.DeletedSystemUsersCleanupCompleted(_logger, removed);
-
-        leaseData.IsDeletedSystemUserAssignmentsCleared = true;
-        await lease.Update(leaseData, cancellationToken);
-    }
-
 
 
     private Entity MapPerson(Person person)
