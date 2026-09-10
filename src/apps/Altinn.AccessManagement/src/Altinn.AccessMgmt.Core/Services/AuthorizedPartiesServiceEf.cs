@@ -5,6 +5,7 @@ using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Enums;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Services.Interfaces;
+using Altinn.AccessMgmt.Core.Appsettings;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils.Helper;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
@@ -309,7 +310,7 @@ public class AuthorizedPartiesServiceEf(
         }
 
         var fromEntities = connections.Select(c => c.From).DistinctBy(e => e.Id).ToList();
-        var fromSubUnits = fromEntities.Where(e => e.ParentId.HasValue).ToList();
+        var fromSubUnits = fromEntities.Where(IsSubunit).ToList();
 
         (Dictionary<Guid, AuthorizedParty> partiesDict, List<AuthorizedParty> authorizedParties) = BuildDictionaryFromEntities(fromEntities, fromSubUnits);
 
@@ -319,6 +320,15 @@ public class AuthorizedPartiesServiceEf(
         return authorizedParties;
     }
 
+    /// <summary>
+    /// Determines whether an entity should be treated as a nested subunit of its parent.
+    /// ADOS (administrative unit - public sector) entities are only treated as subunits when the
+    /// <c>AccessManagement.Subunit.AdosInheritance</c> feature flag is enabled; otherwise they
+    /// are surfaced as separate top-level parties, keeping the feature fully reversible.
+    /// </summary>
+    internal static bool IsSubunit(Entity entity) =>
+        entity.ParentId.HasValue && (AppLifecycleFeatures.AdosSubunitInheritance || entity.VariantId != EntityVariantConstants.ADOS.Id);
+
     private static (Dictionary<Guid, AuthorizedParty> AllPartiesDict, List<AuthorizedParty> AuthorizedParties) BuildDictionaryFromEntities(IEnumerable<Entity> parties, IEnumerable<Entity> subunits)
     {
         Dictionary<Guid, AuthorizedParty> allPartiesDict = new();
@@ -327,7 +337,7 @@ public class AuthorizedPartiesServiceEf(
         // Parties list is expected to be distinct parties where "some" access exists
         foreach (var party in parties)
         {
-            if (party.ParentId.HasValue)
+            if (IsSubunit(party))
             {
                 var subUnit = BuildAuthorizedPartyFromEntity(party);
                 allPartiesDict[party.Id] = subUnit;
