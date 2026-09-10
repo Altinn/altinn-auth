@@ -1,7 +1,7 @@
 ﻿namespace Altinn.AccessMgmt.Core.Appsettings;
 
 /// <summary>
-/// Holds feature toggle values resolved once at application startup and kept immutable for the
+/// Holds feature toggle values resolved once at application startup and intended to remain stable for the
 /// lifetime of the host. Registered as a singleton so each host container has its own instance,
 /// avoiding process-global mutable state and cross-host/test interference.
 /// </summary>
