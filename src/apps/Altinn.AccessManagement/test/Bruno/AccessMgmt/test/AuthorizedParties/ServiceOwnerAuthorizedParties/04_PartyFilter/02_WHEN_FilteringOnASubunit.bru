@@ -34,8 +34,9 @@ body:json {
 
 docs {
   WHEN the filter is on a subunit, the subunit is returned nested under its main unit, since
-  a subunit is never returned at the top level. The main unit itself is only a hierarchy
-  carrier with no access information of its own.
+  a subunit is never returned at the top level. The main unit carries the access the subject
+  holds on it, the same contract as the enduser endpoint. This client's main unit has no
+  access of its own for the subject, so it comes back as a bare hierarchy carrier here.
 }
 
 script:pre-request {
@@ -68,9 +69,9 @@ tests {
     expect(subunit, `expected the subunit ${client.subunit.name} nested under its main unit`).to.not.be.undefined;
   });
 
-  test("AND the main unit is only a hierarchy carrier with no access info of its own", function() {
+  test("AND the main unit carries its own access, which for this client is none", function() {
     const mainUnit = res.getBody().find(party => party.partyUuid.toLowerCase() === client.partyUuid.toLowerCase());
-    expect(mainUnit.onlyHierarchyElementWithNoAccess, "the main unit did not match the filter").to.be.true;
+    expect(mainUnit.onlyHierarchyElementWithNoAccess, "the subject holds no access on this main unit").to.be.true;
     expect(mainUnit.authorizedRoles).to.be.empty;
     expect(mainUnit.authorizedAccessPackages).to.be.empty;
     expect(mainUnit.authorizedResources).to.be.empty;

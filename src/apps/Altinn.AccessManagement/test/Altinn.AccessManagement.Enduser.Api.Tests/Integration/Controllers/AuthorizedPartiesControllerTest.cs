@@ -490,14 +490,16 @@ public class AuthorizedPartiesControllerTest : IClassFixture<ApiFixture>
     /// <summary>
     /// A partyFilter on the subunit returns the main unit at the top level with the subunit nested under
     /// it (the subunit is reachable only through the main unit's hierarchy, not as a top-level party).
-    /// Guards the subunit partyFilter contract (#3498 area 5).
+    /// The main unit is not reduced to a bare hierarchy carrier: it keeps the access the caller holds on
+    /// it, so the caller can tell inherited access apart from access given directly on the subunit.
+    /// Guards the subunit partyFilter contract (#3498 area 5, #4001).
     /// </summary>
     [Fact]
     public async Task GetAuthorizedParties_WithSubunitPartyFilter_Returns200WithMainUnitWithSubunitNested()
     {
         HttpClient client = CreatePortalClient(TestEntities.PersonPaula);
 
-        HttpResponseMessage response = await client.GetAsync($"{Route}?includeRoles=true&partyFilter={TestEntities.SubunitKarlstad.Id}", TestContext.Current.CancellationToken);
+        HttpResponseMessage response = await client.GetAsync($"{Route}?includeRoles=true&includeAccessPackages=true&partyFilter={TestEntities.SubunitKarlstad.Id}", TestContext.Current.CancellationToken);
         string content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {content}");
 
@@ -506,8 +508,18 @@ public class AuthorizedPartiesControllerTest : IClassFixture<ApiFixture>
 
         AuthorizedPartyDto mainUnit = result.Items.FirstOrDefault(p => p.PartyUuid == TestEntities.MainUnitKarlstad.Id);
         Assert.NotNull(mainUnit);
-        Assert.Contains(mainUnit.Subunits, s => s.PartyUuid == TestEntities.SubunitKarlstad.Id);
+        AuthorizedPartyDto subUnit = mainUnit.Subunits.FirstOrDefault(s => s.PartyUuid == TestEntities.SubunitKarlstad.Id);
+        Assert.NotNull(subUnit);
         Assert.DoesNotContain(result.Items, p => p.PartyUuid == TestEntities.SubunitKarlstad.Id);
+
+        // The main unit carries its own access, it is not a bare hierarchy carrier.
+        Assert.False(mainUnit.OnlyHierarchyElementWithNoAccess, $"Expected the main unit to carry its own access. Response: {content}");
+        Assert.NotEmpty(mainUnit.AuthorizedRoles);
+        Assert.NotEmpty(mainUnit.AuthorizedAccessPackages);
+
+        // The subunit carries what it inherits from the main unit on top of its own access.
+        Assert.All(mainUnit.AuthorizedRoles, role => Assert.Contains(role, subUnit.AuthorizedRoles));
+        Assert.All(mainUnit.AuthorizedAccessPackages, pkg => Assert.Contains(pkg, subUnit.AuthorizedAccessPackages));
     }
 
     /// <summary>
