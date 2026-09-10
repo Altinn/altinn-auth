@@ -1,4 +1,4 @@
--- Baseline DDL for the consent schema: the enum types, the consentrequest /
+﻿-- Baseline DDL for the consent schema: the enum types, the consentrequest /
 -- consentright / consentevent / context / metadata / resourceattribute tables,
 -- their primary keys and indexes, and the grants to platform_authorization.
 -- Generated from 'pg_dump --schema-only --schema=consent' of the established
@@ -105,7 +105,9 @@ END $$;
 CREATE INDEX IF NOT EXISTS idx_consentevent_consentrequestid_created ON consent.consentevent USING btree (consentrequestid, created);
 CREATE INDEX IF NOT EXISTS idx_consentrequest_frompartyuuid ON consent.consentrequest USING btree (frompartyuuid);
 CREATE INDEX IF NOT EXISTS idx_consentrequest_frompartyuuid_status_portal_show ON consent.consentrequest USING btree (frompartyuuid, status) WHERE (portalviewmode = 'show'::consent.portal_view_mode);
+CREATE INDEX IF NOT EXISTS idx_consentrequest_handledbypartyuuid ON consent.consentrequest USING btree (handledbypartyuuid);
 CREATE INDEX IF NOT EXISTS idx_consentrequest_status ON consent.consentrequest USING btree (status);
+CREATE INDEX IF NOT EXISTS idx_consentrequest_topartyuuid ON consent.consentrequest USING btree (topartyuuid);
 CREATE INDEX IF NOT EXISTS idx_consentright_consentrequestid ON consent.consentright USING btree (consentrequestid);
 CREATE INDEX IF NOT EXISTS idx_context_consentrequestid ON consent.context USING btree (consentrequestid);
 CREATE INDEX IF NOT EXISTS idx_metadata_consentrightid ON consent.metadata USING btree (consentrightid);
