@@ -76,6 +76,11 @@ namespace Altinn.AccessManagement.TestUtils.Mocks
         /// <inheritdoc/>
         public Task<bool> PolicyExistsAsync(CancellationToken cancellationToken = default)
         {
+            if (WrittenPolicies != null && WrittenPolicies.ContainsKey(Filepath))
+            {
+                return Task.FromResult(true);
+            }
+
             string fullpath = Path.Combine(GetDataInputBlobPath(), Filepath);
 
             if (File.Exists(fullpath))
