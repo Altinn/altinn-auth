@@ -8,7 +8,7 @@
 set -euo pipefail
 shopt -s nullglob
 
-APP_DIR="${APP_WORKDIR:-./src/apps/Altinn.AccessManagement/deploy}"
+APPS_ROOT="${APPS_ROOT:-./src/apps}"
 SYNCROOT_DIR="${SYNCROOT_WORKDIR:-./flux/syncroot}"
 
 fail() {
@@ -16,15 +16,23 @@ fail() {
   exit 1
 }
 
-[ -f "${APP_DIR}/base/kustomization.yaml" ] || fail "Missing ${APP_DIR}/base/kustomization.yaml"
+# Every app that ships a deploy/ directory is validated, not just the one currently
+# published: an app whose overlays never render is a deploy that breaks the day it is
+# wired into the syncroot, long after the change that broke it was merged.
+app_dirs=("${APPS_ROOT}"/*/deploy/)
+[ ${#app_dirs[@]} -gt 0 ] || fail "No app deploy directories under ${APPS_ROOT}/*/deploy/"
 
-app_overlays=("${APP_DIR}"/environments/*/)
-[ ${#app_overlays[@]} -gt 0 ] || fail "No overlays under ${APP_DIR}/environments/"
+for app_dir in "${app_dirs[@]}"; do
+  [ -f "${app_dir}base/kustomization.yaml" ] || fail "Missing ${app_dir}base/kustomization.yaml"
 
-for overlay in "${app_overlays[@]}"; do
-  [ -f "${overlay}kustomization.yaml" ] || fail "Missing ${overlay}kustomization.yaml"
-  kustomize build "${overlay}" > /dev/null
-  echo "Renders: ${overlay}"
+  app_overlays=("${app_dir}"environments/*/)
+  [ ${#app_overlays[@]} -gt 0 ] || fail "No overlays under ${app_dir}environments/"
+
+  for overlay in "${app_overlays[@]}"; do
+    [ -f "${overlay}kustomization.yaml" ] || fail "Missing ${overlay}kustomization.yaml"
+    kustomize build "${overlay}" > /dev/null
+    echo "Renders: ${overlay}"
+  done
 done
 
 for dir in "${SYNCROOT_DIR}"/*/; do

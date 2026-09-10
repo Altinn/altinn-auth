@@ -38,7 +38,7 @@ jobs:
     name: Kustomize diff
     uses: dis-way/actions/.github/workflows/kustomize-diff.yml@ffb218661867b33f3aa9ed764240f3bccf985b43 # main
     with:
-      build-paths: "src/apps/Altinn.AccessManagement/deploy/environments/*,flux/syncroot/*"
+      build-paths: "src/apps/*/deploy/environments/*,flux/syncroot/*"
     permissions:
       contents: read
       pull-requests: write

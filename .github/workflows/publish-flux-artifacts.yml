@@ -19,6 +19,8 @@ on:
 env:
   SYNCROOT_ARTIFACT_NAME: authorization/syncroot
   APP_ARTIFACT_NAME: authorization/altinn-auth
+  # Scopes what gets published, not what gets validated: validate-manifests.sh
+  # renders every app under src/apps/*/deploy, this ships one of them.
   APP_WORKDIR: ./src/apps/Altinn.AccessManagement/deploy
 
 permissions:
