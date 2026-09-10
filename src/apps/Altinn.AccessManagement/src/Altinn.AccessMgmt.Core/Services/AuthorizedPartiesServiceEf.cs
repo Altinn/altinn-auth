@@ -20,7 +20,8 @@ namespace Altinn.AccessManagement.Core.Services;
 public class AuthorizedPartiesServiceEf(
     IContextRetrievalService contextRetrievalService,
     IAuthorizedPartyRepoServiceEf repoService,
-    IMemoryCache memoryCache) : IAuthorizedPartiesService
+    IMemoryCache memoryCache,
+    AppLifecycleFeatures lifecycleFeatures) : IAuthorizedPartiesService
 {
     private static readonly MemoryCacheEntryOptions _cacheEntryOptions = new() { AbsoluteExpirationRelativeToNow = new TimeSpan(0, 5, 0) };
 
@@ -326,10 +327,10 @@ public class AuthorizedPartiesServiceEf(
     /// <c>AccessManagement.Subunit.AdosInheritance</c> feature flag is enabled; otherwise they
     /// are surfaced as separate top-level parties, keeping the feature fully reversible.
     /// </summary>
-    internal static bool IsSubunit(Entity entity) =>
-        entity.ParentId.HasValue && (AppLifecycleFeatures.AdosSubunitInheritance || entity.VariantId != EntityVariantConstants.ADOS.Id);
+    internal bool IsSubunit(Entity entity) =>
+        entity.ParentId.HasValue && (lifecycleFeatures.AdosSubunitInheritance || entity.VariantId != EntityVariantConstants.ADOS.Id);
 
-    private static (Dictionary<Guid, AuthorizedParty> AllPartiesDict, List<AuthorizedParty> AuthorizedParties) BuildDictionaryFromEntities(IEnumerable<Entity> parties, IEnumerable<Entity> subunits)
+    private (Dictionary<Guid, AuthorizedParty> AllPartiesDict, List<AuthorizedParty> AuthorizedParties) BuildDictionaryFromEntities(IEnumerable<Entity> parties, IEnumerable<Entity> subunits)
     {
         Dictionary<Guid, AuthorizedParty> allPartiesDict = new();
         List<AuthorizedParty> authorizedParties = new();

@@ -16,19 +16,18 @@ namespace Altinn.AccessMgmt.Core.Tests.Unit.Services;
 ///   is set.
 /// - Entities without a ParentId are never treated as subunits.
 ///
-/// The feature flag is resolved once at startup into <see cref="AppLifecycleFeatures.AdosSubunitInheritance"/>,
-/// which these tests set directly and reset on dispose.
+/// The feature flag is resolved once at startup into a per-host <see cref="AppLifecycleFeatures"/>
+/// singleton, which these tests inject directly per case (no shared static state).
 /// </summary>
 [UnitTest]
-public class AuthorizedPartiesServiceEfIsSubunitTest : IDisposable
+public class AuthorizedPartiesServiceEfIsSubunitTest
 {
-    private readonly bool _originalAdosSubunitInheritance = AppLifecycleFeatures.AdosSubunitInheritance;
-
-    public void Dispose()
-    {
-        AppLifecycleFeatures.AdosSubunitInheritance = _originalAdosSubunitInheritance;
-        GC.SuppressFinalize(this);
-    }
+    private static AuthorizedPartiesServiceEf CreateService(bool adosSubunitInheritance) =>
+        new(
+            contextRetrievalService: null!,
+            repoService: null!,
+            memoryCache: null!,
+            lifecycleFeatures: new AppLifecycleFeatures { AdosSubunitInheritance = adosSubunitInheritance });
 
     private static Entity Entity(Guid variantId, Guid? parentId) => new()
     {
@@ -42,9 +41,9 @@ public class AuthorizedPartiesServiceEfIsSubunitTest : IDisposable
     [InlineData(false)]
     public void IsSubunit_Bedr_WithParent_AlwaysTrue(bool adosAsSubunit)
     {
-        AppLifecycleFeatures.AdosSubunitInheritance = adosAsSubunit;
+        var sut = CreateService(adosAsSubunit);
         var entity = Entity(EntityVariantConstants.BEDR.Id, Guid.NewGuid());
-        AuthorizedPartiesServiceEf.IsSubunit(entity).Should().BeTrue();
+        sut.IsSubunit(entity).Should().BeTrue();
     }
 
     [Theory]
@@ -52,26 +51,26 @@ public class AuthorizedPartiesServiceEfIsSubunitTest : IDisposable
     [InlineData(false)]
     public void IsSubunit_Aafy_WithParent_AlwaysTrue(bool adosAsSubunit)
     {
-        AppLifecycleFeatures.AdosSubunitInheritance = adosAsSubunit;
+        var sut = CreateService(adosAsSubunit);
         var entity = Entity(EntityVariantConstants.AAFY.Id, Guid.NewGuid());
-        AuthorizedPartiesServiceEf.IsSubunit(entity).Should().BeTrue();
+        sut.IsSubunit(entity).Should().BeTrue();
     }
 
     [Fact]
     public void IsSubunit_Ados_Enabled_ReturnsTrue()
     {
-        AppLifecycleFeatures.AdosSubunitInheritance = true;
+        var sut = CreateService(adosSubunitInheritance: true);
         var entity = Entity(EntityVariantConstants.ADOS.Id, Guid.NewGuid());
-        AuthorizedPartiesServiceEf.IsSubunit(entity).Should().BeTrue();
+        sut.IsSubunit(entity).Should().BeTrue();
     }
 
     [Fact]
     public void IsSubunit_Ados_Disabled_ReturnsFalse()
     {
         // Even though ParentId is set (backfilled), a disabled flag must keep ADOS as a separate top-level party.
-        AppLifecycleFeatures.AdosSubunitInheritance = false;
+        var sut = CreateService(adosSubunitInheritance: false);
         var entity = Entity(EntityVariantConstants.ADOS.Id, Guid.NewGuid());
-        AuthorizedPartiesServiceEf.IsSubunit(entity).Should().BeFalse();
+        sut.IsSubunit(entity).Should().BeFalse();
     }
 
     [Theory]
@@ -79,8 +78,8 @@ public class AuthorizedPartiesServiceEfIsSubunitTest : IDisposable
     [InlineData(false)]
     public void IsSubunit_NoParent_AlwaysFalse(bool adosAsSubunit)
     {
-        AppLifecycleFeatures.AdosSubunitInheritance = adosAsSubunit;
+        var sut = CreateService(adosAsSubunit);
         var entity = Entity(EntityVariantConstants.ORGL.Id, parentId: null);
-        AuthorizedPartiesServiceEf.IsSubunit(entity).Should().BeFalse();
+        sut.IsSubunit(entity).Should().BeFalse();
     }
 }

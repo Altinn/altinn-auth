@@ -52,6 +52,7 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddAccessMgmtCore(this IServiceCollection services, IConfiguration configuration, Action<CoreAppsettings> configureAppsettings = null)
     {
         services.AddCoreOtel();
+        services.AddSingleton<AppLifecycleFeatures>();
         services.AddHostedService<RegisterHostedService>();
         services.AddHostedService<OutboxHandlerJob>();
         services.AddHostedService<OutboxReaperJob>();
@@ -59,7 +60,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IIngestService, IngestService>();
         services.AddScoped(sp => new ConnectionQuery(
             sp.GetRequiredService<AppDbContext>(),
-            AppLifecycleFeatures.AdosSubunitInheritance));
+            sp.GetRequiredService<AppLifecycleFeatures>().AdosSubunitInheritance));
         services.AddScoped<IConnectionService, ConnectionService>();
         services.AddScoped<IMaskinportenSupplierService, MaskinportenSupplierService>();
         services.AddScoped<IPartyService, PartyService>();
