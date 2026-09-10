@@ -1,0 +1,5 @@
+﻿apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - authorization-oci-repository.yaml
+  - authorization-flux-kustomization.yaml
