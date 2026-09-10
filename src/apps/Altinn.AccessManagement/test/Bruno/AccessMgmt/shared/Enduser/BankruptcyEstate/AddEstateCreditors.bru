@@ -1,0 +1,46 @@
+meta {
+  name: AddEstateCreditors
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/estates/creditors?party={{party}}&estate={{estate}}&creditor={{creditor}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  estate: {{estate}}
+  creditor: {{creditor}}
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/bankruptcyestate-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("requestName", "POST_BankruptcyEstate_AddCreditor");
+  
+  bru.setVar("party", testdata.BOSTYRER.partyUuid);
+  bru.setVar("estate", testdata.BOSTYRER.client_BLAUT_FRYKTLØS_ØGLE_KONKURSBO.partyUuid);
+  bru.setVar("creditor", testdata.creditor_GLAD_SLAPP_TIGER_AS.partyUuid);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.BOSTYRER.userId,
+    auth_partyId: testdata.BOSTYRER.partyId,
+    auth_partyUuid: testdata.BOSTYRER.partyUuid,
+    auth_ssn: testdata.BOSTYRER.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
