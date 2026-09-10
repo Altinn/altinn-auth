@@ -286,7 +286,7 @@ namespace Altinn.AccessMgmt.Core.Services
         }
 
         /// <inheritdoc/>
-        public async Task<Result<AssignmentDto>> AddAdministrator(Guid party, Guid user, Action<ConnectionOptions> configureConnections, CancellationToken cancellationToken)
+        public async Task<Result<AssignmaentWithAssignmentPackageDto>> AddAdministrator(Guid party, Guid user, Action<ConnectionOptions> configureConnections, CancellationToken cancellationToken)
         {
             var assignment = await connectionService.AddRightholder(party, user, configureConnections, cancellationToken);
             if (assignment.IsProblem)
@@ -416,13 +416,15 @@ namespace Altinn.AccessMgmt.Core.Services
                 );
             }
 
-            if (errorBuilder.TryBuild(out var problem))
+            if (errorBuilder.TryBuild(out problem))
             {
                 return problem;
             }
 
             var delegation = await db.Delegations
                         .AsNoTracking()
+                        .Include(d => d.From)
+                        .Include(d => d.To)
                         .Where(d => d.FromId == clientAssignment.Id && d.ToId == agentAssignment.Id && d.FacilitatorId == party)
                         .FirstOrDefaultAsync(cancellationToken);
             
@@ -437,9 +439,13 @@ namespace Altinn.AccessMgmt.Core.Services
                 db.Delegations.Add(delegation);
             }
 
+            List<Guid> bankruptcyRoleIds = [];
+            bankruptcyRoleIds.Add(RoleConstants.EstateAdministrator.Id);
+            bankruptcyRoleIds.Add(RoleConstants.MainAdministrator.Id);
+
             var availablePackages = await db.RolePackages
                 .AsNoTracking()
-                .Where(rp => rp.RoleId == RoleConstants.EstateAdministrator.Id && (rp.EntityVariantId == null || rp.EntityVariantId == EntityVariantConstants.KBO.Id))
+                .Where(rp => bankruptcyRoleIds.Contains(rp.RoleId) && BankruptcyPackageList.Contains(rp.PackageId) && (rp.EntityVariantId == null || rp.EntityVariantId == EntityVariantConstants.KBO.Id))
                 .Select(rp => rp)
                 .ToListAsync(cancellationToken);
 
@@ -456,11 +462,18 @@ namespace Altinn.AccessMgmt.Core.Services
                 }
                 else
                 {
-                    var rolePackageId = availablePackages.First(rp => rp.PackageId == packageId).Id;
+                    var rolePackage = availablePackages
+                        .Where(rp => rp.PackageId == packageId)
+                        .OrderBy(rp => rp.RoleId != RoleConstants.MainAdministrator.Id && rp.EntityVariantId != null)
+                        .FirstOrDefault();
+
+                    var rolePackageId = rolePackage.Id;
 
                     var delegationPackage = await db.DelegationPackages
                         .AsNoTracking()
-                        .Where(dp => dp.DelegationId == delegation.Id && dp.PackageId == packageId && dp.RolePackageId == rolePackageId)
+                        .Where(dp => dp.DelegationId == delegation.Id && 
+                            dp.PackageId == packageId && 
+                            dp.RolePackageId == rolePackageId)
                         .FirstOrDefaultAsync(cancellationToken);
 
                     if (delegationPackage is null)
@@ -483,6 +496,9 @@ namespace Altinn.AccessMgmt.Core.Services
 
             await db.SaveChangesAsync(cancellationToken);
 
+            // Ensure the From navigation is populated for the response mapping
+            await db.Entry(delegation).Reference(d => d.From).LoadAsync(cancellationToken);
+
             return DtoMapper.Convert(delegation);
         }
 
@@ -504,7 +520,7 @@ namespace Altinn.AccessMgmt.Core.Services
 
             if (agentAssignment is null)
             {
-                return false
+                return false;
             }
 
             var clientAssignment = await db.Assignments.AsNoTracking().FirstOrDefaultAsync(t => t.FromId == estate && t.ToId == party && t.RoleId == RoleConstants.EstateAdministrator.Id, cancellationToken);
@@ -516,8 +532,6 @@ namespace Altinn.AccessMgmt.Core.Services
 
             var delegation = await db.Delegations
                         .AsNoTracking()
-                        .Include(d => d.DelegationPackages)
-                        .Include(d => d.DelegationResources)
                         .Where(d => d.FromId == clientAssignment.Id && d.ToId == agentAssignment.Id && d.FacilitatorId == party)
                         .FirstOrDefaultAsync(cancellationToken);
 
@@ -526,9 +540,13 @@ namespace Altinn.AccessMgmt.Core.Services
                 return false;
             }
 
+            List<Guid> bankruptcyRoleIds = [];
+            bankruptcyRoleIds.Add(RoleConstants.EstateAdministrator.Id);
+            bankruptcyRoleIds.Add(RoleConstants.MainAdministrator.Id);
+
             var availablePackages = await db.RolePackages
                 .AsNoTracking()
-                .Where(rp => rp.RoleId == RoleConstants.EstateAdministrator.Id && (rp.EntityVariantId == null || rp.EntityVariantId == EntityVariantConstants.KBO.Id))
+                .Where(rp => bankruptcyRoleIds.Contains(rp.RoleId) && BankruptcyPackageList.Contains(rp.PackageId) && (rp.EntityVariantId == null || rp.EntityVariantId == EntityVariantConstants.KBO.Id))
                 .Select(rp => rp)
                 .ToListAsync(cancellationToken);
 
@@ -545,8 +563,13 @@ namespace Altinn.AccessMgmt.Core.Services
                 }
                 else
                 {
-                    var rolePackageId = availablePackages.First(rp => rp.PackageId == packageId).Id;
+                    var rolePackage = availablePackages
+                        .Where(rp => rp.PackageId == packageId)
+                        .OrderBy(rp => rp.RoleId != RoleConstants.MainAdministrator.Id && rp.EntityVariantId != null)
+                        .FirstOrDefault();
 
+                    var rolePackageId = rolePackage.Id;
+                    
                     var delegationPackage = await db.DelegationPackages
                         .AsNoTracking()
                         .Where(dp => dp.DelegationId == delegation.Id && dp.PackageId == packageId && dp.RolePackageId == rolePackageId)
@@ -565,14 +588,22 @@ namespace Altinn.AccessMgmt.Core.Services
                 return problem;
             }
 
-            if (delegation.DelegationPackages.Count == 0 && delegation.DelegationResources.Count == 0)
-            {
-                db.Delegations.Remove(delegation);
-                anyDataDeleted = true;
-            }
-
             await db.SaveChangesAsync(cancellationToken);
 
+            var currentDelegation = await db.Delegations
+                .AsNoTracking()
+                .Include(d => d.DelegationPackages)
+                .Include(d => d.DelegationResources)
+                .Where(d => d.FromId == clientAssignment.Id && d.ToId == agentAssignment.Id && d.FacilitatorId == party)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (currentDelegation.DelegationPackages.Count == 0 && currentDelegation.DelegationResources.Count == 0)
+            {
+                db.Delegations.Remove(currentDelegation);                
+                anyDataDeleted = true;
+                await db.SaveChangesAsync(cancellationToken);
+            }
+            
             return anyDataDeleted;
         }
     }
@@ -669,7 +700,7 @@ namespace Altinn.AccessMgmt.Core.Services
         /// <param name="configureConnections">Optional action to configure connection options.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>A problem details if some error occurs. The assignment details if successful.</returns>
-        Task<Result<AssignmentDto>> AddAdministrator(Guid party, Guid user, Action<ConnectionOptions> configureConnections, CancellationToken cancellationToken);
+        Task<Result<AssignmaentWithAssignmentPackageDto>> AddAdministrator(Guid party, Guid user, Action<ConnectionOptions> configureConnections, CancellationToken cancellationToken);
 
         /// <summary>
         /// Revokes rightholder role from a user and removes the boadministrator package for a specific party.

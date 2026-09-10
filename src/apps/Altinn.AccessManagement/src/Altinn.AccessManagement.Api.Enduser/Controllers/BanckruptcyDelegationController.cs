@@ -223,7 +223,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
         [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_BANKRUPTCYDELEGATION_WRITE)]
         [Authorize(Policy = AuthzConstants.POLICY_BANKRUPTCYDELEGATION_WRITE)]
         [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
-        [ProducesResponseType<PaginatedResult<BankruptcyEstateAssignmentsDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -316,7 +316,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
         [HttpGet("estates")]
         [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_BANKRUPTCYDELEGATION_READ)]
         [Authorize(Policy = AuthzConstants.POLICY_BANKRUPTCYDELEGATION_READ)]
-        [ProducesResponseType<PaginatedResult<BankruptcyEntityDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+        [ProducesResponseType<PaginatedResult<CompactEntityDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
         [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -340,7 +340,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
         [HttpGet("estates/users")]
         [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_BANKRUPTCYDELEGATION_READ)]
         [Authorize(Policy = AuthzConstants.POLICY_BANKRUPTCYDELEGATION_READ)]
-        [ProducesResponseType<PaginatedResult<BankruptcyEntityDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+        [ProducesResponseType<PaginatedResult<CompactEntityDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
         [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -362,7 +362,8 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
         [HttpPost("estates/users")]
         [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_BANKRUPTCYDELEGATION_WRITE)]
         [Authorize(Policy = AuthzConstants.POLICY_BANKRUPTCYDELEGATION_WRITE)]
-        [ProducesResponseType<PaginatedResult<BankruptcyEntityDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+        [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+        [ProducesResponseType<CreateDelegationResponseDto>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
         [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -380,19 +381,20 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
                 return Forbid();
             }
 
-            var result = await bankruptcyDelegationService.AddBankruptcyEstateForUser(party, estate, user, cancellationToken);
+            var result = await bankruptcyDelegationService.AddBankruptcyEstateForUser(party, estate, user, ConfigureConnections, cancellationToken);
             if (result.IsProblem)
             {
                 return result.Problem.ToActionResult();
             }
 
-            return Ok(PaginatedResult.Create(result.Value, null));
+            return Ok(result.Value);
         }
 
         [HttpDelete("estates/users")]
         [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_BANKRUPTCYDELEGATION_WRITE)]
         [Authorize(Policy = AuthzConstants.POLICY_BANKRUPTCYDELEGATION_WRITE)]
-        [ProducesResponseType<PaginatedResult<BankruptcyEntityDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+        [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -411,13 +413,13 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
                 return Forbid();
             }
 
-            var result = await bankruptcyDelegationService.RevokeBankruptcyEstateForUser(party, estate, user, cancellationToken);
+            var result = await bankruptcyDelegationService.RevokeBankruptcyEstateForUser(party, estate, user, ConfigureConnections, cancellationToken);
             if (result.IsProblem)
             {
                 return result.Problem.ToActionResult();
             }
 
-            return Ok(PaginatedResult.Create(result.Value, null));
+            return NoContent();
         }
 
         #endregion
