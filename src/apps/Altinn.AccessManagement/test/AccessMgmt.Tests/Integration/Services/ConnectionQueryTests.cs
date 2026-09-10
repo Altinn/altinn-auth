@@ -7,6 +7,8 @@ using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.FeatureManagement;
+using Moq;
 using DelegationPackage = Altinn.AccessMgmt.PersistenceEF.Models.DelegationPackage;
 using DelegationResource = Altinn.AccessMgmt.PersistenceEF.Models.DelegationResource;
 
@@ -117,6 +119,66 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
         Assert.Contains(baker.Connections, t => t.Party.Id == TestDataSet.GetEntity("Baker Johnsen - Oslo").Id);
         Assert.Contains(baker.Connections, t => t.Party.Id == TestDataSet.GetEntity("Baker Johnsen - Bergen").Id);
         Assert.Contains(baker.Connections, t => t.Party.Id == TestDataSet.GetEntity("Baker Johnsen - Kristiansand").Id);
+    }
+
+    [Fact]
+    public async Task GetConnectionsFromOthers_AdosPer_AdosInheritanceDisabled_ExcludesAdosSubunit()
+    {
+        var mainUnitId = TestDataSet.GetEntity("ADOS Mainunit").Id;
+        var subUnitId = TestDataSet.GetEntity("ADOS Subunit").Id;
+        var personId = TestDataSet.GetEntity("AdosPer").Id;
+
+        // _query is constructed without an IFeatureManager, so ADOS inheritance is always off (reversible default).
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { personId },
+            IncludeKeyRole = true,
+            EnrichEntities = true,
+            IncludeDelegation = true,
+            IncludeMainUnitConnections = true,
+            IncludeSubConnections = true,
+            ExcludeDeleted = false,
+            EnrichPackageResources = false,
+        };
+
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+        var connections = DtoMapper.ConvertFromOthers(dbResult, false);
+
+        var mainUnit = connections.Single(t => t.Party.Id == mainUnitId);
+        Assert.DoesNotContain(mainUnit.Connections, t => t.Party.Id == subUnitId);
+    }
+
+    [Fact]
+    public async Task GetConnectionsFromOthers_AdosPer_AdosInheritanceEnabled_IncludesAdosSubunit()
+    {
+        var mainUnitId = TestDataSet.GetEntity("ADOS Mainunit").Id;
+        var subUnitId = TestDataSet.GetEntity("ADOS Subunit").Id;
+        var personId = TestDataSet.GetEntity("AdosPer").Id;
+
+        // The filter value is always derived from the feature flag, so enable it through a feature manager.
+        var featureManager = new Mock<IFeatureManager>();
+        featureManager
+            .Setup(m => m.IsEnabledAsync("AccessManagement.Subunit.AdosInheritance"))
+            .ReturnsAsync(true);
+        var query = new ConnectionQuery(_db, featureManager.Object);
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { personId },
+            IncludeKeyRole = true,
+            EnrichEntities = true,
+            IncludeDelegation = true,
+            IncludeMainUnitConnections = true,
+            IncludeSubConnections = true,
+            ExcludeDeleted = false,
+            EnrichPackageResources = false,
+        };
+
+        var dbResult = await query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+        var connections = DtoMapper.ConvertFromOthers(dbResult, false);
+
+        var mainUnit = connections.Single(t => t.Party.Id == mainUnitId);
+        Assert.Contains(mainUnit.Connections, t => t.Party.Id == subUnitId);
     }
 
     [Fact]
@@ -413,6 +475,20 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
         var toId = TestDataSet.GetEntity("Kommune 2").Id;
 
         var (result, reason) = await _query.HasConnection(fromId, toId, [ConnectionReason.KeyRole]);
+
+        Assert.False(result);
+        Assert.Null(reason);
+    }
+
+    [Fact]
+    public async Task HasConnection_AdosSubunitHierarchy_AdosInheritanceDisabled_ReturnsFalse()
+    {
+        // With no IFeatureManager the ADOS subunit inheritance flag defaults to off, so the
+        // ADOS subunit must not inherit the mainunit's connection through the hierarchy reason.
+        var subUnitId = TestDataSet.GetEntity("ADOS Subunit").Id;
+        var personId = TestDataSet.GetEntity("AdosPer").Id;
+
+        var (result, reason) = await _query.HasConnection(subUnitId, personId, [ConnectionReason.Hierarchy]);
 
         Assert.False(result);
         Assert.Null(reason);
@@ -1269,6 +1345,16 @@ internal static class TestDataSet
         new Entity() { Id = Guid.Parse("019f64ec-6579-7579-b961-3277e49293cf"), Name = "ABC IKS", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.IKS, OrganizationIdentifier = "605001815", ParentId = null, RefId = "605001815" },
         new Entity() { Id = Guid.Parse("019f64e1-2ad1-7ad1-b839-9a4265b79b5a"), Name = "DEF IKS", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.IKS, OrganizationIdentifier = "605001793", ParentId = null, RefId = "605001793" },
         new Entity() { Id = Guid.Parse("0195efb8-7c80-7a77-8203-e7ca159053d0"), Name = "Non-IKS Selskap", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.AS, OrganizationIdentifier = "605001777", ParentId = null, RefId = "605001777" },
+
+        // ADOS subunit test entities (administrative unit - public sector).
+        // Mirrors the BEDR "Baker Johnsen" hierarchy: a mainunit, an ADOS subunit whose ParentId points to the mainunit,
+        // and a person (AdosPer) with a direct ManagingDirector assignment on the mainunit (see Assignments below).
+        // Exercised by GetConnectionsFromOthers_AdosPer_AdosInheritanceDisabled_ExcludesAdosSubunit and
+        // GetConnectionsFromOthers_AdosPer_AdosInheritanceEnabled_IncludesAdosSubunit, which verify ADOS subunit
+        // inheritance is only applied when ConnectionQueryFilter.IncludeAdosSubunitInheritance is enabled.
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000050"), Name = "ADOS Mainunit", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.ORGL, OrganizationIdentifier = "ORG-ADOS-01", ParentId = null, RefId = "ORG-ADOS-01" },
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000051"), Name = "ADOS Subunit", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.ADOS, OrganizationIdentifier = "ORG-ADOS-01-01", ParentId = Guid.Parse("0195efb8-7c80-7a01-8001-000000000050"), RefId = "ORG-ADOS-01-01" },
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000052"), Name = "AdosPer", TypeId = EntityTypeConstants.Person, VariantId = EntityVariantConstants.Person, PersonIdentifier = "11018412345", RefId = "11018412345", DateOfBirth = DateOnly.Parse("1984-01-11") },
     };
 
 #pragma warning disable SA1401 // Fields should be private
@@ -1312,6 +1398,10 @@ internal static class TestDataSet
         new Assignment() { Id = Guid.Parse("019f64f8-1c28-7c28-9a1c-daba52081006"), FromId = Entities.First(t => t.Name == "ABC IKS").Id, ToId = Entities.First(t => t.Name == "Kommune 2").Id, RoleId = RoleConstants.ParticipantSharedResponsibility }, // deltaker-delt-ansvar (keyrole) for IKS ABC to Kommune 2
         new Assignment() { Id = Guid.Parse("019f64f8-39fc-79fc-b40f-65f25fa98b92"), FromId = Entities.First(t => t.Name == "ABC IKS").Id, ToId = Entities.First(t => t.Name == "DEF IKS").Id, RoleId = RoleConstants.Auditor }, // Revisor for IKS ABC to DEF IKS
         new Assignment() { Id = Guid.Parse("019f64f8-5c9c-7c9c-9a6e-f2e4f28e439a"), FromId = Entities.First(t => t.Name == "DEF IKS").Id, ToId = Entities.First(t => t.Name == "Kommune 2").Id, RoleId = RoleConstants.ParticipantSharedResponsibility }, // deltaker-delt-ansvar (keyrole) for IKS DEF to Kommune 2
+
+        // ADOS subunit test assignment: AdosPer is Managing Director (DAGL) of the ADOS Mainunit.
+        // The ADOS Subunit inherits this access via ParentId only when ADOS subunit inheritance is enabled.
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000053"), FromId = Entities.First(t => t.Name == "ADOS Mainunit").Id, ToId = Entities.First(t => t.Name == "AdosPer").Id, RoleId = RoleConstants.ManagingDirector }, // Daglig leder
     };
 
     internal static Assignment GetAssignment(string fromName, string toName, Guid roleId)

@@ -114,6 +114,14 @@ public sealed class ConnectionQueryFilter
     public bool IncludeMainUnitConnections { get; init; } = true;
 
     /// <summary>
+    /// Gets or sets a value indicating whether ADOS (administrative unit - public sector) entities should be
+    /// treated as subunits that inherit mainunit access, equal to BEDR/AAFY. When <c>false</c>, ADOS entities
+    /// are excluded from hierarchy-based inheritance even if their <c>ParentId</c> is set, making the behavior
+    /// reversible via feature toggle without clearing stored parent references.
+    /// </summary>
+    public bool IncludeAdosSubunitInheritance { get; set; } = false;
+
+    /// <summary>
     /// Returns true if at least one filter is provided.
     /// </summary>
     public bool HasAny =>

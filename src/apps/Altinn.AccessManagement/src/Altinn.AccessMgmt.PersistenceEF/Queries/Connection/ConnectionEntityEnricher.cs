@@ -1,4 +1,5 @@
-﻿using Altinn.AccessMgmt.PersistenceEF.Contexts;
+﻿using Altinn.AccessMgmt.PersistenceEF.Constants;
+using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 using Microsoft.EntityFrameworkCore;
@@ -101,7 +102,8 @@ internal class ConnectionEntityEnricher(AppDbContext db)
         var allChildren = await db
             .Entities
             .AsNoTracking()
-            .Where(e => e.ParentId != null && entityDict.Keys.Contains((Guid)e.ParentId))
+            .Where(e => e.ParentId != null && entityDict.Keys.Contains((Guid)e.ParentId)
+                && (filter.IncludeAdosSubunitInheritance || e.VariantId != EntityVariantConstants.ADOS.Id))
             .Select(e => new Entity()
             {
                 Id = e.Id,
