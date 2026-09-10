@@ -916,6 +916,80 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
 
     #endregion
 
+    #region ResourceIds filtering
+
+    [Fact]
+    public async Task GetConnectionsFromOthers_ResourceIdsFilter_OnlyMatchingResourcesReturned()
+    {
+        var personId = TestDataSet.GetEntity("Nina").Id;
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { personId },
+            IncludeKeyRole = false,
+            IncludeDelegation = false,
+            IncludeResources = true,
+            ResourceIds = new[] { TestDataSet.TestResourceId },
+            EnrichEntities = false,
+        };
+
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        // Only connections carrying the requested resource should remain
+        Assert.NotEmpty(dbResult);
+        Assert.All(dbResult, c => Assert.NotEmpty(c.Resources));
+        Assert.All(dbResult.SelectMany(c => c.Resources), r => Assert.Equal(TestDataSet.TestResourceId, r.Id));
+    }
+
+    [Fact]
+    public async Task GetConnectionsFromOthers_ResourceIdsFilter_RemovesConnectionsWithNoMatchingResources()
+    {
+        var personId = TestDataSet.GetEntity("Nina").Id;
+        var nonExistentResourceId = Guid.NewGuid();
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { personId },
+            IncludeKeyRole = false,
+            IncludeDelegation = false,
+            IncludeResources = true,
+            ResourceIds = new[] { nonExistentResourceId },
+            EnrichEntities = false,
+        };
+
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        // Every connection should be removed since no resources matched
+        Assert.Empty(dbResult);
+    }
+
+    [Fact]
+    public async Task GetConnectionsFromOthers_ResourceIdsFilter_KeepsDelegationResourceMatches()
+    {
+        var personId = TestDataSet.GetEntity("Gunnar").Id;
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { personId },
+            IncludeKeyRole = false,
+            IncludeDelegation = true,
+            IncludeResources = true,
+            IncludeDelegationResources = true,
+            ResourceIds = new[] { TestDataSet.DelegationTestResourceId },
+            EnrichEntities = false,
+        };
+
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        // The delegation connection carries the resource and survives; connections without it are removed
+        var delegationConnections = dbResult.Where(r => r.Reason == ConnectionReason.Delegation).ToList();
+        Assert.NotEmpty(delegationConnections);
+        Assert.All(dbResult, c => Assert.NotEmpty(c.Resources));
+        Assert.All(dbResult.SelectMany(c => c.Resources), r => Assert.Equal(TestDataSet.DelegationTestResourceId, r.Id));
+    }
+
+    #endregion
+
     #region Supplier role exclusion
 
     [Fact]
