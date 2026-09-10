@@ -12,10 +12,9 @@
 --
 --   Mirrors the service logic: a system user only ever receives access, so every
 --   assignment where the deleted system user is the to-party is removed regardless
---   of role. Deleting an Agent assignment cascades to dbo.delegation via the
---   existing ON DELETE CASCADE on delegation.toid, which in turn cascades to
---   delegationpackage / delegationresource. Assignment packages and resources
---   cascade the same way from dbo.assignment.
+--   of role. Assignment packages, assignment resources and any delegations tied to
+--   the removed assignments are removed by the existing ON DELETE CASCADE
+--   constraints from dbo.assignment.
 --
 -- Reference identifiers
 --   SystemUser entity type      : fe643898-2f47-4080-85e3-86bf6fe39630  (EntityTypeConstants.SystemUser)
@@ -27,7 +26,7 @@
 --   Idempotent: only rows whose to-party is a deleted system user are touched,
 --   so it can be re-run safely.
 --
---   The audit triggers on dbo.assignment and dbo.delegation require an audit
+--   The audit triggers on dbo.assignment and the cascaded tables require an audit
 --   context. We mimic the register import system as the actor, matching
 --   AuditValues(SystemEntityConstants.RegisterImportSystem), by setting both the
 --   SET LOCAL app.* settings and the session_audit_context temp table (read by
@@ -68,7 +67,7 @@ SET LOCAL app.changed_by_system   = 'efec83fc-deba-4f09-8073-b4dd19d0b16b';
 SET LOCAL app.change_operation_id = 'revoke-deleted-systemuser-assignments';
 
 -- Remove every assignment whose to-party is a system user marked as deleted.
--- Delegations, assignment packages and assignment resources tied to these
+-- Assignment packages, assignment resources and any delegations tied to these
 -- assignments are removed by the existing FK cascades.
 DELETE FROM dbo.assignment AS a
 USING  dbo.entity AS e

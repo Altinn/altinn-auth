@@ -1142,7 +1142,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery,
     public async Task<int> ClearAssignmentsForDeletedSystemUser(Guid systemUserId, AuditValues audit, CancellationToken cancellationToken)
     {
         // A system user only ever receives access, so every assignment where it is the to-party is removed regardless of role.
-        // Removing an agent assignment cascades to removing all client delegations for that agent.
+        // Packages, resources and delegations tied to the removed assignments are removed by the existing FK cascades.
         List<Assignment> assignments = await db.Assignments.AsNoTracking()
             .Where(t => t.ToId == systemUserId)
             .ToListAsync(cancellationToken);
