@@ -1,0 +1,106 @@
+name: "Publish Flux Artifacts"
+run-name: Publish authorization flux artifacts to ${{ inputs.environment }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        type: choice
+        required: true
+        options:
+          - at22
+          - at23
+          - at24
+          - tt02
+          - yt01
+          - prod
+
+env:
+  SYNCROOT_ARTIFACT_NAME: authorization/syncroot
+  APP_ARTIFACT_NAME: authorization/altinn-auth
+  # Scopes what gets published, not what gets validated: validate-manifests.sh
+  # renders every app under src/apps/*/deploy, this ships one of them.
+  APP_WORKDIR: ./src/apps/Altinn.AccessManagement/deploy
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: publish-flux-artifacts-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate manifests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Validate syncroot structure
+        uses: Altinn/altinn-platform/actions/flux/verify-syncroot@3535bba3d301df5778ce420f7adf10edd748cc3f # main
+        with:
+          workdir: ./flux/syncroot
+
+      - name: Check the target environment has an app overlay
+        shell: bash
+        env:
+          ENVIRONMENT: ${{ inputs.environment }}
+        run: |
+          set -euo pipefail
+          # The syncroot points its Kustomization at ./environments/<env> inside the app
+          # manifests artifact, so the target environment's overlay has to exist.
+          target="${APP_WORKDIR}/environments/${ENVIRONMENT}"
+          if [ ! -f "${target}/kustomization.yaml" ]; then
+            echo "::error::Missing ${target}/kustomization.yaml"
+            exit 1
+          fi
+
+      - name: Validate manifests
+        run: ./.github/scripts/validate-manifests.sh
+
+  publish-app-manifests:
+    name: Publish app manifests artifact
+    needs: validate
+    # The federated credential backing the OIDC login is scoped to refs/heads/main.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Build and push app manifests artifact
+        uses: Altinn/altinn-platform/actions/flux/build-push-image@3535bba3d301df5778ce420f7adf10edd748cc3f # main
+        with:
+          image_name: ${{ env.APP_ARTIFACT_NAME }}
+          # The syncroot OCIRepository pins ref.tag: main. The environment is selected
+          # by the Kustomization path, not by this tag.
+          tag: main
+          workdir: ${{ env.APP_WORKDIR }}
+          azure_subscription_id: ${{ secrets.DIS_SYNCROOT_AZURE_SUBSCRIPTION_ID }}
+          azure_app_id: ${{ secrets.DIS_SYNCROOT_AZURE_CLIENT_ID }}
+          azure_tenant_id: ${{ secrets.DIS_SYNCROOT_AZURE_TENANT_ID }}
+
+  publish-syncroot:
+    name: Publish syncroot artifact
+    # Push the manifests the syncroot points at first, so the OCIRepository resolves
+    # as soon as Flux picks up the new syncroot.
+    needs: publish-app-manifests
+    # The federated credential backing the OIDC login is scoped to refs/heads/main.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Build and push syncroot artifact
+        uses: Altinn/altinn-platform/actions/flux/build-push-image@3535bba3d301df5778ce420f7adf10edd748cc3f # main
+        with:
+          image_name: ${{ env.SYNCROOT_ARTIFACT_NAME }}
+          tag: ${{ inputs.environment }}
+          workdir: ./flux/syncroot
+          azure_subscription_id: ${{ secrets.DIS_SYNCROOT_AZURE_SUBSCRIPTION_ID }}
+          azure_app_id: ${{ secrets.DIS_SYNCROOT_AZURE_CLIENT_ID }}
+          azure_tenant_id: ${{ secrets.DIS_SYNCROOT_AZURE_TENANT_ID }}
