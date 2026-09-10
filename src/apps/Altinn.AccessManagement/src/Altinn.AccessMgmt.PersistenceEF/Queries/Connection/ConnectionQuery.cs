@@ -3,6 +3,7 @@ using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.FeatureManagement;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 
@@ -10,10 +11,25 @@ namespace Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 /// The ConnectionQuery class provides methods for querying connections between entities based on assignments, delegations, and other relationships.
 /// It supports filtering, enrichment of results with related data, and checking for the existence of connections between two parties.
 /// </summary>
-public class ConnectionQuery(AppDbContext db)
+public class ConnectionQuery(AppDbContext db, IFeatureManager? featureManager = null)
 {
+    /// <summary>
+    /// Feature flag key for treating ADOS entities as subunits that inherit mainunit access (equal to BEDR/AAFY).
+    /// Mirrors <c>AccessMgmtFeatureFlags.AdosSubunitInheritance</c> in the Core project, which PersistenceEF cannot reference.
+    /// </summary>
+    private const string AdosSubunitInheritanceFeatureFlag = "AccessManagement.Subunit.AdosInheritance";
+
     private readonly ConnectionBaseQueryBuilder _baseQueryBuilder = new();
-    
+
+    /// <summary>
+    /// Resolves whether ADOS entities should be treated as subunits that inherit mainunit access.
+    /// Defaults to <c>false</c> (fully reversible) when no <see cref="IFeatureManager"/> is available.
+    /// </summary>
+    private async Task<bool> IsAdosSubunitInheritanceEnabledAsync()
+    {
+        return featureManager is not null && await featureManager.IsEnabledAsync(AdosSubunitInheritanceFeatureFlag);
+    }
+
     public async Task<List<ConnectionQueryExtendedRecord>> GetConnectionsFromOthersAsync(ConnectionQueryFilter filter, CancellationToken ct = default)
     {
         return await GetConnectionsAsync(filter, ConnectionQueryDirection.FromOthers, ct);
@@ -83,10 +99,13 @@ public class ConnectionQuery(AppDbContext db)
 
         if (reasons.Contains(ConnectionReason.Hierarchy))
         {
+            var includeAdosSubunitInheritance = await IsAdosSubunitInheritanceEnabledAsync();
+
             var hierarchy =
             from a in db.Assignments.AsNoTracking()
             join e in db.Entities.AsNoTracking() on a.FromId equals e.ParentId
             where a.ToId == toId && e.Id == fromId
+                && (includeAdosSubunitInheritance || e.VariantId != EntityVariantConstants.ADOS.Id)
             select 1;
 
             if (await hierarchy.AnyAsync())
@@ -125,6 +144,8 @@ public class ConnectionQuery(AppDbContext db)
     {
         try
         {
+            filter.IncludeAdosSubunitInheritance = await IsAdosSubunitInheritanceEnabledAsync();
+
             bool delayChildNesting = true;
             bool delayFromFilter = true;
             if (direction == ConnectionQueryDirection.ToOthers || (filter.FromIds?.Count > 0 && filter.FromIds?.Count <= 20))

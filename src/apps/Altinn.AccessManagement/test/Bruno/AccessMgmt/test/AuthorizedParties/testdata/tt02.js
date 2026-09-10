@@ -1,4 +1,4 @@
-module.exports = 
+module.exports =
 {
     "env": "tt02",
     "resources": {
@@ -234,22 +234,22 @@ module.exports =
             "directPackageTilgangsstyrer": "tilgangsstyrer"
         },
         "employee_instancedelegator": {
-          "name": "LYS MAMMA",
-          "lastname": "MAMMA",
-          "pid": "01818199690",
-          "userId": 1567159,
-          "partyId": 50561881,
-          "partyUuid": "190d6c80-6476-4b7f-9cf6-6aa08620562c",
-          "directPackageToDelegate": "post-til-virksomheten-med-taushetsbelagt-innhold",
-          "directPackageInstanceDelegator": "tilgangsstyring-enkeltinstanser"
+            "name": "LYS MAMMA",
+            "lastname": "MAMMA",
+            "pid": "01818199690",
+            "userId": 1567159,
+            "partyId": 50561881,
+            "partyUuid": "190d6c80-6476-4b7f-9cf6-6aa08620562c",
+            "directPackageToDelegate": "post-til-virksomheten-med-taushetsbelagt-innhold",
+            "directPackageInstanceDelegator": "tilgangsstyring-enkeltinstanser"
         },
         "employee_agent_enk": {
-          "name": "KUL KJENNING",
-          "lastname": "KJENNING",
-          "pid": "20876795923",
-          "userId": 21111470,
-          "partyId": 50795962,
-          "partyUuid": "e87a43c1-0e3d-4783-90f1-dfbd1c5c6170"
+            "name": "KUL KJENNING",
+            "lastname": "KJENNING",
+            "pid": "20876795923",
+            "userId": 21111470,
+            "partyId": 50795962,
+            "partyUuid": "e87a43c1-0e3d-4783-90f1-dfbd1c5c6170"
         }
     },
     "a2BrunoSIUser": {
@@ -313,30 +313,30 @@ module.exports =
         }
     },
     "regnVennligProaktivTiger": {
-      "name": "VENNLIG PROAKTIV TIGER AS",
-      "orgno": "314063945",
-      "partyId": 51451282,
-      "partyUuid": "00832e9b-7100-4e6c-8d7d-d21fb19d0aee",
-      "dagligleder": {
-        "name": "STRENG INFORMASJON",
-        "pid": "13847599221",
-        "userId": 1711398,
-        "partyId": 50670747,
-        "partyUuid": "39b418de-32db-457c-931e-1fd04148d225"
-      },
-      "enkClient": {
-        "name": "FALSK UAVHENGIG KATT LERKETRE",
-        "orgno": "313079422",
-        "partyId": 51674823,
-        "partyUuid": "00a9ab9b-42cf-4121-9086-8b423b0d644f",
-        "innehaver": {
-          "name": "PARODISK KANIN",
-          "pid": "30847798161",
-          "userId": 2203099,
-          "partyId": 51025583,
-          "partyUuid": "a8dbe5a4-55d9-418b-9a9f-3179b9f48a6f"
+        "name": "VENNLIG PROAKTIV TIGER AS",
+        "orgno": "314063945",
+        "partyId": 51451282,
+        "partyUuid": "00832e9b-7100-4e6c-8d7d-d21fb19d0aee",
+        "dagligleder": {
+            "name": "STRENG INFORMASJON",
+            "pid": "13847599221",
+            "userId": 1711398,
+            "partyId": 50670747,
+            "partyUuid": "39b418de-32db-457c-931e-1fd04148d225"
         },
-      }
+        "enkClient": {
+            "name": "FALSK UAVHENGIG KATT LERKETRE",
+            "orgno": "313079422",
+            "partyId": 51674823,
+            "partyUuid": "00a9ab9b-42cf-4121-9086-8b423b0d644f",
+            "innehaver": {
+                "name": "PARODISK KANIN",
+                "pid": "30847798161",
+                "userId": 2203099,
+                "partyId": 51025583,
+                "partyUuid": "a8dbe5a4-55d9-418b-9a9f-3179b9f48a6f"
+            }
+        }
     },
     "regnskapsforerShowClientUnitsFalse": {
         "name": "FROM TYPISK TIGER AS",
@@ -358,30 +358,53 @@ module.exports =
         }
     },
     "rightholderThroughDelegationToSubunitAndKeyRole": {
-      "name": "LATTERMILD LYDIG KATT FLAGG",
-      "orgno": "210367802",
-      "partyId": 51453202,
-      "partyUuid": "83145e4d-e84a-4eb3-b892-8697a9163c4c",
-      "dagligleder": {
-        "name": "FLINK PUSEKATT",
-        "pid": "27917995783",
-        "userId": 2245661,
-        "partyId": 50625169,
-        "partyUuid": "b28588ca-6f4f-4f4d-8b0b-7217423bec77"
-      },
-      "subunit": {
         "name": "LATTERMILD LYDIG KATT FLAGG",
-        "orgno": "315703492",
-        "partyId": 52021146,
-        "partyUuid": "04f806fc-c763-4f93-97c7-ffa3b842acb4"
-      }
+        "orgno": "210367802",
+        "partyId": 51453202,
+        "partyUuid": "83145e4d-e84a-4eb3-b892-8697a9163c4c",
+        "dagligleder": {
+            "name": "FLINK PUSEKATT",
+            "pid": "27917995783",
+            "userId": 2245661,
+            "partyId": 50625169,
+            "partyUuid": "b28588ca-6f4f-4f4d-8b0b-7217423bec77"
+        },
+        "subunit": {
+            "name": "LATTERMILD LYDIG KATT FLAGG",
+            "orgno": "315703492",
+            "partyId": 52021146,
+            "partyUuid": "04f806fc-c763-4f93-97c7-ffa3b842acb4"
+        }
     },
     "idportenEmailUser": {
-      "name": "am-bruno-automated-tests@mailinator.com",
-      "emailId": "am-bruno-automated-tests@mailinator.com",
-      "userId": 2680437,
-      "partyId": 53440923,
-      "partyUuid": "a28806e7-5e11-4ffa-be5a-56c47dcedf98",
+        "name": "am-bruno-automated-tests@mailinator.com",
+        "emailId": "am-bruno-automated-tests@mailinator.com",
+        "userId": 2680437,
+        "partyId": 53440923,
+        "partyUuid": "a28806e7-5e11-4ffa-be5a-56c47dcedf98"
+    },
+    // ADOS (administrativ enhet - offentlig sektor) main unit with an ADOS subunit.
+    // Used to verify that the DAGL (daglig leder) of the ADOS main unit inherits access to
+    // the ADOS subunit, mirroring the BEDR/AAFY subunit inheritance behaviour, once the
+    // AccessManagement.Subunit.AdosInheritance feature flag is enabled.
+    "adosMainUnit": {
+        "name": "UNG GYLDEN BJØRN KOMMUNE",
+        "orgno": "311010905",
+        "partyId": 51537094,
+        "partyUuid": "60c5ff4e-9a3a-48e7-a0e3-1ec21fb0484a",
+        "dagligleder": {
+            "name": "LOJAL KAIE",
+            "pid": "28898199888",
+            "userId": 343160,
+            "partyId": 51077512,
+            "partyUuid": "8653dddd-314b-4ed4-8c0f-31cbfb13263c"
+        },
+        "subunit": {
+            "name": "VIS KONGE PANDA",
+            "orgno": "313676781",
+            "partyId": 51862126,
+            "partyUuid": "7be4bbc3-032d-4508-acf4-6fdb96ef0d9d"
+        }
     },
     "deletedPartyRetentionYears": 2
 };

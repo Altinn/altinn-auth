@@ -127,4 +127,12 @@ public static class AccessMgmtFeatureFlags
     /// Feature flag for including client-delegated resources in ConnectionQuery and AuthorizedParties response.
     /// </summary>
     public const string IncludeClientDelegationResourcesInConnectionQuery = "AccessManagement.ConnectionQuery.IncludeClientDelegationResources";
+
+    /// <summary>
+    /// Enables ADOS (administrative unit - public sector) entities to be treated as subunits that inherit
+    /// all mainunit access, equal to BEDR/AAFY. Gates both the write side (setting <c>Entity.ParentId</c>
+    /// during CCR role sync) and the read side (consuming <c>ParentId</c> for ADOS entities in ConnectionQuery),
+    /// so the behavior is fully reversible without clearing stored parent references.
+    /// </summary>
+    public const string AdosSubunitInheritance = "AccessManagement.Subunit.AdosInheritance";
 }
