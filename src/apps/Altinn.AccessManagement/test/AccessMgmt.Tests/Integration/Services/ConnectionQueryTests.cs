@@ -1,5 +1,4 @@
 ﻿using Altinn.AccessManagement.TestUtils.Fixtures;
-using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;

@@ -69,7 +69,7 @@ public static class PackageDelegationCheckQuery
             FROM dbo.assignment a
                 JOIN dbo.role r ON a.roleid = r.id
             WHERE a.fromid = @fromId
-                AND r.code IN ('hovedenhet', 'ikke-naeringsdrivende-hovedenhet')
+                AND r.code IN ('hovedenhet', 'ikke-naeringsdrivende-hovedenhet', 'administrativ-enhet-offentlig-sektor')
         ),
         allPackages AS (
             SELECT 

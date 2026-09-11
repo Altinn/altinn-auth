@@ -64,7 +64,7 @@ public static class ResourceDelegationCheckRoleQuery
             FROM dbo.assignment a
                 JOIN dbo.role r ON a.roleid = r.id
             WHERE a.fromid = @fromId
-                AND r.code IN ('hovedenhet', 'ikke-naeringsdrivende-hovedenhet')
+                AND r.code IN ('hovedenhet', 'ikke-naeringsdrivende-hovedenhet', 'administrativ-enhet-offentlig-sektor')
         ),
         allRoles AS (
             -- Get all roles relevant for from-party
