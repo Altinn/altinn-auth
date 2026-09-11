@@ -510,7 +510,7 @@ module "appsettings" {
     },
     {
       name        = "AccessManagement.Subunit.AdosInheritance"
-      description = "Specifies if ADOS administrative units should inherit mainunit access as subunits (equal to BEDR/AAFY). Gates both RoleSync ParentId writes and ConnectionQuery reads."
+      description = "Specifies if ADOS administrative units should be treated as subunits that inherit mainunit access (equal to BEDR/AAFY) in ConnectionQuery and AuthorizedParties. Reversible; defaults to false."
       label       = "${lower(var.environment)}-access-management"
       value       = false
     },

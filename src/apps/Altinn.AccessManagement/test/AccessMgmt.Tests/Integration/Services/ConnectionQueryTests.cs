@@ -1,4 +1,5 @@
 ﻿using Altinn.AccessManagement.TestUtils.Fixtures;
+using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
@@ -7,8 +8,6 @@ using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.FeatureManagement;
-using Moq;
 using DelegationPackage = Altinn.AccessMgmt.PersistenceEF.Models.DelegationPackage;
 using DelegationResource = Altinn.AccessMgmt.PersistenceEF.Models.DelegationResource;
 
@@ -128,7 +127,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
         var subUnitId = TestDataSet.GetEntity("ADOS Subunit").Id;
         var personId = TestDataSet.GetEntity("AdosPer").Id;
 
-        // _query is constructed without an IFeatureManager, so ADOS inheritance is always off (reversible default).
+        // _query is constructed with adosSubunitInheritanceEnabled = false, so ADOS inheritance is always off (reversible default).
         var filter = new ConnectionQueryFilter
         {
             ToIds = new[] { personId },
@@ -155,12 +154,8 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
         var subUnitId = TestDataSet.GetEntity("ADOS Subunit").Id;
         var personId = TestDataSet.GetEntity("AdosPer").Id;
 
-        // The filter value is always derived from the feature flag, so enable it through a feature manager.
-        var featureManager = new Mock<IFeatureManager>();
-        featureManager
-            .Setup(m => m.IsEnabledAsync("AccessManagement.Subunit.AdosInheritance"))
-            .ReturnsAsync(true);
-        var query = new ConnectionQuery(_db, featureManager.Object);
+        // The filter value is always derived from the ADOS subunit inheritance flag, so enable it here.
+        var query = new ConnectionQuery(_db, adosSubunitInheritanceEnabled: true);
 
         var filter = new ConnectionQueryFilter
         {
@@ -179,6 +174,47 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
 
         var mainUnit = connections.Single(t => t.Party.Id == mainUnitId);
         Assert.Contains(mainUnit.Connections, t => t.Party.Id == subUnitId);
+    }
+
+    [Fact]
+    public async Task GetConnectionsFromOthers_AdosPer_AdosInheritanceEnabled_SubunitInheritsRolesAndPackages()
+    {
+        // Reproduces the reported PDP (PIP) gap: when ADOS subunit inheritance is enabled the ADOS
+        // subunit (resource party / reportee) must inherit BOTH the mainunit ManagingDirector role
+        // AND its access packages through the hierarchy reason, exactly like BEDR/AAFY subunits.
+        // Filter mirrors AuthorizedPartyRepoServiceEf.GetPipConnectionsFromOthers: FromIds = the resource
+        // party (the ADOS subunit), EnrichEntities = false, IncludePackages = true.
+        var subUnitId = TestDataSet.GetEntity("ADOS Subunit").Id;
+        var personId = TestDataSet.GetEntity("AdosPer").Id;
+
+        var query = new ConnectionQuery(_db, adosSubunitInheritanceEnabled: true);
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { personId },
+            FromIds = new[] { subUnitId },
+            IncludeKeyRole = true,
+            EnrichEntities = false,
+            IncludeDelegation = true,
+            IncludeMainUnitConnections = true,
+            IncludeSubConnections = true,
+            IncludePackages = true,
+            ExcludeDeleted = false,
+            EnrichPackageResources = false,
+        };
+
+        var dbResult = await query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        // The ADOS subunit must appear as an inherited (hierarchy) connection with the ManagingDirector role.
+        var subunitHierarchyRecords = dbResult
+            .Where(r => r.FromId == subUnitId && r.Reason == ConnectionReason.Hierarchy)
+            .ToList();
+        Assert.NotEmpty(subunitHierarchyRecords);
+        Assert.Contains(subunitHierarchyRecords, r => r.RoleId == RoleConstants.ManagingDirector.Id);
+
+        // The inherited ManagingDirector access on the ADOS subunit must also carry its access packages.
+        var subunitPackages = subunitHierarchyRecords.SelectMany(r => r.Packages ?? []).ToList();
+        Assert.NotEmpty(subunitPackages);
     }
 
     [Fact]
@@ -483,7 +519,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
     [Fact]
     public async Task HasConnection_AdosSubunitHierarchy_AdosInheritanceDisabled_ReturnsFalse()
     {
-        // With no IFeatureManager the ADOS subunit inheritance flag defaults to off, so the
+        // With adosSubunitInheritanceEnabled = false the ADOS subunit inheritance flag defaults to off, so the
         // ADOS subunit must not inherit the mainunit's connection through the hierarchy reason.
         var subUnitId = TestDataSet.GetEntity("ADOS Subunit").Id;
         var personId = TestDataSet.GetEntity("AdosPer").Id;
