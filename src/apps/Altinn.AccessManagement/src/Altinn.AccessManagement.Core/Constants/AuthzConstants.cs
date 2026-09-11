@@ -116,6 +116,16 @@
         public const string POLICY_CLIENTDELEGATION_WRITE = "CLIENTDELEGATION_WRITE";
 
         /// <summary>
+        /// Policy tag for authorizing client administration API read access
+        /// </summary>
+        public const string POLICY_BANKRUPTCYDELEGATION_READ = "BANKRUPTCYESTATEDELEGATIONS_READ";
+
+        /// <summary>
+        /// Policy tag for authorizing client administration API write access
+        /// </summary>
+        public const string POLICY_BANKRUPTCYDELEGATION_WRITE = "BANKRUPTCYESTATEDELEGATIONS_WRITE";
+
+        /// <summary>
         /// Policy tag for authorizing enterprises for consent requests
         /// </summary>
         public const string POLICY_CONSENTREQUEST_WRITE = "CONSENTREQUEST_WRITE";
@@ -164,6 +174,16 @@
         /// Client-Administration Write enduser scope giving access to write operations on behalf of Client-Administrators
         /// </summary>
         public const string SCOPE_ENDUSER_CLIENTDELEGATION_WRITE = "altinn:clientdelegations.write";
+
+        /// <summary>
+        /// Bakruptcyestate-Administration Read enduser scope giving access to read operations on behalf of Bankruptcyestate-Administrators
+        /// </summary>
+        public const string SCOPE_ENDUSER_BANKRUPTCYDELEGATION_READ = "altinn:bankruptcyestatedelegations.read";
+
+        /// <summary>
+        /// Bakruptcyestate-Administration Write enduser scope giving access to write operations on behalf of Bankruptcyestate-Administrators
+        /// </summary>
+        public const string SCOPE_ENDUSER_BANKRUPTCYDELEGATION_WRITE = "altinn:bankruptcyestatedelegations.write";
 
         /// <summary>
         /// Enduser scope giving access to read operations on received connections aka from others

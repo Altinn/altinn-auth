@@ -201,4 +201,10 @@ public static class Problems
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
     public static ProblemDescriptor IdPortenAuthorizationInternalServerError { get; }
     = _factory.Create(47, HttpStatusCode.InternalServerError, "An internal server error occurred while processing the IdPorten authorization request");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor PackageNotAvailableForDelegation { get; }
+    = _factory.Create(48, HttpStatusCode.Forbidden, "The party is not authorized to delegate this access package");
+
+
 }

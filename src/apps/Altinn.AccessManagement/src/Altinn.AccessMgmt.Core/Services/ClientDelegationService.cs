@@ -5,6 +5,7 @@ using Altinn.AccessMgmt.Core.Appsettings;
 using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Core.Notifications;
 using Altinn.AccessMgmt.Core.Utils;
+using Altinn.AccessMgmt.Core.Utils.Helper;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
@@ -831,60 +832,19 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
     /// <inheritdoc/>
     public async Task<ValidationProblemInstance?> RemoveAgent(Guid partyUuid, Guid toUuid, bool cascade, CancellationToken cancellationToken = default)
     {
-        ValidationErrorBuilder errorBuilder = default;
-
         var existingAssignment = await db.Assignments
-            .AsTracking()
-            .Where(p => p.FromId == partyUuid && p.ToId == toUuid && p.RoleId == RoleConstants.Agent)
-            .FirstOrDefaultAsync(cancellationToken);
+                .AsTracking()
+                .Where(p => p.FromId == partyUuid && p.ToId == toUuid && p.RoleId == RoleConstants.Agent)
+                .FirstOrDefaultAsync(cancellationToken);
 
-        if (existingAssignment is null)
-        {
-            return null;
-        }
+        if (!cascade)
+        { 
+            ValidationErrorBuilder errorBuilder = await CascadingRevokeHelper.CheckCascadingDependenciesAgentAssignment(db, existingAssignment, cancellationToken);
 
-        var existingDelegations = await db.Delegations
-            .AsNoTracking()
-            .Where(p => p.ToId == existingAssignment.Id)
-            .Include(p => p.DelegationPackages)
-            .Include(p => p.DelegationResources)
-            .Where(p => p.DelegationPackages.Any() || p.DelegationResources.Any())
-            .AsSplitQuery()
-            .ToListAsync(cancellationToken);
-
-        foreach (var existingDelegation in existingDelegations)
-        {
-            if (!cascade)
+            if (errorBuilder.TryBuild(out var problem))
             {
-                if (existingDelegation.DelegationPackages.Count > 0)
-                {
-                    var pkgs = string.Join(", ", existingDelegation.DelegationPackages.Select(p => p.PackageId));
-                    errorBuilder.Add(
-                        ValidationErrors.DelegationHasActiveConnections,
-                        "$QUERY/cascade",
-                        [
-                            new($"{existingDelegation.Id}", $"Cannot remove delegation '{existingDelegation.Id}' because party '{toUuid}' still has active delegated packages <{pkgs}> from party '{existingDelegation.FromId}'.")
-                        ]
-                    );
-                }
-
-                if (existingDelegation.DelegationResources.Count > 0)
-                {
-                    var resources = string.Join(", ", existingDelegation.DelegationResources.Select(r => r.ResourceId));
-                    errorBuilder.Add(
-                        ValidationErrors.DelegationHasActiveConnections,
-                        "$QUERY/cascade",
-                        [
-                            new($"{existingDelegation.Id}", $"Cannot remove delegation '{existingDelegation.Id}' because party '{toUuid}' still has active delegated resources <{resources}> from party '{existingDelegation.FromId}'.")
-                        ]
-                    );
-                }
+                return problem;
             }
-        }
-
-        if (errorBuilder.TryBuild(out var problem))
-        {
-            return problem;
         }
 
         await AgentRemovedNotification.Upsert(

@@ -3775,7 +3775,7 @@ public static class PackageConstants
     /// </summary>
     /// <remarks>
     /// - <c>Id:</c> 0195efb8-7c80-7e9c-95c1-48937e23960a
-    /// - <c>URN:</c> urn:altinn:accesspackage:konkursbo-tilgangsstyrer
+    /// - <c>URN:</c> urn:altinn:accesspackage:koinnbygger-konkursbo-tilgangsstyrer
     /// - <c>Provider:</c> Altinn3
     /// - <c>Description:</c> Gir bruker mulighet til å administrere konkursbo
     /// </remarks>
@@ -3785,12 +3785,12 @@ public static class PackageConstants
         {
             Name = "Konkursbo administrator",
             Description = "Gir bruker mulighet til å administrere konkursbo",
-            Urn = "urn:altinn:accesspackage:konkursbo-tilgangsstyrer",
-            Code = "konkursbo-tilgangsstyrer",
+            Urn = "urn:altinn:accesspackage:innbygger-konkursbo-tilgangsstyrer",
+            Code = "innbygger-konkursbo-tilgangsstyrer",
             IsDelegable = false,
             IsAvailableForServiceOwners = false,
             IsAssignable = true,
-            EntityTypeId = EntityTypeConstants.Organization,
+            EntityTypeId = EntityTypeConstants.Person,
             ProviderId = ProviderConstants.Altinn3,
             AreaId = AreaConstants.ManageAccess,
         },
