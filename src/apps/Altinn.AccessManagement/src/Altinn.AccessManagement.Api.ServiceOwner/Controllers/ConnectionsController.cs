@@ -2,7 +2,9 @@
 using Altinn.AccessManagement.Core.Configuration;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Errors;
+using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.Core.Audit;
+using Altinn.AccessMgmt.Core.Extensions;
 using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
@@ -14,6 +16,7 @@ using Altinn.Authorization.ProblemDetails;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using Microsoft.FeatureManagement.Mvc;
 
 namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers
 {
@@ -26,6 +29,7 @@ namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers
         IServiceOwnerConnectionService connectionService,
         IEntityService EntityService,
         IPackageService packageService,
+        IResourceService resourceService,
         IOptions<ServiceOwnerDelegationSettings> serviceOwnerDelegationSettings
     ) : ControllerBase
     {
@@ -179,6 +183,182 @@ namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers
             }
 
             return NoContent();
+        }
+
+        /// <summary>
+        /// Gets the right keys available for delegation on a resource owned by the authenticated service owner.
+        /// </summary>
+        [HttpGet("resources/rights")]
+        [Authorize(Policy = AuthzConstants.SCOPE_SERVICEOWNER_RESOURCE_DELEGATION_WRITE)]
+        [FeatureGate(AccessMgmtFeatureFlags.EnableServiceOwnerResourceDelegation)]
+        [ProducesResponseType<IEnumerable<RightDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+        [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> GetResourceRights([FromQuery(Name = "resource")] string resource, CancellationToken cancellationToken = default)
+        {
+            Resource resourceObj = await resourceService.GetResource(resource, cancellationToken);
+            if (resourceObj is null)
+            {
+                return InvalidResourceProblem(resource);
+            }
+
+            if (!IsServiceOwnerAuthorizedForResource(resourceObj, out _))
+            {
+                return Problems.ResourceDelegationNotAuthorized.ToActionResult();
+            }
+
+            Result<List<RightDto>> result = await connectionService.GetResourceRights(resourceObj.RefId, this.GetLanguageCode(), cancellationToken);
+
+            if (result.IsProblem)
+            {
+                return result.Problem.ToActionResult();
+            }
+
+            return Ok(result.Value);
+        }
+
+        /// <summary>
+        /// Delegates rights on a resource owned by the authenticated service owner from one party to another.
+        /// </summary>
+        [HttpPost("resources")]
+        [Authorize(Policy = AuthzConstants.SCOPE_SERVICEOWNER_RESOURCE_DELEGATION_WRITE)]
+        [FeatureGate(AccessMgmtFeatureFlags.EnableServiceOwnerResourceDelegation)]
+        [AuditServiceOwnerConsumer]
+        [ProducesResponseType<AssignmentResourceDto>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+        [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> AddResource([FromBody] ServiceOwnerResourceDelegation resourceDelegation, CancellationToken cancellationToken = default)
+        {
+            Resource resourceObj = await resourceService.GetResource(resourceDelegation.Resource, cancellationToken);
+            if (resourceObj is null)
+            {
+                return InvalidResourceProblem(resourceDelegation.Resource);
+            }
+
+            if (!IsServiceOwnerAuthorizedForResource(resourceObj, out OrganizationNumber? organizationNumber))
+            {
+                return Problems.ResourceDelegationNotAuthorized.ToActionResult();
+            }
+
+            Guid? fromEntityId = await ResolvePartyId(resourceDelegation.From, cancellationToken);
+            Guid? toEntityId = await ResolvePartyId(resourceDelegation.To, cancellationToken);
+
+            // Validate entities exist
+            if (fromEntityId is null || toEntityId is null)
+            {
+                return Problems.ConnectionEntitiesDoNotExist.ToActionResult();
+            }
+
+            Entity authenticatedServiceOwnerEntity = await EntityService.GetByOrgNo(organizationNumber.ToString(), cancellationToken);
+            if (authenticatedServiceOwnerEntity is null)
+            {
+                return Problems.PartyNotFound.ToActionResult();
+            }
+
+            Result<AssignmentResourceDto> result = await connectionService.AddResource(fromEntityId.Value, toEntityId.Value, resourceObj, resourceDelegation.RightKeys?.DirectRightKeys, authenticatedServiceOwnerEntity.Id, ConfigureConnections, cancellationToken);
+
+            if (result.IsProblem)
+            {
+                return result.Problem.ToActionResult();
+            }
+
+            return Ok(result.Value);
+        }
+
+        /// <summary>
+        /// Revokes a resource delegation previously made by the authenticated service owner between two parties.
+        /// </summary>
+        [HttpPost("resources/revoke")]
+        [Authorize(Policy = AuthzConstants.SCOPE_SERVICEOWNER_RESOURCE_DELEGATION_WRITE)]
+        [FeatureGate(AccessMgmtFeatureFlags.EnableServiceOwnerResourceDelegation)]
+        [AuditServiceOwnerConsumer]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> RevokeResource([FromBody] ServiceOwnerResourceDelegation resourceDelegation, CancellationToken cancellationToken = default)
+        {
+            Resource resourceObj = await resourceService.GetResource(resourceDelegation.Resource, cancellationToken);
+            if (resourceObj is null)
+            {
+                return InvalidResourceProblem(resourceDelegation.Resource);
+            }
+
+            if (!IsServiceOwnerAuthorizedForResource(resourceObj, out OrganizationNumber? organizationNumber))
+            {
+                return Problems.ResourceDelegationNotAuthorized.ToActionResult();
+            }
+
+            Guid? fromEntityId = await ResolvePartyId(resourceDelegation.From, cancellationToken);
+            Guid? toEntityId = await ResolvePartyId(resourceDelegation.To, cancellationToken);
+
+            // Validate entities exist
+            if (fromEntityId is null || toEntityId is null)
+            {
+                return Problems.ConnectionEntitiesDoNotExist.ToActionResult();
+            }
+
+            Entity authenticatedServiceOwnerEntity = await EntityService.GetByOrgNo(organizationNumber.ToString(), cancellationToken);
+            if (authenticatedServiceOwnerEntity is null)
+            {
+                return Problems.PartyNotFound.ToActionResult();
+            }
+
+            Result<bool> result = await connectionService.RevokeResource(fromEntityId.Value, toEntityId.Value, resourceObj.Id, authenticatedServiceOwnerEntity.Id, cancellationToken);
+
+            if (result.IsProblem)
+            {
+                return result.Problem.ToActionResult();
+            }
+
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Resolves a party given as a person identifier or an organization identifier to the entity id.
+        /// Returns null if the party is given in another form or does not exist.
+        /// </summary>
+        private async Task<Guid?> ResolvePartyId(ServiceOwnerConnectionPartyUrn party, CancellationToken cancellationToken)
+        {
+            if (party.IsPersonId(out PersonIdentifier personIdentifier))
+            {
+                Entity personEntity = await EntityService.GetByPersNo(personIdentifier.ToString(), cancellationToken);
+                return personEntity?.Id;
+            }
+
+            if (party.IsOrganizationId(out OrganizationNumber organizationNumber))
+            {
+                Entity orgEntity = await EntityService.GetByOrgNo(organizationNumber.ToString(), cancellationToken);
+                return orgEntity?.Id;
+            }
+
+            return null;
+        }
+
+        private static IActionResult InvalidResourceProblem(string resource)
+        {
+            ProblemDetails problem = Problems.InvalidResource.ToProblemDetails();
+            problem.Extensions["resource"] = resource;
+            return problem.ToActionResult();
+        }
+
+        /// <summary>
+        /// The service owner is authorized for a resource when the organization number from the consumer claim
+        /// equals the organization number of the resource provider.
+        /// </summary>
+        private bool IsServiceOwnerAuthorizedForResource(Resource resource, out OrganizationNumber? organizationNumber)
+        {
+            var consumerParty = OrgUtil.GetAuthenticatedParty(User);
+            if (consumerParty is null || !consumerParty.IsOrganizationId(out organizationNumber))
+            {
+                organizationNumber = null;
+                return false;
+            }
+
+            string providerOrgNo = resource.Provider?.RefId;
+            return !string.IsNullOrWhiteSpace(providerOrgNo) && string.Equals(providerOrgNo, organizationNumber.ToString(), StringComparison.Ordinal);
         }
 
         private bool IsServiceOwnerAuthorizedForPackage(string packageIdentifier, out OrganizationNumber? organizationNumber)

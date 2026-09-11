@@ -110,6 +110,11 @@ public static class AccessMgmtFeatureFlags
     public const string EnableRequestAssignmentPackage = "AccessMgmt.Controller.RequestAssignment.Package";
 
     /// <summary>
+    /// Enables the resource delegation endpoints in the serviceowner connections API.
+    /// </summary>
+    public const string EnableServiceOwnerResourceDelegation = "AccessMgmt.Controller.ServiceOwner.ResourceDelegation";
+
+    /// <summary>
     /// Represents the configuration key used to disable cache invalidation for Altinn 2 cache.
     /// </summary>
     /// <remarks>Set this key in the application's configuration to prevent automatic invalidation of the
