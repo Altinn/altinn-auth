@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.2.4](https://github.com/Altinn/altinn-auth/compare/Altinn.Authorization.PEP-v4.2.3...Altinn.Authorization.PEP-v4.2.4) (2026-09-11)
+
+
+### Bug Fixes
+
+* PascalCase logger placeholders across both verticals (S6678) ([#3089](https://github.com/Altinn/altinn-auth/issues/3089)) ([f8108dc](https://github.com/Altinn/altinn-auth/commit/f8108dcd0bbb97ee8a7a7001cd7fe7add1e707ab))
+
 ## [4.2.3](https://github.com/Altinn/altinn-auth/compare/Altinn.Authorization.PEP-v4.2.2...Altinn.Authorization.PEP-v4.2.3) (2026-02-09)
 
 
