@@ -1,6 +1,5 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Altinn.AccessManagement;
-using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.Core.Extensions;
 using Altinn.AccessMgmt.Core.HostedServices;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
