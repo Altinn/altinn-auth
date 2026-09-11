@@ -45,4 +45,7 @@ public static partial class Log
 
     [LoggerMessage(EventId = 5, Level = LogLevel.Warning, Message = "Failed to {Action} assingment from '{From}' to '{To}' with role '{Role}'")]
     internal static partial void AssignmentFailed(ILogger logger, string action, string from, string to, string role);
+
+    [LoggerMessage(EventId = 6, Level = LogLevel.Information, Message = "Removed {Count} assignments given to deleted system user {PartyUuid}")]
+    internal static partial void DeletedSystemUserAssignmentsCleared(ILogger logger, int count, Guid partyUuid);
 }
