@@ -18,6 +18,7 @@ public static class PackageDelegationCheckQuery
         Guid toId,
         IEnumerable<Guid> packageIds,
         bool isForResourceDelegationCheck = false,
+        bool includeAdosSubunitInheritance = false,
         CancellationToken ct = default)
     {
         var ids = packageIds?.ToArray();
@@ -27,6 +28,7 @@ public static class PackageDelegationCheckQuery
                 QUERY,
                 new NpgsqlParameter("fromId", fromId),
                 new NpgsqlParameter("toId", toId),
+                new NpgsqlParameter("includeAdos", NpgsqlDbType.Boolean) { Value = includeAdosSubunitInheritance },
                 new NpgsqlParameter("packageIds", NpgsqlDbType.Array | NpgsqlDbType.Uuid)
                 {
                     Value = (ids != null && ids.Length > 0) ? ids : DBNull.Value
@@ -69,7 +71,10 @@ public static class PackageDelegationCheckQuery
             FROM dbo.assignment a
                 JOIN dbo.role r ON a.roleid = r.id
             WHERE a.fromid = @fromId
-                AND r.code IN ('hovedenhet', 'ikke-naeringsdrivende-hovedenhet', 'administrativ-enhet-offentlig-sektor')
+                AND (
+                    r.code IN ('hovedenhet', 'ikke-naeringsdrivende-hovedenhet')
+                    OR (@includeAdos AND r.code = 'administrativ-enhet-offentlig-sektor')
+                )
         ),
         allPackages AS (
             SELECT 

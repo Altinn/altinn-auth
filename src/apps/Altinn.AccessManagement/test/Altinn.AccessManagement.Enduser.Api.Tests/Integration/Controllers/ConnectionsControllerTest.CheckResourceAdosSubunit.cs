@@ -7,6 +7,7 @@ using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.TestUtils;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessManagement.TestUtils.Mocks;
+using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
@@ -41,6 +42,7 @@ public partial class ConnectionsControllerTest
         public CheckResourceAdosSubunit(ApiFixture fixture)
         {
             Fixture = fixture;
+            Fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.AdosSubunitInheritance);
             Fixture.ConfigureServices(services =>
             {
                 services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
@@ -150,6 +152,132 @@ public partial class ConnectionsControllerTest
             Assert.True(readRight.Result, "The 'read' right should have Result = true (delegable via the inherited A2 role from the ADOS mainunit)");
             Assert.NotEmpty(readRight.ReasonCodes);
             Assert.Contains(readRight.ReasonCodes, r => r.Equals(DelegationCheckReasonCode.RoleAccess));
+        }
+    }
+
+    /// <summary>
+    /// Feature-off counterpart of <see cref="CheckResourceAdosSubunit"/>: when the
+    /// <c>AccessManagement.Subunit.AdosInheritance</c> feature flag is disabled, the ADOS main-unit
+    /// relationship must not be treated as a main-unit branch in <c>ResourceDelegationCheckRoleQuery</c>, so the
+    /// A2 role held on the mainunit must NOT grant the resource right from the ADOS subunit.
+    /// </summary>
+    [IntegrationTest]
+    public class CheckResourceAdosSubunitFeatureDisabled : IClassFixture<ApiFixture>
+    {
+        private static readonly Guid AdosMainUnitId = Guid.Parse("0196b171-0000-7000-8000-000000000001");
+        private static readonly Guid AdosSubUnitId = Guid.Parse("0196b171-0000-7000-8000-000000000002");
+        private static readonly Guid AccessManagerPersonId = Guid.Parse("0196b171-0000-7000-8000-000000000003");
+
+        public CheckResourceAdosSubunitFeatureDisabled(ApiFixture fixture)
+        {
+            Fixture = fixture;
+            Fixture.WithDisabledFeatureFlag(AccessMgmtFeatureFlags.AdosSubunitInheritance);
+            Fixture.ConfigureServices(services =>
+            {
+                services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
+            });
+            Fixture.EnsureSeedOnce<CheckResourceAdosSubunitFeatureDisabled>(db =>
+            {
+                db.Entities.AddRange(
+                    new Entity()
+                    {
+                        Id = AdosMainUnitId,
+                        Name = "ADOS Mainunit ResourceCheck Disabled",
+                        TypeId = EntityTypeConstants.Organization,
+                        VariantId = EntityVariantConstants.ORGL,
+                        OrganizationIdentifier = "399971001",
+                        RefId = "399971001",
+                        PartyId = 50971001,
+                    },
+                    new Entity()
+                    {
+                        Id = AdosSubUnitId,
+                        Name = "ADOS Subunit ResourceCheck Disabled",
+                        TypeId = EntityTypeConstants.Organization,
+                        VariantId = EntityVariantConstants.ADOS,
+                        OrganizationIdentifier = "399971002",
+                        RefId = "399971002",
+                        ParentId = AdosMainUnitId,
+                        PartyId = 50971002,
+                    },
+                    new Entity()
+                    {
+                        Id = AccessManagerPersonId,
+                        Name = "Anders Tilgangsstyrer Disabled",
+                        TypeId = EntityTypeConstants.Person,
+                        VariantId = EntityVariantConstants.Person,
+                        PersonIdentifier = "26019099953",
+                        RefId = "26019099953",
+                        PartyId = 50971003,
+                        UserId = 50971003,
+                        DateOfBirth = new DateOnly(1990, 1, 26),
+                    });
+                db.SaveChanges();
+
+                // The ADOS subunit points to its mainunit via the ADOS (administrativ-enhet-offentlig-sektor) role.
+                db.Assignments.Add(new Assignment()
+                {
+                    FromId = AdosSubUnitId,
+                    ToId = AdosMainUnitId,
+                    RoleId = RoleConstants.AdministrativeUnitPublicSector,
+                });
+
+                // Anders is AccessManager and holds the A2 role (A0239 - Accountant with signing rights) on the ADOS mainunit.
+                db.Assignments.Add(new Assignment()
+                {
+                    FromId = AdosMainUnitId,
+                    ToId = AccessManagerPersonId,
+                    RoleId = RoleConstants.AccessManager,
+                });
+                db.Assignments.Add(new Assignment()
+                {
+                    FromId = AdosMainUnitId,
+                    ToId = AccessManagerPersonId,
+                    RoleId = RoleConstants.AccountantWithSigningRights,
+                });
+
+                db.SaveChanges();
+            });
+        }
+
+        public ApiFixture Fixture { get; }
+
+        private HttpClient CreateClient(Guid partyUuid, params string[] scopes)
+        {
+            var client = Fixture.Server.CreateClient();
+            var token = TestTokenGenerator.CreateToken(new ClaimsIdentity("mock"), claims =>
+            {
+                claims.Add(new Claim(AltinnCoreClaimTypes.PartyUuid, partyUuid.ToString()));
+                claims.Add(new Claim("scope", string.Join(" ", scopes)));
+            });
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            return client;
+        }
+
+        /// <summary>
+        /// With ADOS inheritance disabled, the resource delegation check on behalf of the ADOS subunit must not
+        /// grant the read right via the A2 role inherited from the mainunit.
+        /// </summary>
+        [Fact]
+        public async Task CheckResource_AsAccessManagerWithA2RoleOfAdosMainUnit_FeatureDisabled_ReturnsRightNotGrantedFromAdosSubunit()
+        {
+            HttpClient client = CreateClient(AccessManagerPersonId, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE);
+
+            HttpResponseMessage response = await client.GetAsync(
+                $"{Route}/resources/delegationcheck?party={AdosSubUnitId}&resource=app_dihe_omsetningsoppgave-for-alkohol",
+                TestContext.Current.CancellationToken);
+
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {responseContent}");
+
+            ResourceCheckDto result = JsonSerializer.Deserialize<ResourceCheckDto>(responseContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            Assert.NotNull(result);
+            Assert.NotNull(result.Rights);
+
+            RightCheckDto readRight = result.Rights.FirstOrDefault(r => r.Right.Name.Equals("read", StringComparison.InvariantCultureIgnoreCase));
+            Assert.NotNull(readRight);
+            Assert.False(readRight.Result, "The 'read' right must NOT be delegable when ADOS inheritance is disabled");
+            Assert.DoesNotContain(readRight.ReasonCodes, r => r.Equals(DelegationCheckReasonCode.RoleAccess));
         }
     }
 }

@@ -18,6 +18,7 @@ public static class ResourceDelegationCheckRoleQuery
         Guid fromId,
         Guid toId,
         bool toIsMainAdminForFrom = false,
+        bool includeAdosSubunitInheritance = false,
         CancellationToken ct = default)
     {
         var rows = await dbContext.Database
@@ -25,7 +26,8 @@ public static class ResourceDelegationCheckRoleQuery
                 QUERY,
                 new NpgsqlParameter("fromId", fromId),
                 new NpgsqlParameter("toId", toId),
-                new NpgsqlParameter("isMainAdmin", NpgsqlDbType.Boolean) { Value = toIsMainAdminForFrom }
+                new NpgsqlParameter("isMainAdmin", NpgsqlDbType.Boolean) { Value = toIsMainAdminForFrom },
+                new NpgsqlParameter("includeAdos", NpgsqlDbType.Boolean) { Value = includeAdosSubunitInheritance }
             )
             .AsNoTracking()
             .ToListAsync(ct);
@@ -64,7 +66,10 @@ public static class ResourceDelegationCheckRoleQuery
             FROM dbo.assignment a
                 JOIN dbo.role r ON a.roleid = r.id
             WHERE a.fromid = @fromId
-                AND r.code IN ('hovedenhet', 'ikke-naeringsdrivende-hovedenhet', 'administrativ-enhet-offentlig-sektor')
+                AND (
+                    r.code IN ('hovedenhet', 'ikke-naeringsdrivende-hovedenhet')
+                    OR (@includeAdos AND r.code = 'administrativ-enhet-offentlig-sektor')
+                )
         ),
         allRoles AS (
             -- Get all roles relevant for from-party

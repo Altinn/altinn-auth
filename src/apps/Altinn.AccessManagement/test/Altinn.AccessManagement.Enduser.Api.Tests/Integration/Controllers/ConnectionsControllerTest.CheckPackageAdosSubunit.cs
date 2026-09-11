@@ -5,6 +5,7 @@ using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.TestUtils;
 using Altinn.AccessManagement.TestUtils.Fixtures;
+using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
@@ -33,6 +34,7 @@ public partial class ConnectionsControllerTest
         public CheckPackageAdosSubunit(ApiFixture fixture)
         {
             Fixture = fixture;
+            Fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.AdosSubunitInheritance);
             Fixture.EnsureSeedOnce<CheckPackageAdosSubunit>(db =>
             {
                 db.Entities.AddRange(
@@ -128,6 +130,121 @@ public partial class ConnectionsControllerTest
 
             // At least one package must be delegable, resolved through the mainunit inheritance branch of the query.
             Assert.Contains(
+                result.Items,
+                p => p.Result && p.Reasons.Any(r => (r.Description ?? string.Empty).Contains("MainUnit", StringComparison.OrdinalIgnoreCase)));
+        }
+    }
+
+    /// <summary>
+    /// Feature-off counterpart of <see cref="CheckPackageAdosSubunit"/>: when the
+    /// <c>AccessManagement.Subunit.AdosInheritance</c> feature flag is disabled, the ADOS main-unit
+    /// relationship must not be treated as a main-unit branch in <c>PackageDelegationCheckQuery</c>, so the
+    /// Daglig-leder's mainunit packages must NOT be delegable from the ADOS subunit.
+    /// </summary>
+    [IntegrationTest]
+    public class CheckPackageAdosSubunitFeatureDisabled : IClassFixture<ApiFixture>
+    {
+        private static readonly Guid AdosMainUnitId = Guid.Parse("0196b161-0000-7000-8000-000000000001");
+        private static readonly Guid AdosSubUnitId = Guid.Parse("0196b161-0000-7000-8000-000000000002");
+        private static readonly Guid DagligLederId = Guid.Parse("0196b161-0000-7000-8000-000000000003");
+
+        public CheckPackageAdosSubunitFeatureDisabled(ApiFixture fixture)
+        {
+            Fixture = fixture;
+            Fixture.WithDisabledFeatureFlag(AccessMgmtFeatureFlags.AdosSubunitInheritance);
+            Fixture.EnsureSeedOnce<CheckPackageAdosSubunitFeatureDisabled>(db =>
+            {
+                db.Entities.AddRange(
+                    new Entity()
+                    {
+                        Id = AdosMainUnitId,
+                        Name = "ADOS Mainunit DelegationCheck Disabled",
+                        TypeId = EntityTypeConstants.Organization,
+                        VariantId = EntityVariantConstants.ORGL,
+                        OrganizationIdentifier = "399961001",
+                        RefId = "399961001",
+                        PartyId = 50961001,
+                    },
+                    new Entity()
+                    {
+                        Id = AdosSubUnitId,
+                        Name = "ADOS Subunit DelegationCheck Disabled",
+                        TypeId = EntityTypeConstants.Organization,
+                        VariantId = EntityVariantConstants.ADOS,
+                        OrganizationIdentifier = "399961002",
+                        RefId = "399961002",
+                        ParentId = AdosMainUnitId,
+                        PartyId = 50961002,
+                    },
+                    new Entity()
+                    {
+                        Id = DagligLederId,
+                        Name = "Dagny DagligLeder Disabled",
+                        TypeId = EntityTypeConstants.Person,
+                        VariantId = EntityVariantConstants.Person,
+                        PersonIdentifier = "25019099952",
+                        RefId = "25019099952",
+                        PartyId = 50961003,
+                        UserId = 50961003,
+                        DateOfBirth = new DateOnly(1990, 1, 25),
+                    });
+                db.SaveChanges();
+
+                // The ADOS subunit points to its mainunit via the ADOS (administrativ-enhet-offentlig-sektor) role.
+                db.Assignments.Add(new Assignment()
+                {
+                    FromId = AdosSubUnitId,
+                    ToId = AdosMainUnitId,
+                    RoleId = RoleConstants.AdministrativeUnitPublicSector,
+                });
+
+                // Dagny is Managing Director (DAGL) of the ADOS mainunit.
+                db.Assignments.Add(new Assignment()
+                {
+                    FromId = AdosMainUnitId,
+                    ToId = DagligLederId,
+                    RoleId = RoleConstants.ManagingDirector,
+                });
+
+                db.SaveChanges();
+            });
+        }
+
+        public ApiFixture Fixture { get; }
+
+        private HttpClient CreateClient(Guid partyUuid, params string[] scopes)
+        {
+            var client = Fixture.Server.CreateClient();
+            var token = TestTokenGenerator.CreateToken(new ClaimsIdentity("mock"), claims =>
+            {
+                claims.Add(new Claim(AltinnCoreClaimTypes.PartyUuid, partyUuid.ToString()));
+                claims.Add(new Claim("scope", string.Join(" ", scopes)));
+            });
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            return client;
+        }
+
+        /// <summary>
+        /// With ADOS inheritance disabled, the package delegation check on behalf of the ADOS subunit must not
+        /// surface any packages delegable through the mainunit inheritance branch.
+        /// </summary>
+        [Fact]
+        public async Task CheckPackage_AsDagligLederOfAdosMainUnit_FeatureDisabled_ReturnsNoPackagesFromAdosSubunit()
+        {
+            HttpClient client = CreateClient(DagligLederId, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE);
+
+            HttpResponseMessage response = await client.GetAsync(
+                $"{Route}/accesspackages/delegationcheck?party={AdosSubUnitId}",
+                TestContext.Current.CancellationToken);
+
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {responseContent}");
+
+            var result = JsonSerializer.Deserialize<PaginatedResult<AccessPackageDto.AccessPackageDtoCheck>>(responseContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            Assert.NotNull(result);
+
+            // No package may be delegable through the mainunit inheritance branch when the feature is off.
+            Assert.DoesNotContain(
                 result.Items,
                 p => p.Result && p.Reasons.Any(r => (r.Description ?? string.Empty).Contains("MainUnit", StringComparison.OrdinalIgnoreCase)));
         }
