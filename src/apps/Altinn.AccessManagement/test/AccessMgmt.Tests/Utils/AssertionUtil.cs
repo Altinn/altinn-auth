@@ -1,4 +1,5 @@
-﻿using Altinn.AccessManagement.Core.Models;
+﻿using Altinn.AccessManagement.Api.Internal.Models;
+using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.Register;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Core.Models.Rights;

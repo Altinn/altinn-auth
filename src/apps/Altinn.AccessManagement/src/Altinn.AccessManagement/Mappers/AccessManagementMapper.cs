@@ -41,10 +41,6 @@ namespace Altinn.AccessManagement.Mappers
             // Rights
             CreateMap<Detail, DetailExternal>();
 
-            // Delegation
-            CreateMap<DelegationChange, DelegationChangeExternal>();
-            CreateMap<DelegationChangeType, DelegationChangeTypeExternal>();
-
             CreateMap<AuthorizedParty, AuthorizedPartyDto>();
             CreateMap<AuthorizedParty.AuthorizedResourceInstance, AuthorizedPartyDto.AuthorizedResourceInstance>();
             CreateMap<AuthorizedPartyType, AuthorizedPartyTypeDto>();

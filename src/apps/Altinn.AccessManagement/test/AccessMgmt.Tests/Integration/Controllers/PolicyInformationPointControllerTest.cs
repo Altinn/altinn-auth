@@ -1,9 +1,9 @@
 ﻿using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
-using Altinn.AccessManagement.Controllers;
+using Altinn.AccessManagement.Api.Internal.Controllers;
+using Altinn.AccessManagement.Api.Internal.Models;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
-using Altinn.AccessManagement.Models;
 using Altinn.AccessManagement.Tests.Fixtures;
 using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.Tests.Utils;
