@@ -13,13 +13,6 @@ namespace Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 internal class ConnectionEntityEnricher(AppDbContext db, ILogger logger)
 {
     /// <summary>
-    /// Roles are seeded from <see cref="RoleConstants"/> and never written at runtime, so the
-    /// role table is only a projection of the constants. Building the lookup once removes a load
-    /// of all roles, joined to provider and provider type, from every enrichment call.
-    /// </summary>
-    private static readonly Lazy<Dictionary<Guid, Role>> RolesById = new(BuildRolesById);
-
-    /// <summary>
     /// Enriches the given records with entity, role, and child-nesting data.
     /// </summary>
     public async Task<List<ConnectionQueryExtendedRecord>> EnrichAsync(List<ConnectionQueryExtendedRecord> allKeys, ConnectionQueryFilter filter, bool doChildNesting, bool applyFromFilter, CancellationToken ct)
@@ -36,32 +29,59 @@ internal class ConnectionEntityEnricher(AppDbContext db, ILogger logger)
     /// the database for any id they do not cover.
     /// </summary>
     /// <remarks>
+    /// <para>
+    /// Roles are seeded from <see cref="RoleConstants"/> and never written at runtime, so the
+    /// role table is only a projection of the constants. Projecting the referenced roles from
+    /// the constants removes a load of all roles, joined to provider and provider type, from
+    /// every enrichment call.
+    /// </para>
+    /// <para>
+    /// The projection is rebuilt per call rather than cached. The result is handed to callers as
+    /// ordinary mutable models, and a process-wide cache would turn any later in-place edit, such
+    /// as a translation applied to the wrong object, into corrupted role data for every request
+    /// until restart. Fresh instances per call keep the same ownership the database query had.
+    /// </para>
+    /// <para>
     /// StaticDataIngest never deletes, so a role dropped from <see cref="RoleConstants"/> in an
     /// earlier release can still exist in the database and be referenced by an assignment made
     /// while it was current. Falling back keeps reads working through that drift instead of
     /// failing the whole query on one stale row.
+    /// </para>
     /// </remarks>
     private async Task<Dictionary<Guid, Role>> ResolveRolesAsync(List<ConnectionQueryExtendedRecord> allKeys, CancellationToken ct)
     {
-        var seeded = RolesById.Value;
-
-        HashSet<Guid> missing = [];
+        HashSet<Guid> referenced = [];
         foreach (var key in allKeys)
         {
-            if (key.RoleId != Guid.Empty && !seeded.ContainsKey(key.RoleId))
+            if (key.RoleId != Guid.Empty)
             {
-                missing.Add(key.RoleId);
+                referenced.Add(key.RoleId);
             }
 
-            if (key.ViaRoleId is { } viaRoleId && viaRoleId != Guid.Empty && !seeded.ContainsKey(viaRoleId))
+            if (key.ViaRoleId is { } viaRoleId && viaRoleId != Guid.Empty)
             {
-                missing.Add(viaRoleId);
+                referenced.Add(viaRoleId);
+            }
+        }
+
+        Dictionary<Guid, Role> resolved = [];
+        Dictionary<Guid, Provider> providersById = [];
+        HashSet<Guid> missing = [];
+        foreach (var roleId in referenced)
+        {
+            if (RoleConstants.TryGetById(roleId, out var definition))
+            {
+                resolved[roleId] = ProjectRole(definition.Entity, providersById);
+            }
+            else
+            {
+                missing.Add(roleId);
             }
         }
 
         if (missing.Count == 0)
         {
-            return seeded;
+            return resolved;
         }
 
         logger.LogWarning(
@@ -75,7 +95,6 @@ internal class ConnectionEntityEnricher(AppDbContext db, ILogger logger)
             .Where(r => missing.Contains(r.Id))
             .ToListAsync(ct);
 
-        var resolved = new Dictionary<Guid, Role>(seeded);
         foreach (var stray in strays)
         {
             resolved[stray.Id] = stray;
@@ -208,50 +227,70 @@ internal class ConnectionEntityEnricher(AppDbContext db, ILogger logger)
     }
 
     /// <summary>
-    /// Projects the role constants into the same shape the previous query produced: every role
-    /// with its provider, and that provider with its type. <see cref="Role.EntityType"/> is left
+    /// Projects a role constant into the same shape the previous query produced: the role with
+    /// its provider, and that provider with its type. <see cref="Role.EntityType"/> is left
     /// unset because the query did not include it either.
     /// </summary>
     /// <remarks>
     /// The graph is rebuilt here rather than assigned onto the constants' own entities. Those
     /// instances are the seeds StaticDataIngest hands to EF, and a populated reference navigation
     /// on a seed makes <c>DbSet.Add</c> cascade into an insert of the referenced provider.
+    /// Providers are shared between the roles of one call through <paramref name="providersById"/>,
+    /// which matches what the query's include produced.
     /// </remarks>
-    private static Dictionary<Guid, Role> BuildRolesById()
+    private static Role ProjectRole(Role seed, Dictionary<Guid, Provider> providersById)
     {
-        var providersById = ProviderConstants.AllEntities().ToDictionary(
-            definition => definition.Entity.Id,
-            definition => new Provider
+        if (!providersById.TryGetValue(seed.ProviderId, out var provider))
+        {
+            provider = ProjectProvider(seed.ProviderId);
+            if (provider is not null)
             {
-                Id = definition.Entity.Id,
-                Name = definition.Entity.Name,
-                RefId = definition.Entity.RefId,
-                LogoUrl = definition.Entity.LogoUrl,
-                Code = definition.Entity.Code,
-                TypeId = definition.Entity.TypeId,
-                Type = ProviderTypeConstants.TryGetById(definition.Entity.TypeId, out var providerType)
-                    ? new ProviderType { Id = providerType.Entity.Id, Name = providerType.Entity.Name }
-                    : null,
-            });
+                providersById[seed.ProviderId] = provider;
+            }
+        }
 
-        return RoleConstants.AllEntities().ToDictionary(
-            definition => definition.Entity.Id,
-            definition => new Role
-            {
-                Id = definition.Entity.Id,
-                Name = definition.Entity.Name,
-                Code = definition.Entity.Code,
-                LegacyCode = definition.Entity.LegacyCode,
-                Description = definition.Entity.Description,
-                Urn = definition.Entity.Urn,
-                LegacyUrn = definition.Entity.LegacyUrn,
-                IsKeyRole = definition.Entity.IsKeyRole,
-                IsAssignable = definition.Entity.IsAssignable,
-                IsAvailableForServiceOwners = definition.Entity.IsAvailableForServiceOwners,
-                EntityTypeId = definition.Entity.EntityTypeId,
-                ProviderId = definition.Entity.ProviderId,
-                Provider = providersById.GetValueOrDefault(definition.Entity.ProviderId),
-            });
+        return new Role
+        {
+            Id = seed.Id,
+            Name = seed.Name,
+            Code = seed.Code,
+            LegacyCode = seed.LegacyCode,
+            Description = seed.Description,
+            Urn = seed.Urn,
+            LegacyUrn = seed.LegacyUrn,
+            IsKeyRole = seed.IsKeyRole,
+            IsAssignable = seed.IsAssignable,
+            IsAvailableForServiceOwners = seed.IsAvailableForServiceOwners,
+            EntityTypeId = seed.EntityTypeId,
+            ProviderId = seed.ProviderId,
+            Provider = provider,
+        };
+    }
+
+    /// <summary>
+    /// Projects a provider constant with its type, or returns null when the constants do not
+    /// cover the id.
+    /// </summary>
+    private static Provider? ProjectProvider(Guid providerId)
+    {
+        if (!ProviderConstants.TryGetById(providerId, out var definition))
+        {
+            return null;
+        }
+
+        var seed = definition.Entity;
+        return new Provider
+        {
+            Id = seed.Id,
+            Name = seed.Name,
+            RefId = seed.RefId,
+            LogoUrl = seed.LogoUrl,
+            Code = seed.Code,
+            TypeId = seed.TypeId,
+            Type = ProviderTypeConstants.TryGetById(seed.TypeId, out var providerType)
+                ? new ProviderType { Id = providerType.Entity.Id, Name = providerType.Entity.Name }
+                : null,
+        };
     }
 
     /// <summary>
