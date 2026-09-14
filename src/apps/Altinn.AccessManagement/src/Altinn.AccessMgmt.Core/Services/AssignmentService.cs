@@ -853,6 +853,24 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery,
         db.SaveChanges(audit);
     }
 
+    /// <inheritdoc />
+    public async Task<int> ClearAssignmentsForDeletedSystemUser(Guid systemUserId, AuditValues audit, CancellationToken cancellationToken)
+    {
+        // A system user only ever receives access, so every assignment where it is the to-party is removed regardless of role.
+        // Packages, resources and delegations tied to the removed assignments are removed by the existing FK cascades.
+        List<Assignment> assignments = await db.Assignments.AsNoTracking()
+            .Where(t => t.ToId == systemUserId)
+            .ToListAsync(cancellationToken);
+
+        if (assignments.Count == 0)
+        {
+            return 0;
+        }
+
+        db.Assignments.RemoveRange(assignments);
+        return db.SaveChanges(audit);
+    }
+
     private static void ValidatePartyIsNotNull(Guid id, Entity entity, ref ValidationErrorBuilder errors, string param)
     {
         if (entity is null)

@@ -173,4 +173,13 @@ public interface IAssignmentService
     /// </summary>
     /// <returns></returns>
     Task ClearAssignmentsInAfterLife(Guid deadPerson, AuditValues audit = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Removes all assignments given to a system user that has been deleted.
+    /// </summary>
+    /// <param name="systemUserId">The uuid of the deleted system user.</param>
+    /// <param name="audit">Audit values used when saving the change.</param>
+    /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns>The number of assignments removed.</returns>
+    Task<int> ClearAssignmentsForDeletedSystemUser(Guid systemUserId, AuditValues audit = null, CancellationToken cancellationToken = default);
 }
