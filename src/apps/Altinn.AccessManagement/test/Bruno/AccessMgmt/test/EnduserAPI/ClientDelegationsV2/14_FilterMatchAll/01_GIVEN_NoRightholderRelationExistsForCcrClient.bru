@@ -1,0 +1,43 @@
+meta {
+  name: 01_GIVEN_NoRightholderRelationExistsForCcrClient
+  type: http
+  seq: 1
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{clientA}}&from={{clientA}}&to={{party}}&cascade=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{clientA}}
+  from: {{clientA}}
+  to: {{party}}
+  cascade: true
+}
+
+docs {
+  GIVEN no rightholder relation exists between the CCR client and the facilitator.
+
+  Reset step: removes any leftover rightholder connection from earlier runs,
+  including package grants hanging on it. The CCR relation the client already has
+  through the regnskapsforer role is untouched. The delete is idempotent and
+  returns 204 either way.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("clientA", td.REGN_Organisasjon.REGN_Org_Clients.client_A.partyUuid);
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+
+  await loginAs(td.REGN_Organisasjon.REGN_Org_Clients.client_A.dagligleder);
+}
+
+tests {
+  test("GIVEN no rightholder relation exists for the CCR client, the reset delete returns 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

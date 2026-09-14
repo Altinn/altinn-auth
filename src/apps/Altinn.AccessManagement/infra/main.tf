@@ -508,6 +508,12 @@ module "appsettings" {
       label       = "${lower(var.environment)}-access-management"
       value       = false
     },
+    {
+      name        = "AccessManagement.Subunit.AdosInheritance"
+      description = "Specifies if ADOS administrative units should be treated as subunits that inherit mainunit access (equal to BEDR/AAFY) in ConnectionQuery and AuthorizedParties. Reversible; defaults to false."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
   ]
   providers = {
     azurerm.hub = azurerm.hub

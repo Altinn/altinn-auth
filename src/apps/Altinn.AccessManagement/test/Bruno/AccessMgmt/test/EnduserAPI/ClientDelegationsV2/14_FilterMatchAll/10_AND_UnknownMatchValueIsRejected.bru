@@ -1,0 +1,46 @@
+meta {
+  name: 10_AND_UnknownPackageMatchValueIsRejected
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/clientdelegations/clients?party={{party}}&packages={{grantedPackage}}&match=sometimes
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  packages: {{grantedPackage}}
+  match: sometimes
+}
+
+docs {
+  AND a match value outside any and all is rejected.
+
+  match is declared as an enum in the api contracts, so model binding rejects the
+  value before the action runs. Expects 400 with a validation error on the match
+  parameter.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("grantedPackage", td.clientDelegationV2.packages.skattegrunnlag);
+
+  await loginAs(td.REGN_Organisasjon.dagligleder);
+}
+
+tests {
+  test("AND an unknown match value returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN the validation error points at the match parameter", function() {
+    const body = res.getBody();
+    expect(JSON.stringify(body.errors)).to.include("match");
+  });
+}

@@ -1,0 +1,59 @@
+meta {
+	name: 01_WHEN_TheAdosMainUnitDailyLeaderListsAuthorizedParties
+	type: http
+	seq: 1
+}
+
+get {
+	url: {{baseUrl}}/accessmanagement/api/v1/enduser/authorizedparties?includeSubParties=true&includeRoles=true
+	body: none
+	auth: inherit
+}
+
+params:query {
+	includeSubParties: true
+	includeRoles: true
+}
+
+docs {
+	WHEN the daily leader (DAGL) of an ADOS main unit lists authorized parties with subunits
+	included.
+
+	THEN the ADOS main unit is returned as an authorized party.
+
+	AND the ADOS subunit is nested under the ADOS main unit, showing that a key role on an ADOS
+	main unit is inherited by its ADOS subunit, exactly like BEDR/AAFY subunit inheritance.
+
+	This exercises the read side of the AccessManagement.Subunit.AdosInheritance feature flag.
+	It relies on the ADOS subunit's ParentId pointing at the ADOS main unit in the seeded data.
+}
+
+script:pre-request {
+	const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+	const { loginAs } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+	await loginAs(testdata.adosMainUnit.dagligleder);
+}
+
+tests {
+	const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+	const { findParty } = require("./test/AuthorizedParties/EnduserAuthorizedParties/helpers.js");
+
+	const ados = testdata.adosMainUnit;
+
+	test("WHEN the ADOS main unit daily leader lists authorized parties, the request returns 200", function() {
+		expect(res.status).to.equal(200);
+	});
+
+	test("THEN the ADOS main unit is returned as an authorized party", function() {
+		const mainUnit = findParty(res.getBody().data, ados.partyUuid);
+		expect(mainUnit, "expected the ADOS main unit among the authorized parties").to.not.be.undefined;
+	});
+
+	test("AND the ADOS subunit is nested under the ADOS main unit", function() {
+		const mainUnit = findParty(res.getBody().data, ados.partyUuid);
+		expect(mainUnit, "expected the ADOS main unit among the authorized parties").to.not.be.undefined;
+		expect(mainUnit.subunits.map(subunit => subunit.partyUuid.toLowerCase()))
+			.to.include(ados.subunit.partyUuid.toLowerCase());
+	});
+}
