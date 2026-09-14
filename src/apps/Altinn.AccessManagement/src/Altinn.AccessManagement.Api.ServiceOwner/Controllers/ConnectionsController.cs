@@ -208,6 +208,11 @@ namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers
                 return Problems.ResourceDelegationNotAuthorized.ToActionResult();
             }
 
+            if (IsMaskinportenSchema(resourceObj))
+            {
+                return Problems.ResourceNotDelegable.ToActionResult();
+            }
+
             Result<List<RightDto>> result = await connectionService.GetResourceRights(resourceObj.RefId, this.GetLanguageCode(), cancellationToken);
 
             if (result.IsProblem)
@@ -240,6 +245,11 @@ namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers
             if (!IsServiceOwnerAuthorizedForResource(resourceObj, out OrganizationNumber? organizationNumber))
             {
                 return Problems.ResourceDelegationNotAuthorized.ToActionResult();
+            }
+
+            if (IsMaskinportenSchema(resourceObj))
+            {
+                return Problems.ResourceNotDelegable.ToActionResult();
             }
 
             Guid? fromEntityId = await ResolvePartyId(resourceDelegation.From, cancellationToken);
@@ -291,6 +301,11 @@ namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers
                 return Problems.ResourceDelegationNotAuthorized.ToActionResult();
             }
 
+            if (IsMaskinportenSchema(resourceObj))
+            {
+                return Problems.ResourceNotDelegable.ToActionResult();
+            }
+
             Guid? fromEntityId = await ResolvePartyId(resourceDelegation.From, cancellationToken);
             Guid? toEntityId = await ResolvePartyId(resourceDelegation.To, cancellationToken);
 
@@ -335,6 +350,15 @@ namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// MaskinportenSchema resources are delegated through the dedicated Maskinporten delegation API,
+        /// not as rightholder resources through these endpoints.
+        /// </summary>
+        private static bool IsMaskinportenSchema(Resource resource)
+        {
+            return string.Equals(resource.Type?.Name, "MaskinportenSchema", StringComparison.OrdinalIgnoreCase);
         }
 
         private static IActionResult InvalidResourceProblem(string resource)

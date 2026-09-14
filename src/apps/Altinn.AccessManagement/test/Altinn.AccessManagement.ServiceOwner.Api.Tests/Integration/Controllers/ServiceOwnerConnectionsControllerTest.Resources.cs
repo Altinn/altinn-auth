@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Xml.Linq;
@@ -59,6 +59,10 @@ public partial class ServiceOwnerConnectionsControllerTest
 
         private static readonly Guid SkatteetatenProviderId = Guid.Parse("0196b130-0000-7000-8000-000000000001");
 
+        private const string MaskinportenSchemaResource = "skd_maskinporten_schema_test";
+
+        private static readonly Guid MaskinportenSchemaResourceId = Guid.Parse("0196b130-0000-7000-8000-000000000003");
+
         public AddRevokeResources(ApiFixture fixture)
         {
             Fixture = fixture;
@@ -83,6 +87,18 @@ public partial class ServiceOwnerConnectionsControllerTest
 
                 Resource resource = db.Resources.Single(r => r.Id == TestData.SiriusSkattemelding.Id);
                 resource.ProviderId = SkatteetatenProviderId;
+                db.SaveChanges();
+
+                Guid maskinportenSchemaTypeId = db.ResourceTypes.Single(t => t.Name == "MaskinportenSchema").Id;
+                db.Resources.Add(new Resource()
+                {
+                    Id = MaskinportenSchemaResourceId,
+                    Name = "Maskinporten schema owned by the test service owner",
+                    Description = "Maskinporten schema owned by the test service owner",
+                    RefId = MaskinportenSchemaResource,
+                    TypeId = maskinportenSchemaTypeId,
+                    ProviderId = SkatteetatenProviderId,
+                });
                 db.SaveChanges();
             });
         }
@@ -522,6 +538,86 @@ public partial class ServiceOwnerConnectionsControllerTest
 
             Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
             await AssertProblemCode(response, "AM-00048");
+        }
+
+        /// <summary>
+        /// Revoking the resource keeps the rightholder assignment while the same two parties still have an
+        /// Altinn 2 role assignment between them, the same way the end user connection API keeps it.
+        /// </summary>
+        [Fact]
+        public async Task RevokeResource_WhereAltinn2RoleAssignmentExists_Returns204AndKeepsAssignment()
+        {
+            var request = await AddResource(Organization(TestData.DumboAdventures), Organization(TestData.MittRegnskap));
+            Assert.NotNull(await GetRightholderAssignment(TestData.DumboAdventures.Id, TestData.MittRegnskap.Id));
+
+            await Fixture.QueryDb(async db =>
+            {
+                db.Assignments.Add(new Assignment()
+                {
+                    FromId = TestData.DumboAdventures.Id,
+                    ToId = TestData.MittRegnskap.Id,
+                    RoleId = RoleConstants.PrimaryIndustryAndFoodstuff,
+                });
+                await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+            });
+
+            var response = await CreateClient().PostAsJsonAsync($"{Route}/resources/revoke", request, TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+            Assert.Null(await GetAssignmentResource(TestData.DumboAdventures.Id, TestData.MittRegnskap.Id));
+            Assert.NotNull(await GetRightholderAssignment(TestData.DumboAdventures.Id, TestData.MittRegnskap.Id));
+        }
+
+        /// <summary>
+        /// MaskinportenSchema resources are delegated through the dedicated Maskinporten delegation API, so the
+        /// rights endpoint refuses them even when the service owner owns the resource.
+        /// </summary>
+        [Fact]
+        public async Task GetResourceRights_ForMaskinportenSchemaResource_Returns400ResourceNotDelegable()
+        {
+            var response = await CreateClient().GetAsync($"{Route}/resources/rights?resource={MaskinportenSchemaResource}", TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            await AssertProblemCode(response, "AM-00042");
+        }
+
+        /// <summary>
+        /// A MaskinportenSchema resource cannot be delegated as a rightholder resource.
+        /// </summary>
+        [Fact]
+        public async Task AddResource_ForMaskinportenSchemaResource_Returns400ResourceNotDelegable()
+        {
+            var request = CreateMaskinportenSchemaRequest();
+
+            var response = await CreateClient().PostAsJsonAsync($"{Route}/resources", request, TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            await AssertProblemCode(response, "AM-00042");
+        }
+
+        /// <summary>
+        /// A MaskinportenSchema resource cannot be revoked as a rightholder resource either.
+        /// </summary>
+        [Fact]
+        public async Task RevokeResource_ForMaskinportenSchemaResource_Returns400ResourceNotDelegable()
+        {
+            var request = CreateMaskinportenSchemaRequest();
+
+            var response = await CreateClient().PostAsJsonAsync($"{Route}/resources/revoke", request, TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            await AssertProblemCode(response, "AM-00042");
+        }
+
+        private static ServiceOwnerResourceDelegation CreateMaskinportenSchemaRequest()
+        {
+            return new ServiceOwnerResourceDelegation()
+            {
+                From = Organization(TestData.FredriksonsFabrikk),
+                To = Organization(TestData.RegnskapNorge),
+                Resource = MaskinportenSchemaResource,
+                RightKeys = new RightKeyListDto { DirectRightKeys = ["read"] },
+            };
         }
     }
 

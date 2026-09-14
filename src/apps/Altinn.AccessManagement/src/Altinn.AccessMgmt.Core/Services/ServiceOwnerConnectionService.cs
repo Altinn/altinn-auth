@@ -308,7 +308,17 @@ namespace Altinn.AccessMgmt.Core.Services
         {
             if (!cascade)
             {
-                var problem = await connectionService.CheckAssignmentForConnectedReferences(assignment, null, cancellationToken);
+                // The Altinn 2 role assignments between the same parties count as connected references, the same way
+                // ConnectionService.RemoveAssignment treats them, so the rightholder assignment is kept while they exist.
+                List<Assignment> a2Assignments = await dbContext.Assignments
+                    .AsNoTracking()
+                    .Include(a => a.Role)
+                    .Where(a => a.FromId == assignment.FromId)
+                    .Where(a => a.ToId == assignment.ToId)
+                    .Where(a => a.Role.ProviderId == ProviderConstants.Altinn2.Id)
+                    .ToListAsync(cancellationToken);
+
+                var problem = await connectionService.CheckAssignmentForConnectedReferences(assignment, a2Assignments, cancellationToken);
 
                 if (problem is { })
                 {
