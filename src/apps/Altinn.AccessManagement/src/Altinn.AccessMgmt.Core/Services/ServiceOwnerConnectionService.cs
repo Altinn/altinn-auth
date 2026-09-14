@@ -1,5 +1,6 @@
 ﻿using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Models;
+using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
@@ -180,6 +181,18 @@ namespace Altinn.AccessMgmt.Core.Services
             if (serviceOwner is null)
             {
                 return Problems.PartyNotFound;
+            }
+
+            // The resource registry Delegable flag decides whether the resource may be delegated at all.
+            ServiceResource resourceMetadata = await contextRetrievalService.GetResource(resource.RefId, cancellationToken);
+            if (resourceMetadata is null)
+            {
+                return Problems.InvalidResource;
+            }
+
+            if (!resourceMetadata.Delegable)
+            {
+                return Problems.ResourceNotDelegable;
             }
 
             // Validate that all requested right keys exist in the resource policy
