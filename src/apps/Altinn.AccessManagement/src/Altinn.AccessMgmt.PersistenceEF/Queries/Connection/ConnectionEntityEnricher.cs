@@ -244,11 +244,20 @@ internal class ConnectionEntityEnricher(AppDbContext db, ILogger logger)
     /// unset because the query did not include it either.
     /// </summary>
     /// <remarks>
+    /// <para>
+    /// The audit columns inherited from <see cref="Altinn.AccessMgmt.PersistenceEF.Models.Audit.Base.BaseAudit"/> are not
+    /// copied, because the constants do not carry them. A projected role therefore holds the
+    /// field initializers instead of what the table has: <c>Audit_ValidFrom</c> is the time
+    /// of projection and <c>Audit_ChangeOperation</c> a fresh Guid. Nothing reads them from an
+    /// enriched role, and <c>RoleDto</c> does not expose them.
+    /// </para>
+    /// <para>
     /// The graph is rebuilt here rather than assigned onto the constants' own entities. Those
     /// instances are the seeds StaticDataIngest hands to EF, and a populated reference navigation
     /// on a seed makes <c>DbSet.Add</c> cascade into an insert of the referenced provider.
     /// Providers are shared between the roles of one call through <paramref name="providersById"/>,
     /// which matches what the query's include produced.
+    /// </para>
     /// </remarks>
     private static Role ProjectRole(Role seed, Dictionary<Guid, Provider> providersById)
     {
