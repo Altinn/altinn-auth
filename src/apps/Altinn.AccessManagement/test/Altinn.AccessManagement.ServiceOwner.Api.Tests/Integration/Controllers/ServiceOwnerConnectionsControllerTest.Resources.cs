@@ -592,11 +592,12 @@ public partial class ServiceOwnerConnectionsControllerTest
         }
 
         /// <summary>
-        /// Revoking the resource keeps the rightholder assignment while the same two parties still have an
-        /// Altinn 2 role assignment between them, the same way the end user connection API keeps it.
+        /// Revoking the resource removes the rightholder assignment even while the same two parties still have an
+        /// Altinn 2 role assignment between them. Altinn 2 roles only hold the assignment back when the removal
+        /// cascades, and a revoke made by a service owner never cascades.
         /// </summary>
         [Fact]
-        public async Task RevokeResource_WhereAltinn2RoleAssignmentExists_Returns204AndKeepsAssignment()
+        public async Task RevokeResource_WhereAltinn2RoleAssignmentExists_Returns204AndRemovesAssignment()
         {
             var request = await AddResource(Organization(TestData.DumboAdventures), Organization(TestData.MittRegnskap));
             Assert.NotNull(await GetRightholderAssignment(TestData.DumboAdventures.Id, TestData.MittRegnskap.Id));
@@ -616,7 +617,7 @@ public partial class ServiceOwnerConnectionsControllerTest
 
             Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
             Assert.Null(await GetAssignmentResource(TestData.DumboAdventures.Id, TestData.MittRegnskap.Id));
-            Assert.NotNull(await GetRightholderAssignment(TestData.DumboAdventures.Id, TestData.MittRegnskap.Id));
+            Assert.Null(await GetRightholderAssignment(TestData.DumboAdventures.Id, TestData.MittRegnskap.Id));
         }
 
         /// <summary>
