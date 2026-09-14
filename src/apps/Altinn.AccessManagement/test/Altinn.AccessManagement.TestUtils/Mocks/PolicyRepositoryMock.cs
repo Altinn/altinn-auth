@@ -76,7 +76,7 @@ namespace Altinn.AccessManagement.TestUtils.Mocks
         /// <inheritdoc/>
         public Task<bool> PolicyExistsAsync(CancellationToken cancellationToken = default)
         {
-            string fullpath = Path.Combine(GetDataInputBlobPath(), Filepath);
+            string fullpath = ResolveUnderBlobPath(GetDataInputBlobPath(), Filepath);
 
             if (File.Exists(fullpath))
             {
@@ -98,9 +98,34 @@ namespace Altinn.AccessManagement.TestUtils.Mocks
             return Path.Join(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "Data", "blobs", "input");
         }
 
+        /// <summary>
+        /// Resolves <paramref name="filepath"/> inside <paramref name="blobPath"/> and refuses a
+        /// path that leaves it.
+        /// </summary>
+        /// <remarks>
+        /// The mock is handed the policy path the request under test produced, so a plain combine
+        /// lets a path containing <c>..</c> reach files outside the test data folder. Resolving
+        /// both sides first and comparing the result against the folder keeps every read and write
+        /// where the tests expect it.
+        /// </remarks>
+        private static string ResolveUnderBlobPath(string blobPath, string filepath)
+        {
+            ArgumentNullException.ThrowIfNull(filepath);
+
+            string root = Path.GetFullPath(blobPath);
+            string resolved = Path.GetFullPath(Path.Combine(root, filepath));
+
+            if (!resolved.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+            {
+                throw new ArgumentException($"Policy path '{filepath}' resolves outside the test data folder '{root}'.", nameof(filepath));
+            }
+
+            return resolved;
+        }
+
         private static Stream GetTestDataStream(string filepath)
         {
-            string dataPath = Path.Combine(GetDataInputBlobPath(), filepath);
+            string dataPath = ResolveUnderBlobPath(GetDataInputBlobPath(), filepath);
             Stream ms = new MemoryStream();
             if (File.Exists(dataPath))
             {
@@ -113,7 +138,7 @@ namespace Altinn.AccessManagement.TestUtils.Mocks
 
         private async Task<Response<BlobContentInfo>> WriteStreamToTestDataFolder(string filepath, Stream fileStream)
         {
-            string dataPath = Path.Combine(GetDataOutputBlobPath(), filepath);
+            string dataPath = ResolveUnderBlobPath(GetDataOutputBlobPath(), filepath);
 
             if (!Directory.Exists(Path.GetDirectoryName(dataPath)))
             {
