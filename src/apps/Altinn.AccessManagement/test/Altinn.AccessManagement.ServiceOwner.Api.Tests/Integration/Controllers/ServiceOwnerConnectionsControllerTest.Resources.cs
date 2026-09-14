@@ -322,6 +322,57 @@ public partial class ServiceOwnerConnectionsControllerTest
         }
 
         /// <summary>
+        /// The service owner cannot add to a resource delegation that someone else changed last. The
+        /// decision the party made itself takes priority over the service owner.
+        /// </summary>
+        [Fact]
+        public async Task AddResource_WhereResourceWasDelegatedByOthers_Returns400ResourceDelegationChangedByOther()
+        {
+            await Fixture.QueryDb(async db =>
+            {
+                var assignment = new Assignment()
+                {
+                    FromId = TestData.AstridJohansen.Id,
+                    ToId = TestData.TrondLarsen.Id,
+                    RoleId = RoleConstants.Rightholder,
+                };
+                db.Assignments.Add(assignment);
+                db.AssignmentResources.Add(new AssignmentResource()
+                {
+                    AssignmentId = assignment.Id,
+                    ResourceId = TestData.SiriusSkattemelding.Id,
+                    PolicyPath = "skd/sirius-skattemelding-v1/50200014/p50200015/delegationpolicy.xml",
+                    PolicyVersion = "1.0",
+                });
+                await db.SaveChangesAsync(new AuditValues(TestData.BakerJohnsen.Id), TestContext.Current.CancellationToken);
+            });
+
+            var request = CreateRequest(Person(TestData.AstridJohansen), Person(TestData.TrondLarsen), await GetAvailableRightKeys());
+
+            var response = await CreateClient().PostAsJsonAsync($"{Route}/resources", request, TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            await AssertProblemCode(response, "AM-00050");
+        }
+
+        /// <summary>
+        /// The service owner can still add to a resource delegation it wrote itself.
+        /// </summary>
+        [Fact]
+        public async Task AddResource_WhereResourceWasDelegatedByTheSameServiceOwner_Returns200()
+        {
+            await AddResource(Person(TestData.BjornMoe), Person(TestData.HelgeNilsen));
+
+            var request = CreateRequest(Person(TestData.BjornMoe), Person(TestData.HelgeNilsen), await GetAvailableRightKeys());
+
+            var response = await CreateClient().PostAsJsonAsync($"{Route}/resources", request, TestContext.Current.CancellationToken);
+
+            var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {content}");
+            Assert.NotNull(await GetAssignmentResource(TestData.BjornMoe.Id, TestData.HelgeNilsen.Id));
+        }
+
+        /// <summary>
         /// Right keys must be given explicitly in the delegation body.
         /// </summary>
         [Fact]

@@ -214,6 +214,22 @@ namespace Altinn.AccessMgmt.Core.Services
                 .Where(a => a.RoleId == RoleConstants.Rightholder)
                 .FirstOrDefaultAsync(cancellationToken);
 
+            if (assignment is not null)
+            {
+                // A service owner may only add to or change a resource delegation it wrote itself. Once anyone
+                // else has touched the delegation, that decision takes priority over the service owner.
+                AssignmentResource existingResource = await dbContext.AssignmentResources
+                    .AsNoTracking()
+                    .Where(a => a.AssignmentId == assignment.Id)
+                    .Where(a => a.ResourceId == resource.Id)
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                if (existingResource is not null && existingResource.Audit_ChangedBy != authenticatedServiceOwnerId)
+                {
+                    return Problems.ResourceDelegationChangedByOther;
+                }
+            }
+
             bool assignmentCreated = false;
             if (assignment == null)
             {
