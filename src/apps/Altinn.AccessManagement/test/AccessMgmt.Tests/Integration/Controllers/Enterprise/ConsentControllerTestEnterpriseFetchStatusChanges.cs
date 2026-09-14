@@ -278,6 +278,57 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
             }
         }
 
+        /// <summary>
+        /// Test: Getting consent status changes as the HandledBy party of a consent request returns the
+        /// events for that request, not only for requests where the caller is the To party.
+        /// </summary>
+        [Fact]
+        public async Task GetConsentStatusChanges_AsHandledByParty_Returns200OkWithEventsForHandledRequest()
+        {
+            Guid consentRequestId = await CreateAndAcceptConsentHandledBy("810419512", "810418192");
+
+            HttpClient client = GetTestClient();
+            string token = PrincipalUtil.GetMaskinportenToken("810418192", "altinn:consentrequests.read");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            string url = $"/accessmanagement/api/v1/enterprise/consentrequests/events?consentRequestId={consentRequestId}";
+            HttpResponseMessage response = await client.GetAsync(url, TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            PaginatedResult<ConsentStatusChangeDto> result = JsonSerializer.Deserialize<PaginatedResult<ConsentStatusChangeDto>>(
+                await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), _jsonOptions);
+
+            Assert.Equal(2, result.Items.Count()); // created + accepted
+            Assert.All(result.Items, item => Assert.Equal(consentRequestId, item.ConsentRequestId));
+
+            var eventTypes = result.Items.Select(i => i.EventType).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            Assert.Contains("created", eventTypes);
+            Assert.Contains("accepted", eventTypes);
+        }
+
+        /// <summary>
+        /// Test: Getting consent status changes as an organization that is neither the To party nor the
+        /// HandledBy party of a consent request returns no events for that request.
+        /// </summary>
+        [Fact]
+        public async Task GetConsentStatusChanges_AsUnrelatedParty_Returns200OkWithNoEvents()
+        {
+            Guid consentRequestId = await CreateAndAcceptConsentHandledBy("810419512", "810418192");
+
+            HttpClient client = GetTestClient();
+            string token = PrincipalUtil.GetMaskinportenToken("910493353", "altinn:consentrequests.read");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            string url = $"/accessmanagement/api/v1/enterprise/consentrequests/events?consentRequestId={consentRequestId}";
+            HttpResponseMessage response = await client.GetAsync(url, TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            PaginatedResult<ConsentStatusChangeDto> result = JsonSerializer.Deserialize<PaginatedResult<ConsentStatusChangeDto>>(
+                await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), _jsonOptions);
+
+            Assert.Empty(result.Items);
+        }
+
         [Fact]
         public async Task GetConsentStatusChanges_Paging_Returns200OkWithoutOlderEventsForSameConsentRequest()
         {
@@ -834,6 +885,67 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
             string token = PrincipalUtil.GetMaskinportenToken("810419512", "altinn:consentrequests.read");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
             return client;
+        }
+
+        /// <summary>
+        /// Creates a consent request with <paramref name="handledByOrgNumber"/> as the HandledBy party and
+        /// accepts it as the From party, so the request has a created and an accepted event to fetch.
+        /// </summary>
+        /// <param name="toOrgNumber">Organization number of the To party</param>
+        /// <param name="handledByOrgNumber">Organization number of the supplier that becomes HandledBy</param>
+        /// <returns>Id of the created consent request</returns>
+        private async Task<Guid> CreateAndAcceptConsentHandledBy(string toOrgNumber, string handledByOrgNumber)
+        {
+            var consentRequest = new ConsentRequestDto
+            {
+                Id = Guid.CreateVersion7(),
+                From = ConsentPartyUrn.PersonId.Create(PersonIdentifier.Parse("01025161013")),
+                To = ConsentPartyUrn.OrganizationId.Create(OrganizationNumber.Parse(toOrgNumber)),
+                ValidTo = DateTimeOffset.UtcNow.AddDays(1),
+                ConsentRights = new List<ConsentRightDto>
+                {
+                    new ConsentRightDto
+                    {
+                        Action = new List<string> { "read" },
+                        Resource = new List<ConsentResourceAttributeDto>
+                        {
+                            new ConsentResourceAttributeDto
+                            {
+                                Type = "urn:altinn:resource",
+                                Value = "ttd_inntektsopplysninger"
+                            }
+                        },
+                        Metadata = new Dictionary<string, string>
+                        {
+                            { "INNTEKTSAAR", "ADSF" }
+                        }
+                    }
+                },
+                RequestMessage = new Dictionary<string, string>
+                {
+                    { "en", "Please approve this consent request" }
+                },
+                RedirectUrl = "https://www.dnb.no"
+            };
+
+            HttpClient createClient = GetTestClient();
+            createClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+            string createToken = PrincipalUtil.GetMaskinportenToken(toOrgNumber, "altinn:consentrequests.write", handledByOrgNumber);
+            createClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", createToken);
+            StringContent createContent = new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json");
+            HttpResponseMessage createResponse = await createClient.PostAsync("/accessmanagement/api/v1/enterprise/consentrequests", createContent);
+            createResponse.EnsureSuccessStatusCode();
+            ConsentRequestDetailsDto created = await createResponse.Content.ReadFromJsonAsync<ConsentRequestDetailsDto>();
+            Assert.Equal($"urn:altinn:organization:identifier-no:{handledByOrgNumber}", created.HandledBy.ToString());
+
+            HttpClient acceptClient = GetTestClient();
+            string acceptToken = PrincipalUtil.GetToken(20001337, 50003899, 2, Guid.Parse("d5b861c8-8e3b-44cd-9952-5315e5990cf5"), AuthzConstants.SCOPE_PORTAL_ENDUSER);
+            acceptClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", acceptToken);
+            HttpContent acceptContent = new StringContent(JsonSerializer.Serialize(new ConsentContextDto { Language = "nb" }), Encoding.UTF8, "application/json");
+            HttpResponseMessage acceptResponse = await acceptClient.PostAsync($"accessmanagement/api/v1/bff/consentrequests/{created.Id}/accept/", acceptContent);
+            acceptResponse.EnsureSuccessStatusCode();
+
+            return created.Id;
         }
 
         private async Task CreateAndUpdateConsentsForGet(int numberOfConsents)

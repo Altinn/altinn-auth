@@ -6,7 +6,7 @@
         <TargetFramework></TargetFramework>
         <TargetFrameworks>net10.0</TargetFrameworks>
         <!-- No integration tests: the CI integration lane skips this assembly
-             (see src/testing/IntegrationLaneGate.targets). -->
+             (see eng/testing/IntegrationLaneGate.targets). -->
         <HasIntegrationTests>false</HasIntegrationTests>
     </PropertyGroup>
 

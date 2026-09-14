@@ -54,6 +54,11 @@ namespace Altinn.Platform.Authorization.Controllers
 
         private readonly SortedDictionary<string, AuthInfo> _appInstanceInfo = new();
 
+        /// <summary>
+        /// Resolved once per request by <see cref="RecordPdpDecisionMetric"/>, see the comment there.
+        /// </summary>
+        private string _callerKind;
+
         private static JsonSerializerOptions jsonSerializerOptions = new()
         {
             PropertyNameCaseInsensitive = true,
@@ -415,7 +420,8 @@ namespace Altinn.Platform.Authorization.Controllers
         /// <summary>
         /// Resolves the resource owner and resource identifier for the current decision request and records
         /// a PDP decision counter increment so that PDP usage can be attributed back to the service owner of
-        /// the resource being protected, dimensioned on which PDP API (internal or external) served it.
+        /// the resource being protected, dimensioned on which PDP API (internal or external) served it and
+        /// on what kind of caller requested it.
         /// </summary>
         private async Task RecordPdpDecisionMetric(XacmlContextRequest decisionRequest, bool isExternalRequest, CancellationToken cancellationToken)
         {
@@ -451,7 +457,13 @@ namespace Altinn.Platform.Authorization.Controllers
                     ? DecisionTelemetry.ExternalApiDimensionValue
                     : DecisionTelemetry.InternalApiDimensionValue;
 
-                _decisionTelemetry.RecordDecision(ownerOrg, resourceId, apiKind);
+                // Cached because a multirequest calls Authorize once per sub-request, and the caller is
+                // a property of the HTTP request. The controller instance is per request, so this is safe.
+                _callerKind ??= isExternalRequest
+                    ? PdpCallerHelper.GetExternalCallerKind(HttpContext?.User)
+                    : DecisionTelemetry.InternalCallerDimensionValue;
+
+                _decisionTelemetry.RecordDecision(ownerOrg, resourceId, apiKind, _callerKind);
             }
             catch (Exception ex)
             {

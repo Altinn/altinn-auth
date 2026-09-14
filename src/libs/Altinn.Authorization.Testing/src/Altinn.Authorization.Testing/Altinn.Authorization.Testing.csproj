@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <XUnitVersion>v3</XUnitVersion>
+        <!-- Shared test-helper library, not a runnable test project, so `dotnet test`
+             does not try to execute it (which fails under MTP when 0 tests are
+             discovered). -->
+        <IsTestLibrary>true</IsTestLibrary>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <!-- The JwtCookie stub configures ASP.NET Core cookie authentication. -->
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="Altinn.Common.AccessToken" />
+        <PackageReference Include="JWTCookieAuthentication" />
+        <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
+        <PackageReference Include="Npgsql" />
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
+        <PackageReference Include="Testcontainers.PostgreSql" />
+    </ItemGroup>
+
+</Project>

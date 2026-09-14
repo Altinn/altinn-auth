@@ -49,7 +49,7 @@ namespace Altinn.AccessManagement.Integration.Clients
         /// <inheritdoc/>
         public async Task<ServiceResource> GetResource(string resourceId, CancellationToken cancellationToken = default)
         {
-            string endpointUrl = $"v1/resource/{resourceId}";
+            string endpointUrl = $"v1/resource/{Uri.EscapeDataString(resourceId)}";
 
             HttpResponseMessage response = await _httpClient.GetAsync(endpointUrl, cancellationToken);
             if (response.StatusCode == HttpStatusCode.OK)
@@ -58,63 +58,43 @@ namespace Altinn.AccessManagement.Integration.Clients
                 return JsonSerializer.Deserialize<ServiceResource>(content, options);
             }
 
-            return null;
+            throw new HttpRequestException($"Failed to get resource from Resource Registry. Status code: {response.StatusCode}");
         }
 
         /// <inheritdoc/>
         public async Task<List<ServiceResource>> GetResources(CancellationToken cancellationToken = default, string? searchParams = null)
         {
-            List<ServiceResource> resources = new();
+            string endpointUrl = "v1/resource/search";
 
-            try
+            if (!string.IsNullOrWhiteSpace(searchParams))
             {
-                string endpointUrl = "v1/resource/search";
-
-                if (!string.IsNullOrWhiteSpace(searchParams))
-                {
-                    string prefix = searchParams.StartsWith("?") ? string.Empty : "?";
-                    endpointUrl += prefix + searchParams;
-                }
-
-                HttpResponseMessage response = await _httpClient.GetAsync(endpointUrl, cancellationToken);
-                if (response.StatusCode == HttpStatusCode.OK)
-                {
-                    string content = await response.Content.ReadAsStringAsync(cancellationToken);
-                    resources = JsonSerializer.Deserialize<List<ServiceResource>>(content, options);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "AccessManagement // ResourceRegistryClient // SearchResources // Exception");
-                throw;
+                string prefix = searchParams.StartsWith("?") ? string.Empty : "?";
+                endpointUrl += prefix + searchParams;
             }
 
-            return resources;
+            HttpResponseMessage response = await _httpClient.GetAsync(endpointUrl, cancellationToken);
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                string content = await response.Content.ReadAsStringAsync(cancellationToken);
+                return JsonSerializer.Deserialize<List<ServiceResource>>(content, options);
+            }
+
+            throw new HttpRequestException($"Failed to get resources from Resource Registry. Status code: {response.StatusCode}");
         }
 
         /// <inheritdoc/>
         public async Task<List<ServiceResource>> GetResourceList(CancellationToken cancellationToken = default)
         {
-            List<ServiceResource> resources = new();
+            string endpointUrl = $"v1/resource/resourcelist";
 
-            try
+            HttpResponseMessage response = await _httpClient.GetAsync(endpointUrl, cancellationToken);
+            if (response.StatusCode == HttpStatusCode.OK)
             {
-                string endpointUrl = $"v1/resource/resourcelist";
-
-                HttpResponseMessage response = await _httpClient.GetAsync(endpointUrl, cancellationToken);
-                if (response.StatusCode == HttpStatusCode.OK)
-                {
-                    string content = await response.Content.ReadAsStringAsync(cancellationToken);
-                    resources = JsonSerializer.Deserialize<List<ServiceResource>>(content, options);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "AccessManagement // ResourceRegistryClient // GetResourceList // Exception");
-                throw;
+                string content = await response.Content.ReadAsStringAsync(cancellationToken);
+                return JsonSerializer.Deserialize<List<ServiceResource>>(content, options);
             }
 
-            return resources;
+            throw new HttpRequestException($"Failed to get resource list from Resource Registry. Status code: {response.StatusCode}");
         }
 
         /// <inheritdoc/>
@@ -160,7 +140,7 @@ namespace Altinn.AccessManagement.Integration.Clients
         {
             try
             {
-                string endpointUrl = $"v2/resource/{resource}/policy/rights";
+                string endpointUrl = $"v2/resource/{Uri.EscapeDataString(resource)}/policy/rights";
                 HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, endpointUrl);
                 request.Headers.Add(TranslationConstants.AcceptLanguageHeader, languageCode);
 
@@ -199,9 +179,8 @@ namespace Altinn.AccessManagement.Integration.Clients
                 string consentTemplatesString = await response.Content.ReadAsStringAsync();
                 List<ConsentTemplate> consentTemplates = JsonSerializer.Deserialize<List<ConsentTemplate>>(consentTemplatesString, _serializerOptions);
 
-                // Cache for 1 hour
-                var cacheEntryOptions = new MemoryCacheEntryOptions()
-                    .SetAbsoluteExpiration(TimeSpan.FromHours(1));
+                // Cache sliding for 4 hours
+                var cacheEntryOptions = new MemoryCacheEntryOptions().SetSlidingExpiration(TimeSpan.FromHours(4));
 
                 _memoryCache.Set(cacheKey, consentTemplates, cacheEntryOptions);
 

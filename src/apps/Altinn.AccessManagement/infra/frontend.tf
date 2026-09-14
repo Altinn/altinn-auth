@@ -32,6 +32,12 @@ module "frontend_appsettings" {
       label       = "${lower(var.environment)}-access-management-ui"
       default     = false
     },
+    {
+      name        = "AccessManagementUI.EnableSkyra"
+      description = "Whether or not to load the Skyra survey SDK and ask for cookie consent."
+      label       = "${lower(var.environment)}-access-management-ui"
+      default     = false
+    },
   ]
 
   providers = {

@@ -1,0 +1,63 @@
+meta {
+  name: 01_WHEN_AllAccessInformationIsRequested
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeRoles=true&includeAccessPackages=true&includeResources=true&includeInstances=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeRoles: true
+  includeAccessPackages: true
+  includeResources: true
+  includeInstances: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{subjectPersonId}}"
+  }
+}
+
+docs {
+  WHEN every access information flag is on, the access collections carry data: the client
+  organisation is held through the accountant role with the accountant packages.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectPersonId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.pid);
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty, lower } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  const client = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_USENSUELL_UVIRKSOM_TIGER;
+
+  test("WHEN all access information is requested, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the client party carries roles and access packages", function() {
+    const party = findParty(res.getBody(), client.partyUuid);
+    expect(party, `expected the client ${client.name} in the party list`).to.not.be.undefined;
+    expect(lower(party.authorizedRoles), "roles are populated when requested").to.include("regnskapsforer");
+    expect(party.authorizedAccessPackages, "access packages are populated when requested").to.not.be.empty;
+  });
+}

@@ -1,0 +1,55 @@
+meta {
+  name: 06_AND_TheSameOrganisationByOrganisationUuid
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeAccessPackages=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeAccessPackages: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:organization:uuid",
+    "value": "{{subjectValue}}"
+  }
+}
+
+docs {
+  AND the same organisation looked up by organisation uuid returns the same parties as the
+  organisation number form did.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectValue", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.partyUuid);
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir);
+}
+
+tests {
+  const { partyUuids } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  test("AND the organisation looked up by organisation uuid returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the party list matches the organisation number lookup", function() {
+    const expected = JSON.parse(bru.getVar("orgPartyUuids"));
+    expect(partyUuids(res.getBody()).sort()).to.deep.equal(expected);
+  });
+}

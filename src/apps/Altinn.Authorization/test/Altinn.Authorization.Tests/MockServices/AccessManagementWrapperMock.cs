@@ -2,6 +2,7 @@
 using Altinn.Authorization.Api.Contracts.Authorization;
 using Altinn.Authorization.Enums;
 using Altinn.Authorization.Tests.Data;
+using Altinn.Authorization.Tests.Util;
 using Altinn.Platform.Authenticaiton.Extensions;
 using Altinn.Platform.Authorization.Constants;
 using Altinn.Platform.Authorization.Models;
@@ -70,6 +71,15 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
             ConditionalAdd(
                 DelegationChangesTestData.Default(DelegationChangesTestData.WithResourceID("ttd-externalpdp-resource3"), DelegationChangesTestData.WithResourceInstanceId("4c1b880e-f425-4050-9a46-cd1b3e56bf94"), DelegationChangesTestData.WithOfferedByPartyID(50005545), DelegationChangesTestData.WithCoveredByUserID(1337)),
                 WithDefaultCondition("ttd-externalpdp-resource3", new AttributeMatch { Id = XacmlRequestAttribute.PartyAttribute, Value = "50005545" }, new AttributeMatch { Id = XacmlRequestAttribute.UserAttribute, Value = "1337" })),
+            ConditionalAdd(
+                DelegationChangesTestData.Default(DelegationChangesTestData.WithResourceID(AccessListTestData.ResourceId), DelegationChangesTestData.WithOfferedByPartyID(AccessListTestData.MemberPartyId), DelegationChangesTestData.WithCoveredByUserID(AccessListTestData.DelegationUserId)),
+                WithDefaultCondition(AccessListTestData.ResourceId, new AttributeMatch { Id = XacmlRequestAttribute.PartyAttribute, Value = $"{AccessListTestData.MemberPartyId}" }, new AttributeMatch { Id = XacmlRequestAttribute.UserAttribute, Value = $"{AccessListTestData.DelegationUserId}" })),
+            ConditionalAdd(
+                DelegationChangesTestData.Default(DelegationChangesTestData.WithResourceID(AccessListTestData.ResourceId), DelegationChangesTestData.WithOfferedByPartyID(AccessListTestData.NonMemberPartyId), DelegationChangesTestData.WithCoveredByUserID(AccessListTestData.DelegationUserId)),
+                WithDefaultCondition(AccessListTestData.ResourceId, new AttributeMatch { Id = XacmlRequestAttribute.PartyAttribute, Value = $"{AccessListTestData.NonMemberPartyId}" }, new AttributeMatch { Id = XacmlRequestAttribute.UserAttribute, Value = $"{AccessListTestData.DelegationUserId}" })),
+            ConditionalAdd(
+                DelegationChangesTestData.Default(DelegationChangesTestData.WithResourceID(AccessListTestData.ResourceId), DelegationChangesTestData.WithOfferedByPartyID(AccessListTestData.MemberPartyId), DelegationChangesTestData.WithToUuid(UuidType.SystemUser, Guid.Parse(AccessListTestData.SystemUserUuid))),
+                WithDefaultCondition(AccessListTestData.ResourceId, new AttributeMatch { Id = XacmlRequestAttribute.PartyAttribute, Value = $"{AccessListTestData.MemberPartyId}" }, new AttributeMatch { Id = XacmlRequestAttribute.SystemUserIdAttribute, Value = AccessListTestData.SystemUserUuid })),
         };
 
         var result = new List<DelegationChangeExternal>();

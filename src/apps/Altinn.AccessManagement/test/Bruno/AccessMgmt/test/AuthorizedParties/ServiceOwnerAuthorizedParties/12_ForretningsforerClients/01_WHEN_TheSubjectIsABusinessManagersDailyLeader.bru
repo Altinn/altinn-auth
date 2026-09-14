@@ -1,0 +1,66 @@
+meta {
+  name: 01_WHEN_TheSubjectIsABusinessManagersDailyLeader
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeRoles=true&includeAccessPackages=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeRoles: true
+  includeAccessPackages: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{subjectPersonId}}"
+  }
+}
+
+docs {
+  WHEN the subject is the daily leader of a business manager firm, the housing company clients
+  the firm manages are returned, and the client the firm holds the eiendom package for carries
+  that package.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectPersonId", testdata.forretningsforerNonfigurativEmosjonellPuma.dagligleder.pid);
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  const firm = testdata.forretningsforerNonfigurativEmosjonellPuma;
+
+  test("WHEN the subject is a business manager's daily leader, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the client the firm holds the eiendom package for carries that package", function() {
+    const party = findParty(res.getBody(), firm.esekClient.partyUuid);
+    expect(party, `expected the client ${firm.esekClient.name} in the party list`).to.not.be.undefined;
+    expect(party.authorizedAccessPackages).to.include(firm.esekClient.clientPackage);
+  });
+
+  test("THEN the other housing company client is also returned", function() {
+    const party = findParty(res.getBody(), firm.nonBrlEsekClient.partyUuid);
+    expect(party, `expected the client ${firm.nonBrlEsekClient.name} in the party list`).to.not.be.undefined;
+  });
+}

@@ -2,6 +2,7 @@
 using System.Text.Json;
 using Altinn.AccessManagement.Core.Enums;
 using Altinn.AccessManagement.Core.Helpers;
+using Altinn.AccessManagement.Core.Helpers.Extensions;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
@@ -90,7 +91,7 @@ namespace Altinn.AccessManagement.Core.Services
                         string reasonPhrase = httpResponse.ReasonPhrase;
                         _logger.LogError(
                             "Writing of delegation policy at path: {PolicyPath} failed. Response Status Code:\n{Status}. Response Reason Phrase:\n{ReasonPhrase}",
-                            policyPath,
+                            policyPath.AsLogValue(),
                             status,
                             reasonPhrase);
                         return false;
@@ -124,11 +125,11 @@ namespace Altinn.AccessManagement.Core.Services
         {
             if (logAsError)
             {
-                _logger.LogError("Could not acquire blob lease lock on delegation policy at path: {PolicyPath}", policyPath);
+                _logger.LogError("Could not acquire blob lease lock on delegation policy at path: {PolicyPath}", policyPath.AsLogValue());
             }
             else
             {
-                _logger.LogInformation("Could not acquire blob lease lock on delegation policy at path: {PolicyPath}", policyPath);
+                _logger.LogInformation("Could not acquire blob lease lock on delegation policy at path: {PolicyPath}", policyPath.AsLogValue());
             }
         }
 
@@ -164,7 +165,7 @@ namespace Altinn.AccessManagement.Core.Services
                         string reasonPhrase = httpResponse.ReasonPhrase;
                         _logger.LogError(
                             "Writing of delegation policy at path: {PolicyPath} failed. Response Status Code:\n{Status}. Response Reason Phrase:\n{ReasonPhrase}",
-                            policyPath,
+                            policyPath.AsLogValue(),
                             status,
                             reasonPhrase);
                         return false;
@@ -215,7 +216,7 @@ namespace Altinn.AccessManagement.Core.Services
                 // The root blob is in effect orphaned/ignored as the delegation policies are always to be read by version, and will be overritten by the next delegation change.
                 _logger.LogError(
                     "Writing of delegation change to authorization postgresql database failed for changes to delegation policy at path: {PolicyPath}",
-                    policyPath);
+                    policyPath.AsLogValue());
                 return false;
             }
 
@@ -312,7 +313,7 @@ namespace Altinn.AccessManagement.Core.Services
                     _logger.LogError(
                         ex,
                         "An exception occured while processing authorization rules for delegation on delegation policy path: {Path}",
-                        path);
+                        path.AsLogValue());
                 }
 
                 foreach (InstanceRule rule in rules.InstanceRules)
@@ -352,7 +353,7 @@ namespace Altinn.AccessManagement.Core.Services
 
                 if (validPath)
                 {
-                    _logger.LogError(ex, "An exception occured while processing authorization rules for delegation on delegation policy path: {Path}", path);
+                    _logger.LogError(ex, "An exception occured while processing authorization rules for delegation on delegation policy path: {Path}", path.AsLogValue());
                 }
                 else
                 {
@@ -390,7 +391,7 @@ namespace Altinn.AccessManagement.Core.Services
             {
                 string resourceId = rights[0].ResourceId;
                 string instanceId = rights[0].InstanceId;
-                _logger.LogError(e, "One or more rules could not be processed when writing policy files ResourceId: {ResourceId}, InstanceId: {InstanceId}", resourceId, instanceId);
+                _logger.LogError(e, "One or more rules could not be processed when writing policy files ResourceId: {ResourceId}, InstanceId: {InstanceId}", resourceId.AsLogValue(), instanceId.AsLogValue());
             }
 
             foreach (InstanceRight rules in rights)
@@ -457,7 +458,7 @@ namespace Altinn.AccessManagement.Core.Services
                             string reasonPhrase = httpResponse.ReasonPhrase;
                             _logger.LogError(
                                 "Writing of delegation policy at path: {PolicyPath} failed. Response Status Code:\n{Status}. Response Reason Phrase:\n{ReasonPhrase}",
-                                currentPolicyWrite.PolicyPath,
+                                currentPolicyWrite.PolicyPath.AsLogValue(),
                                 status,
                                 reasonPhrase);
                             return false;
@@ -501,7 +502,7 @@ namespace Altinn.AccessManagement.Core.Services
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "An exception occured while processing authorization rules for delegation on delegation policy path: {DelegationPolicypath}", delegationPolicypath);
+                    _logger.LogError(ex, "An exception occured while processing authorization rules for delegation on delegation policy path: {DelegationPolicypath}", delegationPolicypath.AsLogValue());
                 }
 
                 foreach (Rule rule in delegationDict[delegationPolicypath])
@@ -553,14 +554,14 @@ namespace Altinn.AccessManagement.Core.Services
             var policyClient = _policyFactory.Create(policyPath);
             if (!await policyClient.PolicyExistsAsync(cancellationToken))
             {
-                _logger.LogWarning("No blob was found for the expected path: {PolicyPath} this must be removed without upading the database", policyPath);
+                _logger.LogWarning("No blob was found for the expected path: {PolicyPath} this must be removed without upading the database", policyPath.AsLogValue());
                 return null;
             }
 
             string leaseId = await policyClient.TryAcquireBlobLease(cancellationToken);
             if (leaseId == null)
             {
-                _logger.LogError("Could not acquire blob lease on delegation policy at path: {PolicyPath}", policyPath);
+                _logger.LogError("Could not acquire blob lease on delegation policy at path: {PolicyPath}", policyPath.AsLogValue());
                 return null;
             }
 
@@ -577,7 +578,7 @@ namespace Altinn.AccessManagement.Core.Services
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Writing of delegation policy at path: {PolicyPath} failed. Is delegation blob storage account alive and well?", policyPath);
+                    _logger.LogError(ex, "Writing of delegation policy at path: {PolicyPath} failed. Is delegation blob storage account alive and well?", policyPath.AsLogValue());
                     return null;
                 }
 
@@ -585,7 +586,7 @@ namespace Altinn.AccessManagement.Core.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An exception occured while processing rules to delete in policy: {PolicyPath}", policyPath);
+                _logger.LogError(ex, "An exception occured while processing rules to delete in policy: {PolicyPath}", policyPath.AsLogValue());
                 return null;
             }
             finally
@@ -616,7 +617,7 @@ namespace Altinn.AccessManagement.Core.Services
             if (!DelegationHelper.TryGetDelegationParamsFromRule(rules[0], out ResourceAttributeMatchType resourceMatchType, out string resourceId, out string org, out string app, out int offeredByPartyId, out Guid? fromUuid, out UuidType fromUuidType, out Guid? toUuid, out UuidType toUuidType, out int? coveredByPartyId, out int? coveredByUserId, out int? delegatedByUserId, out int? delegatedByPartyId, out Guid? performedByUuid, out UuidType performedByUuidType, out DateTime delegatedDateTime)
                 || resourceMatchType == ResourceAttributeMatchType.None)
             {
-                _logger.LogWarning("This should not happen. Incomplete rule model received for delegation to delegation policy at: {PolicyPath}. Incomplete model should have been returned in unsortable rule set by TryWriteDelegationPolicyRules. DelegationHelper.SortRulesByDelegationPolicyPath might be broken.", policyPath);
+                _logger.LogWarning("This should not happen. Incomplete rule model received for delegation to delegation policy at: {PolicyPath}. Incomplete model should have been returned in unsortable rule set by TryWriteDelegationPolicyRules. DelegationHelper.SortRulesByDelegationPolicyPath might be broken.", policyPath.AsLogValue());
                 return false;
             }
 
@@ -625,7 +626,7 @@ namespace Altinn.AccessManagement.Core.Services
                 XacmlPolicy resourcePolicy = await _prp.GetPolicyAsync(resourceId, cancellationToken);
                 if (resourcePolicy == null)
                 {
-                    _logger.LogWarning("No valid resource policy found for delegation policy path: {PolicyPath}", policyPath);
+                    _logger.LogWarning("No valid resource policy found for delegation policy path: {PolicyPath}", policyPath.AsLogValue());
                     return false;
                 }
 
@@ -633,7 +634,7 @@ namespace Altinn.AccessManagement.Core.Services
                 {
                     if (!DelegationHelper.PolicyContainsMatchingRule(resourcePolicy, rule))
                     {
-                        _logger.LogWarning("Matching rule not found in resource policy. Action might not exist for Resource, or Resource itself might not exist. Delegation policy path: {PolicyPath}. Rule: {Rule}", policyPath, rule);
+                        _logger.LogWarning("Matching rule not found in resource policy. Action might not exist for Resource, or Resource itself might not exist. Delegation policy path: {PolicyPath}. Rule: {Rule}", policyPath.AsLogValue(), rule);
                         return false;
                     }
                 }
@@ -643,7 +644,7 @@ namespace Altinn.AccessManagement.Core.Services
                 XacmlPolicy appPolicy = await _prp.GetPolicyAsync(org, app, cancellationToken);
                 if (appPolicy == null)
                 {
-                    _logger.LogWarning("No valid App policy found for delegation policy path: {PolicyPath}", policyPath);
+                    _logger.LogWarning("No valid App policy found for delegation policy path: {PolicyPath}", policyPath.AsLogValue());
                     return false;
                 }
 
@@ -651,7 +652,7 @@ namespace Altinn.AccessManagement.Core.Services
                 {
                     if (!DelegationHelper.PolicyContainsMatchingRule(appPolicy, rule))
                     {
-                        _logger.LogWarning("Matching rule not found in app policy. Action might not exist for Resource, or Resource itself might not exist. Delegation policy path: {PolicyPath}. Rule: {Rule}", policyPath, rule);
+                        _logger.LogWarning("Matching rule not found in app policy. Action might not exist for Resource, or Resource itself might not exist. Delegation policy path: {PolicyPath}. Rule: {Rule}", policyPath.AsLogValue(), rule);
                         return false;
                     }
                 }
@@ -703,7 +704,7 @@ namespace Altinn.AccessManagement.Core.Services
                     Response httpResponse = blobResponse.GetRawResponse();
                     if (httpResponse.Status != (int)HttpStatusCode.Created)
                     {
-                        _logger.LogError("Writing of delegation policy at path: {PolicyPath} failed. Response Status Code:\n{HttpStatus}. Response Reason Phrase:\n{HttpReasonPhrase}", policyPath, httpResponse.Status, httpResponse.ReasonPhrase);
+                        _logger.LogError("Writing of delegation policy at path: {PolicyPath} failed. Response Status Code:\n{HttpStatus}. Response Reason Phrase:\n{HttpReasonPhrase}", policyPath.AsLogValue(), httpResponse.Status, httpResponse.ReasonPhrase);
                         return false;
                     }
 
@@ -734,7 +735,7 @@ namespace Altinn.AccessManagement.Core.Services
                         // Comment:
                         // This means that the current version of the root blob is no longer in sync with changes in authorization postgresql delegation.delegatedpolicy table.
                         // The root blob is in effect orphaned/ignored as the delegation policies are always to be read by version, and will be overritten by the next delegation change.
-                        _logger.LogError("Writing of delegation change to authorization postgresql database failed for changes to delegation policy at path: {PolicyPath}", policyPath);
+                        _logger.LogError("Writing of delegation change to authorization postgresql database failed for changes to delegation policy at path: {PolicyPath}", policyPath.AsLogValue());
                         return false;
                     }
 
@@ -774,7 +775,7 @@ namespace Altinn.AccessManagement.Core.Services
                 XacmlPolicy existingDelegationPolicy = null;
                 if (currentChange.DelegationChangeType == DelegationChangeType.RevokeLast)
                 {
-                    _logger.LogWarning("The policy is already deleted for: {ResourceId} CoveredBy: {CoveredBy} OfferedBy: {OfferedBy}", resourceId, coveredBy, offeredBy);
+                    _logger.LogWarning("The policy is already deleted for: {ResourceId} CoveredBy: {CoveredBy} OfferedBy: {OfferedBy}", resourceId.AsLogValue(), coveredBy.AsLogValue(), offeredBy.AsLogValue());
                     return null;
                 }
 
@@ -785,7 +786,7 @@ namespace Altinn.AccessManagement.Core.Services
                     XacmlRule xacmlRuleToRemove = existingDelegationPolicy.Rules.FirstOrDefault(r => r.RuleId == ruleId);
                     if (xacmlRuleToRemove == null)
                     {
-                        _logger.LogWarning("The rule with id: {RuleId} does not exist in policy with path: {PolicyPath}", ruleId, policyPath);
+                        _logger.LogWarning("The rule with id: {RuleId} does not exist in policy with path: {PolicyPath}", ruleId.AsLogValue(), policyPath.AsLogValue());
                         continue;
                     }
 
@@ -808,7 +809,7 @@ namespace Altinn.AccessManagement.Core.Services
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogError(ex, "Writing of delegation policy at path: {PolicyPath} failed. Is delegation blob storage account alive and well?", policyPath);
+                        _logger.LogError(ex, "Writing of delegation policy at path: {PolicyPath} failed. Is delegation blob storage account alive and well?", policyPath.AsLogValue());
                         return null;
                     }
 
@@ -837,14 +838,14 @@ namespace Altinn.AccessManagement.Core.Services
                         // Comment:
                         // This means that the current version of the root blob is no longer in sync with changes in authorization postgresql delegation.delegatedpolicy table.
                         // The root blob is in effect orphaned/ignored as the delegation policies are always to be read by version, and will be overritten by the next delegation change.
-                        _logger.LogError("Writing of delegation change to authorization postgresql database failed for changes to delegation policy at path: {PolicyPath}. is authorization postgresql database alive and well?", policyPath);
+                        _logger.LogError("Writing of delegation change to authorization postgresql database failed for changes to delegation policy at path: {PolicyPath}. is authorization postgresql database alive and well?", policyPath.AsLogValue());
                         return null;
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An exception occured while processing rules to delete in policy: {PolicyPath}", policyPath);
+                _logger.LogError(ex, "An exception occured while processing rules to delete in policy: {PolicyPath}", policyPath.AsLogValue());
                 return null;
             }
             finally
@@ -873,21 +874,21 @@ namespace Altinn.AccessManagement.Core.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Not possible to build policy path for: {ResourceId} CoveredBy: {CoveredBy} OfferedBy: {OfferedByPartyId}", resourceId, coveredBy, policyToDelete.PolicyMatch.OfferedByPartyId);
+                _logger.LogError(ex, "Not possible to build policy path for: {ResourceId} CoveredBy: {CoveredBy} OfferedBy: {OfferedByPartyId}", resourceId.AsLogValue(), coveredBy.AsLogValue(), policyToDelete.PolicyMatch.OfferedByPartyId);
                 return null;
             }
 
             var policyClient = _policyFactory.Create(policyPath);
             if (!await policyClient.PolicyExistsAsync(cancellationToken))
             {
-                _logger.LogWarning("No blob was found for the expected path: {PolicyPath} this must be removed without upading the database", policyPath);
+                _logger.LogWarning("No blob was found for the expected path: {PolicyPath} this must be removed without upading the database", policyPath.AsLogValue());
                 return null;
             }
 
             string leaseId = await policyClient.TryAcquireBlobLease(cancellationToken);
             if (leaseId == null)
             {
-                _logger.LogError("Could not acquire blob lease on delegation policy at path: {PolicyPath}", policyPath);
+                _logger.LogError("Could not acquire blob lease on delegation policy at path: {PolicyPath}", policyPath.AsLogValue());
                 return null;
             }
 
@@ -897,7 +898,7 @@ namespace Altinn.AccessManagement.Core.Services
 
                 if (currentChange.DelegationChangeType == DelegationChangeType.RevokeLast)
                 {
-                    _logger.LogWarning("The policy is already deleted for: {ResourceId} CoveredBy: {CoveredBy} OfferedBy: {OfferedByPartyId}", resourceId, coveredBy, policyToDelete.PolicyMatch.OfferedByPartyId);
+                    _logger.LogWarning("The policy is already deleted for: {ResourceId} CoveredBy: {CoveredBy} OfferedBy: {OfferedByPartyId}", resourceId.AsLogValue(), coveredBy.AsLogValue(), policyToDelete.PolicyMatch.OfferedByPartyId);
                     return null;
                 }
 
@@ -918,7 +919,7 @@ namespace Altinn.AccessManagement.Core.Services
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Writing of delegation policy at path: {PolicyPath} failed. Is delegation blob storage account alive and well?", policyPath);
+                    _logger.LogError(ex, "Writing of delegation policy at path: {PolicyPath} failed. Is delegation blob storage account alive and well?", policyPath.AsLogValue());
                     return null;
                 }
 
@@ -946,7 +947,7 @@ namespace Altinn.AccessManagement.Core.Services
                     // Comment:
                     // This means that the current version of the root blob is no longer in sync with changes in authorization postgresql delegation.delegatedpolicy table.
                     // The root blob is in effect orphaned/ignored as the delegation policies are always to be read by version, and will be overritten by the next delegation change.
-                    _logger.LogError("Writing of delegation change to authorization postgresql database failed for changes to delegation policy at path: {PolicyPath}. is authorization postgresql database alive and well?", policyPath);
+                    _logger.LogError("Writing of delegation change to authorization postgresql database failed for changes to delegation policy at path: {PolicyPath}. is authorization postgresql database alive and well?", policyPath.AsLogValue());
                     return null;
                 }
 
@@ -954,7 +955,7 @@ namespace Altinn.AccessManagement.Core.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An exception occured while processing rules to delete in policy: {PolicyPath}", policyPath);
+                _logger.LogError(ex, "An exception occured while processing rules to delete in policy: {PolicyPath}", policyPath.AsLogValue());
                 return null;
             }
             finally
@@ -981,14 +982,14 @@ namespace Altinn.AccessManagement.Core.Services
             catch (Exception ex)
             {
                 string rulesToDeleteString = string.Join(", ", rulesToDelete.RuleIds);
-                _logger.LogError(ex, "Not possible to build policy path for: {ResourceId} CoveredBy: {CoveredBy} OfferedBy: {OfferedByPartyId} RuleIds: {RuleIds}", resourceId, coveredBy, rulesToDelete.PolicyMatch.OfferedByPartyId, rulesToDeleteString);
+                _logger.LogError(ex, "Not possible to build policy path for: {ResourceId} CoveredBy: {CoveredBy} OfferedBy: {OfferedByPartyId} RuleIds: {RuleIds}", resourceId.AsLogValue(), coveredBy.AsLogValue(), rulesToDelete.PolicyMatch.OfferedByPartyId, rulesToDeleteString.AsLogValue());
                 return null;
             }
 
             var policyClient = _policyFactory.Create(policyPath);
             if (!await policyClient.PolicyExistsAsync(cancellationToken))
             {
-                _logger.LogWarning("No blob was found for the expected path: {PolicyPath} this must be removed without updating the database", policyPath);
+                _logger.LogWarning("No blob was found for the expected path: {PolicyPath} this must be removed without updating the database", policyPath.AsLogValue());
                 return null;
             }
 

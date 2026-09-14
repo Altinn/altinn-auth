@@ -9,9 +9,9 @@ namespace Altinn.Authorization.ABAC.Tests;
 /// Engine-level tests for <see cref="PolicyDecisionPoint"/>. Each test drives a
 /// crafted minimal XACML 3.0 policy + request through
 /// <see cref="PolicyDecisionPoint.Authorize"/>, exercising the parser, the Xacml
-/// object model, attribute matching, the deny-overrides rule-combining algorithm,
-/// and the missing-required-attribute path together — the breadth the indirect
-/// conformance suite covers, but localized and without a web host.
+/// object model, attribute matching, the rule-combining algorithms, and the
+/// missing-required-attribute path together: the breadth the indirect conformance
+/// suite covers, but localized and without a web host.
 /// </summary>
 [UnitTest]
 public class PolicyDecisionPointTest
@@ -57,13 +57,9 @@ public class PolicyDecisionPointTest
         result.Decision.Should().Be(XacmlContextDecision.NotApplicable);
     }
 
-    // Acceptance test for #3132 milestone A2. first-applicable means the first
-    // matching rule decides, so a matching Deny placed first must yield Deny. The
-    // PDP currently implements only rule-deny-overrides: for any other algorithm it
-    // drops the Deny and lets the later Permit win - a silent grant where the policy
-    // says deny (verified: this assertion fails today with Actual = Permit). Skipped
-    // until first-applicable is implemented; remove the Skip then.
-    [Fact(Skip = "PDP only implements rule-deny-overrides; first-applicable is unimplemented and currently returns Permit instead of Deny (silent grant). Acceptance test for #3132 milestone A2.")]
+    // first-applicable means the first matching rule decides, so a matching Deny
+    // placed first yields Deny.
+    [Fact]
     public void Authorize_FirstApplicable_DenyRuleFirst_ReturnsDeny()
     {
         XacmlContextResult result = Decide(TwoRulePolicy("Deny", "Permit", FirstApplicable), Request());

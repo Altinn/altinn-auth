@@ -1,0 +1,76 @@
+meta {
+  name: 03_AND_ClientOrganisationsAppearWithClientPackages
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeRoles=true&includeAccessPackages=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeRoles: true
+  includeAccessPackages: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{subjectPersonId}}"
+  }
+}
+
+docs {
+  AND a client organisation of the accounting firm appears with the packages the firm holds
+  through the accountant role, and its subunit inherits the same access.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectPersonId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.pid);
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty, lower } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  const client = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_USENSUELL_UVIRKSOM_TIGER;
+  const accountantPackages = [
+    "regnskapsforer-lonn",
+    "regnskapsforer-med-signeringsrettighet",
+    "regnskapsforer-uten-signeringsrettighet",
+  ];
+
+  test("AND the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the client organisation appears with the accountant packages", function() {
+    const party = findParty(res.getBody(), client.partyUuid);
+    expect(party, `expected the client ${client.name} in the party list`).to.not.be.undefined;
+    expect(party.organizationNumber).to.equal(client.orgno);
+    expect(party.type).to.equal("Organization");
+    expect(party.authorizedAccessPackages).to.include.members(accountantPackages);
+    expect(lower(party.authorizedRoles), "the client is held through the accountant role").to.include("regnskapsforer");
+  });
+
+  test("AND the client's subunit is nested under it with the same packages", function() {
+    const party = findParty(res.getBody(), client.partyUuid);
+    const subunit = party.subunits.find(item => item.partyUuid.toLowerCase() === client.subunit.partyUuid.toLowerCase());
+    expect(subunit, `expected the client subunit ${client.subunit.name} nested under the client`).to.not.be.undefined;
+    expect(subunit.organizationNumber).to.equal(client.subunit.orgno);
+    expect(subunit.authorizedAccessPackages).to.include.members(accountantPackages);
+  });
+}

@@ -13,10 +13,13 @@ using Altinn.AccessMgmt.Core.Outbox;
 using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Telemetry;
+using Altinn.AccessMgmt.PersistenceEF.Contexts;
+using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using AMPartyService = Altinn.AccessMgmt.Core.Services.AMPartyService;
@@ -50,11 +53,16 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddAccessMgmtCore(this IServiceCollection services, IConfiguration configuration, Action<CoreAppsettings> configureAppsettings = null)
     {
         services.AddCoreOtel();
+        services.AddSingleton<AppLifecycleFeatures>();
         services.AddHostedService<RegisterHostedService>();
         services.AddHostedService<OutboxHandlerJob>();
         services.AddHostedService<OutboxReaperJob>();
         services.AddScoped<RegisterHostedService>();
         services.AddScoped<IIngestService, IngestService>();
+        services.AddScoped(sp => new ConnectionQuery(
+            sp.GetRequiredService<AppDbContext>(),
+            sp.GetRequiredService<ILogger<ConnectionQuery>>(),
+            sp.GetRequiredService<AppLifecycleFeatures>().AdosSubunitInheritance));
         services.AddScoped<IConnectionService, ConnectionService>();
         services.AddScoped<IMaskinportenSupplierService, MaskinportenSupplierService>();
         services.AddScoped<IPartyService, PartyService>();

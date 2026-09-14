@@ -1,30 +1,50 @@
 @page "/entity-search"
 @inherits EnvironmentPageBase
 @inject EntitySearchService SearchService
+@inject IJSRuntime JS
+@inject ISnackbar Snackbar
 
 <PageTitle>Entity-søk – Access Management</PageTitle>
 
 <MudText Typo="Typo.h4" GutterBottom="true">Entity-søk</MudText>
 <MudText Typo="Typo.body1" Class="mb-6 mud-text-secondary">
     Søk opp entities direkte mot databasen via <code>DbSet&lt;Entity&gt;</code>.
+    Søketermen tolkes som UUID, organisasjonsnummer, fødselsnummer, party-id eller navn
+    og slås opp mot riktig felt.
 </MudText>
 
 <MudPaper Elevation="1" Class="pa-4 mb-4">
     <MudGrid>
-        <MudItem xs="12" sm="8" md="6">
+        <MudItem xs="12" sm="5">
             <MudTextField @bind-Value="_searchTerm"
                           Label="Søk"
                           Variant="Variant.Outlined"
-                          Placeholder="Navn, organisasjonsnr, brukernavn, party-id..."
+                          Placeholder="Navn, UUID, org.nr, fødselsnr, party-id..."
                           Adornment="Adornment.Start"
                           AdornmentIcon="@Icons.Material.Filled.Search"
                           OnKeyDown="OnKeyDown"
                           Immediate="false" />
         </MudItem>
+        <MudItem xs="6" sm="3">
+            <MudSelect T="EntitySearchKind?"
+                       @bind-Value="_selectedKind"
+                       Label="Søk etter"
+                       Variant="Variant.Outlined"
+                       Dense="true"
+                       ToStringFunc="@KindDisplay">
+                <MudSelectItem T="EntitySearchKind?" Value="@((EntitySearchKind?)null)">Auto</MudSelectItem>
+                @foreach (var kind in Enum.GetValues<EntitySearchKind>())
+                {
+                    <MudSelectItem T="EntitySearchKind?" Value="@((EntitySearchKind?)kind)">
+                        @KindDisplay(kind)
+                    </MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
         <MudItem xs="6" sm="2">
             <MudCheckBox @bind-Value="_includeDeleted" Label="Vis slettede" Color="Color.Primary" />
         </MudItem>
-        <MudItem xs="6" sm="2">
+        <MudItem xs="12" sm="2">
             <MudButton Variant="Variant.Filled"
                        Color="Color.Primary"
                        StartIcon="@Icons.Material.Filled.Search"
@@ -48,7 +68,7 @@
 
 @if (_results is not null)
 {
-    <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-2">
         <MudText Typo="Typo.body2" Class="mud-text-secondary">
             @if (_results.Count == EntitySearchService.MaxResults)
             {
@@ -59,12 +79,19 @@
                 <span>@_results.Count treff</span>
             }
         </MudText>
+        @if (_usedKind is not null)
+        {
+            <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined">
+                Søkte på @EntitySearchKindText.Label(_usedKind.Value)
+            </MudChip>
+        }
     </MudStack>
 
     <MudPaper Elevation="1">
         <MudTable Items="_results" Hover="true" Dense="true" FixedHeader="true" Height="600px">
             <HeaderContent>
                 <MudTh>Navn</MudTh>
+                <MudTh>UUID</MudTh>
                 <MudTh>Type</MudTh>
                 <MudTh>Variant</MudTh>
                 <MudTh>OrgNr</MudTh>
@@ -76,6 +103,17 @@
             <RowTemplate>
                 <MudTd DataLabel="Navn">
                     <MudLink Href="@($"/entity/{context.Id}")" Typo="Typo.body2">@context.Name</MudLink>
+                </MudTd>
+                <MudTd DataLabel="UUID">
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="0">
+                        <MudTooltip Text="@context.Id.ToString()">
+                            <MudText Typo="Typo.body2" Style="font-family:monospace">@ShortId(context.Id)</MudText>
+                        </MudTooltip>
+                        <MudIconButton Icon="@Icons.Material.Filled.ContentCopy"
+                                       Size="Size.Small"
+                                       aria-label="Kopier UUID"
+                                       OnClick="@(() => CopyId(context.Id))" />
+                    </MudStack>
                 </MudTd>
                 <MudTd DataLabel="Type">
                     <MudText Typo="Typo.body2">@(context.Type?.Name ?? "–")</MudText>
@@ -107,7 +145,7 @@
                 </MudTd>
             </RowTemplate>
             <NoRecordsContent>
-                <MudText Class="pa-4 mud-text-secondary">Ingen treff – prøv et annet søkeord.</MudText>
+                <MudText Class="pa-4 mud-text-secondary">Ingen treff – prøv et annet søkeord eller en annen søketype.</MudText>
             </NoRecordsContent>
         </MudTable>
     </MudPaper>
@@ -116,12 +154,15 @@
 @code {
     private string _searchTerm = string.Empty;
     private bool _includeDeleted;
+    private EntitySearchKind? _selectedKind;
+    private EntitySearchKind? _usedKind;
     private List<Entity>? _results;
 
     protected override Task OnEnvironmentChangedAsync()
     {
         // Results belong to the previous environment.
         _results = null;
+        _usedKind = null;
         Error = null;
         return Task.CompletedTask;
     }
@@ -129,6 +170,7 @@
     private async Task Search()
     {
         _results = null;
+        _usedKind = null;
 
         var term = _searchTerm.Trim();
         if (term.Length < 2)
@@ -137,8 +179,12 @@
             return;
         }
 
+        var kind = _selectedKind ?? EntitySearchService.DetectKind(term);
         await RunAsync(async ct =>
-            _results = await SearchService.SearchAsync(EnvState.Current, term, _includeDeleted, ct: ct));
+        {
+            _results = await SearchService.SearchAsync(EnvState.Current, term, _includeDeleted, kind, ct: ct);
+            _usedKind = kind;
+        });
     }
 
     private async Task OnKeyDown(KeyboardEventArgs e)
@@ -148,6 +194,20 @@
             await Search();
         }
     }
+
+    private async Task CopyId(Guid id)
+    {
+        await JS.InvokeVoidAsync("navigator.clipboard.writeText", id.ToString());
+        Snackbar.Add("UUID kopiert", Severity.Success);
+    }
+
+    private static string ShortId(Guid id) => id.ToString()[..8] + "…";
+
+    private static string KindDisplay(EntitySearchKind? kind) =>
+        kind is null ? "Auto" : Capitalize(EntitySearchKindText.Label(kind.Value));
+
+    private static string Capitalize(string text) =>
+        text.Length > 0 ? char.ToUpperInvariant(text[0]) + text[1..] : text;
 
     private static string MaskPersonIdentifier(string? fnr) =>
         fnr?.Length == 11 ? fnr[..6] + "*****" : fnr ?? "–";

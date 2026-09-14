@@ -1,0 +1,93 @@
+meta {
+  name: 01_WHEN_TheServiceOwnerListsPartiesForTheDailyLeader
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeRoles=true&includeAccessPackages=true&includeResources=true&includeInstances=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeRoles: true
+  includeAccessPackages: true
+  includeResources: true
+  includeInstances: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{subjectPersonId}}"
+  }
+}
+
+docs {
+  WHEN a service owner lists the authorized parties for the daily leader of the accounting
+  firm with every access information flag on.
+
+  THEN the response is a bare array of parties, and every party carries the full set of
+  party fields.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectPersonId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.pid);
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir);
+}
+
+tests {
+  const { flatten } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  test("WHEN the service owner lists authorized parties, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the response is a bare array of parties", function() {
+    const body = res.getBody();
+    expect(body, "the service owner endpoint returns a bare array, not an envelope").to.be.an("array").that.is.not.empty;
+  });
+
+  test("AND every party carries the party fields of the contract", function() {
+    for (const party of flatten(res.getBody())) {
+      expect(party).to.have.all.keys(
+        "partyUuid",
+        "name",
+        "organizationNumber",
+        "parentId",
+        "personId",
+        "dateOfBirth",
+        "partyId",
+        "emailId",
+        "type",
+        "unitType",
+        "isDeleted",
+        "onlyHierarchyElementWithNoAccess",
+        "authorizedAccessPackages",
+        "authorizedResources",
+        "authorizedRoles",
+        "authorizedInstances",
+        "subunits");
+      expect(party.partyUuid, `party ${party.name} has no uuid`).to.be.a("string");
+      expect(party.type, `unexpected party type on ${party.name}`).to.be.oneOf(["None", "Person", "Organization", "SelfIdentified"]);
+      expect(party.isDeleted).to.be.a("boolean");
+      expect(party.onlyHierarchyElementWithNoAccess).to.be.a("boolean");
+      expect(party.authorizedAccessPackages).to.be.an("array");
+      expect(party.authorizedResources).to.be.an("array");
+      expect(party.authorizedRoles).to.be.an("array");
+      expect(party.authorizedInstances).to.be.an("array");
+      expect(party.subunits).to.be.an("array");
+    }
+  });
+}

@@ -48,6 +48,8 @@ public class UserProfileLookupServiceMock : IUserProfileLookupService
         AddIfPerson(lookup, TestData.Thea);
         AddIfPerson(lookup, TestData.JosephineYvonnesdottir);
         AddIfPerson(lookup, TestData.BodilFarmor);
+        AddIfPerson(lookup, TestData.PadmeAmidala);
+        AddIfPerson(lookup, TestEntities.PersonMargit);
         return lookup;
     }
 

@@ -194,7 +194,8 @@ internal class ConnectionEntityEnricher(AppDbContext db, ILogger logger)
         var allChildren = await db
             .Entities
             .AsNoTracking()
-            .Where(e => e.ParentId != null && entityDict.Keys.Contains((Guid)e.ParentId))
+            .Where(e => e.ParentId != null && entityDict.Keys.Contains((Guid)e.ParentId)
+                && (filter.IncludeAdosSubunitInheritance || e.VariantId != EntityVariantConstants.ADOS.Id))
             .Select(e => new Entity()
             {
                 Id = e.Id,

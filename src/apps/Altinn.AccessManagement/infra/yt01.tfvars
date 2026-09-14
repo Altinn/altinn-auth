@@ -15,7 +15,7 @@ db_max_pool_size = 10
 db_compute_sku   = "D2"
 configuration = {
   consent = {
-    events_page_size          = 1000
+    events_page_size = 1000
   }
   core = {
     request_notify_request_approved_in_seconds = 600

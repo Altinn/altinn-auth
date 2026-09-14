@@ -1,0 +1,20 @@
+meta {
+  name: 10_SubjectLookupForms
+  seq: 10
+}
+
+docs {
+  Scenario: The same subject resolves to the same party list whichever identifier form is used
+
+    Given a person looked up by national identity number
+    Then looking the same person up by user id, party id and person uuid returns the same parties
+    And an organisation looked up by organisation number returns the same parties as by organisation uuid
+    And an enterprise user looked up by user name returns the same parties as by uuid
+
+  This matrix only exists on the service owner surface, since the subject is named in the request
+  body rather than taken from the token. The system user uuid form is covered by
+  07_PartyKinds/05_WHEN_TheSubjectIsASystemUser and is not repeated here.
+
+  Each step stashes the party uuids it saw so the following step can compare against them, so the
+  steps in this folder run in order.
+}

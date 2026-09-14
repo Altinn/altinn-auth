@@ -1,0 +1,54 @@
+meta {
+  name: 08_AND_TheSameEnterpriseUserByUuid
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeAccessPackages=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeAccessPackages: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:enterpriseuser:uuid",
+    "value": "{{subjectValue}}"
+  }
+}
+
+docs {
+  AND the same enterprise user looked up by uuid returns the same parties as the user name form did.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectValue", testdata.a2BrunoECUser.partyUuid);
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir);
+}
+
+tests {
+  const { partyUuids } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  test("AND the enterprise user looked up by uuid returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the party list matches the user name lookup", function() {
+    const expected = JSON.parse(bru.getVar("enterpriseUserPartyUuids"));
+    expect(partyUuids(res.getBody()).sort()).to.deep.equal(expected);
+  });
+}

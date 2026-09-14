@@ -1,0 +1,66 @@
+meta {
+  name: 04_AND_TheSoleProprietorshipOwnerAppearsAsAPerson
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeRoles=true&includeAccessPackages=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeRoles: true
+  includeAccessPackages: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{subjectPersonId}}"
+  }
+}
+
+docs {
+  AND the owner of an active sole proprietorship client appears as a person party, holding
+  the client through the accountant role.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectPersonId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.pid);
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  const innehaver = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.innehaver;
+  const accountantPackages = [
+    "regnskapsforer-lonn",
+    "regnskapsforer-med-signeringsrettighet",
+    "regnskapsforer-uten-signeringsrettighet",
+  ];
+
+  test("AND the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the sole proprietorship owner appears as a person party with the accountant packages", function() {
+    const party = findParty(res.getBody(), innehaver.partyUuid);
+    expect(party, `expected the sole proprietorship owner ${innehaver.name} in the party list`).to.not.be.undefined;
+    expect(party.type).to.equal("Person");
+    expect(party.authorizedAccessPackages).to.include.members(accountantPackages);
+  });
+}

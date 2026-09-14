@@ -79,7 +79,7 @@ integration lane, match zero tests, and be logged as `Failed! ... Total: 0`
 
 When the integration lane runs (`dotnet test -p:TestLane=Integration`),
 `src/Directory.Build.targets` imports
-[`src/testing/IntegrationLaneGate.targets`](../../src/testing/IntegrationLaneGate.targets)
+[`eng/testing/IntegrationLaneGate.targets`](../../eng/testing/IntegrationLaneGate.targets)
 for these projects, which replaces the test invocation with a skip message.
 Unit lanes, plain `dotnet test`, and IDE runs are unaffected — every assembly
 always has unit tests (`TestCategoryGuard` itself is one), so only the

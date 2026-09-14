@@ -274,6 +274,28 @@ public static class TestEntities
         }
     };
 
+    public static ConstantDefinition<Entity> PersonMargit { get; } = new("ea070162-f1d4-4050-a096-d5999c53f806")
+    {
+        Entity = new()
+        {
+            DateOfBirth = new(1929, 11, 4),
+            DateOfDeath = new(2025, 12, 7),
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "MARGIT BØRSTAD",
+            OrganizationIdentifier = null,
+            Parent = null,
+            ParentId = null,
+            PartyId = 51000001,
+            PersonIdentifier = "04112912083",
+            RefId = "04112912083",
+            TypeId = EntityTypeConstants.Person,
+            UserId = 51000001,
+            Username = null,
+            VariantId = EntityVariantConstants.Person,
+        }
+    };
+
     #endregion
 
     #region Systemusers

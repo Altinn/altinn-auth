@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
+using System.Globalization;
 
 namespace Altinn.AccessMgmt.Core.Utils;
 
@@ -85,7 +86,7 @@ public class TranslationMiddleware
                 var qpart = segments[1].Trim();
                 if (qpart.StartsWith("q=", StringComparison.OrdinalIgnoreCase))
                 {
-                    if (double.TryParse(qpart.AsSpan(2), out var parsedQuality))
+                    if (double.TryParse(qpart.AsSpan(2), NumberStyles.Any, CultureInfo.InvariantCulture, out var parsedQuality))
                     {
                         quality = parsedQuality;
                     }

@@ -10,7 +10,7 @@ terraform {
     }
     time = {
       source  = "hashicorp/time"
-      version = "0.13.1"
+      version = "0.14.1"
     }
   }
 
@@ -505,6 +505,12 @@ module "appsettings" {
     {
       name        = "AccessManagement.ConnectionQuery.IncludeClientDelegationResources"
       description = "Specifies if client-delegated resources should be included in ConnectionQuery and AuthorizedParties response."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
+      name        = "AccessManagement.Subunit.AdosInheritance"
+      description = "Specifies if ADOS administrative units should be treated as subunits that inherit mainunit access (equal to BEDR/AAFY) in ConnectionQuery and AuthorizedParties. Reversible; defaults to false."
       label       = "${lower(var.environment)}-access-management"
       value       = false
     },

@@ -1,0 +1,76 @@
+meta {
+  name: 05_WHEN_APersonDelegatesToASubunit
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeRoles=true&includeAccessPackages=true&includeResources=true&includeInstances=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeRoles: true
+  includeAccessPackages: true
+  includeResources: true
+  includeInstances: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{subjectPersonId}}"
+  }
+}
+
+docs {
+  WHEN a person has received access from a subunit, a lookup of that person returns the
+  subunit nested under its main unit, since a subunit is never returned at the top level.
+}
+
+script:pre-request {
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectPersonId", testdata.authParties_personA.pid);
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir);
+}
+
+tests {
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  const mainUnit = testdata.authParties_hovedenhetD;
+  const subunit = mainUnit.authParties_underenhetD;
+
+  test("WHEN a subunit has delegated to a person, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the delegating subunit is nested under its main unit and not at the top level", function() {
+    const top = res.getBody().map(party => party.partyUuid.toLowerCase());
+    expect(top, "a subunit is never a top level party").to.not.include(subunit.partyuuid.toLowerCase());
+
+    const found = findParty(res.getBody(), subunit.partyuuid);
+    expect(found, `expected the subunit ${subunit.name} nested under its main unit`).to.not.be.undefined;
+  });
+
+  test("AND the subunit carries the access it delegated", function() {
+    const found = findParty(res.getBody(), subunit.partyuuid);
+    const access = [
+      ...(found.authorizedAccessPackages || []),
+      ...(found.authorizedResources || []),
+      ...(found.authorizedRoles || []),
+      ...(found.authorizedInstances || []),
+    ];
+    expect(access, `expected some delegated access on ${subunit.name}`).to.not.be.empty;
+  });
+}

@@ -1,0 +1,23 @@
+meta {
+  name: 06_UnitHierarchyDelegationDirections
+  seq: 6
+}
+
+docs {
+  Scenario: Delegations between main units, subunits and persons show up for the receiving side
+
+    Given a set of main units, their subunits and persons that have delegated to each other
+    When a service owner looks up the receiving side as the subject
+    Then the delegating party is in the subject's list with the access it delegated
+    And access delegated by a main unit extends to that main unit's subunit
+
+  The subject in the request body is always the RECEIVER of the delegation, either the person
+  who received it directly or the daily leader of the receiving organisation, and the assertion
+  is that the DELEGATOR appears. The directions covered here are main unit to main unit, main
+  unit to person, person to main unit, person to person, person to subunit, subunit to main unit,
+  main unit to subunit and subunit to subunit.
+
+  The last two, main unit to subunit and subunit to subunit, were switched off in the folder this
+  replaces with a skipScenario flag and an early return, so they registered no assertions and
+  always passed. They are written for real here.
+}

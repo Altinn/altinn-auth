@@ -33,9 +33,8 @@ namespace Altinn.Authorization.ABAC.Tests;
 /// collapsed Indeterminate and note the extended value in a row comment. Refining
 /// those assertions belongs to the Indeterminate split (#3132, XACML-3).
 ///
-/// Rows where the engine already produces the spec decision are active. Rows where it
-/// does not are skipped with a reason naming the spec-required decision; un-skipping a
-/// row is the acceptance gate for the #3132 fix that implements that algorithm.
+/// Rows the engine answers are active. A skipped row names the engine limitation that
+/// keeps it from the spec decision, and lifting that limitation is what un-skips it.
 /// </summary>
 [UnitTest]
 public class CombiningAlgorithmMatrixTest
@@ -67,9 +66,9 @@ public class CombiningAlgorithmMatrixTest
         yield return Row("Permit,IndeterminateD", Indeterminate); // spec: Indeterminate{DP}
         yield return Row("Deny,IndeterminateP", Deny);
         yield return Row("Deny,IndeterminateD", Deny);
-        yield return Row("Permit,IndeterminateP", Permit, IndeterminateHandlingSkip("deny-overrides", "C.2", Permit));
-        yield return Row("IndeterminateP,Deny", Deny, IndeterminateHandlingSkip("deny-overrides", "C.2", Deny));
-        yield return Row("IndeterminateD,Deny", Deny, IndeterminateHandlingSkip("deny-overrides", "C.2", Deny));
+        yield return Row("Permit,IndeterminateP", Permit);
+        yield return Row("IndeterminateP,Deny", Deny);
+        yield return Row("IndeterminateD,Deny", Deny);
     }
 
     [Theory]
@@ -86,7 +85,6 @@ public class CombiningAlgorithmMatrixTest
 
     public static IEnumerable<TheoryDataRow<string, XacmlContextDecision>> OrderedDenyOverridesMatrix()
     {
-        const string alg = "ordered-deny-overrides";
         yield return Row("Permit", Permit);
         yield return Row("NotApplicable", NotApplicable);
         yield return Row("NotApplicableByTarget", NotApplicable);
@@ -95,15 +93,15 @@ public class CombiningAlgorithmMatrixTest
         yield return Row("IndeterminateP", Indeterminate); // spec: Indeterminate{P}
         yield return Row("IndeterminateD,Permit", Indeterminate); // spec: Indeterminate{DP}
         yield return Row("Permit,IndeterminateD", Indeterminate); // spec: Indeterminate{DP}
-        yield return Row("Deny", Deny, NotImplementedSkip(alg, "C.3", Deny, NotApplicable));
-        yield return Row("Deny,Permit", Deny, NotImplementedSkip(alg, "C.3", Deny, Permit) + SilentGrant);
-        yield return Row("Permit,Deny", Deny, NotImplementedSkip(alg, "C.3", Deny, Permit) + SilentGrant);
-        yield return Row("NotApplicable,Deny", Deny, NotImplementedSkip(alg, "C.3", Deny, NotApplicable));
-        yield return Row("Permit,IndeterminateP", Permit, NotImplementedSkip(alg, "C.3", Permit, Indeterminate));
-        yield return Row("IndeterminateP,Deny", Deny, NotImplementedSkip(alg, "C.3", Deny, Indeterminate));
-        yield return Row("Deny,IndeterminateP", Deny, NotImplementedSkip(alg, "C.3", Deny, Indeterminate));
-        yield return Row("IndeterminateD,Deny", Deny, NotImplementedSkip(alg, "C.3", Deny, Indeterminate));
-        yield return Row("Deny,IndeterminateD", Deny, NotImplementedSkip(alg, "C.3", Deny, Indeterminate));
+        yield return Row("Deny", Deny);
+        yield return Row("Deny,Permit", Deny);
+        yield return Row("Permit,Deny", Deny);
+        yield return Row("NotApplicable,Deny", Deny);
+        yield return Row("Permit,IndeterminateP", Permit);
+        yield return Row("IndeterminateP,Deny", Deny);
+        yield return Row("Deny,IndeterminateP", Deny);
+        yield return Row("IndeterminateD,Deny", Deny);
+        yield return Row("Deny,IndeterminateD", Deny);
     }
 
     [Theory]
@@ -119,7 +117,6 @@ public class CombiningAlgorithmMatrixTest
 
     public static IEnumerable<TheoryDataRow<string, XacmlContextDecision>> PermitOverridesMatrix()
     {
-        const string alg = "permit-overrides";
         yield return Row("Permit", Permit);
         yield return Row("NotApplicable", NotApplicable);
         yield return Row("NotApplicableByTarget", NotApplicable);
@@ -130,13 +127,13 @@ public class CombiningAlgorithmMatrixTest
         yield return Row("IndeterminateP", Indeterminate); // spec: Indeterminate{P}
         yield return Row("IndeterminateP,Deny", Indeterminate); // spec: Indeterminate{DP}
         yield return Row("Deny,IndeterminateP", Indeterminate); // spec: Indeterminate{DP}
-        yield return Row("Deny", Deny, NotImplementedSkip(alg, "C.4", Deny, NotApplicable));
-        yield return Row("NotApplicable,Deny", Deny, NotImplementedSkip(alg, "C.4", Deny, NotApplicable));
-        yield return Row("IndeterminateD,Permit", Permit, NotImplementedSkip(alg, "C.4", Permit, Indeterminate));
-        yield return Row("Permit,IndeterminateD", Permit, NotImplementedSkip(alg, "C.4", Permit, Indeterminate));
-        yield return Row("Permit,IndeterminateP", Permit, NotImplementedSkip(alg, "C.4", Permit, Indeterminate));
-        yield return Row("IndeterminateD,Deny", Deny, NotImplementedSkip(alg, "C.4", Deny, Indeterminate));
-        yield return Row("Deny,IndeterminateD", Deny, NotImplementedSkip(alg, "C.4", Deny, Indeterminate));
+        yield return Row("Deny", Deny);
+        yield return Row("NotApplicable,Deny", Deny);
+        yield return Row("IndeterminateD,Permit", Permit);
+        yield return Row("Permit,IndeterminateD", Permit);
+        yield return Row("Permit,IndeterminateP", Permit);
+        yield return Row("IndeterminateD,Deny", Deny);
+        yield return Row("Deny,IndeterminateD", Deny);
     }
 
     [Theory]
@@ -152,7 +149,6 @@ public class CombiningAlgorithmMatrixTest
 
     public static IEnumerable<TheoryDataRow<string, XacmlContextDecision>> OrderedPermitOverridesMatrix()
     {
-        const string alg = "ordered-permit-overrides";
         yield return Row("Permit", Permit);
         yield return Row("NotApplicable", NotApplicable);
         yield return Row("NotApplicableByTarget", NotApplicable);
@@ -163,13 +159,13 @@ public class CombiningAlgorithmMatrixTest
         yield return Row("IndeterminateP", Indeterminate); // spec: Indeterminate{P}
         yield return Row("IndeterminateP,Deny", Indeterminate); // spec: Indeterminate{DP}
         yield return Row("Deny,IndeterminateP", Indeterminate); // spec: Indeterminate{DP}
-        yield return Row("Deny", Deny, NotImplementedSkip(alg, "C.5", Deny, NotApplicable));
-        yield return Row("NotApplicable,Deny", Deny, NotImplementedSkip(alg, "C.5", Deny, NotApplicable));
-        yield return Row("IndeterminateD,Permit", Permit, NotImplementedSkip(alg, "C.5", Permit, Indeterminate));
-        yield return Row("Permit,IndeterminateD", Permit, NotImplementedSkip(alg, "C.5", Permit, Indeterminate));
-        yield return Row("Permit,IndeterminateP", Permit, NotImplementedSkip(alg, "C.5", Permit, Indeterminate));
-        yield return Row("IndeterminateD,Deny", Deny, NotImplementedSkip(alg, "C.5", Deny, Indeterminate));
-        yield return Row("Deny,IndeterminateD", Deny, NotImplementedSkip(alg, "C.5", Deny, Indeterminate));
+        yield return Row("Deny", Deny);
+        yield return Row("NotApplicable,Deny", Deny);
+        yield return Row("IndeterminateD,Permit", Permit);
+        yield return Row("Permit,IndeterminateD", Permit);
+        yield return Row("Permit,IndeterminateP", Permit);
+        yield return Row("IndeterminateD,Deny", Deny);
+        yield return Row("Deny,IndeterminateD", Deny);
     }
 
     [Theory]
@@ -186,24 +182,23 @@ public class CombiningAlgorithmMatrixTest
 
     public static IEnumerable<TheoryDataRow<string, XacmlContextDecision>> DenyUnlessPermitMatrix()
     {
-        const string alg = "deny-unless-permit";
         yield return Row("Permit", Permit);
         yield return Row("Deny,Permit", Permit);
         yield return Row("Permit,Deny", Permit);
         yield return Row("NotApplicable,Permit", Permit);
-        yield return Row("Deny", Deny, NotImplementedSkip(alg, "C.6", Deny, NotApplicable));
-        yield return Row("NotApplicable", Deny, NotImplementedSkip(alg, "C.6", Deny, NotApplicable));
-        yield return Row("NotApplicableByTarget", Deny, NotImplementedSkip(alg, "C.6", Deny, NotApplicable));
-        yield return Row("NotApplicable,Deny", Deny, NotImplementedSkip(alg, "C.6", Deny, NotApplicable));
-        yield return Row("IndeterminateD", Deny, NotImplementedSkip(alg, "C.6", Deny, Indeterminate));
-        yield return Row("IndeterminateP", Deny, NotImplementedSkip(alg, "C.6", Deny, Indeterminate));
-        yield return Row("IndeterminateD,Permit", Permit, NotImplementedSkip(alg, "C.6", Permit, Indeterminate));
-        yield return Row("Permit,IndeterminateD", Permit, NotImplementedSkip(alg, "C.6", Permit, Indeterminate));
-        yield return Row("Permit,IndeterminateP", Permit, NotImplementedSkip(alg, "C.6", Permit, Indeterminate));
-        yield return Row("IndeterminateP,Deny", Deny, NotImplementedSkip(alg, "C.6", Deny, Indeterminate));
-        yield return Row("Deny,IndeterminateP", Deny, NotImplementedSkip(alg, "C.6", Deny, Indeterminate));
-        yield return Row("IndeterminateD,Deny", Deny, NotImplementedSkip(alg, "C.6", Deny, Indeterminate));
-        yield return Row("Deny,IndeterminateD", Deny, NotImplementedSkip(alg, "C.6", Deny, Indeterminate));
+        yield return Row("Deny", Deny);
+        yield return Row("NotApplicable", Deny);
+        yield return Row("NotApplicableByTarget", Deny);
+        yield return Row("NotApplicable,Deny", Deny);
+        yield return Row("IndeterminateD", Deny);
+        yield return Row("IndeterminateP", Deny);
+        yield return Row("IndeterminateD,Permit", Permit);
+        yield return Row("Permit,IndeterminateD", Permit);
+        yield return Row("Permit,IndeterminateP", Permit);
+        yield return Row("IndeterminateP,Deny", Deny);
+        yield return Row("Deny,IndeterminateP", Deny);
+        yield return Row("IndeterminateD,Deny", Deny);
+        yield return Row("Deny,IndeterminateD", Deny);
     }
 
     [Theory]
@@ -220,24 +215,23 @@ public class CombiningAlgorithmMatrixTest
 
     public static IEnumerable<TheoryDataRow<string, XacmlContextDecision>> PermitUnlessDenyMatrix()
     {
-        const string alg = "permit-unless-deny";
         yield return Row("Permit", Permit);
         yield return Row("NotApplicable,Permit", Permit);
-        yield return Row("Deny", Deny, NotImplementedSkip(alg, "C.7", Deny, NotApplicable));
-        yield return Row("NotApplicable", Permit, NotImplementedSkip(alg, "C.7", Permit, NotApplicable));
-        yield return Row("NotApplicableByTarget", Permit, NotImplementedSkip(alg, "C.7", Permit, NotApplicable));
-        yield return Row("Deny,Permit", Deny, NotImplementedSkip(alg, "C.7", Deny, Permit) + SilentGrant);
-        yield return Row("Permit,Deny", Deny, NotImplementedSkip(alg, "C.7", Deny, Permit) + SilentGrant);
-        yield return Row("NotApplicable,Deny", Deny, NotImplementedSkip(alg, "C.7", Deny, NotApplicable));
-        yield return Row("IndeterminateD", Permit, NotImplementedSkip(alg, "C.7", Permit, Indeterminate));
-        yield return Row("IndeterminateP", Permit, NotImplementedSkip(alg, "C.7", Permit, Indeterminate));
-        yield return Row("IndeterminateD,Permit", Permit, NotImplementedSkip(alg, "C.7", Permit, Indeterminate));
-        yield return Row("Permit,IndeterminateD", Permit, NotImplementedSkip(alg, "C.7", Permit, Indeterminate));
-        yield return Row("Permit,IndeterminateP", Permit, NotImplementedSkip(alg, "C.7", Permit, Indeterminate));
-        yield return Row("IndeterminateP,Deny", Deny, NotImplementedSkip(alg, "C.7", Deny, Indeterminate));
-        yield return Row("Deny,IndeterminateP", Deny, NotImplementedSkip(alg, "C.7", Deny, Indeterminate));
-        yield return Row("IndeterminateD,Deny", Deny, NotImplementedSkip(alg, "C.7", Deny, Indeterminate));
-        yield return Row("Deny,IndeterminateD", Deny, NotImplementedSkip(alg, "C.7", Deny, Indeterminate));
+        yield return Row("Deny", Deny);
+        yield return Row("NotApplicable", Permit);
+        yield return Row("NotApplicableByTarget", Permit);
+        yield return Row("Deny,Permit", Deny);
+        yield return Row("Permit,Deny", Deny);
+        yield return Row("NotApplicable,Deny", Deny);
+        yield return Row("IndeterminateD", Permit);
+        yield return Row("IndeterminateP", Permit);
+        yield return Row("IndeterminateD,Permit", Permit);
+        yield return Row("Permit,IndeterminateD", Permit);
+        yield return Row("Permit,IndeterminateP", Permit);
+        yield return Row("IndeterminateP,Deny", Deny);
+        yield return Row("Deny,IndeterminateP", Deny);
+        yield return Row("IndeterminateD,Deny", Deny);
+        yield return Row("Deny,IndeterminateD", Deny);
     }
 
     [Theory]
@@ -255,7 +249,6 @@ public class CombiningAlgorithmMatrixTest
 
     public static IEnumerable<TheoryDataRow<string, XacmlContextDecision>> FirstApplicableMatrix()
     {
-        const string alg = "first-applicable";
         yield return Row("Permit", Permit);
         yield return Row("NotApplicable", NotApplicable);
         yield return Row("NotApplicableByTarget", NotApplicable);
@@ -266,13 +259,13 @@ public class CombiningAlgorithmMatrixTest
         yield return Row("IndeterminateD,Permit", Indeterminate);
         yield return Row("IndeterminateP,Deny", Indeterminate);
         yield return Row("IndeterminateD,Deny", Indeterminate);
-        yield return Row("Deny", Deny, NotImplementedSkip(alg, "C.8", Deny, NotApplicable));
-        yield return Row("Deny,Permit", Deny, NotImplementedSkip(alg, "C.8", Deny, Permit) + SilentGrant);
-        yield return Row("NotApplicable,Deny", Deny, NotImplementedSkip(alg, "C.8", Deny, NotApplicable));
-        yield return Row("Permit,IndeterminateD", Permit, NotImplementedSkip(alg, "C.8", Permit, Indeterminate));
-        yield return Row("Permit,IndeterminateP", Permit, NotImplementedSkip(alg, "C.8", Permit, Indeterminate));
-        yield return Row("Deny,IndeterminateP", Deny, NotImplementedSkip(alg, "C.8", Deny, Indeterminate));
-        yield return Row("Deny,IndeterminateD", Deny, NotImplementedSkip(alg, "C.8", Deny, Indeterminate));
+        yield return Row("Deny", Deny);
+        yield return Row("Deny,Permit", Deny);
+        yield return Row("NotApplicable,Deny", Deny);
+        yield return Row("Permit,IndeterminateD", Permit);
+        yield return Row("Permit,IndeterminateP", Permit);
+        yield return Row("Deny,IndeterminateP", Deny);
+        yield return Row("Deny,IndeterminateD", Deny);
     }
 
     [Theory]
@@ -287,7 +280,7 @@ public class CombiningAlgorithmMatrixTest
     // results of policies inside a policy set, and XACML 3.0 does not define it for
     // rules. Two consequences for this engine:
     //
-    // 1. A Policy that names it as RuleCombiningAlgId is invalid. The PDP must not
+    // 1. A Policy that names it as RuleCombiningAlgId is invalid. The PDP does not
     //    fall through to some other combining behaviour; the safe, spec-consistent
     //    response to an unsupported combining algorithm is Indeterminate.
     // 2. The real C.9 decision table needs PolicySet evaluation (#3132, XACML-2),
@@ -296,10 +289,16 @@ public class CombiningAlgorithmMatrixTest
     //    the placeholder body with a policy-set evaluation and un-skip.
     ////////////////////////////////////////////////////////////////////////////////
 
-    [Fact(Skip = "#3132: only-one-applicable is a policy-combining algorithm (XACML 3.0 C.9) and is not a valid RuleCombiningAlgId. The PDP must reject it with Indeterminate instead of combining rules; it currently combines permissively and returns Permit for a Deny+Permit policy." + SilentGrant)]
+    [Fact]
     public void Authorize_OnlyOneApplicableAsRuleCombiningAlgorithm_ReturnsIndeterminate()
     {
         Decide(XacmlConstants.CombiningAlgorithms.PolicyOnlyOneApplicable, "Deny,Permit").Decision.Should().Be(Indeterminate);
+    }
+
+    [Fact]
+    public void Authorize_OnlyOneApplicableAsRuleCombiningAlgorithm_NoRuleReachedByTarget_ReturnsIndeterminate()
+    {
+        Decide(XacmlConstants.CombiningAlgorithms.PolicyOnlyOneApplicable, "NotApplicableByTarget").Decision.Should().Be(Indeterminate);
     }
 
     public static IEnumerable<TheoryDataRow<string, XacmlContextDecision>> OnlyOneApplicablePolicySetMatrix()
@@ -319,16 +318,97 @@ public class CombiningAlgorithmMatrixTest
     }
 
     ////////////////////////////////////////////////////////////////////////////////
-    // Skip reasons
+    // Algorithm identifier aliases. A table is reachable through its rule-combining
+    // URN, its ordered variant and the matching policy-combining URN. Delegation
+    // policies are generated with the policy-combining deny-overrides URN in
+    // RuleCombiningAlgId, so that alias carries production traffic.
     ////////////////////////////////////////////////////////////////////////////////
 
-    private const string SilentGrant = " This cell is a silent grant: the engine permits a request the policy denies.";
+    public static IEnumerable<TheoryDataRow<string, string, XacmlContextDecision>> CombiningAlgorithmAliasMatrix()
+    {
+        foreach (string alias in DenyOverridesAliases)
+        {
+            yield return new(alias, "Permit", Permit);
+            yield return new(alias, "Deny,Permit", Deny);
+        }
 
-    private static string NotImplementedSkip(string algorithm, string specSection, XacmlContextDecision specDecision, XacmlContextDecision currentDecision) =>
-        $"#3132: {algorithm} is not implemented in the PDP. XACML 3.0 {specSection} requires {specDecision} for this rule mix; the engine returns {currentDecision}. Un-skip when {algorithm} lands.";
+        foreach (string alias in PermitOverridesAliases)
+        {
+            yield return new(alias, "Deny", Deny);
+            yield return new(alias, "Deny,Permit", Permit);
+        }
 
-    private static string IndeterminateHandlingSkip(string algorithm, string specSection, XacmlContextDecision specDecision) =>
-        $"#3132: {algorithm} must keep combining across Indeterminate children and return {specDecision} for this rule mix (XACML 3.0 {specSection}); the engine stops at the first erroring rule and returns Indeterminate. Un-skip with the Indeterminate{{D}}/{{P}}/{{DP}} work (XACML-3).";
+        foreach (string alias in FirstApplicableAliases)
+        {
+            yield return new(alias, "Deny,Permit", Deny);
+            yield return new(alias, "Permit,Deny", Permit);
+        }
+
+        foreach (string alias in DenyUnlessPermitAliases)
+        {
+            yield return new(alias, "Deny", Deny);
+            yield return new(alias, "Deny,Permit", Permit);
+        }
+
+        foreach (string alias in PermitUnlessDenyAliases)
+        {
+            yield return new(alias, "Permit", Permit);
+            yield return new(alias, "Deny,Permit", Deny);
+        }
+    }
+
+    [Theory]
+    [MemberData(nameof(CombiningAlgorithmAliasMatrix))]
+    public void Authorize_CombiningAlgorithmAlias_ReturnsDecisionFromXacmlCombiningTable(string combiningAlgorithm, string rules, XacmlContextDecision expected)
+    {
+        Decide(combiningAlgorithm, rules).Decision.Should().Be(expected);
+    }
+
+    [Fact]
+    public void Authorize_DelegationPolicyWithPolicyCombiningDenyOverrides_SinglePermitRule_ReturnsPermit()
+    {
+        Decide(XacmlConstants.CombiningAlgorithms.PolicyDenyOverrides, "Permit").Decision.Should().Be(Permit);
+    }
+
+    [Fact]
+    public void Authorize_DelegationPolicyWithPolicyCombiningDenyOverrides_DenyAndPermitRules_ReturnsDeny()
+    {
+        Decide(XacmlConstants.CombiningAlgorithms.PolicyDenyOverrides, "Deny,Permit").Decision.Should().Be(Deny);
+    }
+
+    private static readonly string[] DenyOverridesAliases =
+    [
+        XacmlConstants.CombiningAlgorithms.RuleDenyOverrides,
+        XacmlConstants.CombiningAlgorithms.PolicyDenyOverrides,
+        XacmlConstants.CombiningAlgorithms.RuleOrderedDenyOverrides,
+        XacmlConstants.CombiningAlgorithms.PolicyOrderedDenyOverrided,
+    ];
+
+    private static readonly string[] PermitOverridesAliases =
+    [
+        XacmlConstants.CombiningAlgorithms.RulePermitOverrides,
+        XacmlConstants.CombiningAlgorithms.PolicyPermidOverrides,
+        XacmlConstants.CombiningAlgorithms.RuleOrderedPermitOverrides,
+        XacmlConstants.CombiningAlgorithms.PolicyOrderedPermitOverrides,
+    ];
+
+    private static readonly string[] FirstApplicableAliases =
+    [
+        XacmlConstants.CombiningAlgorithms.RuleFirstApplicable,
+        XacmlConstants.CombiningAlgorithms.PolicyFirstApplicable,
+    ];
+
+    private static readonly string[] DenyUnlessPermitAliases =
+    [
+        XacmlConstants.CombiningAlgorithms.RuleDenyUnlessPermit,
+        XacmlConstants.CombiningAlgorithms.PolicyDenyUnlessPermit,
+    ];
+
+    private static readonly string[] PermitUnlessDenyAliases =
+    [
+        XacmlConstants.CombiningAlgorithms.RulePermittUnlessDeny,
+        XacmlConstants.CombiningAlgorithms.PolicyPermitUnlessDeny,
+    ];
 
     ////////////////////////////////////////////////////////////////////////////////
     // Harness: builds a minimal XACML 3.0 policy with one rule per token and runs it

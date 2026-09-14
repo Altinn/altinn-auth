@@ -1,0 +1,55 @@
+meta {
+  name: 04_AND_TheSamePersonByPersonUuid
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeAccessPackages=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeAccessPackages: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:uuid",
+    "value": "{{subjectValue}}"
+  }
+}
+
+docs {
+  AND the same person looked up by person uuid returns the same parties as the national identity
+  number form did.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectValue", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.partyUuid);
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir);
+}
+
+tests {
+  const { partyUuids } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  test("AND looking the person up by person uuid returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the party list matches the national identity number lookup", function() {
+    const expected = JSON.parse(bru.getVar("personPartyUuids"));
+    expect(partyUuids(res.getBody()).sort()).to.deep.equal(expected);
+  });
+}

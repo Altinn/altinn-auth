@@ -1,0 +1,53 @@
+meta {
+  name: 03_AND_TheAdminScopeMayFilterOnAnyOrgCode
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeAccessPackages=true&orgCode=skd
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeAccessPackages: true
+  orgCode: skd
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{subjectPersonId}}"
+  }
+}
+
+docs {
+  AND the same filter that was refused for the resource owner scope is allowed with the admin
+  scope, which may ask on behalf of any org code.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner, scopes } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectPersonId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.pid);
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir, scopes.authorizedPartiesAdmin);
+}
+
+tests {
+  test("AND the admin scope may filter on another service owner's org code, returning 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the response is a party list", function() {
+    expect(res.getBody()).to.be.an("array");
+  });
+}

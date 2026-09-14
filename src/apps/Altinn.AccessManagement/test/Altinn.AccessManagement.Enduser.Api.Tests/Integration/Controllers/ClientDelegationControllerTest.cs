@@ -1,19 +1,24 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
+using System.Text;
 using System.Text.Json;
 using Altinn.AccessManagement.Api.Enduser.Controllers;
+using Altinn.AccessManagement.Api.Enduser.Models;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Models;
+using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.TestUtils;
 using Altinn.AccessManagement.TestUtils.Data;
 using Altinn.AccessManagement.TestUtils.Fixtures;
+using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers;
 
@@ -757,6 +762,10 @@ public class ClientDelegationControllerTest
         public AddAgent(ApiFixture fixture)
         {
             Fixture = fixture;
+            Fixture.ConfigureServices(services =>
+            {
+                services.AddSingleton<IUserProfileLookupService, UserProfileLookupServiceMock>();
+            });
         }
 
         public ApiFixture Fixture { get; }
@@ -848,6 +857,29 @@ public class ClientDelegationControllerTest
 
             var agent = result.Items.FirstOrDefault(p => p.Agent.Id == TestEntities.SystemUserClient);
             Assert.NotNull(agent);
+        }
+
+        [Fact]
+        public async Task AddAgent_PermittedEntityTypePerson_Returns400WhenReceiversDead()
+        {
+            // Try to add organization as agent
+            var client = CreateClient();
+
+            PersonInput personInput = new() { PersonIdentifier = TestEntities.PersonMargit.Entity.PersonIdentifier, LastName = "BØRSTAD" };
+            StringContent content = new(JsonSerializer.Serialize(personInput), Encoding.UTF8, "application/json");
+
+            var response = await client.PostAsync($"{Route}/agents?party={TestEntities.OrganizationVerdiqAS}", content, TestContext.Current.CancellationToken);
+
+            var data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+            AltinnValidationProblemDetails result = JsonSerializer.Deserialize<AltinnValidationProblemDetails>(data, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+            Assert.NotNull(result);
+            Assert.Single(result.Errors);
+            Assert.Equal("AM.VLD-00034", result.Errors.First().ErrorCode.ToString());
+            string extendedinfo = result.Errors.First().Extensions["personInput"]?.ToString();
+            Assert.Equal("Person not available for delegation (deceased).", extendedinfo);
         }
     }
 

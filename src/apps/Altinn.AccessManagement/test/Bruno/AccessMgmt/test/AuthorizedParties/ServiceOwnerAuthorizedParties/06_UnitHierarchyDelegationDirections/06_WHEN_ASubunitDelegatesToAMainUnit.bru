@@ -1,0 +1,72 @@
+meta {
+  name: 06_WHEN_ASubunitDelegatesToAMainUnit
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeRoles=true&includeAccessPackages=true&includeResources=true&includeInstances=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeRoles: true
+  includeAccessPackages: true
+  includeResources: true
+  includeInstances: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{subjectPersonId}}"
+  }
+}
+
+docs {
+  WHEN a subunit has delegated to main unit B, a lookup of B's daily leader returns the
+  delegating subunit nested under its own main unit. The delegating subunit's main unit is
+  only a hierarchy carrier, it holds no access of its own from this delegation.
+}
+
+script:pre-request {
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectPersonId", testdata.authParties_hovedenhetB.dagligleder.pid);
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir);
+}
+
+tests {
+  const testdata = require(`./testdata/auth-parties-testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  const mainUnit = testdata.authParties_hovedenhetC;
+  const subunit = mainUnit.authParties_underenhetC;
+
+  test("WHEN a subunit delegates to a main unit, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the delegating subunit is nested under its own main unit", function() {
+    const top = res.getBody().map(party => party.partyUuid.toLowerCase());
+    expect(top, "a subunit is never a top level party").to.not.include(subunit.partyuuid.toLowerCase());
+
+    const found = findParty(res.getBody(), subunit.partyuuid);
+    expect(found, `expected the subunit ${subunit.name} nested under its main unit`).to.not.be.undefined;
+  });
+
+  test("AND the subunit's own main unit is only a hierarchy carrier", function() {
+    const carrier = res.getBody().find(party => party.partyUuid.toLowerCase() === mainUnit.partyuuid.toLowerCase());
+    expect(carrier, `expected ${mainUnit.name} as the hierarchy carrier`).to.not.be.undefined;
+    expect(carrier.onlyHierarchyElementWithNoAccess, "the main unit did not delegate anything itself").to.be.true;
+  });
+}

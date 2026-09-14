@@ -1,0 +1,88 @@
+meta {
+  name: 01_WHEN_TheServiceOwnerListsPartiesWithDeletedClients
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/resourceowner/authorizedparties?includeRoles=true&includeAccessPackages=true&includeInactiveParties=true
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeRoles: true
+  includeAccessPackages: true
+  includeInactiveParties: true
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{subjectPersonId}}"
+  }
+}
+
+docs {
+  WHEN a service owner lists the daily leader's authorized parties, the owners of the
+  deleted sole proprietorship clients are included or excluded by the retention window.
+
+  The active owner and the owner of the client deleted inside the window are present, and
+  the owner of the client deleted outside the window is absent. The window is derived from
+  the deletion date and the retention years so the assertion does not depend on the calendar.
+}
+
+script:pre-request {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const { loginAsServiceOwner } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  bru.setVar("subjectPersonId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder.pid);
+
+  await loginAsServiceOwner(sharedtestdata.serviceOwners.digdir);
+}
+
+tests {
+  const testdata = require(`./test/AuthorizedParties/testdata/${bru.getEnvVar("tokenEnv")}.js`);
+  const { findParty, isInsideRetentionWindow } = require("./test/AuthorizedParties/ServiceOwnerAuthorizedParties/helpers.js");
+
+  const firm = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER;
+  const retentionYears = testdata.deletedPartyRetentionYears;
+  const activeEnk = firm.client_ENK_HUMAN_TOPP_KATT_BIL;
+  const deletedInside = firm.client_ENK_DELETED_2025_11_27_InnehaverAccess;
+  const deletedOutside = firm.client_ENK_DELETED_2023_11_01_NoInnehaverAccess;
+
+  test("WHEN the service owner lists authorized parties, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the owner of the active sole proprietorship is present", function() {
+    const party = findParty(res.getBody(), activeEnk.innehaver.partyUuid);
+    expect(party, `expected the active ENK owner ${activeEnk.innehaver.name} in the party list`).to.not.be.undefined;
+  });
+
+  test("AND the owner of the client deleted inside the retention window is present", function() {
+    expect(
+      isInsideRetentionWindow(deletedInside.deletedDate, retentionYears),
+      `fixture ${deletedInside.name} is meant to be inside the ${retentionYears} year window`
+    ).to.be.true;
+
+    const party = findParty(res.getBody(), deletedInside.innehaver.partyUuid);
+    expect(party, `expected the owner ${deletedInside.innehaver.name} of the recently deleted ENK in the party list`).to.not.be.undefined;
+  });
+
+  test("AND the owner of the client deleted outside the retention window is absent", function() {
+    expect(
+      isInsideRetentionWindow(deletedOutside.deletedDate, retentionYears),
+      `fixture ${deletedOutside.name} is meant to be outside the ${retentionYears} year window`
+    ).to.be.false;
+
+    const party = findParty(res.getBody(), deletedOutside.innehaver.partyUuid);
+    expect(party, `did not expect the owner ${deletedOutside.innehaver.name} of the long deleted ENK in the party list`).to.be.undefined;
+  });
+}

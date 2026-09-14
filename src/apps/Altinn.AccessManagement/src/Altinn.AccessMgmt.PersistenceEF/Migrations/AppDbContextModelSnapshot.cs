@@ -18,7 +18,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("Altinn:AuditVersion", 3)
-                .HasAnnotation("ProductVersion", "10.0.9")
+                .HasAnnotation("ProductVersion", "10.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -2846,7 +2846,9 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasName("pk_outboxmessage");
 
                     b.HasIndex("RefId")
-                        .HasDatabaseName("ix_outboxmessage_refid");
+                        .IsUnique()
+                        .HasDatabaseName("uq_outboxmessage_refid_pending")
+                        .HasFilter("status = 'Pending'");
 
                     b.ToTable("outboxmessage", "dbo");
                 });
