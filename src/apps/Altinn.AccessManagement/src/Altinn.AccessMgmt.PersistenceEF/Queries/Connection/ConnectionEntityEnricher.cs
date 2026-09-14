@@ -1,4 +1,5 @@
-﻿using Altinn.AccessMgmt.PersistenceEF.Constants;
+﻿using System.Collections.Concurrent;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
@@ -12,6 +13,13 @@ namespace Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 /// </summary>
 internal class ConnectionEntityEnricher(AppDbContext db, ILogger logger)
 {
+    /// <summary>
+    /// Role ids the drift warning has already been logged for. Drift is a state, not an event:
+    /// a retired role stays in the table and referenced until someone cleans it up, so without
+    /// this the warning would repeat on every enrichment call for as long as it lasts.
+    /// </summary>
+    private static readonly ConcurrentDictionary<Guid, byte> WarnedStrayRoleIds = new();
+
     /// <summary>
     /// Enriches the given records with entity, role, and child-nesting data.
     /// </summary>
@@ -84,10 +92,14 @@ internal class ConnectionEntityEnricher(AppDbContext db, ILogger logger)
             return resolved;
         }
 
-        logger.LogWarning(
-            "RoleConstants does not cover {StrayRoleCount} role(s) referenced by connections: {StrayRoleIds}. Falling back to the role table; the seeded constants and the database have drifted.",
-            missing.Count,
-            string.Join(", ", missing));
+        var unwarned = missing.Where(id => WarnedStrayRoleIds.TryAdd(id, 0)).ToList();
+        if (unwarned.Count > 0)
+        {
+            logger.LogWarning(
+                "RoleConstants does not cover {StrayRoleCount} role(s) referenced by connections: {StrayRoleIds}. Falling back to the role table; the seeded constants and the database have drifted.",
+                unwarned.Count,
+                string.Join(", ", unwarned));
+        }
 
         var strays = await db.Roles
             .Include(r => r.Provider).ThenInclude(p => p.Type)
