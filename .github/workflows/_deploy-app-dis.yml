@@ -1,7 +1,6 @@
 ﻿name: "Template: Release App"
 
 on:
-  push:
   workflow_dispatch:
     inputs:
       name:
