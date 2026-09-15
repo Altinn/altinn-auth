@@ -116,12 +116,12 @@ jobs:
 
           cat ${{ env.DEPLOY_OUT }}
 
-#       - name: Build and push app manifests artifact
-#         uses: Altinn/altinn-platform/actions/flux/build-push-image@523f141da4f116fdd7331585396d83a5d7ade7ea # main
-#         with:
-#           image_name: ${{ inputs.image_name }}
-#           tag: fix/dis
-#           workdir: ${{ env.DEPLOY_OUT }}
-#           azure_subscription_id: ${{ secrets.DIS_SYNCROOT_AZURE_SUBSCRIPTION_ID }}
-#           azure_app_id: ${{ secrets.DIS_SYNCROOT_AZURE_CLIENT_ID }}
-#           azure_tenant_id: ${{ secrets.DIS_SYNCROOT_AZURE_TENANT_ID }}
+      - name: Build and push app manifests artifact
+        uses: Altinn/altinn-platform/actions/flux/build-push-image@523f141da4f116fdd7331585396d83a5d7ade7ea # main
+        with:
+          image_name: ${{ inputs.image_name }}
+          tag: fix/dis
+          workdir: ${{ env.DEPLOY_OUT }}
+          azure_subscription_id: ${{ secrets.DIS_SYNCROOT_AZURE_SUBSCRIPTION_ID }}
+          azure_app_id: ${{ secrets.DIS_SYNCROOT_AZURE_CLIENT_ID }}
+          azure_tenant_id: ${{ secrets.DIS_SYNCROOT_AZURE_TENANT_ID }}
