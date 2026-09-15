@@ -112,7 +112,7 @@ jobs:
 
           kustomize edit set image \
             ${{ inputs.image_name }}:latest=${{ inputs.image_name }}:${{ inputs.image_tag }} \
-            ${{ env.DEPLOY_DIR }}  \
+            ${{ env.DEPLOY_DIR }}
 
           kustomize build ${{ env.DEPLOY_DIR }} \
             -o ${{ env.DEPLOY_OUT }}
