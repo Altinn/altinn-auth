@@ -473,6 +473,12 @@ module "appsettings" {
       value       = false
     },
     {
+      name        = "AccessMgmt.Controller.ServiceOwner.ResourceDelegation"
+      description = "Enables the resource delegation endpoints in the serviceowner connections API."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
       name        = "AccessManagement.Enduser.MaskinportenAdminApi"
       description = "Enables the Maskinporten admin API endpoints (consumers and suppliers) in the enduser API."
       label       = "${lower(var.environment)}-access-management"
