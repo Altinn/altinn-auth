@@ -324,6 +324,18 @@ namespace Altinn.AccessMgmt.Core.Services
         /// <inheritdoc />
         public async Task<Result<List<RightDto>>> GetResourceRights(string resource, string languageCode = "nb", CancellationToken cancellationToken = default)
         {
+            // The same Delegable guard as in AddResource, so the lookup does not advertise rights the add endpoint refuses to delegate.
+            ServiceResource resourceMetadata = await contextRetrievalService.GetResource(resource, cancellationToken);
+            if (resourceMetadata is null)
+            {
+                return Problems.InvalidResource;
+            }
+
+            if (!resourceMetadata.Delegable)
+            {
+                return Problems.ResourceNotDelegable;
+            }
+
             List<RightDto> rights = await contextRetrievalService.GetResourcePolicyV2(resource, languageCode, cancellationToken);
             if (rights is null)
             {

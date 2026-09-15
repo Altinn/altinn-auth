@@ -63,7 +63,7 @@ namespace Altinn.AccessMgmt.Core.Services.Contracts
         /// <param name="resource">The resource registry identifier of the resource.</param>
         /// <param name="languageCode">The language code used for the right names.</param>
         /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
-        /// <returns>A result with the list of rights available on the resource.</returns>
+        /// <returns>A result with the list of rights available on the resource, or a problem when the resource is unknown or not delegable.</returns>
         Task<Result<List<RightDto>>> GetResourceRights(string resource, string languageCode = "nb", CancellationToken cancellationToken = default);
     }
 }
