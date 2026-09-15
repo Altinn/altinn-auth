@@ -1,0 +1,46 @@
+meta {
+  name: 03_AND_CcrClientDelegatesPackageToFacilitator
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{clientA}}&to={{party}}&package={{package}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{clientA}}
+  to: {{party}}
+  package: {{package}}
+}
+
+docs {
+  AND the CCR client delegates the skattegrunnlag package to the facilitator on the
+  rightholder relation. The client now holds one filter package through its role and
+  the other through this grant.
+
+  Expects 200 with the created package grant.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("clientA", td.REGN_Organisasjon.REGN_Org_Clients.client_A.partyUuid);
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+  bru.setVar("package", td.clientDelegationV2.packages.skattegrunnlag);
+
+  await loginAs(td.REGN_Organisasjon.REGN_Org_Clients.client_A.dagligleder);
+}
+
+tests {
+  test("AND the CCR client delegates the package to the facilitator, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the response contains the created package grant", function() {
+    expect(res.getBody(), "expected the package grant in the response").to.be.ok;
+  });
+}

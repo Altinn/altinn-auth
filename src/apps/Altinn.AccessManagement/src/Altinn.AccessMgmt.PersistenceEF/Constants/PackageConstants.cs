@@ -7167,7 +7167,7 @@ public static class PackageConstants
             Name = "Namsmannen - Tvangsfullbyrdelse, herunder behandling i forliksrådet",
             Code = "vergemal-namsmannen-tvangsfullbyrdelse-forliksradet",
             Description = "Gjelder representasjon i saker om tvangsfullbyrdelse etter tvangsfullbyrdelsesloven, herunder eventuell behandling i forliksrådet av slike saker og oppfølging av saken hos innkrevingsmyndigheten.",
-            Urn = "urn:altinn:accesspackage:namsmannen-tvangsfullbyrdelse-forliksradet",
+            Urn = "urn:altinn:accesspackage:vergemal-namsmannen-tvangsfullbyrdelse-forliksradet",
             IsDelegable = false,
             IsAssignable = false,
             IsAvailableForServiceOwners = true,

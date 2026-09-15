@@ -404,6 +404,7 @@ internal static partial class AccessManagementHost
             .AddPolicy(AuthzConstants.SCOPE_ENDUSER_BANKRUPTCYDELEGATION_WRITE, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_BANKRUPTCYDELEGATION_WRITE])))
             .AddPolicy(AuthzConstants.POLICY_BANKRUPTCYDELEGATION_READ, policy => policy.Requirements.Add(new EndUserResourceAccessRequirement("read", "altinn_bankruptcy_estate_admin")))
             .AddPolicy(AuthzConstants.POLICY_BANKRUPTCYDELEGATION_WRITE, policy => policy.Requirements.Add(new EndUserResourceAccessRequirement("write", "altinn_bankruptcy_estate_admin")))
+            .AddPolicy(AuthzConstants.SCOPE_SERVICEOWNER_RESOURCE_DELEGATION_WRITE, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_SERVICEOWNER_RESOURCE_DELEGATION_WRITE])))
             .AddPolicy(AuthzConstants.POLICY_ENDUSER_CONNECTIONS_BIDRECTIONAL_READ, policy =>
             {
                 policy.AddRequirementConditionalScope(

@@ -58,7 +58,8 @@ internal class ConnectionBaseQueryBuilder
         if (fromSet != null && filter.IncludeDelegation)
         {
             var parentIds = db.Entities
-                .Where(e => fromSet.Distinct().Contains(e.Id) && e.ParentId != null)
+                .Where(e => fromSet.Distinct().Contains(e.Id) && e.ParentId != null
+                    && (filter.IncludeAdosSubunitInheritance || e.VariantId != EntityVariantConstants.ADOS.Id))
                 .AsNoTracking()
                 .Select(e => e.ParentId.Value)
                 .Distinct()
@@ -233,19 +234,21 @@ internal class ConnectionBaseQueryBuilder
             db.Entities,
             c => c.FromId,
             e => e.ParentId,
-            (c, e) => new ConnectionQueryBaseRecord
+            (c, e) => new { c, e })
+        .Where(x => filter.IncludeAdosSubunitInheritance || x.e.VariantId != EntityVariantConstants.ADOS.Id)
+        .Select(x => new ConnectionQueryBaseRecord
             {
-                AssignmentId = c.AssignmentId,
-                DelegationId = c.DelegationId,
-                FromId = e.Id,
-                ToId = c.ToId,
-                RoleId = c.RoleId,
-                ViaId = c.FromId,
-                ViaRoleId = c.ViaRoleId,
+                AssignmentId = x.c.AssignmentId,
+                DelegationId = x.c.DelegationId,
+                FromId = x.e.Id,
+                ToId = x.c.ToId,
+                RoleId = x.c.RoleId,
+                ViaId = x.c.FromId,
+                ViaRoleId = x.c.ViaRoleId,
                 Reason = ConnectionReason.Hierarchy,
-                IsKeyRoleAccess = c.IsKeyRoleAccess,
+                IsKeyRoleAccess = x.c.IsKeyRoleAccess,
                 IsMainUnitAccess = true,
-                IsRoleMap = c.IsRoleMap,
+                IsRoleMap = x.c.IsRoleMap,
             });
 
         var innehaverConnections =
@@ -341,6 +344,7 @@ internal class ConnectionBaseQueryBuilder
         var mainAssignments =
             from e in db.Entities
             where e.Id == fromId
+                && (filter.IncludeAdosSubunitInheritance || e.VariantId != EntityVariantConstants.ADOS.Id)
             join ass in db.Assignments on e.ParentId equals ass.FromId
             select new ConnectionQueryBaseRecord()
             {
@@ -408,14 +412,14 @@ internal class ConnectionBaseQueryBuilder
         /*
         Add KeyRoles on allAssignments
         */
-        var keyRoleAssignments =
-            from all in allAssignments.Concat(roleMapAssignments) // Must include RoleMap assignments
+        var keyRoleAssignmentsWithoutRoleMap =
+            from all in allAssignments
             join fromEntity in db.Entities on all.FromId equals fromEntity.Id
             join toEntity in db.Entities on all.ToId equals toEntity.Id
-            join keyRoleAssignment in db.Assignments on all.ToId equals keyRoleAssignment.FromId            
+            join keyRoleAssignment in db.Assignments on all.ToId equals keyRoleAssignment.FromId
             join role in db.Roles on keyRoleAssignment.RoleId equals role.Id
-            where 
-                role.IsKeyRole && 
+            where
+                role.IsKeyRole &&
                 !(fromEntity.VariantId == EntityVariantConstants.IKS.Id && all.RoleId == RoleConstants.ParticipantSharedResponsibility.Id) &&
                 !(toEntity.VariantId == EntityVariantConstants.IKS.Id && keyRoleAssignment.RoleId == RoleConstants.ParticipantSharedResponsibility.Id)
             select new ConnectionQueryBaseRecord()
@@ -432,6 +436,26 @@ internal class ConnectionBaseQueryBuilder
                 IsMainUnitAccess = all.IsMainUnitAccess,
                 Reason = ConnectionReason.KeyRole
             };
+
+        var roleMapAssignmentsForKeyRoles =
+           from assignment in keyRoleAssignmentsWithoutRoleMap
+           join rolemap in db.RoleMaps on assignment.RoleId equals rolemap.HasRoleId
+           select new ConnectionQueryBaseRecord()
+           {
+               AssignmentId = assignment.AssignmentId,
+               DelegationId = null,
+               FromId = assignment.FromId,
+               ToId = assignment.ToId,
+               RoleId = rolemap.GetRoleId,
+               ViaId = assignment.ViaId,
+               ViaRoleId = assignment.ViaRoleId,
+               IsRoleMap = true,
+               IsKeyRoleAccess = assignment.IsKeyRoleAccess,
+               IsMainUnitAccess = assignment.IsMainUnitAccess,
+               Reason = ConnectionReason.KeyRole
+           };
+
+        var keyRoleAssignments = keyRoleAssignmentsWithoutRoleMap.Union(roleMapAssignmentsForKeyRoles);
 
         /*
         Combine everything

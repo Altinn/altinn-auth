@@ -1,0 +1,11 @@
+﻿apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: authorization-manifests
+  namespace: product-authorization
+spec:
+  interval: 10m
+  provider: azure
+  url: oci://altinncr.azurecr.io/authorization/altinn-auth
+  ref:
+    tag: main
