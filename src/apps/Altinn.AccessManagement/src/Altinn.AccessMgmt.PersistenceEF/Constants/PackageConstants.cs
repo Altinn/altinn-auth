@@ -3775,7 +3775,7 @@ public static class PackageConstants
     /// </summary>
     /// <remarks>
     /// - <c>Id:</c> 0195efb8-7c80-7e9c-95c1-48937e23960a
-    /// - <c>URN:</c> urn:altinn:accesspackage:koinnbygger-konkursbo-tilgangsstyrer
+    /// - <c>URN:</c> urn:altinn:accesspackage:innbygger-konkursbo-tilgangsstyrer
     /// - <c>Provider:</c> Altinn3
     /// - <c>Description:</c> Gir bruker mulighet til å administrere konkursbo
     /// </remarks>

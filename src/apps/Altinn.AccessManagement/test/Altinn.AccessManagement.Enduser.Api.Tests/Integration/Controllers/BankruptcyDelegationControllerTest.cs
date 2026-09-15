@@ -293,7 +293,7 @@ public class BankruptcyDelegationControllerTest
             var responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {responseContent}");
 
-            var result = JsonSerializer.Deserialize<AssignmaentWithAssignmentPackageDto>(
+            var result = JsonSerializer.Deserialize<AssignmentWithAssignmentPackageDto>(
                 responseContent,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
@@ -326,7 +326,7 @@ public class BankruptcyDelegationControllerTest
             var responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {responseContent}");
 
-            var result = JsonSerializer.Deserialize<AssignmaentWithAssignmentPackageDto>(
+            var result = JsonSerializer.Deserialize<AssignmentWithAssignmentPackageDto>(
                 responseContent,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
@@ -625,7 +625,7 @@ public class BankruptcyDelegationControllerTest
             var responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {responseContent}");
 
-            var result = JsonSerializer.Deserialize<AssignmaentWithAssignmentPackageDto>(
+            var result = JsonSerializer.Deserialize<AssignmentWithAssignmentPackageDto>(
                 responseContent,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
@@ -658,7 +658,7 @@ public class BankruptcyDelegationControllerTest
             var responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {responseContent}");
 
-            var result = JsonSerializer.Deserialize<AssignmaentWithAssignmentPackageDto>(
+            var result = JsonSerializer.Deserialize<AssignmentWithAssignmentPackageDto>(
                 responseContent,
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 

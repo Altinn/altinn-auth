@@ -4,15 +4,15 @@ using System.Text;
 
 namespace Altinn.Authorization.Api.Contracts.AccessManagement
 {
-    public class AssignmaentWithAssignmentPackageDto : AssignmentDto
+    public class AssignmentWithAssignmentPackageDto : AssignmentDto
     {
         public IEnumerable<AssignmentPackageDto> AssignmentPackages { get; set; }
 
-        public AssignmaentWithAssignmentPackageDto() 
+        public AssignmentWithAssignmentPackageDto() 
         {
         }
 
-        public AssignmaentWithAssignmentPackageDto(AssignmentDto assignment, IEnumerable<AssignmentPackageDto> assignmentPackages)
+        public AssignmentWithAssignmentPackageDto(AssignmentDto assignment, IEnumerable<AssignmentPackageDto> assignmentPackages)
         {
             this.Id = assignment.Id;
             this.RoleId = assignment.RoleId;

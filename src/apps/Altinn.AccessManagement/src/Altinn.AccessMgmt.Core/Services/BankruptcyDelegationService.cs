@@ -60,7 +60,7 @@ namespace Altinn.AccessMgmt.Core.Services
         }
 
         /// <inheritdoc />
-        public async Task<Result<AssignmaentWithAssignmentPackageDto>> AddCreditor(Guid party, Guid estate, Guid creditor, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default)
+        public async Task<Result<AssignmentWithAssignmentPackageDto>> AddCreditor(Guid party, Guid estate, Guid creditor, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default)
         {
             var assignment = await connectionService.AddRightholder(estate, creditor, configureConnections, cancellationToken);
             if (assignment.IsProblem)
@@ -87,7 +87,7 @@ namespace Altinn.AccessMgmt.Core.Services
                 db.SaveChanges();
             }
 
-            return new AssignmaentWithAssignmentPackageDto(assignment.Value, DtoMapper.Convert(assignmentPackage).SingleToList());
+            return new AssignmentWithAssignmentPackageDto(assignment.Value, DtoMapper.Convert(assignmentPackage).SingleToList());
         }
 
         /// <inheritdoc />
@@ -286,7 +286,7 @@ namespace Altinn.AccessMgmt.Core.Services
         }
 
         /// <inheritdoc/>
-        public async Task<Result<AssignmaentWithAssignmentPackageDto>> AddAdministrator(Guid party, Guid user, Action<ConnectionOptions> configureConnections, CancellationToken cancellationToken)
+        public async Task<Result<AssignmentWithAssignmentPackageDto>> AddAdministrator(Guid party, Guid user, Action<ConnectionOptions> configureConnections, CancellationToken cancellationToken)
         {
             var assignment = await connectionService.AddRightholder(party, user, configureConnections, cancellationToken);
             if (assignment.IsProblem)
@@ -313,7 +313,7 @@ namespace Altinn.AccessMgmt.Core.Services
                 db.SaveChanges();
             }
 
-            return new AssignmaentWithAssignmentPackageDto(assignment.Value, DtoMapper.Convert(assignmentPackage).SingleToList());
+            return new AssignmentWithAssignmentPackageDto(assignment.Value, DtoMapper.Convert(assignmentPackage).SingleToList());
         }
 
         /// <inheritdoc/>
@@ -633,7 +633,7 @@ namespace Altinn.AccessMgmt.Core.Services
         /// <param name="configureConnections">Optional action to configure connection options.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>A problem details if some error occurs. true if read access is added and false if it alredy exists</returns>
-        Task<Result<AssignmaentWithAssignmentPackageDto>> AddCreditor(Guid party, Guid estate, Guid creditor, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default);
+        Task<Result<AssignmentWithAssignmentPackageDto>> AddCreditor(Guid party, Guid estate, Guid creditor, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Revokes the package BankruptcyEstateReadAccess from the assignment between the creditor and the bankruptcy estate if the rettighetshaver assignment holds no more content the assignment is also removed.
@@ -700,7 +700,7 @@ namespace Altinn.AccessMgmt.Core.Services
         /// <param name="configureConnections">Optional action to configure connection options.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>A problem details if some error occurs. The assignment details if successful.</returns>
-        Task<Result<AssignmaentWithAssignmentPackageDto>> AddAdministrator(Guid party, Guid user, Action<ConnectionOptions> configureConnections, CancellationToken cancellationToken);
+        Task<Result<AssignmentWithAssignmentPackageDto>> AddAdministrator(Guid party, Guid user, Action<ConnectionOptions> configureConnections, CancellationToken cancellationToken);
 
         /// <summary>
         /// Revokes rightholder role from a user and removes the boadministrator package for a specific party.
