@@ -1,7 +1,6 @@
-﻿name: "Template: Release App"
+﻿name: "Template: Release App Infra"
 
 on:
-  push:
   workflow_call:
     inputs:
       name:

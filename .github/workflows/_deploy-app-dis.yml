@@ -1,6 +1,7 @@
 ﻿name: "Template: Release App"
 
 on:
+  push:
   workflow_dispatch:
     inputs:
       name:
@@ -55,7 +56,6 @@ jobs:
   deploy-app:
     runs-on: ubuntu-latest
     name: Deploy App to DIS
-    if: github.ref == 'refs/heads/main'
     env:
       DEPLOY_DIR: ${{ inputs.app_path }}/deploy/environments/${{ inputs.environment }}
       DEPLOY_OUT: dist
