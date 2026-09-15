@@ -1,10 +1,10 @@
-apiVersion: application.dis.altinn.cloud/v1alpha1
+﻿apiVersion: application.dis.altinn.cloud/v1alpha1
 kind: ApplicationIdentity
 metadata:
   name: access-management
   labels:
     app.kubernetes.io/name: access-management
-    app.kubernetes.io/part-of: altinn-auth
+    app.kubernetes.io/part-of: authorization
 spec: {}
 ---
 apiVersion: apps/v1
@@ -13,7 +13,7 @@ metadata:
   name: access-management
   labels:
     app.kubernetes.io/name: access-management
-    app.kubernetes.io/part-of: altinn-auth
+    app.kubernetes.io/part-of: authorization
 spec:
   selector:
     matchLabels:
@@ -22,7 +22,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: access-management
-        app.kubernetes.io/part-of: altinn-auth
+        app.kubernetes.io/part-of: authorization
         azure.workload.identity/use: "true"
       annotations:
         cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
@@ -46,7 +46,7 @@ metadata:
   name: access-management
   labels:
     app.kubernetes.io/name: access-management
-    app.kubernetes.io/part-of: altinn-auth
+    app.kubernetes.io/part-of: authorization
 spec:
   selector:
     app.kubernetes.io/name: access-management
@@ -61,7 +61,7 @@ metadata:
   name: access-management
   labels:
     app.kubernetes.io/name: access-management
-    app.kubernetes.io/part-of: altinn-auth
+    app.kubernetes.io/part-of: authorization
 spec:
   parentRefs:
     - group: gateway.networking.k8s.io
