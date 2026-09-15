@@ -755,7 +755,8 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
     {
         ValidationErrorBuilder errorBuilder = default;
 
-        var existingDelegation = await db.Delegations
+        // The client reaches the facilitator through one assignment per role, and each of them carries its own delegation to the agent.
+        var existingDelegations = await db.Delegations
             .AsTracking()
             .Where(d =>
                 d.FacilitatorId == partyUuid &&
@@ -766,14 +767,14 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
             .Include(d => d.DelegationResources)
             .ThenInclude(d => d.Resource)
             .AsSplitQuery()
-            .FirstOrDefaultAsync(cancellationToken);
+            .ToListAsync(cancellationToken);
 
-        if (existingDelegation is null)
+        if (existingDelegations.Count == 0)
         {
             return null;
         }
 
-        foreach (var delegationResource in existingDelegation.DelegationResources)
+        foreach (var delegationResource in existingDelegations.SelectMany(d => d.DelegationResources))
         {
             if (!cascade)
             {
@@ -787,7 +788,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
             }
         }
 
-        foreach (var delegationPackage in existingDelegation.DelegationPackages)
+        foreach (var delegationPackage in existingDelegations.SelectMany(d => d.DelegationPackages))
         {
             if (!cascade)
             {
@@ -806,7 +807,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
             return problem;
         }
 
-        db.Delegations.Remove(existingDelegation);
+        db.Delegations.RemoveRange(existingDelegations);
         await ClientRemovedNotification.Upsert(
             db,
             partyUuid,
