@@ -412,14 +412,14 @@ internal class ConnectionBaseQueryBuilder
         /*
         Add KeyRoles on allAssignments
         */
-        var keyRoleAssignments =
-            from all in allAssignments.Concat(roleMapAssignments) // Must include RoleMap assignments
+        var keyRoleAssignmentsWithoutRoleMap =
+            from all in allAssignments
             join fromEntity in db.Entities on all.FromId equals fromEntity.Id
             join toEntity in db.Entities on all.ToId equals toEntity.Id
-            join keyRoleAssignment in db.Assignments on all.ToId equals keyRoleAssignment.FromId            
+            join keyRoleAssignment in db.Assignments on all.ToId equals keyRoleAssignment.FromId
             join role in db.Roles on keyRoleAssignment.RoleId equals role.Id
-            where 
-                role.IsKeyRole && 
+            where
+                role.IsKeyRole &&
                 !(fromEntity.VariantId == EntityVariantConstants.IKS.Id && all.RoleId == RoleConstants.ParticipantSharedResponsibility.Id) &&
                 !(toEntity.VariantId == EntityVariantConstants.IKS.Id && keyRoleAssignment.RoleId == RoleConstants.ParticipantSharedResponsibility.Id)
             select new ConnectionQueryBaseRecord()
@@ -436,6 +436,26 @@ internal class ConnectionBaseQueryBuilder
                 IsMainUnitAccess = all.IsMainUnitAccess,
                 Reason = ConnectionReason.KeyRole
             };
+
+        var roleMapAssignmentsForKeyRoles =
+           from assignment in keyRoleAssignmentsWithoutRoleMap
+           join rolemap in db.RoleMaps on assignment.RoleId equals rolemap.HasRoleId
+           select new ConnectionQueryBaseRecord()
+           {
+               AssignmentId = assignment.AssignmentId,
+               DelegationId = null,
+               FromId = assignment.FromId,
+               ToId = assignment.ToId,
+               RoleId = rolemap.GetRoleId,
+               ViaId = assignment.ViaId,
+               ViaRoleId = assignment.ViaRoleId,
+               IsRoleMap = true,
+               IsKeyRoleAccess = assignment.IsKeyRoleAccess,
+               IsMainUnitAccess = assignment.IsMainUnitAccess,
+               Reason = ConnectionReason.KeyRole
+           };
+
+        var keyRoleAssignments = keyRoleAssignmentsWithoutRoleMap.Union(roleMapAssignmentsForKeyRoles);
 
         /*
         Combine everything

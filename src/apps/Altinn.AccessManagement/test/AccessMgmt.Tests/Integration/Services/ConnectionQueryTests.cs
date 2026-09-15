@@ -460,7 +460,6 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
 
         Assert.DoesNotContain(dbResult, r =>
             r.ToId == personId &&
-            r.RoleId == RoleConstants.ParticipantSharedResponsibility.Id &&
             r.Reason == ConnectionReason.KeyRole);
     }
 
@@ -480,7 +479,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
 
         Assert.DoesNotContain(dbResult, r =>
             r.ToId == orgId &&
-            r.RoleId == RoleConstants.Auditor.Id &&
+            r.ViaRoleId == RoleConstants.ParticipantSharedResponsibility.Id &&
             r.Reason == ConnectionReason.KeyRole);  
     }
 
