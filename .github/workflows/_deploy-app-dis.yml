@@ -16,8 +16,8 @@ on:
         description: Image Name
         type: choice
         options:
-          - ghcr.io/altinn/altinn-auth/access-management
-          - ghcr.io/altinn/altinn-auth/authorization
+          - altinn/altinn-auth/access-management
+          - altinn/altinn-auth/authorization
 
       image_tag:
         description: Image Tag
