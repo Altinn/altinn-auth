@@ -68,7 +68,7 @@ jobs:
     name: Deploy App to DIS
     env:
       DEPLOY_DIR: src/apps/${{ inputs.app }}/deploy/environments/${{ inputs.environment }}
-      DEPLOY_OUT: dist/deployment.yaml
+      DEPLOY_OUT: dist
 
     steps:
       - name: Checkout
@@ -112,9 +112,9 @@ jobs:
           mkdir dist
 
           kustomize edit set image ${{ inputs.image_name }}:latest=${{ inputs.image_name }}:${{ inputs.image_tag }}
-          kustomize build -o ${{ env.DEPLOY_OUT }}
+          kustomize build -o ${{ env.DEPLOY_OUT }}/deployment.yaml
 
-          cat ${{ env.DEPLOY_OUT }}
+          cat ${{ env.DEPLOY_OUT }}/deployment.yaml
 
       - name: Build and push app manifests artifact
         uses: Altinn/altinn-platform/actions/flux/build-push-image@523f141da4f116fdd7331585396d83a5d7ade7ea # main
