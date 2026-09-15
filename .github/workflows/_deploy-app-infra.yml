@@ -1,6 +1,7 @@
 ﻿name: "Template: Release App"
 
 on:
+  push:
   workflow_call:
     inputs:
       name:
