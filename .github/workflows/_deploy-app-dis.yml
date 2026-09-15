@@ -1,0 +1,118 @@
+﻿name: "Template: Release App"
+
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        required: true
+        description: Name of the app
+        type: string
+      
+      app_path:
+        required: true
+        description: Path of the App
+        type: string
+      
+      environment:
+        required: true
+        description: Environment in lowercase
+        type: string
+
+      image_name:
+        required: true
+        description: image name
+        type: string
+
+  workflow_call:
+    inputs:
+      name:
+        required: true
+        description: Name of the app
+        type: string
+      
+      app_path:
+        required: true
+        description: Path of the App
+        type: string
+      
+      environment:
+        required: true
+        description: Environment in lowercase
+        type: string
+
+      image_name:
+        required: true
+        description: image name
+        type: string
+
+permissions:
+  contents: read
+  packages: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  deploy-app:
+    runs-on: ubuntu-latest
+    name: Deploy App to DIS
+    if: github.ref == 'refs/heads/main'
+    env:
+      DEPLOY_DIR: ${{ inputs.app_path }}/deploy/environments/${{ inputs.environment }}
+      DEPLOY_OUT: dist
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+    
+    - name: Install kustomize
+      env:
+        # Official kustomize binary (no Docker, no sudo) so this job can run on
+        # self-hosted runners, which ship neither kustomize nor kubectl.
+        # renovate: datasource=github-releases depName=kubernetes-sigs/kustomize versioning=semver extractVersion=^kustomize\/(?<version>v.+)$
+        KUSTOMIZE_VERSION: v5.8.1
+      run: |
+        set -euo pipefail
+
+        case "$(uname -m)" in
+          x86_64) arch=amd64 ;;
+          aarch64 | arm64) arch=arm64 ;;
+          *) echo "::error::Unsupported architecture: $(uname -m)"; exit 1 ;;
+        esac
+
+        dest="${RUNNER_TEMP:-/tmp}/kustomize-bin"
+        mkdir -p "$dest"
+        tarball="kustomize_${KUSTOMIZE_VERSION}_linux_${arch}.tar.gz"
+        url="https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2F${KUSTOMIZE_VERSION}/${tarball}"
+
+        if command -v curl >/dev/null 2>&1; then
+          curl -fsSL "$url" -o "$dest/$tarball"
+        elif command -v wget >/dev/null 2>&1; then
+          wget -qO "$dest/$tarball" "$url"
+        else
+          echo "::error::Neither curl nor wget is available on the runner."
+          exit 1
+        fi
+
+        tar -xzf "$dest/$tarball" -C "$dest" kustomize
+        rm -f "$dest/$tarball"
+        chmod +x "$dest/kustomize"
+        echo "$dest" >> "$GITHUB_PATH"
+        "$dest/kustomize" version
+    
+    - name: Run kustomize
+      run: |
+        mkdir dist
+        kustomize edit set image \
+          ghcr.io/altinn/altinn-auth/${{ inputs.image }}:latest=ghcr.io/altinn/altinn-auth/${{ inputs.image_name }}:${{ inputs.tag }} \
+          ${{ env.DEPLOY_DIR }}  \
+          -o ${{ env.DEPLOY_OUT }}/deployment.yaml
+
+    - name: Build and push app manifests artifact
+      uses: Altinn/altinn-platform/actions/flux/build-push-image@523f141da4f116fdd7331585396d83a5d7ade7ea # main
+      with:
+        image_name: ${{ inputs.image_name }}
+        tag: fix/dis
+        workdir: ${{ env.DEPLOY_OUT }}
+        azure_subscription_id: ${{ secrets.DIS_SYNCROOT_AZURE_SUBSCRIPTION_ID }}
+        azure_app_id: ${{ secrets.DIS_SYNCROOT_AZURE_CLIENT_ID }}
+        azure_tenant_id: ${{ secrets.DIS_SYNCROOT_AZURE_TENANT_ID }}
