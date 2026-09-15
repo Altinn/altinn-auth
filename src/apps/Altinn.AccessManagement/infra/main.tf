@@ -473,6 +473,12 @@ module "appsettings" {
       value       = false
     },
     {
+      name        = "AccessMgmt.Controller.ServiceOwner.ResourceDelegation"
+      description = "Enables the resource delegation endpoints in the serviceowner connections API."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
       name        = "AccessManagement.Enduser.MaskinportenAdminApi"
       description = "Enables the Maskinporten admin API endpoints (consumers and suppliers) in the enduser API."
       label       = "${lower(var.environment)}-access-management"
@@ -505,6 +511,12 @@ module "appsettings" {
     {
       name        = "AccessManagement.ConnectionQuery.IncludeClientDelegationResources"
       description = "Specifies if client-delegated resources should be included in ConnectionQuery and AuthorizedParties response."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
+      name        = "AccessManagement.Subunit.AdosInheritance"
+      description = "Specifies if ADOS administrative units should be treated as subunits that inherit mainunit access (equal to BEDR/AAFY) in ConnectionQuery and AuthorizedParties. Reversible; defaults to false."
       label       = "${lower(var.environment)}-access-management"
       value       = false
     },

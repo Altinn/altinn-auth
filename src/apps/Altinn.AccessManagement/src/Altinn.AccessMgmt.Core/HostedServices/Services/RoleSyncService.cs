@@ -14,6 +14,7 @@ using Altinn.Authorization.Integration.Platform.Register;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.FeatureManagement;
 
 namespace Altinn.AccessMgmt.Core.HostedServices.Services;
 
@@ -50,6 +51,8 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
         using var scope = _serviceProvider.CreateEFScope(options);
         var appDbContextFactory = scope.ServiceProvider.GetRequiredService<AppDbContextFactory>();
         var ingestService = scope.ServiceProvider.GetRequiredService<IIngestService>();
+        var featureManager = scope.ServiceProvider.GetRequiredService<IFeatureManager>();
+        var adosSubunitInheritanceEnabled = await featureManager.IsEnabledAsync(AccessMgmtFeatureFlags.AdosSubunitInheritance, cancellationToken);
         var leaseData = await lease.Get<RegisterLease>(cancellationToken);
 
         if (isInit == false && leaseData.IsDbIngested == false)
@@ -79,15 +82,18 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
                 foreach (var item in page.Content.Data)
                 {
                     var assignment = MapToAssignment(item);
-                    if (ShouldSetParent(item))
+                    if (ShouldSetParent(item, adosSubunitInheritanceEnabled))
                     {
-                        if (!seen.Add((From: assignment.FromId, To: assignment.ToId, Role: RoleConstants.HasAsRegistrationUnitBEDR)))
+                        // Track every parent-materializing role for this (From, To) so ordering/flush behavior
+                        // is consistent across BEDR, AAFY and ADOS. ADOS is only included when the feature flag
+                        // is enabled, matching ShouldSetParent(...).
+                        foreach (var parentRole in ParentRoles(adosSubunitInheritanceEnabled))
                         {
-                            flushed += await Flush();
-                        }
-                        else if (!seen.Add((From: assignment.FromId, To: assignment.ToId, Role: RoleConstants.HasAsRegistrationUnitAAFY)))
-                        {
-                            flushed += await Flush();
+                            if (!seen.Add((From: assignment.FromId, To: assignment.ToId, Role: parentRole)))
+                            {
+                                flushed += await Flush();
+                                break;
+                            }
                         }
                     }
                     else
@@ -101,7 +107,7 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
                     if (item.Type == ExternalRoleAssignmentEvent.EventType.Added)
                     {
                         addAssignments.Add(assignment);
-                        if (ShouldSetParent(item))
+                        if (ShouldSetParent(item, adosSubunitInheritanceEnabled))
                         {
                             addParent[assignment.FromId] = assignment.ToId;
                         }
@@ -109,7 +115,7 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
                     else if (item.Type == ExternalRoleAssignmentEvent.EventType.Removed)
                     {
                         removeAssignments.Add(assignment);
-                        if (ShouldSetParent(item))
+                        if (ShouldSetParent(item, adosSubunitInheritanceEnabled))
                         {
                             removeParent[assignment.FromId] = assignment.ToId;
                         }
@@ -280,8 +286,24 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
         return await dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    private bool ShouldSetParent(ExternalRoleAssignmentEvent item) =>
-        item.RoleIdentifier == RoleConstants.HasAsRegistrationUnitBEDR.Entity.Code || item.RoleIdentifier == RoleConstants.HasAsRegistrationUnitAAFY.Entity.Code;
+    internal static bool ShouldSetParent(ExternalRoleAssignmentEvent item, bool adosSubunitInheritanceEnabled) =>
+        item.RoleIdentifier == RoleConstants.HasAsRegistrationUnitBEDR.Entity.Code
+        || item.RoleIdentifier == RoleConstants.HasAsRegistrationUnitAAFY.Entity.Code
+        || (adosSubunitInheritanceEnabled && item.RoleIdentifier == RoleConstants.AdministrativeUnitPublicSector.Entity.Code);
+
+    /// <summary>
+    /// The roles that materialize a parent (subunit) relationship. ADOS is included only when the
+    /// feature flag is enabled, mirroring <see cref="ShouldSetParent(ExternalRoleAssignmentEvent, bool)"/>.
+    /// </summary>
+    internal static IEnumerable<Guid> ParentRoles(bool adosSubunitInheritanceEnabled)
+    {
+        yield return RoleConstants.HasAsRegistrationUnitBEDR;
+        yield return RoleConstants.HasAsRegistrationUnitAAFY;
+        if (adosSubunitInheritanceEnabled)
+        {
+            yield return RoleConstants.AdministrativeUnitPublicSector;
+        }
+    }
 
     private Assignment MapToAssignment(ExternalRoleAssignmentEvent model)
     {

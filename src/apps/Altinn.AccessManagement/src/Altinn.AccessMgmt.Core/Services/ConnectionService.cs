@@ -33,7 +33,6 @@ using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Microsoft.FeatureManagement;
 using Npgsql;
 
 namespace Altinn.AccessMgmt.Core.Services;
@@ -51,7 +50,7 @@ public partial class ConnectionService(
     IRoleService roleService,
     ITranslationService translationService,
     ISingleRightsService singleRightsService,
-    IFeatureManager featureManager) : IConnectionService
+    AppLifecycleFeatures lifecycleFeatures) : IConnectionService
 {
     public async Task<Result<IEnumerable<ConnectionDto>>> Get(Guid party, Guid? fromId, Guid? toId, bool includeClientDelegations = true, bool includeAgentConnections = true, bool includeAccessPackages = false, bool includeResources = false, bool includeInstances = false, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default)
     {
@@ -721,6 +720,7 @@ public partial class ConnectionService(
             party,
             auditAccessor.AuditValues.ChangedBy,
             packageIds,
+            includeAdosSubunitInheritance: lifecycleFeatures.AdosSubunitInheritance,
             ct: cancellationToken
         );
 
@@ -773,6 +773,7 @@ public partial class ConnectionService(
             authenticatedUserUuid,
             packageIds,
             true,
+            lifecycleFeatures.AdosSubunitInheritance,
             cancellationToken
         );
 
@@ -934,6 +935,7 @@ public partial class ConnectionService(
             fromId: party,
             toId: toId.Value,
             toIsMainAdminForFrom,
+            includeAdosSubunitInheritance: lifecycleFeatures.AdosSubunitInheritance,
             ct: cancellationToken
         );
 
