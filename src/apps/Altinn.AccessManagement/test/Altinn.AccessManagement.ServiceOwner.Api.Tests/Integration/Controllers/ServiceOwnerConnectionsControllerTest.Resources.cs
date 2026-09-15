@@ -63,6 +63,10 @@ public partial class ServiceOwnerConnectionsControllerTest
 
         private static readonly Guid MaskinportenSchemaResourceId = Guid.Parse("0196b130-0000-7000-8000-000000000003");
 
+        private const string NonDelegableResource = "app_skd_taxreport";
+
+        private static readonly Guid NonDelegableResourceId = Guid.Parse("0196b130-0000-7000-8000-000000000004");
+
         public AddRevokeResources(ApiFixture fixture)
         {
             Fixture = fixture;
@@ -87,6 +91,17 @@ public partial class ServiceOwnerConnectionsControllerTest
 
                 Resource resource = db.Resources.Single(r => r.Id == TestData.SiriusSkattemelding.Id);
                 resource.ProviderId = SkatteetatenProviderId;
+                db.SaveChanges();
+
+                db.Resources.Add(new Resource()
+                {
+                    Id = NonDelegableResourceId,
+                    Name = "Skattemelding uten delegeringsadgang",
+                    Description = "Resource owned by the test service owner with delegable false in the resource registry",
+                    RefId = NonDelegableResource,
+                    TypeId = resource.TypeId,
+                    ProviderId = SkatteetatenProviderId,
+                });
                 db.SaveChanges();
 
                 Guid maskinportenSchemaTypeId = db.ResourceTypes.Single(t => t.Name == "MaskinportenSchema").Id;
@@ -628,6 +643,19 @@ public partial class ServiceOwnerConnectionsControllerTest
         public async Task GetResourceRights_ForMaskinportenSchemaResource_Returns400ResourceNotDelegable()
         {
             var response = await CreateClient().GetAsync($"{Route}/resources/rights?resource={MaskinportenSchemaResource}", TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            await AssertProblemCode(response, "AM-00042");
+        }
+
+        /// <summary>
+        /// A resource the service owner owns, but which the resource registry marks as not delegable, is refused by
+        /// the rights lookup as well, so it does not advertise rights that the add endpoint refuses to delegate.
+        /// </summary>
+        [Fact]
+        public async Task GetResourceRights_ForNonDelegableResource_Returns400ResourceNotDelegable()
+        {
+            var response = await CreateClient().GetAsync($"{Route}/resources/rights?resource={NonDelegableResource}", TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
             await AssertProblemCode(response, "AM-00042");
