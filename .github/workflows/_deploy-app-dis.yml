@@ -111,7 +111,7 @@ jobs:
         run: |
           mkdir dist
 
-          kustomize edit set image ${{ inputs.image_name }}:latest=${{ inputs.image_name }}:${{ inputs.image_tag }}
+          kustomize edit set image ghcr.io/${{ inputs.image_name }}:latest=ghcr.io/${{ inputs.image_name }}:${{ inputs.image_tag }}
           kustomize build -o ${{ env.DEPLOY_OUT }}/deployment.yaml
 
           cat ${{ env.DEPLOY_OUT }}/deployment.yaml
