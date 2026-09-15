@@ -108,8 +108,9 @@ jobs:
       - name: Run kustomize
         run: |
           mkdir dist
+
           kustomize edit set image \
-            ghcr.io/altinn/altinn-auth/${{ inputs.image_name }}:latest=ghcr.io/altinn/altinn-auth/${{ inputs.image_name }}:${{ inputs.image_tag }} \
+            ${{ inputs.image_name }}:latest=${{ inputs.image_name }}:${{ inputs.image_tag }} \
             ${{ env.DEPLOY_DIR }}  \
           
           kustomize build ${{ env.DEPLOY_DIR }} \
