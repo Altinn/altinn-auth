@@ -13,12 +13,14 @@ on:
         type: choice
 
       image_name:
+        description: Image Name
         type: choice
         options:
           - ghcr.io/altinn/altinn-auth/altinn-access-management
           - ghcr.io/altinn/altinn-auth/altinn-authorization
-      
+
       image_tag:
+        description: Image Tag
         default: latest
         type: string
 
@@ -44,7 +46,7 @@ on:
       image_name:
         description: image name
         type: string
-      
+
       image_tag:
         required: true
         type: string
@@ -53,7 +55,6 @@ on:
         required: true
         description: Environment in lowercase
         type: string
-
 
 permissions:
   contents: read
@@ -112,10 +113,10 @@ jobs:
           kustomize edit set image \
             ${{ inputs.image_name }}:latest=${{ inputs.image_name }}:${{ inputs.image_tag }} \
             ${{ env.DEPLOY_DIR }}  \
-          
+
           kustomize build ${{ env.DEPLOY_DIR }} \
             -o ${{ env.DEPLOY_OUT }}
-          
+
           cat ${{ env.DEPLOY_OUT }}
 
 #       - name: Build and push app manifests artifact
