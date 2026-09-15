@@ -100,7 +100,7 @@ jobs:
         run: |
           mkdir dist
           kustomize edit set image \
-            ghcr.io/altinn/altinn-auth/${{ inputs.image }}:latest=ghcr.io/altinn/altinn-auth/${{ inputs.image_name }}:${{ inputs.tag }} \
+            ghcr.io/altinn/altinn-auth/${{ inputs.image_name }}:latest=ghcr.io/altinn/altinn-auth/${{ inputs.image_name }}:${{ inputs.tag }} \
             ${{ env.DEPLOY_DIR }}  \
             -o ${{ env.DEPLOY_OUT }}/deployment.yaml
 
