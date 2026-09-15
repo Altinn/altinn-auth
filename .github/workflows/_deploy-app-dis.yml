@@ -3,36 +3,50 @@
 on:
   workflow_dispatch:
     inputs:
-      name:
+      app:
+        default: Altinn.AccessManagement
         required: true
-        description: Name of the app
-        type: string
+        description: App
+        options:
+          - Altinn.AccessManagement
+          - Altinn.Authorization
+        type: choice
 
-      app_path:
-        required: true
-        description: Path of the App
+      image_name:
+        type: choice
+        options:
+          - ghcr.io/altinn/altinn-auth/altinn-access-management
+          - ghcr.io/altinn/altinn-auth/altinn-authorization
+      
+      image_tag:
+        default: latest
         type: string
 
       environment:
-        required: true
-        description: Environment in lowercase
-        type: string
-
-      image_name:
-        required: true
-        description: image name
-        type: string
+        default: at22
+        description: Environment
+        type: choice
+        options:
+          - at22
+          - at23
+          - at24
+          - yt01
+          - tt02
+          - prod
 
   workflow_call:
     inputs:
-      name:
-        required: true
-        description: Name of the app
-        type: string
-
-      app_path:
+      app:
         required: true
         description: Path of the App
+        type: string
+
+      image_name:
+        description: image name
+        type: string
+      
+      image_tag:
+        required: true
         type: string
 
       environment:
@@ -40,10 +54,6 @@ on:
         description: Environment in lowercase
         type: string
 
-      image_name:
-        required: true
-        description: image name
-        type: string
 
 permissions:
   contents: read
@@ -56,8 +66,8 @@ jobs:
     runs-on: ubuntu-latest
     name: Deploy App to DIS
     env:
-      DEPLOY_DIR: ${{ inputs.app_path }}/deploy/environments/${{ inputs.environment }}
-      DEPLOY_OUT: dist
+      DEPLOY_DIR: src/apps/${{ inputs.app }}/deploy/environments/${{ inputs.environment }}
+      DEPLOY_OUT: dist/deployment.yaml
 
     steps:
       - name: Checkout
@@ -99,13 +109,13 @@ jobs:
         run: |
           mkdir dist
           kustomize edit set image \
-            ghcr.io/altinn/altinn-auth/${{ inputs.image_name }}:latest=ghcr.io/altinn/altinn-auth/${{ inputs.image_name }}:${{ inputs.tag }} \
+            ghcr.io/altinn/altinn-auth/${{ inputs.image_name }}:latest=ghcr.io/altinn/altinn-auth/${{ inputs.image_name }}:${{ inputs.image_tag }} \
             ${{ env.DEPLOY_DIR }}  \
           
           kustomize build ${{ env.DEPLOY_DIR }} \
-            -o ${{ env.DEPLOY_OUT }}/deployment.yaml
+            -o ${{ env.DEPLOY_OUT }}
           
-          cat ${{ env.DEPLOY_OUT }}/deployment.yaml
+          cat ${{ env.DEPLOY_OUT }}
 
 #       - name: Build and push app manifests artifact
 #         uses: Altinn/altinn-platform/actions/flux/build-push-image@523f141da4f116fdd7331585396d83a5d7ade7ea # main
