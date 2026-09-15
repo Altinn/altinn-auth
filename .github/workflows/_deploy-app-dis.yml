@@ -121,7 +121,7 @@ jobs:
         with:
           image_name: ${{ inputs.image_name }}
           tag: fix/dis
-          workdir: ${{ env.DEPLOY_OUT }}
+          workdir: ${{ env.DEPLOY_DIR }}/${{ env.DEPLOY_OUT }}
           azure_subscription_id: ${{ secrets.DIS_SYNCROOT_AZURE_SUBSCRIPTION_ID }}
           azure_app_id: ${{ secrets.DIS_SYNCROOT_AZURE_CLIENT_ID }}
           azure_tenant_id: ${{ secrets.DIS_SYNCROOT_AZURE_TENANT_ID }}
