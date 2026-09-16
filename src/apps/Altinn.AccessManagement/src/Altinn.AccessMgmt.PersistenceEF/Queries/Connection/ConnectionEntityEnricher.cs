@@ -92,24 +92,39 @@ internal class ConnectionEntityEnricher(AppDbContext db, ILogger logger)
             return resolved;
         }
 
-        var unwarned = missing.Where(id => WarnedStrayRoleIds.TryAdd(id, 0)).ToList();
-        if (unwarned.Count > 0)
-        {
-            logger.LogWarning(
-                "RoleConstants does not cover {StrayRoleCount} role(s) referenced by connections: {StrayRoleIds}. Falling back to the role table; the seeded constants and the database have drifted.",
-                unwarned.Count,
-                string.Join(", ", unwarned));
-        }
-
         var strays = await db.Roles
             .Include(r => r.Provider).ThenInclude(p => p.Type)
             .AsNoTracking()
             .Where(r => missing.Contains(r.Id))
             .ToListAsync(ct);
 
+        List<Guid> drifted = [];
         foreach (var stray in strays)
         {
             resolved[stray.Id] = stray;
+            missing.Remove(stray.Id);
+            if (WarnedStrayRoleIds.TryAdd(stray.Id, 0))
+            {
+                drifted.Add(stray.Id);
+            }
+        }
+
+        if (drifted.Count > 0)
+        {
+            logger.LogWarning(
+                "RoleConstants does not cover {StrayRoleCount} role(s) referenced by connections: {StrayRoleIds}. Falling back to the role table; the seeded constants and the database have drifted.",
+                drifted.Count,
+                string.Join(", ", drifted));
+        }
+
+        // Not deduplicated on purpose: a dangling id fails the query with KeyNotFoundException
+        // in ApplyEnrichment, and every such failure should have a log line naming the role.
+        if (missing.Count > 0)
+        {
+            logger.LogError(
+                "{DanglingRoleCount} role(s) referenced by connections exist neither in RoleConstants nor in the role table: {DanglingRoleIds}. The query will fail on these ids.",
+                missing.Count,
+                string.Join(", ", missing));
         }
 
         return resolved;
