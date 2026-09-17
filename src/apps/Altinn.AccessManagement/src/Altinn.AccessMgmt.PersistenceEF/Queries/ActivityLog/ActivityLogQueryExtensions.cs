@@ -245,6 +245,22 @@ internal static class ActivityLogQueryExtensions
         return query.Where(t => t.RoleId.HasValue && ids.Contains(t.RoleId.Value));
     }
 
+    internal static IQueryable<ActivityLog> RoleIdNotContains(this IQueryable<ActivityLog> query, HashSet<Guid> ids)
+    {
+        if (ids is null || ids.Count == 0)
+        {
+            return query;
+        }
+
+        if (ids.Count == 1)
+        {
+            var id = ids.First();
+            return query.Where(t => t.RoleId == null || t.RoleId != id);
+        }
+
+        return query.Where(t => t.RoleId == null || !ids.Contains(t.RoleId.Value));
+    }
+
     internal static IQueryable<ActivityLog> PackageIdContains(this IQueryable<ActivityLog> query, HashSet<Guid> ids)
     {
         if (ids is null || ids.Count == 0)

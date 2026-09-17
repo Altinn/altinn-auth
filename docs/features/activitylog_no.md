@@ -91,6 +91,7 @@ Returnerer de distinkte `(id, name)`-parene som forekommer i partyens logg for e
 - **`term`:** case-insensitivt delstrengsøk kun på navn.
 - **`orderBy`:** `Name` (default, alfabetisk — stabil på tvers av sider) eller `When` (nyeste forekomst per verdi først — nye hendelser kan forskyve sider).
 - **Duplikater er tilsiktet:** navn er snapshots fra hendelsestidspunktet, så samme id kan gjenta seg med ulike navn (f.eks. etter navnebytte); alle par returneres slik at hver historisk etikett er søkbar. For `source` og `activitytype` kommer navnene fra de respektive katalogene i stedet for snapshots.
+- **Supplier-rollen dukker aldri opp som verdi:** maskinportenschema-hendelser skjules som standard (se tverrgående oppførsel), så rollen deres tilbys heller ikke.
 - **Paging og konvolutt:** identisk med hovedspørringen (`pageSize`/`pageNo`, `links.next`).
 
 ```
@@ -109,6 +110,7 @@ GET /accessmanagement/api/v1/enduser/activitylog/types
 
 ### Tverrgående oppførsel
 
+- **Maskinportenschema-hendelser skjules som standard:** Supplier-rollen brukes utelukkende for maskinportenschema-delegeringer, så tjenesten ekskluderer den fra både hendelser og filterverdier — samme regel som connection-spørringene. Et `includeMps`-flagg på tjenesten henter dem tilbake for interne kallere; det er ikke eksponert som API-parameter.
 - **Validering:** tom `party` og ukjente `typeId`-verdier gir `400` med problem details.
 - **Feature-flagg:** hele kontrolleren ligger bak `EnableEnduserActivityLogApi`.
 - **Sorteringsgaranti:** `(when desc, id desc)` — stabil og duplikatfri på tvers av sider under paging.

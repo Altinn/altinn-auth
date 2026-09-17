@@ -83,6 +83,13 @@ public sealed record ActivityLogQueryFilter
     public IReadOnlyCollection<Guid> RoleIds { get; init; }
 
     /// <summary>
+    /// Gets the collection of role identifiers whose entries are excluded from the result.
+    /// Entries without a role are kept. An exclusion never narrows the scan, so it does not
+    /// count towards <see cref="HasAny"/>.
+    /// </summary>
+    public IReadOnlyCollection<Guid> ExcludeRoleIds { get; init; }
+
+    /// <summary>
     /// Gets the collection of access package identifiers.
     /// </summary>
     public IReadOnlyCollection<Guid> PackageIds { get; init; }

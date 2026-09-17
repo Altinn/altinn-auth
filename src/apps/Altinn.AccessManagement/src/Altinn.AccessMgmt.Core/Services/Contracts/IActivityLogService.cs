@@ -17,8 +17,11 @@ public interface IActivityLogService
     /// <param name="filter">Additional narrowing filters; InvolvedIds and the anchored field are overwritten by <paramref name="party"/>.</param>
     /// <param name="pageSize">Maximum number of entries per page.</param>
     /// <param name="pageNumber">Zero-based page number.</param>
+    /// <param name="includeMps">Whether to include Maskinporten schema events. By default they are
+    /// hidden by excluding the Supplier role, which is used exclusively for Maskinporten schema
+    /// delegations — mirroring how connection queries hide them.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    Task<ActivityLogPage> GetActivityLog(Guid party, ActivityLogDirection? direction, ActivityLogQueryFilter filter, int pageSize, int pageNumber, CancellationToken cancellationToken = default);
+    Task<ActivityLogPage> GetActivityLog(Guid party, ActivityLogDirection? direction, ActivityLogQueryFilter filter, int pageSize, int pageNumber, bool includeMps = false, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Returns one page of values occurring in the party's activity log entries for the given
@@ -34,8 +37,10 @@ public interface IActivityLogService
     /// <param name="orderBy">Value ordering.</param>
     /// <param name="pageSize">Maximum number of values per page.</param>
     /// <param name="pageNumber">Zero-based page number.</param>
+    /// <param name="includeMps">Whether to include Maskinporten schema events (the Supplier role).
+    /// By default they are hidden, so the Supplier role never appears as a facet value either.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    Task<ActivityLogFacetPage> GetActivityLogFacet(Guid party, ActivityLogDirection? direction, ActivityLogFacetField field, ActivityLogQueryFilter filter, string term, ActivityLogFacetOrder orderBy, int pageSize, int pageNumber, CancellationToken cancellationToken = default);
+    Task<ActivityLogFacetPage> GetActivityLogFacet(Guid party, ActivityLogDirection? direction, ActivityLogFacetField field, ActivityLogQueryFilter filter, string term, ActivityLogFacetOrder orderBy, int pageSize, int pageNumber, bool includeMps = false, CancellationToken cancellationToken = default);
 }
 
 /// <summary>

@@ -219,6 +219,11 @@
 
         <MudSpacer />
 
+        <MudTooltip Text="Maskinporten-skjema (Supplier-rollen) skjules som standard, likt sluttbruker-API-et.">
+            <MudCheckBox T="bool" Value="_includeMps" ValueChanged="OnIncludeMpsChanged" Dense="true" Color="Color.Primary"
+                         Label="Inkluder maskinporten-skjema" />
+        </MudTooltip>
+
         <div style="width: 140px;">
             <MudNumericField T="int"
                              Value="_pageSize"
@@ -568,6 +573,8 @@
     private DateTime? _afterDate;
     private DateTime? _beforeDate;
     private int _pageSize = 200;
+
+    private bool _includeMps;
 
     private readonly HashSet<Guid> _selectedActivityTypes = [];
 
@@ -1105,6 +1112,12 @@
         ScheduleQuery();
     }
 
+    private void OnIncludeMpsChanged(bool value)
+    {
+        _includeMps = value;
+        ScheduleQuery();
+    }
+
     private void ScheduleQuery()
     {
         _debounce?.Cancel();
@@ -1166,6 +1179,7 @@
         ByIds = AnchoredOrList(FilterDim.By, PartyDirection.By, excludeDim),
         SourceIds = excludeDim == FilterDim.Source ? null : ListOrNull(FilterDim.Source),
         RoleIds = excludeDim == FilterDim.Role ? null : ListOrNull(FilterDim.Role),
+        ExcludeRoleIds = _includeMps ? null : [RoleConstants.Supplier.Id],
         PackageIds = excludeDim == FilterDim.Package ? null : ListOrNull(FilterDim.Package),
         ResourceIds = excludeDim == FilterDim.Resource ? null : ListOrNull(FilterDim.Resource),
         ItemIds = ListOrNull(FilterDim.Item),

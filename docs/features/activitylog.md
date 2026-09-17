@@ -91,6 +91,7 @@ Returns the distinct `(id, name)` pairs occurring in the party's log for one fie
 - **`term`:** case-insensitive substring match on name only.
 - **`orderBy`:** `Name` (default, alphabetical — stable across pages) or `When` (newest occurrence per value first — new events can shift pages).
 - **Duplicates are intentional:** names are point-in-time snapshots, so one id can recur with different names (e.g. after a rename); all pairs are returned so every historical label is findable. For `source` and `activitytype` the names come from the respective catalogs instead of snapshots.
+- **The Supplier role never appears as a value:** Maskinporten schema events are hidden by default (see cross-cutting behavior), so their role is not offered either.
 - **Paging and envelope:** identical to the main query (`pageSize`/`pageNo`, `links.next`).
 
 ```
@@ -109,6 +110,7 @@ GET /accessmanagement/api/v1/enduser/activitylog/types
 
 ### Cross-cutting behavior
 
+- **Maskinporten schema events are hidden by default:** the Supplier role is used exclusively for Maskinporten schema delegations, so the service excludes it from both entries and filter values — the same rule connection queries apply. An `includeMps` flag on the service brings them back for internal callers; it is not exposed as an API parameter.
 - **Validation:** empty `party` and unknown `typeId` values return `400` with problem details.
 - **Feature flag:** the whole controller sits behind `EnableEnduserActivityLogApi`.
 - **Ordering guarantee:** `(when desc, id desc)` — stable and duplicate-free across pages while paging.

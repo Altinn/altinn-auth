@@ -1,5 +1,6 @@
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Queries;
 using Altinn.Authorization.Api.Contracts.AccessManagement.ActivityLog;
 
@@ -9,9 +10,9 @@ namespace Altinn.AccessMgmt.Core.Services;
 public class ActivityLogService(ActivityLogQuery activityLogQuery) : IActivityLogService
 {
     /// <inheritdoc />
-    public async Task<ActivityLogPage> GetActivityLog(Guid party, ActivityLogDirection? direction, ActivityLogQueryFilter filter, int pageSize, int pageNumber, CancellationToken cancellationToken = default)
+    public async Task<ActivityLogPage> GetActivityLog(Guid party, ActivityLogDirection? direction, ActivityLogQueryFilter filter, int pageSize, int pageNumber, bool includeMps = false, CancellationToken cancellationToken = default)
     {
-        var anchoredFilter = Anchor(party, direction, filter ?? new ActivityLogQueryFilter());
+        var anchoredFilter = WithoutMaskinportenSchema(Anchor(party, direction, filter ?? new ActivityLogQueryFilter()), includeMps);
 
         var page = await activityLogQuery.GetAsync(anchoredFilter, pageSize, pageNumber, cancellationToken);
 
@@ -20,15 +21,32 @@ public class ActivityLogService(ActivityLogQuery activityLogQuery) : IActivityLo
     }
 
     /// <inheritdoc />
-    public async Task<ActivityLogFacetPage> GetActivityLogFacet(Guid party, ActivityLogDirection? direction, ActivityLogFacetField field, ActivityLogQueryFilter filter, string term, ActivityLogFacetOrder orderBy, int pageSize, int pageNumber, CancellationToken cancellationToken = default)
+    public async Task<ActivityLogFacetPage> GetActivityLogFacet(Guid party, ActivityLogDirection? direction, ActivityLogFacetField field, ActivityLogQueryFilter filter, string term, ActivityLogFacetOrder orderBy, int pageSize, int pageNumber, bool includeMps = false, CancellationToken cancellationToken = default)
     {
         var baseFilter = WithoutOwnField(field, filter ?? new ActivityLogQueryFilter());
-        var anchoredFilter = Anchor(party, direction, baseFilter);
+        var anchoredFilter = WithoutMaskinportenSchema(Anchor(party, direction, baseFilter), includeMps);
 
         var page = await activityLogQuery.GetFacetAsync(field, anchoredFilter, term, orderBy, pageSize, pageNumber, cancellationToken);
 
         var items = page.Items.Select(DtoMapper.ToActivityLogFacetDto).ToList();
         return new ActivityLogFacetPage(items, page.HasMore);
+    }
+
+    // The Supplier role is used exclusively for Maskinporten schema delegations, so excluding
+    // it hides those events entirely — the same rule connection queries apply. The exclusion
+    // survives WithoutOwnField, so the Supplier role never shows up as a role facet value.
+    private static ActivityLogQueryFilter WithoutMaskinportenSchema(ActivityLogQueryFilter filter, bool includeMps)
+    {
+        if (includeMps)
+        {
+            return filter;
+        }
+
+        IReadOnlyCollection<Guid> excluded = filter.ExcludeRoleIds is { Count: > 0 }
+            ? [.. filter.ExcludeRoleIds, RoleConstants.Supplier.Id]
+            : [RoleConstants.Supplier.Id];
+
+        return filter with { ExcludeRoleIds = excluded };
     }
 
     private static ActivityLogQueryFilter Anchor(Guid party, ActivityLogDirection? direction, ActivityLogQueryFilter filter)

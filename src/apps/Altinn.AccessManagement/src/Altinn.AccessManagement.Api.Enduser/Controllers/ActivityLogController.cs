@@ -93,7 +93,7 @@ public class ActivityLogController(IActivityLogService activityLogService) : Con
             filter,
             size,
             page,
-            cancellationToken);
+            cancellationToken: cancellationToken);
 
         return Ok(PaginatedResult.Create(result.Items, result.HasMore ? NextLink(size, page + 1) : null));
     }
@@ -166,7 +166,7 @@ public class ActivityLogController(IActivityLogService activityLogService) : Con
             orderBy,
             size,
             page,
-            cancellationToken);
+            cancellationToken: cancellationToken);
 
         return Ok(PaginatedResult.Create(result.Items, result.HasMore ? NextLink(size, page + 1) : null));
     }

@@ -431,14 +431,47 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
         var ownFieldIgnored = await service.GetActivityLogFacet(
             from.Id, direction: null, ActivityLogFacetField.To,
             new ActivityLogQueryFilter { ToIds = [Guid.NewGuid()] },
-            term: null, ActivityLogFacetOrder.Name, 100, 0, TestContext.Current.CancellationToken);
+            term: null, ActivityLogFacetOrder.Name, 100, 0, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Contains(ownFieldIgnored.Items, p => p.Id == to.Id);
 
         var otherFieldApplies = await service.GetActivityLogFacet(
             from.Id, direction: null, ActivityLogFacetField.Role,
             new ActivityLogQueryFilter { ToIds = [Guid.NewGuid()] },
-            term: null, ActivityLogFacetOrder.Name, 100, 0, TestContext.Current.CancellationToken);
+            term: null, ActivityLogFacetOrder.Name, 100, 0, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Empty(otherFieldApplies.Items);
+    }
+
+    [Fact]
+    public async Task Service_HidesMaskinportenSchemaEventsUnlessIncluded()
+    {
+        var (from, to, rightholderAssignment) = await SeedAssignment();
+        var supplierAssignment = new Assignment { Id = Guid.CreateVersion7(), FromId = from.Id, ToId = to.Id, RoleId = RoleConstants.Supplier };
+        _db.Assignments.Add(supplierAssignment);
+        await _db.SaveChangesAsync(Seeder);
+
+        var service = new Altinn.AccessMgmt.Core.Services.ActivityLogService(_query);
+
+        // Default: the Supplier-role (Maskinporten schema) event is hidden from entries and facets.
+        var entries = await service.GetActivityLog(
+            from.Id, direction: null, new ActivityLogQueryFilter(), 100, 0, cancellationToken: TestContext.Current.CancellationToken);
+        Assert.DoesNotContain(entries.Items, e => e.ItemId == supplierAssignment.Id);
+        Assert.Contains(entries.Items, e => e.ItemId == rightholderAssignment.Id);
+
+        var roles = await service.GetActivityLogFacet(
+            from.Id, direction: null, ActivityLogFacetField.Role, new ActivityLogQueryFilter(),
+            term: null, ActivityLogFacetOrder.Name, 100, 0, cancellationToken: TestContext.Current.CancellationToken);
+        Assert.DoesNotContain(roles.Items, r => r.Id == RoleConstants.Supplier.Id);
+
+        // includeMps: true returns them again.
+        var included = await service.GetActivityLog(
+            from.Id, direction: null, new ActivityLogQueryFilter(), 100, 0, includeMps: true, TestContext.Current.CancellationToken);
+        Assert.Contains(included.Items, e => e.ItemId == supplierAssignment.Id);
+
+        // The raw query has no default exclusion, and the exclusion alone must not count as
+        // a narrowing filter.
+        var raw = await _query.GetAsync(new ActivityLogQueryFilter { InvolvedIds = [from.Id] }, 100, cancellationToken: TestContext.Current.CancellationToken);
+        Assert.Contains(raw.Items, e => e.ItemId == supplierAssignment.Id);
+        Assert.False(new ActivityLogQueryFilter { ExcludeRoleIds = [RoleConstants.Supplier.Id] }.HasAny);
     }
 
     [Fact]
