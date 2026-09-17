@@ -76,7 +76,7 @@ public sealed class ActivityLogQuery(AppDbContext db)
     }
 
     /// <summary>
-    /// Returns one page of values occurring in the log for the given facet field, within the
+    /// Returns one page of values occurring in the log for the given filter field, within the
     /// same filter semantics as <see cref="GetAsync"/>. Values are distinct (id, name) pairs;
     /// the same id can recur with different name snapshots. The term matches names only.
     /// </summary>
@@ -87,11 +87,11 @@ public sealed class ActivityLogQuery(AppDbContext db)
     /// <param name="pageSize">Maximum number of values to return.</param>
     /// <param name="pageNumber">Zero-based page number.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    public async Task<ActivityLogFacetQueryPage> GetFacetAsync(
-        ActivityLogFacetField field,
+    public async Task<ActivityLogFilterValueQueryPage> GetFilterValuesAsync(
+        ActivityLogFilterField field,
         ActivityLogQueryFilter filter,
         string term,
-        ActivityLogFacetOrder orderBy,
+        ActivityLogFilterValueOrder orderBy,
         int pageSize,
         int pageNumber = 0,
         CancellationToken cancellationToken = default)
@@ -105,23 +105,23 @@ public sealed class ActivityLogQuery(AppDbContext db)
 
         return field switch
         {
-            ActivityLogFacetField.From => await PageSnapshotFacetAsync(source.Where(t => t.FromId != null).Select(t => new FacetRow { Id = t.FromId.Value, Name = t.FromName, When = t.When }), term, orderBy, pageSize, pageNumber, cancellationToken),
-            ActivityLogFacetField.To => await PageSnapshotFacetAsync(source.Where(t => t.ToId != null).Select(t => new FacetRow { Id = t.ToId.Value, Name = t.ToName, When = t.When }), term, orderBy, pageSize, pageNumber, cancellationToken),
-            ActivityLogFacetField.Via => await PageSnapshotFacetAsync(source.Where(t => t.ViaId != null).Select(t => new FacetRow { Id = t.ViaId.Value, Name = t.ViaName, When = t.When }), term, orderBy, pageSize, pageNumber, cancellationToken),
-            ActivityLogFacetField.By => await PageSnapshotFacetAsync(source.Where(t => t.ById != null).Select(t => new FacetRow { Id = t.ById.Value, Name = t.ByName, When = t.When }), term, orderBy, pageSize, pageNumber, cancellationToken),
-            ActivityLogFacetField.Role => await PageSnapshotFacetAsync(source.Where(t => t.RoleId != null).Select(t => new FacetRow { Id = t.RoleId.Value, Name = t.RoleName, When = t.When }), term, orderBy, pageSize, pageNumber, cancellationToken),
-            ActivityLogFacetField.Package => await PageSnapshotFacetAsync(source.Where(t => t.PackageId != null).Select(t => new FacetRow { Id = t.PackageId.Value, Name = t.PackageName, When = t.When }), term, orderBy, pageSize, pageNumber, cancellationToken),
-            ActivityLogFacetField.Resource => await PageSnapshotFacetAsync(source.Where(t => t.ResourceId != null).Select(t => new FacetRow { Id = t.ResourceId.Value, Name = t.ResourceName, When = t.When }), term, orderBy, pageSize, pageNumber, cancellationToken),
-            ActivityLogFacetField.Source => await PageSourceFacetAsync(source, term, orderBy, pageSize, pageNumber, cancellationToken),
-            ActivityLogFacetField.ActivityType => await PageActivityTypeFacetAsync(source, term, orderBy, pageSize, pageNumber, cancellationToken),
-            _ => throw new ArgumentOutOfRangeException(nameof(field), field, "Unknown facet field."),
+            ActivityLogFilterField.From => await PageSnapshotValuesAsync(source.Where(t => t.FromId != null).Select(t => new ValueRow { Id = t.FromId.Value, Name = t.FromName, When = t.When }), term, orderBy, pageSize, pageNumber, cancellationToken),
+            ActivityLogFilterField.To => await PageSnapshotValuesAsync(source.Where(t => t.ToId != null).Select(t => new ValueRow { Id = t.ToId.Value, Name = t.ToName, When = t.When }), term, orderBy, pageSize, pageNumber, cancellationToken),
+            ActivityLogFilterField.Via => await PageSnapshotValuesAsync(source.Where(t => t.ViaId != null).Select(t => new ValueRow { Id = t.ViaId.Value, Name = t.ViaName, When = t.When }), term, orderBy, pageSize, pageNumber, cancellationToken),
+            ActivityLogFilterField.By => await PageSnapshotValuesAsync(source.Where(t => t.ById != null).Select(t => new ValueRow { Id = t.ById.Value, Name = t.ByName, When = t.When }), term, orderBy, pageSize, pageNumber, cancellationToken),
+            ActivityLogFilterField.Role => await PageSnapshotValuesAsync(source.Where(t => t.RoleId != null).Select(t => new ValueRow { Id = t.RoleId.Value, Name = t.RoleName, When = t.When }), term, orderBy, pageSize, pageNumber, cancellationToken),
+            ActivityLogFilterField.Package => await PageSnapshotValuesAsync(source.Where(t => t.PackageId != null).Select(t => new ValueRow { Id = t.PackageId.Value, Name = t.PackageName, When = t.When }), term, orderBy, pageSize, pageNumber, cancellationToken),
+            ActivityLogFilterField.Resource => await PageSnapshotValuesAsync(source.Where(t => t.ResourceId != null).Select(t => new ValueRow { Id = t.ResourceId.Value, Name = t.ResourceName, When = t.When }), term, orderBy, pageSize, pageNumber, cancellationToken),
+            ActivityLogFilterField.Source => await PageSourceValuesAsync(source, term, orderBy, pageSize, pageNumber, cancellationToken),
+            ActivityLogFilterField.ActivityType => await PageActivityTypeValuesAsync(source, term, orderBy, pageSize, pageNumber, cancellationToken),
+            _ => throw new ArgumentOutOfRangeException(nameof(field), field, "Unknown filter field."),
         };
     }
 
-    private static async Task<ActivityLogFacetQueryPage> PageSnapshotFacetAsync(
-        IQueryable<FacetRow> rows,
+    private static async Task<ActivityLogFilterValueQueryPage> PageSnapshotValuesAsync(
+        IQueryable<ValueRow> rows,
         string term,
-        ActivityLogFacetOrder orderBy,
+        ActivityLogFilterValueOrder orderBy,
         int pageSize,
         int pageNumber,
         CancellationToken cancellationToken)
@@ -136,7 +136,7 @@ public sealed class ActivityLogQuery(AppDbContext db)
             .GroupBy(r => new { r.Id, r.Name })
             .Select(g => new { g.Key.Id, g.Key.Name, When = g.Max(r => r.When) });
 
-        grouped = orderBy == ActivityLogFacetOrder.When
+        grouped = orderBy == ActivityLogFilterValueOrder.When
             ? grouped.OrderByDescending(r => r.When).ThenBy(r => r.Name).ThenBy(r => r.Id)
             : grouped.OrderBy(r => r.Name).ThenBy(r => r.Id);
 
@@ -151,13 +151,13 @@ public sealed class ActivityLogQuery(AppDbContext db)
             page.RemoveAt(pageSize);
         }
 
-        return new ActivityLogFacetQueryPage(page.Select(r => new ActivityLogFacet(r.Id, r.Name)).ToList(), hasMore);
+        return new ActivityLogFilterValueQueryPage(page.Select(r => new ActivityLogFilterValue(r.Id, r.Name)).ToList(), hasMore);
     }
 
-    private static async Task<ActivityLogFacetQueryPage> PageSourceFacetAsync(
+    private static async Task<ActivityLogFilterValueQueryPage> PageSourceValuesAsync(
         IQueryable<ActivityLog> source,
         string term,
-        ActivityLogFacetOrder orderBy,
+        ActivityLogFilterValueOrder orderBy,
         int pageSize,
         int pageNumber,
         CancellationToken cancellationToken)
@@ -176,10 +176,10 @@ public sealed class ActivityLogQuery(AppDbContext db)
         return PageInMemory(values, term, orderBy, pageSize, pageNumber);
     }
 
-    private static async Task<ActivityLogFacetQueryPage> PageActivityTypeFacetAsync(
+    private static async Task<ActivityLogFilterValueQueryPage> PageActivityTypeValuesAsync(
         IQueryable<ActivityLog> source,
         string term,
-        ActivityLogFacetOrder orderBy,
+        ActivityLogFilterValueOrder orderBy,
         int pageSize,
         int pageNumber,
         CancellationToken cancellationToken)
@@ -201,10 +201,10 @@ public sealed class ActivityLogQuery(AppDbContext db)
         return PageInMemory(values, term, orderBy, pageSize, pageNumber);
     }
 
-    private static ActivityLogFacetQueryPage PageInMemory(
+    private static ActivityLogFilterValueQueryPage PageInMemory(
         IEnumerable<(Guid Id, string Name, DateTimeOffset When)> values,
         string term,
-        ActivityLogFacetOrder orderBy,
+        ActivityLogFilterValueOrder orderBy,
         int pageSize,
         int pageNumber)
     {
@@ -214,7 +214,7 @@ public sealed class ActivityLogQuery(AppDbContext db)
             values = values.Where(v => v.Name is not null && v.Name.Contains(trimmed, StringComparison.OrdinalIgnoreCase));
         }
 
-        values = orderBy == ActivityLogFacetOrder.When
+        values = orderBy == ActivityLogFilterValueOrder.When
             ? values.OrderByDescending(v => v.When).ThenBy(v => v.Name, StringComparer.Ordinal).ThenBy(v => v.Id)
             : values.OrderBy(v => v.Name, StringComparer.Ordinal).ThenBy(v => v.Id);
 
@@ -226,7 +226,7 @@ public sealed class ActivityLogQuery(AppDbContext db)
             page.RemoveAt(pageSize);
         }
 
-        return new ActivityLogFacetQueryPage(page.Select(v => new ActivityLogFacet(v.Id, v.Name)).ToList(), hasMore);
+        return new ActivityLogFilterValueQueryPage(page.Select(v => new ActivityLogFilterValue(v.Id, v.Name)).ToList(), hasMore);
     }
 
     private static string EscapeLike(string term)
@@ -237,7 +237,7 @@ public sealed class ActivityLogQuery(AppDbContext db)
 
     // Member-init shape on purpose: EF only inlines member access over anonymous types and
     // member-init projections; a positional record constructor is untranslatable in GroupBy.
-    private sealed record FacetRow
+    private sealed record ValueRow
     {
         public Guid Id { get; init; }
 

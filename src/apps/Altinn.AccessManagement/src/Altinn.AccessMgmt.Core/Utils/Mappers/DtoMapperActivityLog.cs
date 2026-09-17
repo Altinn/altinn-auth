@@ -51,12 +51,12 @@ public partial class DtoMapper : IDtoMapper
     };
 
     /// <summary>
-    /// Maps a facet value to its external contract.
+    /// Maps a filter value to its external contract.
     /// </summary>
-    public static ActivityLogFacetDto ToActivityLogFacetDto(ActivityLogFacet facet) => new()
+    public static ActivityLogFilterValueDto ToActivityLogFilterValueDto(ActivityLogFilterValue value) => new()
     {
-        Id = facet.Id,
-        Name = facet.Name,
+        Id = value.Id,
+        Name = value.Name,
     };
 
     /// <summary>

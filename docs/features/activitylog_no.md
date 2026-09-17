@@ -82,7 +82,7 @@ GET /accessmanagement/api/v1/enduser/activitylog?party={guid}&direction=From&typ
 
 ### 2. Filterverdi-endepunktene — `GET /activitylog/filters/{field}`
 
-*(Også omtalt som facet-endepunkter; «filterverdi-oppslag» er hverdagsnavnet — de returnerer de distinkte verdiene som forekommer i loggen, avgrenset til gjeldende søk.)*
+*(De returnerer de distinkte verdiene som forekommer i loggen, avgrenset til gjeldende søk.)*
 
 Returnerer de distinkte `(id, name)`-parene som forekommer i partyens logg for ett felt, slik at filtervelgere bare tilbyr verdier som faktisk gir treff. `field` er en av `from`, `to`, `via`, `by`, `role`, `package`, `resource`, `source`, `activitytype`.
 

@@ -99,24 +99,24 @@ public class ActivityLogController(IActivityLogService activityLogService) : Con
     }
 
     /// <summary>
-    /// Get the values occurring in the party's activity log for one facet field, as (id, name)
+    /// Get the values occurring in the party's activity log for one filter field, as (id, name)
     /// pairs to populate a filter picker. Takes the same filter parameters as the main endpoint
-    /// (the faceted field's own filter values are ignored so more can be added; the party
+    /// (the looked-up field's own filter values are ignored so more can be added; the party
     /// anchor never is), pages the same way, and term matches names case-insensitively.
     /// The same id can recur with different names, since names are point-in-time snapshots.
     /// </summary>
     [HttpGet("filters/{field}")]
     [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_ACTIVITYLOG_READ)]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_READ)]
-    [ProducesResponseType<PaginatedResult<ActivityLogFacetDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<PaginatedResult<ActivityLogFilterValueDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetActivityLogFacet(
-        [FromRoute(Name = "field")] ActivityLogFacetField field,
+    public async Task<IActionResult> GetActivityLogFilterValues(
+        [FromRoute(Name = "field")] ActivityLogFilterField field,
         [Required][FromQuery(Name = "party")] Guid party,
         [FromQuery(Name = "term")] string term = null,
-        [FromQuery(Name = "orderBy")] ActivityLogFacetOrder orderBy = ActivityLogFacetOrder.Name,
+        [FromQuery(Name = "orderBy")] ActivityLogFilterValueOrder orderBy = ActivityLogFilterValueOrder.Name,
         [FromQuery(Name = "direction")] ActivityLogDirection? direction = null,
         [FromQuery(Name = "typeId")] List<Guid> typeId = null,
         [FromQuery(Name = "type")] List<ActivityLogType> type = null,
@@ -157,7 +157,7 @@ public class ActivityLogController(IActivityLogService activityLogService) : Con
         var size = Math.Clamp(pageSize ?? DefaultPageSize, 1, MaxPageSize);
         var page = Math.Max(pageNo ?? 0, 0);
 
-        var result = await activityLogService.GetActivityLogFacet(
+        var result = await activityLogService.GetActivityLogFilterValues(
             party,
             direction,
             field,

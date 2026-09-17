@@ -3,10 +3,10 @@ using System.Text.Json.Serialization;
 namespace Altinn.Authorization.Api.Contracts.AccessManagement.ActivityLog;
 
 /// <summary>
-/// Ordering of facet values.
+/// Ordering of filter values.
 /// </summary>
 [JsonConverter(typeof(JsonStringEnumConverter))]
-public enum ActivityLogFacetOrder
+public enum ActivityLogFilterValueOrder
 {
     /// <summary>
     /// Alphabetically by name — stable across pages.

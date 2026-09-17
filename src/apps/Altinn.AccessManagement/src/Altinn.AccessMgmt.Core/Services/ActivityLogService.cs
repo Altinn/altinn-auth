@@ -21,20 +21,20 @@ public class ActivityLogService(ActivityLogQuery activityLogQuery) : IActivityLo
     }
 
     /// <inheritdoc />
-    public async Task<ActivityLogFacetPage> GetActivityLogFacet(Guid party, ActivityLogDirection? direction, ActivityLogFacetField field, ActivityLogQueryFilter filter, string term, ActivityLogFacetOrder orderBy, int pageSize, int pageNumber, bool includeMps = false, CancellationToken cancellationToken = default)
+    public async Task<ActivityLogFilterValuePage> GetActivityLogFilterValues(Guid party, ActivityLogDirection? direction, ActivityLogFilterField field, ActivityLogQueryFilter filter, string term, ActivityLogFilterValueOrder orderBy, int pageSize, int pageNumber, bool includeMps = false, CancellationToken cancellationToken = default)
     {
         var baseFilter = WithoutOwnField(field, filter ?? new ActivityLogQueryFilter());
         var anchoredFilter = WithoutMaskinportenSchema(Anchor(party, direction, baseFilter), includeMps);
 
-        var page = await activityLogQuery.GetFacetAsync(field, anchoredFilter, term, orderBy, pageSize, pageNumber, cancellationToken);
+        var page = await activityLogQuery.GetFilterValuesAsync(field, anchoredFilter, term, orderBy, pageSize, pageNumber, cancellationToken);
 
-        var items = page.Items.Select(DtoMapper.ToActivityLogFacetDto).ToList();
-        return new ActivityLogFacetPage(items, page.HasMore);
+        var items = page.Items.Select(DtoMapper.ToActivityLogFilterValueDto).ToList();
+        return new ActivityLogFilterValuePage(items, page.HasMore);
     }
 
     // The Supplier role is used exclusively for Maskinporten schema delegations, so excluding
     // it hides those events entirely — the same rule connection queries apply. The exclusion
-    // survives WithoutOwnField, so the Supplier role never shows up as a role facet value.
+    // survives WithoutOwnField, so the Supplier role never shows up as a role filter value.
     private static ActivityLogQueryFilter WithoutMaskinportenSchema(ActivityLogQueryFilter filter, bool includeMps)
     {
         if (includeMps)
@@ -65,17 +65,17 @@ public class ActivityLogService(ActivityLogQuery activityLogQuery) : IActivityLo
         };
     }
 
-    private static ActivityLogQueryFilter WithoutOwnField(ActivityLogFacetField field, ActivityLogQueryFilter filter) => field switch
+    private static ActivityLogQueryFilter WithoutOwnField(ActivityLogFilterField field, ActivityLogQueryFilter filter) => field switch
     {
-        ActivityLogFacetField.From => filter with { FromIds = null },
-        ActivityLogFacetField.To => filter with { ToIds = null },
-        ActivityLogFacetField.Via => filter with { ViaIds = null },
-        ActivityLogFacetField.By => filter with { ByIds = null },
-        ActivityLogFacetField.Role => filter with { RoleIds = null },
-        ActivityLogFacetField.Package => filter with { PackageIds = null },
-        ActivityLogFacetField.Resource => filter with { ResourceIds = null },
-        ActivityLogFacetField.Source => filter with { SourceIds = null },
-        ActivityLogFacetField.ActivityType => filter with { ActivityTypeKeys = null },
+        ActivityLogFilterField.From => filter with { FromIds = null },
+        ActivityLogFilterField.To => filter with { ToIds = null },
+        ActivityLogFilterField.Via => filter with { ViaIds = null },
+        ActivityLogFilterField.By => filter with { ByIds = null },
+        ActivityLogFilterField.Role => filter with { RoleIds = null },
+        ActivityLogFilterField.Package => filter with { PackageIds = null },
+        ActivityLogFilterField.Resource => filter with { ResourceIds = null },
+        ActivityLogFilterField.Source => filter with { SourceIds = null },
+        ActivityLogFilterField.ActivityType => filter with { ActivityTypeKeys = null },
         _ => filter,
     };
 }

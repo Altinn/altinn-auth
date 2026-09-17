@@ -6,7 +6,7 @@ namespace Altinn.AccessMgmt.FFB.Services.PageData;
 
 /// <summary>
 /// Runs ActivityLogQuery against an environment for the activity log page: the entry query
-/// and the facet lookups its filter pickers use.
+/// and the filter value lookups its filter pickers use.
 /// </summary>
 public sealed class ActivityLogPageService(IEnvironmentDbContextFactory dbFactory)
 {
@@ -23,9 +23,9 @@ public sealed class ActivityLogPageService(IEnvironmentDbContextFactory dbFactor
         return await query.GetAsync(filter, pageSize, pageNumber, ct);
     }
 
-    public async Task<ActivityLogFacetQueryPage> FacetAsync(
+    public async Task<ActivityLogFilterValueQueryPage> FilterValuesAsync(
         string environment,
-        ActivityLogFacetField field,
+        ActivityLogFilterField field,
         ActivityLogQueryFilter filter,
         string? term,
         int pageSize,
@@ -34,6 +34,6 @@ public sealed class ActivityLogPageService(IEnvironmentDbContextFactory dbFactor
         using var db = dbFactory.CreateContext(environment);
         var query = new ActivityLogQuery(db);
 
-        return await query.GetFacetAsync(field, filter, term, ActivityLogFacetOrder.Name, pageSize, 0, ct);
+        return await query.GetFilterValuesAsync(field, filter, term, ActivityLogFilterValueOrder.Name, pageSize, 0, ct);
     }
 }

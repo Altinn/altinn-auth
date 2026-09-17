@@ -3,10 +3,10 @@ using System.Text.Json.Serialization;
 namespace Altinn.Authorization.Api.Contracts.AccessManagement.ActivityLog;
 
 /// <summary>
-/// The activity log field a facet lookup returns occurring values for.
+/// The activity log field a filter value lookup returns occurring values for.
 /// </summary>
 [JsonConverter(typeof(JsonStringEnumConverter))]
-public enum ActivityLogFacetField
+public enum ActivityLogFilterField
 {
     /// <summary>
     /// The from-party.

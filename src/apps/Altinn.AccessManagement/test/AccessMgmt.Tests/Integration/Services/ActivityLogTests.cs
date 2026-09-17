@@ -394,7 +394,7 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
     }
 
     [Fact]
-    public async Task FacetQuery_ReturnsDistinctPairs_KeepingRenamedSnapshotsAndMatchingTerm()
+    public async Task FilterValueQuery_ReturnsDistinctPairs_KeepingRenamedSnapshotsAndMatchingTerm()
     {
         var (from, to, assignment) = await SeedAssignment();
         var package = await _db.Packages.AsNoTracking().OrderBy(p => p.Id).FirstAsync(TestContext.Current.CancellationToken);
@@ -408,36 +408,36 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
 
         var filter = new ActivityLogQueryFilter { InvolvedIds = [from.Id] };
 
-        var pairs = await _query.GetFacetAsync(ActivityLogFacetField.To, filter, term: null, ActivityLogFacetOrder.Name, 100, cancellationToken: TestContext.Current.CancellationToken);
+        var pairs = await _query.GetFilterValuesAsync(ActivityLogFilterField.To, filter, term: null, ActivityLogFilterValueOrder.Name, 100, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal(2, pairs.Items.Count);
         Assert.All(pairs.Items, p => Assert.Equal(to.Id, p.Id));
         Assert.Contains(pairs.Items, p => p.Name == "Aktivitetslogg Til AS");
         Assert.Contains(pairs.Items, p => p.Name == "Aktivitetslogg Omdøpt AS");
 
-        var termMatch = await _query.GetFacetAsync(ActivityLogFacetField.To, filter, term: "omdøpt", ActivityLogFacetOrder.Name, 100, cancellationToken: TestContext.Current.CancellationToken);
+        var termMatch = await _query.GetFilterValuesAsync(ActivityLogFilterField.To, filter, term: "omdøpt", ActivityLogFilterValueOrder.Name, 100, cancellationToken: TestContext.Current.CancellationToken);
         var single = Assert.Single(termMatch.Items);
         Assert.Equal("Aktivitetslogg Omdøpt AS", single.Name);
 
-        var newestFirst = await _query.GetFacetAsync(ActivityLogFacetField.To, filter, term: null, ActivityLogFacetOrder.When, 100, cancellationToken: TestContext.Current.CancellationToken);
+        var newestFirst = await _query.GetFilterValuesAsync(ActivityLogFilterField.To, filter, term: null, ActivityLogFilterValueOrder.When, 100, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Equal("Aktivitetslogg Omdøpt AS", newestFirst.Items[0].Name);
     }
 
     [Fact]
-    public async Task FacetService_IgnoresOwnFieldFilterButAppliesOthers()
+    public async Task FilterValueService_IgnoresOwnFieldFilterButAppliesOthers()
     {
         var (from, to, _) = await SeedAssignment();
         var service = new Altinn.AccessMgmt.Core.Services.ActivityLogService(_query);
 
-        var ownFieldIgnored = await service.GetActivityLogFacet(
-            from.Id, direction: null, ActivityLogFacetField.To,
+        var ownFieldIgnored = await service.GetActivityLogFilterValues(
+            from.Id, direction: null, ActivityLogFilterField.To,
             new ActivityLogQueryFilter { ToIds = [Guid.NewGuid()] },
-            term: null, ActivityLogFacetOrder.Name, 100, 0, cancellationToken: TestContext.Current.CancellationToken);
+            term: null, ActivityLogFilterValueOrder.Name, 100, 0, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Contains(ownFieldIgnored.Items, p => p.Id == to.Id);
 
-        var otherFieldApplies = await service.GetActivityLogFacet(
-            from.Id, direction: null, ActivityLogFacetField.Role,
+        var otherFieldApplies = await service.GetActivityLogFilterValues(
+            from.Id, direction: null, ActivityLogFilterField.Role,
             new ActivityLogQueryFilter { ToIds = [Guid.NewGuid()] },
-            term: null, ActivityLogFacetOrder.Name, 100, 0, cancellationToken: TestContext.Current.CancellationToken);
+            term: null, ActivityLogFilterValueOrder.Name, 100, 0, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Empty(otherFieldApplies.Items);
     }
 
@@ -451,15 +451,15 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
 
         var service = new Altinn.AccessMgmt.Core.Services.ActivityLogService(_query);
 
-        // Default: the Supplier-role (Maskinporten schema) event is hidden from entries and facets.
+        // Default: the Supplier-role (Maskinporten schema) event is hidden from entries and filter values.
         var entries = await service.GetActivityLog(
             from.Id, direction: null, new ActivityLogQueryFilter(), 100, 0, cancellationToken: TestContext.Current.CancellationToken);
         Assert.DoesNotContain(entries.Items, e => e.ItemId == supplierAssignment.Id);
         Assert.Contains(entries.Items, e => e.ItemId == rightholderAssignment.Id);
 
-        var roles = await service.GetActivityLogFacet(
-            from.Id, direction: null, ActivityLogFacetField.Role, new ActivityLogQueryFilter(),
-            term: null, ActivityLogFacetOrder.Name, 100, 0, cancellationToken: TestContext.Current.CancellationToken);
+        var roles = await service.GetActivityLogFilterValues(
+            from.Id, direction: null, ActivityLogFilterField.Role, new ActivityLogQueryFilter(),
+            term: null, ActivityLogFilterValueOrder.Name, 100, 0, cancellationToken: TestContext.Current.CancellationToken);
         Assert.DoesNotContain(roles.Items, r => r.Id == RoleConstants.Supplier.Id);
 
         // includeMps: true returns them again.
@@ -475,7 +475,7 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
     }
 
     [Fact]
-    public async Task FacetQuery_ResolvesActivityTypeAndSourceFacets()
+    public async Task FilterValueQuery_ResolvesActivityTypeAndSourceValues()
     {
         var (from, _, assignment) = await SeedAssignment();
         var package = await _db.Packages.AsNoTracking().OrderBy(p => p.Id).FirstAsync(TestContext.Current.CancellationToken);
@@ -485,11 +485,11 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
 
         var filter = new ActivityLogQueryFilter { InvolvedIds = [from.Id] };
 
-        var activityTypes = await _query.GetFacetAsync(ActivityLogFacetField.ActivityType, filter, term: null, ActivityLogFacetOrder.Name, 100, cancellationToken: TestContext.Current.CancellationToken);
+        var activityTypes = await _query.GetFilterValuesAsync(ActivityLogFilterField.ActivityType, filter, term: null, ActivityLogFilterValueOrder.Name, 100, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Contains(activityTypes.Items, p => p.Id == ActivityTypeConstants.AssignmentCreated.Id && p.Name == ActivityTypeConstants.AssignmentCreated.Entity.Name);
         Assert.Contains(activityTypes.Items, p => p.Id == ActivityTypeConstants.AssignmentPackageCreated.Id);
 
-        var sources = await _query.GetFacetAsync(ActivityLogFacetField.Source, filter, term: null, ActivityLogFacetOrder.Name, 100, cancellationToken: TestContext.Current.CancellationToken);
+        var sources = await _query.GetFilterValuesAsync(ActivityLogFilterField.Source, filter, term: null, ActivityLogFilterValueOrder.Name, 100, cancellationToken: TestContext.Current.CancellationToken);
         var sourcePair = Assert.Single(sources.Items);
         Assert.Equal(SystemEntityConstants.StaticDataIngest.Id, sourcePair.Id);
         Assert.Equal("StaticDataIngest", sourcePair.Name);

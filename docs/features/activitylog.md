@@ -82,7 +82,7 @@ GET /accessmanagement/api/v1/enduser/activitylog?party={guid}&direction=From&typ
 
 ### 2. Filter value endpoints — `GET /activitylog/filters/{field}`
 
-*(Also referred to as facet endpoints; "filter value lookup" is the plain-language name — they return the distinct values occurring in the log, scoped to the current search.)*
+*(They return the distinct values occurring in the log, scoped to the current search.)*
 
 Returns the distinct `(id, name)` pairs occurring in the party's log for one field, so filter pickers only offer values that actually give hits. `field` is one of `from`, `to`, `via`, `by`, `role`, `package`, `resource`, `source`, `activitytype`.
 
