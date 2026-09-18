@@ -1,7 +1,7 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Altinn.AccessManagement.Models;
+using Altinn.AccessManagement.Api.Internal.Models;
 using Altinn.AccessManagement.Tests.Fixtures;
 using Altinn.AccessManagement.TestUtils.Data;
 using Altinn.AccessMgmt.Core;

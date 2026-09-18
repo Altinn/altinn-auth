@@ -1,14 +1,14 @@
-﻿using Altinn.AccessManagement.Core.Models;
+﻿using Altinn.AccessManagement.Api.Internal.Extensions;
+using Altinn.AccessManagement.Api.Internal.Models;
+using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Services.Interfaces;
-using Altinn.AccessManagement.Models;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 using Altinn.Authorization.Api.Contracts.Authorization;
-using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Altinn.AccessManagement.Controllers;
+namespace Altinn.AccessManagement.Api.Internal.Controllers;
 
 /// <summary>
 /// Controller responsible for all operations for managing delegations of Altinn Apps
@@ -16,7 +16,6 @@ namespace Altinn.AccessManagement.Controllers;
 [Route("accessmanagement/api/v1/policyinformation")]
 [ApiController]
 public class PolicyInformationPointController(
-    IMapper mapper,
     IPolicyInformationPoint pip,
     IAuthorizedPartyRepoServiceEf authorizedPartyRepoService
     ) : ControllerBase
@@ -44,7 +43,7 @@ public class PolicyInformationPointController(
             return new ObjectResult(ProblemDetailsFactory.CreateValidationProblemDetails(HttpContext, ModelState));
         }
 
-        return mapper.Map<List<DelegationChangeExternal>>(response.DelegationChanges);
+        return response.DelegationChanges.Select(x => x.ToDelegationChangeExternal()).ToList();
     }
 
     /// <summary>
@@ -96,7 +95,7 @@ public class PolicyInformationPointController(
                 if (RoleConstants.TryGetById(conRole.RoleId, out var role) && role.Id != RoleConstants.Rightholder.Id && role.Id != RoleConstants.Agent.Id)
                 {
                     pipResponse.Roles.Add(RoleUrn.Parse(role.Entity.Urn));
-                    
+
                     if (!string.IsNullOrWhiteSpace(role.Entity.LegacyUrn))
                     {
                         pipResponse.Roles.Add(RoleUrn.Parse(role.Entity.LegacyUrn));

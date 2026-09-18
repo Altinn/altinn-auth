@@ -1,4 +1,4 @@
-namespace Altinn.AccessManagement.Models
+namespace Altinn.AccessManagement.Api.Internal.Models
 {
     /// <summary>
     /// The type of delegation change
