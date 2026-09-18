@@ -3,3 +3,7 @@ kind: Kustomization
 namespace: product-authorization
 resources:
   - ../../app
+  - config-map-runtime.yaml
+patches:
+  - path: deployment-patch.yaml
+

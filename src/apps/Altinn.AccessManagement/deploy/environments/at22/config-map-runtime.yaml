@@ -1,0 +1,37 @@
+﻿---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: access-management-runtime
+  labels:
+    app.kubernetes.io/name: access-management-runtime
+    app.kubernetes.io/instance: at22
+    app.kubernetes.io/component: access-management
+    app.kubernetes.io/part-of: authorization
+    app.kubernetes.io/managed-by: kustomize
+data:
+  Altinn__AppConfiguration__Endpoint: https://appconfaltinnauth001hub.azconfig.io
+  Altinn__AppConfiguration__FeatureFlags__Enable: "true"
+  Altinn__AppConfiguration__Label: at22-access-management
+  PostgreSQLSettings__AdminConnectionString: Host=at22-authorization-postgres.altinn.cloud;Port=5432;Username=platform_authorization_admin;Password={0};Database=authorizationdb;SslMode=Require;Trust Server Certificate=true;Pooling=true;Maximum Pool Size=2;Include Error Detail=true;
+  PostgreSQLSettings__ConnectionString: Host=at22-authorization-postgres.altinn.cloud;Port=5432;Username=platform_authorization;Password={0};Database=authorizationdb;SslMode=Require;Trust Server Certificate=true;Pooling=true;Maximum Pool Size=8;Include Error Detail=true;
+  PostgreSQLSettings__EnableDBConnection: "true"
+  GeneralSettings__Hostname: at22.altinn.cloud
+  GeneralSettings__FrontendBaseUrl: https://amcdntest.z16.web.core.windows.net/
+  PlatformSettings__ApiAuthenticationEndpoint: http://altinn-authentication.default.svc.cluster.local/authentication/api/v1/
+  PlatformSettings__ApiAuthorizationEndpoint: http://altinn-authorization.default.svc.cluster.local/authorization/api/v1/
+  PlatformSettings__ApiProfileEndpoint: http://altinn-profile.default.svc.cluster.local/profile/api/v1/
+  PlatformSettings__ApiRegisterEndpoint: http://altinn-register.default.svc.cluster.local/register/api/v1/
+  PlatformSettings__ApiResourceRegistryEndpoint: http://altinn-resource-registry.default.svc.cluster.local/resourceregistry/api/
+  PlatformSettings__AltinnPlatformBaseUrl: https://platform.at22.altinn.cloud/
+  SblBridgeSettings__BaseApiUrl: https://at22.altinn.cloud/sblbridge/
+  OidcProviders__altinn__Issuer: https://platform.at22.altinn.cloud/authentication/api/v1/openid/
+  OidcProviders__altinn__WellKnownConfigEndpoint: https://platform.at22.altinn.cloud/authentication/api/v1/openid/.well-known/openid-configuration
+  OidcProviders__maskinporten-ver2__Issuer: https://ver2.maskinporten.no/
+  OidcProviders__maskinporten-ver2__WellKnownConfigEndpoint: https://ver2.maskinporten.no/.well-known/oauth-authorization-server
+  OidcProviders__maskinporten-test__Issuer: https://test.maskinporten.no/
+  OidcProviders__maskinporten-test__WellKnownConfigEndpoint: https://test.maskinporten.no/.well-known/oauth-authorization-server
+  FeatureManagement__RightsDelegationApi: "true"
+  FeatureManagement__UseNewQueryRepo: "true"
+  AppConfiguration__Enabled: "true"
+  Environment: at22

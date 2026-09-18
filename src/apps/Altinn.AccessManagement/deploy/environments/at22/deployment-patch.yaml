@@ -1,0 +1,17 @@
+﻿apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: access-management
+spec:
+  selector:
+  template:
+    spec:
+      containers:
+        - name: access-management
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              value: Staging
+            - name: ASPNETCORE_URLS
+              value: http://+:5110
+            - name: ALTINN_ENVIRONMENT
+              value: AT22

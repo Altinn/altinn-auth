@@ -55,12 +55,6 @@ spec:
             periodSeconds: 10
             failureThreshold: 3
             timeoutSeconds: 2
-          env:
-          - name: ASPNETCORE_ENVIRONMENT
-            value: Staging
-          - name: ASPNETCORE_URLS
-            value: http://+:5110
-          - name: TEST
-            value: f1234
-          - name: TEST2
-            value: fffff
+          envFrom:
+            - configMapRef:
+              name: access-management-runtime
