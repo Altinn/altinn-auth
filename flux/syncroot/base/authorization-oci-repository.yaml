@@ -8,4 +8,4 @@ spec:
   provider: azure
   url: oci://altinncr.azurecr.io/authorization/altinn-auth
   ref:
-    tag: main
+    tag: fix/dis
