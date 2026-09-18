@@ -62,3 +62,5 @@ spec:
             value: http://+:5110
           - name: TEST
             value: f1234
+          - name: TEST2
+            value: fffff
