@@ -1412,6 +1412,185 @@ public class ClientDelegationControllerTest
             });
         }
     }
+
+    /// <summary>
+    /// <see cref="ClientDelegationController.RemoveAgentsClient(Guid, Guid, Guid, bool, CancellationToken)"/>
+    /// The client holds two assignments towards the facilitator (an ER role and a rightholder assignment), so the agent has one delegation per role.
+    /// </summary>
+    [IntegrationTest]
+    public class RemoveAnAgentsClientWithClientAssignmentsAcrossRoles : IClassFixture<ApiFixture>
+    {
+        public RemoveAnAgentsClientWithClientAssignmentsAcrossRoles(ApiFixture fixture)
+        {
+            Fixture = fixture;
+            Fixture.EnsureSeedOnce<RemoveAnAgentsClientWithClientAssignmentsAcrossRoles>(db =>
+            {
+                var rightholderFromNordisToVerdiq = new Assignment()
+                {
+                    FromId = TestEntities.OrganizationNordisAS.Id,
+                    ToId = TestEntities.OrganizationVerdiqAS.Id,
+                    RoleId = RoleConstants.Rightholder,
+                };
+
+                var accountantFromNordisToVerdiq = new Assignment()
+                {
+                    FromId = TestEntities.OrganizationNordisAS.Id,
+                    ToId = TestEntities.OrganizationVerdiqAS.Id,
+                    RoleId = RoleConstants.Accountant,
+                };
+
+                var agentFromVerdiqToPaula = new Assignment()
+                {
+                    FromId = TestEntities.OrganizationVerdiqAS.Id,
+                    ToId = TestEntities.PersonPaula,
+                    RoleId = RoleConstants.Agent,
+                };
+
+                var agentFromVerdiqToOrjan = new Assignment()
+                {
+                    FromId = TestEntities.OrganizationVerdiqAS.Id,
+                    ToId = TestEntities.PersonOrjan,
+                    RoleId = RoleConstants.Agent,
+                };
+
+                var assignmentPackageCustoms = new AssignmentPackage()
+                {
+                    AssignmentId = rightholderFromNordisToVerdiq.Id,
+                    PackageId = PackageConstants.Customs.Id,
+                };
+
+                var rolePackage = db.RolePackages.FirstOrDefault(r => r.RoleId == RoleConstants.Accountant && r.PackageId == PackageConstants.AccountantWithSigningRights);
+
+                var rightholderDelegationToPaula = new AccessMgmt.PersistenceEF.Models.Delegation()
+                {
+                    FromId = rightholderFromNordisToVerdiq.Id,
+                    ToId = agentFromVerdiqToPaula.Id,
+                    FacilitatorId = TestEntities.OrganizationVerdiqAS.Id,
+                };
+
+                var accountantDelegationToPaula = new AccessMgmt.PersistenceEF.Models.Delegation()
+                {
+                    FromId = accountantFromNordisToVerdiq.Id,
+                    ToId = agentFromVerdiqToPaula.Id,
+                    FacilitatorId = TestEntities.OrganizationVerdiqAS.Id,
+                };
+
+                var rightholderDelegationToOrjan = new AccessMgmt.PersistenceEF.Models.Delegation()
+                {
+                    FromId = rightholderFromNordisToVerdiq.Id,
+                    ToId = agentFromVerdiqToOrjan.Id,
+                    FacilitatorId = TestEntities.OrganizationVerdiqAS.Id,
+                };
+
+                var accountantDelegationToOrjan = new AccessMgmt.PersistenceEF.Models.Delegation()
+                {
+                    FromId = accountantFromNordisToVerdiq.Id,
+                    ToId = agentFromVerdiqToOrjan.Id,
+                    FacilitatorId = TestEntities.OrganizationVerdiqAS.Id,
+                };
+
+                db.Assignments.Add(rightholderFromNordisToVerdiq);
+                db.Assignments.Add(accountantFromNordisToVerdiq);
+                db.Assignments.Add(agentFromVerdiqToPaula);
+                db.Assignments.Add(agentFromVerdiqToOrjan);
+                db.AssignmentPackages.Add(assignmentPackageCustoms);
+                db.Delegations.Add(rightholderDelegationToPaula);
+                db.Delegations.Add(accountantDelegationToPaula);
+                db.Delegations.Add(rightholderDelegationToOrjan);
+                db.Delegations.Add(accountantDelegationToOrjan);
+                db.DelegationPackages.Add(new()
+                {
+                    DelegationId = rightholderDelegationToPaula.Id,
+                    AssignmentPackageId = assignmentPackageCustoms.Id,
+                    PackageId = PackageConstants.Customs.Id,
+                });
+                db.DelegationPackages.Add(new()
+                {
+                    DelegationId = accountantDelegationToPaula.Id,
+                    RolePackageId = rolePackage.Id,
+                    PackageId = PackageConstants.AccountantWithSigningRights.Id,
+                });
+                db.DelegationPackages.Add(new()
+                {
+                    DelegationId = rightholderDelegationToOrjan.Id,
+                    AssignmentPackageId = assignmentPackageCustoms.Id,
+                    PackageId = PackageConstants.Customs.Id,
+                });
+                db.DelegationPackages.Add(new()
+                {
+                    DelegationId = accountantDelegationToOrjan.Id,
+                    RolePackageId = rolePackage.Id,
+                    PackageId = PackageConstants.AccountantWithSigningRights.Id,
+                });
+
+                db.SaveChanges();
+            });
+        }
+
+        public ApiFixture Fixture { get; }
+
+        private HttpClient CreateClient()
+        {
+            var client = Fixture.Server.CreateClient();
+            var token = TestTokenGenerator.CreateToken(new ClaimsIdentity("mock"), claims =>
+            {
+                claims.Add(new Claim(AltinnCoreClaimTypes.PartyUuid, TestEntities.PersonPaula.Id.ToString()));
+                claims.Add(new Claim("scope", $"{AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_WRITE} {AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_READ}"));
+            });
+
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            return client;
+        }
+
+        [Fact]
+        public async Task RemoveAgentsClientWithDelegationsAcrossRoles_WithCascadeFalse_Returns400WithOneErrorPerPackage()
+        {
+            var client = CreateClient();
+            var response = await client.DeleteAsync($"{Route}/agents/clients?party={TestEntities.OrganizationVerdiqAS}&client={TestEntities.OrganizationNordisAS}&agent={TestEntities.PersonPaula}", TestContext.Current.CancellationToken);
+
+            var data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+            var problem = JsonSerializer.Deserialize<AltinnValidationProblemDetails>(data, SerializerOptions);
+            Assert.Equal(2, problem.Errors.Count);
+            Assert.All(problem.Errors, error =>
+            {
+                Assert.Equal(ValidationErrors.DelegationHasActiveConnections.ErrorCode, error.ErrorCode);
+            });
+            Assert.Single(problem.Errors, e => e.Extensions.ContainsKey(PackageConstants.Customs.Id.ToString()));
+            Assert.Single(problem.Errors, e => e.Extensions.ContainsKey(PackageConstants.AccountantWithSigningRights.Id.ToString()));
+        }
+
+        [Fact]
+        public async Task RemoveAgentsClientWithDelegationsAcrossRoles_WithCascadeTrue_Returns204AndRemovesAllDelegations()
+        {
+            var client = CreateClient();
+
+            // Ensure one delegation per client role exists
+            await Fixture.QueryDb(static async db =>
+            {
+                var delegations = await db.Delegations
+                    .Where(d => d.From.FromId == TestEntities.OrganizationNordisAS.Id && d.To.ToId == TestEntities.PersonOrjan.Id && d.FacilitatorId == TestEntities.OrganizationVerdiqAS.Id)
+                    .ToListAsync(TestContext.Current.CancellationToken);
+
+                Assert.Equal(2, delegations.Count);
+            });
+
+            var response = await client.DeleteAsync($"{Route}/agents/clients?party={TestEntities.OrganizationVerdiqAS}&client={TestEntities.OrganizationNordisAS}&agent={TestEntities.PersonOrjan}&cascade=true", TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+            // Ensure both delegations have been deleted.
+            await Fixture.QueryDb(static async db =>
+            {
+                var delegations = await db.Delegations
+                    .Where(d => d.From.FromId == TestEntities.OrganizationNordisAS.Id && d.To.ToId == TestEntities.PersonOrjan.Id && d.FacilitatorId == TestEntities.OrganizationVerdiqAS.Id)
+                    .ToListAsync(TestContext.Current.CancellationToken);
+
+                Assert.Empty(delegations);
+            });
+        }
+    }
     #endregion
 
     #region POST accessmanagement/api/v2/enduser/clientdelegations/agents/accesspackages
