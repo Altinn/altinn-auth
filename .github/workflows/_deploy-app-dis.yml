@@ -65,7 +65,7 @@ permissions:
 jobs:
   deploy-app:
     runs-on: ubuntu-latest
-    name: Deploy App to DIS
+    name: Deploy ${{ inputs.app }} to DIS
     env:
       DEPLOY_DIR: src/apps/${{ inputs.app }}/deploy/environments/${{ inputs.environment }}
       DEPLOY_OUT: dist
@@ -107,9 +107,9 @@ jobs:
           "$dest/kustomize" version
 
       - name: Run kustomize
-        working-directory: ${{ env.DEPLOY_DIR }} 
+        working-directory: ${{ env.DEPLOY_DIR }}
         run: |
-          mkdir dist
+          mkdir -p ${{ env.DEPLOY_OUT }}
 
           kustomize edit set image ghcr.io/${{ inputs.image_name }}:latest=ghcr.io/${{ inputs.image_name }}:${{ inputs.image_tag }}
           kustomize build -o ${{ env.DEPLOY_OUT }}/deployment.yaml
