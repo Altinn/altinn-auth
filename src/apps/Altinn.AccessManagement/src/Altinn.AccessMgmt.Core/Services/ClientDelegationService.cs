@@ -837,6 +837,11 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
                 .Where(p => p.FromId == partyUuid && p.ToId == toUuid && p.RoleId == RoleConstants.Agent)
                 .FirstOrDefaultAsync(cancellationToken);
 
+        if (existingAssignment == null) 
+        { 
+            return null;
+        }
+
         if (!cascade)
         { 
             ValidationErrorBuilder errorBuilder = await CascadingRevokeHelper.CheckCascadingDependenciesAgentAssignment(db, existingAssignment, cancellationToken);

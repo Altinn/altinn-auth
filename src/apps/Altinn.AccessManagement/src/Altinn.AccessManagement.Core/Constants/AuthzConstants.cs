@@ -116,12 +116,12 @@
         public const string POLICY_CLIENTDELEGATION_WRITE = "CLIENTDELEGATION_WRITE";
 
         /// <summary>
-        /// Policy tag for authorizing client administration API read access
+        /// Policy tag for authorizing bankruptcy estate administration API read access
         /// </summary>
         public const string POLICY_BANKRUPTCYDELEGATION_READ = "BANKRUPTCYESTATEDELEGATIONS_READ";
 
         /// <summary>
-        /// Policy tag for authorizing client administration API write access
+        /// Policy tag for authorizing bankruptcy estate administration API write access
         /// </summary>
         public const string POLICY_BANKRUPTCYDELEGATION_WRITE = "BANKRUPTCYESTATEDELEGATIONS_WRITE";
 
@@ -176,12 +176,12 @@
         public const string SCOPE_ENDUSER_CLIENTDELEGATION_WRITE = "altinn:clientdelegations.write";
 
         /// <summary>
-        /// Bakruptcyestate-Administration Read enduser scope giving access to read operations on behalf of Bankruptcyestate-Administrators
+        /// Bakruptcy estate administration Read enduser scope giving access to read operations on behalf of Bankruptcyestate-Administrators
         /// </summary>
         public const string SCOPE_ENDUSER_BANKRUPTCYDELEGATION_READ = "altinn:bankruptcyestatedelegations.read";
 
         /// <summary>
-        /// Bakruptcyestate-Administration Write enduser scope giving access to write operations on behalf of Bankruptcyestate-Administrators
+        /// Bakruptcy estate administration Write enduser scope giving access to write operations on behalf of Bankruptcyestate-Administrators
         /// </summary>
         public const string SCOPE_ENDUSER_BANKRUPTCYDELEGATION_WRITE = "altinn:bankruptcyestatedelegations.write";
 

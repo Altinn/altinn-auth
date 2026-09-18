@@ -13,50 +13,80 @@ using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 
 using Altinn.Authorization.ProblemDetails;
-using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Microsoft.FeatureManagement;
 
 namespace Altinn.AccessMgmt.Core.Services
 {
     public class BankruptcyDelegationService(AppDbContext db, IConnectionService connectionService, IAssignmentService assignmentService, IOptions<CoreAppsettings> appsettings) : IBankruptcyDelegationService
     {
-        private IEnumerable<ConstantDefinition<EntityType>> SupportedToTypes { get; } = [
-            EntityTypeConstants.Person,
-        ];
-
         private Task<(Entity From, Entity To)> GetFromAndToEntities(Guid? fromId, Guid? toId, CancellationToken cancellationToken) =>
             ConnectionWriteValidation.GetFromAndToEntitiesAsync(db, fromId, toId, cancellationToken);
 
         private static ValidationProblemInstance ValidateWriteOpInput(Entity from, Entity to, ConnectionOptions options) =>
             ConnectionWriteValidation.ValidateWriteOpInput(from, to, options);
 
-        private static List<Guid> BankruptcyPackageList { get; } = new List<Guid>
+        private static Result<List<Guid>> GetPackageListFromUrnList(List<PackageReferenceDto> packages)
         {
-            PackageConstants.BankruptcyEstateWriteAccess.Id,
-            PackageConstants.AOrderSystem.Id,
-            PackageConstants.Salary.Id,
-            PackageConstants.RegularMailToBusiness.Id,
-            PackageConstants.ConfidentialMailToBusiness.Id,
-            PackageConstants.ValueAddedTax.Id,
-            PackageConstants.TaxBase.Id
-        };
+            List<Guid> packageIds = [];
+            ValidationErrorBuilder errors = default;
+
+            foreach (PackageReferenceDto package in packages)
+            {
+                if (!PackageConstants.TryGetByUrn(package.Urn, out var packageObj))
+                {
+                    errors.Add(ValidationErrors.PackageNotExists, "QUERY/packages", [new("package", $"Package with urn '{package.Urn}' not found.")]);
+                    continue;
+                }
+
+                packageIds.Add(packageObj.Entity.Id);
+            }
+
+            if (errors.TryBuild(out var errorResult))
+            {
+                return errorResult;
+            }
+
+            return packageIds;
+        }
+
+        private async Task<List<RolePackage>> GetDelegablePackagesForBankruptcyEstateAdmin( CancellationToken cancellationToken)
+        {
+            var directAvilablePackages = await db.RolePackages
+                .AsNoTracking()
+                .Where(rp =>
+                    rp.RoleId == RoleConstants.EstateAdministrator.Id &&
+                    (rp.EntityVariantId == null || rp.EntityVariantId == EntityVariantConstants.KBO.Id) &&
+                    rp.CanDelegate)
+                .Select(rp => rp)
+                .ToListAsync(cancellationToken);
+
+            List<RolePackage> mainAdminPackages = new List<RolePackage>();
+            if (directAvilablePackages.Any(p => p.PackageId.Equals(PackageConstants.MainAdministrator)))
+            {
+                mainAdminPackages = await db.RolePackages
+                .AsNoTracking()
+                .Where(rp =>
+                    rp.RoleId == RoleConstants.MainAdministrator.Id &&
+                    (rp.EntityVariantId == null || rp.EntityVariantId == EntityVariantConstants.KBO.Id) &&
+                    rp.CanDelegate)
+                .Select(rp => rp)
+                .ToListAsync(cancellationToken);
+            }
+
+            var combinedPackages = directAvilablePackages
+                .Concat(mainAdminPackages.Where(m => !directAvilablePackages.Any(d => d.Id == m.Id)))
+                .ToList();
+
+            return combinedPackages;
+        }
 
         /// <inheritdoc />
         public async Task<bool> CheckBankruptcyEstateConnection(Guid party, Guid estate, CancellationToken cancellationToken = default)
         {
-            var estateAssignments = await db.Assignments
+            return await db.Assignments
                 .AsNoTracking()
-                .Where(a => a.FromId == estate && a.ToId == party && a.RoleId == RoleConstants.EstateAdministrator)
-                .ToListAsync(cancellationToken);
-
-            if (estateAssignments.Count > 0)
-            {
-                return true;
-            }
-
-            return false;
+                .AnyAsync(a => a.FromId == estate && a.ToId == party && a.RoleId == RoleConstants.EstateAdministrator, cancellationToken);
         }
 
         /// <inheritdoc />
@@ -84,7 +114,7 @@ namespace Altinn.AccessMgmt.Core.Services
                 };
 
                 db.AssignmentPackages.Add(assignmentPackage);
-                db.SaveChanges();
+                await db.SaveChangesAsync(cancellationToken);
             }
 
             return new AssignmentWithAssignmentPackageDto(assignment.Value, DtoMapper.Convert(assignmentPackage).SingleToList());
@@ -118,11 +148,16 @@ namespace Altinn.AccessMgmt.Core.Services
                 .Where(ap => ap.AssignmentId == existingAssignment.Id && ap.PackageId == PackageConstants.BankruptcyEstateReadAccess.Id)
                 .ToListAsync(cancellationToken);
 
+            if (assignmentPackagesToRemove.Count == 0)
+            {
+                return false;
+            }
+
             db.AssignmentPackages.RemoveRange(assignmentPackagesToRemove);
             int removedCount = await db.SaveChangesAsync(cancellationToken);
 
             var result = await assignmentService.DeleteAssignment(existingAssignment.Id, false, null, cancellationToken);
-            
+
             return removedCount > 0;
         }
 
@@ -131,18 +166,18 @@ namespace Altinn.AccessMgmt.Core.Services
         {
             var estateAssignments = await db.Assignments
                 .AsNoTracking()
-                .Include(a => a.To)
                 .Join(db.AssignmentPackages, a => a.Id, ap => ap.AssignmentId, (a, ap) => new { Assignment = a, AssignmentPackage = ap })
                 .Where(a => a.Assignment.FromId == estate && a.Assignment.RoleId == RoleConstants.Rightholder && a.AssignmentPackage.PackageId == PackageConstants.BankruptcyEstateReadAccess.Id)
+                .Select(a => a.Assignment.To)
                 .ToListAsync(cancellationToken);
 
             List<CompactEntityDto> creditors = new List<CompactEntityDto>();
 
-            foreach (var access in estateAssignments)
+            foreach (var to in estateAssignments)
             {
-                creditors.Add(DtoMapper.Convert(access.Assignment.To));
+                creditors.Add(DtoMapper.Convert(to));
             }
-            
+
             return creditors;
         }
 
@@ -150,6 +185,7 @@ namespace Altinn.AccessMgmt.Core.Services
         public async Task<Result<AssignmentDto>> AddAgent(Guid party, Guid user, Action<ConnectionOptions> configureConnections, CancellationToken cancellationToken = default)
         {
             var options = new ConnectionOptions(configureConnections);
+
             (Entity from, Entity to) = await GetFromAndToEntities(party, user, cancellationToken);
             var problem = ValidateWriteOpInput(from, to, options);
             if (problem is { })
@@ -157,33 +193,15 @@ namespace Altinn.AccessMgmt.Core.Services
                 return problem;
             }
 
-            ValidationErrorBuilder errorBuilder = default;
+            if (from.TypeId != EntityTypeConstants.Person)
+            {
+                return Problems.EntityTypeNotFound;
+            }
 
             var existingAssignment = await db.Assignments.AsNoTracking().Where(p => p.FromId == party && p.ToId == user && p.RoleId == RoleConstants.Agent).FirstOrDefaultAsync(cancellationToken);
             if (existingAssignment is { })
             {
                 return DtoMapper.Convert(existingAssignment);
-            }
-
-            var entity = await db.Entities.FirstOrDefaultAsync(e => e.Id == user, cancellationToken);
-            if (entity is null)
-            {
-                return Problems.EntityTypeNotFound;
-            }
-
-            if (!SupportedToTypes.Any(e => e.Id == entity.TypeId))
-            {
-                var supportedToTypeNames = string.Join(", ", SupportedToTypes.Select(t => t.Entity.Name));
-                errorBuilder.Add(
-                    ValidationErrors.DisallowedEntityType,
-                    $"$QUERY/user",
-                    [new($"{entity.TypeId}", $"Entity type is not supported as an agent. Supported types: <{supportedToTypeNames}>.")]
-                );
-            }            
-
-            if (errorBuilder.TryBuild(out problem))
-            {
-                return problem;
             }
 
             var assignment = new Assignment
@@ -222,6 +240,11 @@ namespace Altinn.AccessMgmt.Core.Services
                 .Where(p => p.FromId == party && p.ToId == user && p.RoleId == RoleConstants.Agent)
                 .FirstOrDefaultAsync(cancellationToken);
 
+            if (existingAssignment is null)
+            {
+                return null;
+            }
+
             if (!cascade)
             {
                 ValidationErrorBuilder errorBuilder = default;
@@ -257,13 +280,13 @@ namespace Altinn.AccessMgmt.Core.Services
 
             var adminAssignments = await db.Assignments
                 .AsNoTracking()
-                .Include(a => a.To)
                 .Join(db.AssignmentPackages, a => a.Id, ap => ap.AssignmentId, (a, ap) => new { Assignment = a, AssignmentPackage = ap })
                 .Where(a => a.Assignment.FromId == party && a.Assignment.RoleId == RoleConstants.Rightholder && a.AssignmentPackage.PackageId == PackageConstants.KonkursboAdministrator.Id)
+                .Select(a => a.Assignment.To)
                 .ToListAsync(cancellationToken);
 
             var agentUsers = agentAssignments.Select(a => DtoMapper.Convert(a.To)).ToList();
-            var adminUsers = adminAssignments.Select(a => DtoMapper.Convert(a.Assignment.To)).ToList();
+            var adminUsers = adminAssignments.Select(a => DtoMapper.Convert(a)).ToList();
             
             var combined = agentUsers
                 .Select(x => (Entity: x, Permission: BankruptcyEstatePermissions.User))
@@ -310,7 +333,7 @@ namespace Altinn.AccessMgmt.Core.Services
                 };
 
                 db.AssignmentPackages.Add(assignmentPackage);
-                db.SaveChanges();
+                await db.SaveChangesAsync(cancellationToken);
             }
 
             return new AssignmentWithAssignmentPackageDto(assignment.Value, DtoMapper.Convert(assignmentPackage).SingleToList());
@@ -344,6 +367,11 @@ namespace Altinn.AccessMgmt.Core.Services
                 .Where(ap => ap.AssignmentId == existingAssignment.Id && ap.PackageId == PackageConstants.KonkursboAdministrator.Id)
                 .ToListAsync(cancellationToken);
 
+            if (assignmentPackagesToRemove.Count == 0)
+            {
+                return false;
+            }
+
             db.AssignmentPackages.RemoveRange(assignmentPackagesToRemove);
             int removedCount = await db.SaveChangesAsync(cancellationToken);
 
@@ -370,7 +398,13 @@ namespace Altinn.AccessMgmt.Core.Services
             .AsNoTracking()
             .Include(d => d.To)
             .Include(d => d.From).ThenInclude(a => a.From)
-            .Where(d => d.FacilitatorId == party && d.To.ToId == user)
+            .Where(d => 
+                d.FacilitatorId == party &&
+                d.To.FromId == party &&
+                d.To.ToId == user &&
+                d.To.RoleId == RoleConstants.Agent &&
+                d.From.ToId == party &&
+                d.From.RoleId == RoleConstants.EstateAdministrator)
             .ToListAsync(cancellationToken);
 
             var result = query
@@ -382,7 +416,7 @@ namespace Altinn.AccessMgmt.Core.Services
         }
 
         /// <inheritdoc />
-        public async Task<Result<CreateDelegationResponseDto>> AddBankruptcyEstateForUser(Guid party, Guid estate, Guid user, Action<ConnectionOptions> configureConnections, CancellationToken cancellationToken)
+        public async Task<Result<CreateDelegationResponseDto>> AddBankruptcyEstateForUser(Guid party, Guid estate, Guid user, List<PackageReferenceDto> packages, Action<ConnectionOptions> configureConnections, CancellationToken cancellationToken)
         {
             var options = new ConnectionOptions(configureConnections);
             (Entity from, Entity to) = await GetFromAndToEntities(party, user, cancellationToken);
@@ -390,6 +424,13 @@ namespace Altinn.AccessMgmt.Core.Services
             if (problem is { })
             {
                 return problem;
+            }
+
+            var packageList = GetPackageListFromUrnList(packages);
+
+            if (packageList.IsProblem)
+            {
+                return packageList.Problem;
             }
 
             ValidationErrorBuilder errorBuilder = default;
@@ -405,9 +446,9 @@ namespace Altinn.AccessMgmt.Core.Services
                 );
             }
 
-            var clientAssignment = await db.Assignments.AsNoTracking().FirstOrDefaultAsync(t => t.FromId == estate && t.ToId == party && t.RoleId == RoleConstants.EstateAdministrator.Id, cancellationToken);
+            var estateAssignment = await db.Assignments.AsNoTracking().FirstOrDefaultAsync(t => t.FromId == estate && t.ToId == party && t.RoleId == RoleConstants.EstateAdministrator.Id, cancellationToken);
 
-            if (clientAssignment is null)
+            if (estateAssignment is null)
             {
                 errorBuilder.Add(
                     ValidationErrors.MissingAssignment,
@@ -425,31 +466,25 @@ namespace Altinn.AccessMgmt.Core.Services
                         .AsNoTracking()
                         .Include(d => d.From)
                         .Include(d => d.To)
-                        .Where(d => d.FromId == clientAssignment.Id && d.ToId == agentAssignment.Id && d.FacilitatorId == party)
+                        .Where(d => d.FromId == estateAssignment.Id && d.ToId == agentAssignment.Id && d.FacilitatorId == party)
                         .FirstOrDefaultAsync(cancellationToken);
-            
+
+            bool isDelegationCreatedNow = false;
             if (delegation is null)
             {
                 delegation = new Delegation
                 {
-                    FromId = clientAssignment.Id,
+                    FromId = estateAssignment.Id,
                     ToId = agentAssignment.Id,
                     FacilitatorId = party
                 };
                 db.Delegations.Add(delegation);
+                isDelegationCreatedNow = true;
             }
 
-            List<Guid> bankruptcyRoleIds = [];
-            bankruptcyRoleIds.Add(RoleConstants.EstateAdministrator.Id);
-            bankruptcyRoleIds.Add(RoleConstants.MainAdministrator.Id);
+            var availablePackages = await GetDelegablePackagesForBankruptcyEstateAdmin(cancellationToken);
 
-            var availablePackages = await db.RolePackages
-                .AsNoTracking()
-                .Where(rp => bankruptcyRoleIds.Contains(rp.RoleId) && BankruptcyPackageList.Contains(rp.PackageId) && (rp.EntityVariantId == null || rp.EntityVariantId == EntityVariantConstants.KBO.Id))
-                .Select(rp => rp)
-                .ToListAsync(cancellationToken);
-
-            foreach (var packageId in BankruptcyPackageList)
+            foreach (var packageId in packageList.Value)
             {
                 if (!availablePackages.Any(p => p.PackageId == packageId))
                 {
@@ -469,12 +504,17 @@ namespace Altinn.AccessMgmt.Core.Services
 
                     var rolePackageId = rolePackage.Id;
 
-                    var delegationPackage = await db.DelegationPackages
+                    DelegationPackage delegationPackage = null;
+
+                    if (!isDelegationCreatedNow)
+                    {
+                        delegationPackage = await db.DelegationPackages
                         .AsNoTracking()
                         .Where(dp => dp.DelegationId == delegation.Id && 
                             dp.PackageId == packageId && 
                             dp.RolePackageId == rolePackageId)
                         .FirstOrDefaultAsync(cancellationToken);
+                    }
 
                     if (delegationPackage is null)
                     {
@@ -503,7 +543,7 @@ namespace Altinn.AccessMgmt.Core.Services
         }
 
         /// <inheritdoc />
-        public async Task<Result<bool>> RevokeBankruptcyEstateForUser(Guid party, Guid estate, Guid user, Action<ConnectionOptions> configureConnections, CancellationToken cancellationToken)
+        public async Task<Result<bool>> RevokeBankruptcyEstateForUser(Guid party, Guid estate, Guid user, List<PackageReferenceDto> packages, Action<ConnectionOptions> configureConnections, CancellationToken cancellationToken)
         {
             bool anyDataDeleted = false;
             var options = new ConnectionOptions(configureConnections);
@@ -512,6 +552,13 @@ namespace Altinn.AccessMgmt.Core.Services
             if (problem is { })
             {
                 return problem;
+            }
+
+            var packageList = GetPackageListFromUrnList(packages);
+
+            if (packageList.IsProblem)
+            {
+                return packageList.Problem;
             }
 
             ValidationErrorBuilder errorBuilder = default;
@@ -540,17 +587,9 @@ namespace Altinn.AccessMgmt.Core.Services
                 return false;
             }
 
-            List<Guid> bankruptcyRoleIds = [];
-            bankruptcyRoleIds.Add(RoleConstants.EstateAdministrator.Id);
-            bankruptcyRoleIds.Add(RoleConstants.MainAdministrator.Id);
+            var availablePackages = await GetDelegablePackagesForBankruptcyEstateAdmin(cancellationToken);
 
-            var availablePackages = await db.RolePackages
-                .AsNoTracking()
-                .Where(rp => bankruptcyRoleIds.Contains(rp.RoleId) && BankruptcyPackageList.Contains(rp.PackageId) && (rp.EntityVariantId == null || rp.EntityVariantId == EntityVariantConstants.KBO.Id))
-                .Select(rp => rp)
-                .ToListAsync(cancellationToken);
-
-            foreach (var packageId in BankruptcyPackageList)
+            foreach (var packageId in packageList.Value)
             {
                 if (!availablePackages.Any(p => p.PackageId == packageId))
                 {
@@ -605,6 +644,30 @@ namespace Altinn.AccessMgmt.Core.Services
             }
             
             return anyDataDeleted;
+        }
+
+        public async Task<Result<List<PackageDto>>> GetBankruptcyEstatePackagesForUser(Guid party, Guid estate, Guid user, CancellationToken cancellationToken)
+        {
+            var query = await db.Delegations
+            .AsNoTracking()
+            .Include(d => d.DelegationPackages)
+            .ThenInclude(dp => dp.Package)
+            .Where(d =>
+                d.FacilitatorId == party &&
+                d.To.FromId == party &&
+                d.To.ToId == user &&
+                d.To.RoleId == RoleConstants.Agent &&
+                d.From.ToId == party &&
+                d.From.FromId == estate &&
+                d.From.RoleId == RoleConstants.EstateAdministrator)
+            .ToListAsync(cancellationToken);
+
+            var result = query
+                .Select(e =>
+                    DtoMapper.Convert(e.DelegationPackages)
+                ).ToList();
+
+            return result;
         }
     }
 
@@ -724,22 +787,20 @@ namespace Altinn.AccessMgmt.Core.Services
         /// Gets the list of bankruptcy estates for a specific user.
         /// </summary>
         /// <param name="party">The entity the rightholder relationship is defined for</param>
-        /// <param name="estate">The bankruptcyestate identifier to fetch</param>
         /// <param name="user">The user identifier to fetch</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        /// <returns>A problem details if some error occurs. List of packages if successful.</returns>
+        /// <returns>A problem details if some error occurs. List of bankruptcy estates if successful.</returns>
         Task<Result<List<CompactEntityDto>>> GetBankruptcyEstatesForUser(Guid party, Guid user, CancellationToken cancellationToken);
 
         /// <summary>
-        /// Gets the list of bankruptcy estates for a specific user.
+        /// Gets the list of pacgages for a given bankruptcy estate and a specific user.
         /// </summary>
         /// <param name="party">The entity the rightholder relationship is defined for</param>
         /// <param name="estate">The bankruptcyestate identifier to fetch</param>
         /// <param name="user">The user identifier to fetch</param>
-        /// <param name="configureConnections">Optional action to configure connection options.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>A problem details if some error occurs. List of packages if successful.</returns>
-        Task<Result<CreateDelegationResponseDto>> AddBankruptcyEstateForUser(Guid party, Guid estate, Guid user, Action<ConnectionOptions> configureConnections, CancellationToken cancellationToken);
+        Task<Result<List<PackageDto>>> GetBankruptcyEstatePackagesForUser(Guid party, Guid estate, Guid user, CancellationToken cancellationToken);
 
         /// <summary>
         /// Gets the list of bankruptcy estates for a specific user.
@@ -747,9 +808,22 @@ namespace Altinn.AccessMgmt.Core.Services
         /// <param name="party">The entity the rightholder relationship is defined for</param>
         /// <param name="estate">The bankruptcyestate identifier to fetch</param>
         /// <param name="user">The user identifier to fetch</param>
+        /// <param name="packages">The packages to add to the delegation.</param>
         /// <param name="configureConnections">Optional action to configure connection options.</param>
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>A problem details if some error occurs. List of packages if successful.</returns>
-        Task<Result<bool>> RevokeBankruptcyEstateForUser(Guid party, Guid estate, Guid user, Action<ConnectionOptions> configureConnections, CancellationToken cancellationToken);
+        Task<Result<CreateDelegationResponseDto>> AddBankruptcyEstateForUser(Guid party, Guid estate, Guid user, List<PackageReferenceDto> packages, Action<ConnectionOptions> configureConnections, CancellationToken cancellationToken);
+
+        /// <summary>
+        /// Gets the list of bankruptcy estates for a specific user.
+        /// </summary>
+        /// <param name="party">The entity the rightholder relationship is defined for</param>
+        /// <param name="estate">The bankruptcyestate identifier to fetch</param>
+        /// <param name="user">The user identifier to fetch</param>
+        /// <param name="packages">The packages to revoke from the delegation.</param>
+        /// <param name="configureConnections">Optional action to configure connection options.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>A problem details if some error occurs. List of packages if successful.</returns>
+        Task<Result<bool>> RevokeBankruptcyEstateForUser(Guid party, Guid estate, Guid user, List<PackageReferenceDto> packages, Action<ConnectionOptions> configureConnections, CancellationToken cancellationToken);
     }
 }

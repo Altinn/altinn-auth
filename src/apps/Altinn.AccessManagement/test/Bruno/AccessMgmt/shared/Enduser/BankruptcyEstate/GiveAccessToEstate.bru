@@ -1,12 +1,12 @@
 meta {
   name: GiveAccessToEstate
   type: http
-  seq: 9
+  seq: 10
 }
 
 post {
   url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/estates/users?party={{party}}&user={{user}}&estate={{estate}}
-  body: none
+  body: json
   auth: inherit
 }
 
@@ -14,6 +14,18 @@ params:query {
   party: {{party}}
   user: {{user}}
   estate: {{estate}}
+}
+
+body:json {
+  [
+    { "urn": "urn:altinn:accesspackage:konkursbo-skrivetilgang" },
+    { "urn": "urn:altinn:accesspackage:a-ordning" },
+    { "urn": "urn:altinn:accesspackage:lonn" },
+    { "urn": "urn:altinn:accesspackage:ordinaer-post-til-virksomheten" },
+    { "urn": "urn:altinn:accesspackage:post-til-virksomheten-med-taushetsbelagt-innhold" },
+    { "urn": "urn:altinn:accesspackage:merverdiavgift" },
+    { "urn": "urn:altinn:accesspackage:skattegrunnlag" }
+  ]
 }
 
 script:pre-request {

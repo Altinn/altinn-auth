@@ -33,7 +33,7 @@ public class BankruptcyDelegationControllerTest
     /// Tests for <see cref="BanckruptcyDelegationController.GetAgentAdminInformation(Guid, CancellationToken)"/>.
     /// </summary>
     /// <remarks>
-    /// Seed data (estate party = <see cref="TestEntities.OrganizationVerdiqAS"/>):
+    /// Seed data (estate party = <see cref="TestEntities.PersonMatilde"/>):
     /// <list type="bullet">
     ///   <item><description><see cref="TestEntities.PersonPaula"/> has only an Agent assignment (AgentForhold) -> <see cref="BankruptcyEstatePermissions.User"/>.</description></item>
     ///   <item><description><see cref="TestEntities.PersonOrjan"/> has only an administrator delegation (Rightholder + KonkursboAdministrator package) -> <see cref="BankruptcyEstatePermissions.Admin"/>.</description></item>
@@ -51,7 +51,7 @@ public class BankruptcyDelegationControllerTest
                 // Paula: only AgentForhold (Agent assignment)
                 var agentToPaula = new Assignment()
                 {
-                    FromId = TestEntities.OrganizationVerdiqAS.Id,
+                    FromId = TestEntities.PersonMatilde.Id,
                     ToId = TestEntities.PersonPaula.Id,
                     RoleId = RoleConstants.Agent,
                 };
@@ -59,7 +59,7 @@ public class BankruptcyDelegationControllerTest
                 // Orjan: only admin access delegated (Rightholder + KonkursboAdministrator package)
                 var rightholderToOrjan = new Assignment()
                 {
-                    FromId = TestEntities.OrganizationVerdiqAS.Id,
+                    FromId = TestEntities.PersonMatilde.Id,
                     ToId = TestEntities.PersonOrjan.Id,
                     RoleId = RoleConstants.Rightholder,
                 };
@@ -72,13 +72,13 @@ public class BankruptcyDelegationControllerTest
                 // Kasper: both AgentForhold and admin access delegated
                 var agentToKasper = new Assignment()
                 {
-                    FromId = TestEntities.OrganizationVerdiqAS.Id,
+                    FromId = TestEntities.PersonMatilde.Id,
                     ToId = TestEntities.PersonKasper.Id,
                     RoleId = RoleConstants.Agent,
                 };
                 var rightholderToKasper = new Assignment()
                 {
-                    FromId = TestEntities.OrganizationVerdiqAS.Id,
+                    FromId = TestEntities.PersonMatilde.Id,
                     ToId = TestEntities.PersonKasper.Id,
                     RoleId = RoleConstants.Rightholder,
                 };
@@ -124,7 +124,7 @@ public class BankruptcyDelegationControllerTest
             var client = Fixture.Server.CreateClient();
 
             var response = await client.GetAsync(
-                $"{Route}/users?party={TestEntities.OrganizationVerdiqAS.Id}",
+                $"{Route}/users?party={TestEntities.PersonMatilde.Id}",
                 TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
@@ -138,10 +138,10 @@ public class BankruptcyDelegationControllerTest
         [Fact]
         public async Task GetAgentAdminInformation_Authorized_Returns200WithUsersAndAdmins()
         {
-            var client = CreateClient(TestEntities.OrganizationVerdiqAS.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
+            var client = CreateClient(TestEntities.PersonMatilde.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
 
             var response = await client.GetAsync(
-                $"{Route}/users?party={TestEntities.OrganizationVerdiqAS.Id}",
+                $"{Route}/users?party={TestEntities.PersonMatilde.Id}",
                 TestContext.Current.CancellationToken);
 
             var responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
@@ -188,7 +188,7 @@ public class BankruptcyDelegationControllerTest
     /// Tests for <see cref="BanckruptcyDelegationController.GetCreditors(Guid, Guid, CancellationToken)"/>.
     /// </summary>
     /// <remarks>
-    /// party (bankruptcy administrator) = <see cref="TestEntities.OrganizationVerdiqAS"/>,
+    /// party (bankruptcy administrator) = <see cref="TestEntities.PersonMatilde"/>,
     /// estate = <see cref="TestEntities.OrganizationSolsidenSameie"/> connected via an
     /// EstateAdministrator assignment. The creditor <see cref="TestEntities.OrganizationNufExampleNUF"/>
     /// is a Rightholder with the BankruptcyEstateReadAccess package.
@@ -204,7 +204,7 @@ public class BankruptcyDelegationControllerTest
                 db.Assignments.Add(new Assignment()
                 {
                     FromId = TestEntities.OrganizationSolsidenSameie.Id,
-                    ToId = TestEntities.OrganizationVerdiqAS.Id,
+                    ToId = TestEntities.PersonMatilde.Id,
                     RoleId = RoleConstants.EstateAdministrator,
                 });
 
@@ -230,10 +230,10 @@ public class BankruptcyDelegationControllerTest
         [Fact]
         public async Task GetCreditors_Authorized_Returns200WithCreditors()
         {
-            var client = CreateClient(Fixture, TestEntities.OrganizationVerdiqAS.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
+            var client = CreateClient(Fixture, TestEntities.PersonMatilde.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
 
             var response = await client.GetAsync(
-                $"{Route}/estates/creditors?party={TestEntities.OrganizationVerdiqAS.Id}&estate={TestEntities.OrganizationSolsidenSameie.Id}",
+                $"{Route}/estates/creditors?party={TestEntities.PersonMatilde.Id}&estate={TestEntities.OrganizationSolsidenSameie.Id}",
                 TestContext.Current.CancellationToken);
 
             var responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
@@ -270,7 +270,7 @@ public class BankruptcyDelegationControllerTest
                 db.Assignments.Add(new Assignment()
                 {
                     FromId = TestEntities.OrganizationSolsidenSameie.Id,
-                    ToId = TestEntities.OrganizationVerdiqAS.Id,
+                    ToId = TestEntities.PersonMatilde.Id,
                     RoleId = RoleConstants.EstateAdministrator,
                 });
 
@@ -283,10 +283,10 @@ public class BankruptcyDelegationControllerTest
         [Fact]
         public async Task AddCreditor_ForOrganization_Returns200WithAssignment()
         {
-            var client = CreateClient(Fixture, TestEntities.OrganizationVerdiqAS.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
+            var client = CreateClient(Fixture, TestEntities.PersonMatilde.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
 
             var response = await client.PostAsync(
-                $"{Route}/estates/creditors?party={TestEntities.OrganizationVerdiqAS.Id}&estate={TestEntities.OrganizationSolsidenSameie.Id}&creditor={TestEntities.OrganizationOrsta.Id}",
+                $"{Route}/estates/creditors?party={TestEntities.PersonMatilde.Id}&estate={TestEntities.OrganizationSolsidenSameie.Id}&creditor={TestEntities.OrganizationOrsta.Id}",
                 null,
                 TestContext.Current.CancellationToken);
 
@@ -313,13 +313,13 @@ public class BankruptcyDelegationControllerTest
         [Fact]
         public async Task AddCreditor_ForPersonViaPersonInput_Returns200WithAssignment()
         {
-            var client = CreateClient(Fixture, TestEntities.OrganizationVerdiqAS.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
+            var client = CreateClient(Fixture, TestEntities.PersonMatilde.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
 
             PersonInput personInput = new() { PersonIdentifier = TestData.BodilFarmor.Entity.PersonIdentifier, LastName = "Farmor" };
             StringContent content = new(JsonSerializer.Serialize(personInput), Encoding.UTF8, "application/json");
 
             var response = await client.PostAsync(
-                $"{Route}/estates/creditors?party={TestEntities.OrganizationVerdiqAS.Id}&estate={TestEntities.OrganizationSolsidenSameie.Id}",
+                $"{Route}/estates/creditors?party={TestEntities.PersonMatilde.Id}&estate={TestEntities.OrganizationSolsidenSameie.Id}",
                 content,
                 TestContext.Current.CancellationToken);
 
@@ -345,13 +345,13 @@ public class BankruptcyDelegationControllerTest
         [Fact]
         public async Task AddCreditor_ForPersonViaPersonInputWithWrongLastName_Returns400()
         {
-            var client = CreateClient(Fixture, TestEntities.OrganizationVerdiqAS.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
+            var client = CreateClient(Fixture, TestEntities.PersonMatilde.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
 
             PersonInput personInput = new() { PersonIdentifier = TestData.BodilFarmor.Entity.PersonIdentifier, LastName = "WrongName" };
             StringContent content = new(JsonSerializer.Serialize(personInput), Encoding.UTF8, "application/json");
 
             var response = await client.PostAsync(
-                $"{Route}/estates/creditors?party={TestEntities.OrganizationVerdiqAS.Id}&estate={TestEntities.OrganizationSolsidenSameie.Id}",
+                $"{Route}/estates/creditors?party={TestEntities.PersonMatilde.Id}&estate={TestEntities.OrganizationSolsidenSameie.Id}",
                 content,
                 TestContext.Current.CancellationToken);
 
@@ -386,7 +386,7 @@ public class BankruptcyDelegationControllerTest
                 db.Assignments.Add(new Assignment()
                 {
                     FromId = TestEntities.OrganizationSolsidenSameie.Id,
-                    ToId = TestEntities.OrganizationVerdiqAS.Id,
+                    ToId = TestEntities.PersonMatilde.Id,
                     RoleId = RoleConstants.EstateAdministrator,
                 });
 
@@ -412,10 +412,10 @@ public class BankruptcyDelegationControllerTest
         [Fact]
         public async Task RevokeCreditor_ForExistingCreditor_Returns204()
         {
-            var client = CreateClient(Fixture, TestEntities.OrganizationVerdiqAS.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
+            var client = CreateClient(Fixture, TestEntities.PersonMatilde.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
 
             var response = await client.DeleteAsync(
-                $"{Route}/estates/creditors?party={TestEntities.OrganizationVerdiqAS.Id}&estate={TestEntities.OrganizationSolsidenSameie.Id}&creditor={TestEntities.OrganizationOkernBorettslag.Id}",
+                $"{Route}/estates/creditors?party={TestEntities.PersonMatilde.Id}&estate={TestEntities.OrganizationSolsidenSameie.Id}&creditor={TestEntities.OrganizationOkernBorettslag.Id}",
                 TestContext.Current.CancellationToken);
 
             var responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
@@ -448,7 +448,7 @@ public class BankruptcyDelegationControllerTest
             {
                 db.Assignments.Add(new Assignment()
                 {
-                    FromId = TestEntities.OrganizationVerdiqAS.Id,
+                    FromId = TestEntities.PersonMatilde.Id,
                     ToId = TestEntities.PersonOrjan.Id,
                     RoleId = RoleConstants.Agent,
                 });
@@ -462,10 +462,10 @@ public class BankruptcyDelegationControllerTest
         [Fact]
         public async Task AddAgent_ForConnectedPerson_Returns200WithAssignment()
         {
-            var client = CreateClient(Fixture, TestEntities.OrganizationVerdiqAS.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
+            var client = CreateClient(Fixture, TestEntities.PersonMatilde.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
 
             var response = await client.PostAsync(
-                $"{Route}/users?party={TestEntities.OrganizationVerdiqAS.Id}&user={TestEntities.PersonOrjan.Id}",
+                $"{Route}/users?party={TestEntities.PersonMatilde.Id}&user={TestEntities.PersonOrjan.Id}",
                 null,
                 TestContext.Current.CancellationToken);
 
@@ -477,7 +477,7 @@ public class BankruptcyDelegationControllerTest
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
             Assert.NotNull(result);
-            Assert.Equal(TestEntities.OrganizationVerdiqAS.Id, result.FromId);
+            Assert.Equal(TestEntities.PersonMatilde.Id, result.FromId);
             Assert.Equal(TestEntities.PersonOrjan.Id, result.ToId);
             Assert.Equal(RoleConstants.Agent.Id, result.RoleId);
         }
@@ -491,13 +491,13 @@ public class BankruptcyDelegationControllerTest
         [Fact]
         public async Task AddAgent_ForPersonViaPersonInput_Returns200WithAssignment()
         {
-            var client = CreateClient(Fixture, TestEntities.OrganizationVerdiqAS.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
+            var client = CreateClient(Fixture, TestEntities.PersonMatilde.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
 
             PersonInput personInput = new() { PersonIdentifier = TestData.BodilFarmor.Entity.PersonIdentifier, LastName = "Farmor" };
             StringContent content = new(JsonSerializer.Serialize(personInput), Encoding.UTF8, "application/json");
 
             var response = await client.PostAsync(
-                $"{Route}/users?party={TestEntities.OrganizationVerdiqAS.Id}",
+                $"{Route}/users?party={TestEntities.PersonMatilde.Id}",
                 content,
                 TestContext.Current.CancellationToken);
 
@@ -509,7 +509,7 @@ public class BankruptcyDelegationControllerTest
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
             Assert.NotNull(result);
-            Assert.Equal(TestEntities.OrganizationVerdiqAS.Id, result.FromId);
+            Assert.Equal(TestEntities.PersonMatilde.Id, result.FromId);
             Assert.Equal(TestData.BodilFarmor.Id, result.ToId);
             Assert.Equal(RoleConstants.Agent.Id, result.RoleId);
         }
@@ -522,13 +522,13 @@ public class BankruptcyDelegationControllerTest
         [Fact]
         public async Task AddAgent_ForPersonViaPersonInputWithWrongLastName_Returns400()
         {
-            var client = CreateClient(Fixture, TestEntities.OrganizationVerdiqAS.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
+            var client = CreateClient(Fixture, TestEntities.PersonMatilde.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
 
             PersonInput personInput = new() { PersonIdentifier = TestData.BodilFarmor.Entity.PersonIdentifier, LastName = "WrongName" };
             StringContent content = new(JsonSerializer.Serialize(personInput), Encoding.UTF8, "application/json");
 
             var response = await client.PostAsync(
-                $"{Route}/users?party={TestEntities.OrganizationVerdiqAS.Id}",
+                $"{Route}/users?party={TestEntities.PersonMatilde.Id}",
                 content,
                 TestContext.Current.CancellationToken);
 
@@ -562,7 +562,7 @@ public class BankruptcyDelegationControllerTest
             {
                 db.Assignments.Add(new Assignment()
                 {
-                    FromId = TestEntities.OrganizationVerdiqAS.Id,
+                    FromId = TestEntities.PersonMatilde.Id,
                     ToId = TestEntities.PersonMargit.Id,
                     RoleId = RoleConstants.Agent,
                 });
@@ -576,10 +576,10 @@ public class BankruptcyDelegationControllerTest
         [Fact]
         public async Task RevokeAgent_ForExistingAgent_Returns204()
         {
-            var client = CreateClient(Fixture, TestEntities.OrganizationVerdiqAS.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
+            var client = CreateClient(Fixture, TestEntities.PersonMatilde.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
 
             var response = await client.DeleteAsync(
-                $"{Route}/users?party={TestEntities.OrganizationVerdiqAS.Id}&user={TestEntities.PersonMargit.Id}&cascade=true",
+                $"{Route}/users?party={TestEntities.PersonMatilde.Id}&user={TestEntities.PersonMargit.Id}&cascade=true",
                 TestContext.Current.CancellationToken);
 
             var responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
@@ -613,12 +613,12 @@ public class BankruptcyDelegationControllerTest
         public ApiFixture Fixture { get; }
 
         [Fact]
-        public async Task AddAdministrator_ForOrganization_Returns200WithAdminPackage()
+        public async Task AddAdministrator_ForBankruptcyAdmin_Returns200WithAdminPackage()
         {
-            var client = CreateClient(Fixture, TestEntities.OrganizationVerdiqAS.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
+            var client = CreateClient(Fixture, TestEntities.PersonMatilde.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
 
             var response = await client.PutAsync(
-                $"{Route}/users/administrators?party={TestEntities.OrganizationVerdiqAS.Id}&user={TestEntities.OrganizationOrsta.Id}",
+                $"{Route}/users/administrators?party={TestEntities.PersonMatilde.Id}&user={TestEntities.OrganizationOrsta.Id}",
                 null,
                 TestContext.Current.CancellationToken);
 
@@ -630,7 +630,7 @@ public class BankruptcyDelegationControllerTest
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
             Assert.NotNull(result);
-            Assert.Equal(TestEntities.OrganizationVerdiqAS.Id, result.FromId);
+            Assert.Equal(TestEntities.PersonMatilde.Id, result.FromId);
             Assert.Equal(TestEntities.OrganizationOrsta.Id, result.ToId);
             Assert.Equal(RoleConstants.Rightholder.Id, result.RoleId);
             Assert.Contains(result.AssignmentPackages, p => p.PackageId == PackageConstants.KonkursboAdministrator.Id);
@@ -645,13 +645,13 @@ public class BankruptcyDelegationControllerTest
         [Fact]
         public async Task AddAdministrator_ForPersonViaPersonInput_Returns200WithAdminPackage()
         {
-            var client = CreateClient(Fixture, TestEntities.OrganizationVerdiqAS.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
+            var client = CreateClient(Fixture, TestEntities.PersonMatilde.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
 
             PersonInput personInput = new() { PersonIdentifier = TestData.BodilFarmor.Entity.PersonIdentifier, LastName = "Farmor" };
             StringContent content = new(JsonSerializer.Serialize(personInput), Encoding.UTF8, "application/json");
 
             var response = await client.PutAsync(
-                $"{Route}/users/administrators?party={TestEntities.OrganizationVerdiqAS.Id}",
+                $"{Route}/users/administrators?party={TestEntities.PersonMatilde.Id}",
                 content,
                 TestContext.Current.CancellationToken);
 
@@ -663,7 +663,7 @@ public class BankruptcyDelegationControllerTest
                 new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
             Assert.NotNull(result);
-            Assert.Equal(TestEntities.OrganizationVerdiqAS.Id, result.FromId);
+            Assert.Equal(TestEntities.PersonMatilde.Id, result.FromId);
             Assert.Equal(TestData.BodilFarmor.Id, result.ToId);
             Assert.Equal(RoleConstants.Rightholder.Id, result.RoleId);
             Assert.Contains(result.AssignmentPackages, p => p.PackageId == PackageConstants.KonkursboAdministrator.Id);
@@ -677,13 +677,13 @@ public class BankruptcyDelegationControllerTest
         [Fact]
         public async Task AddAdministrator_ForPersonViaPersonInputWithWrongLastName_Returns400()
         {
-            var client = CreateClient(Fixture, TestEntities.OrganizationVerdiqAS.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
+            var client = CreateClient(Fixture, TestEntities.PersonMatilde.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
 
             PersonInput personInput = new() { PersonIdentifier = TestData.BodilFarmor.Entity.PersonIdentifier, LastName = "WrongName" };
             StringContent content = new(JsonSerializer.Serialize(personInput), Encoding.UTF8, "application/json");
 
             var response = await client.PutAsync(
-                $"{Route}/users/administrators?party={TestEntities.OrganizationVerdiqAS.Id}",
+                $"{Route}/users/administrators?party={TestEntities.PersonMatilde.Id}",
                 content,
                 TestContext.Current.CancellationToken);
 
@@ -717,7 +717,7 @@ public class BankruptcyDelegationControllerTest
             {
                 var adminAssignment = new Assignment()
                 {
-                    FromId = TestEntities.OrganizationVerdiqAS.Id,
+                    FromId = TestEntities.PersonMatilde.Id,
                     ToId = TestEntities.OrganizationOkernBorettslag.Id,
                     RoleId = RoleConstants.Rightholder,
                 };
@@ -737,10 +737,10 @@ public class BankruptcyDelegationControllerTest
         [Fact]
         public async Task RevokeAdministrator_ForExistingAdministrator_Returns204()
         {
-            var client = CreateClient(Fixture, TestEntities.OrganizationVerdiqAS.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
+            var client = CreateClient(Fixture, TestEntities.PersonMatilde.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
 
             var response = await client.DeleteAsync(
-                $"{Route}/users/administrators?party={TestEntities.OrganizationVerdiqAS.Id}&user={TestEntities.OrganizationOkernBorettslag.Id}",
+                $"{Route}/users/administrators?party={TestEntities.PersonMatilde.Id}&user={TestEntities.OrganizationOkernBorettslag.Id}",
                 TestContext.Current.CancellationToken);
 
             var responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
@@ -756,7 +756,7 @@ public class BankruptcyDelegationControllerTest
     /// Tests for <see cref="BanckruptcyDelegationController.GetBankruptcyEstatesForParty(Guid, CancellationToken)"/>.
     /// </summary>
     /// <remarks>
-    /// party = <see cref="TestEntities.OrganizationVerdiqAS"/> is EstateAdministrator for the
+    /// party = <see cref="TestEntities.PersonMatilde"/> is EstateAdministrator for the
     /// estate <see cref="TestEntities.OrganizationSolsidenSameie"/>.
     /// </remarks>
     [IntegrationTest]
@@ -770,7 +770,7 @@ public class BankruptcyDelegationControllerTest
                 db.Assignments.Add(new Assignment()
                 {
                     FromId = TestEntities.OrganizationSolsidenSameie.Id,
-                    ToId = TestEntities.OrganizationVerdiqAS.Id,
+                    ToId = TestEntities.PersonMatilde.Id,
                     RoleId = RoleConstants.EstateAdministrator,
                 });
 
@@ -783,10 +783,10 @@ public class BankruptcyDelegationControllerTest
         [Fact]
         public async Task GetBankruptcyEstatesForParty_Authorized_Returns200WithEstates()
         {
-            var client = CreateClient(Fixture, TestEntities.OrganizationVerdiqAS.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
+            var client = CreateClient(Fixture, TestEntities.PersonMatilde.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
 
             var response = await client.GetAsync(
-                $"{Route}/estates?party={TestEntities.OrganizationVerdiqAS.Id}",
+                $"{Route}/estates?party={TestEntities.PersonMatilde.Id}",
                 TestContext.Current.CancellationToken);
 
             var responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
@@ -810,7 +810,7 @@ public class BankruptcyDelegationControllerTest
     /// and <see cref="BanckruptcyDelegationController.RevokeBankruptcyEstateForUser(Guid, Guid, Guid, CancellationToken)"/>.
     /// </summary>
     /// <remarks>
-    /// party (bankruptcy administrator) = <see cref="TestEntities.OrganizationVerdiqAS"/> is
+    /// party (bankruptcy administrator) = <see cref="TestEntities.PersonMatilde"/> is
     /// EstateAdministrator for the estate <see cref="TestEntities.OrganizationSolsidenSameie"/>.
     /// <see cref="TestEntities.PersonPaula"/> is an Agent for the party. Delegating the estate to
     /// the agent (user) therefore succeeds. The estate <see cref="TestEntities.OrganizationOkernBorettslag"/>
@@ -828,14 +828,14 @@ public class BankruptcyDelegationControllerTest
                 db.Assignments.Add(new Assignment()
                 {
                     FromId = TestEntities.OrganizationSolsidenSameie.Id,
-                    ToId = TestEntities.OrganizationVerdiqAS.Id,
+                    ToId = TestEntities.PersonMatilde.Id,
                     RoleId = RoleConstants.EstateAdministrator,
                 });
 
                 // Paula is an Agent for the party
                 db.Assignments.Add(new Assignment()
                 {
-                    FromId = TestEntities.OrganizationVerdiqAS.Id,
+                    FromId = TestEntities.PersonMatilde.Id,
                     ToId = TestEntities.PersonPaula.Id,
                     RoleId = RoleConstants.Agent,
                 });
@@ -853,10 +853,10 @@ public class BankruptcyDelegationControllerTest
         [Fact]
         public async Task AddAndRevokeBankruptcyEstateForUser_WhenPartyAdministratesEstate_ReturnsOk()
         {
-            var client = CreateClient(Fixture, TestEntities.OrganizationVerdiqAS.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
+            var client = CreateClient(Fixture, TestEntities.PersonMatilde.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
 
             var addResponse = await client.PostAsync(
-                $"{Route}/estates/users?party={TestEntities.OrganizationVerdiqAS.Id}&estate={TestEntities.OrganizationSolsidenSameie.Id}&user={TestEntities.PersonPaula.Id}",
+                $"{Route}/estates/users?party={TestEntities.PersonMatilde.Id}&estate={TestEntities.OrganizationSolsidenSameie.Id}&user={TestEntities.PersonPaula.Id}",
                 null,
                 TestContext.Current.CancellationToken);
 
@@ -871,7 +871,7 @@ public class BankruptcyDelegationControllerTest
             Assert.NotEqual(Guid.Empty, addResult.DelegationId);
 
             var revokeResponse = await client.DeleteAsync(
-                $"{Route}/estates/users?party={TestEntities.OrganizationVerdiqAS.Id}&estate={TestEntities.OrganizationSolsidenSameie.Id}&user={TestEntities.PersonPaula.Id}",
+                $"{Route}/estates/users?party={TestEntities.PersonMatilde.Id}&estate={TestEntities.OrganizationSolsidenSameie.Id}&user={TestEntities.PersonPaula.Id}",
                 TestContext.Current.CancellationToken);
 
             var revokeContent = await revokeResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
@@ -886,17 +886,17 @@ public class BankruptcyDelegationControllerTest
         [Fact]
         public async Task AddAndRevokeBankruptcyEstateForUser_WhenEstateNotAdministratedByParty_ReturnsForbidden()
         {
-            var client = CreateClient(Fixture, TestEntities.OrganizationVerdiqAS.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
+            var client = CreateClient(Fixture, TestEntities.PersonMatilde.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
 
             var addResponse = await client.PostAsync(
-                $"{Route}/estates/users?party={TestEntities.OrganizationVerdiqAS.Id}&estate={TestEntities.OrganizationOkernBorettslag.Id}&user={TestEntities.PersonPaula.Id}",
+                $"{Route}/estates/users?party={TestEntities.PersonMatilde.Id}&estate={TestEntities.OrganizationOkernBorettslag.Id}&user={TestEntities.PersonPaula.Id}",
                 null,
                 TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.Forbidden, addResponse.StatusCode);
 
             var revokeResponse = await client.DeleteAsync(
-                $"{Route}/estates/users?party={TestEntities.OrganizationVerdiqAS.Id}&estate={TestEntities.OrganizationOkernBorettslag.Id}&user={TestEntities.PersonPaula.Id}",
+                $"{Route}/estates/users?party={TestEntities.PersonMatilde.Id}&estate={TestEntities.OrganizationOkernBorettslag.Id}&user={TestEntities.PersonPaula.Id}",
                 TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.Forbidden, revokeResponse.StatusCode);
