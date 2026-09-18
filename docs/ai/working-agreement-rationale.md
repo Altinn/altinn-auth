@@ -31,15 +31,13 @@ Source links are in section 6.
 
 ### What recurs
 
-Across these policies, five rules appear almost everywhere, regardless of stance:
+Across these policies, three rules appear almost everywhere, regardless of stance:
 
 1. The human is accountable and must be able to explain the change in their own words.
-2. Substantial AI generation is disclosed. Autocomplete and grammar help are usually exempt.
-3. Commit messages, PR descriptions and replies to reviewers are written by the author.
-4. Self-review, a passing build and passing tests come before asking for review.
-5. AI review is advisory. A person approves, and bot comments are resolved or dismissed by a person.
+2. Self-review, a passing build and passing tests come before asking for review.
+3. AI review is advisory. A person approves, and bot comments are resolved or dismissed by a person.
 
-Two more recur in the projects that use AI most: keep generated changes small, and give agents no secrets or production access.
+Two more appear in about half of them: disclosure of substantial AI generation (49% of the 281 surveyed policies, 14 of the 22 read here; autocomplete and grammar help are usually exempt), and PR text, commit messages and replies written by the author rather than generated (28% of the surveyed policies forbid AI in communication; 11 of the 22 here, among them Kubernetes, LLVM, Node.js and Rust). Two more recur in the projects that use AI most: keep generated changes small, and give agents no secrets or production access.
 
 ### What we adopted, and what we left out
 
@@ -63,7 +61,7 @@ The 400-line guideline in CONTRIBUTING.md is the top of the SmartBear range, cho
 
 ### You own what you submit
 
-Every study that measured both perception and outcome found the same gap. Experienced developers in their own repositories expected AI to make them 24% faster, believed afterwards it had made them 20% faster, and were measured 19% slower (METR, July 2025, randomised, 16 developers, 246 tasks). METR's 2026 follow-up with 57 developers found a non-significant 18% speed-up and repeated that people overestimate AI's effect on their time by about 40 percentage points.
+Every study that measured both perception and outcome found the same gap. Experienced developers in their own repositories expected AI to make them 24% faster, believed afterwards it had made them 20% faster, and were measured 19% slower (METR, July 2025, randomised, 16 developers, 246 tasks). METR's own summary of that study is that people overestimated AI's effect on their time by 40 percentage points on average (METR, May 2026). The February 2026 follow-up (57 developers, 143 repositories, 800+ tasks) is weak evidence in both directions: the ten returning participants were an estimated 18% faster and the 47 new ones 4% faster, neither significant and both with confidence intervals spanning zero, and METR itself calls the result an unreliable signal because 30% to 50% of participants withheld tasks they did not want to do without AI. METR then abandoned the design.
 
 Comprehension is the mechanism. Junior engineers who used AI to learn a new library scored 50% on a quiz about the code they had just written, against 67% for those who wrote it by hand, with no significant time saved (Anthropic, randomised, January 2026). Comprehension survived when participants asked the assistant to explain rather than to do. Users with an AI assistant wrote less secure code and were more confident it was secure (Perry et al., Stanford, 2023). Higher confidence in generative AI correlated with less critical thinking among 319 knowledge workers (Microsoft Research, 2025).
 
@@ -87,7 +85,7 @@ No study shows that disclosure changes outcomes on its own. The reason to disclo
 
 ### Measure outcomes in aggregate
 
-This is the best-supported rule. Perceived gains and measured gains diverged in the same direction in METR 2025 and 2026, DORA 2025 (over 80% believe productivity rose while stability fell), Faros 2025 (individual gains, flat company metrics), Uplevel 2024 (41% more bugs, no change in cycle time) and Microsoft 2026 (24% more merged PRs, with the authors warning that a merged PR is not the same as value). Self-report is not a measurement. Aggregate, not per person, because the point is to learn, not to rank.
+This is the best-supported rule. Perceived gains and measured gains diverged in the same direction in METR 2025, DORA 2025 (over 80% believe productivity rose while stability fell), Faros 2025 (individual gains, flat company metrics), Uplevel 2024 (41% more bugs, no change in cycle time) and Microsoft 2026 (24% more merged PRs, with the authors warning that a merged PR is not the same as value). Self-report is not a measurement. Aggregate, not per person, because the point is to learn, not to rank.
 
 ### AI use is a personal choice
 
@@ -95,15 +93,15 @@ The gains are heterogeneous. Contractors on a greenfield task were 55% faster wi
 
 ### Where the evidence is mixed
 
-Speed: 55% faster in 2022, 19% slower in 2025, a non-significant 18% faster in 2026, and DORA flipping from negative to positive throughput between 2024 and 2025. Quality: GitHub's study and the CodeScene experiment are neutral to slightly positive; GitClear, Uplevel, Sonar, Veracode and Faros are negative. Vendor incentives run both ways: GitHub sells Copilot, the others sell measurement or scanning. Every large telemetry study is correlational and every randomised study is small. That is itself the argument for measuring our own outcomes.
+Speed: 55% faster in 2022, 19% slower in 2025, a non-significant 4% to 18% faster in the weak 2026 follow-up, and DORA flipping from negative to positive throughput between 2024 and 2025. Quality: GitHub's study and the CodeScene experiment are neutral to slightly positive; GitClear, Uplevel, Sonar, Veracode and Faros are negative. Vendor incentives run both ways: GitHub sells Copilot, the others sell measurement or scanning. Every large telemetry study is correlational and every randomised study is small. That is itself the argument for measuring our own outcomes.
 
 ## 3. The Norwegian and regulatory frame
 
-Digdir is a state body, and the working agreement has to sit inside what Digdir itself, the government and the coming AI Act expect. This section maps those expectations to the rules. Two verification notes: digdir.no and regjeringen.no block automated readers, so Digdir's guidance text was read through search-index snippets and the rundskriv through press coverage. Confirm the exact wording in a browser before quoting either outside this document.
+Digdir is a state body, and the working agreement has to sit inside what Digdir itself, the government and the coming AI Act expect. This section maps those expectations to the rules. One verification note: digdir.no and regjeringen.no block automated readers. Digdir's guidance text was read through search-index snippets, and the rundskriv's section 1.3 was checked against the primary document by a reviewer of the PR that added this page. Confirm Digdir's exact wording in a browser before quoting it outside this document.
 
-**Digdir's own guidance.** *Veiledning for ansvarlig bruk og utvikling av kunstig intelligens*, sub-page *Bruk av generativ KI* (open beta, last updated November 2024), is the only Norwegian public-sector source found that addresses developers using code assistants directly. It says that personal data and information that is taushetsbelagt, gradert, unntatt offentlighet, security-sensitive or IP-protected must not be given to a generative tool; that for code tools this explicitly includes API keys, security tokens, environment variables and test data; and that because assistants cannot reliably exclude individual files, such material must be kept where the tool does not see it. The user is the sender and answers for the content. It recommends stating in the pull request that AI-assisted code generation was used, so the reviewer knows. It asks for training and routines for developers, and it cites the same Stanford finding as section 2. That is the source of rules 1, 2 and 7.
+**Digdir's own guidance.** *Veiledning for ansvarlig bruk og utvikling av kunstig intelligens*, sub-page *Bruk av generativ KI* (open beta, last updated November 2024), is the clearest Norwegian public-sector source found that addresses developers using code assistants directly; NAV's guidance and tooling, below, are the most concrete practice. It says that personal data and information that is taushetsbelagt, gradert, unntatt offentlighet, security-sensitive or IP-protected must not be given to a generative tool; that for code tools this explicitly includes API keys, security tokens, environment variables and test data; and that because assistants cannot reliably exclude individual files, such material must be kept where the tool does not see it. The user is the sender and answers for the content. It recommends stating in the pull request that AI-assisted code generation was used, so the reviewer knows. It asks for training and routines for developers, and it cites the same Stanford finding as section 2. That is the source of rules 1, 2 and 7.
 
-**Digitaliseringsrundskrivet D-2/25** (May 2025, binding for state bodies): every state body shall use AI where it helps, have a plan, and make sure employees know the organisation's routines for AI; a data protection impact assessment is expected when web-based tools such as ChatGPT are used. The existence of this agreement, rule 9 on onboarding, and the data policy in #4083 answer that.
+**Digitaliseringsrundskrivet D-2/25** (May 2025) is binding for state bodies, but its AI section 1.3 is a recommendation, not a requirement: state bodies *should* assess where AI helps, *should* have a plan, and *should* make sure employees know the organisation's routines for AI. Section 1.8 points to the duty under GDPR article 35 to carry out a data protection impact assessment when web-based tools such as ChatGPT are used; that duty comes from the GDPR, not from the rundskriv. This agreement, rule 9 on onboarding and the data policy in #4083 follow the recommendation; the DPIA belongs to #4083.
 
 **The EU AI Act.** Article 4 on AI literacy has applied to deployers since February 2025 and is enforced in the EU from August 2026; the July 2026 Omnibus softened it to a duty to support the development of AI literacy. The Commission's Q&A says staff using Copilot- or ChatGPT-type tools are in scope, that measures are tailored to role and risk, and that organisations may keep an internal record of training. The Act is not yet Norwegian law: a new høring is planned for autumn 2026 and a proposition for spring 2027. A general-purpose coding assistant is not a high-risk system; Annex III has no software-development category, and the deployer duties in Article 26 apply only to high-risk systems. Article 50 covers public-facing text and synthetic media, not source code. One sentence for this team in particular: if AI were ever placed inside the authorization decision path itself, Annex III point 5(a) on access to essential public services could apply. That is outside the scope of a coding-assistant agreement, and worth remembering.
 
@@ -134,7 +132,9 @@ What does not apply, so nobody has to ask: high-risk obligations under the AI Ac
 | Autocomplete and grammar exempt from disclosure | Disclose everything (Ghostty) | Disclosure of trivial use produces noise and is not followed. Fedora, KubeVirt and the QEMU proposal draw the same line. |
 | AI review bots advisory, one bot for the repo | Ban bots on PRs (Django) | The Copilot review ruleset already exists here. Advisory-only removes the failure mode Django worried about. Decision on which bot is #4085. |
 | Optional per person, rules mandatory for all | Mandate use, or ban use | Heterogeneous gains, low trust, and the harassment clause in Rust's policy all point the same way. |
-| Own words in PR text and review replies | Allow AI-written descriptions with disclosure | The most-cited pain in every maintainer post is reviewing text nobody wrote. |
+| PR text and review replies are the author's: drafting with a tool is allowed, every claim is checked, the verification described is the verification done | An absolute ban on generated PR text (Kubernetes, jj, the QEMU proposal) | The pain maintainers describe is text nobody has read, not text a tool helped draft. LLVM's line, copy-editing yes and authorship no, fits a team that talks every day. |
+| Verification proportional to the change | Full build and test run before every review | A docs-only change gets a link check; authorization logic gets negative tests and permission boundaries. What matters is that the checks that fit the change were run and the gaps are stated. |
+| Generated code excluded from the size guideline means mechanically generated files only | Exclude everything a tool produced | Code an assistant wrote is exactly the code that needs review capacity, so it counts in full. |
 | Onboarding before use, recorded by the team | No onboarding requirement | AI Act Article 4, the rundskriv's "know the routines", Datatilsynet's training point and NAV's survey all ask for it. Content is #4091. |
 | Decision records name the model when substantially AI-assisted | Disclose only in PRs | Nasjonalarkivet's proportional documentation duty: provenance matters where output underpins a decision. |
 
@@ -178,6 +178,7 @@ Evidence:
 - DORA, *State of AI-assisted Software Development 2025* (2025-09-23): <https://cloud.google.com/blog/products/ai-machine-learning/announcing-the-2025-dora-report>
 - METR, *Measuring the Impact of Early-2025 AI on Experienced Open-Source Developer Productivity* (2025-07-10): <https://metr.org/blog/2025-07-10-early-2025-ai-experienced-os-dev-study/>
 - METR, *We are changing our developer productivity experiment design* (2026-02-24): <https://metr.org/blog/2026-02-24-uplift-update/>
+- METR, *Measuring the Self-Reported Impact of Early-2026 AI on Technical Worker Productivity* (2026-05-11): <https://metr.org/blog/2026-05-11-ai-usage-survey/>
 - GitHub, *Quantifying GitHub Copilot's impact on developer productivity* (2022-09-07): <https://github.blog/news-insights/research/research-quantifying-github-copilots-impact-on-developer-productivity-and-happiness/>
 - GitHub, *Does GitHub Copilot improve code quality?* (2024-11-18): <https://github.blog/news-insights/research/does-github-copilot-improve-code-quality-heres-what-the-data-says/>
 - GitHub, *Octoverse 2025* (2025-10-28): <https://github.blog/news-insights/octoverse/octoverse-a-new-developer-joins-github-every-second-as-ai-leads-typescript-to-1/>
@@ -199,7 +200,7 @@ Evidence:
 - Murphy-Hill, Butler, Savelieva, *Adoption and Impact of Command-Line AI Coding Agents at Microsoft* (2026-07-01): <https://arxiv.org/abs/2607.01418>
 - Uplevel, *Can Generative AI Improve Developer Productivity?* (2024-09): <https://uplevelteam.com/blog/ai-for-developer-productivity>
 
-Norwegian and regulatory (digdir.no and regjeringen.no pages were read through search-index snippets and press coverage; confirm wording in a browser before quoting):
+Norwegian and regulatory (digdir.no pages were read through search-index snippets; confirm wording in a browser before quoting):
 
 - Digdir, *Bruk av generativ KI* (open beta, updated 2024-11): <https://www.digdir.no/kunstig-intelligens/bruk-av-generativ-ki/4670>; *Anskaffelse av generativ KI*: <https://www.digdir.no/kunstig-intelligens/anskaffelse-av-generativ-ki/7546>
 - Digdir, Prosjektveiviseren, *Kunstig intelligens* (2026-06-25): <https://prosjektveiviseren.digdir.no/god-praksis-og-tilpasning/kunstig-intelligens/272>; KI Norge, *KI-loven: informasjon* (2026-06-10): <https://ki.norge.no/veiledning/ki-loven-informasjon>
