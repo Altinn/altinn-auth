@@ -120,13 +120,16 @@ This repository follows the [AGENTS.md](https://agents.md/) convention, decided 
 [ADR-0002](docs/adr/0002-tool-neutral-agent-contract.md): `AGENTS.md` is the single
 source of guidance for AI coding agents, at the root for what is common and in each
 vertical (`src/apps/<Vertical>/AGENTS.md`) for that vertical's commands, landmines
-and test gotchas. `CLAUDE.md` and `.github/copilot-instructions.md` only point to it.
-If your tool does not read `AGENTS.md` on its own, point it there.
+and test gotchas. `CLAUDE.md` imports it, and `.github/copilot-instructions.md`
+carries a short summary and a link. If your tool does not read `AGENTS.md` on its
+own, point it there.
 
-The root file and the first vertical files are being added under
-[epic #4075](https://github.com/Altinn/altinn-auth/issues/4075). Using an agent is
-optional. The bar for a contribution is the same either way: you own what you submit,
-and it goes through the same build, tests and review.
+Rollout: the root `AGENTS.md` and its pointer files come with
+[#4077](https://github.com/Altinn/altinn-auth/issues/4077), the first vertical files
+with [#4078](https://github.com/Altinn/altinn-auth/issues/4078). Until then this
+README is the guidance. Using an agent is optional. The bar for a contribution is
+the same either way: you own what you submit, and it goes through the same build,
+tests and review.
 
 ## Contributing
 

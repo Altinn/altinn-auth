@@ -2,11 +2,11 @@
 
 - **Status:** Accepted
 - **Date:** 2026-09-18
-- **Deciders:** Team Autorisasjon
+- **Deciders:** The altinn-auth maintainers, `@altinn/team-access-management`
 
 ## Context
 
-This repository holds the Policy Decision Point, the Policy Enforcement Point and Access Management for Altinn 3, and is becoming the monorepo for the whole authorization domain: register, resource registry, authentication and the Access Management frontend are being moved in with their history ([#4048](https://github.com/Altinn/altinn-auth/issues/4048)).
+This repository holds the Policy Decision Point, the Policy Enforcement Point and Access Management for Altinn 3, and is becoming the monorepo for the whole authorization domain: register, resource registry, authentication and the Access Management frontend are being moved in with their history ([#4049](https://github.com/Altinn/altinn-auth/issues/4049), with the moves in [#4056](https://github.com/Altinn/altinn-auth/issues/4056) to [#4059](https://github.com/Altinn/altinn-auth/issues/4059)).
 
 It carries a lot of implicit knowledge: why a code path that looks removable is load-bearing, which behaviour production depends on, why a dismissed scanner finding is a false positive, why a delegation check is ordered the way it is. That knowledge lives in people's heads and in closed PR discussions, and is re-derived at cost by new contributors and by AI coding agents, who need the *why* and not only the *what*.
 
@@ -32,5 +32,5 @@ We will record significant architectural and behavioural decisions as Architectu
 ## References
 
 - Issue [#4076](https://github.com/Altinn/altinn-auth/issues/4076), part of epic [#4075](https://github.com/Altinn/altinn-auth/issues/4075).
-- Repository consolidation: [#4048](https://github.com/Altinn/altinn-auth/issues/4048).
+- Repository consolidation: decision in [#4049](https://github.com/Altinn/altinn-auth/issues/4049), moves in [#4056](https://github.com/Altinn/altinn-auth/issues/4056) to [#4059](https://github.com/Altinn/altinn-auth/issues/4059).
 - Reference implementation: [altinn-authentication `docs/adr/`](https://github.com/Altinn/altinn-authentication/tree/main/docs/adr).
