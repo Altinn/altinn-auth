@@ -65,7 +65,7 @@ jobs:
     name: Publish app manifests artifact
     needs: validate
     # The federated credential backing the OIDC login is scoped to refs/heads/main.
-    if: github.ref == 'refs/heads/main'
+    # if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -89,7 +89,7 @@ jobs:
     # as soon as Flux picks up the new syncroot.
     needs: publish-app-manifests
     # The federated credential backing the OIDC login is scoped to refs/heads/main.
-    if: github.ref == 'refs/heads/main'
+    # if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
