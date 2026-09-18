@@ -1,1 +1,19 @@
+# Line endings are normalised to LF in the repository, whatever core.autocrlf
+# the contributor happens to have set locally.
+* text=auto eol=lf
+
+# Files git must never touch.
+*.png binary
+*.ico binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.pdf binary
+*.zip binary
+*.gz binary
+*.dll binary
+*.exe binary
+*.snk binary
+*.pfx binary
+
 *.sln linguist-generated
