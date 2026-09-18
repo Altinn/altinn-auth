@@ -62,6 +62,7 @@ public static class ServiceCollectionExtensions
             sp.GetRequiredService<AppDbContext>(),
             sp.GetRequiredService<AppLifecycleFeatures>().AdosSubunitInheritance));
         services.AddScoped<IConnectionService, ConnectionService>();
+        services.AddScoped<IBankruptcyDelegationService, BankruptcyDelegationService>();
         services.AddScoped<IMaskinportenSupplierService, MaskinportenSupplierService>();
         services.AddScoped<IPartyService, PartyService>();
         services.AddScoped<IPackageService, PackageService>();

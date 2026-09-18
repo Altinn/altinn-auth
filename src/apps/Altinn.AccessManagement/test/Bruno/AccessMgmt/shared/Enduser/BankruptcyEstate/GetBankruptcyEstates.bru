@@ -1,0 +1,42 @@
+meta {
+  name: GetBankruptcyEstates
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/estates?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/bankruptcyestate-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  
+  bru.setVar("requestName", "GET_BankruptcyEstates_GetEstates");
+  
+  bru.setVar("party", testdata.BOSTYRER.partyUuid);
+  
+  var getTokenParameters = {
+    auth_userId: testdata.BOSTYRER.userId,
+    auth_partyId: testdata.BOSTYRER.partyId,
+    auth_partyUuid: testdata.BOSTYRER.partyUuid,
+    auth_ssn: testdata.BOSTYRER.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

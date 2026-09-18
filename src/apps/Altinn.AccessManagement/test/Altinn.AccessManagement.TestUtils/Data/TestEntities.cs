@@ -296,6 +296,28 @@ public static class TestEntities
         }
     };
 
+    public static ConstantDefinition<Entity> PersonMatilde { get; } = new("dd2b3e17-e098-4dca-a345-09a24adb0597")
+    {
+        Entity = new()
+        {
+            DateOfBirth = new(1973, 10, 7),
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "MATILDE BØRSTAD",
+            OrganizationIdentifier = null,
+            Parent = null,
+            ParentId = null,
+            PartyId = 51000002,
+            PersonIdentifier = "07107312026",
+            RefId = "07107312026",
+            TypeId = EntityTypeConstants.Person,
+            UserId = 51000002,
+            Username = null,
+            VariantId = EntityVariantConstants.Person,
+        }
+    };
+
     #endregion
 
     #region Systemusers

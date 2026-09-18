@@ -61,6 +61,13 @@ public class InputValidation(
                     errorBuilder.Add(ValidationErrors.EntityNotExists, $"QUERY/{options.ToParameterName}", [new(options.ToParameterName, "Person not available for delegation (deceased).")]);
                 }
 
+                if (options.AllowedToEntityTypes.Count > 0 && !options.AllowedToEntityTypes.Contains(toEntity.TypeId))
+                {
+                    var supportedEntityTypes = EntityTypeConstants.AllEntities().Select(t => t.Entity).Where(t => options.AllowedToEntityTypes.Contains(t.Id)).ToList();
+                    var supportedToTypeNames = string.Join(", ", supportedEntityTypes.Select(t => t.Name));
+                    errorBuilder.Add(ValidationErrors.DisallowedEntityType, $"$QUERY/{options.ToParameterName}", [new(options.ToParameterName, $"Entity type is not supported. Supported types: <{supportedToTypeNames}>.")]);
+                }
+
                 if (errorBuilder.TryBuild(out var validationError))
                 {
                     return validationError;
