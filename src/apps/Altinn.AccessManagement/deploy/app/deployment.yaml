@@ -60,3 +60,5 @@ spec:
             value: Staging
           - name: ASPNETCORE_URLS
             value: http://+:5110
+          - name: TEST
+            value: f1234
