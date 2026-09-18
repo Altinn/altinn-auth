@@ -30,7 +30,7 @@ spec:
               memory: "128Mi"
               cpu: "500m"
 
-          image: ghcr.io/altinn/altinn-auth/access-management:latest
+          image: ghcr.io/altinn/altinn-auth/access-management:2b6f83e
           ports:
             - name: http
               containerPort: 5110
