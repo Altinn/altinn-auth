@@ -16,6 +16,7 @@ This guide applies to everyone who changes this repository, whether you type eve
 - One approving review from a person and green required checks are needed to merge. Open a draft PR early if you want feedback.
 - Documentation, `AGENTS.md` and ADRs are updated in the same PR as the behaviour they describe. Write an ADR in `docs/adr/` (cross-cutting) or the vertical's `docs/adr/` when a change alters an authorization flow or policy evaluation, a public API contract, a data model, a dependency between verticals, or a build, release or repository-structure convention, and for any choice that should survive being asked about in two years.
 - Tests are production code: reviewed with the same care, and never deleted or weakened without a reason a reviewer has agreed to. See the [testing guide](docs/testing/README.md). Say in the PR what you could not test locally.
+- Write for the reader. Anything a person is meant to read, whether an issue, a PR description, a comment or a doc, starts with a **TL;DR of at most five bullets**. An issue keeps under 200 words above the fold and puts the rest in a collapsed `<details>` block. A PR description is the TL;DR plus what you verified. A text drafted with a tool says so at the top, and names who has read it; an empty name is an honest signal, not a failure.
 
 ## Working with AI assistance
 
@@ -36,6 +37,7 @@ Using an AI assistant is a personal choice. Nobody is required to use one, and n
 
 ## Reviewing
 
+- If the PR has no TL;DR, ask for one before you read further.
 - Review the change, not the tool. Ask the author to explain anything you cannot follow; a good answer is part of the contribution.
 - A small, focused PR gets a faster and better review. Ask for a split when a PR is too big to hold in your head.
 - Approve only what you would be comfortable maintaining yourself.
