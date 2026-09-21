@@ -4,8 +4,8 @@ metadata:
   name: access-management
   labels:
     app.kubernetes.io/name: access-management
-    app.kubernetes.io/part-of: authorization
 spec:
+  replicas: 2
   selector:
     matchLabels:
       app.kubernetes.io/name: access-management
@@ -29,8 +29,7 @@ spec:
             limits:
               memory: "128Mi"
               cpu: "500m"
-
-          image: ghcr.io/altinn/altinn-auth/access-management:2b6f83e
+          image: ghcr.io/altinn/altinn-auth/access-management:latest
           ports:
             - name: http
               containerPort: 5110

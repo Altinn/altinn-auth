@@ -1,9 +1,20 @@
 ﻿apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: product-authorization
+labels:
+  - pairs:
+      app.kubernetes.io/instance: at22
+    includeSelectors: false
+    includeTemplates: false
+
 resources:
-  - ../../app
-  - config-map-runtime.yaml
-patches:
-  - path: deployment-patch.yaml
+- ../../base
+configMapGenerator:
+- name: access-management-runtime
+  behavior: merge
+  envs:
+  - application.properties
+images:
+  - name: ghcr.io/altinn/altinn-auth/access-management
+    newName: ghcr.io/altinn/altinn-auth/access-management
+    newTag: 2b6f83e
 

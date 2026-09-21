@@ -1,0 +1,28 @@
+﻿apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: access-management-runtime
+  labels:
+    app.kubernetes.io/name: access-management-runtime
+data:
+  AppConfiguration__Enabled: "true"
+  Altinn__AppConfiguration__Endpoint: https://appconfaltinnauth001hub.azconfig.io
+  Altinn__AppConfiguration__FeatureFlags__Enable: "true"
+  Altinn__AppConfiguration__Label: <application.properties>
+  PostgreSQLSettings__AdminConnectionString: <application.properties>
+  PostgreSQLSettings__ConnectionString: <application.properties>
+  PostgreSQLSettings__EnableDBConnection: "true"
+  GeneralSettings__Hostname: <application.properties>
+  GeneralSettings__FrontendBaseUrl: <application.properties>
+  PlatformSettings__ApiAuthenticationEndpoint: <application.properties>
+  PlatformSettings__ApiAuthorizationEndpoint: <application.properties>
+  PlatformSettings__ApiProfileEndpoint: <application.properties>
+  PlatformSettings__ApiRegisterEndpoint: <application.properties>
+  PlatformSettings__ApiResourceRegistryEndpoint: <application.properties>
+  PlatformSettings__AltinnPlatformBaseUrl: <application.properties>
+  OidcProviders__altinn__Issuer: <application.properties>
+  OidcProviders__altinn__WellKnownConfigEndpoint: <application.properties>
+  OidcProviders__maskinporten-ver2__Issuer: <application.properties>
+  OidcProviders__maskinporten-ver2__WellKnownConfigEndpoint: <application.properties>
+  OidcProviders__maskinporten-test__Issuer: <application.properties>
+  OidcProviders__maskinporten-test__WellKnownConfigEndpoint: <application.properties>

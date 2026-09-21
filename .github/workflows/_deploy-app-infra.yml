@@ -1,0 +1,106 @@
+﻿name: "Template: Release App Infra"
+
+on:
+  workflow_call:
+    inputs:
+      name:
+        required: true
+        description: Name of the app
+        type: string
+      
+      path:
+        required: true
+        description: Path of the App
+        type: string
+
+      terraform:
+        description: Whether to deploy terraform
+        type: boolean
+        default: false
+
+      terraformStateFile:
+        description: Path to the terraform state file
+        type: string
+
+permissions:
+  contents: read
+  packages: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  build-push:
+    name: Build and Push
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      image: ${{ steps.img.outputs.image }}
+      tag: ${{ steps.img.outputs.tag }}
+
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        name: Checkout repository
+
+      - name: Install .NET
+        uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
+
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+        with:
+          version: 9
+          run_install: |
+            - cwd: .github/scripts
+              args: [--frozen-lockfile]
+            - args: [--global, tsx]
+
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        name: Login to ghcr
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and Push ${{ inputs.name }}
+        id: img
+        run: tsx ./.github/scripts/build-push-app.mts "${{ inputs.name }}" --tag "${{ inputs.version }}"
+
+      - name: Print outputs
+        env:
+          IMAGE: ${{ steps.img.outputs.image }}
+          TAG: ${{ steps.img.outputs.tag }}
+        run: |
+          echo "Image: ${IMAGE}"
+          echo "Tag: ${TAG}"
+
+  deploy-staging:
+    name: Releaser Staging
+    if: inputs.terraform
+    secrets: inherit
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [tt02]
+
+    uses: ./.github/workflows/_deploy-app-terraform.yml
+    with:
+      environment: ${{ matrix.environment }}
+      working_dir: ${{ inputs.path }}/infra
+      tf_state: ${{ inputs.terraformStateFile }}
+
+  deploy-prod:
+    name: Release Prod
+    if: inputs.terraform
+    secrets: inherit
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [prod]
+    
+    uses: ./.github/workflows/_deploy-app-terraform.yml
+    with:
+      environment: ${{ matrix.environment }}
+      working_dir: ${{ inputs.path }}/infra
+      tf_state: ${{ inputs.terraformStateFile }}

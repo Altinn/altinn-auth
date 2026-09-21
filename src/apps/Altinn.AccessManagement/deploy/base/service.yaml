@@ -1,0 +1,13 @@
+﻿apiVersion: v1
+kind: Service
+metadata:
+  name: access-management
+  labels:
+    app.kubernetes.io/name: access-management
+spec:
+  selector:
+    app.kubernetes.io/name: access-management
+  ports:
+    - name: http
+      port: 80
+      targetPort: 5110
