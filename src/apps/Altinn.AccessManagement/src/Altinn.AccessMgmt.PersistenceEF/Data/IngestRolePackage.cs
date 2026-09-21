@@ -63,7 +63,7 @@ public static partial class StaticDataIngest
             new RolePackage() { RoleId = roleBobe, PackageId = packageTS, EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roleKnuf, PackageId = packageTS, EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roleHadm, PackageId = packageTS, EntityVariantId = null, CanDelegate = true, HasAccess = false },
-            new RolePackage() { RoleId = roleNufRepr, PackageId = packageTS, EntityVariant = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roleNufRepr, PackageId = packageTS, EntityVariantId = null, CanDelegate = true, HasAccess = true }
             new RolePackage() { RoleId = roleFfor, PackageId = packageTS, EntityVariantId = EntityVariantConstants.VPFO.Id, CanDelegate = true, HasAccess = true },
 
             new RolePackage() { RoleId = roleDagl, PackageId = PackageConstants.InstanceDelegation.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
