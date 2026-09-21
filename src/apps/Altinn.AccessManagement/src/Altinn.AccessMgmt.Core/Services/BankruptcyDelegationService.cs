@@ -663,9 +663,9 @@ namespace Altinn.AccessMgmt.Core.Services
             .ToListAsync(cancellationToken);
 
             var result = query
-                .Select(e =>
-                    DtoMapper.Convert(e.DelegationPackages)
-                ).ToList();
+                .SelectMany(e => e.DelegationPackages)
+                .Select(dp => DtoMapper.Convert(dp.Package))
+                .ToList();
 
             return result;
         }
