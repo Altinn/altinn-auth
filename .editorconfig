@@ -223,3 +223,7 @@ dotnet_diagnostic.SA1600.severity = none
 
 # SA1316: Tuple element naming convention - test code uses camelCase
 dotnet_diagnostic.SA1316.severity = none
+
+[*.md]
+charset = utf-8
+end_of_line = lf
