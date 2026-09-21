@@ -3,7 +3,7 @@ kind: HTTPRoute
 metadata:
   name: access-management
   labels:
-    app.kubernetes.io/name: access-management
+    app.kubernetes.io/name: access-management-httproute
 spec:
   parentRefs:
     - group: gateway.networking.k8s.io
@@ -14,7 +14,7 @@ spec:
     - matches:
         - path:
             type: PathPrefix
-            value: /
+            value: /accessmanagement/api
       filters:
         - type: RequestHeaderModifier
           requestHeaderModifier:
@@ -22,7 +22,6 @@ spec:
               - name: l5d-dst-override
                 value: access-management.product-authorization.svc.cluster.local:80
       backendRefs:
-        - group: ""
-          kind: Service
+        - kind: Service
           name: access-management
           port: 80
