@@ -1,13 +1,13 @@
 ﻿apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: access-management-apps
-  namespace: product-access-management
+  name: accessmanagement-apps
+  namespace: product-accessmanagement
 spec:
   interval: 10m
   path: ./environments/at22
   prune: true
   sourceRef:
     kind: OCIRepository
-    name: access-management-manifests
-  targetNamespace: product-access-management
+    name: accessmanagement-manifests
+  targetNamespace: product-accessmanagement

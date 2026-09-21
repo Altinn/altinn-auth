@@ -4,7 +4,7 @@ metadata:
   name: access-management
   labels:
     app.kubernetes.io/name: access-management
-    app.kubernetes.io/part-of: access-management
+    app.kubernetes.io/part-of: accessmanagement
 spec:
   selector:
     matchLabels:
@@ -13,7 +13,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: access-management
-        app.kubernetes.io/part-of: access-management
+        app.kubernetes.io/part-of: accessmanagement
         azure.workload.identity/use: "true"
       annotations:
         cluster-autoscaler.kubernetes.io/safe-to-evict: "true"

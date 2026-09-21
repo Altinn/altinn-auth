@@ -5,12 +5,12 @@ resources:
 patches:
   - target:
       kind: Kustomization
-      name: access-management-apps
+      name: accessmanagement-apps
     patch: |-
       apiVersion: kustomize.toolkit.fluxcd.io/v1
       kind: Kustomization
       metadata:
-        name: access-management-apps
-        namespace: product-access-management
+        name: accessmanagement-apps
+        namespace: product-accessmanagement
       spec:
         path: ./environments/prod

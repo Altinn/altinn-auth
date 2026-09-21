@@ -4,7 +4,7 @@ metadata:
   name: access-management
   labels:
     app.kubernetes.io/name: access-management
-    app.kubernetes.io/part-of: access-management
+    app.kubernetes.io/part-of: accessmanagement
 spec: {}
 ---
 apiVersion: apps/v1
@@ -13,7 +13,7 @@ metadata:
   name: access-management
   labels:
     app.kubernetes.io/name: access-management
-    app.kubernetes.io/part-of: access-management
+    app.kubernetes.io/part-of: accessmanagement
 spec:
   selector:
     matchLabels:
@@ -22,7 +22,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: access-management
-        app.kubernetes.io/part-of: access-management
+        app.kubernetes.io/part-of: accessmanagement
         azure.workload.identity/use: "true"
       annotations:
         cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
@@ -46,7 +46,7 @@ metadata:
   name: access-management
   labels:
     app.kubernetes.io/name: access-management
-    app.kubernetes.io/part-of: access-management
+    app.kubernetes.io/part-of: accessmanagement
 spec:
   selector:
     app.kubernetes.io/name: access-management
@@ -61,7 +61,7 @@ metadata:
   name: access-management
   labels:
     app.kubernetes.io/name: access-management
-    app.kubernetes.io/part-of: access-management
+    app.kubernetes.io/part-of: accessmanagement
 spec:
   parentRefs:
     - group: gateway.networking.k8s.io
@@ -78,7 +78,7 @@ spec:
           requestHeaderModifier:
             set:
               - name: l5d-dst-override
-                value: access-management.product-access-management.svc.cluster.local:80
+                value: access-management.product-accessmanagement.svc.cluster.local:80
       backendRefs:
         - group: ""
           kind: Service

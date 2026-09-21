@@ -1,8 +1,8 @@
 ﻿apiVersion: source.toolkit.fluxcd.io/v1
 kind: OCIRepository
 metadata:
-  name: access-management-manifests
-  namespace: product-access-management
+  name: accessmanagement-manifests
+  namespace: product-accessmanagement
 spec:
   interval: 10m
   provider: azure
