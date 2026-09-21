@@ -114,8 +114,9 @@ Open [`http://localhost:8000`](http://localhost:8000) and log in with
 
 ## Contributing
 
-Open a pull request against `main`. CI builds and tests the verticals affected
-by your change.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for branches, PR conventions, testing
+expectations and the working agreement for AI-assisted development. CI builds
+and tests the verticals affected by your change.
 
 ## Security
 
