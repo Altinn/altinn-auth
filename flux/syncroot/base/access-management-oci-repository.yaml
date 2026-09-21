@@ -1,0 +1,11 @@
+﻿apiVersion: source.toolkit.fluxcd.io/v1
+kind: OCIRepository
+metadata:
+  name: access-management-manifests
+  namespace: product-access-management
+spec:
+  interval: 10m
+  provider: azure
+  url: oci://altinncr.azurecr.io/accessmanagement/altinn-auth
+  ref:
+    tag: main

@@ -1,5 +1,5 @@
 name: "Publish Flux Artifacts"
-run-name: Publish authorization flux artifacts to ${{ inputs.environment }}
+run-name: Publish accessmanagement flux artifacts to ${{ inputs.environment }}
 
 on:
   workflow_dispatch:
@@ -17,8 +17,8 @@ on:
           - prod
 
 env:
-  SYNCROOT_ARTIFACT_NAME: authorization/syncroot
-  APP_ARTIFACT_NAME: authorization/altinn-auth
+  SYNCROOT_ARTIFACT_NAME: accessmanagement/syncroot
+  APP_ARTIFACT_NAME: accessmanagement/altinn-auth
   # Scopes what gets published, not what gets validated: validate-manifests.sh
   # renders every app under src/apps/*/deploy, this ships one of them.
   APP_WORKDIR: ./src/apps/Altinn.AccessManagement/deploy
