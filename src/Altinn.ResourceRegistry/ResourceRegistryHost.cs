@@ -46,6 +46,11 @@ internal static class ResourceRegistryHost
         var services = builder.Services;
         var config = builder.Configuration;
 
+        // ServiceDefaults 6 handles exceptions with an IExceptionHandler that does not log, and .NET 10
+        // suppresses the exception handler middleware's diagnostics for handled exceptions by default.
+        // Keep logging unhandled exceptions until this is fixed in ServiceDefaults.
+        services.Configure<ExceptionHandlerOptions>(options => options.SuppressDiagnosticsCallback = _ => false);
+
         MapPostgreSqlConfiguration(builder);
         services.AddMemoryCache();
 
