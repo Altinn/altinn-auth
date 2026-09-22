@@ -4,3 +4,11 @@ namespace: product-accessmanagement
 resources:
   - 01-identity.yaml
   - 02-db-migration.yaml
+
+configMapGenerator:
+  - name: environment
+    envs:
+      - ./config/environment.env
+
+generatorOptions:
+  disableNameSuffixHash: true
