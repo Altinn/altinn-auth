@@ -15,6 +15,5 @@ configMapGenerator:
   - application.properties
 images:
   - name: ghcr.io/altinn/altinn-auth/access-management
-    newName: ghcr.io/altinn/altinn-auth/access-management
     newTag: 2b6f83e
 
