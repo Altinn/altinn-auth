@@ -12,7 +12,10 @@ prod_like                       = false
 spoke_principal_ids = ["6eaed23e-df7f-4708-9c8e-a7f34deeadb4"]
 service_bus_firewall = [
   "20.100.48.108/31", # platform-at24-01-prefix
-  "20.100.48.112/31", #platform-at24-02-prefix
+  "20.100.48.112/31", # platform-at24-02-prefix
+  "4.220.80.16/28",   # DIS AKS
+  "20.100.192.19/31", # Platform VPN DIS Prod
+  "4.235.99.236/31"   # Platform VPN DIS Test
 ]
 
 maintainers_principal_ids = [
