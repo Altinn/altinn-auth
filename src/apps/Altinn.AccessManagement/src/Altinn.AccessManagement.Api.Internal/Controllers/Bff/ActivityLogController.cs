@@ -1,7 +1,9 @@
 using System.Net.Mime;
+using Altinn.AccessManagement.Api.Internal.Utils;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessMgmt.Core;
+using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
@@ -13,30 +15,30 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.FeatureManagement.Mvc;
 
-namespace Altinn.AccessManagement.Api.Enduser.Controllers;
+namespace Altinn.AccessManagement.Api.Internal.Controllers.Bff;
 
 /// <summary>
-/// Controller for the enduser activity log over assignments, delegations and requests.
+/// Activity log endpoints for the Altinn Portal frontend — the early access surface while the
+/// enduser API is still gated off. Accessible only with the portal scope. What the caller may
+/// see is decided by <see cref="ActivityLogRoleMatrix"/>: their effective roles for the party
+/// determine which parts of the log are visible, and every query is constrained to that set.
 /// </summary>
 [ApiController]
-[Route("accessmanagement/api/v1/enduser/activitylog")]
-[FeatureGate(AccessMgmtFeatureFlags.EnableEnduserActivityLogApi)]
-public class ActivityLogController(IActivityLogService activityLogService) : ControllerBase
+[Route("accessmanagement/api/v1/bff/activitylog")]
+[FeatureGate(AccessMgmtFeatureFlags.EnableBffActivityLogApi)]
+public class ActivityLogController(IActivityLogService activityLogService, IConnectionService connectionService) : ControllerBase
 {
     private const int DefaultPageSize = 100;
 
     private const int MaxPageSize = 1000;
 
     /// <summary>
-    /// Get activity log entries involving the specified party, newest first. All filter
-    /// parameters accept multiple values. The optional direction anchors the party on the
-    /// from (given), to (received) or via (facilitator) side; without it any involvement
-    /// matches. typeId values reference the activity type catalog and expand to whole
-    /// combinations OR'ed together. Paging is page-based via pageSize and pageNo; without
-    /// them the first 100 entries are returned.
+    /// Get activity log entries involving the specified party, newest first, limited to the
+    /// log types the caller's roles for the party may see. Same query surface as the enduser
+    /// endpoint. Maskinporten schema events are never included.
     /// </summary>
     [HttpGet]
-    [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_ACTIVITYLOG_READ)]
+    [Authorize(Policy = AuthzConstants.SCOPE_PORTAL_ENDUSER)]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_READ)]
     [ProducesResponseType<PaginatedResult<ActivityLogDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
@@ -58,15 +60,31 @@ public class ActivityLogController(IActivityLogService activityLogService) : Con
             return ValidationProblem(ModelState);
         }
 
+        var allowed = await ResolveAllowedTypes(query.Party, cancellationToken);
+        if (allowed is null)
+        {
+            return Unauthorized();
+        }
+
+        if (allowed.Count == 0)
+        {
+            return Forbid();
+        }
+
         var filter = ActivityLogQueryMapper.BuildFilter(query, activityTypeKeys);
 
         var size = Math.Clamp(query.PageSize ?? DefaultPageSize, 1, MaxPageSize);
         var page = Math.Max(query.PageNo ?? 0, 0);
 
+        if (!ActivityLogRoleMatrix.TryConstrain(filter, allowed, out var constrained))
+        {
+            return Ok(PaginatedResult.Create(Array.Empty<ActivityLogDto>(), null));
+        }
+
         var result = await activityLogService.GetActivityLog(
             query.Party,
             query.Direction,
-            filter,
+            constrained,
             size,
             page,
             cancellationToken: cancellationToken);
@@ -75,14 +93,12 @@ public class ActivityLogController(IActivityLogService activityLogService) : Con
     }
 
     /// <summary>
-    /// Get the values occurring in the party's activity log for one filter field, as (id, name)
-    /// pairs to populate a filter picker. Takes the same filter parameters as the main endpoint
-    /// (the looked-up field's own filter values are ignored so more can be added; the party
-    /// anchor never is), pages the same way, and term matches names case-insensitively.
-    /// The same id can recur with different names, since names are point-in-time snapshots.
+    /// Get the values occurring in the party's activity log for one filter field, limited to
+    /// the log types the caller's roles for the party may see. Same semantics as the enduser
+    /// filter value endpoint.
     /// </summary>
     [HttpGet("filters/{field}")]
-    [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_ACTIVITYLOG_READ)]
+    [Authorize(Policy = AuthzConstants.SCOPE_PORTAL_ENDUSER)]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_READ)]
     [ProducesResponseType<PaginatedResult<ActivityLogFilterValueDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
@@ -105,16 +121,32 @@ public class ActivityLogController(IActivityLogService activityLogService) : Con
             return ValidationProblem(ModelState);
         }
 
+        var allowed = await ResolveAllowedTypes(query.Party, cancellationToken);
+        if (allowed is null)
+        {
+            return Unauthorized();
+        }
+
+        if (allowed.Count == 0)
+        {
+            return Forbid();
+        }
+
         var filter = ActivityLogQueryMapper.BuildFilter(query, activityTypeKeys);
 
         var size = Math.Clamp(query.PageSize ?? DefaultPageSize, 1, MaxPageSize);
         var page = Math.Max(query.PageNo ?? 0, 0);
 
+        if (!ActivityLogRoleMatrix.TryConstrain(filter, allowed, out var constrained))
+        {
+            return Ok(PaginatedResult.Create(Array.Empty<ActivityLogFilterValueDto>(), null));
+        }
+
         var result = await activityLogService.GetActivityLogFilterValues(
             query.Party,
             query.Direction,
             field,
-            filter,
+            constrained,
             query.Term,
             query.OrderBy,
             size,
@@ -135,6 +167,29 @@ public class ActivityLogController(IActivityLogService activityLogService) : Con
     [ProducesResponseType<List<ActivityTypeDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
     public IActionResult GetActivityTypes()
         => Ok(ActivityTypeConstants.AllEntities().Select(DtoMapper.ToActivityTypeDto).ToList());
+
+    /// <summary>
+    /// Resolves the caller's effective roles for the party (direct, keyrole and rolemap
+    /// expansion via the connection query) into the set of visible log types. Null means the
+    /// caller identity is missing; an empty set means no part of the log is visible.
+    /// </summary>
+    private async Task<IReadOnlySet<ActivityLogType>> ResolveAllowedTypes(Guid party, CancellationToken cancellationToken)
+    {
+        var userUuid = UserUtil.GetUserUuid(User);
+        if (userUuid is null)
+        {
+            return null;
+        }
+
+        var connections = await connectionService.Get(party, fromId: party, toId: userUuid.Value, cancellationToken: cancellationToken);
+        if (connections.IsProblem)
+        {
+            return ActivityLogRoleMatrix.AllowedTypes([]);
+        }
+
+        var roleIds = connections.Value.SelectMany(c => c.Roles).Select(r => r.Id);
+        return ActivityLogRoleMatrix.AllowedTypes(roleIds);
+    }
 
     private string NextLink(int pageSize, int nextPageNo)
     {

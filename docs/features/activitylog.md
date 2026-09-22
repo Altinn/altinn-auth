@@ -115,3 +115,10 @@ GET /accessmanagement/api/v1/enduser/activitylog/types
 - **Feature flag:** the whole controller sits behind `EnableEnduserActivityLogApi`.
 - **Ordering guarantee:** `(when desc, id desc)` — stable and duplicate-free across pages while paging.
 - **No joins at read time:** every name in the response is a denormalized snapshot from the log table itself; the log is served from a single range-partitioned table.
+
+## BFF surface (early access)
+
+While the enduser API is gated off, the portal frontend gets the same functionality through the BFF surface of the internal API: `accessmanagement/api/v1/bff/activitylog`, `…/filters/{field}` and `…/types`, behind its own feature flag `AccessManagement.Bff.ActivityLogApi`. Both activity log flags are declared in the deploy terraform (created disabled; toggled per environment in App Configuration). The endpoints take the same query surface (a shared parameter model) and return the same shapes as the enduser API, with two differences:
+
+- **Portal only:** the endpoints require the portal scope plus access-management read for the party. `includeMps` is not exposed — Maskinporten schema events stay hidden.
+- **Role matrix:** what the caller may see is decided by their effective roles for the party (resolved through the connection query): access managers see the assignment part, client administrators the delegation part, and main administrators everything. Every query — entries and filter values alike — is constrained to the visible types. Asking only for types outside the caller's set returns an empty page; a caller with no matrix role gets 403. The matrix is a code table (`ActivityLogRoleMatrix`) meant to be extended as the log gains data points.

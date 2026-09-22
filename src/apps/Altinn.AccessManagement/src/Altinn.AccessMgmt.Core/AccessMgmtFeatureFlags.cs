@@ -145,4 +145,10 @@ public static class AccessMgmtFeatureFlags
     /// Enables the activity log endpoint in the enduser API.
     /// </summary>
     public const string EnableEnduserActivityLogApi = "AccessManagement.Enduser.ActivityLogApi";
+
+    /// <summary>
+    /// Enables the activity log endpoints in the BFF surface of the internal API — the early
+    /// access for the portal frontend while the enduser API is still gated off.
+    /// </summary>
+    public const string EnableBffActivityLogApi = "AccessManagement.Bff.ActivityLogApi";
 }
