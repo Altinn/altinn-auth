@@ -118,6 +118,6 @@ jobs:
             --source="$(git config --get remote.origin.url)" \
             --revision="$(git branch --show-current)@sha1:$(git rev-parse HEAD)"          
 
-      - name: Deploy manifests to staging
+      - name: Deploy manifests to at22
         run: |
-          flux tag artifact $OCI_REPO:$(git rev-parse --short HEAD) --tag staging  
+          flux tag artifact "ghcr.io/altinn/accessmanagement-manifests:${{ github.sha }}" --tag at22  
