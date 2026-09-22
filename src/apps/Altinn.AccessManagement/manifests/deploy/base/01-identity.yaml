@@ -1,7 +1,7 @@
 ﻿apiVersion: application.dis.altinn.cloud/v1alpha1
 kind: ApplicationIdentity
 metadata:
-  name: access-management
+  name: app
   labels:
     app.kubernetes.io/name: access-management
     app.kubernetes.io/part-of: accessmanagement

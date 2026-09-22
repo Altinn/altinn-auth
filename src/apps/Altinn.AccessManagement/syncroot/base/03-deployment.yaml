@@ -6,7 +6,6 @@ spec:
   interval: 60m
   path: ./fake
   prune: true
-  wait: true
   targetNamespace: product-accessmanagement
 
   sourceRef:
