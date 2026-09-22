@@ -36,15 +36,16 @@ namespace Altinn.AccessManagement.Persistence.Consent
 
         private const string EventQuery = /*strpsql*/@"
                 INSERT INTO consent.consentevent (consentEventId, consentRequestId, eventtype, created, performedByParty, topartyuuid, handledbypartyuuid)
-                VALUES (
+                SELECT
                 @consentEventId,
                 @consentRequestId,
                 @eventtype,
                 @created,
                 @performedByParty,
-                (SELECT topartyuuid FROM consent.consentrequest WHERE consentrequestid = @consentRequestId),
-                (SELECT handledbypartyuuid FROM consent.consentrequest WHERE consentrequestid = @consentRequestId))
-                RETURNING consentEventId;
+                cr.topartyuuid,
+                cr.handledbypartyuuid
+                FROM consent.consentrequest cr
+                WHERE cr.consentrequestid = @consentRequestId;
                 ";
 
         /// <inheritdoc/>
