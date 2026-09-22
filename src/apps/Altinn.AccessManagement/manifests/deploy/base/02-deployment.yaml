@@ -90,3 +90,17 @@ spec:
               failureThreshold: 30
               periodSeconds: 10
               timeoutSeconds: 10
+
+          volumeMounts:
+            - name: altinn-appsettings
+              mountPath: "/altinn-appsettings"
+            - name: accesstoken
+              mountPath: "/accesstoken"
+
+      volumes:
+        - name: altinn-appsettings
+          secret:
+            secretName: altinn-appsettings-secret
+        - name: accesstoken
+          secret:
+            secretName: accesstoken
