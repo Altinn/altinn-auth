@@ -1,0 +1,7 @@
+﻿apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - 01-oci-repository.yaml
+  - 02-pre-deployment.yaml
+  - 03-deployment.yaml
+  - 04-cluster-info.yaml
