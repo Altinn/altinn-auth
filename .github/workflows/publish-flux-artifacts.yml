@@ -1,4 +1,4 @@
-﻿name: "Publish Flux Artifacts"
+﻿name: "Publish AccessManagement via Flux"
 run-name: Publish accessmanagement flux artifacts to ${{ inputs.environment }}
 
 on:
