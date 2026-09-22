@@ -67,23 +67,41 @@ jobs:
       - name: Validate manifests
         run: ./.github/scripts/validate-manifests.sh
 
-  publish-syncroot:
-    name: Publish syncroot artifact
-    # Push the manifests the syncroot points at first, so the OCIRepository resolves
-    # as soon as Flux picks up the new syncroot.
+
+  publish-accessmanagement:
+    name: Publish accessmanagement manifests artifact
+    needs: validate
     # The federated credential backing the OIDC login is scoped to refs/heads/main.
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+
+    permissions: 
+      contents: read
+      packages: write
+
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Build and push syncroot artifact
-        uses: Altinn/altinn-platform/actions/flux/build-push-image@3535bba3d301df5778ce420f7adf10edd748cc3f # main
+      
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v4
+      
+      - name: Build and push accessmanagement image
+        uses: docker/build-push-action@v7
         with:
-          image_name: ${{ env.SYNCROOT_ARTIFACT_NAME }}
-          tag: ${{ inputs.environment }}
-          workdir: ${{ env.SYNCROOT_WORKDIR }}
-          azure_subscription_id: ${{ secrets.DIS_SYNCROOT_AZURE_SUBSCRIPTION_ID }}
-          azure_app_id: ${{ secrets.DIS_SYNCROOT_AZURE_CLIENT_ID }}
-          azure_tenant_id: ${{ secrets.DIS_SYNCROOT_AZURE_TENANT_ID }}
+          context: .
+          file: src/apps/Altinn.AccessManagement/Dockerfile
+          push: true
+          tags: "ghcr.io/altinn/accessmanagement:${{ github.sha }}"
+
+      # - name: Build and push app manifests artifact
+      #   uses: Altinn/altinn-platform/actions/flux/build-push-image@3535bba3d301df5778ce420f7adf10edd748cc3f # main
+      #   with:
+      #     image_name: ${{ env.APP_ARTIFACT_NAME }}
+      #     # The syncroot OCIRepository pins ref.tag to the environment name, so each
+      #     # environment reads its own snapshot of the manifests artifact.
+      #     tag: ${{ inputs.environment }}
+      #     workdir: ${{ env.APP_WORKDIR }}
+      #     azure_subscription_id: ${{ secrets.DIS_SYNCROOT_AZURE_SUBSCRIPTION_ID }}
+      #     azure_app_id: ${{ secrets.DIS_SYNCROOT_AZURE_CLIENT_ID }}
+      #     azure_tenant_id: ${{ secrets.DIS_SYNCROOT_AZURE_TENANT_ID }}

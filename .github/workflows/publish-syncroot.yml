@@ -1,0 +1,57 @@
+﻿name: "Publish Syncroot"
+run-name: Publish accessmanagement flux artifacts to ${{ inputs.environment }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        type: choice
+        required: true
+        options:
+          - at22
+          - at23
+          - at24
+          - tt02
+          - yt01
+          - prod
+
+env:
+  SYNCROOT_ARTIFACT_NAME: accessmanagement/syncroot
+  APP_ARTIFACT_NAME: accessmanagement/altinn-auth
+  SYNCROOT_WORKDIR: ./src/apps/Altinn.AccessManagement/syncroot
+  # Scopes what gets published, not what gets validated: validate-manifests.sh
+  # renders every app under src/apps/*/manifests, this ships one of them. The
+  # artifact root is manifests/, not one of its stages, because the syncroot
+  # Kustomizations select ./pre-deploy/<env> and ./deploy/<env> beneath it.
+  APP_WORKDIR: ./src/apps/Altinn.AccessManagement/manifests
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: publish-flux-artifacts-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  publish-syncroot:
+    name: Publish syncroot artifact
+    # Push the manifests the syncroot points at first, so the OCIRepository resolves
+    # as soon as Flux picks up the new syncroot.
+    # The federated credential backing the OIDC login is scoped to refs/heads/main.
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Build and push syncroot artifact
+        uses: Altinn/altinn-platform/actions/flux/build-push-image@3535bba3d301df5778ce420f7adf10edd748cc3f # main
+        with:
+          image_name: ${{ env.SYNCROOT_ARTIFACT_NAME }}
+          tag: ${{ inputs.environment }}
+          workdir: ${{ env.SYNCROOT_WORKDIR }}
+          azure_subscription_id: ${{ secrets.DIS_SYNCROOT_AZURE_SUBSCRIPTION_ID }}
+          azure_app_id: ${{ secrets.DIS_SYNCROOT_AZURE_CLIENT_ID }}
+          azure_tenant_id: ${{ secrets.DIS_SYNCROOT_AZURE_TENANT_ID }}
