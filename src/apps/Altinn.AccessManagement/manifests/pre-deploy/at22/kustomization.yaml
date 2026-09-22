@@ -1,0 +1,14 @@
+﻿apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: product-accessmanagement
+resources:
+  - ../base
+
+configMapGenerator:
+  - name: environment
+    behavior: merge
+    envs:
+      - ./config/environment.env
+
+generatorOptions:
+  disableNameSuffixHash: true

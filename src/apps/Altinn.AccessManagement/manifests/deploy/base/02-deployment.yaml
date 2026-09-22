@@ -1,0 +1,92 @@
+﻿apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: access-management
+  labels:
+    app.kubernetes.io/name: access-management
+    app.kubernetes.io/part-of: accessmanagement
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: access-management
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: access-management
+        app.kubernetes.io/part-of: accessmanagement
+        azure.workload.identity/use: "true"
+      annotations:
+        cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
+        linkerd.io/inject: enabled
+    spec:
+      serviceAccountName: app
+
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 3000
+        allowPrivilegeEscalation: false
+
+      containers:
+        - name: accessmanagement
+          image: ghcr.io/altinn/altinn-auth/accessmanagement:{{GIT_SHA}}
+          imagePullPolicy: Always
+
+          resources:
+            requests:
+              cpu: 750m
+              memory: 1500Mi
+
+          envFrom:
+            - configMapRef:
+                name: environment
+
+          env:
+            - name: K8S_CONTAINER_NAME
+              value: accessmanagement
+            - name: K8S_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: K8S_POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: K8S_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: Altinn__ClusterInfo__TrustedProxies
+              valueFrom:
+                configMapKeyRef:
+                  name: clusterinfo
+                  key: trusted_proxies
+
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+
+          readinessProbe:
+            # an http probe
+            httpGet:
+              path: /health/
+              port: 8080
+            failureThreshold: 3
+            periodSeconds: 10
+            timeoutSeconds: 10
+          livenessProbe:
+              # an http probe
+              httpGet:
+                path: /health/
+                port: 8080
+              failureThreshold: 3
+              periodSeconds: 10
+              timeoutSeconds: 10
+          startupProbe:
+              # an http probe
+              httpGet:
+                path: /health/
+                port: 8080
+              failureThreshold: 30
+              periodSeconds: 10
+              timeoutSeconds: 10

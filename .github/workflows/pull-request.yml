@@ -5,8 +5,8 @@ name: "Pull Request"
 on:
   pull_request:
     paths:
-      - "src/apps/**/deploy/**"
-      - "flux/**"
+      - "src/apps/**/manifests/**"
+      - "src/apps/**/syncroot/**"
       - ".github/scripts/validate-manifests.sh"
       - ".github/workflows/pull-request.yml"
       - ".github/workflows/publish-flux-artifacts.yml"
@@ -29,7 +29,7 @@ jobs:
       - name: Validate syncroot structure
         uses: Altinn/altinn-platform/actions/flux/verify-syncroot@3535bba3d301df5778ce420f7adf10edd748cc3f # main
         with:
-          workdir: ./flux/syncroot
+          workdir: ./src/apps/Altinn.AccessManagement/syncroot
 
       - name: Validate manifests
         run: ./.github/scripts/validate-manifests.sh
@@ -38,7 +38,9 @@ jobs:
     name: Kustomize diff
     uses: dis-way/actions/.github/workflows/kustomize-diff.yml@8a0034943836baaa34c7e220854f950ce3a5f370 # main
     with:
-      build-paths: "src/apps/*/deploy/environments/*,flux/syncroot/*"
+      # base/ overlays are skipped by the reusable workflow, so the trailing * only
+      # ever resolves to environment overlays.
+      build-paths: "src/apps/*/manifests/pre-deploy/*,src/apps/*/manifests/deploy/*,src/apps/*/syncroot/*"
     permissions:
       contents: read
       pull-requests: write

@@ -1,0 +1,59 @@
+﻿apiVersion: batch/v1
+kind: Job
+metadata:
+  name: migrate-database
+  labels:
+    app.kubernetes.io/name: access-management-migrate-database
+    app.kubernetes.io/part-of: accessmanagement
+spec:
+  activeDeadlineSeconds: 86400 # 24 hours
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: access-management-migrate-database
+        app.kubernetes.io/part-of: accessmanagement
+    spec:
+      serviceAccountName: pre-deploy
+
+      restartPolicy: Never
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 3000
+        allowPrivilegeEscalation: false
+
+      containers:
+        - name: accessmanagement
+          image: ghcr.io/altinn/altinn-auth/accessmanagement:{{GIT_SHA}}
+          imagePullPolicy: Always
+
+          resources:
+            requests:
+              cpu: 750m
+              memory: 1500Mi
+
+          envFrom:
+            - configMapRef:
+                name: environment
+          env:
+            - name: RunInitOnly
+              value: 'true'
+            - name: K8S_CONTAINER_NAME
+              value: accessmanagement
+            - name: K8S_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: K8S_POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: K8S_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: Altinn__ClusterInfo__TrustedProxies
+              valueFrom:
+                configMapKeyRef:
+                  name: clusterinfo
+                  key: trusted_proxies
