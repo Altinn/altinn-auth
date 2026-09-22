@@ -13,6 +13,7 @@ spec:
       labels:
         app.kubernetes.io/name: access-management-migrate-database
         app.kubernetes.io/part-of: accessmanagement
+        azure.workload.identity/use: "true"
     spec:
       serviceAccountName: pre-deploy
 
