@@ -32,7 +32,7 @@ data "azurerm_client_config" "current" {}
 locals {
   hub_suffix = lower("${var.organization}${var.product_name}${var.instance}hub")
   suffix     = lower("${var.organization}${var.product_name}${var.instance}${var.environment}")
-  repo       = "altinn-auth"
+  repo       = "altinn-auth@854445147"
 
   ipv4_single_stack_prefix    = tonumber(split("/", var.single_stack_ipv4_address_space)[1])
   ipv4_dual_stack_cidr_prefix = tonumber(split("/", var.dual_stack_ipv4_address_space)[1])
@@ -314,7 +314,7 @@ resource "azurerm_federated_identity_credential" "admin" {
   name     = "GitHubAction"
   audience = ["api://AzureADTokenExchange"]
   issuer   = "https://token.actions.githubusercontent.com"
-  subject  = "repo:Altinn/${local.repo}:environment:${var.environment}"
+  subject  = "repo:Altinn@5949420/${local.repo}:environment:${var.environment}"
 }
 
 # resource "azurerm_management_lock" "delete" {
