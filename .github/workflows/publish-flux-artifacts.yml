@@ -102,7 +102,7 @@ jobs:
           context: .
           file: src/apps/Altinn.AccessManagement/Dockerfile
           push: true
-          tags: "ghcr.io/altinn/accessmanagement:${{ github.sha }}"
+          tags: "ghcr.io/altinn/altinn-auth/accessmanagement:${{ github.sha }}"
 
       - name: Find and Replace
         uses: jacobtomlinson/gha-find-replace@v3
@@ -113,11 +113,11 @@ jobs:
 
       - name: Push manifests
         run: |
-          flux push artifact "oci://ghcr.io/altinn/accessmanagement-manifests:${{ github.sha }}" \
+          flux push artifact "oci://ghcr.io/altinn/altinn-auth/accessmanagement-manifests:${{ github.sha }}" \
             --path="./src/apps/Altinn.AccessManagement/manifests" \
             --source="$(git config --get remote.origin.url)" \
             --revision="$(git branch --show-current)@sha1:$(git rev-parse HEAD)"          
 
       - name: Deploy manifests to at22
         run: |
-          flux tag artifact "oci://ghcr.io/altinn/accessmanagement-manifests:${{ github.sha }}" --tag at22  
+          flux tag artifact "oci://ghcr.io/altinn/altinn-auth/accessmanagement-manifests:${{ github.sha }}" --tag at22  
