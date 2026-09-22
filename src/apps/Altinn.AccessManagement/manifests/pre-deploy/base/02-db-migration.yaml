@@ -2,17 +2,20 @@
 kind: Job
 metadata:
   name: migrate-database
+  labels:
+    app.kubernetes.io/name: access-management-migrate-database
+    app.kubernetes.io/part-of: accessmanagement
 spec:
   activeDeadlineSeconds: 86400 # 24 hours
   backoffLimit: 0
   template:
     metadata:
-      annotations:
-        migration.alxandr.me/revision: "3"
       labels:
-        app.kubernetes.io/name: accessmanagement
-        app.kubernetes.io/component: migration
+        app.kubernetes.io/name: access-management-migrate-database
+        app.kubernetes.io/part-of: accessmanagement
     spec:
+      serviceAccountName: access-management-pre-deploy
+
       restartPolicy: Never
       securityContext:
         runAsUser: 1000
@@ -21,11 +24,9 @@ spec:
 
       containers:
         - name: accessmanagement
-          image: ghcr.io/altinn/altinn-auth/accessmanagement:${VERSION}
+          image: ghcr.io/altinn/altinn-auth/accessmanagement:{{GIT_SHA}}
           imagePullPolicy: Always
-          securityContext:
-            runAsUser: 1000
-            runAsGroup: 1002
+
           envFrom:
             - configMapRef:
                 name: environment
