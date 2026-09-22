@@ -1,0 +1,49 @@
+meta {
+  name: 02_AND_CcrClientAddsFacilitatorAsRightholder
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{clientA}}&to={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{clientA}}
+  to: {{party}}
+}
+
+docs {
+  AND the CCR client adds the facilitator as rightholder, so it can grant a package
+  on top of what the regnskapsforer role already gives.
+
+  Expects 200 with the created assignment: fromId is the client, toId is the
+  facilitator, roleId is the rettighetshaver role.
+}
+
+script:pre-request {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+  const { loginAs } = require("./test/EnduserAPI/ClientDelegationsV2/helpers.js");
+
+  bru.setVar("clientA", td.REGN_Organisasjon.REGN_Org_Clients.client_A.partyUuid);
+  bru.setVar("party", td.REGN_Organisasjon.partyUuid);
+
+  await loginAs(td.REGN_Organisasjon.REGN_Org_Clients.client_A.dagligleder);
+}
+
+tests {
+  const td = require(`./testdata/klient-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+
+  test("AND the CCR client adds the facilitator as rightholder, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the assignment connects the CCR client to the facilitator with the rettighetshaver role", function() {
+    const body = res.getBody();
+    expect(body.roleId.toLowerCase()).to.equal("42cae370-2dc1-4fdc-9c67-c2f4b0f0f829");
+    expect(body.fromId.toLowerCase()).to.equal(td.REGN_Organisasjon.REGN_Org_Clients.client_A.partyUuid.toLowerCase());
+    expect(body.toId.toLowerCase()).to.equal(td.REGN_Organisasjon.partyUuid.toLowerCase());
+  });
+}

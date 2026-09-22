@@ -55,6 +55,7 @@ public class PartySyncService : BaseSyncService, IPartySyncService
         var ingestAssignments = new List<Assignment>();
         var seenAssignments = new HashSet<(Guid FromId, Guid ToId, Guid RoleId)>();
         HashSet<Guid> seenDeadPeople = [];
+        HashSet<Guid> seenDeletedSystemUsers = [];
 
         using IServiceScope scope = _serviceProvider.CreateEFScope(options);
         var ingestService = scope.ServiceProvider.GetRequiredService<IIngestService>();
@@ -105,6 +106,11 @@ public class PartySyncService : BaseSyncService, IPartySyncService
                     if (entity.TypeId == EntityTypeConstants.Person && entity.DateOfDeath.HasValue)
                     {
                         seenDeadPeople.Add(entity.Id);
+                    }
+
+                    if (entity.TypeId == EntityTypeConstants.SystemUser && entity.IsDeleted)
+                    {
+                        seenDeletedSystemUsers.Add(entity.Id);
                     }
 
                     ingestEntities.Add(entity);
@@ -167,6 +173,15 @@ public class PartySyncService : BaseSyncService, IPartySyncService
                     }
                 }
 
+                foreach (Guid systemUserId in seenDeletedSystemUsers)
+                {
+                    int removed = await assignmentService.ClearAssignmentsForDeletedSystemUser(systemUserId, options, cancellationToken);
+                    if (removed > 0)
+                    {
+                        Log.DeletedSystemUserAssignmentsCleared(_logger, removed, systemUserId);
+                    }
+                }
+
                 if (ingestedEntities != ingestEntities.Count)
                 {
                     _logger.LogWarning("Ingest partial complete: Entity ({0}/{1})", ingestedEntities, ingestEntities.Count);
@@ -199,6 +214,7 @@ public class PartySyncService : BaseSyncService, IPartySyncService
                 ingestAssignments.Clear();
                 seen.Clear();
                 seenDeadPeople.Clear();
+                seenDeletedSystemUsers.Clear();
             }
 
             return 0;

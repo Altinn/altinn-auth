@@ -1,4 +1,4 @@
-import { Chalk } from "chalk";
+﻿import { Chalk } from "chalk";
 import { globby } from "globby";
 import { Octokit } from "@octokit/action";
 import { $, retry } from "zx";
@@ -30,7 +30,7 @@ const projectNumber = Number.parseInt(projectNumberString, 10);
 const issueInfo = {
     issue_number: Number.parseInt(issueNumber, 10),
     owner: "Altinn",
-    repo: "altinn-authorization-tmp",
+    repo: "altinn-auth",
 } as const;
 
 const github = new Octokit({

@@ -1,0 +1,13 @@
+﻿apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: authorization-apps
+  namespace: product-authorization
+spec:
+  interval: 10m
+  path: ./environments/at22
+  prune: true
+  sourceRef:
+    kind: OCIRepository
+    name: authorization-manifests
+  targetNamespace: product-authorization

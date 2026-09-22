@@ -31,7 +31,7 @@ These instructions will get you a copy of the authorization component up and run
 
 ## Running the authorization component
 
-Clone [Altinn Authorization repo](https://github.com/Altinn/altinn-authorization-tmp) and navigate to the root folder.
+Clone [Altinn Authorization repo](https://github.com/Altinn/altinn-auth) and navigate to the root folder.
 
 The Authorization components can be run locally when developing/debugging. Follow the install steps above if this has not already been done.
 

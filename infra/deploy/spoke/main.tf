@@ -32,7 +32,7 @@ data "azurerm_client_config" "current" {}
 locals {
   hub_suffix = lower("${var.organization}${var.product_name}${var.instance}hub")
   suffix     = lower("${var.organization}${var.product_name}${var.instance}${var.environment}")
-  repo       = "altinn-authorization-tmp"
+  repo       = "altinn-auth"
 
   ipv4_single_stack_prefix    = tonumber(split("/", var.single_stack_ipv4_address_space)[1])
   ipv4_dual_stack_cidr_prefix = tonumber(split("/", var.dual_stack_ipv4_address_space)[1])

@@ -1,7 +1,7 @@
 # Integration-test setup time
 
 How integration-test setup time is kept down. Measurement detail lives in
-[#3379](https://github.com/Altinn/altinn-authorization-tmp/issues/3379).
+[#3379](https://github.com/Altinn/altinn-auth/issues/3379).
 
 ## Where the time goes
 

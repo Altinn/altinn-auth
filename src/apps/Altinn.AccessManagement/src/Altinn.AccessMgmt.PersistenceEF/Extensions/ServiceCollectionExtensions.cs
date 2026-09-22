@@ -37,7 +37,6 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuditAccessor, AuditAccessor>();
         services.AddMemoryCache(); // Add memory cache for translation service
         services.AddScoped<ITranslationService, TranslationService>();
-        services.AddScoped<ConnectionQuery>();
         services.AddScoped<ActivityLogQuery>();
         services.AddScoped<AppDbContextFactory>();
         services.AddScoped(sp => sp.GetRequiredService<AppDbContextFactory>().CreateDbContext());
