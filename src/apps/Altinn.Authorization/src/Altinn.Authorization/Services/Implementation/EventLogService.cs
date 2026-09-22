@@ -51,8 +51,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
 
                     if (await featureManager.IsEnabledAsync(FeatureFlags.AuditLogDuplicateMeasurement))
                     {
-                        AuthorizationEventDuplicateKind duplicateKind = _duplicateTracker.Track(authorizationEvent);
-                        _telemetry.RecordAuditLogEvent(authorizationEvent.Resource, duplicateKind);
+                        _telemetry.RecordAuditLogEvent(_duplicateTracker.Track(authorizationEvent));
                     }
                 }
             }

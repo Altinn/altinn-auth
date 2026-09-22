@@ -92,7 +92,6 @@ Below is a list of applications that publishes metrics, and what those metrics a
       <td>counter</td>
       <td>
         <ul>
-          <li><code>resource.id</code></li>
           <li><code>auditlog.duplicate</code></li>
         </ul>
       </td>

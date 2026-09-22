@@ -99,7 +99,7 @@ public class EventLogServiceTest : IDisposable
             Times.Exactly(3));
 
         Assert.Equal(new object?[] { "none", "trace", "window" }, collector.Measurements.Select(tags => tags["auditlog.duplicate"]).ToArray());
-        Assert.All(collector.Measurements, tags => Assert.Equal("test-resource", tags["resource.id"]));
+        Assert.All(collector.Measurements, tags => Assert.Equal("auditlog.duplicate", Assert.Single(tags).Key));
     }
 
     [Fact]

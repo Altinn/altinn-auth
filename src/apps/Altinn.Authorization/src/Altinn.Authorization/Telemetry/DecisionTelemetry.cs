@@ -116,9 +116,12 @@ namespace Altinn.Platform.Authorization.Telemetry
         /// Records an authorization event queued for the audit log, and whether it repeats one already
         /// seen. The share of duplicates is what deduplication before the queue would save.
         /// </summary>
-        /// <param name="resourceId">Resource identifier of the event, or null/empty when unknown.</param>
         /// <param name="duplicateKind">How the event was classified by the duplicate tracker.</param>
-        public void RecordAuditLogEvent(string resourceId, AuthorizationEventDuplicateKind duplicateKind)
+        /// <remarks>
+        /// Deliberately not dimensioned on the resource: the total share is what matters, and the audit
+        /// log covers far more resources than a time series per resource can carry.
+        /// </remarks>
+        public void RecordAuditLogEvent(AuthorizationEventDuplicateKind duplicateKind)
         {
             string duplicate = duplicateKind switch
             {
@@ -131,7 +134,6 @@ namespace Altinn.Platform.Authorization.Telemetry
 
             TagList tags = new()
             {
-                { ResourceIdTag, string.IsNullOrEmpty(resourceId) ? UnknownDimensionValue : resourceId.ToLowerInvariant() },
                 { AuditLogDuplicateTag, duplicate },
             };
 
