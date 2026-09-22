@@ -19,9 +19,12 @@ on:
 env:
   SYNCROOT_ARTIFACT_NAME: accessmanagement/syncroot
   APP_ARTIFACT_NAME: accessmanagement/altinn-auth
+  SYNCROOT_WORKDIR: ./src/apps/Altinn.AccessManagement/syncroot
   # Scopes what gets published, not what gets validated: validate-manifests.sh
-  # renders every app under src/apps/*/deploy, this ships one of them.
-  APP_WORKDIR: ./src/apps/Altinn.AccessManagement/deploy
+  # renders every app under src/apps/*/manifests, this ships one of them. The
+  # artifact root is manifests/, not one of its stages, because the syncroot
+  # Kustomizations select ./pre-deploy/<env> and ./deploy/<env> beneath it.
+  APP_WORKDIR: ./src/apps/Altinn.AccessManagement/manifests
 
 permissions:
   contents: read
@@ -42,21 +45,24 @@ jobs:
       - name: Validate syncroot structure
         uses: Altinn/altinn-platform/actions/flux/verify-syncroot@3535bba3d301df5778ce420f7adf10edd748cc3f # main
         with:
-          workdir: ./flux/syncroot
+          workdir: ${{ env.SYNCROOT_WORKDIR }}
 
-      - name: Check the target environment has an app overlay
+      - name: Check the target environment has app overlays
         shell: bash
         env:
           ENVIRONMENT: ${{ inputs.environment }}
         run: |
           set -euo pipefail
-          # The syncroot points its Kustomization at ./environments/<env> inside the app
-          # manifests artifact, so the target environment's overlay has to exist.
-          target="${APP_WORKDIR}/environments/${ENVIRONMENT}"
-          if [ ! -f "${target}/kustomization.yaml" ]; then
-            echo "::error::Missing ${target}/kustomization.yaml"
-            exit 1
-          fi
+          # The syncroot points its Kustomizations at ./pre-deploy/<env> and
+          # ./deploy/<env> inside the app manifests artifact, so the target
+          # environment needs an overlay for both stages.
+          for stage in pre-deploy deploy; do
+            target="${APP_WORKDIR}/${stage}/${ENVIRONMENT}"
+            if [ ! -f "${target}/kustomization.yaml" ]; then
+              echo "::error::Missing ${target}/kustomization.yaml"
+              exit 1
+            fi
+          done
 
       - name: Validate manifests
         run: ./.github/scripts/validate-manifests.sh
@@ -75,9 +81,9 @@ jobs:
         uses: Altinn/altinn-platform/actions/flux/build-push-image@3535bba3d301df5778ce420f7adf10edd748cc3f # main
         with:
           image_name: ${{ env.APP_ARTIFACT_NAME }}
-          # The syncroot OCIRepository pins ref.tag: main. The environment is selected
-          # by the Kustomization path, not by this tag.
-          tag: main
+          # The syncroot OCIRepository pins ref.tag to the environment name, so each
+          # environment reads its own snapshot of the manifests artifact.
+          tag: ${{ inputs.environment }}
           workdir: ${{ env.APP_WORKDIR }}
           azure_subscription_id: ${{ secrets.DIS_SYNCROOT_AZURE_SUBSCRIPTION_ID }}
           azure_app_id: ${{ secrets.DIS_SYNCROOT_AZURE_CLIENT_ID }}
@@ -100,7 +106,7 @@ jobs:
         with:
           image_name: ${{ env.SYNCROOT_ARTIFACT_NAME }}
           tag: ${{ inputs.environment }}
-          workdir: ./flux/syncroot
+          workdir: ${{ env.SYNCROOT_WORKDIR }}
           azure_subscription_id: ${{ secrets.DIS_SYNCROOT_AZURE_SUBSCRIPTION_ID }}
           azure_app_id: ${{ secrets.DIS_SYNCROOT_AZURE_CLIENT_ID }}
           azure_tenant_id: ${{ secrets.DIS_SYNCROOT_AZURE_TENANT_ID }}
