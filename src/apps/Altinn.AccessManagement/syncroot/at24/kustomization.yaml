@@ -25,7 +25,7 @@ patches:
       metadata:
         name: pre-deployment
       spec:
-        path: ./pre-deployment/at24
+        path: ./pre-deploy/at24
 
   - target:
       kind: Kustomization
@@ -36,4 +36,4 @@ patches:
       metadata:
         name: deployment
       spec:
-        path: ./deployment/at24
+        path: ./deploy/at24

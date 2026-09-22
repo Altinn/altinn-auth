@@ -3,4 +3,4 @@ kind: ConfigMap
 metadata:
   name: clusterinfo
 data:
-  trusted_proxies: "${DIS_CLUSTER_PROXIES}"
+  trusted_proxies: "${DIS_TRUSTED_PROXIES}"
