@@ -113,11 +113,11 @@ jobs:
 
       - name: Push manifests
         run: |
-          flux push artifact "ghcr.io/altinn/accessmanagement-manifests:${{ github.sha }}" \
+          flux push artifact "oci://ghcr.io/altinn/accessmanagement-manifests:${{ github.sha }}" \
             --path="./src/apps/Altinn.AccessManagement/manifests" \
             --source="$(git config --get remote.origin.url)" \
             --revision="$(git branch --show-current)@sha1:$(git rev-parse HEAD)"          
 
       - name: Deploy manifests to at22
         run: |
-          flux tag artifact "ghcr.io/altinn/accessmanagement-manifests:${{ github.sha }}" --tag at22  
+          flux tag artifact "oci://ghcr.io/altinn/accessmanagement-manifests:${{ github.sha }}" --tag at22  
