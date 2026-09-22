@@ -1,5 +1,5 @@
 ﻿name: "Publish Syncroot"
-run-name: Publish accessmanagement flux artifacts to ${{ inputs.environment }}
+run-name: Publish syncroot artifacts to ${{ inputs.environment }}
 
 on:
   workflow_dispatch:

@@ -7,3 +7,12 @@ metadata:
     app.kubernetes.io/part-of: accessmanagement
 spec: {}
 
+---
+apiVersion: application.dis.altinn.cloud/v1alpha1
+kind: ApplicationIdentity
+metadata:
+  name: app
+  labels:
+    app.kubernetes.io/name: access-management
+    app.kubernetes.io/part-of: accessmanagement
+spec: {}
