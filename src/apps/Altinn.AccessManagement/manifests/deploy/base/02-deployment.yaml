@@ -31,6 +31,11 @@ spec:
           image: ghcr.io/altinn/altinn-auth/accessmanagement:{{GIT_SHA}}
           imagePullPolicy: Always
 
+          resources:
+            requests:
+              cpu: 750m
+              memory: 1500Mi
+
           envFrom:
             - configMapRef:
                 name: environment
@@ -39,3 +44,28 @@ spec:
             - name: http
               containerPort: 8080
               protocol: TCP
+
+          readinessProbe:
+            # an http probe
+            httpGet:
+              path: /health/
+              port: 8080
+            failureThreshold: 3
+            periodSeconds: 10
+            timeoutSeconds: 10
+          livenessProbe:
+              # an http probe
+              httpGet:
+                path: /health/
+                port: 8080
+              failureThreshold: 3
+              periodSeconds: 10
+              timeoutSeconds: 10
+          startupProbe:
+              # an http probe
+              httpGet:
+                path: /health/
+                port: 8080
+              failureThreshold: 30
+              periodSeconds: 10
+              timeoutSeconds: 10
