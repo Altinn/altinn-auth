@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using Altinn.Platform.Authorization.Models.EventLog;
 
 namespace Altinn.Platform.Authorization.Telemetry
 {
@@ -58,8 +59,10 @@ namespace Altinn.Platform.Authorization.Telemetry
         private const string ResourceIdTag = "resource.id";
         private const string ApiKindTag = "pdp.api.kind";
         private const string CallerKindTag = "pdp.caller.kind";
+        private const string AuditLogDuplicateTag = "auditlog.duplicate";
 
         private readonly Counter<long> _pdpDecisions;
+        private readonly Counter<long> _auditLogEvents;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DecisionTelemetry"/> class. Registered as a
@@ -73,6 +76,10 @@ namespace Altinn.Platform.Authorization.Telemetry
                 "altinn.pdp.decisions",
                 unit: "1",
                 description: "Number of PDP authorization decisions evaluated");
+            _auditLogEvents = meter.CreateCounter<long>(
+                "altinn.pdp.auditlog.events",
+                unit: "1",
+                description: "Number of authorization events queued for the audit log, by whether they repeat an event already seen");
         }
 
         /// <summary>
@@ -103,6 +110,32 @@ namespace Altinn.Platform.Authorization.Telemetry
             };
 
             _pdpDecisions.Add(1, tags);
+        }
+
+        /// <summary>
+        /// Records an authorization event queued for the audit log, and whether it repeats one already
+        /// seen. The share of duplicates is what deduplication before the queue would save.
+        /// </summary>
+        /// <param name="resourceId">Resource identifier of the event, or null/empty when unknown.</param>
+        /// <param name="duplicateKind">How the event was classified by the duplicate tracker.</param>
+        public void RecordAuditLogEvent(string resourceId, AuthorizationEventDuplicateKind duplicateKind)
+        {
+            string duplicate = duplicateKind switch
+            {
+                AuthorizationEventDuplicateKind.None => "none",
+                AuthorizationEventDuplicateKind.SameTrace => "trace",
+                AuthorizationEventDuplicateKind.Window => "window",
+                AuthorizationEventDuplicateKind.Untracked => "untracked",
+                _ => UnknownDimensionValue,
+            };
+
+            TagList tags = new()
+            {
+                { ResourceIdTag, string.IsNullOrEmpty(resourceId) ? UnknownDimensionValue : resourceId.ToLowerInvariant() },
+                { AuditLogDuplicateTag, duplicate },
+            };
+
+            _auditLogEvents.Add(1, tags);
         }
     }
 }

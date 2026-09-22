@@ -46,6 +46,10 @@ A metric consists of the following properties:
       <td><code>pdp.api.kind</code> (rename?)</td>
       <td>TODO</td>
     </tr>
+    <tr>
+      <td><code>auditlog.duplicate</code></td>
+      <td>Whether an authorization event queued for the audit log repeats one already seen within the deduplication window: <code>none</code>, <code>trace</code> (same trace), <code>window</code> (another trace) or <code>untracked</code> (tracker at capacity).</td>
+    </tr>
   </tbody>
 </table>
 
@@ -77,6 +81,19 @@ Below is a list of applications that publishes metrics, and what those metrics a
           <li><code>resource.owner.org</code></li>
           <li><code>resource.id</code></li>
           <li><code>pdp.api.kind</code></li>
+        </ul>
+      </td>
+      <td>❌</td>
+    </tr>
+    <tr>
+      <td><code>Altinn.Authorization.Pdp</code></td>
+      <td><code>altinn.pdp.auditlog.events</code></td>
+      <td>The number of authorization events queued for the audit log, by whether they repeat an event already seen. Only recorded when the <code>AuditLogDuplicateMeasurement</code> feature flag is on.</td>
+      <td>counter</td>
+      <td>
+        <ul>
+          <li><code>resource.id</code></li>
+          <li><code>auditlog.duplicate</code></li>
         </ul>
       </td>
       <td>❌</td>
