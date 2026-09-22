@@ -160,7 +160,7 @@ public class InstanceRemovedNotificationHandler(
         ArgumentNullException.ThrowIfNull(to);
 
         var pronoun = to.TypeId == EntityTypeConstants.Person ? "Du" : "Dere";
-        var subject = $"{pronoun} har fått fullmakt i Altinn";
+        var subject = $"{pronoun} har blitt fratatt fullmakt i Altinn";
 
         if (to.TypeId == EntityTypeConstants.Person)
         {
