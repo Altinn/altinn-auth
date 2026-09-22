@@ -1041,11 +1041,11 @@ public static class PackageConstants
     };
 
     /// <summary>
-    /// Represents the 'Mine sider hos kommunen' access package.
+    /// Represents the 'Kommunale tjenester' access package.
     /// </summary>
     /// <remarks>
     /// - <c>Id:</c> 600bf1be-61f6-423c-9a13-df93ee3214a5
-    /// - <c>URN:</c> urn:altinn:accesspackage:mine-sider-kommune
+    /// - <c>URN:</c> urn:altinn:accesspackage:kommunale-tjenester
     /// - <c>Provider:</c> Altinn3
     /// - <c>Description:</c> Denne fullmakten gir generell tilgang til tjenester av typen “mine sider” tjenester hos kommuner. Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmakten gir.
     /// </remarks>
@@ -1053,10 +1053,10 @@ public static class PackageConstants
     {
         Entity = new()
         {
-            Name = "Mine sider hos kommunen",
+            Name = "Kommunale tjenester",
             Description = "Denne fullmakten gir generell tilgang til tjenester av typen “mine sider” tjenester hos kommuner. Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmakten gir.",
-            Urn = "urn:altinn:accesspackage:mine-sider-kommune",
-            Code = "mine-sider-kommune",
+            Urn = "urn:altinn:accesspackage:kommunale-tjenester",
+            Code = "kommunale-tjenester",
             IsDelegable = true,
             IsAvailableForServiceOwners = true,
             IsAssignable = true,
@@ -1065,11 +1065,11 @@ public static class PackageConstants
             AreaId = AreaConstants.BusinessAffairs,
         },
         EN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "My pages at the municipality"),
+            KeyValuePair.Create("Name", "Municipal services"),
             KeyValuePair.Create("Description", "This authorization provides general access to \"my page\" type services at municipalities. In the event of regulatory changes or the introduction of new digital services, there may be changes in the access that the authorization provides.")
         ),
         NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Mine sider hos kommunen"),
+            KeyValuePair.Create("Name", "Kommunale tenester"),
             KeyValuePair.Create("Description", "Denne fullmakta gir generell tilgang til tenester av typen «mine side» tenester hos kommunar. Ved regelverksendringar eller innføring av nye digitale tenester kan det bli endringar i tilgangar som fullmakta gir.")
         ),
     };
