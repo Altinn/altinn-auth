@@ -120,6 +120,8 @@ public partial class ConnectionsControllerTest
         /// <summary>
         /// The forretningsfoerer of a limited company holds no packages at all: every role package for
         /// the role is scoped to some other entity variant, so none of them resolve for an AS.
+        /// NOTE: if forretningsfoerer packages are ever added to the AS variant, this test will fail and 
+        /// need to be updated to reflect the new rule.
         /// </summary>
         [Fact]
         public async Task GetPackages_AsBusinessManagerOfLimitedCompany_ReturnsNoPackages()
