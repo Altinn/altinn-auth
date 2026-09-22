@@ -35,14 +35,15 @@ namespace Altinn.AccessManagement.Persistence.Consent
         private const string PARAM_LANGAUGE = "language";        
 
         private const string EventQuery = /*strpsql*/@"
-                INSERT INTO consent.consentevent (consentEventId, consentRequestId, eventtype, created, performedByParty, topartyuuid)
+                INSERT INTO consent.consentevent (consentEventId, consentRequestId, eventtype, created, performedByParty, topartyuuid, handledbypartyuuid)
                 VALUES (
                 @consentEventId,
                 @consentRequestId,
                 @eventtype,
                 @created,
                 @performedByParty,
-                (SELECT topartyuuid FROM consent.consentrequest WHERE consentrequestid = @consentRequestId))
+                (SELECT topartyuuid FROM consent.consentrequest WHERE consentrequestid = @consentRequestId),
+                (SELECT handledbypartyuuid FROM consent.consentrequest WHERE consentrequestid = @consentRequestId))
                 RETURNING consentEventId;
                 ";
 
