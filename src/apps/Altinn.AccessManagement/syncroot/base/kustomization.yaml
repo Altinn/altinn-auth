@@ -4,3 +4,4 @@ resources:
   - 01-oci-repository.yaml
   - 02-pre-deployment.yaml
   - 03-deployment.yaml
+  - 04-cluster-info.yaml
