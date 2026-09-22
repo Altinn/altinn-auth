@@ -14,7 +14,7 @@ spec:
         app.kubernetes.io/name: access-management-migrate-database
         app.kubernetes.io/part-of: accessmanagement
     spec:
-      serviceAccountName: access-management-pre-deploy
+      serviceAccountName: pre-deploy
 
       restartPolicy: Never
       securityContext:

@@ -19,7 +19,7 @@ spec:
         cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
         linkerd.io/inject: enabled
     spec:
-      serviceAccountName: access-management
+      serviceAccountName: app
 
       securityContext:
         runAsUser: 1000
