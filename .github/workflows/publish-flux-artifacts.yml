@@ -85,7 +85,17 @@ jobs:
       
       - name: Set up Docker
         uses: docker/setup-buildx-action@v4
-      
+
+      - name: Setup Flux CLI
+        uses: fluxcd/flux2/action@main
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build and push accessmanagement image
         uses: docker/build-push-action@v7
         with:
@@ -94,14 +104,20 @@ jobs:
           push: true
           tags: "ghcr.io/altinn/accessmanagement:${{ github.sha }}"
 
-      # - name: Build and push app manifests artifact
-      #   uses: Altinn/altinn-platform/actions/flux/build-push-image@3535bba3d301df5778ce420f7adf10edd748cc3f # main
-      #   with:
-      #     image_name: ${{ env.APP_ARTIFACT_NAME }}
-      #     # The syncroot OCIRepository pins ref.tag to the environment name, so each
-      #     # environment reads its own snapshot of the manifests artifact.
-      #     tag: ${{ inputs.environment }}
-      #     workdir: ${{ env.APP_WORKDIR }}
-      #     azure_subscription_id: ${{ secrets.DIS_SYNCROOT_AZURE_SUBSCRIPTION_ID }}
-      #     azure_app_id: ${{ secrets.DIS_SYNCROOT_AZURE_CLIENT_ID }}
-      #     azure_tenant_id: ${{ secrets.DIS_SYNCROOT_AZURE_TENANT_ID }}
+      - name: Find and Replace
+        uses: jacobtomlinson/gha-find-replace@v3
+        with:
+          find: "{{GIT_SHA}}"
+          replace: "${{ github.sha }}"
+          include: "src/apps/Altinn.AccessManagement/manifests/**"
+
+      - name: Push manifests
+        run: |
+          flux push artifact "ghcr.io/altinn/accessmanagement-manifests:${{ github.sha }}" \
+            --path="./src/apps/Altinn.AccessManagement/manifests" \
+            --source="$(git config --get remote.origin.url)" \
+            --revision="$(git branch --show-current)@sha1:$(git rev-parse HEAD)"          
+
+      - name: Deploy manifests to staging
+        run: |
+          flux tag artifact $OCI_REPO:$(git rev-parse --short HEAD) --tag staging  
