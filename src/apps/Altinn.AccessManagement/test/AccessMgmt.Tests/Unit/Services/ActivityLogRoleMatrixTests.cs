@@ -15,7 +15,9 @@ public class ActivityLogRoleMatrixTests
     [Fact]
     public void AllowedTypes_FollowsTheMatrix()
     {
-        Assert.Equal([ActivityLogType.Assignment], ActivityLogRoleMatrix.AllowedTypes([RoleConstants.AccessManager.Id]));
+        Assert.Equal(
+            new HashSet<ActivityLogType> { ActivityLogType.Assignment, ActivityLogType.Request },
+            ActivityLogRoleMatrix.AllowedTypes([RoleConstants.AccessManager.Id]));
         Assert.Equal([ActivityLogType.Delegation], ActivityLogRoleMatrix.AllowedTypes([RoleConstants.ClientAdministrator.Id]));
         Assert.Equal(ActivityLogRoleMatrix.AllTypes, ActivityLogRoleMatrix.AllowedTypes([RoleConstants.MainAdministrator.Id]));
         Assert.Equal(ActivityLogRoleMatrix.AllTypes, ActivityLogRoleMatrix.AllowedTypes([RoleConstants.MainAdministratorA2.Id]));
@@ -25,11 +27,21 @@ public class ActivityLogRoleMatrixTests
     public void AllowedTypes_UnionsOverRolesAndIgnoresUnknownRoles()
     {
         var combined = ActivityLogRoleMatrix.AllowedTypes([RoleConstants.AccessManager.Id, RoleConstants.ClientAdministrator.Id, RoleConstants.Rightholder.Id]);
-        Assert.Equal(new HashSet<ActivityLogType> { ActivityLogType.Assignment, ActivityLogType.Delegation }, combined);
+        Assert.Equal(new HashSet<ActivityLogType> { ActivityLogType.Assignment, ActivityLogType.Request, ActivityLogType.Delegation }, combined);
 
         Assert.Empty(ActivityLogRoleMatrix.AllowedTypes([RoleConstants.Rightholder.Id, Guid.NewGuid()]));
         Assert.Empty(ActivityLogRoleMatrix.AllowedTypes([]));
         Assert.Empty(ActivityLogRoleMatrix.AllowedTypes(null));
+    }
+
+    [Fact]
+    public void MaySeeMaskinportenSchema_RequiresTheMaskinportenAdministratorPackage()
+    {
+        Assert.True(ActivityLogRoleMatrix.MaySeeMaskinportenSchema([PackageConstants.MaskinportenAdministrator.Id]));
+        Assert.True(ActivityLogRoleMatrix.MaySeeMaskinportenSchema([RoleConstants.AccessManager.Id, PackageConstants.MaskinportenAdministrator.Id]));
+        Assert.False(ActivityLogRoleMatrix.MaySeeMaskinportenSchema([RoleConstants.MainAdministrator.Id]));
+        Assert.False(ActivityLogRoleMatrix.MaySeeMaskinportenSchema([]));
+        Assert.False(ActivityLogRoleMatrix.MaySeeMaskinportenSchema(null));
     }
 
     [Fact]
@@ -39,7 +51,7 @@ public class ActivityLogRoleMatrixTests
 
         // No requested types: the allowed set becomes the type filter.
         Assert.True(ActivityLogRoleMatrix.TryConstrain(new ActivityLogQueryFilter(), allowed, out var constrained));
-        Assert.Equal([ActivityLogType.Assignment], constrained.Types);
+        Assert.Equal(allowed, constrained.Types.ToHashSet());
 
         // Requested types are intersected.
         var mixed = new ActivityLogQueryFilter { Types = [ActivityLogType.Assignment, ActivityLogType.Delegation] };

@@ -119,6 +119,12 @@ public class ActivityLogQueryParameters
     public DateTimeOffset? Before { get; set; }
 
     /// <summary>
+    /// Whether to include Maskinporten schema events. Default false; honored only for callers
+    /// whose roles unlock them, and ignored by surfaces without that authorization model.
+    /// </summary>
+    public bool IncludeMps { get; set; }
+
+    /// <summary>
     /// Maximum number of entries per page (default 100, clamped to 1–1000).
     /// </summary>
     public int? PageSize { get; set; }

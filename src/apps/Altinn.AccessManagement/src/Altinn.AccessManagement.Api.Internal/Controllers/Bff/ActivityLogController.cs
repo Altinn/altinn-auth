@@ -35,7 +35,8 @@ public class ActivityLogController(IActivityLogService activityLogService, IConn
     /// <summary>
     /// Get activity log entries involving the specified party, newest first, limited to the
     /// log types the caller's roles for the party may see. Same query surface as the enduser
-    /// endpoint. Maskinporten schema events are never included.
+    /// endpoint. Maskinporten schema events are included only when includeMps is set and the
+    /// caller holds the Maskinporten administrator package.
     /// </summary>
     [HttpGet]
     [Authorize(Policy = AuthzConstants.SCOPE_PORTAL_ENDUSER)]
@@ -60,12 +61,13 @@ public class ActivityLogController(IActivityLogService activityLogService, IConn
             return ValidationProblem(ModelState);
         }
 
-        var allowed = await ResolveAllowedTypes(query.Party, cancellationToken);
-        if (allowed is null)
+        var granted = await ResolveGrantedIds(query.Party, cancellationToken);
+        if (granted is null)
         {
             return Unauthorized();
         }
 
+        var allowed = ActivityLogRoleMatrix.AllowedTypes(granted);
         if (allowed.Count == 0)
         {
             return Forbid();
@@ -87,6 +89,7 @@ public class ActivityLogController(IActivityLogService activityLogService, IConn
             constrained,
             size,
             page,
+            includeMps: query.IncludeMps && ActivityLogRoleMatrix.MaySeeMaskinportenSchema(granted),
             cancellationToken: cancellationToken);
 
         return Ok(PaginatedResult.Create(result.Items, result.HasMore ? NextLink(size, page + 1) : null));
@@ -121,12 +124,13 @@ public class ActivityLogController(IActivityLogService activityLogService, IConn
             return ValidationProblem(ModelState);
         }
 
-        var allowed = await ResolveAllowedTypes(query.Party, cancellationToken);
-        if (allowed is null)
+        var granted = await ResolveGrantedIds(query.Party, cancellationToken);
+        if (granted is null)
         {
             return Unauthorized();
         }
 
+        var allowed = ActivityLogRoleMatrix.AllowedTypes(granted);
         if (allowed.Count == 0)
         {
             return Forbid();
@@ -151,6 +155,7 @@ public class ActivityLogController(IActivityLogService activityLogService, IConn
             query.OrderBy,
             size,
             page,
+            includeMps: query.IncludeMps && ActivityLogRoleMatrix.MaySeeMaskinportenSchema(granted),
             cancellationToken: cancellationToken);
 
         return Ok(PaginatedResult.Create(result.Items, result.HasMore ? NextLink(size, page + 1) : null));
@@ -169,11 +174,12 @@ public class ActivityLogController(IActivityLogService activityLogService, IConn
         => Ok(ActivityTypeConstants.AllEntities().Select(DtoMapper.ToActivityTypeDto).ToList());
 
     /// <summary>
-    /// Resolves the caller's effective roles for the party (direct, keyrole and rolemap
-    /// expansion via the connection query) into the set of visible log types. Null means the
-    /// caller identity is missing; an empty set means no part of the log is visible.
+    /// Resolves the caller's effective roles and access packages for the party (direct,
+    /// keyrole and rolemap expansion via the connection query) as the id set the role matrix
+    /// keys on. Null means the caller identity is missing; an empty set resolves to no
+    /// visibility. Interim mechanism — the goal is resolving this from the token instead.
     /// </summary>
-    private async Task<IReadOnlySet<ActivityLogType>> ResolveAllowedTypes(Guid party, CancellationToken cancellationToken)
+    private async Task<IReadOnlySet<Guid>> ResolveGrantedIds(Guid party, CancellationToken cancellationToken)
     {
         var userUuid = UserUtil.GetUserUuid(User);
         if (userUuid is null)
@@ -181,14 +187,20 @@ public class ActivityLogController(IActivityLogService activityLogService, IConn
             return null;
         }
 
-        var connections = await connectionService.Get(party, fromId: party, toId: userUuid.Value, cancellationToken: cancellationToken);
+        var connections = await connectionService.Get(party, fromId: party, toId: userUuid.Value, includeAccessPackages: true, cancellationToken: cancellationToken);
         if (connections.IsProblem)
         {
-            return ActivityLogRoleMatrix.AllowedTypes([]);
+            return new HashSet<Guid>();
         }
 
-        var roleIds = connections.Value.SelectMany(c => c.Roles).Select(r => r.Id);
-        return ActivityLogRoleMatrix.AllowedTypes(roleIds);
+        var granted = new HashSet<Guid>();
+        foreach (var connection in connections.Value)
+        {
+            granted.UnionWith(connection.Roles.Select(r => r.Id));
+            granted.UnionWith(connection.Packages.Select(p => p.Id));
+        }
+
+        return granted;
     }
 
     private string NextLink(int pageSize, int nextPageNo)

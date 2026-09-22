@@ -19,24 +19,35 @@ public static class ActivityLogRoleMatrix
     public static readonly IReadOnlySet<ActivityLogType> AllTypes =
         new HashSet<ActivityLogType> { ActivityLogType.Assignment, ActivityLogType.Delegation, ActivityLogType.Request };
 
+    // Access managers see the assignment part including the requests that lead to
+    // assignments (issue #3981); client administrators see the delegation part.
     private static readonly IReadOnlyDictionary<Guid, IReadOnlySet<ActivityLogType>> Matrix = new Dictionary<Guid, IReadOnlySet<ActivityLogType>>
     {
-        [RoleConstants.AccessManager.Id] = new HashSet<ActivityLogType> { ActivityLogType.Assignment },
+        [RoleConstants.AccessManager.Id] = new HashSet<ActivityLogType> { ActivityLogType.Assignment, ActivityLogType.Request },
         [RoleConstants.ClientAdministrator.Id] = new HashSet<ActivityLogType> { ActivityLogType.Delegation },
         [RoleConstants.MainAdministrator.Id] = AllTypes,
         [RoleConstants.MainAdministratorA2.Id] = AllTypes,
     };
 
+    // Maskinporten schema events are hidden by default everywhere; these unlock them when the
+    // caller asks for them. Maskinporten administration is granted as an access package, not a
+    // role, so the id here is a package id — the matrix keys are simply "granted thing" ids.
+    private static readonly IReadOnlySet<Guid> MaskinportenSchemaViewers = new HashSet<Guid>
+    {
+        PackageConstants.MaskinportenAdministrator.Id,
+    };
+
     /// <summary>
-    /// Returns the union of log types the given effective roles may see. Roles outside the
-    /// matrix contribute nothing; an empty result means the caller may not see the log at all.
+    /// Returns the union of log types the given effective roles and packages may see. Ids
+    /// outside the matrix contribute nothing; an empty result means the caller may not see
+    /// the log at all.
     /// </summary>
-    public static IReadOnlySet<ActivityLogType> AllowedTypes(IEnumerable<Guid> roleIds)
+    public static IReadOnlySet<ActivityLogType> AllowedTypes(IEnumerable<Guid> roleOrPackageIds)
     {
         var allowed = new HashSet<ActivityLogType>();
-        foreach (var roleId in roleIds ?? [])
+        foreach (var id in roleOrPackageIds ?? [])
         {
-            if (Matrix.TryGetValue(roleId, out var types))
+            if (Matrix.TryGetValue(id, out var types))
             {
                 allowed.UnionWith(types);
                 if (allowed.Count == AllTypes.Count)
@@ -48,6 +59,12 @@ public static class ActivityLogRoleMatrix
 
         return allowed;
     }
+
+    /// <summary>
+    /// Whether the given effective roles and packages unlock Maskinporten schema events.
+    /// </summary>
+    public static bool MaySeeMaskinportenSchema(IEnumerable<Guid> roleOrPackageIds)
+        => roleOrPackageIds?.Any(MaskinportenSchemaViewers.Contains) == true;
 
     /// <summary>
     /// Constrains a filter to the allowed types: the type list becomes the allowed set (or its
