@@ -63,6 +63,7 @@ namespace Altinn.Platform.Authorization.Telemetry
 
         private readonly Counter<long> _pdpDecisions;
         private readonly Counter<long> _auditLogEvents;
+        private readonly Counter<long> _auditLogTrackerCapacityRotations;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DecisionTelemetry"/> class. Registered as a
@@ -80,6 +81,10 @@ namespace Altinn.Platform.Authorization.Telemetry
                 "altinn.pdp.auditlog.events",
                 unit: "1",
                 description: "Number of authorization events queued for the audit log, by whether they repeat an event already seen");
+            _auditLogTrackerCapacityRotations = meter.CreateCounter<long>(
+                "altinn.pdp.auditlog.tracker.capacity_rotations",
+                unit: "1",
+                description: "Number of times the audit log duplicate tracker was full and forgot its oldest events before their window ended");
         }
 
         /// <summary>
@@ -128,7 +133,6 @@ namespace Altinn.Platform.Authorization.Telemetry
                 AuthorizationEventDuplicateKind.None => "none",
                 AuthorizationEventDuplicateKind.SameTrace => "trace",
                 AuthorizationEventDuplicateKind.Window => "window",
-                AuthorizationEventDuplicateKind.Untracked => "untracked",
                 _ => UnknownDimensionValue,
             };
 
@@ -139,5 +143,12 @@ namespace Altinn.Platform.Authorization.Telemetry
 
             _auditLogEvents.Add(1, tags);
         }
+
+        /// <summary>
+        /// Records that the audit log duplicate tracker was full and started a new generation early,
+        /// forgetting its oldest events before their window ended. Above zero means the effective window
+        /// is shorter than configured, and duplicates are undercounted.
+        /// </summary>
+        public void RecordAuditLogTrackerCapacityRotation() => _auditLogTrackerCapacityRotations.Add(1);
     }
 }

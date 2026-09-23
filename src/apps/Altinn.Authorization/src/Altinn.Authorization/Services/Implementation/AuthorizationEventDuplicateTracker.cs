@@ -6,6 +6,7 @@ using System.IO.Hashing;
 using System.Runtime.InteropServices;
 using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Models.EventLog;
+using Altinn.Platform.Authorization.Telemetry;
 using Microsoft.Extensions.Options;
 
 namespace Altinn.Platform.Authorization.Services.Implementation
@@ -28,20 +29,27 @@ namespace Altinn.Platform.Authorization.Services.Implementation
     /// </para>
     /// <para>
     /// Events are stored as a 64-bit XxHash3, seeded randomly per process, in two generations of at most
-    /// <see cref="AuditLogDeduplicationSettings.MaxTrackedEvents"/> entries each. A generation is
-    /// discarded once everything in it is older than the window, so memory stays bounded without a
-    /// background timer. Both generations are sized for the maximum on first use and reused afterwards,
-    /// so memory use is fixed and nothing is allocated per event.
+    /// <see cref="AuditLogDeduplicationSettings.MaxTrackedEvents"/> entries each. A new generation is
+    /// started when the window has passed, or early when the current one is full, and the oldest is
+    /// dropped. A key found in the previous generation is copied into the current one, so keys that keep
+    /// repeating survive, and the tracker holds on to the most recent events rather than the first ones.
+    /// Under load the oldest events are therefore forgotten before their window ends, which is counted in
+    /// <c>altinn.pdp.auditlog.tracker.capacity_rotations</c>. Both generations are sized for the maximum
+    /// on first use and reused, so memory use is fixed and nothing is allocated per event.
     /// </para>
     /// </remarks>
     public sealed class AuthorizationEventDuplicateTracker
     {
+        // An event stores at most two keys: its trace key and, the first time it is seen, its event key.
+        private const int MaxKeysPerEvent = 2;
+
         // A random seed keeps the keys, which are not a cryptographic hash, from being predictable.
         private static readonly long Seed = Random.Shared.NextInt64();
         private static readonly ThreadLocal<ArrayBufferWriter<byte>> KeyBuffer = new(() => new ArrayBufferWriter<byte>(512));
 
         private readonly Lock _gate = new();
         private readonly TimeProvider _timeProvider;
+        private readonly DecisionTelemetry _telemetry;
         private readonly long _windowTicks;
         private readonly int _maxTrackedEvents;
 
@@ -56,11 +64,13 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         /// </summary>
         /// <param name="settings">Window and capacity settings</param>
         /// <param name="timeProvider">Clock used to age out remembered events</param>
-        public AuthorizationEventDuplicateTracker(IOptions<AuditLogDeduplicationSettings> settings, TimeProvider timeProvider)
+        /// <param name="telemetry">PDP telemetry, for counting generations started early</param>
+        public AuthorizationEventDuplicateTracker(IOptions<AuditLogDeduplicationSettings> settings, TimeProvider timeProvider, DecisionTelemetry telemetry)
         {
             _windowTicks = settings.Value.Window.Ticks;
-            _maxTrackedEvents = Math.Max(settings.Value.MaxTrackedEvents, 0);
+            _maxTrackedEvents = Math.Max(settings.Value.MaxTrackedEvents, MaxKeysPerEvent);
             _timeProvider = timeProvider;
+            _telemetry = telemetry;
         }
 
         /// <summary>
@@ -73,50 +83,70 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         {
             (ulong eventKey, ulong traceKey) = ComputeKeys(authorizationEvent, resourceInstanceIds);
             long now = _timeProvider.GetUtcNow().UtcTicks;
+            bool rotatedEarly;
+            AuthorizationEventDuplicateKind duplicateKind;
 
             lock (_gate)
             {
-                RotateIfExpired(now);
+                // Rotating before the lookups leaves room for every key this call can store, including
+                // keys copied from the previous generation.
+                rotatedEarly = RotateIfNeeded(now);
 
                 if (IsSeen(traceKey, now))
                 {
-                    return AuthorizationEventDuplicateKind.SameTrace;
+                    duplicateKind = AuthorizationEventDuplicateKind.SameTrace;
                 }
-
-                bool seenInWindow = IsSeen(eventKey, now);
-
-                // Only the keys that are missing need room: the trace key always, the event key when it
-                // was not seen. Without room for the trace key, further repeats in this trace could not
-                // be told apart from repeats in other traces, so the event is reported as untracked
-                // rather than given a classification that later events would contradict.
-                int missingKeys = seenInWindow ? 1 : 2;
-                if (_current.Count + missingKeys > _maxTrackedEvents)
+                else
                 {
-                    return AuthorizationEventDuplicateKind.Untracked;
+                    bool seenInWindow = IsSeen(eventKey, now);
+
+                    // Remember the trace even when the event was seen in another trace, so that further
+                    // repeats in this trace are classified as SameTrace.
+                    _current[traceKey] = now;
+
+                    if (seenInWindow)
+                    {
+                        duplicateKind = AuthorizationEventDuplicateKind.Window;
+                    }
+                    else
+                    {
+                        _current[eventKey] = now;
+                        duplicateKind = AuthorizationEventDuplicateKind.None;
+                    }
                 }
-
-                _current[traceKey] = now;
-
-                if (seenInWindow)
-                {
-                    return AuthorizationEventDuplicateKind.Window;
-                }
-
-                _current[eventKey] = now;
-                return AuthorizationEventDuplicateKind.None;
             }
+
+            if (rotatedEarly)
+            {
+                _telemetry.RecordAuditLogTrackerCapacityRotation();
+            }
+
+            return duplicateKind;
         }
 
-        private void RotateIfExpired(long now)
+        private bool RotateIfNeeded(long now)
         {
-            if (now - _currentStartedTicks < _windowTicks)
+            if (now - _currentStartedTicks >= _windowTicks)
             {
-                return;
+                Rotate(now);
+                return false;
             }
 
-            // The previous generation only holds events from before the current one started, at least a
-            // window ago, so it can be dropped. Its dictionary is reused for the new generation, and sized
-            // for the maximum the first time, so that it never grows while events are tracked.
+            if (_current.Count + MaxKeysPerEvent > _maxTrackedEvents)
+            {
+                Rotate(now);
+                return true;
+            }
+
+            return false;
+        }
+
+        private void Rotate(long now)
+        {
+            // The oldest generation is dropped. After a rotation on time, everything in it is older than
+            // the window. After a rotation because the current generation was full, it may still hold
+            // events within their window, which are forgotten early. Its dictionary is reused for the new
+            // generation, and sized for the maximum the first time, so it never grows while in use.
             (_previous, _current) = (_current, _previous);
             _current.Clear();
             _current.EnsureCapacity(_maxTrackedEvents);
@@ -125,10 +155,22 @@ namespace Altinn.Platform.Authorization.Services.Implementation
 
         private bool IsSeen(ulong key, long now)
         {
-            // Entries in the current generation are always within the window. Entries in the previous
-            // generation may have aged out.
-            return _current.ContainsKey(key)
-                || (_previous.TryGetValue(key, out long seen) && now - seen < _windowTicks);
+            // Keys copied from the previous generation keep the time they were first seen, so entries in
+            // either generation may have aged out.
+            if (_current.TryGetValue(key, out long seen))
+            {
+                return now - seen < _windowTicks;
+            }
+
+            if (_previous.TryGetValue(key, out seen) && now - seen < _windowTicks)
+            {
+                // Copy the key into the current generation, so that a key that keeps repeating survives
+                // the next rotation. The original time keeps its window from being extended.
+                _current[key] = seen;
+                return true;
+            }
+
+            return false;
         }
 
         private static (ulong EventKey, ulong TraceKey) ComputeKeys(AuthorizationEvent authorizationEvent, IReadOnlyList<string> resourceInstanceIds)

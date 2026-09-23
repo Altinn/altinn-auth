@@ -48,7 +48,7 @@ A metric consists of the following properties:
     </tr>
     <tr>
       <td><code>auditlog.duplicate</code></td>
-      <td>Whether an authorization event queued for the audit log repeats one already seen within the deduplication window: <code>none</code>, <code>trace</code> (same trace), <code>window</code> (another trace) or <code>untracked</code> (not classified, the tracker is at capacity).</td>
+      <td>Whether an authorization event queued for the audit log repeats one already seen within the deduplication window: <code>none</code>, <code>trace</code> (same trace), <code>window</code> (another trace).</td>
     </tr>
   </tbody>
 </table>
@@ -95,6 +95,14 @@ Below is a list of applications that publishes metrics, and what those metrics a
           <li><code>auditlog.duplicate</code></li>
         </ul>
       </td>
+      <td>❌</td>
+    </tr>
+    <tr>
+      <td><code>Altinn.Authorization.Pdp</code></td>
+      <td><code>altinn.pdp.auditlog.tracker.capacity_rotations</code></td>
+      <td>The number of times the audit log duplicate tracker was full and forgot its oldest events before their window ended. Above zero means the effective window is shorter than configured, and duplicates are undercounted.</td>
+      <td>counter</td>
+      <td></td>
       <td>❌</td>
     </tr>
   </tbody>

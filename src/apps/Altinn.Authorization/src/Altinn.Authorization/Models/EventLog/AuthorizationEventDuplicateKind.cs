@@ -20,11 +20,5 @@ namespace Altinn.Platform.Authorization.Models.EventLog
         /// The same event has already been seen within the window, but in another trace.
         /// </summary>
         Window,
-
-        /// <summary>
-        /// Not classified, because the tracker is at capacity and could not remember the event in its
-        /// trace. A share above zero means the capacity is too low for the traffic.
-        /// </summary>
-        Untracked,
     }
 }

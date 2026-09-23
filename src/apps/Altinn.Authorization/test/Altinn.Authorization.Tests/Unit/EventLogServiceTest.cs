@@ -29,11 +29,15 @@ public class EventLogServiceTest : IDisposable
 
     private IMeterFactory MeterFactory => _metrics.GetRequiredService<IMeterFactory>();
 
-    private EventLogService CreateService() => new(
-        _queueClientMock.Object,
-        _timeProvider,
-        new AuthorizationEventDuplicateTracker(Options.Create(new AuditLogDeduplicationSettings()), _timeProvider),
-        new DecisionTelemetry(MeterFactory));
+    private EventLogService CreateService()
+    {
+        var telemetry = new DecisionTelemetry(MeterFactory);
+        return new(
+            _queueClientMock.Object,
+            _timeProvider,
+            new AuthorizationEventDuplicateTracker(Options.Create(new AuditLogDeduplicationSettings()), _timeProvider, telemetry),
+            telemetry);
+    }
 
     [Fact]
     public async Task CreateAuthorizationEvent_AuditLogEnabled_EnqueuesEvent()

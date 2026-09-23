@@ -1,19 +1,28 @@
+using System.Diagnostics.Metrics;
 using System.Text.Json;
 using Altinn.Authorization.ABAC.Xacml;
+using Altinn.Authorization.Tests.Util;
 using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Models.EventLog;
 using Altinn.Platform.Authorization.Services.Implementation;
+using Altinn.Platform.Authorization.Telemetry;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 
 namespace Altinn.Authorization.Tests.Unit;
 
 [UnitTest]
-public class AuthorizationEventDuplicateTrackerTest
+public class AuthorizationEventDuplicateTrackerTest : IDisposable
 {
     private static readonly TimeSpan Window = TimeSpan.FromMinutes(1);
 
     private readonly FakeTimeProvider _timeProvider = new(new DateTimeOffset(2026, 9, 22, 12, 0, 0, TimeSpan.Zero));
+    private readonly ServiceProvider _metrics = new ServiceCollection().AddMetrics().BuildServiceProvider();
+
+    public void Dispose() => _metrics.Dispose();
+
+    private IMeterFactory MeterFactory => _metrics.GetRequiredService<IMeterFactory>();
 
     [Fact]
     public void Track_FirstOccurrence_IsNotDuplicate()
@@ -216,21 +225,10 @@ public class AuthorizationEventDuplicateTrackerTest
     }
 
     [Fact]
-    public void Track_AtCapacity_NewEventIsUntracked()
+    public void Track_NearCapacity_RepeatsInOtherTrace_AreStillClassified()
     {
-        // Room for a single event: its event key and its trace key.
-        var tracker = CreateTracker(maxTrackedEvents: 2);
-        AuthorizationEvent other = CreateEvent();
-        other.Operation = "write";
-
-        Assert.Equal(AuthorizationEventDuplicateKind.None, Track(tracker, CreateEvent(traceId: "trace-1")));
-        Assert.Equal(AuthorizationEventDuplicateKind.Untracked, Track(tracker, other));
-    }
-
-    [Fact]
-    public void Track_NearCapacity_RepeatInOtherTrace_NeedsRoomOnlyForItsTrace()
-    {
-        // The first event takes two entries, and a repeat from another trace only one more.
+        // Room for one event and a bit: the repeat from another trace starts a new generation early,
+        // and the event is found in the previous one.
         var tracker = CreateTracker(maxTrackedEvents: 3);
 
         Assert.Equal(AuthorizationEventDuplicateKind.None, Track(tracker, CreateEvent(traceId: "trace-a")));
@@ -239,17 +237,58 @@ public class AuthorizationEventDuplicateTrackerTest
     }
 
     [Fact]
-    public void Track_AtCapacity_RepeatWhoseTraceCannotBeRemembered_IsUntracked()
+    public void Track_WhenFull_StartsNewGenerationEarly_AndKeepsRecentEvents()
     {
-        // Full after the first event, so the second trace cannot be remembered. Reporting the repeat as
-        // Window would make every further repeat in that trace look like Window too.
-        var tracker = CreateTracker(maxTrackedEvents: 2);
+        // Room for two events per generation. The third call starts a new generation, and the first two
+        // events are still found in the previous one.
+        var tracker = CreateTracker(maxTrackedEvents: 4);
+        using var collector = CapacityRotations();
+        AuthorizationEvent write = CreateEvent(traceId: "trace-a");
+        write.Operation = "write";
 
         Track(tracker, CreateEvent(traceId: "trace-a"));
+        Track(tracker, write);
 
-        Assert.Equal(AuthorizationEventDuplicateKind.Untracked, Track(tracker, CreateEvent(traceId: "trace-b")));
-        Assert.Equal(AuthorizationEventDuplicateKind.Untracked, Track(tracker, CreateEvent(traceId: "trace-b")));
-        Assert.Equal(AuthorizationEventDuplicateKind.SameTrace, Track(tracker, CreateEvent(traceId: "trace-a")));
+        Assert.Equal(AuthorizationEventDuplicateKind.Window, Track(tracker, CreateEvent(traceId: "trace-b")));
+        Assert.Single(collector.Measurements);
+    }
+
+    [Fact]
+    public void Track_WhenFull_ForgetsOldestEventsBeforeTheirWindowEnds()
+    {
+        // Room for one event per generation, so every event starts a new generation, and the event two
+        // generations back is forgotten well within its window.
+        var tracker = CreateTracker(maxTrackedEvents: 2);
+        using var collector = CapacityRotations();
+
+        Track(tracker, CreateEvent(traceId: "trace-a"), "message-1");
+        Track(tracker, CreateEvent(traceId: "trace-a"), "message-2");
+        Track(tracker, CreateEvent(traceId: "trace-a"), "message-3");
+
+        Assert.Equal(AuthorizationEventDuplicateKind.None, Track(tracker, CreateEvent(traceId: "trace-b"), "message-1"));
+        Assert.Equal(3, collector.Measurements.Count);
+    }
+
+    [Fact]
+    public void Track_RepeatCopiedFromPreviousGeneration_KeepsItsWindow()
+    {
+        var tracker = CreateTracker(maxTrackedEvents: 4);
+        AuthorizationEvent write = CreateEvent(traceId: "trace-a");
+        write.Operation = "write";
+
+        Track(tracker, CreateEvent(traceId: "trace-a"));
+        _timeProvider.Advance(TimeSpan.FromSeconds(10));
+        Track(tracker, write);
+        _timeProvider.Advance(TimeSpan.FromSeconds(10));
+
+        // The generation is full, so a new one starts, and the event is copied into it with the time it
+        // was first seen, 20 seconds ago.
+        Assert.Equal(AuthorizationEventDuplicateKind.Window, Track(tracker, CreateEvent(traceId: "trace-b")));
+
+        // 65 seconds after it was first seen, the event is new again, although it is in the current
+        // generation.
+        _timeProvider.Advance(TimeSpan.FromSeconds(45));
+        Assert.Equal(AuthorizationEventDuplicateKind.None, Track(tracker, CreateEvent(traceId: "trace-c")));
     }
 
     [Fact]
@@ -269,7 +308,9 @@ public class AuthorizationEventDuplicateTrackerTest
         tracker.Track(authorizationEvent, resourceInstanceIds);
 
     private AuthorizationEventDuplicateTracker CreateTracker(int maxTrackedEvents = 1000) =>
-        new(Options.Create(new AuditLogDeduplicationSettings { Window = Window, MaxTrackedEvents = maxTrackedEvents }), _timeProvider);
+        new(Options.Create(new AuditLogDeduplicationSettings { Window = Window, MaxTrackedEvents = maxTrackedEvents }), _timeProvider, new DecisionTelemetry(MeterFactory));
+
+    private PdpMetricCollector CapacityRotations() => new(MeterFactory, "altinn.pdp.auditlog.tracker.capacity_rotations");
 
     private AuthorizationEvent CreateEvent(string traceId = "trace-1") => new()
     {
