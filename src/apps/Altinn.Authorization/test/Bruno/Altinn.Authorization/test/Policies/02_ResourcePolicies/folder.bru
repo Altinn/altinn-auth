@@ -1,0 +1,21 @@
+meta {
+  name: 02_ResourcePolicies
+  seq: 2
+}
+
+docs {
+  Scenario: The rules of one or more app policies can be read in one request
+
+    Given the app ttd/authz-bruno-testapp1 has a stored policy
+    When the policies are requested for that app, the response is 200 with
+    the actions, the role grants and the minimum authentication level
+    And a list mixing a known app, an unknown app and an entry without an
+    app is answered entry by entry, with an errorResponse on the failures
+    When the body is not a list of lists, the response is 400
+
+  POST /authorization/api/v1/policies/GetPolicies takes a list where each
+  entry identifies one app as a list of attribute matches (urn:altinn:org
+  and urn:altinn:app). The response has one entry per request entry, in the
+  same order. A lookup that fails for one entry does not fail the request:
+  that entry carries errorResponse and the status stays 200.
+}

@@ -1,0 +1,45 @@
+meta {
+  name: 03_WHEN_BodyIsNotAListReturnsBadRequest
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/authorization/api/v1/policies/GetPolicies
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Ocp-Apim-Subscription-Key: {{apimSubscriptionKey}}
+}
+
+body:json {
+  {
+    "org": "ttd",
+    "app": "authz-bruno-testapp1"
+  }
+}
+
+docs {
+  WHEN the body is a single object instead of a list of attribute match
+  lists, THEN model binding fails before the action runs and the response
+  is the standard ASP.NET Core validation problem (400) with the error on
+  the JSON root ("$"). This is the most common mistake when calling the
+  endpoint by hand: even a single app must be wrapped in two arrays.
+}
+
+tests {
+  test("WHEN the body is not a list of lists, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN the problem body points at the JSON root", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("status", 400);
+    expect(body).to.have.property("title", "One or more validation errors occurred.");
+    expect(body.errors).to.have.property("$");
+    expect(body.errors["$"][0]).to.contain("could not be converted");
+  });
+}
