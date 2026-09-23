@@ -1,0 +1,43 @@
+meta {
+  name: 12_THEN_ReceiverIsNoLongerAvailable
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/users?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+docs {
+  THEN the receiver is no longer among the delegator's available users once the
+  connection is gone.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/Connections/AvailableUsersAndRights/helpers.js");
+  const td = testdata();
+
+  bru.setVar("party", td.delegator.partyUuid);
+
+  await loginAs(td.delegator);
+}
+
+tests {
+  const { testdata } = require("./test/EnduserAPI/Connections/AvailableUsersAndRights/helpers.js");
+  const td = testdata();
+
+  test("THEN the available users request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the receiver is gone from the available users", function() {
+    const entry = res.getBody().data.find(item => item.party.id.toLowerCase() === td.receiver.partyUuid.toLowerCase());
+    expect(entry, "expected the receiver to be gone").to.be.undefined;
+  });
+}

@@ -1,0 +1,44 @@
+meta {
+  name: AvailableUsersAndRights
+  seq: 12
+}
+
+auth {
+  mode: inherit
+}
+
+docs {
+  # Enduser connections: available users, instance users, resource rights and Altinn 2 roles
+
+  BDD scenarios for four endpoints under `/accessmanagement/api/v1/enduser/connections`:
+
+  - `GET users`: the parties the selected party already has a connection to, which the
+    portal offers as recipients of a new delegation.
+  - `GET resources/instances/users`: the parties that have access to one app instance.
+  - `PUT resources/rights`: replaces the rights one party has delegated to another on a
+    single resource.
+  - `DELETE roles`: removes an Altinn 2 role assignment between two parties.
+
+  Each subfolder is one scenario. The files inside are the scenario steps, named
+  `NN_GIVEN|WHEN|THEN|AND|CLEANUP_...` and ordered by `seq`. A scenario starts from a known
+  state (the GIVEN steps reset leftovers from earlier runs) and removes everything it
+  created, so the folder can run repeatedly against a shared environment.
+
+  ## Personas and fixtures
+
+  Seed data comes from `testdata/enduser-connections-users-rights/<env>.js`, which only
+  maps personas from `testdata/be-om-tilgang` and `testdata/enduser_instans-delegation`
+  to the roles below:
+
+  - delegator: a private person who owns an app instance and delegates access.
+  - receiver: a private person the delegator makes rightholder and delegates to. The
+    scenarios own the connection between the delegator and the receiver.
+  - outsider: a private person with no relation to the delegator, used for the
+    authorization negatives.
+
+  Every step mints its own personal token through `helpers.js` (`loginAs(persona, scopes?)`).
+
+  ## Environments
+
+  Runs against AT22.
+}

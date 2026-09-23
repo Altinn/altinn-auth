@@ -1,0 +1,48 @@
+meta {
+  name: 06_WHEN_DelegatorDelegatesInstanceToReceiver
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources/instances/rights?party={{party}}&to={{to}}&resource={{resource}}&instance={{instance}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  to: {{to}}
+  resource: {{resource}}
+  instance: {{instance}}
+}
+
+body:json {
+  {
+    "directRightKeys": {{aur_instanceRightKeys}}
+  }
+}
+
+docs {
+  WHEN the delegator delegates the delegable rights on the app instance to the receiver.
+
+  Expects 201 with no body.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/Connections/AvailableUsersAndRights/helpers.js");
+  const td = testdata();
+
+  bru.setVar("party", td.delegator.partyUuid);
+  bru.setVar("to", td.receiver.partyUuid);
+  bru.setVar("resource", td.app.appId);
+  bru.setVar("instance", td.app.instanceUrn);
+
+  await loginAs(td.delegator);
+}
+
+tests {
+  test("WHEN the instance is delegated, the request returns 201", function() {
+    expect(res.status).to.equal(201);
+  });
+}

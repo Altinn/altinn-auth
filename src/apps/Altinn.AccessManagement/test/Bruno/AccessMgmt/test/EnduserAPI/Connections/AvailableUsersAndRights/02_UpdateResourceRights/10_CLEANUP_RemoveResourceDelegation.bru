@@ -1,0 +1,39 @@
+meta {
+  name: 10_CLEANUP_RemoveResourceDelegation
+  type: http
+  seq: 10
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources?party={{party}}&from={{party}}&to={{to}}&resource={{resource}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{to}}
+  resource: {{resource}}
+}
+
+docs {
+  CLEANUP: the delegator removes the resource delegation to the receiver.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/Connections/AvailableUsersAndRights/helpers.js");
+  const td = testdata();
+
+  bru.setVar("party", td.delegator.partyUuid);
+  bru.setVar("to", td.receiver.partyUuid);
+  bru.setVar("resource", td.resource.refId);
+
+  await loginAs(td.delegator);
+}
+
+tests {
+  test("CLEANUP the resource delegation is removed with 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

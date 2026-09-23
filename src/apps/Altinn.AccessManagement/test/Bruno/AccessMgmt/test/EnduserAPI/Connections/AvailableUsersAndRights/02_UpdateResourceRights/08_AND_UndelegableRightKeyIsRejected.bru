@@ -1,0 +1,55 @@
+meta {
+  name: 08_AND_UndelegableRightKeyIsRejected
+  type: http
+  seq: 8
+}
+
+put {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources/rights?party={{party}}&to={{to}}&resource={{resource}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  to: {{to}}
+  resource: {{resource}}
+}
+
+body:json {
+  {
+    "directRightKeys": ["{{aur_readKey}}", "01bruno-right-key-that-is-not-delegable"]
+  }
+}
+
+docs {
+  AND a right key the delegator cannot delegate is rejected.
+
+  Every key in the body is checked against the delegation check for the authenticated
+  user. One unknown key fails the whole update with 400 AM-00028 and leaves the delegated
+  rights as they were.
+}
+
+script:pre-request {
+  const { loginAs, testdata, scopes } = require("./test/EnduserAPI/Connections/AvailableUsersAndRights/helpers.js");
+  const td = testdata();
+
+  bru.setVar("party", td.delegator.partyUuid);
+  bru.setVar("to", td.receiver.partyUuid);
+  bru.setVar("resource", td.resource.refId);
+
+  await loginAs(td.delegator, scopes.enduserSystemToOthersWrite);
+}
+
+tests {
+  test("AND the update is rejected with 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("AND the problem body says the user is not authorized for the delegation", function() {
+    const body = res.getBody();
+    expect(body.status).to.equal(400);
+    expect(body.code).to.equal("AM-00028");
+    expect(body.detail).to.equal("Not authorized for delegation");
+  });
+}

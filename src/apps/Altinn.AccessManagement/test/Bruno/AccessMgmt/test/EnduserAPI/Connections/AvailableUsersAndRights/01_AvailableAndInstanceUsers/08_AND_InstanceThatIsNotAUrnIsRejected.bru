@@ -1,0 +1,51 @@
+meta {
+  name: 08_AND_InstanceThatIsNotAUrnIsRejected
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources/instances/users?party={{party}}&resource={{resource}}&instance=not-an-instance-urn
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  resource: {{resource}}
+  instance: not-an-instance-urn
+}
+
+docs {
+  AND an instance identifier that is not a URN is rejected.
+
+  Expects 400 with error code STD-00000 and validation error AM.VLD-00007 whose path
+  points at the instance query parameter.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/Connections/AvailableUsersAndRights/helpers.js");
+  const td = testdata();
+
+  bru.setVar("party", td.delegator.partyUuid);
+  bru.setVar("resource", td.app.appId);
+
+  await loginAs(td.delegator);
+}
+
+tests {
+  test("AND the request is rejected with 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("AND the problem body points at the instance query parameter", function() {
+    const body = res.getBody();
+    expect(body.status).to.equal(400);
+    expect(body.code).to.equal("STD-00000");
+    expect(body.validationErrors).to.be.an("array").with.lengthOf(1);
+    const err = body.validationErrors[0];
+    expect(err.code).to.equal("AM.VLD-00007");
+    expect(err.paths).to.deep.equal(["$QUERY/instance"]);
+    expect(err.instance).to.include("urn:altinn:instance-id:");
+  });
+}

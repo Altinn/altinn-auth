@@ -1,0 +1,66 @@
+meta {
+  name: 04_WHEN_DelegatorSetsReadAndWrite
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources/rights?party={{party}}&to={{to}}&resource={{resource}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  to: {{to}}
+  resource: {{resource}}
+}
+
+body:json {
+  {
+    "directRightKeys": ["{{aur_readKey}}", "{{aur_writeKey}}"]
+  }
+}
+
+docs {
+  WHEN the delegator sets read and write on the resource for the receiver.
+
+  `PUT /accessmanagement/api/v1/enduser/connections/resources/rights?party={party}&to={to}&resource={resource}`
+
+  Replaces the rights the selected party has delegated to `to` on one resource with the
+  right keys in the body. Rights that are delegated today but missing from the body are
+  revoked; rights in the body that are not delegated yet are added. It works whether or
+  not the resource is delegated already, and when party has no rightholder connection to
+  `to` yet, the connection is created along with the delegation. An empty key list is
+  accepted with 200 but changes nothing; use `DELETE connections/resources` to revoke
+  every right on the resource.
+
+  - Query: `party` (required), the uuid of the delegating party; `to` (required), the
+    uuid of the receiving party; `resource` (required), the resource reference id.
+  - Body: `{ "directRightKeys": [ ... ] }` with the keys from
+    `GET connections/resources/delegationcheck`. Every key must be one the authenticated
+    user can delegate on behalf of the party.
+  - Token: personal token with `altinn:portal/enduser` or
+    `altinn:accessmanagement/enduser:connections:toothers.write` (used here), and the user
+    must have write access to access management (`altinn_access_management`) for the party.
+  - Responses: 200 with no body; 400 AM-00028 when a key cannot be delegated by the user;
+    400 AM-00027 with the resource echoed when the resource is unknown; 403 when the user
+    cannot act for the party.
+}
+
+script:pre-request {
+  const { loginAs, testdata, scopes } = require("./test/EnduserAPI/Connections/AvailableUsersAndRights/helpers.js");
+  const td = testdata();
+
+  bru.setVar("party", td.delegator.partyUuid);
+  bru.setVar("to", td.receiver.partyUuid);
+  bru.setVar("resource", td.resource.refId);
+
+  await loginAs(td.delegator, scopes.enduserSystemToOthersWrite);
+}
+
+tests {
+  test("WHEN read and write are set, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+}
