@@ -128,7 +128,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
             }
 
             var entity = await inputValidation.SanitizeToInput(
-            party,
+            estate,
             creditor,
             person,
             options =>
