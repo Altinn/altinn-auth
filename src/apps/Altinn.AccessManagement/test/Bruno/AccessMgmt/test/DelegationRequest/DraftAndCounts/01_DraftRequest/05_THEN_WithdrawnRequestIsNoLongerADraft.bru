@@ -1,0 +1,33 @@
+meta {
+  name: 05_THEN_WithdrawnRequestIsNoLongerADraft
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/request/draft?id={{dac_requestId}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  id: {{dac_requestId}}
+}
+
+docs {
+  THEN the requester can no longer open the withdrawn request as a draft. The draft
+  endpoint only serves requests in status Draft and answers 403 for anything else.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/DelegationRequest/DraftAndCounts/helpers.js");
+  const td = testdata();
+
+  await loginAs(td.requester);
+}
+
+tests {
+  test("THEN the withdrawn request is refused with 403", function() {
+    expect(res.status).to.equal(403);
+  });
+}

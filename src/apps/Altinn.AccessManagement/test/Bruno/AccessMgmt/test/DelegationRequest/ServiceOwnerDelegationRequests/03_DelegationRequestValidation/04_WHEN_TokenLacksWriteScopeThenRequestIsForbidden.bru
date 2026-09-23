@@ -1,0 +1,49 @@
+meta {
+  name: 04_WHEN_TokenLacksWriteScopeThenRequestIsForbidden
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/delegationrequests
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "from": "urn:altinn:person:identifier-no:{{grantorPid}}",
+    "to": "urn:altinn:person:identifier-no:{{requesterPid}}",
+    "resource": {
+      "referenceId": "{{requestResource}}"
+    }
+  }
+}
+
+docs {
+  WHEN the token carries only `altinn:serviceowner/delegationrequests.read` the create
+  request is forbidden with 403, and no request is created.
+}
+
+script:pre-request {
+  const { td, loginAsServiceOwner, scopes } = require("./test/DelegationRequest/ServiceOwnerDelegationRequests/helpers.js");
+  const data = td();
+
+  bru.setVar("grantorPid", data.delegationRequest.grantor.pid);
+  bru.setVar("requesterPid", data.delegationRequest.requester.pid);
+  bru.setVar("requestResource", data.delegationRequest.resource);
+  bru.setVar("requestPackage", data.delegationRequest.package);
+
+  await loginAsServiceOwner(data.serviceOwners.ttd, scopes.delegationRequestsRead);
+}
+
+tests {
+  test("WHEN the token lacks the write scope, the request returns 403", function() {
+    expect(res.status).to.equal(403);
+  });
+}

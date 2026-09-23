@@ -1,0 +1,65 @@
+meta {
+  name: 01_GIVEN_ServiceOwnerCreatesDraftPackageRequest
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/delegationrequests/package
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "from": "urn:altinn:person:identifier-no:{{requesterPid}}",
+    "to": "urn:altinn:organization:identifier-no:{{orgNo}}",
+    "package": "{{package}}"
+  }
+}
+
+docs {
+  GIVEN the service owner has created a draft package request: the requester (from)
+  asks the organization (to) for the package.
+
+  Expects 202 with the request in status Draft. When an open draft for the same parties
+  and package exists from an earlier or crashed run, that draft is returned instead, so
+  the step is idempotent. The request id is captured for the next steps.
+}
+
+script:pre-request {
+  const { loginAsServiceOwner, testdata } = require("./test/DelegationRequest/DraftAndCounts/helpers.js");
+  const td = testdata();
+
+  bru.setVar("requesterPid", td.requester.pid);
+  bru.setVar("orgNo", td.organization.orgNo);
+  bru.setVar("package", td.package);
+
+  await loginAsServiceOwner();
+}
+
+script:post-response {
+  const body = res.getBody();
+  if (body && body.id) {
+    bru.setVar("dac_requestId", body.id);
+  }
+}
+
+tests {
+  const { testdata } = require("./test/DelegationRequest/DraftAndCounts/helpers.js");
+  const td = testdata();
+
+  test("GIVEN the draft is created, the request returns 202", function() {
+    expect(res.status).to.equal(202);
+  });
+
+  test("GIVEN the request is a package request in status Draft between the requester and the organization", function() {
+    const body = res.getBody();
+    expect(body.id).to.be.a("string").that.is.not.empty;
+    expect(body.status).to.equal("Draft");
+    expect(body.type).to.equal("package");
+    expect(body.package.referenceId).to.equal(td.package);
+    expect(body.from.id.toLowerCase()).to.equal(td.requester.partyUuid.toLowerCase());
+    expect(body.to.id.toLowerCase()).to.equal(td.organization.partyUuid.toLowerCase());
+  });
+}
