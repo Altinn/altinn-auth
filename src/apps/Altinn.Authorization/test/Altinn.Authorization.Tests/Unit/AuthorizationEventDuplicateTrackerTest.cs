@@ -20,7 +20,7 @@ public class AuthorizationEventDuplicateTrackerTest
     {
         var tracker = CreateTracker();
 
-        Assert.Equal(AuthorizationEventDuplicateKind.None, tracker.Track(CreateEvent()));
+        Assert.Equal(AuthorizationEventDuplicateKind.None, Track(tracker, CreateEvent()));
     }
 
     [Fact]
@@ -28,9 +28,9 @@ public class AuthorizationEventDuplicateTrackerTest
     {
         var tracker = CreateTracker();
 
-        tracker.Track(CreateEvent(traceId: "trace-1"));
+        Track(tracker, CreateEvent(traceId: "trace-1"));
 
-        Assert.Equal(AuthorizationEventDuplicateKind.SameTrace, tracker.Track(CreateEvent(traceId: "trace-1")));
+        Assert.Equal(AuthorizationEventDuplicateKind.SameTrace, Track(tracker, CreateEvent(traceId: "trace-1")));
     }
 
     [Fact]
@@ -38,9 +38,9 @@ public class AuthorizationEventDuplicateTrackerTest
     {
         var tracker = CreateTracker();
 
-        tracker.Track(CreateEvent(traceId: "trace-1"));
+        Track(tracker, CreateEvent(traceId: "trace-1"));
 
-        Assert.Equal(AuthorizationEventDuplicateKind.Window, tracker.Track(CreateEvent(traceId: "trace-2")));
+        Assert.Equal(AuthorizationEventDuplicateKind.Window, Track(tracker, CreateEvent(traceId: "trace-2")));
     }
 
     [Fact]
@@ -48,10 +48,10 @@ public class AuthorizationEventDuplicateTrackerTest
     {
         var tracker = CreateTracker();
 
-        tracker.Track(CreateEvent(traceId: "trace-1"));
-        tracker.Track(CreateEvent(traceId: "trace-2"));
+        Track(tracker, CreateEvent(traceId: "trace-1"));
+        Track(tracker, CreateEvent(traceId: "trace-2"));
 
-        Assert.Equal(AuthorizationEventDuplicateKind.SameTrace, tracker.Track(CreateEvent(traceId: "trace-2")));
+        Assert.Equal(AuthorizationEventDuplicateKind.SameTrace, Track(tracker, CreateEvent(traceId: "trace-2")));
     }
 
     [Theory]
@@ -88,9 +88,9 @@ public class AuthorizationEventDuplicateTrackerTest
             default: throw new ArgumentOutOfRangeException(nameof(field), field, null);
         }
 
-        tracker.Track(CreateEvent());
+        Track(tracker, CreateEvent());
 
-        Assert.Equal(AuthorizationEventDuplicateKind.None, tracker.Track(other));
+        Assert.Equal(AuthorizationEventDuplicateKind.None, Track(tracker, other));
     }
 
     [Fact]
@@ -103,9 +103,9 @@ public class AuthorizationEventDuplicateTrackerTest
         AuthorizationEvent withEmpty = CreateEvent();
         withEmpty.InstanceId = string.Empty;
 
-        tracker.Track(withNull);
+        Track(tracker, withNull);
 
-        Assert.Equal(AuthorizationEventDuplicateKind.SameTrace, tracker.Track(withEmpty));
+        Assert.Equal(AuthorizationEventDuplicateKind.SameTrace, Track(tracker, withEmpty));
     }
 
     [Fact]
@@ -116,9 +116,32 @@ public class AuthorizationEventDuplicateTrackerTest
         AuthorizationEvent withoutDecision = CreateEvent();
         withoutDecision.Decision = null;
 
-        tracker.Track(CreateEvent());
+        Track(tracker, CreateEvent());
 
-        Assert.Equal(AuthorizationEventDuplicateKind.None, tracker.Track(withoutDecision));
+        Assert.Equal(AuthorizationEventDuplicateKind.None, Track(tracker, withoutDecision));
+    }
+
+    [Fact]
+    public void Track_EventsDifferingInResourceInstance_AreNotDuplicates()
+    {
+        // Reading two messages of the same resource are two events, although no column tells them apart.
+        var tracker = CreateTracker();
+
+        Track(tracker, CreateEvent(), "message-a");
+
+        Assert.Equal(AuthorizationEventDuplicateKind.None, Track(tracker, CreateEvent(), "message-b"));
+        Assert.Equal(AuthorizationEventDuplicateKind.SameTrace, Track(tracker, CreateEvent(), "message-a"));
+    }
+
+    [Fact]
+    public void Track_ResourceInstanceValues_DoNotRunTogether()
+    {
+        var tracker = CreateTracker();
+
+        Track(tracker, CreateEvent(), "ab");
+
+        Assert.Equal(AuthorizationEventDuplicateKind.None, Track(tracker, CreateEvent(), "a", "b"));
+        Assert.Equal(AuthorizationEventDuplicateKind.None, Track(tracker, CreateEvent()));
     }
 
     [Fact]
@@ -129,9 +152,9 @@ public class AuthorizationEventDuplicateTrackerTest
         other.Created = other.Created!.Value.AddSeconds(5);
         other.ContextRequestJson = JsonSerializer.SerializeToElement(new { other = true });
 
-        tracker.Track(CreateEvent());
+        Track(tracker, CreateEvent());
 
-        Assert.Equal(AuthorizationEventDuplicateKind.SameTrace, tracker.Track(other));
+        Assert.Equal(AuthorizationEventDuplicateKind.SameTrace, Track(tracker, other));
     }
 
     [Fact]
@@ -139,10 +162,10 @@ public class AuthorizationEventDuplicateTrackerTest
     {
         var tracker = CreateTracker();
 
-        tracker.Track(CreateEvent(traceId: "trace-1"));
+        Track(tracker, CreateEvent(traceId: "trace-1"));
         _timeProvider.Advance(Window - TimeSpan.FromSeconds(1));
 
-        Assert.Equal(AuthorizationEventDuplicateKind.Window, tracker.Track(CreateEvent(traceId: "trace-2")));
+        Assert.Equal(AuthorizationEventDuplicateKind.Window, Track(tracker, CreateEvent(traceId: "trace-2")));
     }
 
     [Fact]
@@ -150,10 +173,10 @@ public class AuthorizationEventDuplicateTrackerTest
     {
         var tracker = CreateTracker();
 
-        tracker.Track(CreateEvent(traceId: "trace-1"));
+        Track(tracker, CreateEvent(traceId: "trace-1"));
         _timeProvider.Advance(Window);
 
-        Assert.Equal(AuthorizationEventDuplicateKind.None, tracker.Track(CreateEvent(traceId: "trace-2")));
+        Assert.Equal(AuthorizationEventDuplicateKind.None, Track(tracker, CreateEvent(traceId: "trace-2")));
     }
 
     [Fact]
@@ -161,14 +184,14 @@ public class AuthorizationEventDuplicateTrackerTest
     {
         var tracker = CreateTracker();
 
-        Assert.Equal(AuthorizationEventDuplicateKind.None, tracker.Track(CreateEvent(traceId: "trace-1")));
+        Assert.Equal(AuthorizationEventDuplicateKind.None, Track(tracker, CreateEvent(traceId: "trace-1")));
 
         _timeProvider.Advance(TimeSpan.FromSeconds(40));
-        Assert.Equal(AuthorizationEventDuplicateKind.Window, tracker.Track(CreateEvent(traceId: "trace-2")));
+        Assert.Equal(AuthorizationEventDuplicateKind.Window, Track(tracker, CreateEvent(traceId: "trace-2")));
 
         // The window runs from the first occurrence, so the repeats in between do not extend it.
         _timeProvider.Advance(TimeSpan.FromSeconds(30));
-        Assert.Equal(AuthorizationEventDuplicateKind.None, tracker.Track(CreateEvent(traceId: "trace-3")));
+        Assert.Equal(AuthorizationEventDuplicateKind.None, Track(tracker, CreateEvent(traceId: "trace-3")));
     }
 
     [Fact]
@@ -179,17 +202,17 @@ public class AuthorizationEventDuplicateTrackerTest
         AuthorizationEvent late = CreateEvent(traceId: "trace-1");
         late.Operation = "write";
 
-        tracker.Track(early);
+        Track(tracker, early);
         _timeProvider.Advance(TimeSpan.FromSeconds(50));
-        tracker.Track(late);
+        Track(tracker, late);
 
         // Starts a new generation. The late event is 20 seconds old, the early one 70.
         _timeProvider.Advance(TimeSpan.FromSeconds(20));
 
         AuthorizationEvent lateRepeat = CreateEvent(traceId: "trace-2");
         lateRepeat.Operation = "write";
-        Assert.Equal(AuthorizationEventDuplicateKind.Window, tracker.Track(lateRepeat));
-        Assert.Equal(AuthorizationEventDuplicateKind.None, tracker.Track(CreateEvent(traceId: "trace-2")));
+        Assert.Equal(AuthorizationEventDuplicateKind.Window, Track(tracker, lateRepeat));
+        Assert.Equal(AuthorizationEventDuplicateKind.None, Track(tracker, CreateEvent(traceId: "trace-2")));
     }
 
     [Fact]
@@ -200,8 +223,8 @@ public class AuthorizationEventDuplicateTrackerTest
         AuthorizationEvent other = CreateEvent();
         other.Operation = "write";
 
-        Assert.Equal(AuthorizationEventDuplicateKind.None, tracker.Track(CreateEvent(traceId: "trace-1")));
-        Assert.Equal(AuthorizationEventDuplicateKind.Untracked, tracker.Track(other));
+        Assert.Equal(AuthorizationEventDuplicateKind.None, Track(tracker, CreateEvent(traceId: "trace-1")));
+        Assert.Equal(AuthorizationEventDuplicateKind.Untracked, Track(tracker, other));
     }
 
     [Fact]
@@ -210,9 +233,9 @@ public class AuthorizationEventDuplicateTrackerTest
         // The first event takes two entries, and a repeat from another trace only one more.
         var tracker = CreateTracker(maxTrackedEvents: 3);
 
-        Assert.Equal(AuthorizationEventDuplicateKind.None, tracker.Track(CreateEvent(traceId: "trace-a")));
-        Assert.Equal(AuthorizationEventDuplicateKind.Window, tracker.Track(CreateEvent(traceId: "trace-b")));
-        Assert.Equal(AuthorizationEventDuplicateKind.SameTrace, tracker.Track(CreateEvent(traceId: "trace-b")));
+        Assert.Equal(AuthorizationEventDuplicateKind.None, Track(tracker, CreateEvent(traceId: "trace-a")));
+        Assert.Equal(AuthorizationEventDuplicateKind.Window, Track(tracker, CreateEvent(traceId: "trace-b")));
+        Assert.Equal(AuthorizationEventDuplicateKind.SameTrace, Track(tracker, CreateEvent(traceId: "trace-b")));
     }
 
     [Fact]
@@ -222,11 +245,11 @@ public class AuthorizationEventDuplicateTrackerTest
         // Window would make every further repeat in that trace look like Window too.
         var tracker = CreateTracker(maxTrackedEvents: 2);
 
-        tracker.Track(CreateEvent(traceId: "trace-a"));
+        Track(tracker, CreateEvent(traceId: "trace-a"));
 
-        Assert.Equal(AuthorizationEventDuplicateKind.Untracked, tracker.Track(CreateEvent(traceId: "trace-b")));
-        Assert.Equal(AuthorizationEventDuplicateKind.Untracked, tracker.Track(CreateEvent(traceId: "trace-b")));
-        Assert.Equal(AuthorizationEventDuplicateKind.SameTrace, tracker.Track(CreateEvent(traceId: "trace-a")));
+        Assert.Equal(AuthorizationEventDuplicateKind.Untracked, Track(tracker, CreateEvent(traceId: "trace-b")));
+        Assert.Equal(AuthorizationEventDuplicateKind.Untracked, Track(tracker, CreateEvent(traceId: "trace-b")));
+        Assert.Equal(AuthorizationEventDuplicateKind.SameTrace, Track(tracker, CreateEvent(traceId: "trace-a")));
     }
 
     [Fact]
@@ -236,11 +259,14 @@ public class AuthorizationEventDuplicateTrackerTest
         AuthorizationEvent other = CreateEvent();
         other.Operation = "write";
 
-        tracker.Track(CreateEvent());
+        Track(tracker, CreateEvent());
         _timeProvider.Advance(Window);
 
-        Assert.Equal(AuthorizationEventDuplicateKind.None, tracker.Track(other));
+        Assert.Equal(AuthorizationEventDuplicateKind.None, Track(tracker, other));
     }
+
+    private static AuthorizationEventDuplicateKind Track(AuthorizationEventDuplicateTracker tracker, AuthorizationEvent authorizationEvent, params string[] resourceInstanceIds) =>
+        tracker.Track(authorizationEvent, resourceInstanceIds);
 
     private AuthorizationEventDuplicateTracker CreateTracker(int maxTrackedEvents = 1000) =>
         new(Options.Create(new AuditLogDeduplicationSettings { Window = Window, MaxTrackedEvents = maxTrackedEvents }), _timeProvider);

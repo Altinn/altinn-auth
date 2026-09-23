@@ -17,8 +17,10 @@ namespace Altinn.Platform.Authorization.Services.Implementation
     /// <remarks>
     /// <para>
     /// Two events are the same when every field that is persisted as a column in the audit log is equal:
-    /// subject, resource, instance, resource party, action, decision, session and IP address. The
-    /// timestamp, trace id and the full context request are not part of the comparison.
+    /// subject, resource, instance, resource party, action, decision, session and IP address. So must the
+    /// resource instance id (<c>urn:altinn:resource:instance-id</c>): it is not a column, but tells apart,
+    /// for example, reads of two different messages of the same resource. The timestamp, trace id and the
+    /// rest of the context request are not part of the comparison.
     /// </para>
     /// <para>
     /// The window is fixed from the first occurrence: an event that repeats continuously is reported as
@@ -65,10 +67,11 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         /// Classifies the event against those seen within the window, and remembers it.
         /// </summary>
         /// <param name="authorizationEvent">The event about to be queued for the audit log</param>
+        /// <param name="resourceInstanceIds">The resource instance ids of the request the event is for</param>
         /// <returns>Whether, and how, the event repeats one already seen</returns>
-        public AuthorizationEventDuplicateKind Track(AuthorizationEvent authorizationEvent)
+        public AuthorizationEventDuplicateKind Track(AuthorizationEvent authorizationEvent, IReadOnlyList<string> resourceInstanceIds)
         {
-            (ulong eventKey, ulong traceKey) = ComputeKeys(authorizationEvent);
+            (ulong eventKey, ulong traceKey) = ComputeKeys(authorizationEvent, resourceInstanceIds);
             long now = _timeProvider.GetUtcNow().UtcTicks;
 
             lock (_gate)
@@ -128,7 +131,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 || (_previous.TryGetValue(key, out long seen) && now - seen < _windowTicks);
         }
 
-        private static (ulong EventKey, ulong TraceKey) ComputeKeys(AuthorizationEvent authorizationEvent)
+        private static (ulong EventKey, ulong TraceKey) ComputeKeys(AuthorizationEvent authorizationEvent, IReadOnlyList<string> resourceInstanceIds)
         {
             ArrayBufferWriter<byte> buffer = KeyBuffer.Value!;
             buffer.ResetWrittenCount();
@@ -137,6 +140,14 @@ namespace Altinn.Platform.Authorization.Services.Implementation
             // its own. The decision does: Permit is 0.
             WriteString(buffer, authorizationEvent.Resource);
             WriteString(buffer, authorizationEvent.InstanceId);
+
+            // The count keeps the list apart from the fields that follow it.
+            WriteInt(buffer, resourceInstanceIds.Count);
+            for (int i = 0; i < resourceInstanceIds.Count; i++)
+            {
+                WriteString(buffer, resourceInstanceIds[i]);
+            }
+
             WriteInt(buffer, authorizationEvent.ResourcePartyId ?? 0);
             WriteInt(buffer, authorizationEvent.SubjectUserId ?? 0);
             WriteInt(buffer, authorizationEvent.SubjectParty ?? 0);

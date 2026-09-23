@@ -74,6 +74,32 @@ public class EventLogHelperTest
         Assert.Null(resourcePartyId);
     }
 
+    // --- GetResourceInstanceIds ---
+    [Fact]
+    public void GetResourceInstanceIds_WithoutResourceInstance_ReturnsEmpty()
+    {
+        var request = CreateContextRequest(
+        [
+            (XacmlConstants.MatchAttributeCategory.Resource, XacmlRequestAttribute.ResourceRegistryAttribute, "ttd-correspondence"),
+        ]);
+
+        Assert.Empty(EventLogHelper.GetResourceInstanceIds(request));
+    }
+
+    [Fact]
+    public void GetResourceInstanceIds_ReturnsEveryValueInOrder_AndIgnoresOtherCategories()
+    {
+        var request = CreateContextRequest(
+        [
+            (XacmlConstants.MatchAttributeCategory.Resource, XacmlRequestAttribute.ResourceRegistryAttribute, "app_ttd_test"),
+            (XacmlConstants.MatchAttributeCategory.Resource, XacmlRequestAttribute.ResourceRegistryInstanceAttribute, "5678"),
+            (XacmlConstants.MatchAttributeCategory.Resource, XacmlRequestAttribute.ResourceRegistryInstanceAttribute, "urn:altinn:instance-id:1234/5678"),
+            (XacmlConstants.MatchAttributeCategory.Subject, XacmlRequestAttribute.ResourceRegistryInstanceAttribute, "not-a-resource"),
+        ]);
+
+        Assert.Equal(["5678", "urn:altinn:instance-id:1234/5678"], EventLogHelper.GetResourceInstanceIds(request));
+    }
+
     // --- GetSubjectInformation ---
     [Fact]
     public void GetSubjectInformation_WithAllAttributes_ReturnsAll()

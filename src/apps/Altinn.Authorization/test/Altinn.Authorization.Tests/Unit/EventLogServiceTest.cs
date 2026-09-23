@@ -125,12 +125,42 @@ public class EventLogServiceTest : IDisposable
         Assert.Empty(collector.Measurements);
     }
 
-    private static XacmlContextRequest CreateMinimalRequest()
+    [Fact]
+    public async Task CreateAuthorizationEvent_DuplicateMeasurementEnabled_TellsResourceInstancesApart()
+    {
+        _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.AuditLog)).ReturnsAsync(true);
+        _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.AuditLogDuplicateMeasurement)).ReturnsAsync(true);
+        _queueClientMock
+            .Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<Altinn.Platform.Authorization.Models.EventLog.AuthorizationEvent>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new QueuePostReceipt { Success = true });
+
+        var response = new XacmlContextResponse(new XacmlContextResult(XacmlContextDecision.Permit, new XacmlContextStatus(new XacmlContextStatusCode("urn:oasis:names:tc:xacml:1.0:status:ok"))));
+        var httpContext = new DefaultHttpContext { TraceIdentifier = "trace-1" };
+
+        using var collector = new PdpMetricCollector(MeterFactory, AuditLogEventsInstrument);
+        var service = CreateService();
+
+        // Two messages of the same resource, read while handling one request, and the first one again.
+        await service.CreateAuthorizationEvent(_featureManagerMock.Object, CreateMinimalRequest("message-a"), httpContext, response, TestContext.Current.CancellationToken);
+        await service.CreateAuthorizationEvent(_featureManagerMock.Object, CreateMinimalRequest("message-b"), httpContext, response, TestContext.Current.CancellationToken);
+        await service.CreateAuthorizationEvent(_featureManagerMock.Object, CreateMinimalRequest("message-a"), httpContext, response, TestContext.Current.CancellationToken);
+
+        Assert.Equal(new object?[] { "none", "none", "trace" }, collector.Measurements.Select(tags => tags["auditlog.duplicate"]).ToArray());
+    }
+
+    private static XacmlContextRequest CreateMinimalRequest(string? resourceInstanceId = null)
     {
         var resourceAttrs = new XacmlContextAttributes(new Uri(XacmlConstants.MatchAttributeCategory.Resource));
         var resourceAttr = new XacmlAttribute(new Uri("urn:altinn:resource"), false);
         resourceAttr.AttributeValues.Add(new XacmlAttributeValue(new Uri(XacmlConstants.DataTypes.XMLString), "test-resource"));
         resourceAttrs.Attributes.Add(resourceAttr);
+
+        if (resourceInstanceId != null)
+        {
+            var instanceAttr = new XacmlAttribute(new Uri("urn:altinn:resource:instance-id"), false);
+            instanceAttr.AttributeValues.Add(new XacmlAttributeValue(new Uri(XacmlConstants.DataTypes.XMLString), resourceInstanceId));
+            resourceAttrs.Attributes.Add(instanceAttr);
+        }
 
         return new XacmlContextRequest(false, false, [resourceAttrs]);
     }
