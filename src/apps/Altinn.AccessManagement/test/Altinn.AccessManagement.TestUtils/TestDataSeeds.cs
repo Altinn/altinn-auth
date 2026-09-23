@@ -55,7 +55,8 @@ public static class TestDataSeeds
             TestEntities.OrganizationOrsta,
             TestEntities.PersonKasper,
             TestEntities.PersonMargit,
-            TestEntities.PersonMatilde
+            TestEntities.PersonMatilde,
+            TestEntities.PersonHenrik
         ]);
         #endregion
 

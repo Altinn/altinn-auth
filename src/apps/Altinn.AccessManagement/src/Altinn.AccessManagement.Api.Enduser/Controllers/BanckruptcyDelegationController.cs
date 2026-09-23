@@ -4,6 +4,7 @@ using System.Net.Mime;
 using Altinn.AccessManagement.Api.Enduser.Models;
 using Altinn.AccessManagement.Api.Enduser.Validation;
 using Altinn.AccessManagement.Core.Constants;
+using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessMgmt.Core.Audit;
 using Altinn.AccessMgmt.Core.Services;
@@ -45,6 +46,29 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
             options.FilterFromEntityTypes = [];
             options.FilterToEntityTypes = [];
         };
+
+        /// <summary>
+        /// Validates that a package list was supplied. An empty list carries no intent for either
+        /// delegating or revoking access, and is rejected rather than silently creating or keeping
+        /// a delegation without packages.
+        /// </summary>
+        /// <returns>A problem to return to the caller, or null when the list holds at least one package.</returns>
+        private static ValidationProblemInstance ValidatePackagesNotEmpty(List<PackageReferenceDto> packages)
+        {
+            if (packages is { Count: > 0 })
+            {
+                return null;
+            }
+
+            ValidationErrorBuilder errorBuilder = default;
+            errorBuilder.Add(
+                ValidationErrors.Required,
+                "/packages",
+                [new("packages", "At least one package must be specified.")]);
+
+            errorBuilder.TryBuild(out var problem);
+            return problem;
+        }
 
         #region Creditor methods
 
@@ -414,6 +438,12 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
                 return Forbid();
             }
 
+            var packagesProblem = ValidatePackagesNotEmpty(packages);
+            if (packagesProblem is { })
+            {
+                return packagesProblem.ToActionResult();
+            }
+
             var result = await bankruptcyDelegationService.AddBankruptcyEstateForUser(party, estate, user, packages, ConfigureBankruptcyUserConnections, cancellationToken);
             if (result.IsProblem)
             {
@@ -444,6 +474,12 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
             if (!hasConnection)
             {
                 return Forbid();
+            }
+
+            var packagesProblem = ValidatePackagesNotEmpty(packages);
+            if (packagesProblem is { })
+            {
+                return packagesProblem.ToActionResult();
             }
 
             var result = await bankruptcyDelegationService.RevokeBankruptcyEstateForUser(party, estate, user, packages, ConfigureBankruptcyUserConnections, cancellationToken);

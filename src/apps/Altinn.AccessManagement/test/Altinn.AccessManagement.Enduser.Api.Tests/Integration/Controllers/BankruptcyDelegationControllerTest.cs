@@ -16,6 +16,7 @@ using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 using Altinn.Authorization.ProblemDetails;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers;
@@ -23,9 +24,11 @@ namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers;
 /// <summary>
 /// Tests for <see cref="BanckruptcyDelegationController"/>.
 /// </summary>
-public class BankruptcyDelegationControllerTest
+public partial class BankruptcyDelegationControllerTest
 {
     public const string Route = "accessmanagement/api/v1/enduser/bankruptcyestate";
+
+    internal static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
     #region GET accessmanagement/api/v1/enduser/bankruptcyestate/users
 
@@ -182,6 +185,27 @@ public class BankruptcyDelegationControllerTest
         return client;
     }
 
+    /// <summary>
+    /// Serializes a package list body for the endpoints that take
+    /// <c>[FromBody][Required] List&lt;PackageReferenceDto&gt;</c>.
+    /// </summary>
+    /// <param name="urns">Package urns. May be empty, which produces an empty (but present) json array.</param>
+    internal static StringContent PackagesContent(params string[] urns)
+    {
+        var packages = urns.Select(urn => new PackageReferenceDto { Urn = urn }).ToList();
+        return new StringContent(JsonSerializer.Serialize(packages), Encoding.UTF8, "application/json");
+    }
+
+    /// <summary>
+    /// Sends a DELETE with a request body. <see cref="HttpClient.DeleteAsync(string, CancellationToken)"/>
+    /// cannot carry content, so the request has to be built by hand.
+    /// </summary>
+    internal static Task<HttpResponseMessage> DeleteWithBodyAsync(HttpClient client, string url, HttpContent content)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Delete, url) { Content = content };
+        return client.SendAsync(request, TestContext.Current.CancellationToken);
+    }
+
     #region GET accessmanagement/api/v1/enduser/bankruptcyestate/estates/creditors
 
     /// <summary>
@@ -189,25 +213,21 @@ public class BankruptcyDelegationControllerTest
     /// </summary>
     /// <remarks>
     /// party (bankruptcy administrator) = <see cref="TestEntities.PersonMatilde"/>,
-    /// estate = <see cref="TestEntities.OrganizationSolsidenSameie"/> connected via an
-    /// EstateAdministrator assignment. The creditor <see cref="TestEntities.OrganizationNufExampleNUF"/>
-    /// is a Rightholder with the BankruptcyEstateReadAccess package.
+    /// estate = <see cref="TestEntities.OrganizationSolsidenSameie"/>, which she administrates as part
+    /// of the shared seed on <see cref="BankruptcyReadOnlyFixture"/>. This class adds the creditor
+    /// <see cref="TestEntities.OrganizationNufExampleNUF"/>, a Rightholder with the
+    /// BankruptcyEstateReadAccess package.
     /// </remarks>
     [IntegrationTest]
-    public class GetCreditors : IClassFixture<ApiFixture>
+    [Collection(BankruptcyReadOnlyCollection.Name)]
+    public class GetCreditors
     {
-        public GetCreditors(ApiFixture fixture)
+        public GetCreditors(BankruptcyReadOnlyFixture fixture)
         {
             Fixture = fixture;
+            Fixture.EnsureSeeded();
             Fixture.EnsureSeedOnce<GetCreditors>(db =>
             {
-                db.Assignments.Add(new Assignment()
-                {
-                    FromId = TestEntities.OrganizationSolsidenSameie.Id,
-                    ToId = TestEntities.PersonMatilde.Id,
-                    RoleId = RoleConstants.EstateAdministrator,
-                });
-
                 var creditorAssignment = new Assignment()
                 {
                     FromId = TestEntities.OrganizationSolsidenSameie.Id,
@@ -225,7 +245,7 @@ public class BankruptcyDelegationControllerTest
             });
         }
 
-        public ApiFixture Fixture { get; }
+        public BankruptcyReadOnlyFixture Fixture { get; }
 
         [Fact]
         public async Task GetCreditors_Authorized_Returns200WithCreditors()
@@ -756,29 +776,21 @@ public class BankruptcyDelegationControllerTest
     /// Tests for <see cref="BanckruptcyDelegationController.GetBankruptcyEstatesForParty(Guid, CancellationToken)"/>.
     /// </summary>
     /// <remarks>
-    /// party = <see cref="TestEntities.PersonMatilde"/> is EstateAdministrator for the
-    /// estate <see cref="TestEntities.OrganizationSolsidenSameie"/>.
+    /// party = <see cref="TestEntities.PersonMatilde"/> is EstateAdministrator for
+    /// <see cref="TestEntities.OrganizationSolsidenSameie"/> and two more estates, per the shared seed
+    /// on <see cref="BankruptcyReadOnlyFixture"/>.
     /// </remarks>
     [IntegrationTest]
-    public class GetBankruptcyEstatesForParty : IClassFixture<ApiFixture>
+    [Collection(BankruptcyReadOnlyCollection.Name)]
+    public class GetBankruptcyEstatesForParty
     {
-        public GetBankruptcyEstatesForParty(ApiFixture fixture)
+        public GetBankruptcyEstatesForParty(BankruptcyReadOnlyFixture fixture)
         {
             Fixture = fixture;
-            Fixture.EnsureSeedOnce<GetBankruptcyEstatesForParty>(db =>
-            {
-                db.Assignments.Add(new Assignment()
-                {
-                    FromId = TestEntities.OrganizationSolsidenSameie.Id,
-                    ToId = TestEntities.PersonMatilde.Id,
-                    RoleId = RoleConstants.EstateAdministrator,
-                });
-
-                db.SaveChanges();
-            });
+            Fixture.EnsureSeeded();
         }
 
-        public ApiFixture Fixture { get; }
+        public BankruptcyReadOnlyFixture Fixture { get; }
 
         [Fact]
         public async Task GetBankruptcyEstatesForParty_Authorized_Returns200WithEstates()
@@ -849,33 +861,59 @@ public class BankruptcyDelegationControllerTest
         /// <summary>
         /// The party is EstateAdministrator for the estate and the user is an Agent of the party,
         /// so delegating the estate to the user succeeds. Revoking it afterwards also succeeds.
+        /// Both endpoints require a package list in the request body; the revoke must therefore be
+        /// sent as a DELETE with content (see <see cref="DeleteWithBodyAsync"/>).
         /// </summary>
         [Fact]
         public async Task AddAndRevokeBankruptcyEstateForUser_WhenPartyAdministratesEstate_ReturnsOk()
         {
             var client = CreateClient(Fixture, TestEntities.PersonMatilde.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
+            var url = $"{Route}/estates/users?party={TestEntities.PersonMatilde.Id}&estate={TestEntities.OrganizationSolsidenSameie.Id}&user={TestEntities.PersonPaula.Id}";
 
             var addResponse = await client.PostAsync(
-                $"{Route}/estates/users?party={TestEntities.PersonMatilde.Id}&estate={TestEntities.OrganizationSolsidenSameie.Id}&user={TestEntities.PersonPaula.Id}",
-                null,
+                url,
+                PackagesContent(PackageConstants.BankruptcyEstateReadAccess.Entity.Urn),
                 TestContext.Current.CancellationToken);
 
             var addContent = await addResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.True(addResponse.StatusCode == HttpStatusCode.OK, $"Expected OK but got {addResponse.StatusCode}. Response body: {addContent}");
 
-            var addResult = JsonSerializer.Deserialize<CreateDelegationResponseDto>(
-                addContent,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            var addResult = JsonSerializer.Deserialize<CreateDelegationResponseDto>(addContent, JsonOptions);
 
             Assert.NotNull(addResult);
             Assert.NotEqual(Guid.Empty, addResult.DelegationId);
 
-            var revokeResponse = await client.DeleteAsync(
-                $"{Route}/estates/users?party={TestEntities.PersonMatilde.Id}&estate={TestEntities.OrganizationSolsidenSameie.Id}&user={TestEntities.PersonPaula.Id}",
-                TestContext.Current.CancellationToken);
+            await Fixture.QueryDb(async db =>
+            {
+                var packages = await db.DelegationPackages
+                    .AsNoTracking()
+                    .Where(dp => dp.DelegationId == addResult.DelegationId)
+                    .ToListAsync(TestContext.Current.CancellationToken);
+
+                var package = Assert.Single(packages);
+                Assert.Equal(PackageConstants.BankruptcyEstateReadAccess.Id, package.PackageId);
+            });
+
+            var revokeResponse = await DeleteWithBodyAsync(
+                client,
+                url,
+                PackagesContent(PackageConstants.BankruptcyEstateReadAccess.Entity.Urn));
 
             var revokeContent = await revokeResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.True(revokeResponse.StatusCode == HttpStatusCode.NoContent, $"Expected NoContent but got {revokeResponse.StatusCode}. Response body: {revokeContent}");
+
+            await Fixture.QueryDb(async db =>
+            {
+                Assert.Empty(await db.DelegationPackages
+                    .AsNoTracking()
+                    .Where(dp => dp.DelegationId == addResult.DelegationId)
+                    .ToListAsync(TestContext.Current.CancellationToken));
+
+                // The delegation itself is removed once its last package is revoked.
+                Assert.Null(await db.Delegations
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(d => d.Id == addResult.DelegationId, TestContext.Current.CancellationToken));
+            });
         }
 
         /// <summary>
@@ -887,17 +925,19 @@ public class BankruptcyDelegationControllerTest
         public async Task AddAndRevokeBankruptcyEstateForUser_WhenEstateNotAdministratedByParty_ReturnsForbidden()
         {
             var client = CreateClient(Fixture, TestEntities.PersonMatilde.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
+            var url = $"{Route}/estates/users?party={TestEntities.PersonMatilde.Id}&estate={TestEntities.OrganizationOkernBorettslag.Id}&user={TestEntities.PersonPaula.Id}";
 
             var addResponse = await client.PostAsync(
-                $"{Route}/estates/users?party={TestEntities.PersonMatilde.Id}&estate={TestEntities.OrganizationOkernBorettslag.Id}&user={TestEntities.PersonPaula.Id}",
-                null,
+                url,
+                PackagesContent(PackageConstants.BankruptcyEstateReadAccess.Entity.Urn),
                 TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.Forbidden, addResponse.StatusCode);
 
-            var revokeResponse = await client.DeleteAsync(
-                $"{Route}/estates/users?party={TestEntities.PersonMatilde.Id}&estate={TestEntities.OrganizationOkernBorettslag.Id}&user={TestEntities.PersonPaula.Id}",
-                TestContext.Current.CancellationToken);
+            var revokeResponse = await DeleteWithBodyAsync(
+                client,
+                url,
+                PackagesContent(PackageConstants.BankruptcyEstateReadAccess.Entity.Urn));
 
             Assert.Equal(HttpStatusCode.Forbidden, revokeResponse.StatusCode);
         }

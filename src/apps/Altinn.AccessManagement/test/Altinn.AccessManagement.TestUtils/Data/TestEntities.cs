@@ -296,6 +296,33 @@ public static class TestEntities
         }
     };
 
+    /// <summary>
+    /// A person with no connections seeded anywhere. Use as the "unrelated party" in tests that need
+    /// someone who is not a rightholder, not an agent and has no connection to the acting party — so
+    /// that meaning does not have to be carried by a person who also stands for something else.
+    /// </summary>
+    public static ConstantDefinition<Entity> PersonHenrik { get; } = new("c6a5f4d2-3b17-4f6e-9c58-7ad2e1b40c93")
+    {
+        Entity = new()
+        {
+            DateOfBirth = new(1968, 3, 21),
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "HENRIK BØRSTAD",
+            OrganizationIdentifier = null,
+            Parent = null,
+            ParentId = null,
+            PartyId = 51000003,
+            PersonIdentifier = "21036812041",
+            RefId = "21036812041",
+            TypeId = EntityTypeConstants.Person,
+            UserId = 51000003,
+            Username = null,
+            VariantId = EntityVariantConstants.Person,
+        }
+    };
+
     public static ConstantDefinition<Entity> PersonMatilde { get; } = new("dd2b3e17-e098-4dca-a345-09a24adb0597")
     {
         Entity = new()
