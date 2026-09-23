@@ -179,7 +179,7 @@ public class AuthorizationEventDuplicateTrackerTest
     }
 
     [Fact]
-    public void Track_AtCapacity_NewEventIsUntracked_ButRepeatsAreStillDetected()
+    public void Track_AtCapacity_NewEventIsUntracked()
     {
         // Room for a single event: its event key and its trace key.
         var tracker = CreateTracker(maxTrackedEvents: 2);
@@ -188,7 +188,31 @@ public class AuthorizationEventDuplicateTrackerTest
 
         Assert.Equal(AuthorizationEventDuplicateKind.None, tracker.Track(CreateEvent(traceId: "trace-1")));
         Assert.Equal(AuthorizationEventDuplicateKind.Untracked, tracker.Track(other));
-        Assert.Equal(AuthorizationEventDuplicateKind.Window, tracker.Track(CreateEvent(traceId: "trace-2")));
+    }
+
+    [Fact]
+    public void Track_NearCapacity_RepeatInOtherTrace_NeedsRoomOnlyForItsTrace()
+    {
+        // The first event takes two entries, and a repeat from another trace only one more.
+        var tracker = CreateTracker(maxTrackedEvents: 3);
+
+        Assert.Equal(AuthorizationEventDuplicateKind.None, tracker.Track(CreateEvent(traceId: "trace-a")));
+        Assert.Equal(AuthorizationEventDuplicateKind.Window, tracker.Track(CreateEvent(traceId: "trace-b")));
+        Assert.Equal(AuthorizationEventDuplicateKind.SameTrace, tracker.Track(CreateEvent(traceId: "trace-b")));
+    }
+
+    [Fact]
+    public void Track_AtCapacity_RepeatWhoseTraceCannotBeRemembered_IsUntracked()
+    {
+        // Full after the first event, so the second trace cannot be remembered. Reporting the repeat as
+        // Window would make every further repeat in that trace look like Window too.
+        var tracker = CreateTracker(maxTrackedEvents: 2);
+
+        tracker.Track(CreateEvent(traceId: "trace-a"));
+
+        Assert.Equal(AuthorizationEventDuplicateKind.Untracked, tracker.Track(CreateEvent(traceId: "trace-b")));
+        Assert.Equal(AuthorizationEventDuplicateKind.Untracked, tracker.Track(CreateEvent(traceId: "trace-b")));
+        Assert.Equal(AuthorizationEventDuplicateKind.SameTrace, tracker.Track(CreateEvent(traceId: "trace-a")));
     }
 
     [Fact]

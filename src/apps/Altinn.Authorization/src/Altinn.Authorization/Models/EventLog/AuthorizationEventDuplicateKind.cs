@@ -22,7 +22,8 @@ namespace Altinn.Platform.Authorization.Models.EventLog
         Window,
 
         /// <summary>
-        /// Not seen before, but could not be remembered because the tracker is at capacity.
+        /// Not classified, because the tracker is at capacity and could not remember the event in its
+        /// trace. A share above zero means the capacity is too low for the traffic.
         /// </summary>
         Untracked,
     }

@@ -75,14 +75,16 @@ namespace Altinn.Platform.Authorization.Services.Implementation
 
                 bool seenInWindow = IsSeen(eventKey, now);
 
-                // Room for both keys, so that the two classifications stay consistent with each other.
-                if (_current.Count + 2 > _maxTrackedEvents)
+                // Only the keys that are missing need room: the trace key always, the event key when it
+                // was not seen. Without room for the trace key, further repeats in this trace could not
+                // be told apart from repeats in other traces, so the event is reported as untracked
+                // rather than given a classification that later events would contradict.
+                int missingKeys = seenInWindow ? 1 : 2;
+                if (_current.Count + missingKeys > _maxTrackedEvents)
                 {
-                    return seenInWindow ? AuthorizationEventDuplicateKind.Window : AuthorizationEventDuplicateKind.Untracked;
+                    return AuthorizationEventDuplicateKind.Untracked;
                 }
 
-                // Remember the trace even when the event was seen in another trace, so that further
-                // repeats in this trace are classified as SameTrace.
                 _current[traceKey] = now;
 
                 if (seenInWindow)

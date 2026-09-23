@@ -48,7 +48,7 @@ A metric consists of the following properties:
     </tr>
     <tr>
       <td><code>auditlog.duplicate</code></td>
-      <td>Whether an authorization event queued for the audit log repeats one already seen within the deduplication window: <code>none</code>, <code>trace</code> (same trace), <code>window</code> (another trace) or <code>untracked</code> (tracker at capacity).</td>
+      <td>Whether an authorization event queued for the audit log repeats one already seen within the deduplication window: <code>none</code>, <code>trace</code> (same trace), <code>window</code> (another trace) or <code>untracked</code> (not classified, the tracker is at capacity).</td>
     </tr>
   </tbody>
 </table>
