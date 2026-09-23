@@ -1,0 +1,47 @@
+meta {
+  name: 07_WHEN_ContinuationTokenIsMalformedThenRequestFails
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enterprise/consentrequests/events?continuationToken=abc
+  body: none
+  auth: inherit
+}
+
+params:query {
+  continuationToken: abc
+}
+
+docs {
+  WHEN the continuation token is malformed, the request fails with a validation error.
+
+  GET /accessmanagement/api/v1/enterprise/consentrequests/events?continuationToken=abc
+
+  The token must be the opaque value from links.next. Anything else gives 400 with error
+  code STD-00000 and validation error AM.VLD-00053 whose path points at
+  continuationToken.
+}
+
+script:pre-request {
+  const { loginAsEnterprise, scopes, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  await loginAsEnterprise(td.enterprise, scopes.consentRequestsRead);
+}
+
+tests {
+  test("WHEN the continuation token is malformed, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN validation error AM.VLD-00053 points at continuationToken", function() {
+    const body = res.getBody();
+    expect(body.status).to.equal(400);
+    expect(body.code).to.equal("STD-00000");
+    expect(body.validationErrors).to.have.lengthOf(1);
+    expect(body.validationErrors[0].code).to.equal("AM.VLD-00053");
+    expect(body.validationErrors[0].paths).to.deep.equal(["$QUERY/continuationToken"]);
+  });
+}

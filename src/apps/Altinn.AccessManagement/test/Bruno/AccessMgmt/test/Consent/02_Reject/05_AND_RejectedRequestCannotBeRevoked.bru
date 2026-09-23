@@ -1,0 +1,44 @@
+meta {
+  name: 05_AND_RejectedRequestCannotBeRevoked
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/bff/consents/:consentId/revoke
+  body: none
+  auth: inherit
+}
+
+params:path {
+  consentId: {{rejectRequestId}}
+}
+
+docs {
+  AND the rejected request cannot be revoked.
+
+  POST /accessmanagement/api/v1/bff/consents/:consentId/revoke
+
+  See scenario 01 step 13 for the endpoint. Only an accepted consent can be revoked; a
+  rejected request answers 400 with problem code AM-00010.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  await loginAs(td.consentingPerson);
+}
+
+tests {
+  test("WHEN the person tries to revoke the rejected request, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN the problem is AM-00010, wrong status to be revoked", function() {
+    const body = res.getBody();
+    expect(body.status).to.equal(400);
+    expect(body.code).to.equal("AM-00010");
+    expect(body.detail).to.equal("Consent cant be revoked.Wrong status");
+  });
+}

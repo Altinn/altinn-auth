@@ -1,0 +1,49 @@
+meta {
+  name: 07_WHEN_OtherPersonAcceptsRequestThenForbidden
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/bff/consentrequests/:requestId/accept
+  body: json
+  auth: inherit
+}
+
+params:path {
+  requestId: {{boundaryRequestId}}
+}
+
+body:json {
+  {
+    "language": "nb"
+  }
+}
+
+docs {
+  WHEN another person accepts the request, the request is forbidden.
+
+  POST /accessmanagement/api/v1/bff/consentrequests/:requestId/accept
+
+  A person who may not answer for the from party gets 403 with problem code AM-00000 and
+  the request stays in status Created.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  await loginAs(td.otherPerson);
+}
+
+tests {
+  test("WHEN another person accepts the request, the request returns 403", function() {
+    expect(res.status).to.equal(403);
+  });
+
+  test("THEN the problem is AM-00000, not authorized for consent", function() {
+    const body = res.getBody();
+    expect(body.status).to.equal(403);
+    expect(body.code).to.equal("AM-00000");
+  });
+}
