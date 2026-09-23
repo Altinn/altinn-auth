@@ -2,8 +2,8 @@
 
 using System.Buffers;
 using System.Buffers.Binary;
+using System.IO.Hashing;
 using System.Runtime.InteropServices;
-using System.Security.Cryptography;
 using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Models.EventLog;
 using Microsoft.Extensions.Options;
@@ -25,22 +25,29 @@ namespace Altinn.Platform.Authorization.Services.Implementation
     /// new once per window, not suppressed indefinitely.
     /// </para>
     /// <para>
-    /// Events are stored as a 128-bit prefix of a SHA-256 hash in two generations of at most
+    /// Events are stored as a 64-bit XxHash3, seeded randomly per process, in two generations of at most
     /// <see cref="AuditLogDeduplicationSettings.MaxTrackedEvents"/> entries each. A generation is
     /// discarded once everything in it is older than the window, so memory stays bounded without a
-    /// background timer.
+    /// background timer. Both generations are sized for the maximum on first use and reused afterwards,
+    /// so memory use is fixed and nothing is allocated per event.
     /// </para>
     /// </remarks>
     public sealed class AuthorizationEventDuplicateTracker
     {
-        private readonly object _gate = new();
+        // A random seed keeps the keys, which are not a cryptographic hash, from being predictable.
+        private static readonly long Seed = Random.Shared.NextInt64();
+        private static readonly ThreadLocal<ArrayBufferWriter<byte>> KeyBuffer = new(() => new ArrayBufferWriter<byte>(512));
+
+        private readonly Lock _gate = new();
         private readonly TimeProvider _timeProvider;
-        private readonly TimeSpan _window;
+        private readonly long _windowTicks;
         private readonly int _maxTrackedEvents;
 
-        private Dictionary<UInt128, DateTimeOffset> _current = [];
-        private Dictionary<UInt128, DateTimeOffset> _previous = [];
-        private DateTimeOffset _currentStarted = DateTimeOffset.MinValue;
+        private Dictionary<ulong, long> _current = [];
+        private Dictionary<ulong, long> _previous = [];
+
+        // DateTime.MinValue, so that the first event starts a generation.
+        private long _currentStartedTicks;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="AuthorizationEventDuplicateTracker"/> class.
@@ -49,8 +56,8 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         /// <param name="timeProvider">Clock used to age out remembered events</param>
         public AuthorizationEventDuplicateTracker(IOptions<AuditLogDeduplicationSettings> settings, TimeProvider timeProvider)
         {
-            _window = settings.Value.Window;
-            _maxTrackedEvents = settings.Value.MaxTrackedEvents;
+            _windowTicks = settings.Value.Window.Ticks;
+            _maxTrackedEvents = Math.Max(settings.Value.MaxTrackedEvents, 0);
             _timeProvider = timeProvider;
         }
 
@@ -61,8 +68,8 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         /// <returns>Whether, and how, the event repeats one already seen</returns>
         public AuthorizationEventDuplicateKind Track(AuthorizationEvent authorizationEvent)
         {
-            (UInt128 eventKey, UInt128 traceKey) = ComputeKeys(authorizationEvent);
-            DateTimeOffset now = _timeProvider.GetUtcNow();
+            (ulong eventKey, ulong traceKey) = ComputeKeys(authorizationEvent);
+            long now = _timeProvider.GetUtcNow().UtcTicks;
 
             lock (_gate)
             {
@@ -97,78 +104,73 @@ namespace Altinn.Platform.Authorization.Services.Implementation
             }
         }
 
-        private void RotateIfExpired(DateTimeOffset now)
+        private void RotateIfExpired(long now)
         {
-            if (now - _currentStarted < _window)
+            if (now - _currentStartedTicks < _windowTicks)
             {
                 return;
             }
 
             // The previous generation only holds events from before the current one started, at least a
-            // window ago, so it can be dropped. Its dictionary is reused for the new generation.
+            // window ago, so it can be dropped. Its dictionary is reused for the new generation, and sized
+            // for the maximum the first time, so that it never grows while events are tracked.
             (_previous, _current) = (_current, _previous);
             _current.Clear();
-            _currentStarted = now;
+            _current.EnsureCapacity(_maxTrackedEvents);
+            _currentStartedTicks = now;
         }
 
-        private bool IsSeen(UInt128 key, DateTimeOffset now)
+        private bool IsSeen(ulong key, long now)
         {
             // Entries in the current generation are always within the window. Entries in the previous
             // generation may have aged out.
             return _current.ContainsKey(key)
-                || (_previous.TryGetValue(key, out DateTimeOffset seen) && now - seen < _window);
+                || (_previous.TryGetValue(key, out long seen) && now - seen < _windowTicks);
         }
 
-        private static (UInt128 EventKey, UInt128 TraceKey) ComputeKeys(AuthorizationEvent authorizationEvent)
+        private static (ulong EventKey, ulong TraceKey) ComputeKeys(AuthorizationEvent authorizationEvent)
         {
-            // Hashed in one go rather than incrementally: a single native call per key is several times
-            // cheaper than one per field.
-            ArrayBufferWriter<byte> buffer = new(512);
+            ArrayBufferWriter<byte> buffer = KeyBuffer.Value!;
+            buffer.ResetWrittenCount();
 
+            // Ids are never 0, and null and empty strings mean the same here, so neither needs a marker of
+            // its own. The decision does: Permit is 0.
             WriteString(buffer, authorizationEvent.Resource);
             WriteString(buffer, authorizationEvent.InstanceId);
-            WriteInt(buffer, authorizationEvent.ResourcePartyId);
-            WriteInt(buffer, authorizationEvent.SubjectUserId);
-            WriteInt(buffer, authorizationEvent.SubjectParty);
+            WriteInt(buffer, authorizationEvent.ResourcePartyId ?? 0);
+            WriteInt(buffer, authorizationEvent.SubjectUserId ?? 0);
+            WriteInt(buffer, authorizationEvent.SubjectParty ?? 0);
             WriteString(buffer, authorizationEvent.SubjectPartyUuid);
             WriteString(buffer, authorizationEvent.SubjectOrgCode);
-            WriteInt(buffer, authorizationEvent.SubjectOrgNumber);
+            WriteInt(buffer, authorizationEvent.SubjectOrgNumber ?? 0);
             WriteString(buffer, authorizationEvent.SessionId);
             WriteString(buffer, authorizationEvent.IpAdress);
             WriteString(buffer, authorizationEvent.Operation);
-            WriteInt(buffer, (int?)authorizationEvent.Decision);
+            WriteInt(buffer, (int?)authorizationEvent.Decision ?? -1);
             int eventLength = buffer.WrittenCount;
 
             // The trace key is the event key input followed by the trace id.
             WriteString(buffer, authorizationEvent.TraceId);
 
-            Span<byte> digest = stackalloc byte[SHA256.HashSizeInBytes];
-            SHA256.HashData(buffer.WrittenSpan[..eventLength], digest);
-            UInt128 eventKey = BinaryPrimitives.ReadUInt128LittleEndian(digest);
-
-            SHA256.HashData(buffer.WrittenSpan, digest);
-            UInt128 traceKey = BinaryPrimitives.ReadUInt128LittleEndian(digest);
-
-            return (eventKey, traceKey);
+            return (
+                XxHash3.HashToUInt64(buffer.WrittenSpan[..eventLength], Seed),
+                XxHash3.HashToUInt64(buffer.WrittenSpan, Seed));
         }
 
         private static void WriteString(ArrayBufferWriter<byte> buffer, string? value)
         {
-            // The length prefix keeps adjacent fields apart ("ab" + "c" differs from "a" + "bc"), and
-            // separates null from the empty string.
-            WriteInt(buffer, value?.Length);
+            // The length prefix keeps adjacent fields apart: "ab" + "c" differs from "a" + "bc".
+            WriteInt(buffer, value?.Length ?? 0);
             if (!string.IsNullOrEmpty(value))
             {
                 buffer.Write(MemoryMarshal.AsBytes(value.AsSpan()));
             }
         }
 
-        private static void WriteInt(ArrayBufferWriter<byte> buffer, int? value)
+        private static void WriteInt(ArrayBufferWriter<byte> buffer, int value)
         {
-            Span<byte> span = buffer.GetSpan(1 + sizeof(int));
-            span[0] = value.HasValue ? (byte)1 : (byte)0;
-            BinaryPrimitives.WriteInt32LittleEndian(span[1..], value.GetValueOrDefault());
-            buffer.Advance(1 + sizeof(int));
+            BinaryPrimitives.WriteInt32LittleEndian(buffer.GetSpan(sizeof(int)), value);
+            buffer.Advance(sizeof(int));
         }
     }
 }

@@ -94,8 +94,9 @@ public class AuthorizationEventDuplicateTrackerTest
     }
 
     [Fact]
-    public void Track_EventsDifferingInNullAndEmpty_AreNotDuplicates()
+    public void Track_NullAndEmptyString_AreTheSame()
     {
+        // The event mapping uses empty strings for missing values, so null carries no extra meaning.
         var tracker = CreateTracker();
         AuthorizationEvent withNull = CreateEvent();
         withNull.InstanceId = null;
@@ -104,7 +105,20 @@ public class AuthorizationEventDuplicateTrackerTest
 
         tracker.Track(withNull);
 
-        Assert.Equal(AuthorizationEventDuplicateKind.None, tracker.Track(withEmpty));
+        Assert.Equal(AuthorizationEventDuplicateKind.SameTrace, tracker.Track(withEmpty));
+    }
+
+    [Fact]
+    public void Track_MissingDecision_IsNotPermit()
+    {
+        // Permit is 0, so a missing decision must not be hashed as 0.
+        var tracker = CreateTracker();
+        AuthorizationEvent withoutDecision = CreateEvent();
+        withoutDecision.Decision = null;
+
+        tracker.Track(CreateEvent());
+
+        Assert.Equal(AuthorizationEventDuplicateKind.None, tracker.Track(withoutDecision));
     }
 
     [Fact]
