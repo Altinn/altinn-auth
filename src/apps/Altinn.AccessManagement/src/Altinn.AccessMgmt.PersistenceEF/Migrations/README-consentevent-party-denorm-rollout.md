@@ -38,7 +38,10 @@ exist (Phase 3) — otherwise matching events are silently dropped from results.
 ## Phase 1 — Deploy: columns + forward-fill  (this change set)
 - EF migration `20260922113000_ConsentEventPartyDenormColumns` adds the two nullable columns
   (`topartyuuid`, `handledbypartyuuid`) via `migrationBuilder.Sql` — metadata-only, no table rewrite —
-  and they are mirrored into `ConsentSchema.sql` for fresh provisioning.
+  and they are mirrored onto the `consentevent` table in `ConsentSchema.sql` for fresh provisioning.
+  The **feed indexes are deliberately not in `ConsentSchema.sql`**: a transactional build in the
+  baseline would fail on an old table that lacks the columns and would lock a large table where it
+  does not. They are built out of band in Phase 3, on fresh databases as well.
 - `ConsentRepository.EventQuery` populates both columns from the parent request on every insert, so all
   **new** events are populated immediately after deploy.
 - The read query stays on the materialized-CTE form; it returns correct results while existing rows are
@@ -85,6 +88,8 @@ WHERE ce.topartyuuid        IS DISTINCT FROM cr.topartyuuid
 ```
 
 ## Phase 3 — Build the feed indexes  (manual, concurrent)
+These are not created by any migration — run them on every database, fresh ones included (instant on an
+empty table), before switching the read query in Phase 4.
 ```sql
 CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_consentevent_topartyuuid_feed
     ON consent.consentevent (topartyuuid, consenteventid);

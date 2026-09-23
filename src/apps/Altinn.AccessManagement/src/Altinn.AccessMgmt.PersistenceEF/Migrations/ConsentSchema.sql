@@ -105,11 +105,6 @@ END $$;
 
 -- Indexes.
 CREATE INDEX IF NOT EXISTS idx_consentevent_consentrequestid_created ON consent.consentevent USING btree (consentrequestid, created);
--- Feed indexes for the denormalized party columns (GetConsentEventsForParty, join-free end state).
--- On existing databases these are built CONCURRENTLY out of band (see the rollout runbook); here they
--- are created transactionally for fresh provisioning, which is instant on an empty table.
-CREATE INDEX IF NOT EXISTS idx_consentevent_topartyuuid_feed ON consent.consentevent USING btree (topartyuuid, consenteventid);
-CREATE INDEX IF NOT EXISTS idx_consentevent_handledbypartyuuid_feed ON consent.consentevent USING btree (handledbypartyuuid, consenteventid);
 CREATE INDEX IF NOT EXISTS idx_consentrequest_frompartyuuid ON consent.consentrequest USING btree (frompartyuuid);
 CREATE INDEX IF NOT EXISTS idx_consentrequest_frompartyuuid_status_portal_show ON consent.consentrequest USING btree (frompartyuuid, status) WHERE (portalviewmode = 'show'::consent.portal_view_mode);
 CREATE INDEX IF NOT EXISTS idx_consentrequest_handledbypartyuuid ON consent.consentrequest USING btree (handledbypartyuuid);
