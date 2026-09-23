@@ -128,9 +128,7 @@ public partial class BankruptcyDelegationControllerTest
         }
 
         /// <summary>
-        /// A person that exists but has no connection to the party cannot be added by uuid. Note that
-        /// this is checked against the party even on the creditor route, where the assignment is
-        /// created from the estate rather than from the party.
+        /// A person that exists but has no connection to the party cannot be added by uuid.
         /// </summary>
         [Theory]
         [MemberData(nameof(AddRoutes))]
