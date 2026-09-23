@@ -1,0 +1,23 @@
+<Project>
+
+  <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Build.props', '$(MSBuildThisFileDirectory)../'))" />
+
+  <PropertyGroup>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);1591</NoWarn>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(Configuration)'=='Debug'">
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="all"
+      IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" />
+    <AdditionalFiles Include="$([MSBuild]::GetPathOfFileAbove('stylecop.json', '$(MSBuildThisFileDirectory)'))">
+      <Link>stylecop.json</Link>
+    </AdditionalFiles>
+  </ItemGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
+    <CodeAnalysisRuleSet>$([MSBuild]::GetPathOfFileAbove('Altinn3.ruleset', '$(MSBuildThisFileDirectory)'))</CodeAnalysisRuleSet>
+  </PropertyGroup>
+
+</Project>

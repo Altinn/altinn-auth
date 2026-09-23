@@ -5,6 +5,7 @@
 
     <IsPackable>false</IsPackable>
     <IsTestProject>false</IsTestProject>
+    <IsTestLibrary>true</IsTestLibrary>
   </PropertyGroup>
 
   <ItemGroup>

@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/Altinn.ResourceRegistry/" />
+  <Folder Name="/Altinn.ResourceRegistry/src/">
+    <Project Path="src/apps/Altinn.ResourceRegistry/src/Altinn.ResourceRegistry/Altinn.ResourceRegistry.csproj" />
+    <Project Path="src/apps/Altinn.ResourceRegistry/src/Altinn.ResourceRegistry.Core/Altinn.ResourceRegistry.Core.csproj" />
+    <Project Path="src/apps/Altinn.ResourceRegistry/src/Altinn.ResourceRegistry.Integration/Altinn.ResourceRegistry.Integration.csproj" />
+    <Project Path="src/apps/Altinn.ResourceRegistry/src/Altinn.ResourceRegistry.Persistence/Altinn.ResourceRegistry.Persistence.csproj" />
+  </Folder>
+  <Folder Name="/Altinn.ResourceRegistry/test/">
+    <Project Path="src/apps/Altinn.ResourceRegistry/test/Altinn.ResourceRegistry.Persistence.Tests/Altinn.ResourceRegistry.Persistence.Tests.csproj" />
+    <Project Path="src/apps/Altinn.ResourceRegistry/test/Altinn.ResourceRegistry.Tests/Altinn.ResourceRegistry.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Altinn.ResourceRegistry/test/lib/">
+    <Project Path="src/apps/Altinn.ResourceRegistry/test/Altinn.ResourceRegistry.TestUtils/Altinn.ResourceRegistry.TestUtils.csproj" />
+  </Folder>
+</Solution>

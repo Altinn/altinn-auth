@@ -69,10 +69,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <None Include="..\..\.editorconfig" Link=".editorconfig" />
-  </ItemGroup>
-
-  <ItemGroup>
     <None Update="selfSignedTestCertificate.pfx">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
