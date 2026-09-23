@@ -1,0 +1,67 @@
+meta {
+  name: 04_THEN_RecipientAuthorizedPartiesShowResource
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/authorizedparties?includeRoles=false&anyOfResourceIds={{resource}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  includeRoles: false
+  anyOfResourceIds: {{resource}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{subjectPid}}"
+  }
+}
+
+docs {
+  THEN the recipient's authorized parties show the grantor with the resource.
+
+  POST /accessmanagement/api/v1/serviceowner/authorizedparties, here filtered with
+  `anyOfResourceIds` to the parties where the recipient has the resource, and with
+  roles left out. The grantor appears as a Person party with the resource in
+  `authorizedResources`.
+}
+
+script:pre-request {
+  const { td, loginAsServiceOwner, scopes, serviceOwners } = require("./test/ServiceOwnerAPI/Scenarios/helpers.js");
+  const data = td();
+
+  bru.setVar("subjectPid", data.resourceDelegation.recipient.pid);
+  bru.setVar("resource", data.resourceDelegation.resource);
+
+  await loginAsServiceOwner(serviceOwners.digdir, scopes.authorizedParties);
+}
+
+tests {
+  const { td } = require("./test/ServiceOwnerAPI/Scenarios/helpers.js");
+  const data = td().resourceDelegation;
+
+  test("THEN the authorized parties request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the grantor is an authorized party with the delegated resource", function() {
+    const party = res.getBody().find(p => p.partyUuid === data.grantor.partyuuid);
+    expect(party, "expected the grantor among the recipient's authorized parties").to.not.be.undefined;
+    expect(party.type).to.equal("Person");
+    expect(party.personId).to.equal(data.grantor.pid);
+    expect(party.partyId).to.equal(data.grantor.partyid);
+    expect(party.name).to.equal(data.grantor.name);
+    expect(party.authorizedResources).to.include(data.resource);
+    expect(party.authorizedRoles).to.be.an("array").that.is.empty;
+  });
+}
