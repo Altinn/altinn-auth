@@ -392,6 +392,14 @@ namespace Altinn.AccessMgmt.Core.Services
             return assignments.Select(a => DtoMapper.Convert(a.From)).ToList();
         }
 
+        /// <inheritdoc />
+        public async Task<Result<bool>> HasBankruptcyEstatesForParty(Guid party, CancellationToken cancellationToken = default)
+        {
+            return await db.Assignments
+                .AsNoTracking()
+                .AnyAsync(a => a.ToId == party && a.RoleId == RoleConstants.EstateAdministrator, cancellationToken);
+        }
+
         public async Task<Result<List<CompactEntityDto>>> GetBankruptcyEstatesForUser(Guid party, Guid user, CancellationToken cancellationToken)
         {
             var query = await db.Delegations
@@ -782,6 +790,14 @@ namespace Altinn.AccessMgmt.Core.Services
         /// <param name="cancellationToken">Cancellation token.</param>
         /// <returns>A problem details if some error occurs. List of bankruptcy estates if successful.</returns>
         Task<Result<List<CompactEntityDto>>> GetBankruptcyEstatesForParty(Guid party, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Checks whether there are any bankruptcy estates for a specific party.
+        /// </summary>
+        /// <param name="party">The party identifier to check bankruptcy estates for.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>A problem details if some error occurs. True if the party has bankruptcy estates, otherwise false.</returns>
+        Task<Result<bool>> HasBankruptcyEstatesForParty(Guid party, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets the list of bankruptcy estates for a specific user.

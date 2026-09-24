@@ -21,13 +21,20 @@ public partial class BankruptcyDelegationControllerTest
 {
     /// <summary>
     /// Expands the placeholders used by the route tables below into the ids of the seeded test entities.
+    /// A template that is empty or starts with a query string addresses the controller's own base
+    /// route, and must not pick up a trailing slash.
     /// </summary>
-    private static string ExpandRoute(string template) => $"{Route}/" + template
-        .Replace("{party}", TestEntities.PersonMatilde.Id.ToString())
-        .Replace("{estate}", TestEntities.OrganizationSolsidenSameie.Id.ToString())
-        .Replace("{user}", TestEntities.PersonPaula.Id.ToString())
-        .Replace("{creditor}", TestEntities.OrganizationOrsta.Id.ToString())
-        .Replace("{stranger}", TestEntities.PersonHenrik.Id.ToString());
+    private static string ExpandRoute(string template)
+    {
+        var expanded = template
+            .Replace("{party}", TestEntities.PersonMatilde.Id.ToString())
+            .Replace("{estate}", TestEntities.OrganizationSolsidenSameie.Id.ToString())
+            .Replace("{user}", TestEntities.PersonPaula.Id.ToString())
+            .Replace("{creditor}", TestEntities.OrganizationOrsta.Id.ToString())
+            .Replace("{stranger}", TestEntities.PersonHenrik.Id.ToString());
+
+        return expanded.Length == 0 || expanded.StartsWith('?') ? Route + expanded : $"{Route}/{expanded}";
+    }
 
     private static Task<HttpResponseMessage> SendAsync(HttpClient client, string method, string template) =>
         client.SendAsync(
@@ -61,6 +68,7 @@ public partial class BankruptcyDelegationControllerTest
         public static TheoryData<string, string> AllRoutes =>
             new()
             {
+                { "GET", "?party={party}" },
                 { "GET", "users?party={party}" },
                 { "POST", "users?party={party}&user={user}" },
                 { "DELETE", "users?party={party}&user={user}" },
@@ -165,6 +173,8 @@ public partial class BankruptcyDelegationControllerTest
         [InlineData("estates")]
         [InlineData("estates?party=")]
         [InlineData("estates?party=not-a-guid")]
+        [InlineData("")]
+        [InlineData("?party=not-a-guid")]
         public async Task ReadRoute_WithMissingOrMalformedParty_Returns403Forbidden(string template)
         {
             var client = CreateClient(Fixture, TestEntities.PersonMatilde.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
