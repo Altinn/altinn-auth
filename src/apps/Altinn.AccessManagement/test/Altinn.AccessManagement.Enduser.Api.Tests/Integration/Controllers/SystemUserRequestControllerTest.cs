@@ -78,6 +78,22 @@ public class SystemUserRequestControllerTest
 
             Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         }
+
+        [Fact]
+        public async Task NonSystemUserSender_IsRejected_ReturnsForbidden()
+        {
+            // Token carries the scope, but the authorization_details id resolves to a
+            // non-system-user entity, so the request must not be created on its behalf.
+            var client = CreateSystemUserClient(Fixture, TestData.BakerJohnsen.Id);
+            var packageUrn = PackageConstants.Agriculture.Entity.Urn;
+
+            var response = await client.PostAsync(
+                $"{Route}/package?to={TestData.BakerJohnsen.Id}&package={packageUrn}",
+                null,
+                TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        }
     }
 
     #endregion

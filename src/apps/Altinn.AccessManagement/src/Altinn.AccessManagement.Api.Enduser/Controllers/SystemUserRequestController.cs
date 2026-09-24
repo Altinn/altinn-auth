@@ -45,10 +45,9 @@ public class SystemUserRequestController(
     {
         var systemUserUuid = AuthenticationHelper.GetSystemUserUuid(HttpContext);
 
-        var result = await requestService.CreatePackageRequest(
+        var result = await requestService.CreateSystemUserPackageRequest(
            toId: to,
-           fromId: systemUserUuid,
-           byId: systemUserUuid,
+           systemUserId: systemUserUuid,
            roleId: RoleConstants.Rightholder.Id,
            package: package,
            status: RequestStatus.Pending,

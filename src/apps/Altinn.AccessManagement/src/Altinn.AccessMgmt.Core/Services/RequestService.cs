@@ -145,7 +145,7 @@ public class RequestService(
     /// <inheritdoc/>
     public async Task<Result<RequestDto>> CreateResourceRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, Guid resourceId, RequestStatus status = RequestStatus.Pending, CancellationToken ct = default)
     {
-        var systemUserProblem = await ValidateSystemUserParticipation(fromId, toId, ct);
+        var systemUserProblem = await ValidateRecipientNotSystemUser(toId, ct);
         if (systemUserProblem is { } resourceGuard)
         {
             return resourceGuard;
@@ -178,12 +178,29 @@ public class RequestService(
     /// <inheritdoc/>
     public async Task<Result<RequestDto>> CreatePackageRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, string package, RequestStatus status = RequestStatus.Pending, CancellationToken ct = default)
     {
-        var systemUserProblem = await ValidateSystemUserParticipation(fromId, toId, ct);
+        var systemUserProblem = await ValidateRecipientNotSystemUser(toId, ct);
         if (systemUserProblem is { } packageGuard)
         {
             return packageGuard;
         }
 
+        return await CreatePackageRequestInternal(toId, fromId, byId, roleId, package, status, ct);
+    }
+
+    /// <inheritdoc/>
+    public async Task<Result<RequestDto>> CreateSystemUserPackageRequest(Guid toId, Guid systemUserId, Guid roleId, string package, RequestStatus status = RequestStatus.Pending, CancellationToken ct = default)
+    {
+        var systemUserProblem = await ValidateSystemUserSender(systemUserId, toId, ct);
+        if (systemUserProblem is { } senderGuard)
+        {
+            return senderGuard;
+        }
+
+        return await CreatePackageRequestInternal(toId, systemUserId, systemUserId, roleId, package, status, ct);
+    }
+
+    private async Task<Result<RequestDto>> CreatePackageRequestInternal(Guid toId, Guid fromId, Guid byId, Guid roleId, string package, RequestStatus status, CancellationToken ct)
+    {
         var to = await db.Entities.Include(t => t.Type).FirstOrDefaultAsync(e => e.Id == toId, ct);
         var from = await db.Entities.Include(t => t.Type).FirstOrDefaultAsync(e => e.Id == fromId, ct);
 
@@ -223,45 +240,54 @@ public class RequestService(
     #region privates
 
     /// <summary>
-    /// Enforces the system-user access request rules:
-    /// when the requester (<paramref name="fromId"/>) is a system user, the request may only be
-    /// sent to an organization and only while the
-    /// <see cref="AccessMgmtFeatureFlags.EnableSystemUserRequests"/> feature is enabled;
-    /// for all other requesters, both parties must be a person or an organization
-    /// (a system user can never be the recipient).
+    /// Enforces the recipient hard-block that applies to every request type:
+    /// a system user can never be the recipient (<paramref name="toId"/>) of a request.
     /// </summary>
     /// <returns>A <see cref="Problems.SystemUserRequestNotAllowed"/> descriptor when the request is not allowed; otherwise <c>null</c>.</returns>
-    private async Task<ProblemDescriptor?> ValidateSystemUserParticipation(Guid fromId, Guid toId, CancellationToken ct)
+    private async Task<ProblemDescriptor?> ValidateRecipientNotSystemUser(Guid toId, CancellationToken ct)
+    {
+        var systemUserTypeId = EntityTypeConstants.SystemUser.Id;
+
+        var toIsSystemUser = await db.Entities.AsNoTracking()
+            .AnyAsync(e => e.Id == toId && e.TypeId == systemUserTypeId, ct);
+        if (toIsSystemUser)
+        {
+            return Problems.SystemUserRequestNotAllowed;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Enforces the system-user sender rules for the dedicated system-user request path:
+    /// the requester (<paramref name="fromId"/>) must resolve to a system user entity, the
+    /// <see cref="AccessMgmtFeatureFlags.EnableSystemUserRequests"/> feature must be enabled and the
+    /// recipient (<paramref name="toId"/>) must be an organization.
+    /// </summary>
+    /// <returns>A <see cref="Problems.SystemUserRequestNotAllowed"/> descriptor when the request is not allowed; otherwise <c>null</c>.</returns>
+    private async Task<ProblemDescriptor?> ValidateSystemUserSender(Guid fromId, Guid toId, CancellationToken ct)
     {
         var systemUserTypeId = EntityTypeConstants.SystemUser.Id;
         var organizationTypeId = EntityTypeConstants.Organization.Id;
 
-        var fromIsSystemUser = await db.Entities.AsNoTracking()
-            .AnyAsync(e => e.Id == fromId && e.TypeId == systemUserTypeId, ct);
-
-        if (fromIsSystemUser)
+        var featureEnabled = await featureManager.IsEnabledAsync(AccessMgmtFeatureFlags.EnableSystemUserRequests);
+        if (!featureEnabled)
         {
-            var featureEnabled = await featureManager.IsEnabledAsync(AccessMgmtFeatureFlags.EnableSystemUserRequests);
-            if (!featureEnabled)
-            {
-                return Problems.SystemUserRequestNotAllowed;
-            }
-
-            // A system user may only send requests to an organization.
-            var toIsOrganization = await db.Entities.AsNoTracking()
-                .AnyAsync(e => e.Id == toId && e.TypeId == organizationTypeId, ct);
-            if (!toIsOrganization)
-            {
-                return Problems.SystemUserRequestNotAllowed;
-            }
-
-            return null;
+            return Problems.SystemUserRequestNotAllowed;
         }
 
-        // For all other requesters a system user can never be the recipient.
-        var toIsSystemUser = await db.Entities.AsNoTracking()
-            .AnyAsync(e => e.Id == toId && e.TypeId == systemUserTypeId, ct);
-        if (toIsSystemUser)
+        // The requester must actually be a system user entity.
+        var fromIsSystemUser = fromId != Guid.Empty && await db.Entities.AsNoTracking()
+            .AnyAsync(e => e.Id == fromId && e.TypeId == systemUserTypeId, ct);
+        if (!fromIsSystemUser)
+        {
+            return Problems.SystemUserRequestNotAllowed;
+        }
+
+        // A system user may only send requests to an organization.
+        var toIsOrganization = await db.Entities.AsNoTracking()
+            .AnyAsync(e => e.Id == toId && e.TypeId == organizationTypeId, ct);
+        if (!toIsOrganization)
         {
             return Problems.SystemUserRequestNotAllowed;
         }
