@@ -61,10 +61,10 @@ public class ActivityLogController(IActivityLogService activityLogService, IConn
             return ValidationProblem(ModelState);
         }
 
-        var granted = await ResolveGrantedIds(query.Party, cancellationToken);
-        if (granted is null)
+        var (grantError, granted) = await ResolveGrantedIds(query.Party, cancellationToken);
+        if (grantError is not null)
         {
-            return Unauthorized();
+            return grantError;
         }
 
         var allowed = ActivityLogRoleMatrix.AllowedTypes(granted);
@@ -76,7 +76,7 @@ public class ActivityLogController(IActivityLogService activityLogService, IConn
         var filter = ActivityLogQueryMapper.BuildFilter(query, activityTypeKeys);
 
         var size = Math.Clamp(query.PageSize ?? DefaultPageSize, 1, MaxPageSize);
-        var page = Math.Max(query.PageNo ?? 0, 0);
+        var page = Math.Clamp(query.PageNo ?? 0, 0, (int.MaxValue / size) - 1);
 
         if (!ActivityLogRoleMatrix.TryConstrain(filter, allowed, out var constrained))
         {
@@ -124,10 +124,10 @@ public class ActivityLogController(IActivityLogService activityLogService, IConn
             return ValidationProblem(ModelState);
         }
 
-        var granted = await ResolveGrantedIds(query.Party, cancellationToken);
-        if (granted is null)
+        var (grantError, granted) = await ResolveGrantedIds(query.Party, cancellationToken);
+        if (grantError is not null)
         {
-            return Unauthorized();
+            return grantError;
         }
 
         var allowed = ActivityLogRoleMatrix.AllowedTypes(granted);
@@ -139,7 +139,7 @@ public class ActivityLogController(IActivityLogService activityLogService, IConn
         var filter = ActivityLogQueryMapper.BuildFilter(query, activityTypeKeys);
 
         var size = Math.Clamp(query.PageSize ?? DefaultPageSize, 1, MaxPageSize);
-        var page = Math.Max(query.PageNo ?? 0, 0);
+        var page = Math.Clamp(query.PageNo ?? 0, 0, (int.MaxValue / size) - 1);
 
         if (!ActivityLogRoleMatrix.TryConstrain(filter, allowed, out var constrained))
         {
@@ -176,21 +176,23 @@ public class ActivityLogController(IActivityLogService activityLogService, IConn
     /// <summary>
     /// Resolves the caller's effective roles and access packages for the party (direct,
     /// keyrole and rolemap expansion via the connection query) as the id set the role matrix
-    /// keys on. Null means the caller identity is missing; an empty set resolves to no
-    /// visibility. Interim mechanism — the goal is resolving this from the token instead.
+    /// keys on. A non-null error short-circuits the request: missing caller identity, or a
+    /// failed connection lookup surfaced as its problem result rather than a denial. An empty
+    /// set resolves to no visibility. Interim mechanism — the goal is resolving this from the
+    /// token instead.
     /// </summary>
-    private async Task<IReadOnlySet<Guid>> ResolveGrantedIds(Guid party, CancellationToken cancellationToken)
+    private async Task<(IActionResult Error, IReadOnlySet<Guid> Granted)> ResolveGrantedIds(Guid party, CancellationToken cancellationToken)
     {
         var userUuid = UserUtil.GetUserUuid(User);
         if (userUuid is null)
         {
-            return null;
+            return (Unauthorized(), null);
         }
 
         var connections = await connectionService.Get(party, fromId: party, toId: userUuid.Value, includeAccessPackages: true, cancellationToken: cancellationToken);
         if (connections.IsProblem)
         {
-            return new HashSet<Guid>();
+            return (connections.Problem.ToActionResult(), null);
         }
 
         var granted = new HashSet<Guid>();
@@ -200,7 +202,7 @@ public class ActivityLogController(IActivityLogService activityLogService, IConn
             granted.UnionWith(connection.Packages.Select(p => p.Id));
         }
 
-        return granted;
+        return (null, granted);
     }
 
     private string NextLink(int pageSize, int nextPageNo)

@@ -1,7 +1,7 @@
 START TRANSACTION;
-DROP TABLE dbo.activitytype;
+DROP TABLE IF EXISTS dbo.activitytype;
 
-DROP TABLE dbo_history.auditactivitytype;
+DROP TABLE IF EXISTS dbo_history.auditactivitytype;
 
 
 COMMIT;

@@ -65,7 +65,9 @@ public static class ActivityLogQueryMapper
         InstanceIds = parameters.Instance,
         ItemIds = parameters.ItemId,
         ParentIds = parameters.ParentId,
-        After = parameters.After,
-        Before = parameters.Before,
+        // Npgsql only accepts offset-zero DateTimeOffset for timestamptz, so normalize
+        // whatever offset the client sent.
+        After = parameters.After?.ToUniversalTime(),
+        Before = parameters.Before?.ToUniversalTime(),
     };
 }

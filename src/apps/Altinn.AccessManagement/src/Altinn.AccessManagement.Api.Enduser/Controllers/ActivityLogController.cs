@@ -61,7 +61,7 @@ public class ActivityLogController(IActivityLogService activityLogService) : Con
         var filter = ActivityLogQueryMapper.BuildFilter(query, activityTypeKeys);
 
         var size = Math.Clamp(query.PageSize ?? DefaultPageSize, 1, MaxPageSize);
-        var page = Math.Max(query.PageNo ?? 0, 0);
+        var page = Math.Clamp(query.PageNo ?? 0, 0, (int.MaxValue / size) - 1);
 
         var result = await activityLogService.GetActivityLog(
             query.Party,
@@ -108,7 +108,7 @@ public class ActivityLogController(IActivityLogService activityLogService) : Con
         var filter = ActivityLogQueryMapper.BuildFilter(query, activityTypeKeys);
 
         var size = Math.Clamp(query.PageSize ?? DefaultPageSize, 1, MaxPageSize);
-        var page = Math.Max(query.PageNo ?? 0, 0);
+        var page = Math.Clamp(query.PageNo ?? 0, 0, (int.MaxValue / size) - 1);
 
         var result = await activityLogService.GetActivityLogFilterValues(
             query.Party,
