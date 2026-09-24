@@ -46,10 +46,17 @@ public static class ActivityLogTriggerScripts
     /// </summary>
     public static IReadOnlyCollection<string> Tables => Scripts.Keys;
 
+    // Delete triggers are deferred constraint triggers: they run at commit, after every audit
+    // trigger in the transaction has written its history row. A DB-level FK cascade deletes
+    // child rows inside the parent's RI trigger, which fires before the parent's own AFTER
+    // DELETE audit trigger — an immediate child trigger would then find neither a live nor a
+    // history row for the parent and log NULL parties. Deferral moves the lookup past that
+    // window; the session_audit_context temp table (ON COMMIT DROP) is still alive when
+    // deferred triggers fire.
     private static string CreateTrigger(string table, string op, string? when = null) => $"""
         DO $$ BEGIN IF NOT EXISTS (SELECT * FROM pg_trigger t WHERE t.tgname ILIKE 'activitylog_{table}_{op}_trg' AND t.tgrelid = to_regclass('dbo.{table}')) THEN
-        CREATE OR REPLACE TRIGGER activitylog_{table}_{op}_trg AFTER {op.ToUpperInvariant()} ON dbo.{table}
-        FOR EACH ROW {(when is null ? string.Empty : when + " ")}EXECUTE FUNCTION dbo.activitylog_{table}_{op}_fn();
+        CREATE {(op == "delete" ? "CONSTRAINT " : string.Empty)}TRIGGER activitylog_{table}_{op}_trg AFTER {op.ToUpperInvariant()} ON dbo.{table}
+        {(op == "delete" ? "DEFERRABLE INITIALLY DEFERRED " : string.Empty)}FOR EACH ROW {(when is null ? string.Empty : when + " ")}EXECUTE FUNCTION dbo.activitylog_{table}_{op}_fn();
         END IF; END $$;
         """;
 

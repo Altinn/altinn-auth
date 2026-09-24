@@ -79,7 +79,11 @@ public class ActivityLogContractTests
             Assert.Contains($"activitylog_{table}_insert_fn", sql);
             Assert.Contains($"activitylog_{table}_insert_trg", sql);
             Assert.Contains($"activitylog_{table}_delete_fn", sql);
-            Assert.Contains($"activitylog_{table}_delete_trg", sql);
+
+            // Delete triggers must stay deferred so DB-level cascades resolve parent
+            // snapshots from history written earlier in the same transaction.
+            Assert.Contains($"CREATE CONSTRAINT TRIGGER activitylog_{table}_delete_trg", sql);
+            Assert.Contains("DEFERRABLE INITIALLY DEFERRED", sql);
             Assert.Equal(TablesWithUpdateTriggers.Contains(table), sql.Contains($"activitylog_{table}_update_trg"));
 
             Assert.Contains("INSERT INTO dbo.activitylog", sql);

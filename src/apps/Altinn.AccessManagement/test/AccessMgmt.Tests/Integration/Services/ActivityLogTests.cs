@@ -72,6 +72,53 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
     }
 
     [Fact]
+    public async Task DbLevelCascadeDelete_ResolvesParentSnapshotsFromHistory()
+    {
+        var (from, to, assignment) = await SeedAssignment();
+        var package = await _db.Packages.AsNoTracking().OrderBy(p => p.Id).FirstAsync(TestContext.Current.CancellationToken);
+
+        var assignmentPackage = new AssignmentPackage { Id = Guid.CreateVersion7(), AssignmentId = assignment.Id, PackageId = package.Id };
+        _db.AssignmentPackages.Add(assignmentPackage);
+        await _db.SaveChangesAsync(Seeder);
+
+        // Delete via raw SQL so the package is removed by the database's FK cascade, not by
+        // EF's client-side cascade — the parent's history row then only exists because the
+        // activity log delete triggers are deferred to commit.
+        await using (var transaction = await _db.Database.BeginTransactionAsync(TestContext.Current.CancellationToken))
+        {
+            await _db.Database.ExecuteSqlAsync(
+                $"""
+                CREATE TEMP TABLE IF NOT EXISTS session_audit_context (
+                    changed_by UUID,
+                    changed_by_system UUID,
+                    change_operation_id TEXT
+                ) ON COMMIT DROP;
+                TRUNCATE session_audit_context;
+                INSERT INTO session_audit_context (changed_by, changed_by_system, change_operation_id)
+                VALUES ({(Guid)SystemEntityConstants.StaticDataIngest}, {(Guid)SystemEntityConstants.StaticDataIngest}, {Guid.CreateVersion7().ToString()});
+                """,
+                TestContext.Current.CancellationToken);
+
+            await _db.Database.ExecuteSqlAsync(
+                $"DELETE FROM dbo.assignment WHERE id = {assignment.Id};",
+                TestContext.Current.CancellationToken);
+
+            await transaction.CommitAsync(TestContext.Current.CancellationToken);
+        }
+
+        var packageDeleted = await SingleEvent(assignmentPackage.Id, ActivityLogTrigger.Deleted);
+        Assert.Equal(from.Id, packageDeleted.FromId);
+        Assert.Equal(from.Name, packageDeleted.FromName);
+        Assert.Equal(to.Id, packageDeleted.ToId);
+        Assert.Equal((Guid)RoleConstants.Rightholder, packageDeleted.RoleId);
+        Assert.Equal(package.Name, packageDeleted.PackageName);
+
+        var assignmentDeleted = await SingleEvent(assignment.Id, ActivityLogTrigger.Deleted);
+        Assert.Equal(from.Id, assignmentDeleted.FromId);
+        Assert.Equal(to.Id, assignmentDeleted.ToId);
+    }
+
+    [Fact]
     public async Task AssignmentInsert_WritesCreatedEventWithNameSnapshots()
     {
         var (from, to, assignment) = await SeedAssignment();

@@ -101,6 +101,12 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 });
 
             migrationBuilder.CreateIndex(
+                name: "ix_activitylog_byid_when",
+                schema: "dbo",
+                table: "activitylog",
+                columns: new[] { "byid", "when" });
+
+            migrationBuilder.CreateIndex(
                 name: "ix_activitylog_fromid_when",
                 schema: "dbo",
                 table: "activitylog",
@@ -123,6 +129,12 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                 schema: "dbo",
                 table: "activitylog",
                 columns: new[] { "toid", "when" });
+
+            migrationBuilder.CreateIndex(
+                name: "ix_activitylog_viaid_when",
+                schema: "dbo",
+                table: "activitylog",
+                columns: new[] { "viaid", "when" });
 
             foreach (var table in ActivityLogTables)
             {

@@ -312,6 +312,8 @@ GRANT SELECT, INSERT, UPDATE, DELETE, TRIGGER, REFERENCES ON TABLE dbo.activityl
 GRANT SELECT, INSERT, UPDATE, DELETE, TRIGGER, REFERENCES ON TABLE dbo.activitylogbackfillprogress TO platform_authorization_admin;
 
 
+CREATE INDEX ix_activitylog_byid_when ON dbo.activitylog (byid, "when");
+
 CREATE INDEX ix_activitylog_fromid_when ON dbo.activitylog (fromid, "when");
 
 CREATE INDEX ix_activitylog_itemid ON dbo.activitylog (itemid);
@@ -319,6 +321,8 @@ CREATE INDEX ix_activitylog_itemid ON dbo.activitylog (itemid);
 CREATE INDEX ix_activitylog_parentid ON dbo.activitylog (parentid);
 
 CREATE INDEX ix_activitylog_toid_when ON dbo.activitylog (toid, "when");
+
+CREATE INDEX ix_activitylog_viaid_when ON dbo.activitylog (viaid, "when");
 
 CREATE OR REPLACE FUNCTION dbo.audit_assignment_insert_fn() returns TRIGGER language plpgsql AS $$
 BEGIN
@@ -442,8 +446,8 @@ END;
 $$;
 
 DO $$ BEGIN IF NOT EXISTS (SELECT * FROM pg_trigger t WHERE t.tgname ILIKE 'activitylog_assignment_delete_trg' AND t.tgrelid = to_regclass('dbo.assignment')) THEN
-CREATE OR REPLACE TRIGGER activitylog_assignment_delete_trg AFTER DELETE ON dbo.assignment
-FOR EACH ROW EXECUTE FUNCTION dbo.activitylog_assignment_delete_fn();
+CREATE CONSTRAINT TRIGGER activitylog_assignment_delete_trg AFTER DELETE ON dbo.assignment
+DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION dbo.activitylog_assignment_delete_fn();
 END IF; END $$;
 
 GRANT SELECT, INSERT, UPDATE, DELETE, TRIGGER, REFERENCES ON TABLE dbo.assignment TO platform_authorization;
@@ -580,8 +584,8 @@ END;
 $$;
 
 DO $$ BEGIN IF NOT EXISTS (SELECT * FROM pg_trigger t WHERE t.tgname ILIKE 'activitylog_assignmentpackage_delete_trg' AND t.tgrelid = to_regclass('dbo.assignmentpackage')) THEN
-CREATE OR REPLACE TRIGGER activitylog_assignmentpackage_delete_trg AFTER DELETE ON dbo.assignmentpackage
-FOR EACH ROW EXECUTE FUNCTION dbo.activitylog_assignmentpackage_delete_fn();
+CREATE CONSTRAINT TRIGGER activitylog_assignmentpackage_delete_trg AFTER DELETE ON dbo.assignmentpackage
+DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION dbo.activitylog_assignmentpackage_delete_fn();
 END IF; END $$;
 
 GRANT SELECT, INSERT, UPDATE, DELETE, TRIGGER, REFERENCES ON TABLE dbo.assignmentpackage TO platform_authorization;
@@ -718,8 +722,8 @@ END;
 $$;
 
 DO $$ BEGIN IF NOT EXISTS (SELECT * FROM pg_trigger t WHERE t.tgname ILIKE 'activitylog_assignmentresource_delete_trg' AND t.tgrelid = to_regclass('dbo.assignmentresource')) THEN
-CREATE OR REPLACE TRIGGER activitylog_assignmentresource_delete_trg AFTER DELETE ON dbo.assignmentresource
-FOR EACH ROW EXECUTE FUNCTION dbo.activitylog_assignmentresource_delete_fn();
+CREATE CONSTRAINT TRIGGER activitylog_assignmentresource_delete_trg AFTER DELETE ON dbo.assignmentresource
+DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION dbo.activitylog_assignmentresource_delete_fn();
 END IF; END $$;
 
 GRANT SELECT, INSERT, UPDATE, DELETE, TRIGGER, REFERENCES ON TABLE dbo.assignmentresource TO platform_authorization;
@@ -894,8 +898,8 @@ END;
 $$;
 
 DO $$ BEGIN IF NOT EXISTS (SELECT * FROM pg_trigger t WHERE t.tgname ILIKE 'activitylog_assignmentinstance_delete_trg' AND t.tgrelid = to_regclass('dbo.assignmentinstance')) THEN
-CREATE OR REPLACE TRIGGER activitylog_assignmentinstance_delete_trg AFTER DELETE ON dbo.assignmentinstance
-FOR EACH ROW EXECUTE FUNCTION dbo.activitylog_assignmentinstance_delete_fn();
+CREATE CONSTRAINT TRIGGER activitylog_assignmentinstance_delete_trg AFTER DELETE ON dbo.assignmentinstance
+DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION dbo.activitylog_assignmentinstance_delete_fn();
 END IF; END $$;
 
 GRANT SELECT, INSERT, UPDATE, DELETE, TRIGGER, REFERENCES ON TABLE dbo.assignmentinstance TO platform_authorization;
@@ -1042,8 +1046,8 @@ END;
 $$;
 
 DO $$ BEGIN IF NOT EXISTS (SELECT * FROM pg_trigger t WHERE t.tgname ILIKE 'activitylog_delegation_delete_trg' AND t.tgrelid = to_regclass('dbo.delegation')) THEN
-CREATE OR REPLACE TRIGGER activitylog_delegation_delete_trg AFTER DELETE ON dbo.delegation
-FOR EACH ROW EXECUTE FUNCTION dbo.activitylog_delegation_delete_fn();
+CREATE CONSTRAINT TRIGGER activitylog_delegation_delete_trg AFTER DELETE ON dbo.delegation
+DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION dbo.activitylog_delegation_delete_fn();
 END IF; END $$;
 
 GRANT SELECT, INSERT, UPDATE, DELETE, TRIGGER, REFERENCES ON TABLE dbo.delegation TO platform_authorization;
@@ -1198,8 +1202,8 @@ END;
 $$;
 
 DO $$ BEGIN IF NOT EXISTS (SELECT * FROM pg_trigger t WHERE t.tgname ILIKE 'activitylog_delegationpackage_delete_trg' AND t.tgrelid = to_regclass('dbo.delegationpackage')) THEN
-CREATE OR REPLACE TRIGGER activitylog_delegationpackage_delete_trg AFTER DELETE ON dbo.delegationpackage
-FOR EACH ROW EXECUTE FUNCTION dbo.activitylog_delegationpackage_delete_fn();
+CREATE CONSTRAINT TRIGGER activitylog_delegationpackage_delete_trg AFTER DELETE ON dbo.delegationpackage
+DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION dbo.activitylog_delegationpackage_delete_fn();
 END IF; END $$;
 
 GRANT SELECT, INSERT, UPDATE, DELETE, TRIGGER, REFERENCES ON TABLE dbo.delegationpackage TO platform_authorization;
@@ -1354,8 +1358,8 @@ END;
 $$;
 
 DO $$ BEGIN IF NOT EXISTS (SELECT * FROM pg_trigger t WHERE t.tgname ILIKE 'activitylog_delegationresource_delete_trg' AND t.tgrelid = to_regclass('dbo.delegationresource')) THEN
-CREATE OR REPLACE TRIGGER activitylog_delegationresource_delete_trg AFTER DELETE ON dbo.delegationresource
-FOR EACH ROW EXECUTE FUNCTION dbo.activitylog_delegationresource_delete_fn();
+CREATE CONSTRAINT TRIGGER activitylog_delegationresource_delete_trg AFTER DELETE ON dbo.delegationresource
+DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION dbo.activitylog_delegationresource_delete_fn();
 END IF; END $$;
 
 GRANT SELECT, INSERT, UPDATE, DELETE, TRIGGER, REFERENCES ON TABLE dbo.delegationresource TO platform_authorization;
@@ -1486,8 +1490,8 @@ END;
 $$;
 
 DO $$ BEGIN IF NOT EXISTS (SELECT * FROM pg_trigger t WHERE t.tgname ILIKE 'activitylog_requestassignment_delete_trg' AND t.tgrelid = to_regclass('dbo.requestassignment')) THEN
-CREATE OR REPLACE TRIGGER activitylog_requestassignment_delete_trg AFTER DELETE ON dbo.requestassignment
-FOR EACH ROW EXECUTE FUNCTION dbo.activitylog_requestassignment_delete_fn();
+CREATE CONSTRAINT TRIGGER activitylog_requestassignment_delete_trg AFTER DELETE ON dbo.requestassignment
+DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION dbo.activitylog_requestassignment_delete_fn();
 END IF; END $$;
 
 GRANT SELECT, INSERT, UPDATE, DELETE, TRIGGER, REFERENCES ON TABLE dbo.requestassignment TO platform_authorization;
@@ -1664,8 +1668,8 @@ END;
 $$;
 
 DO $$ BEGIN IF NOT EXISTS (SELECT * FROM pg_trigger t WHERE t.tgname ILIKE 'activitylog_requestassignmentpackage_delete_trg' AND t.tgrelid = to_regclass('dbo.requestassignmentpackage')) THEN
-CREATE OR REPLACE TRIGGER activitylog_requestassignmentpackage_delete_trg AFTER DELETE ON dbo.requestassignmentpackage
-FOR EACH ROW EXECUTE FUNCTION dbo.activitylog_requestassignmentpackage_delete_fn();
+CREATE CONSTRAINT TRIGGER activitylog_requestassignmentpackage_delete_trg AFTER DELETE ON dbo.requestassignmentpackage
+DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION dbo.activitylog_requestassignmentpackage_delete_fn();
 END IF; END $$;
 
 GRANT SELECT, INSERT, UPDATE, DELETE, TRIGGER, REFERENCES ON TABLE dbo.requestassignmentpackage TO platform_authorization;
@@ -1842,8 +1846,8 @@ END;
 $$;
 
 DO $$ BEGIN IF NOT EXISTS (SELECT * FROM pg_trigger t WHERE t.tgname ILIKE 'activitylog_requestassignmentresource_delete_trg' AND t.tgrelid = to_regclass('dbo.requestassignmentresource')) THEN
-CREATE OR REPLACE TRIGGER activitylog_requestassignmentresource_delete_trg AFTER DELETE ON dbo.requestassignmentresource
-FOR EACH ROW EXECUTE FUNCTION dbo.activitylog_requestassignmentresource_delete_fn();
+CREATE CONSTRAINT TRIGGER activitylog_requestassignmentresource_delete_trg AFTER DELETE ON dbo.requestassignmentresource
+DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION dbo.activitylog_requestassignmentresource_delete_fn();
 END IF; END $$;
 
 GRANT SELECT, INSERT, UPDATE, DELETE, TRIGGER, REFERENCES ON TABLE dbo.requestassignmentresource TO platform_authorization;

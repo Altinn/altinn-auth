@@ -21,8 +21,13 @@ public class ActivityLogConfiguration : IEntityTypeConfiguration<ActivityLog>
 
         builder.Property(p => p.Details).HasColumnType("jsonb");
 
+        // Every arm of the involved-party OR (from/to/via, plus by for the any-party anchor)
+        // must be indexed for the planner to BitmapOr them; one unindexed arm forces a scan
+        // of every partition.
         builder.HasIndex(p => new { p.FromId, p.When });
         builder.HasIndex(p => new { p.ToId, p.When });
+        builder.HasIndex(p => new { p.ViaId, p.When });
+        builder.HasIndex(p => new { p.ById, p.When });
         builder.HasIndex(p => p.ItemId);
         builder.HasIndex(p => p.ParentId);
     }

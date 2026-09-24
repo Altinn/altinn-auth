@@ -208,6 +208,12 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasIndex("ToId", "When")
                         .HasDatabaseName("ix_activitylog_toid_when");
 
+                    b.HasIndex("ViaId", "When")
+                        .HasDatabaseName("ix_activitylog_viaid_when");
+
+                    b.HasIndex("ById", "When")
+                        .HasDatabaseName("ix_activitylog_byid_when");
+
                     b.ToTable("activitylog", "dbo");
 
                     b.HasAnnotation("Altinn:PartitionByRangeColumn", "when");
