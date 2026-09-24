@@ -6,6 +6,8 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);1591</NoWarn>
     <IsPackable>false</IsPackable>
+    <!-- SA0001 has no source location, so .editorconfig cannot raise it. Keep it an error, as the removed ruleset did. -->
+    <WarningsAsErrors>$(WarningsAsErrors);SA0001</WarningsAsErrors>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(Configuration)'=='Debug'">
@@ -15,9 +17,5 @@
       <Link>stylecop.json</Link>
     </AdditionalFiles>
   </ItemGroup>
-
-  <PropertyGroup Condition="'$(Configuration)'=='Debug'">
-    <CodeAnalysisRuleSet>$([MSBuild]::GetPathOfFileAbove('Altinn3.ruleset', '$(MSBuildThisFileDirectory)'))</CodeAnalysisRuleSet>
-  </PropertyGroup>
 
 </Project>
