@@ -21,7 +21,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
     [ApiController]
     [Route("accessmanagement/api/v1/enduser/bankruptcyestate")]
     [Tags("Bankruptcy Delegation")]
-    public class BanckruptcyDelegationController(
+    public class BankruptcyDelegationController(
         IHttpContextAccessor httpContextAccessor,
         IInputValidation inputValidation,
         IBankruptcyDelegationService bankruptcyDelegationService,

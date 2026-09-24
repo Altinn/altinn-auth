@@ -14,7 +14,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers;
 
 /// <summary>
-/// Partial test class for <see cref="BanckruptcyDelegationController"/>, covering the authorization
+/// Partial test class for <see cref="BankruptcyDelegationController"/>, covering the authorization
 /// attributes on the routes: authentication, the scope requirement and the PDP resource requirement.
 /// </summary>
 public partial class BankruptcyDelegationControllerTest

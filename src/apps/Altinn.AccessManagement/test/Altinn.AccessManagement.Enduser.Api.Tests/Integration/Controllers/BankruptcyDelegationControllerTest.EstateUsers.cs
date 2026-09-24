@@ -15,7 +15,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers;
 
 /// <summary>
-/// Partial test class for <see cref="BanckruptcyDelegationController"/>, covering the two read
+/// Partial test class for <see cref="BankruptcyDelegationController"/>, covering the two read
 /// endpoints that report what a single agent has been given: <c>GET estates/users</c> and
 /// <c>GET estates/users/packages</c>.
 /// </summary>
@@ -55,8 +55,8 @@ public partial class BankruptcyDelegationControllerTest
     }
 
     /// <summary>
-    /// Tests for <see cref="BanckruptcyDelegationController.GetBankruptcyEstatesForUser"/> and
-    /// <see cref="BanckruptcyDelegationController.GetBankruptcyEstatePackagesForUser"/>.
+    /// Tests for <see cref="BankruptcyDelegationController.GetBankruptcyEstatesForUser"/> and
+    /// <see cref="BankruptcyDelegationController.GetBankruptcyEstatePackagesForUser"/>.
     /// </summary>
     /// <remarks>
     /// Reads the shared seed described on <see cref="BankruptcyReadOnlyFixture"/>: Paula has Solsiden

@@ -18,7 +18,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers;
 
 /// <summary>
-/// Partial test class for <see cref="BanckruptcyDelegationController"/>, covering the input validation
+/// Partial test class for <see cref="BankruptcyDelegationController"/>, covering the input validation
 /// the three "add" routes share through <c>IInputValidation.SanitizeToInput</c>, plus the estate
 /// connection gate on the creditor routes.
 /// </summary>
@@ -124,7 +124,7 @@ public partial class BankruptcyDelegationControllerTest
         {
             var problem = await SendAndAssertBadRequest(method, $"{template}&{toParameter}={TestEntities.PersonMargit.Id}");
 
-            Assert.Contains(problem.Errors, e => e.ErrorCode == ValidationErrors.EntityNotExists.ErrorCode);
+            Assert.Single(problem.Errors, e => e.ErrorCode == ValidationErrors.EntityNotExists.ErrorCode && e.Extensions != null && e.Extensions.ContainsKey("to") && e.Extensions["to"].ToString() == "Person not available for delegation (deceased).");
         }
 
         /// <summary>

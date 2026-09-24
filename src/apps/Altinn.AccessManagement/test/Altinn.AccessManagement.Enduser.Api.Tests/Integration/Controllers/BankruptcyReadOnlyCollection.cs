@@ -76,7 +76,7 @@ public sealed class BankruptcyReadOnlyFixture : ApiFixture
 
 /// <summary>
 /// Shares a single <see cref="BankruptcyReadOnlyFixture"/> — one test host plus one seeded database —
-/// across the read-only <c>BanckruptcyDelegationController</c> test classes, instead of each building
+/// across the read-only <c>BankruptcyDelegationController</c> test classes, instead of each building
 /// its own host (the dominant integration-test setup cost).
 /// </summary>
 /// <remarks>
@@ -88,5 +88,5 @@ public sealed class BankruptcyReadOnlyFixture : ApiFixture
 public sealed class BankruptcyReadOnlyCollection : ICollectionFixture<BankruptcyReadOnlyFixture>
 {
     /// <summary>Collection name referenced by member classes via <c>[Collection]</c>.</summary>
-    public const string Name = "BanckruptcyDelegationController read-only";
+    public const string Name = "BankruptcyDelegationController read-only";
 }

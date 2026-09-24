@@ -22,7 +22,7 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers;
 
 /// <summary>
-/// Tests for <see cref="BanckruptcyDelegationController"/>.
+/// Tests for <see cref="BankruptcyDelegationController"/>.
 /// </summary>
 public partial class BankruptcyDelegationControllerTest
 {
@@ -33,7 +33,7 @@ public partial class BankruptcyDelegationControllerTest
     #region GET accessmanagement/api/v1/enduser/bankruptcyestate/users
 
     /// <summary>
-    /// Tests for <see cref="BanckruptcyDelegationController.GetAgentAdminInformation(Guid, CancellationToken)"/>.
+    /// Tests for <see cref="BankruptcyDelegationController.GetAgentAdminInformation(Guid, CancellationToken)"/>.
     /// </summary>
     /// <remarks>
     /// Seed data (estate party = <see cref="TestEntities.PersonMatilde"/>):
@@ -209,7 +209,7 @@ public partial class BankruptcyDelegationControllerTest
     #region GET accessmanagement/api/v1/enduser/bankruptcyestate/estates/creditors
 
     /// <summary>
-    /// Tests for <see cref="BanckruptcyDelegationController.GetCreditors(Guid, Guid, CancellationToken)"/>.
+    /// Tests for <see cref="BankruptcyDelegationController.GetCreditors(Guid, Guid, CancellationToken)"/>.
     /// </summary>
     /// <remarks>
     /// party (bankruptcy administrator) = <see cref="TestEntities.PersonMatilde"/>,
@@ -273,7 +273,7 @@ public partial class BankruptcyDelegationControllerTest
     #region POST accessmanagement/api/v1/enduser/bankruptcyestate/estates/creditors
 
     /// <summary>
-    /// Tests for <see cref="BanckruptcyDelegationController.AddCreditor(Guid, Guid, Guid?, AccessManagement.Api.Enduser.Models.PersonInput, CancellationToken)"/>.
+    /// Tests for <see cref="BankruptcyDelegationController.AddCreditor(Guid, Guid, Guid?, AccessManagement.Api.Enduser.Models.PersonInput, CancellationToken)"/>.
     /// </summary>
     [IntegrationTest]
     public class AddCreditor : IClassFixture<ApiFixture>
@@ -393,7 +393,7 @@ public partial class BankruptcyDelegationControllerTest
     #region DELETE accessmanagement/api/v1/enduser/bankruptcyestate/estates/creditors
 
     /// <summary>
-    /// Tests for <see cref="BanckruptcyDelegationController.RevokeCreditor(Guid, Guid, Guid, CancellationToken)"/>.
+    /// Tests for <see cref="BankruptcyDelegationController.RevokeCreditor(Guid, Guid, Guid, CancellationToken)"/>.
     /// </summary>
     [IntegrationTest]
     public class RevokeCreditor : IClassFixture<ApiFixture>
@@ -448,7 +448,7 @@ public partial class BankruptcyDelegationControllerTest
     #region POST accessmanagement/api/v1/enduser/bankruptcyestate/users
 
     /// <summary>
-    /// Tests for <see cref="BanckruptcyDelegationController.AddAgent(Guid, Guid?, AccessManagement.Api.Enduser.Models.PersonInput, CancellationToken)"/>.
+    /// Tests for <see cref="BankruptcyDelegationController.AddAgent(Guid, Guid?, AccessManagement.Api.Enduser.Models.PersonInput, CancellationToken)"/>.
     /// </summary>
     /// <remarks>
     /// <see cref="TestEntities.PersonOrjan"/> already has an Agent assignment from the party, so the
@@ -570,7 +570,7 @@ public partial class BankruptcyDelegationControllerTest
     #region DELETE accessmanagement/api/v1/enduser/bankruptcyestate/users
 
     /// <summary>
-    /// Tests for <see cref="BanckruptcyDelegationController.RevokeAgent(Guid, Guid, bool, CancellationToken)"/>.
+    /// Tests for <see cref="BankruptcyDelegationController.RevokeAgent(Guid, Guid, bool, CancellationToken)"/>.
     /// </summary>
     [IntegrationTest]
     public class RevokeAgent : IClassFixture<ApiFixture>
@@ -612,7 +612,7 @@ public partial class BankruptcyDelegationControllerTest
     #region PUT accessmanagement/api/v1/enduser/bankruptcyestate/users/administrators
 
     /// <summary>
-    /// Tests for <see cref="BanckruptcyDelegationController.AddAdministrator(Guid, Guid?, AccessManagement.Api.Enduser.Models.PersonInput, CancellationToken)"/>.
+    /// Tests for <see cref="BankruptcyDelegationController.AddAdministrator(Guid, Guid?, AccessManagement.Api.Enduser.Models.PersonInput, CancellationToken)"/>.
     /// </summary>
     [IntegrationTest]
     public class AddAdministrator : IClassFixture<ApiFixture>
@@ -725,7 +725,7 @@ public partial class BankruptcyDelegationControllerTest
     #region DELETE accessmanagement/api/v1/enduser/bankruptcyestate/users/administrators
 
     /// <summary>
-    /// Tests for <see cref="BanckruptcyDelegationController.RevokeAdministrator(Guid, Guid, CancellationToken)"/>.
+    /// Tests for <see cref="BankruptcyDelegationController.RevokeAdministrator(Guid, Guid, CancellationToken)"/>.
     /// </summary>
     [IntegrationTest]
     public class RevokeAdministrator : IClassFixture<ApiFixture>
@@ -773,7 +773,7 @@ public partial class BankruptcyDelegationControllerTest
     #region GET accessmanagement/api/v1/enduser/bankruptcyestate/estates
 
     /// <summary>
-    /// Tests for <see cref="BanckruptcyDelegationController.GetBankruptcyEstatesForParty(Guid, CancellationToken)"/>.
+    /// Tests for <see cref="BankruptcyDelegationController.GetBankruptcyEstatesForParty(Guid, CancellationToken)"/>.
     /// </summary>
     /// <remarks>
     /// party = <see cref="TestEntities.PersonMatilde"/> is EstateAdministrator for
@@ -818,8 +818,8 @@ public partial class BankruptcyDelegationControllerTest
     #region POST/DELETE accessmanagement/api/v1/enduser/bankruptcyestate/estates/users
 
     /// <summary>
-    /// Tests for <see cref="BanckruptcyDelegationController.AddBankruptcyEstateForUser(Guid, Guid, Guid, CancellationToken)"/>
-    /// and <see cref="BanckruptcyDelegationController.RevokeBankruptcyEstateForUser(Guid, Guid, Guid, CancellationToken)"/>.
+    /// Tests for <see cref="BankruptcyDelegationController.AddBankruptcyEstateForUser(Guid, Guid, Guid, CancellationToken)"/>
+    /// and <see cref="BankruptcyDelegationController.RevokeBankruptcyEstateForUser(Guid, Guid, Guid, CancellationToken)"/>.
     /// </summary>
     /// <remarks>
     /// party (bankruptcy administrator) = <see cref="TestEntities.PersonMatilde"/> is

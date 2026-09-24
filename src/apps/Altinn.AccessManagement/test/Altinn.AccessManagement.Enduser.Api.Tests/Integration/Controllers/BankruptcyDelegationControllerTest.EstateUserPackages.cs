@@ -15,9 +15,9 @@ using Microsoft.EntityFrameworkCore;
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers;
 
 /// <summary>
-/// Partial test class for <see cref="BanckruptcyDelegationController"/>, focused on the package list
-/// that <see cref="BanckruptcyDelegationController.AddBankruptcyEstateForUser"/> and
-/// <see cref="BanckruptcyDelegationController.RevokeBankruptcyEstateForUser"/> take in the request body.
+/// Partial test class for <see cref="BankruptcyDelegationController"/>, focused on the package list
+/// that <see cref="BankruptcyDelegationController.AddBankruptcyEstateForUser"/> and
+/// <see cref="BankruptcyDelegationController.RevokeBankruptcyEstateForUser"/> take in the request body.
 /// </summary>
 public partial class BankruptcyDelegationControllerTest
 {

@@ -14,14 +14,14 @@ using Microsoft.EntityFrameworkCore;
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers;
 
 /// <summary>
-/// Partial test class for <see cref="BanckruptcyDelegationController"/>, covering the revoke routes:
+/// Partial test class for <see cref="BankruptcyDelegationController"/>, covering the revoke routes:
 /// the cascade flag on <c>DELETE users</c>, the <c>POST .../delete</c> aliases, and what is actually
 /// left in the database after a revoke.
 /// </summary>
 public partial class BankruptcyDelegationControllerTest
 {
     /// <summary>
-    /// Tests for <see cref="BanckruptcyDelegationController.RevokeAgent"/>, which refuses to remove an
+    /// Tests for <see cref="BankruptcyDelegationController.RevokeAgent"/>, which refuses to remove an
     /// agent that still has delegated access unless <c>cascade=true</c>.
     /// </summary>
     /// <remarks>
@@ -203,8 +203,8 @@ public partial class BankruptcyDelegationControllerTest
     }
 
     /// <summary>
-    /// Tests for what <see cref="BanckruptcyDelegationController.RevokeCreditor"/> and
-    /// <see cref="BanckruptcyDelegationController.RevokeAdministrator"/> leave behind.
+    /// Tests for what <see cref="BankruptcyDelegationController.RevokeCreditor"/> and
+    /// <see cref="BankruptcyDelegationController.RevokeAdministrator"/> leave behind.
     /// </summary>
     /// <remarks>
     /// Both services remove their own package from the Rightholder assignment and then call
