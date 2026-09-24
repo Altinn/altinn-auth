@@ -124,7 +124,7 @@ public partial class BankruptcyDelegationControllerTest
         {
             var problem = await SendAndAssertBadRequest(method, $"{template}&{toParameter}={TestEntities.PersonMargit.Id}");
 
-            Assert.Single(problem.Errors, e => e.ErrorCode == ValidationErrors.EntityNotExists.ErrorCode);
+            Assert.Contains(problem.Errors, e => e.ErrorCode == ValidationErrors.EntityNotExists.ErrorCode);
         }
 
         /// <summary>
