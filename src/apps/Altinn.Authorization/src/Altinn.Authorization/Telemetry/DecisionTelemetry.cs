@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using Altinn.Platform.Authorization.Models.EventLog;
 
 namespace Altinn.Platform.Authorization.Telemetry
 {
@@ -58,8 +59,11 @@ namespace Altinn.Platform.Authorization.Telemetry
         private const string ResourceIdTag = "resource.id";
         private const string ApiKindTag = "pdp.api.kind";
         private const string CallerKindTag = "pdp.caller.kind";
+        private const string AuditLogDuplicateTag = "auditlog.duplicate";
 
         private readonly Counter<long> _pdpDecisions;
+        private readonly Counter<long> _auditLogEvents;
+        private readonly Counter<long> _auditLogTrackerCapacityRotations;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DecisionTelemetry"/> class. Registered as a
@@ -73,6 +77,14 @@ namespace Altinn.Platform.Authorization.Telemetry
                 "altinn.pdp.decisions",
                 unit: "1",
                 description: "Number of PDP authorization decisions evaluated");
+            _auditLogEvents = meter.CreateCounter<long>(
+                "altinn.pdp.auditlog.events",
+                unit: "1",
+                description: "Number of authorization events queued for the audit log, by whether they repeat an event already seen");
+            _auditLogTrackerCapacityRotations = meter.CreateCounter<long>(
+                "altinn.pdp.auditlog.tracker.capacity_rotations",
+                unit: "1",
+                description: "Number of times the audit log duplicate tracker was full and forgot its oldest events before their window ended");
         }
 
         /// <summary>
@@ -104,5 +116,39 @@ namespace Altinn.Platform.Authorization.Telemetry
 
             _pdpDecisions.Add(1, tags);
         }
+
+        /// <summary>
+        /// Records an authorization event queued for the audit log, and whether it repeats one already
+        /// seen. The share of duplicates is what deduplication before the queue would save.
+        /// </summary>
+        /// <param name="duplicateKind">How the event was classified by the duplicate tracker.</param>
+        /// <remarks>
+        /// Deliberately not dimensioned on the resource: the total share is what matters, and the audit
+        /// log covers far more resources than a time series per resource can carry.
+        /// </remarks>
+        public void RecordAuditLogEvent(AuthorizationEventDuplicateKind duplicateKind)
+        {
+            string duplicate = duplicateKind switch
+            {
+                AuthorizationEventDuplicateKind.None => "none",
+                AuthorizationEventDuplicateKind.SameTrace => "trace",
+                AuthorizationEventDuplicateKind.Window => "window",
+                _ => UnknownDimensionValue,
+            };
+
+            TagList tags = new()
+            {
+                { AuditLogDuplicateTag, duplicate },
+            };
+
+            _auditLogEvents.Add(1, tags);
+        }
+
+        /// <summary>
+        /// Records that the audit log duplicate tracker was full and started a new generation early,
+        /// forgetting its oldest events before their window ended. Above zero means the effective window
+        /// is shorter than configured, and duplicates are undercounted.
+        /// </summary>
+        public void RecordAuditLogTrackerCapacityRotation() => _auditLogTrackerCapacityRotations.Add(1);
     }
 }

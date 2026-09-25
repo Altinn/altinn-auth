@@ -100,6 +100,45 @@ namespace Altinn.Platform.Authorization.Helpers
         }
 
         /// <summary>
+        /// Returns the values of the resource instance attribute (<c>urn:altinn:resource:instance-id</c>). It
+        /// is not persisted as a column of its own, but identifies what was accessed, such as a single
+        /// message or dialog.
+        /// </summary>
+        /// <param name="request">The context request</param>
+        /// <returns>The values in the order of the request, or an empty list when there are none</returns>
+        public static IReadOnlyList<string> GetResourceInstanceIds(XacmlContextRequest request)
+        {
+            // Runs for every logged decision while duplicates are measured, so plain loops rather than LINQ.
+            List<string>? values = null;
+
+            if (request != null)
+            {
+                foreach (XacmlContextAttributes attr in request.Attributes)
+                {
+                    if (!attr.Category.OriginalString.Equals(XacmlConstants.MatchAttributeCategory.Resource))
+                    {
+                        continue;
+                    }
+
+                    foreach (XacmlAttribute xacmlAtr in attr.Attributes)
+                    {
+                        if (!xacmlAtr.AttributeId.OriginalString.Equals(XacmlRequestAttribute.ResourceRegistryInstanceAttribute))
+                        {
+                            continue;
+                        }
+
+                        foreach (XacmlAttributeValue value in xacmlAtr.AttributeValues)
+                        {
+                            (values ??= new List<string>(2)).Add(value.Value);
+                        }
+                    }
+                }
+            }
+
+            return values ?? [];
+        }
+
+        /// <summary>
         /// Returens the policy resource type based on XacmlContextRequest
         /// </summary>
         /// <param name="request">The requestId</param>
