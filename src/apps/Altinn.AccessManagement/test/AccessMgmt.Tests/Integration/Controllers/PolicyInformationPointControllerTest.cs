@@ -77,7 +77,7 @@ public class PolicyInformationPointControllerTest : IClassFixture<AccessMgmtApiF
     public async Task GetDelegationChanges_ValidRequest_Returns200Ok(string scenario)
     {
         // Act
-        HttpResponseMessage actualResponse = await _client.PostAsync($"accessmanagement/api/v1/policyinformation/getdelegationchanges", GetRequest(scenario), TestContext.Current.CancellationToken);
+        HttpResponseMessage actualResponse = await _client.PostAsync($"accessmanagement/api/v1/internal/policyinformation/getdelegationchanges", GetRequest(scenario), TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, actualResponse.StatusCode);
@@ -96,7 +96,7 @@ public class PolicyInformationPointControllerTest : IClassFixture<AccessMgmtApiF
     public async Task GetAccessPackages_ValidResponse(string scenario, string from, string to, List<AccessPackageUrn> expected)
     {
         // Act
-        HttpResponseMessage actualResponse = await _client.GetAsync($"accessmanagement/api/v1/policyinformation/accesspackages?from={from}&to={to}");
+        HttpResponseMessage actualResponse = await _client.GetAsync($"accessmanagement/api/v1/internal/policyinformation/accesspackages?from={from}&to={to}");
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, actualResponse.StatusCode);

@@ -41,7 +41,7 @@ public class AccessManagementWrapper : IAccessManagementWrapper
     public async Task<IEnumerable<DelegationChangeExternal>> GetAllDelegationChanges(DelegationChangeInput input, CancellationToken cancellationToken = default)
     {
         var response = await _client.Client.SendAsync(
-            new(HttpMethod.Post, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), "policyinformation/getdelegationchanges"))
+            new(HttpMethod.Post, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), "internal/policyinformation/getdelegationchanges"))
             {
                 Content = new StringContent(JsonSerializer.Serialize(input), Encoding.UTF8, MediaTypeNames.Application.Json)
             },
@@ -124,7 +124,7 @@ public class AccessManagementWrapper : IAccessManagementWrapper
         if (!_memoryCache.TryGetValue(cacheKey, out IEnumerable<AccessPackageUrn> result))
         {
             var response = await _client.Client.SendAsync(
-                new(HttpMethod.Get, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), $"policyinformation/accesspackages?to={to}&from={from}")),
+                new(HttpMethod.Get, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), $"internal/policyinformation/accesspackages?to={to}&from={from}")),
                 cancellationToken);
 
             if (response.IsSuccessStatusCode)
@@ -155,7 +155,7 @@ public class AccessManagementWrapper : IAccessManagementWrapper
         if (!_memoryCache.TryGetValue(cacheKey, out PipResponseDto result))
         {
             var response = await _client.Client.SendAsync(
-                new(HttpMethod.Get, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), $"policyinformation/roles-and-accesspackages?to={to}&from={from}")),
+                new(HttpMethod.Get, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), $"internal/policyinformation/roles-and-accesspackages?to={to}&from={from}")),
                 cancellationToken);
 
             if (response.IsSuccessStatusCode)

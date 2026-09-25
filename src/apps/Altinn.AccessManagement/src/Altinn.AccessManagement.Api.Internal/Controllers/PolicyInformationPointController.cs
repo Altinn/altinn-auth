@@ -13,7 +13,8 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers;
 /// <summary>
 /// Controller responsible for all operations for managing delegations of Altinn Apps
 /// </summary>
-[Route("accessmanagement/api/v1/policyinformation")]
+[Route("accessmanagement/api/v1/internal/policyinformation")]
+[Route("accessmanagement/api/v1/policyinformation")] // TODO: Remove this legacy route once Altinn.Authorization calls the internal route in all envs
 [ApiController]
 public class PolicyInformationPointController(
     IPolicyInformationPoint pip,

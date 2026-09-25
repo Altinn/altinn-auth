@@ -357,7 +357,7 @@ public class PolicyInformationPointRuntimeDelegatedSigningTest
         };
 
         var response = await _client.PostAsJsonAsync(
-            "accessmanagement/api/v1/policyinformation/getdelegationchanges",
+            "accessmanagement/api/v1/internal/policyinformation/getdelegationchanges",
             request,
             TestContext.Current.CancellationToken);
 
@@ -398,7 +398,7 @@ public class PolicyInformationPointRuntimeDelegatedSigningTest
         };
 
         var response = await _client.PostAsJsonAsync(
-            "accessmanagement/api/v1/policyinformation/getdelegationchanges",
+            "accessmanagement/api/v1/internal/policyinformation/getdelegationchanges",
             request,
             TestContext.Current.CancellationToken);
 
@@ -439,7 +439,7 @@ public class PolicyInformationPointRuntimeDelegatedSigningTest
         };
 
         var response = await _client.PostAsJsonAsync(
-            "accessmanagement/api/v1/policyinformation/getdelegationchanges",
+            "accessmanagement/api/v1/internal/policyinformation/getdelegationchanges",
             request,
             TestContext.Current.CancellationToken);
 
@@ -479,7 +479,7 @@ public class PolicyInformationPointRuntimeDelegatedSigningTest
         };
 
         var response = await _client.PostAsJsonAsync(
-            "accessmanagement/api/v1/policyinformation/getdelegationchanges",
+            "accessmanagement/api/v1/internal/policyinformation/getdelegationchanges",
             request,
             TestContext.Current.CancellationToken);
 
@@ -512,7 +512,7 @@ public class PolicyInformationPointRuntimeDelegatedSigningTest
         };
 
         var response = await _client.PostAsJsonAsync(
-            "accessmanagement/api/v1/policyinformation/getdelegationchanges",
+            "accessmanagement/api/v1/internal/policyinformation/getdelegationchanges",
             request,
             TestContext.Current.CancellationToken);
 
