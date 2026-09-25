@@ -1,0 +1,53 @@
+meta {
+  name: 02_WHEN_UnknownAppReturnsNotFound
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/authorization/api/v1/policies/roleswithaccess/:org/:app
+  body: none
+  auth: none
+}
+
+params:path {
+  org: {{org}}
+  app: {{app}}
+}
+
+headers {
+  Accept: application/json
+  Ocp-Apim-Subscription-Key: {{apimSubscriptionKey}}
+}
+
+docs {
+  WHEN the roles with access are requested for an app that has no stored
+  policy, THEN the response is 404 with a message string, not a problem
+  body. With Accept: application/json the body is a JSON string:
+
+    "No valid policy found for org 'ttd' and app 'authz-bruno-no-such-app'"
+
+  Without a JSON Accept header the same message comes back as text/plain.
+
+  The same 404 is returned for an app that does not exist and for an app
+  whose policy file is missing, since the lookup only reads policy storage.
+}
+
+script:pre-request {
+  const td = require("./testdata/policies/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  bru.setVar("org", td.unknownApp.org);
+  bru.setVar("app", td.unknownApp.app);
+}
+
+tests {
+  const td = require("./testdata/policies/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  test("WHEN the app has no policy, the request returns 404", function() {
+    expect(res.status).to.equal(404);
+  });
+
+  test("THEN the message names the org and app", function() {
+    expect(res.getBody()).to.equal("No valid policy found for org '" + td.unknownApp.org + "' and app '" + td.unknownApp.app + "'");
+  });
+}
