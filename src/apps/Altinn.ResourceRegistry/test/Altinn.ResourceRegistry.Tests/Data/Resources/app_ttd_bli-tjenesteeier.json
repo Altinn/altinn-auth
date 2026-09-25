@@ -1,0 +1,50 @@
+{
+  "identifier": "app_ttd_bli-tjenesteeier",
+  "title": {
+    "en": "Become Service Owner",
+    "nb": "Bli tjenesteeier",
+    "nn": "Bli tenesteeigar"
+  },
+  "description": {
+    "en": "Application for becoming a service owner in Altinn",
+    "nb": "Søknad om å bli tjenesteeier i Altinn",
+    "nn": "Søknad om å bli tenesteeigar i Altinn"
+  },
+  "rightDescription": {
+    "en": "Gives access to manage the application",
+    "nb": "Gir tilgang til å administrere søknaden",
+    "nn": "Gir tilgang til å administrere søknaden"
+  },
+  "homepage": "https://altinn.no",
+  "status": "Active",
+  "contactPoints": [
+    {
+      "category": "Support",
+      "email": "support@ttd.no",
+      "telephone": "+4798765432",
+      "contactPage": "https://altinn.no/contact"
+    }
+  ],
+  "isPartOf": "ttd-apps",
+  "resourceReferences": [
+    {
+      "reference": "ttd/bli-tjenesteeier",
+      "referenceSource": "Altinn3",
+      "referenceType": "ApplicationId"
+    }
+  ],
+  "hasCompetentAuthority": {
+    "organization": "991825827",
+    "orgcode": "ttd",
+    "name": {
+      "en": "Test Department",
+      "nb": "Testdepartementet",
+      "nn": "Testdepartementet"
+    }
+  },
+  "keywords": [],
+  "limitedByRRR": false,
+  "selfIdentifiedUserEnabled": false,
+  "enterpriseUserEnabled": false,
+  "resourceType": "AltinnApp"
+}

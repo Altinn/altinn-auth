@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xacml:Policy xmlns:xsl="http://www.w3.org/2001/XMLSchema-instance" xmlns:xacml="urn:oasis:names:tc:xacml:3.0:core:schema:wd-17" PolicyId="urn:altinn:resource:devtest_gar_bruno_client_resource:policyid:1" Version="1.0" RuleCombiningAlgId="urn:oasis:names:tc:xacml:3.0:rule-combining-algorithm:deny-overrides">
+    <xacml:Target/>
+    <xacml:Rule RuleId="urn:altinn:resource:devtest_gar_bruno_client_resource:ruleid:1" Effect="Permit">
+        <xacml:Description>Bruno automated test resource policy for resource; devtest_gar_bruno_client_resource for both A2 Client roles and A3 Client AccessPackages. Ansvarlig revisor A0237 -> urn:altinn:accesspackage:ansvarlig-revisor, Regnskapsfører med signeringsrettighet A0239 -> urn:altinn:accesspackage:regnskapsforer-med-signeringsrettighet and Regnskapsfører Lønn A0241 -> urn:altinn:accesspackage:regnskapsforer-lonn. In addition to a directly delegable access package urn:altinn:accesspackage:reviorattesterer, for general client delegation scenarios</xacml:Description>
+        <xacml:Target>
+            <xacml:AnyOf>
+                <xacml:AllOf>
+                    <xacml:Match MatchId="urn:oasis:names:tc:xacml:3.0:function:string-equal-ignore-case">
+                        <xacml:AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">A0237</xacml:AttributeValue>
+                        <xacml:AttributeDesignator AttributeId="urn:altinn:rolecode" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="false"/>
+                    </xacml:Match>
+                </xacml:AllOf>
+		        <xacml:AllOf>
+                    <xacml:Match MatchId="urn:oasis:names:tc:xacml:3.0:function:string-equal-ignore-case">
+                        <xacml:AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">ansvarlig-revisor</xacml:AttributeValue>
+                        <xacml:AttributeDesignator AttributeId="urn:altinn:accesspackage" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="false"/>
+                    </xacml:Match>
+                </xacml:AllOf>
+		        <xacml:AllOf>
+                    <xacml:Match MatchId="urn:oasis:names:tc:xacml:3.0:function:string-equal-ignore-case">
+                        <xacml:AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">A0239</xacml:AttributeValue>
+                        <xacml:AttributeDesignator AttributeId="urn:altinn:rolecode" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="false"/>
+                    </xacml:Match>
+                </xacml:AllOf>
+                <xacml:AllOf>
+                    <xacml:Match MatchId="urn:oasis:names:tc:xacml:3.0:function:string-equal-ignore-case">
+                        <xacml:AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">regnskapsforer-med-signeringsrettighet</xacml:AttributeValue>
+                        <xacml:AttributeDesignator AttributeId="urn:altinn:accesspackage" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="false"/>
+                    </xacml:Match>
+                </xacml:AllOf>
+                <xacml:AllOf>
+                    <xacml:Match MatchId="urn:oasis:names:tc:xacml:3.0:function:string-equal-ignore-case">
+                        <xacml:AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">A0241</xacml:AttributeValue>
+                        <xacml:AttributeDesignator AttributeId="urn:altinn:rolecode" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="false"/>
+                    </xacml:Match>
+                </xacml:AllOf>
+                <xacml:AllOf>
+                    <xacml:Match MatchId="urn:oasis:names:tc:xacml:3.0:function:string-equal-ignore-case">
+                        <xacml:AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">regnskapsforer-lonn</xacml:AttributeValue>
+                        <xacml:AttributeDesignator AttributeId="urn:altinn:accesspackage" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="false"/>
+                    </xacml:Match>
+                </xacml:AllOf>
+            </xacml:AnyOf>
+            <xacml:AnyOf>
+                <xacml:AllOf>
+                    <xacml:Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+                        <xacml:AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">devtest_gar_bruno_client_resource</xacml:AttributeValue>
+                        <xacml:AttributeDesignator AttributeId="urn:altinn:resource" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:resource" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="false"/>
+                    </xacml:Match>
+                </xacml:AllOf>
+            </xacml:AnyOf>
+            <xacml:AnyOf>
+                <xacml:AllOf>
+                    <xacml:Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+                        <xacml:AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">read</xacml:AttributeValue>
+                        <xacml:AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:action:action-id" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:action" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="false"/>
+                    </xacml:Match>
+                </xacml:AllOf>
+                <xacml:AllOf>
+                    <xacml:Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+                        <xacml:AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">write</xacml:AttributeValue>
+                        <xacml:AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:action:action-id" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:action" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="false"/>
+                    </xacml:Match>
+                </xacml:AllOf>
+            </xacml:AnyOf>
+        </xacml:Target>
+    </xacml:Rule>
+    <xacml:ObligationExpressions>
+        <xacml:ObligationExpression FulfillOn="Permit" ObligationId="urn:altinn:obligation:1">
+            <xacml:AttributeAssignmentExpression AttributeId="urn:altinn:obligation-assignment:1" Category="urn:altinn:minimum-authenticationlevel">
+                <xacml:AttributeValue DataType="http://www.w3.org/2001/XMLSchema#integer">3</xacml:AttributeValue>
+            </xacml:AttributeAssignmentExpression>
+        </xacml:ObligationExpression>
+    </xacml:ObligationExpressions>
+</xacml:Policy>

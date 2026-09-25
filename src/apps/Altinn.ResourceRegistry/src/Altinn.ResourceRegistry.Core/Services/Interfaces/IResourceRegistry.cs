@@ -1,0 +1,191 @@
+﻿using System.Buffers;
+using Altinn.Authorization.ProblemDetails;
+using Altinn.ResourceRegistry.Core.Models;
+
+namespace Altinn.ResourceRegistry.Core.Services.Interfaces
+{
+    /// <summary>
+    /// Interface for the ResourceRegistryService implementation
+    /// </summary>
+    public interface IResourceRegistry
+    {
+        /// <summary>
+        /// Gets a single resource by its resource identifier if it exists in the resource registry
+        /// </summary>
+        /// <param name="id">The resource identifier to retrieve</param>
+        /// <param name="versionId">The version identifier to retrieve</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns>ServiceResource</returns>
+        Task<ServiceResource> GetResource(string id, int? versionId, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Gets a single Altinn app as a <see cref="ServiceResource"/> directly from application storage.
+        /// Used for apps that are not registered as resources in the resource registry. Bypasses the cached
+        /// application list so a freshly published app is resolvable immediately instead of returning
+        /// <see langword="null"/> until the list cache expires.
+        /// </summary>
+        /// <param name="org">The organisation/service owner code</param>
+        /// <param name="app">The application name (without the org prefix)</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns>The app as a service resource, or <see langword="null"/> if it does not exist</returns>
+        Task<ServiceResource> GetAppResource(string org, string app, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Gets the resource owner for a given resource, or <see langword="null"/> if it has no owner.
+        /// </summary>
+        /// <param name="id">The resource identifier to retrieve</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns>A <see cref="CompetentAuthorityReference"/> or <see langword="null"/> if the resource exists, otherwise a <see cref="Result{T}"/> with an error.</returns>
+        Task<Result<CompetentAuthorityReference>> GetResourceOwner(string id, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Returns the full list of 
+        /// </summary>
+        /// <param name="includeApps">Wheather or not to include apps</param>
+        /// <param name="includeExpired">Defines if expired resources should be included</param>
+        /// <param name="includeMigratedApps">Whether or not to include migrated apps from A1/A2</param>
+        /// <param name="includeAllVersions">Include all versions of resources</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns></returns>
+        Task<List<ServiceResource>> GetResourceList(bool includeApps, bool includeExpired, bool includeMigratedApps, bool includeAllVersions, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Creates a service resource in the resource registry if it pass all validation checks
+        /// </summary>
+        /// <param name="serviceResource">Service resource model to create in the resource registry</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns>The result of the operation</returns>
+        Task CreateResource(ServiceResource serviceResource, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Updates a service resource in the resource registry if it pass all validation checks
+        /// </summary>
+        /// <param name="serviceResource">Service resource model for update in the resource registry</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns>The result of the operation</returns>
+        Task UpdateResource(ServiceResource serviceResource, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Deletes a resource from the resource registry
+        /// </summary>
+        /// <param name="id">The resource identifier to delete</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        Task Delete(string id, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Allows for searching for resources in the resource registry
+        /// </summary>
+        /// <param name="resourceSearch">The search model defining the search filter criterias</param>
+        /// <param name="includeAllVersions">Whether to include all versions of resources in the search results</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns>A list of service resources found to match the search criterias</returns>
+        Task<List<ServiceResource>> Search(ResourceSearch resourceSearch, bool includeAllVersions, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Allows for searching for resources in the resource registry
+        /// </summary>
+        /// <param name="resourceSearch">The search model defining the search filter criterias</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns>A list of service resources found to match the search criterias</returns>
+        Task<List<ServiceResource>> GetSearchResults(ResourceSearch resourceSearch, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Allows for storing a policy xacml policy for the resource
+        /// </summary>
+        /// <param name="serviceResource">The resource</param>
+        /// <param name="policyContent">The file stream to the policy file</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns>Bool if storing the policy was successfull</returns>
+        Task<bool> StorePolicy(ServiceResource serviceResource, ReadOnlySequence<byte> policyContent, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Returns the policy for a service resource
+        /// </summary>
+        /// <param name="resourceId">The resource id</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns>The policy as stream</returns>
+        Task<Stream> GetPolicy(string resourceId, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Returns the policy for an app
+        /// </summary>
+        /// <param name="org">the org identifer</param>
+        /// <param name="app">the app identifer</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns>The policy as stream</returns>
+        Task<Stream> GetAppPolicy(string org, string app, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Returns a list of flatten policy rules for a every unqie combinatiotion of subject, action, 
+        /// </summary>
+        /// <param name="resourceId">The resourceID. Support both App and resource</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns></returns>
+        Task<List<PolicyRule>> GetFlattenPolicyRules(string resourceId, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Returns a list of rights for a resource. A right is a combination of resource and action. The response list the subjects in policy that is granted the right.
+        /// Response is grouped by right.
+        /// </summary>
+        Task<List<PolicyRight>> GetPolicyRights(string resourceId, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Returns a list of rights for a resource. A right is a combination of resource and action. The response list the subjects in policy that is granted the right.
+        /// </summary>
+        Task<List<Right>> GetPolicyRightsV2(string resourceId, bool includeServiceOwnerRights, bool includeAppRights, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Returns a list over resources for what each subject has access to
+        /// </summary>
+        /// <param name="subjects">List of subjects</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns>Resources for given subjects</returns>
+        Task<List<SubjectResources>> FindResourcesForSubjects(List<string> subjects, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Returns a list of subjects in a policy for a resource
+        /// </summary>
+        /// <param name="resources">List of resource attributes</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns>List of subjects for a given resource</returns>
+        Task<List<ResourceSubjects>> FindSubjectsForResources(List<string> resources, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Based on a service resource the resource subjects will be reloaded on to database. 
+        /// Created to support migrated apps and resource that was migrated before ResourceSubjecst whent in to production
+        /// </summary>
+        /// <param name="serviceResource">The service resource</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        Task UpdateResourceSubjectsFromResourcePolicy(ServiceResource serviceResource, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Based on org and app loads app policy from policy storage and updates resource subjects for it.
+        /// </summary>
+        /// <param name="org">The organization</param>
+        /// <param name="app">The app</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        Task UpdateResourceSubjectsFromAppPolicy(string org, string app, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Returns a list of resource/subject pairs (including deleted) that has been updated since lastUpdated
+        /// </summary>
+        /// <param name="lastUpdated">The timestamp from which to return updated entries</param>
+        /// <param name="limit">The maximum number of entries to return</param>
+        /// <param name="skipPast">Optional ResourceUrn,SubjectUrn pair to skip past if "since" value matches multiple rows</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns>List of resource/subject pairs updated since lastUpdated</returns>
+        Task<List<UpdatedResourceSubject>> FindUpdatedResourceSubjects(DateTimeOffset lastUpdated, int limit, (Uri ResourceUrn, Uri SubjectUrn)? skipPast = null, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Returns a list of changed resources ordered by their global change id, which is bumped on every
+        /// metadata create/update, policy upload and delete. Each resource appears at most once, at its
+        /// latest change, and only resources that have had a policy uploaded at least once (the policy may
+        /// be empty) and that are not deleted are included.
+        /// </summary>
+        /// <param name="skipPastChangeId">Only changes with a sequence number greater than this value are returned. Use 0 to start from the beginning</param>
+        /// <param name="limit">The maximum number of entries to return</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns>List of changed resources ordered by change-log sequence number</returns>
+        Task<List<ResourceChange>> FindChangedResources(long skipPastChangeId, int limit, CancellationToken cancellationToken = default);
+    }
+}
