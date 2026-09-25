@@ -1,0 +1,29 @@
+meta {
+  name: Put authz-bruno access list members
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{baseUrl}}/resourceregistry/api/v1/access-lists/{{resourceOwner}}/{{listIdentifier}}/members
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: 
+}
+
+body:json {
+  {
+    "data": [
+      "urn:altinn:organization:identifier-no:313776735"
+    ]
+  }
+}
+
+vars:pre-request {
+  auth_tokenType: Enterprise
+  resourceOwner: ttd
+  listIdentifier: authz-bruno
+}

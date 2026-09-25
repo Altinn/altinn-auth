@@ -1,0 +1,30 @@
+meta {
+  name: Put authz-bruno nofilter resource-connection
+  type: http
+  seq: 3
+}
+
+put {
+  url: {{baseUrl}}/resourceregistry/api/v1/access-lists/{{resourceOwner}}/{{listIdentifier}}/resource-connections/{{resourceId}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: 
+}
+
+body:json {
+  {
+  //  "actionFilters": [
+   //   "read"
+   // ]
+  }
+}
+
+vars:pre-request {
+  auth_tokenType: Enterprise
+  resourceOwner: ttd
+  listIdentifier: authz-bruno
+  resourceId: devtest_gar_bruno_accesslist
+}

@@ -1,0 +1,75 @@
+{
+  "identifier": "skd-migrert-4628-1",
+  "version": "1",
+  "title": {
+    "en": "Tax basis",
+    "nb": "Skattegrunnlag latest version",
+    "nn": "Skattegrunnlag"
+  },
+  "description": {
+    "en": "Information reported in connection with the {inntektsaar} tax return:<br>,• Income<br> ,Tax deduction<br> Wealth (including housing car and ,other assets)<br>,• Debt<br>",
+    "nb": "Opplysninger rapportert i forbindelse med skattemeldingen (selvangivelsen) {inntektsaar}: <br>• Inntekt,<br>•Skattefradrag<br>• Formue(inkl. bolig,bil og,andre verdier)<br> • Gjeld <br>",
+    "nn": "Opplysninger rapportert i forbindelse med skattemeldingen (selvangivelsen) {inntektsaar}: <br>• Inntekt,<br>•Skattefradrag<br>• Formue(inkl. bolig,bil og,andre verdier)<br> • Gjeld <br>"
+  },
+  "rightDescription": {
+    "en": "Test",
+    "nb": "Test",
+    "nn": "Test"
+  },
+  "status": "UnderDevelopment",
+  "contactPoints": [
+    {
+      "category": "Tilbakemeldinger",
+      "email": "survey@stami.no",
+      "telephone": "",
+      "contactPage": ""
+    }
+  ],
+  "resourceReferences": [
+    {
+      "referenceSource": "Altinn2",
+      "reference": "4628",
+      "referenceType": "ServiceCode"
+    },
+    {
+      "referenceSource": "Altinn2",
+      "reference": "1",
+      "referenceType": "ServiceEditionCode"
+    },
+    {
+      "referenceSource": "Altinn2",
+      "reference": "9546",
+      "referenceType": "ServiceEditionVersion"
+    }
+  ],
+  "delegable": true,
+  "visible": false,
+  "hasCompetentAuthority": {
+    "name": {
+      "en": "Norwegian Tax Administration",
+      "nb": "Skatteetaten",
+      "nn": "Skatteetaten"
+    },
+    "organization": "974761076",
+    "orgcode": "SKD"
+  },
+  "accessListMode": "Disabled",
+  "selfIdentifiedUserEnabled": false,
+  "enterpriseUserEnabled": false,
+  "resourceType": "Consent",
+  "consentTemplate": "samtykkemal_simpleconsent",
+  "consentText": {
+    "en": "Information reported in connection with the {inntektsaar} tax return:<br>,• Income<br> ,Tax deduction<br> Wealth (including housing car and ,other assets)<br>,• Debt<br>",
+    "nb": "Opplysninger rapportert i forbindelse med skattemeldingen (selvangivelsen) {inntektsaar}: <br>• Inntekt,<br>•Skattefradrag<br>• Formue(inkl. bolig,bil og,andre verdier)<br> • Gjeld <br>",
+    "nn": "Opplysninger rapportert i forbindelse med skattemeldingen (selvangivelsen) {inntektsaar}: <br>• Inntekt,<br>•Skattefradrag<br>• Formue(inkl. bolig,bil og,andre verdier)<br> • Gjeld <br>"
+  },
+  "consentMetadata": {
+    "virksomhet": {
+      "optional": false
+    },
+    "samtykkelink": {
+      "optional": false
+    }
+  },
+  "isOneTimeConsent": false
+}

@@ -1,0 +1,314 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Net;
+using Altinn.ResourceRegistry.Core;
+using Altinn.ResourceRegistry.Core.Extensions;
+using Altinn.ResourceRegistry.Core.Helpers;
+using Altinn.ResourceRegistry.Persistence.Configuration;
+using Azure;
+using Azure.Storage;
+using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Models;
+using Azure.Storage.Blobs.Specialized;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
+
+namespace Altinn.ResourceRegistry.Persistence;
+
+/// <summary>
+/// Repository for handling policy files
+/// </summary>
+[ExcludeFromCodeCoverage]
+internal class PolicyRepository : IPolicyRepository
+{
+    private readonly ILogger<PolicyRepository> _logger;
+    private readonly AzureStorageConfiguration _storageConfig;
+    private readonly BlobContainerClient _metadataContainerClient;
+    private readonly BlobContainerClient _resourceRegisterContainerClient;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="PolicyRepository"/> class
+    /// </summary>
+    /// <param name="storageConfig">The storage configuration for Azure Blob Storage.</param>
+    /// <param name="logger">logger</param>
+    public PolicyRepository(
+        IOptions<AzureStorageConfiguration> storageConfig,
+        ILogger<PolicyRepository> logger)
+    {
+        _logger = logger;
+        _storageConfig = storageConfig.Value;
+
+        StorageSharedKeyCredential resourceRegisterCredentials = new StorageSharedKeyCredential(_storageConfig.ResourceRegistryAccountName, _storageConfig.ResourceRegistryAccountKey);
+        BlobServiceClient resourceRegisterServiceClient = new BlobServiceClient(new Uri(_storageConfig.ResourceRegistryBlobEndpoint), resourceRegisterCredentials);
+        _resourceRegisterContainerClient = resourceRegisterServiceClient.GetBlobContainerClient(_storageConfig.ResourceRegistryContainer);
+
+        StorageSharedKeyCredential metadataCredentials = new StorageSharedKeyCredential(_storageConfig.MetadataAccountName, _storageConfig.MetadataAccountKey);
+        BlobServiceClient metadataServiceClient = new BlobServiceClient(new Uri(_storageConfig.MetadataBlobEndpoint), metadataCredentials);
+        _metadataContainerClient = metadataServiceClient.GetBlobContainerClient(_storageConfig.MetadataContainer);
+    }
+
+    /// <inheritdoc/>
+    public async Task<Stream?> GetPolicyAsync(string resourceId, CancellationToken cancellationToken = default)
+    {
+        string filePath = $"{resourceId.AsFilePath()}/resourcepolicy.xml";
+        BlobClient blobClient = CreateBlobClient(filePath);
+
+        return await GetBlobStreamInternal(blobClient, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<Stream?> GetAppPolicyAsync(string org, string app, CancellationToken cancellationToken = default)
+    {
+        string filePath = PolicyHelper.GetAltinnAppsPolicyPath(org, app);
+        BlobClient blobClient = CreateAppPolicyBlobClient(filePath);
+
+        return await GetBlobStreamInternal(blobClient, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<Stream?> GetPolicyVersionAsync(string resourceId, string version, CancellationToken cancellationToken = default)
+    {
+        string filePath = $"{resourceId.AsFilePath()}/resourcepolicy.xml";
+        BlobClient blobClient = CreateBlobClient(filePath).WithVersion(version);
+
+        return await GetBlobStreamInternal(blobClient, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<Response<BlobContentInfo>> WritePolicyAsync(string resourceId, Stream fileStream, CancellationToken cancellationToken = default)
+    {
+        string filePath = $"{resourceId.AsFilePath()}/resourcepolicy.xml";
+        BlobClient blobClient = CreateBlobClient(filePath);
+
+        return await WriteBlobStreamInternal(blobClient, fileStream, cancellationToken: cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<Response<BlobContentInfo>> WriteAppPolicyAsync(string org, string app, Stream fileStream, CancellationToken cancellationToken = default)
+    {
+        string filePath = PolicyHelper.GetAltinnAppsPolicyPath(org, app);
+        BlobClient blobClient = CreateAppPolicyBlobClient(filePath);
+
+        return await WriteBlobStreamInternal(blobClient, fileStream, cancellationToken: cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<Response<BlobContentInfo>> WritePolicyConditionallyAsync(string resourceId, Stream fileStream, string blobLeaseId, CancellationToken cancellationToken = default)
+    {
+        string filePath = $"{resourceId.AsFilePath()}/resourcepolicy.xml";
+        BlobClient blobClient = CreateBlobClient(filePath);
+
+        BlobUploadOptions blobUploadOptions = new BlobUploadOptions()
+        {
+            Conditions = new BlobRequestConditions()
+            {
+                LeaseId = blobLeaseId
+            }
+        };
+
+        return await WriteBlobStreamInternal(blobClient, fileStream, blobUploadOptions, cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<string?> TryAcquireBlobLease(string resourceId, CancellationToken cancellationToken = default)
+    {
+        string filePath = $"{resourceId.AsFilePath()}/resourcepolicy.xml";
+        BlobClient blobClient = CreateBlobClient(filePath);
+        BlobLeaseClient blobLeaseClient = blobClient.GetBlobLeaseClient();
+
+        try
+        {
+            BlobLease blobLease = await blobLeaseClient.AcquireAsync(TimeSpan.FromSeconds(_storageConfig.BlobLeaseTimeout), cancellationToken: cancellationToken);
+            return blobLease.LeaseId;
+        }
+        catch (RequestFailedException ex)
+        {
+            _logger.LogError(ex, "Failed to acquire blob lease for policy file at {filepath}. RequestFailedException", filePath);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to acquire blob lease for policy file at {filepath}. Unexpected error", filePath);
+        }
+
+        return null;
+    }
+
+    /// <inheritdoc/>
+    public async Task ReleaseBlobLease(string resourceId, string leaseId, CancellationToken cancellationToken = default)
+    {
+        string filePath = $"{resourceId.AsFilePath()}/resourcepolicy.xml";
+        BlobClient blobClient = CreateBlobClient(filePath);
+        BlobLeaseClient blobLeaseClient = blobClient.GetBlobLeaseClient(leaseId);
+        await blobLeaseClient.ReleaseAsync(cancellationToken: cancellationToken);
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> PolicyExistsAsync(string resourceId, CancellationToken cancellationToken = default)
+    {
+        string filePath = $"{resourceId.AsFilePath()}/resourcepolicy.xml";
+        try
+        {
+            BlobClient blobClient = CreateBlobClient(filePath);
+            return await blobClient.ExistsAsync(cancellationToken);
+        }
+        catch (RequestFailedException ex)
+        {
+            _logger.LogError(ex, "Failed to check if blob exists for policy file at {filepath}. RequestFailedException", filePath);
+        }
+
+        return false;
+    }
+
+    /// <inheritdoc/>
+    public async Task<Response> DeletePolicyVersionAsync(string resourceId, string version, CancellationToken cancellationToken = default)
+    {
+        string filePath = $"{resourceId.AsFilePath()}/resourcepolicy.xml";
+        try
+        {
+            BlobClient blockBlob = CreateBlobClient(filePath);
+
+            return await blockBlob.WithVersion(version).DeleteAsync(cancellationToken: cancellationToken);
+        }
+        catch (RequestFailedException ex)
+        {
+            if (ex.Status == (int)HttpStatusCode.Forbidden && ex.ErrorCode == "OperationNotAllowedOnRootBlob")
+            {
+                _logger.LogError(ex, "Failed to delete version {version} of policy file at {filepath}. Not allowed to delete current version.", version, filePath);
+                throw;
+            }
+
+            _logger.LogError(ex, "Failed to delete version {version} of policy file at {filepath}. RequestFailedException", version, filePath);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete version {version} of policy file at {filepath}. Unexpected error", version, filePath);
+            throw;
+        }
+    }
+
+    /// <inheritdoc/>
+    public async Task<bool> TryDeletePolicyAsync(string resourceId, CancellationToken cancellationToken = default)
+    {
+        string filePath = $"{resourceId.AsFilePath()}/resourcepolicy.xml";
+        try
+        {
+            BlobClient blockBlob = CreateBlobClient(filePath);
+
+            // Delete current version and all snapshots
+            bool currentDeleted = await blockBlob.DeleteIfExistsAsync(snapshotsOption: DeleteSnapshotsOption.IncludeSnapshots, cancellationToken: cancellationToken);
+
+            if (!currentDeleted)
+            {
+                _logger.LogWarning("No policy file existed at {FilePath}.", filePath);
+            }
+
+            // Enumerate versions and delete each, even if current did not exist
+            await foreach (BlobItem item in _resourceRegisterContainerClient
+               .GetBlobsAsync(
+                   traits: BlobTraits.None,
+                   states: BlobStates.Version,
+                   prefix: filePath,
+                   cancellationToken: cancellationToken)
+               .Where(b => b.VersionId is not null))
+            {
+                BlobClient versionClient = blockBlob.WithVersion(item.VersionId);
+                try
+                {
+                    await versionClient.DeleteAsync(cancellationToken: cancellationToken);
+                }
+                catch (RequestFailedException ex) when (ex.Status == 404)
+                {
+                    /* already gone */
+                }
+            }
+
+            return true;
+        }
+        catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.Forbidden && ex.ErrorCode == "OperationNotAllowedOnRootBlob")
+        {
+            _logger.LogError(ex, "Failed to delete policy file at {FilePath}. Not allowed to delete.", filePath);
+            throw;
+        }
+        catch (RequestFailedException ex)
+        {
+            _logger.LogError(ex, "Failed to delete policy file at {FilePath}. RequestFailedException", filePath);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to delete policy file at {FilePath}. Unexpected error", filePath);
+            throw;
+        }
+    }
+
+    private BlobClient CreateBlobClient(string blobName)
+    {
+        return _resourceRegisterContainerClient.GetBlobClient(blobName);
+    }
+
+    private BlobClient CreateAppPolicyBlobClient(string blobName)
+    {
+        return _metadataContainerClient.GetBlobClient(blobName);
+    }
+
+    private async Task<Stream?> GetBlobStreamInternal(BlobClient blobClient, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            Stream memoryStream = new MemoryStream();
+            await blobClient.DownloadToAsync(memoryStream, cancellationToken);
+
+            if (memoryStream.Length == 0)
+            {
+                _logger.LogWarning("Policy file at {BlobName} was downloaded but is empty.", blobClient.Name);
+                return null;
+            }
+
+            memoryStream.Position = 0;
+            return memoryStream;
+        }
+        catch (RequestFailedException ex) when (ex.Status == (int)HttpStatusCode.NotFound)
+        {
+            _logger.LogWarning("Policy file not found at {BlobName}.", blobClient.Name);
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to read policy file at {blobClient.Name}.", blobClient.Name);
+            throw;
+        }
+    }
+
+    private async Task<Response<BlobContentInfo>> WriteBlobStreamInternal(
+        BlobClient blobClient,
+        Stream fileStream,
+        BlobUploadOptions? blobUploadOptions = null,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            if (blobUploadOptions != null)
+            {
+                return await blobClient.UploadAsync(fileStream, blobUploadOptions, cancellationToken);
+            }
+
+            return await blobClient.UploadAsync(fileStream, true, cancellationToken);
+        }
+        catch (RequestFailedException ex)
+        {
+            if (ex.Status == (int)HttpStatusCode.PreconditionFailed)
+            {
+                _logger.LogError(ex, "Failed to save policy file {blobClient.Name}. Precondition failed", blobClient.Name);
+                throw;
+            }
+
+            _logger.LogError(ex, "Failed to save policy file {blobClient.Name}. RequestFailedException", blobClient.Name);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to save policy file {blobClient.Name}. Unexpected exception", blobClient.Name);
+            throw;
+        }
+    }
+}

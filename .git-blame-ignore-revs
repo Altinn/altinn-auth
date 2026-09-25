@@ -1,0 +1,5 @@
+# Commits to ignore in `git blame`. GitHub and `git blame --ignore-revs-file` read this file;
+# locally run: git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# Altinn/altinn-resource-registry#880: dotnet format baseline (whitespace only)
+2b90ba0dc98dd9aac12c870440a0cfd960b93c05
