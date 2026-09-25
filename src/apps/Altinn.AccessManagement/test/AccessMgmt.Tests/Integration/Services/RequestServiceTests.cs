@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
+using Microsoft.FeatureManagement;
 
 // No web host: builds an AppDbContext directly from the EfDatabaseFixture
 // database (a clone of the shared migrated + seeded template), then instantiates
@@ -74,7 +75,10 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
 
         var sp = collection.Services.BuildServiceProvider();
 
-        _requestService = new RequestService(_db, sp.GetRequiredService<IOptions<CoreAppsettings>>());
+        _requestService = new RequestService(
+            _db,
+            sp.GetRequiredService<IOptions<CoreAppsettings>>(),
+            new DisabledFeatureManager());
     }
 
     /// <inheritdoc />
@@ -315,4 +319,17 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
         Assert.Equal(RequestStatus.Rejected, rejected.Status);
     }
     #endregion
+
+    private sealed class DisabledFeatureManager : IFeatureManager
+    {
+        public async IAsyncEnumerable<string> GetFeatureNamesAsync()
+        {
+            await Task.CompletedTask;
+            yield break;
+        }
+
+        public Task<bool> IsEnabledAsync(string feature) => Task.FromResult(false);
+
+        public Task<bool> IsEnabledAsync<TContext>(string feature, TContext context) => Task.FromResult(false);
+    }
 }
