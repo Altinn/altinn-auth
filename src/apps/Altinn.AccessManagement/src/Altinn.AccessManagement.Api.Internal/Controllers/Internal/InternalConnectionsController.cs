@@ -14,7 +14,7 @@ using Altinn.Authorization.ProblemDetails;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Altinn.AccessManagement.Api.Internal.Controllers;
+namespace Altinn.AccessManagement.Api.Internal.Controllers.Internal;
 
 /// <summary>
 /// Controller for managing direct assigment of packages for system users.  
@@ -230,7 +230,7 @@ public class InternalConnectionsController(IConnectionService connectionService)
         {
             var handler = new JwtSecurityTokenHandler();
             var jwtSecurityToken = handler.ReadJwtToken(token);
-            
+
             if (jwtSecurityToken.Issuer.Equals(AuthzConstants.PLATFORM_ACCESSTOKEN_ISSUER_BFF, StringComparison.OrdinalIgnoreCase))
             {
                 return true;

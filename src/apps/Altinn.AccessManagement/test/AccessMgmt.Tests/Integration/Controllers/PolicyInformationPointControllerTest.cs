@@ -1,7 +1,7 @@
 ﻿using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
-using Altinn.AccessManagement.Api.Internal.Controllers;
+using Altinn.AccessManagement.Api.Internal.Controllers.Pip;
 using Altinn.AccessManagement.Api.Internal.Models;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Tests.Fixtures;

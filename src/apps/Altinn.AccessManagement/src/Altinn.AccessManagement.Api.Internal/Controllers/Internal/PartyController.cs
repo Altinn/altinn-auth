@@ -8,7 +8,7 @@ using Altinn.Authorization.ProblemDetails;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Altinn.AccessManagement.Controllers
+namespace Altinn.AccessManagement.Api.Internal.Controllers.Internal
 {
     [Authorize(Policy = AuthzConstants.PLATFORM_ACCESSTOKEN_ISSUER_ISPLATFORM)]
     [Route("accessmanagement/api/v1/internal/party")]

@@ -8,7 +8,7 @@ using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 using Altinn.Authorization.Api.Contracts.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Altinn.AccessManagement.Api.Internal.Controllers;
+namespace Altinn.AccessManagement.Api.Internal.Controllers.Pip;
 
 /// <summary>
 /// Controller responsible for all operations for managing delegations of Altinn Apps
