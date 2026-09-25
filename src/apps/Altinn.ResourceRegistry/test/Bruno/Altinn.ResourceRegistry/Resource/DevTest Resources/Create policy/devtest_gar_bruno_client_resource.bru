@@ -1,0 +1,34 @@
+meta {
+  name: devtest_gar_bruno_client_resource
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/resourceregistry/api/v1/resource/devtest_gar_bruno_client_resource/policy
+  body: multipartForm
+  auth: inherit
+}
+
+body:multipart-form {
+  policyFile: @file(Testdata/Policies/devtest_gar_bruno_client_resource.xacml)
+}
+
+script:pre-request {
+  //const token = await tokenGenerator.getToken();
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  
+  var getTokenParameters = {
+    auth_orgNo: sharedtestdata.serviceOwners.ttd.orgno,
+    auth_org: sharedtestdata.serviceOwners.ttd.org,
+    auth_tokenType: sharedtestdata.authTokenType.enterprise,
+    auth_scopes: sharedtestdata.auth_scopes.resourceregistryWrite
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  
+  bru.setVar("bearerToken",  token);
+  
+  
+  
+}

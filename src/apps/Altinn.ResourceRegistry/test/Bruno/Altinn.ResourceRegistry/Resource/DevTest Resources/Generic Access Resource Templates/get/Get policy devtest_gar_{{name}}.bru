@@ -1,0 +1,15 @@
+meta {
+  name: Get policy devtest_gar_{{name}}
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/resourceregistry/api/v1/resource/devtest_gar_{{name}}/policy
+  body: none
+  auth: none
+}
+
+vars:pre-request {
+  name: 
+}

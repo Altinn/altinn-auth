@@ -1,0 +1,67 @@
+meta {
+  name: Create altinn_client_administration
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/resourceregistry/api/v1/resource
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "identifier": "altinn_client_administration",
+    "title": {
+      "en": "Client administration",
+      "nb": "Klientadministrering",
+      "nn": "Klientadministrering"
+    },
+    "description": {
+      "en": "System resource for authorization of users which should have access to client administration user interfaces and access information in Altinn.",
+      "nb": "System ressurs for autorisasjon av brukere som skal ha tilgang til brukergrensesnitt og informasjon knytt til klientadministrering i Altinn.",
+      "nn": "System ressurs for autorisasjon av brukarar som skal ha tilgong til brukargrensesnitt og informasjon knytta til klientadministrering i Altinn."
+    },
+    "rightDescription": {
+      "en": "User with who receives this resource will be able to access all client administration user interfaces and access information on behalf of the delegating party. The user will also be able to perform delegation, of roles or rights the delegating party possess on behalf of its clients.",
+      "nb": "Bruker som mottar denne ressursen vil få tilgang til alle brukergrensesnitt for klientadministrering og behandle klienter av delegerende part. Brukeren vil også kunne utføre delegering av roller og rettigheter, som delegerende part har mottatt fra sine klienter.",
+      "nn": "Brukar som mottek ressursen vil få tilgong til alle brukargrensesnitt for klientadministrering og behandle klienter på vegne av delegerande part. Brukaren vil også kunne utføre delegering av roller og rettigheiter, som delegerande part har motteke frå sine klientar."
+    },
+    "homepage": "https://altinn.no",
+    "status": "Active",
+    "contactPoints": [],
+    "isPartOf": "",
+    "resourceReferences": [],
+    "delegable": false,
+    "visible": false,
+    "hasCompetentAuthority": {
+      "organization": "991825827",
+      "orgcode": "DIGDIR"
+    },
+    "keywords": [],
+    "accessListMode": "Disabled",
+    "selfIdentifiedUserEnabled": false,
+    "enterpriseUserEnabled": true,
+    "resourceType": "SystemResource"
+  }
+}
+
+script:pre-request {
+  //const token = await tokenGenerator.getToken();
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  
+  var getTokenParameters = {
+    auth_orgNo: sharedtestdata.serviceOwners.digdir.orgno,
+    auth_org: sharedtestdata.serviceOwners.digdir.org,
+    auth_tokenType: sharedtestdata.authTokenType.enterprise,
+    auth_scopes: sharedtestdata.auth_scopes.resourceregistryAdmin
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  
+  bru.setVar("bearerToken", token);
+  
+  
+  
+}
