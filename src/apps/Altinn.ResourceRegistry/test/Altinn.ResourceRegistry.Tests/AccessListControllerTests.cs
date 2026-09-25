@@ -961,7 +961,7 @@ public class AccessListControllerTests(DbFixture dbFixture, WebApplicationFixtur
         public class ETagHeaders(DbFixture dbFixture, WebApplicationFixture webApplicationFixture)
             : EtagHeadersTests(dbFixture, webApplicationFixture)
         {
-               protected override async Task<AccessListInfo> Setup()
+            protected override async Task<AccessListInfo> Setup()
             {
                 await AddResource("test1");
 

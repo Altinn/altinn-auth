@@ -52,19 +52,19 @@ public class JsonPatchDocumentTests
     [InlineData(
         /*lang=json,strict*/ """
         [{"op":"add","path":"/a/b/c","value":"foo"}]
-        """, 
+        """,
         new[] { JsonPatchOperationType.Add })]
     [InlineData(
         /*lang=json,strict*/ """
         [{"op":"add","path":"/a/b/c","value":"foo"},{"op":"remove","path":"/a/2"}]
-        """, 
+        """,
         new[] { JsonPatchOperationType.Add, JsonPatchOperationType.Remove })]
     [InlineData(
         /*lang=json,strict*/ """
         [{"op":"add","path":"/a/b/c","value":"foo"},{"op":"remove","path":"/a/2"},{"op":"replace","path":"/a/b/c","value":null}]
         """, new[] { JsonPatchOperationType.Add, JsonPatchOperationType.Remove, JsonPatchOperationType.Replace })]
     public void Document(string json, JsonPatchOperationType[] expected)
-    { 
+    {
         var doc = JsonSerializer.Deserialize<JsonPatchDocument>(json);
         Assert.NotNull(doc);
         Assert.Equal(expected.Length, doc.Operations.Length);

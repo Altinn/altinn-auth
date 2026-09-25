@@ -13,7 +13,7 @@ namespace Microsoft.Extensions.DependencyInjection;
 /// <summary>
 /// Extension methods for adding resource registry services to the dependency injection container.
 /// </summary>
-public static class ResourceRegistryDependencyInjectionExtensions 
+public static class ResourceRegistryDependencyInjectionExtensions
 {
     /// <summary>
     /// Registers resource registry persistence services with the dependency injection container of a host application.

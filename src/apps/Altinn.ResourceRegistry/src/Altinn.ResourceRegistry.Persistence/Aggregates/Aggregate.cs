@@ -37,7 +37,7 @@ internal abstract class Aggregate<TAggregate, TEvent>
         };
 
     /// <inheritdoc/>
-    public DateTimeOffset UpdatedAt 
+    public DateTimeOffset UpdatedAt
         => _events.Count switch
         {
             0 => throw new InvalidOperationException("Aggregate not initialized"),

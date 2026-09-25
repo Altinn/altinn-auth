@@ -64,11 +64,11 @@ internal static class ResourceRegistryHost
         services.AddSingleton<IAccessTokenGenerator, AccessTokenGenerator>();
         services.AddTransient<ISigningCredentialsResolver, SigningCredentialsResolver>();
         services.AddSingleton<IAuthorizationHandler, AccessTokenHandler>();
-        services.AddSingleton<IPublicSigningKeyProvider, PublicSigningKeyProvider>(); 
+        services.AddSingleton<IPublicSigningKeyProvider, PublicSigningKeyProvider>();
         services.Configure<PlatformSettings>(config.GetSection("PlatformSettings"));
         services.Configure<ResourceRegistrySettings>(config.GetSection("ResourceRegistrySettings"));
         services.Configure<OidcProviderSettings>(config.GetSection("OidcProviders"));
-        services.Configure<ActionTranslationsOptions>(config.GetSection("ActionConfig"));   
+        services.Configure<ActionTranslationsOptions>(config.GetSection("ActionConfig"));
         services.Configure<PostgreSQLSettings>(config.GetSection("PostgreSQLSettings"));
         services.Configure<AzureStorageConfiguration>(config.GetSection("AzureStorageConfiguration"));
         services.AddOptions<RegisterClientOptions>()

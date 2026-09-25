@@ -25,7 +25,7 @@ public record AccessListResourceMembershipDto(
     /// <returns>A <see cref="AccessListResourceMembershipDto"/>.</returns>
     public static AccessListResourceMembershipDto From(AccessListResourceConnection resourceConnection, AccessListMembership membership)
         => new(
-            PartyUrn.PartyUuid.Create(membership.PartyUuid), 
+            PartyUrn.PartyUuid.Create(membership.PartyUuid),
             ResourceUrn.ResourceId.Create(ResourceIdentifier.CreateUnchecked(resourceConnection.ResourceIdentifier)),
             membership.Since);
 

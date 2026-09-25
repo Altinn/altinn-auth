@@ -29,7 +29,7 @@ public static class ResourceRegistryIntegrationDependencyInjectionExtensions
             .ConfigureHttpClient(static (s, client) =>
             {
                 var options = s.GetRequiredService<IOptions<RegisterClientOptions>>().Value;
-                
+
                 client.BaseAddress = options.Uri;
             })
             .AddHttpMessageHandler<PlatformAccessTokenHandler>();

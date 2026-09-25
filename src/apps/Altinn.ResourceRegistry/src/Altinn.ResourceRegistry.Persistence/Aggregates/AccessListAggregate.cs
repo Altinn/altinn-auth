@@ -272,7 +272,7 @@ internal class AccessListAggregate
     /// <inheritdoc />
     void IAggregateEventHandler<AccessListResourceConnectionCreatedEvent>.ApplyEvent(AccessListResourceConnectionCreatedEvent @event)
     {
-        _resourceConnections[@event.ResourceIdentifier] = new AccessListResourceConnection(@event.ResourceIdentifier, [..@event.Actions], @event.EventTime, @event.EventTime);
+        _resourceConnections[@event.ResourceIdentifier] = new AccessListResourceConnection(@event.ResourceIdentifier, [.. @event.Actions], @event.EventTime, @event.EventTime);
     }
 
     /// <inheritdoc />

@@ -570,7 +570,7 @@ namespace Altinn.ResourceRegistry.Tests
                     Orgcode = "skd",
                 },
                 ResourceType = ResourceType.AltinnApp,
-                ResourceReferences = new ()
+                ResourceReferences = new()
                 {
                     new ()
                     {
@@ -616,7 +616,7 @@ namespace Altinn.ResourceRegistry.Tests
                     Orgcode = "skd",
                 },
                 ResourceType = ResourceType.MigratedApp,
-                ResourceReferences = new ()
+                ResourceReferences = new()
                 {
                     new ()
                     {
@@ -662,7 +662,7 @@ namespace Altinn.ResourceRegistry.Tests
                     Orgcode = "skd",
                 },
                 ResourceType = ResourceType.MigratedApp,
-                ResourceReferences = new ()
+                ResourceReferences = new()
                 {
                     new ()
                     {
@@ -771,7 +771,7 @@ namespace Altinn.ResourceRegistry.Tests
         public async Task CreateResource_WithValidPrefix()
         {
             var client = CreateClient();
-            string[] prefixes = { "altinn", "digdir", "difi", "krr", "test", "digdirintern", "idporten", "digitalpostinnbygger", "minid", "move", "difitest"};
+            string[] prefixes = { "altinn", "digdir", "difi", "krr", "test", "digdirintern", "idporten", "digitalpostinnbygger", "minid", "move", "difitest" };
             string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write", prefixes);
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
@@ -917,7 +917,7 @@ namespace Altinn.ResourceRegistry.Tests
                         ReferenceType = ReferenceType.ApplicationId,
                         Reference = "skd/superdupertjenestene"
                     },
-                   
+
                 }
 
             };
@@ -1061,7 +1061,7 @@ namespace Altinn.ResourceRegistry.Tests
         public async Task CreateResource_WithInvalidPrefix()
         {
             var client = CreateClient();
-            string[] prefixes = {"altinn", "digdir"};
+            string[] prefixes = { "altinn", "digdir" };
             string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write", prefixes);
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
@@ -1071,7 +1071,7 @@ namespace Altinn.ResourceRegistry.Tests
                 Title = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
                 Status = "Active",
                 Homepage = "www.altinn.no",
-                IsPartOf  = "Altinn",
+                IsPartOf = "Altinn",
                 Keywords = new List<Keyword>(),
                 Description = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
                 RightDescription = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
@@ -1375,7 +1375,7 @@ namespace Altinn.ResourceRegistry.Tests
             Assert.Single(errordetails.Errors);
             Assert.Equal(3, errordetails.Errors["InvalidPrefix"].Length);
         }
-        
+
         [Fact]
         public async Task SetResourcePolicy_OK()
         {
@@ -1383,8 +1383,8 @@ namespace Altinn.ResourceRegistry.Tests
             string token = PrincipalUtil.GetOrgToken("digdir", "991825827", "altinn:resourceregistry/resource.write");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            ServiceResource resource = new ServiceResource() 
-            { 
+            ServiceResource resource = new ServiceResource()
+            {
                 Identifier = "altinn_access_management"
             };
             string fileName = $"{resource.Identifier}.xml";
@@ -1648,7 +1648,7 @@ namespace Altinn.ResourceRegistry.Tests
             HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-            string content  = await response.Content.ReadAsStringAsync();
+            string content = await response.Content.ReadAsStringAsync();
             Assert.Contains("Missing title in nynorsk", content);
             Assert.Contains("Missing title in english", content);
             Assert.Contains("Missing title in bokmal", content);
@@ -1842,7 +1842,7 @@ namespace Altinn.ResourceRegistry.Tests
             string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-            ServiceResource resource = new ServiceResource() 
+            ServiceResource resource = new ServiceResource()
             {
                 Identifier = "superdupertjenestene",
                 Title = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
@@ -1851,10 +1851,10 @@ namespace Altinn.ResourceRegistry.Tests
                 Status = "Completed",
                 ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
                 HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
-              {
-                  Organization = "974761076",
-                  Orgcode = "skd",
-              },
+                {
+                    Organization = "974761076",
+                    Orgcode = "skd",
+                },
                 ResourceType = ResourceType.GenericAccessResource,
             };
 
@@ -1999,7 +1999,7 @@ namespace Altinn.ResourceRegistry.Tests
             string resourceId = "altinn_access_management_skd";
             string requestUri = $"resourceregistry/api/v1/Resource/{resourceId}";
 
-            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Delete, requestUri);            
+            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Delete, requestUri);
 
             // Act
             HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
@@ -2102,7 +2102,7 @@ namespace Altinn.ResourceRegistry.Tests
             Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         }
 
-                /// <summary>
+        /// <summary>
         /// Attempts to delete a resource that does not exist
         /// Expected result: Return httpStatus not found statuscode
         /// </summary>
@@ -2188,7 +2188,7 @@ namespace Altinn.ResourceRegistry.Tests
 
             HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
             Paginated<SubjectResources>? subjectResources = await response.Content.ReadFromJsonAsync<Paginated<SubjectResources>>();
-           
+
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             Assert.NotNull(subjectResources);
             Assert.NotNull(subjectResources.Items.FirstOrDefault(r => r.Subject.Urn.Contains("utinn")));

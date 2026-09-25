@@ -375,20 +375,20 @@ public class PolicyHelperTests
         // Arrange
         string identifier = "app_brg_rrh-innrapportering";
         string[] parts = identifier.Split('_');
-        
+
         string expectedOrg = parts[1];  // "brg"
         string expectedApp = parts[2];  // "rrh-innrapportering"
-        
+
         var xacmlResources = new List<AttributeMatch>
         {
             new AttributeMatch { Id = "urn:altinn:org", Value = "brg" },
             new AttributeMatch { Id = "urn:altinn:app", Value = "rrh-innrapportering" }
         };
-        
+
         // Act
         bool hasOrgAttribute = xacmlResources.Any(r => r.Id.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute) && r.Value.Equals(expectedOrg, StringComparison.OrdinalIgnoreCase));
         bool hasAppAttribute = xacmlResources.Any(r => r.Id.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute) && r.Value.Equals(expectedApp, StringComparison.OrdinalIgnoreCase));
-        
+
         // Assert
         Assert.True(hasOrgAttribute, $"Should find org attribute. Looking for '{AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute}' with value '{expectedOrg}'");
         Assert.True(hasAppAttribute, $"Should find app attribute. Looking for '{AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute}' with value '{expectedApp}'");
@@ -400,7 +400,7 @@ public class PolicyHelperTests
         // Arrange - Load the actual policy file from test data
         string policyPath = "Data/AppPolicies/brg/rrh-innrapportering/policy.xml";
         XacmlPolicy policy;
-        
+
         using (var stream = File.OpenRead(policyPath))
         using (var reader = XmlReader.Create(stream))
         {

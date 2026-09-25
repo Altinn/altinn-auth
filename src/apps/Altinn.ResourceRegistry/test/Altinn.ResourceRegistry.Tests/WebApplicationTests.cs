@@ -72,7 +72,7 @@ public abstract class WebApplicationTests
         if (_services is IAsyncDisposable iad) await iad.DisposeAsync();
         else if (_services is IDisposable id) id.Dispose();
         if (_webApp is { } webApp) await webApp.DisposeAsync();
-         
+
         if (_db is { } db) await db.DisposeAsync();
 
     }
@@ -112,7 +112,7 @@ public abstract class WebApplicationTests
         var nameParam = resourceCmd.Parameters.Add("name", NpgsqlTypes.NpgsqlDbType.Text);
         var jsonParam = resourceCmd.Parameters.Add("json", NpgsqlTypes.NpgsqlDbType.Jsonb);
 
-        jsonParam.Value = 
+        jsonParam.Value =
             $$"""
             {
               "hasCompetentAuthority": {{JsonSerializer.Serialize(owner, JsonOptions)}}

@@ -10,7 +10,7 @@ namespace Altinn.ResourceRegistry.Filters;
 /// A filter that converts <see cref="NotImplementedException"/> to a 501 Not Implemented response.
 /// </summary>
 [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
-internal sealed class NotImplementedFilterAttribute 
+internal sealed class NotImplementedFilterAttribute
     : Attribute
     , IExceptionFilter
 {

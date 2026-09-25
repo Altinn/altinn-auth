@@ -7,7 +7,7 @@ using System.Runtime.CompilerServices;
 
 namespace Altinn.ResourceRegistry.Tests.Utils;
 
-internal class VersionedEntityConditionResultFormatter 
+internal class VersionedEntityConditionResultFormatter
     : IValueFormatter
 {
     [ModuleInitializer]

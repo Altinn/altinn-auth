@@ -7,7 +7,7 @@ using Testcontainers.PostgreSql;
 
 namespace Altinn.ResourceRegistry.TestUtils;
 
-public class DbFixture 
+public class DbFixture
     : IAsyncLifetime
 {
     private const int MAX_CONCURRENCY = 20;

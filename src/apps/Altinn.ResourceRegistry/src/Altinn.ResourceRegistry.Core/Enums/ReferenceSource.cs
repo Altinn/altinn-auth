@@ -8,7 +8,7 @@ namespace Altinn.ResourceRegistry.Core.Enums;
 /// Enum for the different reference sources for resources in the resource registry
 /// </summary>
 [StringEnumConverter]
-public enum ReferenceSource 
+public enum ReferenceSource
     : int
 {
     [EnumMember(Value = "Default")]

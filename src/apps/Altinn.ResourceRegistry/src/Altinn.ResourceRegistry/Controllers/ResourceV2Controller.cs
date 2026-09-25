@@ -50,7 +50,7 @@ namespace Altinn.ResourceRegistry.Controllers
             List<Right> rights = await _resourceRegistry.GetPolicyRightsV2(id, includeServiceOwnerRights, includeAppRights, cancellationToken);
 
             string language = HttpContext.Request.Headers.AcceptLanguage.FirstOrDefault();
-            if (language == null) 
+            if (language == null)
             {
                 language = "nb";
             }
@@ -83,8 +83,8 @@ namespace Altinn.ResourceRegistry.Controllers
                 Name = GetActionNameFromRightKey(rights.Key, resource, language),
                 Resource = rights.Resource.Select(m => new AttributeMatchDTO() { Type = m.Type, Value = m.Value }).ToList(),
                 Action = new AttributeMatchDTO() { Type = MatchAttributeIdentifiers.ActionId, Value = rights.Action.Value }
-            };  
-    
+            };
+
             return right;
         }
 
@@ -115,8 +115,8 @@ namespace Altinn.ResourceRegistry.Controllers
 
                 if (part.StartsWith("oasis:names:tc:xacml:1.0:action:action-id"))
                 {
-                   currentPart = GetActionName(currentPart, language);
-                   actionAdded = true;
+                    currentPart = GetActionName(currentPart, language);
+                    actionAdded = true;
                 }
                 else if (actionAdded)
                 {

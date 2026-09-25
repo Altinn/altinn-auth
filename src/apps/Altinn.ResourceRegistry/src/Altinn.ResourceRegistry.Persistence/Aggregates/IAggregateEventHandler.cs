@@ -17,7 +17,7 @@ internal interface IAggregateEventHandler<TEvent>
 /// </summary>
 /// <typeparam name="TAggregate">The concrete aggregate type</typeparam>
 /// <typeparam name="TEvent">The concrete event type</typeparam>
-internal interface IAggregateEventHandler<TAggregate, TEvent> 
+internal interface IAggregateEventHandler<TAggregate, TEvent>
     : IAggregateEventHandler<TEvent>
     where TAggregate : Aggregate<TAggregate, TEvent>, IAggregateFactory<TAggregate, TEvent>
     where TEvent : IAggregateEvent<TAggregate, TEvent>

@@ -193,20 +193,20 @@ public sealed class Conditional<T, TTag>
     /// </summary>
     /// <param name="value">The value</param>
     /// <returns>A new <see cref="Conditional{T, TTag}"/></returns>
-    internal static Conditional<T, TTag> CreateSucceeded(T value) 
+    internal static Conditional<T, TTag> CreateSucceeded(T value)
         => new(value, default, Result.Succeeded);
 
     /// <summary>
     /// Gets a <see cref="Conditional{T, TTag}"/> representing an unmodified entity.
     /// </summary>
-    internal static Conditional<T, TTag> CreateUnmodified(TTag tag, DateTimeOffset modifiedAt) 
+    internal static Conditional<T, TTag> CreateUnmodified(TTag tag, DateTimeOffset modifiedAt)
         => new(default, new(tag, modifiedAt), Result.Unmodified);
 
     /// <summary>
     /// Gets a <see cref="Conditional{T, TTag}"/> representing a not found entity.
     /// </summary>
     /// <param name="type">The type of entity not found.</param>
-    internal static Conditional<T, TTag> CreateNotFound(string? type) 
+    internal static Conditional<T, TTag> CreateNotFound(string? type)
         => new(type, default, Result.NotFound);
 
     /// <summary>
@@ -300,7 +300,7 @@ public sealed class Conditional<T, TTag>
         }
     }
 
-    public static implicit operator Conditional<T, TTag>(T value) 
+    public static implicit operator Conditional<T, TTag>(T value)
         => Conditional<T, TTag>.CreateSucceeded(value);
 
     public static implicit operator Conditional<T, TTag>(Conditional.EntityFound<T> entity)

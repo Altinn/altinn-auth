@@ -66,7 +66,7 @@ public enum JsonPatchOperationType
 /// JSON converter for <see cref="JsonPatchOperationType"/>.
 /// </summary>
 [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1649:File name should match first type name", Justification = "https://github.com/DotNetAnalyzers/StyleCopAnalyzers/issues/2223")]
-internal class JsonPatchOperationTypeConverter 
+internal class JsonPatchOperationTypeConverter
     : JsonConverter<JsonPatchOperationType>
 {
     private static readonly JsonEncodedText Add = JsonEncodedText.Encode("add");

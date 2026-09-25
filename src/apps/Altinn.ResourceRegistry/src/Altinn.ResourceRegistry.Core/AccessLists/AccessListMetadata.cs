@@ -14,7 +14,7 @@ namespace Altinn.ResourceRegistry.Core.AccessLists;
 public record AccessListMetadata(
     Guid Id,
     DateTimeOffset UpdatedAt,
-    ulong Version) 
+    ulong Version)
     : IVersionEquatable<ulong>
 {
     /// <inheritdoc/>

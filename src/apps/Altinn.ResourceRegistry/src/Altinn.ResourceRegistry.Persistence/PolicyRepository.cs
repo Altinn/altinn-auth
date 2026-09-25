@@ -228,7 +228,7 @@ internal class PolicyRepository : IPolicyRepository
         {
             _logger.LogError(ex, "Failed to delete policy file at {FilePath}. Not allowed to delete.", filePath);
             throw;
-        }        
+        }
         catch (RequestFailedException ex)
         {
             _logger.LogError(ex, "Failed to delete policy file at {FilePath}. RequestFailedException", filePath);
@@ -257,13 +257,13 @@ internal class PolicyRepository : IPolicyRepository
         {
             Stream memoryStream = new MemoryStream();
             await blobClient.DownloadToAsync(memoryStream, cancellationToken);
-            
+
             if (memoryStream.Length == 0)
             {
                 _logger.LogWarning("Policy file at {BlobName} was downloaded but is empty.", blobClient.Name);
                 return null;
             }
-            
+
             memoryStream.Position = 0;
             return memoryStream;
         }
@@ -280,8 +280,8 @@ internal class PolicyRepository : IPolicyRepository
     }
 
     private async Task<Response<BlobContentInfo>> WriteBlobStreamInternal(
-        BlobClient blobClient, 
-        Stream fileStream, 
+        BlobClient blobClient,
+        Stream fileStream,
         BlobUploadOptions? blobUploadOptions = null,
         CancellationToken cancellationToken = default)
     {

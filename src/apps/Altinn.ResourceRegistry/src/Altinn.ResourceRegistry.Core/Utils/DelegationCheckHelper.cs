@@ -124,7 +124,7 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
 
                 Right rightWithKey = new Right
                 {
-                    Resource = [..resource] // Collection expression with spread - creates a new list
+                    Resource = [.. resource] // Collection expression with spread - creates a new list
                 };
 
                 StringBuilder resourceKey = new();

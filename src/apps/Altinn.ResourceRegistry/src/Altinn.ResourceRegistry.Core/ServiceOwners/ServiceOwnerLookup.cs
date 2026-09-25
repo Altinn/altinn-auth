@@ -16,7 +16,7 @@ public sealed class ServiceOwnerLookup
     /// Gets an empty <see cref="ServiceOwnerLookup"/>.
     /// </summary>
     internal static ServiceOwnerLookup Empty { get; } = new(
-        ImmutableDictionary<string, ServiceOwner>.Empty, 
+        ImmutableDictionary<string, ServiceOwner>.Empty,
         ImmutableDictionary<OrganizationNumber, ImmutableArray<ServiceOwner>>.Empty);
 
     private readonly ImmutableDictionary<string, ServiceOwner> _byName;
@@ -66,7 +66,7 @@ public sealed class ServiceOwnerLookup
     }
 
     private ServiceOwnerLookup(
-        ImmutableDictionary<string, ServiceOwner> byName, 
+        ImmutableDictionary<string, ServiceOwner> byName,
         ImmutableDictionary<OrganizationNumber, ImmutableArray<ServiceOwner>> byOrgNumber)
     {
         _byName = byName.WithComparers(StringComparer.OrdinalIgnoreCase);

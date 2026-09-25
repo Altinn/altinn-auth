@@ -8,7 +8,7 @@ namespace Altinn.ResourceRegistry.Core.Enums;
 /// Enum for reference types of resources in the resource registry
 /// </summary>
 [StringEnumConverter]
-public enum ReferenceType 
+public enum ReferenceType
     : int
 {
     [EnumMember(Value = "Default")]
@@ -18,7 +18,7 @@ public enum ReferenceType
     [EnumMember(Value = "Uri")]
     [JsonStringEnumMemberName("Uri")]
     Uri = 1,
-    
+
     [EnumMember(Value = "DelegationSchemeId")]
     [JsonStringEnumMemberName("DelegationSchemeId")]
     DelegationSchemeId = 2,
@@ -26,7 +26,7 @@ public enum ReferenceType
     [EnumMember(Value = "MaskinportenScope")]
     [JsonStringEnumMemberName("MaskinportenScope")]
     MaskinportenScope = 3,
-    
+
     [EnumMember(Value = "ServiceCode")]
     [JsonStringEnumMemberName("ServiceCode")]
     ServiceCode = 4,

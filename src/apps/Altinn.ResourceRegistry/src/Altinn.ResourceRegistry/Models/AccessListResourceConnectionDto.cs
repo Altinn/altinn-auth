@@ -28,7 +28,7 @@ public record AccessListResourceConnectionDto(
     /// Gets the allowed actions or <see langword="null"/> if all actions are allowed.
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public IReadOnlyCollection<string>? ActionFilters { get; } 
+    public IReadOnlyCollection<string>? ActionFilters { get; }
         = ActionFilters is null or { Count: 0 } ? null : ActionFilters;
 
     /// <inheritdoc/>

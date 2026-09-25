@@ -24,7 +24,7 @@ namespace Altinn.ResourceRegistry.Core.Helpers
         /// </summary>
         /// <param name="serviceResources">The resource from the registry</param>
         /// <param name="policy">The xacml policy</param>
-        public static void EnsureValidPolicy(ServiceResource serviceResources, XacmlPolicy policy) 
+        public static void EnsureValidPolicy(ServiceResource serviceResources, XacmlPolicy policy)
         {
             bool isAppResource = serviceResources.Identifier.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX);
             string expectedOrg = null;
@@ -191,7 +191,7 @@ namespace Altinn.ResourceRegistry.Core.Helpers
             List<PolicyRule> rules = new List<PolicyRule>();
             foreach (XacmlRule xacmlRule in xacmlPolicy.Rules)
             {
-                FlattenXacmlRule(xacmlRule, rules);    
+                FlattenXacmlRule(xacmlRule, rules);
             }
 
             return rules;
@@ -212,12 +212,12 @@ namespace Altinn.ResourceRegistry.Core.Helpers
             {
                 List<PolicySubject> subjects = [new PolicySubject { SubjectAttributes = rule.Subject }];
                 PolicyRight policyResourceAction = new PolicyRight()
-                { 
-                    Action = rule.Action, 
+                {
+                    Action = rule.Action,
                     Resource = rule.Resource,
                     Subjects = subjects,
                 };
-                
+
                 if (resourceActions.ContainsKey(policyResourceAction.RightKey))
                 {
                     resourceActions[policyResourceAction.RightKey].Subjects.AddRange(policyResourceAction.Subjects);
@@ -379,7 +379,7 @@ namespace Altinn.ResourceRegistry.Core.Helpers
                     if (action != null)
                     {
                         return new AttributeMatch { Id = action.AttributeDesignator.AttributeId.OriginalString, Value = action.AttributeValue.Value };
-                    }                    
+                    }
                 }
             }
 
@@ -400,7 +400,7 @@ namespace Altinn.ResourceRegistry.Core.Helpers
                 {
                     foreach (XacmlMatch xacmlMatch in allOf.Matches.Where(m => m.AttributeDesignator.Category.Equals(XacmlConstants.MatchAttributeCategory.Resource)))
                     {
-                        result.Add(new AttributeMatch { Id = xacmlMatch.AttributeDesignator.AttributeId.OriginalString, Value = xacmlMatch.AttributeValue.Value });                        
+                        result.Add(new AttributeMatch { Id = xacmlMatch.AttributeDesignator.AttributeId.OriginalString, Value = xacmlMatch.AttributeValue.Value });
                     }
                 }
             }

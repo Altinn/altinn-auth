@@ -16,4 +16,4 @@ namespace Altinn.ResourceRegistry.Core.Exceptions
         {
         }
     }
-} 
+}

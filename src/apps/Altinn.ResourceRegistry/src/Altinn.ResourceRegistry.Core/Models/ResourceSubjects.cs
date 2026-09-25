@@ -14,11 +14,11 @@ namespace Altinn.ResourceRegistry.Core.Models
         /// <summary>
         /// A list of all subjectattribute for that resource 
         /// </summary>
-        public required List<AttributeMatchV2> Subjects { get; set; }   
+        public required List<AttributeMatchV2> Subjects { get; set; }
 
         /// <summary>
         /// The resource owner
         /// </summary>
-        public required string ResourceOwner { get; set; }   
+        public required string ResourceOwner { get; set; }
     }
 }

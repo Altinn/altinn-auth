@@ -34,7 +34,7 @@ public record AccessListMembershipDto(
         var identifiers = new KeyValueUrnDictionary<PartyUrn, PartyUrn.Type>();
         identifiers.Add(id);
         identifiers.Add(PartyUrn.PartyId.Create(membership.PartyIdentifiers.PartyId));
-        
+
         if (membership.PartyIdentifiers.OrgNumber is { } orgNo)
         {
             var orgNumber = PartyUrn.OrganizationIdentifier.Create(OrganizationNumber.Parse(orgNo));

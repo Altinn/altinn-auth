@@ -12,7 +12,7 @@ using Microsoft.AspNetCore.Mvc.Controllers;
 
 namespace Altinn.ResourceRegistry.Tests.Utils;
 
-public class TestWebApplicationFactory 
+public class TestWebApplicationFactory
     : WebApplicationFactory<TestWebApplicationFactory>
 {
     protected virtual WebApplicationBuilder CreateWebApplicationBuilder()
@@ -51,7 +51,7 @@ public class TestWebApplicationFactory
         return app;
     }
 
-    private class TestHostBuilderWrapper(WebApplicationBuilder builder) 
+    private class TestHostBuilderWrapper(WebApplicationBuilder builder)
         : IHostBuilder
     {
         public IDictionary<object, object> Properties => builder.Host.Properties;

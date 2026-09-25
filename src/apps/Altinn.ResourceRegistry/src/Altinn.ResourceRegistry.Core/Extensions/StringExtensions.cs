@@ -25,7 +25,7 @@ namespace Altinn.ResourceRegistry.Core.Extensions
             if (throwExceptionOnInvalidCharacters)
             {
                 if (illegalFileNameCharacters.Any(ic => input.Any(i => ic == i)))
-                {                    
+                {
                     throw new ArgumentOutOfRangeException(nameof(input));
                 }
 

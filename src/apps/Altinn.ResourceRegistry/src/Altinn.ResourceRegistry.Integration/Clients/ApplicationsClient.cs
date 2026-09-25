@@ -12,7 +12,7 @@ namespace Altinn.ResourceRegistry.Integration.Clients
     /// <summary>
     /// Client to get Application info from Altinn Storage
     /// </summary>
-    public class ApplicationsClient: IApplications
+    public class ApplicationsClient : IApplications
     {
         private static readonly JsonSerializerOptions SerializerOptions = new()
         {
@@ -37,7 +37,7 @@ namespace Altinn.ResourceRegistry.Integration.Clients
         }
 
         /// <inheritdoc/>
-        public async Task<ApplicationList?> GetApplicationList(bool includeMigratedApps , CancellationToken cancellationToken = default)
+        public async Task<ApplicationList?> GetApplicationList(bool includeMigratedApps, CancellationToken cancellationToken = default)
         {
             string availabbleServicePath = _settings.StorageApiEndpoint + $"applications";
 
@@ -51,7 +51,7 @@ namespace Altinn.ResourceRegistry.Integration.Clients
                     applications = await response.Content.ReadFromJsonAsync<ApplicationList>(SerializerOptions, cancellationToken);
                     _memoryCache.Set(cacheKey, applications, _cacheEntryOptions);
                 }
-                
+
                 if (includeMigratedApps)
                 {
                     return applications;

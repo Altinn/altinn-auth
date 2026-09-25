@@ -8,7 +8,7 @@ using System.Net.Http.Json;
 
 namespace Altinn.ResourceRegistry.Tests.Results;
 
-public class  ConditionalResultTests
+public class ConditionalResultTests
     : IClassFixture<ConditionalResultTests.Factory>
 {
     private readonly Factory _factory;
@@ -164,7 +164,7 @@ public class  ConditionalResultTests
         }
     }
 
-    public class  Factory : TestControllerApplicationFactory<TestController>
+    public class Factory : TestControllerApplicationFactory<TestController>
     {
     }
 }

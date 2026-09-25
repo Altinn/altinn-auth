@@ -62,7 +62,7 @@ namespace Altinn.ResourceRegistry.Utils
         /// <param name="resourceOwner">the organisation number that owns the resource</param>
         /// <param name="organisation">the authenticated organisation claim</param>
         /// <returns></returns>
-        public static bool IsOwnerOfResource(string resourceOwner, ClaimsPrincipal organisation) 
+        public static bool IsOwnerOfResource(string resourceOwner, ClaimsPrincipal organisation)
         {
             Console.WriteLine($"AuthorizationUtil // IsOwnerOfResource // Checking organisation number in claims.");
 
@@ -96,7 +96,7 @@ namespace Altinn.ResourceRegistry.Utils
             return true;
         }
 
-        private static string GetOrganizationNumberFromClaim(string claim) 
+        private static string GetOrganizationNumberFromClaim(string claim)
         {
             ConsumerClaim consumerClaim;
             try

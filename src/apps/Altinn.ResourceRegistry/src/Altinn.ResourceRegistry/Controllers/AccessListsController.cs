@@ -32,7 +32,7 @@ namespace Altinn.ResourceRegistry.Controllers;
 [ResourceOwnerFromRouteValue("owner")]
 [Authorize(Policy = AuthzConstants.POLICY_ACCESS_LIST_READ)]
 [OwnerMustBeOrgcodeFilter]
-public class AccessListsController 
+public class AccessListsController
     : ControllerBase
 {
     /// <summary>
@@ -135,8 +135,8 @@ public class AccessListsController
     [HttpGet("{identifier:required}")]
     [SwaggerOperation(Tags = ["Access List"])]
     public async Task<ConditionalResult<AccessListInfoDto, AggregateVersion>> GetAccessList(
-        string owner, 
-        string identifier, 
+        string owner,
+        string identifier,
         RequestConditionCollection<AggregateVersion> conditions,
         [FromQuery(Name = "include")] AccessListIncludes includes = AccessListIncludes.None,
         CancellationToken cancellationToken = default)
@@ -188,8 +188,8 @@ public class AccessListsController
     [SwaggerOperation(Tags = ["Access List"])]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_LIST_WRITE)]
     public async Task<ConditionalResult<AccessListInfoDto, AggregateVersion>> UpsertAccessList(
-        string owner, 
-        string identifier, 
+        string owner,
+        string identifier,
         [FromBody] CreateAccessListModel model,
         RequestConditionCollection<AggregateVersion> conditions,
         CancellationToken cancellationToken = default)
@@ -290,8 +290,8 @@ public class AccessListsController
     [SwaggerOperation(Tags = ["Access List Members"])]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_LIST_WRITE)]
     public async Task<ConditionalResult<VersionedPaginated<AccessListMembershipDto, AggregateVersion>, AggregateVersion>> ReplaceAccessListMembers(
-        string owner, 
-        string identifier, 
+        string owner,
+        string identifier,
         [FromBody] UpsertAccessListPartyMembersListDto members,
         RequestConditionCollection<AggregateVersion> conditions,
         CancellationToken cancellationToken = default)
@@ -566,8 +566,8 @@ public class AccessListsController
     [SwaggerResponse(StatusCodes.Status204NoContent, description: "The resource connection did not exist")]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_LIST_WRITE)]
     public async Task<ConditionalResult<AccessListResourceConnectionWithVersionDto, AggregateVersion>> DeleteAccessListResourceConnection(
-        string owner, 
-        string identifier, 
+        string owner,
+        string identifier,
         string resourceIdentifier,
         RequestConditionCollection<AggregateVersion> conditions,
         CancellationToken cancellationToken = default)

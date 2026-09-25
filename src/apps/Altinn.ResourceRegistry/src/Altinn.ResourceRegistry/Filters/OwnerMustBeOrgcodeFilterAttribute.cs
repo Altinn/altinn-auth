@@ -68,9 +68,9 @@ internal sealed class OwnerMustBeOrgcodeFilterAttribute
                 return WaitAndCheckOwner(context, next, serviceOwnersTask, resourceOwner, provider!);
             }
 
-            #pragma warning disable VSTHRD103 // Call async methods when in an async method
+#pragma warning disable VSTHRD103 // Call async methods when in an async method
             return CheckOwner(context, next, serviceOwnersTask.Result, resourceOwner, provider!);
-            #pragma warning restore VSTHRD103 // Call async methods when in an async method
+#pragma warning restore VSTHRD103 // Call async methods when in an async method
 
             static async Task WaitAndCheckOwner(
                 ResourceExecutingContext context,

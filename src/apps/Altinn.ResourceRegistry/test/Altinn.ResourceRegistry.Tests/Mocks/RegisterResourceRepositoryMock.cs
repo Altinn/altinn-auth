@@ -55,9 +55,9 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
             string? resourcePath = GetResourcePath();
             resourcePath.AsFilePath(true);
             if (resourcePath != null)
-            { 
-                string[] files =  Directory.GetFiles(resourcePath);
-                if(files != null)
+            {
+                string[] files = Directory.GetFiles(resourcePath);
+                if (files != null)
                 {
                     foreach (string file in files)
                     {
@@ -99,7 +99,7 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
         public Task<List<SubjectResources>> FindResourcesForSubjects(IEnumerable<string> subjects, CancellationToken cancellationToken = default)
         {
             List<SubjectResources> resources = new List<SubjectResources>();
-            resources.Add(GetSubjectResource("urn:altinn:rolecode:utinn", new List<string>{ "urn:altinn:resource:skd_mva", "urn:altinn:resource:skd_ax" }));
+            resources.Add(GetSubjectResource("urn:altinn:rolecode:utinn", new List<string> { "urn:altinn:resource:skd_mva", "urn:altinn:resource:skd_ax" }));
             return Task.FromResult(resources);
         }
 
@@ -142,53 +142,61 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
 
         private static SubjectResources GetSubjectResource(string subjectUrn, List<string> resources)
         {
-             AttributeMatchV2 subjectMatch = new AttributeMatchV2 {
+            AttributeMatchV2 subjectMatch = new AttributeMatchV2
+            {
                 Type = subjectUrn.Substring(0, subjectUrn.LastIndexOf(':')),
                 Value = subjectUrn.Substring(subjectUrn.LastIndexOf(':') + 1),
-                Urn = subjectUrn};
+                Urn = subjectUrn
+            };
 
             SubjectResources subjectResources = new SubjectResources
-                {
-                   Subject = subjectMatch,
-                   Resources = new List<AttributeMatchV2>()
-                };
+            {
+                Subject = subjectMatch,
+                Resources = new List<AttributeMatchV2>()
+            };
 
 
             subjectResources.Resources = new List<AttributeMatchV2>();
-            foreach(string resource in resources)
+            foreach (string resource in resources)
             {
                 subjectResources.Resources.Add(
-                    new AttributeMatchV2 {
+                    new AttributeMatchV2
+                    {
                         Type = resource.Substring(0, resource.LastIndexOf(':')),
                         Value = resource.Substring(resource.LastIndexOf(':') + 1),
-                        Urn = resource});
-               
+                        Urn = resource
+                    });
+
             }
             return subjectResources;
         }
 
         private static ResourceSubjects GetResourceSubjects(string resourceUrn, List<string> subjects, string owner)
         {
-            AttributeMatchV2 resourceMatch = new AttributeMatchV2 {
-                    Type = resourceUrn.Substring(0, resourceUrn.LastIndexOf(':')),
-                    Value = resourceUrn.Substring(resourceUrn.LastIndexOf(':') + 1),
-                    Urn = resourceUrn};
+            AttributeMatchV2 resourceMatch = new AttributeMatchV2
+            {
+                Type = resourceUrn.Substring(0, resourceUrn.LastIndexOf(':')),
+                Value = resourceUrn.Substring(resourceUrn.LastIndexOf(':') + 1),
+                Urn = resourceUrn
+            };
 
             List<AttributeMatchV2> subjectMatches = new List<AttributeMatchV2>();
 
             foreach (string subject in subjects)
             {
-                subjectMatches.Add(new AttributeMatchV2 {
-                                    Type = subject.Substring(0, subject.LastIndexOf(':')),
-                                    Value = subject.Substring(subject.LastIndexOf(':') + 1),
-                                    Urn = subject});
+                subjectMatches.Add(new AttributeMatchV2
+                {
+                    Type = subject.Substring(0, subject.LastIndexOf(':')),
+                    Value = subject.Substring(subject.LastIndexOf(':') + 1),
+                    Urn = subject
+                });
             }
 
             return new ResourceSubjects
-            { 
-                Resource =  resourceMatch, 
-                Subjects =  subjectMatches, 
-                ResourceOwner = owner 
+            {
+                Resource = resourceMatch,
+                Subjects = subjectMatches,
+                ResourceOwner = owner
             };
         }
 

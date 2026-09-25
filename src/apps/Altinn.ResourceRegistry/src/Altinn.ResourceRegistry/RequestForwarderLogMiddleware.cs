@@ -8,7 +8,7 @@ namespace Altinn.ResourceRegistry;
 /// <summary>
 /// Middleware for logging requests before and after applying X-Forwarded headers.
 /// </summary>
-internal partial class RequestForwarderLogMiddleware 
+internal partial class RequestForwarderLogMiddleware
 {
     private readonly static PathString HealthPath = new("/health");
     private readonly static PathString SwaggerPath = new("/swagger");
@@ -24,7 +24,7 @@ internal partial class RequestForwarderLogMiddleware
     public RequestForwarderLogMiddleware(
         RequestDelegate next,
         IOptionsMonitor<ForwardedHeadersOptions> options,
-        ILogger<RequestForwarderLogMiddleware> logger, 
+        ILogger<RequestForwarderLogMiddleware> logger,
         string name)
     {
         Guard.IsNotNull(next);

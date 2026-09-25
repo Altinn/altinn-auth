@@ -71,7 +71,7 @@ namespace Altinn.ResourceRegistry.Core.Services
         /// <inheritdoc/>
         public async Task<ServiceResource> GetResource(string id, int? versionId, CancellationToken cancellationToken = default)
         {
-            return await _repository.GetResource(id, versionId,  cancellationToken);
+            return await _repository.GetResource(id, versionId, cancellationToken);
         }
 
         /// <inheritdoc/>
@@ -111,9 +111,9 @@ namespace Altinn.ResourceRegistry.Core.Services
         {
             XacmlPolicy policy = PolicyHelper.ParsePolicy(policyContent);
             PolicyHelper.EnsureValidPolicy(serviceResource, policy);
-            
+
             Response<BlobContentInfo> response;
-            
+
             // App resources should be stored in the metadata container at org/app/policy.xml
             if (serviceResource.Identifier.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX, StringComparison.OrdinalIgnoreCase))
             {
@@ -135,7 +135,7 @@ namespace Altinn.ResourceRegistry.Core.Services
                 // Standard resources stored at resourceId/resourcepolicy.xml
                 response = await _policyRepository.WritePolicyAsync(serviceResource.Identifier, policyContent.AsStream(), cancellationToken);
             }
-            
+
             IDictionary<string, ICollection<string>> subjectAttributes = policy.GetAttributeDictionaryByCategory(XacmlConstants.MatchAttributeCategory.Subject);
             ResourceSubjects resourceSubjects = GetResourceSubjects(serviceResource, subjectAttributes);
             await _repository.SetResourceSubjects(resourceSubjects, logPolicyChange: true, CancellationToken.None);
@@ -187,7 +187,7 @@ namespace Altinn.ResourceRegistry.Core.Services
         }
 
         /// <inheritdoc/>
-        public async Task<Stream> GetAppPolicy(string org, string app,CancellationToken cancellationToken = default)
+        public async Task<Stream> GetAppPolicy(string org, string app, CancellationToken cancellationToken = default)
         {
             return await _policyRepository.GetAppPolicyAsync(org, app, cancellationToken);
         }
@@ -206,32 +206,32 @@ namespace Altinn.ResourceRegistry.Core.Services
             }
 
             var resourceLists = await Task.WhenAll(tasks);
-            
+
             // Get Resource Registry resources (always first in the list)
             var registryResources = resourceLists[0];
-            
+
             // Build a HashSet of app identifiers that exist in Resource Registry
             var registryAppIdentifiers = new HashSet<string>(
                 registryResources
                     .Where(r => r.Identifier.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX, StringComparison.OrdinalIgnoreCase))
                     .Select(r => r.Identifier),
                 StringComparer.OrdinalIgnoreCase);
-            
+
             // Combine all resources, but filter out Storage apps that are already in Resource Registry
             var resources = new List<ServiceResource>(registryResources);
-            
+
             for (int i = 1; i < resourceLists.Length; i++)
             {
                 var resourceList = resourceLists[i];
                 foreach (var resource in resourceList)
                 {
                     // Skip Storage apps that are already published to Resource Registry
-                    if (resource.Identifier.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX, StringComparison.OrdinalIgnoreCase) 
+                    if (resource.Identifier.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX, StringComparison.OrdinalIgnoreCase)
                         && registryAppIdentifiers.Contains(resource.Identifier))
                     {
                         continue; // Skip this duplicate
                     }
-                    
+
                     resources.Add(resource);
                 }
             }
@@ -447,7 +447,7 @@ namespace Altinn.ResourceRegistry.Core.Services
             {
                 return null;
             }
-            
+
             // Decompose policy into resource/tasks
             List<Right> rights = DelegationCheckHelper.DecomposePolicy(policy, resourceId, includeServiceOwnerRights, includeAppRights);
 

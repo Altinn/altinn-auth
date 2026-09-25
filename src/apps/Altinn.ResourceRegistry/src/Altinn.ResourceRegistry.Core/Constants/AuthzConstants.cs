@@ -44,7 +44,7 @@
         /// Policy name for authorizing access to internal endpoints, allowing either platform component access or internal scope.
         /// </summary>
         public const string POLICY_INTERNAL_OR_PLATFORM = "InternalOrPlatform";
-        
+
         /// <summary>
         /// Scope for resourceregistry read access
         /// </summary>

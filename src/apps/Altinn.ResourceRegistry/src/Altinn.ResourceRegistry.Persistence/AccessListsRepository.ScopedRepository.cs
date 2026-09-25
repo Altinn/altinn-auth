@@ -280,7 +280,7 @@ internal partial class AccessListsRepository
             AccessListIdentifier identifier,
             string? continueFrom,
             int count,
-            bool includeActions, 
+            bool includeActions,
             CancellationToken cancellationToken)
         {
             var metadata = await LookupInfo(identifier, AccessListIncludes.None, cancellationToken);
@@ -419,9 +419,9 @@ internal partial class AccessListsRepository
         }
 
         private async Task<IReadOnlyList<AccessListResourceConnection>> GetAccessListResourceConnections(
-            Guid id, 
+            Guid id,
             (string? ContinueFrom, int Count)? limit,
-            bool includeActions, 
+            bool includeActions,
             CancellationToken cancellationToken)
         {
             const string ALL_QUERY = /*strpsql*/@"
@@ -437,7 +437,8 @@ internal partial class AccessListsRepository
                 ORDER BY resource_identifier ASC
                 LIMIT @count;";
 
-            await using var cmd = limit switch {
+            await using var cmd = limit switch
+            {
                 null => GetAll(_conn, id),
                 var (continueFrom, count) => GetLimited(_conn, id, continueFrom, count),
             };
@@ -806,7 +807,7 @@ internal partial class AccessListsRepository
                 AND resource_identifier = @resource_identifier;";
 
             HashSet<string> actions;
-            
+
             // get the actions in the db (locking the row)
             {
                 await using var cmd = _conn.CreateCommand(GET_ACTIONS_QUERY);
@@ -966,7 +967,7 @@ internal partial class AccessListsRepository
             return new AccessListResourceConnection(
                 resourceIdentifier,
                 actions,
-                created, 
+                created,
                 modified);
         }
 

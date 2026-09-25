@@ -65,7 +65,7 @@ public sealed class JsonPointer
 
         return result;
     }
-    
+
     /// <summary>
     /// Tries to parse a JSON Pointer from a string value.
     /// </summary>
@@ -91,7 +91,7 @@ public sealed class JsonPointer
         //       ; representing '~' and '/', respectively
         var segments = ImmutableArray.CreateBuilder<Segment>(value.AsSpan().Count('/'));
         var remaining = value.AsMemory();
-        
+
         while (remaining.Length > 0)
         {
             if (remaining.Span[0] != '/')
@@ -184,7 +184,7 @@ public sealed class JsonPointer
                     Debug.Assert(escaped.Length == result.Length, $"expected both spans to be same length, but was: escaped={escaped.Length} result={result.Length}");
                     escaped.CopyTo(result);
                 });
-                
+
                 value = unescaped.AsMemory();
             }
 
@@ -192,7 +192,7 @@ public sealed class JsonPointer
             return true;
         }
     }
-    
+
     /// <inheritdoc/>
     public override string ToString()
         => _raw;
@@ -284,8 +284,8 @@ public sealed class JsonPointer
 
         /// <inheritdoc/>
         public override bool Equals([NotNullWhen(true)] object? obj)
-            => obj switch 
-            { 
+            => obj switch
+            {
                 Segment segment => Equals(segment),
                 string str => Equals(str),
                 _ => false

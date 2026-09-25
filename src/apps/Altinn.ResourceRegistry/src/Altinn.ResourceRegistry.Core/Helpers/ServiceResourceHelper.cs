@@ -127,7 +127,7 @@ namespace Altinn.ResourceRegistry.Core.Helpers
                 AddValidationMessage(validationMessages, "Title", $"Missing title in nynorsk {ResourceConstants.LANGUAGE_NN}");
                 isValid = false;
             }
-       
+
             if (serviceResource.Delegable && (!HasLanguage(serviceResource.RightDescription, ResourceConstants.LANGUAGE_EN)))
             {
                 AddValidationMessage(validationMessages, "RightDescription", $"Missing RightDescription in english {ResourceConstants.LANGUAGE_EN}");
@@ -323,7 +323,7 @@ namespace Altinn.ResourceRegistry.Core.Helpers
 
         private static bool MatchingOrganizationId(ServiceResource serviceResource, ResourceSearch resourceSearch)
         {
-            return resourceSearch.OrganizationId == null || (serviceResource.HasCompetentAuthority != null && serviceResource.HasCompetentAuthority.Organization?.Equals(resourceSearch.OrganizationId , StringComparison.InvariantCultureIgnoreCase) == true);
+            return resourceSearch.OrganizationId == null || (serviceResource.HasCompetentAuthority != null && serviceResource.HasCompetentAuthority.Organization?.Equals(resourceSearch.OrganizationId, StringComparison.InvariantCultureIgnoreCase) == true);
         }
 
         private static bool MatchingDescription(ServiceResource resource, ResourceSearch resourceSearch)

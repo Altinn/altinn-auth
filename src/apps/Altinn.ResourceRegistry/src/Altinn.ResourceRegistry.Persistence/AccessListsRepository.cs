@@ -10,7 +10,7 @@ namespace Altinn.ResourceRegistry.Persistence;
 /// <summary>
 /// Repository for access lists.
 /// </summary>
-internal partial class AccessListsRepository 
+internal partial class AccessListsRepository
     : IAccessListsRepository
     , IAggregateRepository<AccessListAggregate, AccessListEvent>
 {
@@ -46,7 +46,7 @@ internal partial class AccessListsRepository
 
     /// <inheritdoc/>
     public Task<IReadOnlyList<AccessListInfo>> GetAccessListByMember(
-        Guid memberParty, 
+        Guid memberParty,
         CancellationToken cancellationToken = default)
     => InTransaction(repo => repo.GetAccessListByMember(memberParty, cancellationToken), cancellationToken);
 
@@ -156,7 +156,7 @@ internal partial class AccessListsRepository
 
         public AccessListIdentifier(string owner, string identifier)
             : this(Guid.Empty, owner, identifier)
-        { 
+        {
         }
 
         public bool IsEmpty => AccessListId == Guid.Empty && Owner is null && Identifier is null;

@@ -20,7 +20,7 @@ public class RegisterClientTests
     public RegisterClientTests()
     {
         _handler = new();
-        
+
         var httpClient = new HttpClient(_handler)
         {
             BaseAddress = new Uri("https://register.mock/api/"),
@@ -102,10 +102,10 @@ public class RegisterClientTests
         requests.Should().ContainSingle(r => r.PartyUuids == 0 && r.OrgNos == 30);
     }
 
-    private int GetNextPartyId() 
+    private int GetNextPartyId()
         => Interlocked.Increment(ref _nextPartyId);
 
-    private OrganizationNumber GetNextOrganizationNumber() 
+    private OrganizationNumber GetNextOrganizationNumber()
         => OrganizationNumber.Parse(GetNextPartyId().ToString("D9", CultureInfo.InvariantCulture));
 
     private Guid GetNextPartyUuid()

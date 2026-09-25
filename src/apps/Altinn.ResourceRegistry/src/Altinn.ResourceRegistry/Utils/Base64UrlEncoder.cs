@@ -252,7 +252,7 @@ internal static class Base64UrlEncoder
             bytesWritten = 0;
             return false;
         }
-        
+
         bytesWritten = written;
         return true;
     }

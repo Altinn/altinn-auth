@@ -37,7 +37,7 @@ public class AccessListMembershipsControllerTests(DbFixture dbFixture, WebApplic
     public async Task InvalidPartyUrn_Returns_BadRequest()
     {
         using var client = CreateAuthenticatedClient();
-       
+
         var response = await client.GetAsync("/resourceregistry/api/v1/access-lists/memberships?party=invalid");
         response.Should().HaveStatusCode(HttpStatusCode.BadRequest);
 
@@ -160,8 +160,8 @@ public class AccessListMembershipsControllerTests(DbFixture dbFixture, WebApplic
         var user2 = PartyUrn.PartyUuid.Create(GenerateUserId());
 
         var list1 = await Repository.CreateAccessList(
-            resourceOwner: ORG_CODE, 
-            identifier: "access-list1", 
+            resourceOwner: ORG_CODE,
+            identifier: "access-list1",
             name: "Access List 1",
             description: "description1");
 
@@ -356,7 +356,7 @@ public class AccessListMembershipsControllerTests(DbFixture dbFixture, WebApplic
 
         IReadOnlyList<AccessListInfoDto>? memberships = await response.Content.ReadFromJsonAsync<IReadOnlyList<AccessListInfoDto>>();
         Assert.NotNull(memberships);
-        Assert.Equal(2,memberships.Count);
+        Assert.Equal(2, memberships.Count);
         AccessListInfoDto? list1Resp = memberships.FirstOrDefault(r => r.Identifier.Equals("access-list1"));
         AccessListInfoDto? list2Resp = memberships.FirstOrDefault(r => r.Identifier.Equals("access-list2"));
         Assert.NotNull(list1Resp);

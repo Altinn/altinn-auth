@@ -41,7 +41,7 @@ public static partial class RequestConditionCollection
             var isReadRequest = HttpMethods.IsGet(method) || HttpMethods.IsHead(method);
             var hasErrors = false;
             ImmutableArray<IVersionedEntityCondition<T>>.Builder? builder = null;
-            
+
             if (TryReadETags(modelName, bindingContext.ModelState, "If-Match", headers.IfMatch, ref hasErrors, out var conditions))
             {
                 builder ??= ImmutableArray.CreateBuilder<IVersionedEntityCondition<T>>();
@@ -199,7 +199,7 @@ public static partial class RequestConditionCollection
     /// <summary>
     /// <see cref="IModelBinderProvider"/> for <see cref="RequestConditionCollection{T}"/>.
     /// </summary>
-    internal sealed class ModelBinderProvider 
+    internal sealed class ModelBinderProvider
         : IModelBinderProvider
         , ISingleton<ModelBinderProvider>
     {

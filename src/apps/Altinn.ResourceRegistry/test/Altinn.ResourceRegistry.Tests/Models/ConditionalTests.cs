@@ -93,7 +93,7 @@ public class ConditionalTests
         {
             converted.VersionTag.Should().Be(conditional.VersionTag * 4);
             converted.VersionModifiedAt.Should().Be(conditional.VersionModifiedAt);
-        } 
+        }
         else if (conditional.IsNotFound)
         {
             converted.NotFoundType.Should().Be(conditional.NotFoundType);

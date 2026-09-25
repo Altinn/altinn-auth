@@ -92,7 +92,7 @@ public static class HashCodeExtensions
     /// Defaults to <see langword="null"/> (which means calling <see cref="object.GetHashCode()"/> on the value itself).
     /// </param>
     public static void AddDictionary<TKey, TValue>(
-        this ref HashCode hashCode, 
+        this ref HashCode hashCode,
         IReadOnlyCollection<KeyValuePair<TKey, TValue>> dictionary,
         IComparer<TKey>? keyComparer = null,
         IEqualityComparer<TKey>? keyEqualityComparer = null,

@@ -38,7 +38,7 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
         public async Task<Stream?> GetAppPolicyAsync(string org, string app, CancellationToken cancellationToken = default)
         {
             string? containerPath = GetAppPolicyContainerPath();
-            if(containerPath != null)
+            if (containerPath != null)
             {
                 string policyFile = Path.Combine(containerPath, org, app, "policy.xml");
                 if (File.Exists(policyFile))
@@ -111,7 +111,7 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
         private static string? GetPolicyContainerPath()
         {
             string? unitTestFolder = Path.GetDirectoryName(new Uri(typeof(PolicyRepositoryMock).Assembly.Location).LocalPath);
-            if(unitTestFolder != null)
+            if (unitTestFolder != null)
             {
                 return Path.Combine(unitTestFolder, "..", "..", "..", "Data", "ResourcePolicies");
             }
@@ -122,7 +122,7 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
         private static string? GetAppPolicyContainerPath()
         {
             string? unitTestFolder = Path.GetDirectoryName(new Uri(typeof(PolicyRepositoryMock).Assembly.Location).LocalPath);
-            if(unitTestFolder != null)
+            if (unitTestFolder != null)
             {
                 return Path.Combine(unitTestFolder, "..", "..", "..", "Data", "AppPolicies");
             }

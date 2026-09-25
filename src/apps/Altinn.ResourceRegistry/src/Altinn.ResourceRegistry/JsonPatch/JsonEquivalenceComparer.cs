@@ -21,7 +21,7 @@ public class JsonEquivalenceComparer
     public static JsonEquivalenceComparer Instance { get; } = new();
 
     private JsonEquivalenceComparer()
-    { 
+    {
     }
 
     /// <inheritdoc/>

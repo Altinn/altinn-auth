@@ -74,8 +74,8 @@ internal static class JsonExtensions
     /// <returns>A hash code.</returns>
     public static int GetStableHashCode(this JsonElement? self)
     {
-        return self switch 
-        { 
+        return self switch
+        {
             null => 0,
             { } value => JsonEquivalenceComparer.Instance.GetHashCode(value),
         };

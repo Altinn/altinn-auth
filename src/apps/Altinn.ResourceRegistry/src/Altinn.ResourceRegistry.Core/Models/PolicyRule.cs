@@ -21,6 +21,6 @@ namespace Altinn.ResourceRegistry.Core.Models
         /// <summary>
         /// The Resource attributes that identy one unique resource 
         /// </summary>
-        public required IReadOnlyList<UrnJsonTypeValue> Resource { get; init; }    
+        public required IReadOnlyList<UrnJsonTypeValue> Resource { get; init; }
     }
 }

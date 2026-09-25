@@ -147,7 +147,7 @@ public class RequestConditionCollectionTests
             return ThrowHelper.ThrowArgumentOutOfRangeException<IVersionedEntityCondition<Nil>>(nameof(result));
         }
 
-        public VersionedEntityConditionResult Validate<TEntity>(TEntity entity) 
+        public VersionedEntityConditionResult Validate<TEntity>(TEntity entity)
             where TEntity : notnull, IVersionEquatable<Nil>
             => result;
     }

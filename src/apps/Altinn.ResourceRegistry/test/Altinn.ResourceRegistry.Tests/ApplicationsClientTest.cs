@@ -51,7 +51,7 @@ namespace Altinn.ResourceRegistry.Tests
             HttpClient applicationsClient = new HttpClient(mockHttpMessageHandler.Object);
             ApplicationsClient target = new ApplicationsClient(applicationsClient, _platformSettings, cache);
             // Act
-            ApplicationList result = await target.GetApplicationList(false, cancellationToken:default);
+            ApplicationList result = await target.GetApplicationList(false, cancellationToken: default);
             // Assert
             Assert.NotNull(result);
             Assert.NotEmpty(result.Applications);
@@ -151,7 +151,7 @@ namespace Altinn.ResourceRegistry.Tests
             if (unitTestFolder != null)
             {
                 string testDataPath = Path.Combine(unitTestFolder, "..", "..", "..", "Data", "Altinn3Storage", "applications.json");
-                
+
                 if (File.Exists(testDataPath))
                 {
                     string content = await File.ReadAllTextAsync(testDataPath);

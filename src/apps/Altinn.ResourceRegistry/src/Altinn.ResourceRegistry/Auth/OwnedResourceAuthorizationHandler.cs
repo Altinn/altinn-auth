@@ -65,9 +65,9 @@ internal class OwnedResourceAuthorizationHandler
             var matchesTask = MatchResourceOwner(context.User, resourceOwner, httpContext.RequestAborted);
             if (matchesTask.IsCompletedSuccessfully)
             {
-                #pragma warning disable VSTHRD103 // Call async methods when in an async method
+#pragma warning disable VSTHRD103 // Call async methods when in an async method
                 return HandleMatch(context, requirement, matchesTask.Result);
-                #pragma warning restore VSTHRD103 // Call async methods when in an async method
+#pragma warning restore VSTHRD103 // Call async methods when in an async method
             }
             else
             {
@@ -96,9 +96,9 @@ internal class OwnedResourceAuthorizationHandler
         var matchesTask = MatchResourceOwner(context.User, resource.ResourceOwner, CancellationToken.None);
         if (matchesTask.IsCompletedSuccessfully)
         {
-            #pragma warning disable VSTHRD103 // Call async methods when in an async method
+#pragma warning disable VSTHRD103 // Call async methods when in an async method
             return HandleMatch(context, requirement, matchesTask.Result);
-            #pragma warning restore VSTHRD103 // Call async methods when in an async method
+#pragma warning restore VSTHRD103 // Call async methods when in an async method
         }
         else
         {
@@ -137,9 +137,9 @@ internal class OwnedResourceAuthorizationHandler
             var serviceOwnersTask = _serviceOwnerService.GetServiceOwners(cancellationToken);
             if (serviceOwnersTask.IsCompletedSuccessfully)
             {
-                #pragma warning disable VSTHRD103 // Call async methods when in an async method
+#pragma warning disable VSTHRD103 // Call async methods when in an async method
                 return new(MatchServiceOwnerByOrganizationNumber(serviceOwnersTask.Result, userOrgNo, resourceOwner));
-                #pragma warning restore VSTHRD103 // Call async methods when in an async method
+#pragma warning restore VSTHRD103 // Call async methods when in an async method
             }
 
             return AwaitMatchServiceOwnerByOrganizationNumber(serviceOwnersTask, userOrgNo, resourceOwner);

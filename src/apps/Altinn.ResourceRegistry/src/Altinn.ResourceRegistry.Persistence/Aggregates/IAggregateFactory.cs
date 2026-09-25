@@ -29,7 +29,7 @@ internal interface IAggregateFactory<TAggregate, TEvent>
     static TAggregate LoadFrom(TimeProvider timeProvider, Guid id, IAggregateRepository<TAggregate, TEvent> repository, IEnumerable<TEvent> events)
     {
         var aggregate = TAggregate.New(timeProvider, id, repository);
-        
+
         foreach (var e in events)
         {
             aggregate.ApplyEvent(e);
@@ -50,12 +50,12 @@ internal interface IAggregateFactory<TAggregate, TEvent>
     static async Task<TAggregate> LoadFrom(TimeProvider timeProvider, Guid id, IAggregateRepository<TAggregate, TEvent> repository, IAsyncEnumerable<TEvent> events)
     {
         var aggregate = TAggregate.New(timeProvider, id, repository);
-        
+
         await foreach (var e in events)
         {
             aggregate.ApplyEvent(e);
         }
-            
+
         aggregate.Commit();
         return aggregate;
     }

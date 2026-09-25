@@ -20,7 +20,7 @@ public class ServiceOwnerTests
             Logo = "logo",
             Orgnr = "123456789",
             Homepage = "https://org.com",
-            Environments = [ "test", "prod" ],
+            Environments = ["test", "prod"],
         };
 
         var org2 = new Core.Models.Org
@@ -33,7 +33,7 @@ public class ServiceOwnerTests
             Logo = "logo",
             Orgnr = "123456789",
             Homepage = "https://org.com",
-            Environments = [ "prod", "test" ],
+            Environments = ["prod", "test"],
         };
 
         var so1 = ServiceOwner.Create("test", org1);

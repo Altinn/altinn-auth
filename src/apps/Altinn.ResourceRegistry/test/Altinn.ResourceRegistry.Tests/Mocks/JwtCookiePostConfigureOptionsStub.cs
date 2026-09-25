@@ -28,11 +28,11 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
                 ValidateIssuerSigningKey = false,
                 ValidateIssuer = false,
                 ValidateAudience = false,
-                RequireExpirationTime= false,
-                ValidateLifetime= false,
+                RequireExpirationTime = false,
+                ValidateLifetime = false,
                 ClockSkew = TimeSpan.Zero,
                 RequireSignedTokens = false,
-                TryAllIssuerSigningKeys= false,
+                TryAllIssuerSigningKeys = false,
                 IssuerSigningKeys = null,
             };
 

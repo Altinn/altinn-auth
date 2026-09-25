@@ -5,7 +5,7 @@ namespace Altinn.ResourceRegistry.Persistence;
 /// <summary>
 /// Exception thrown when an optimistic concurrency exception occurs.
 /// </summary>
-public class OptimisticConcurrencyException 
+public class OptimisticConcurrencyException
     : Exception
 {
     /// <summary>

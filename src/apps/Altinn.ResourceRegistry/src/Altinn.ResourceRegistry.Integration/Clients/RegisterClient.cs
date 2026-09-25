@@ -84,7 +84,7 @@ internal partial class RegisterClient
         }
 
         var result = MakeSingleRequest(queryEnumerator.Current, cancellationToken);
-        
+
         while (queryEnumerator.MoveNext())
         {
             result = result.Merge(MakeSingleRequest(queryEnumerator.Current, cancellationToken));

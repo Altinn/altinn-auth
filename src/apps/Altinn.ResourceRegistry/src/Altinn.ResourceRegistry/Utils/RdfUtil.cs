@@ -106,7 +106,7 @@ namespace Altinn.ResourceRegistry.Utils
             // Call the Save() method to write to the StringWriter
             rdfTurtlewriter.Save(g, sw);
 
-            if (!string.IsNullOrEmpty(resourceErrors.ToString())) 
+            if (!string.IsNullOrEmpty(resourceErrors.ToString()))
             {
                 return resourceErrors.ToString();
             }
@@ -121,8 +121,8 @@ namespace Altinn.ResourceRegistry.Utils
             {
                 return false;
             }
-             
-            if (resource.HasCompetentAuthority == null 
+
+            if (resource.HasCompetentAuthority == null
                 || string.IsNullOrWhiteSpace(resource.HasCompetentAuthority.Orgcode)
                 || resource.HasCompetentAuthority.Orgcode.Equals("ttd", StringComparison.OrdinalIgnoreCase)
                 || string.IsNullOrWhiteSpace(resource.HasCompetentAuthority.Organization))

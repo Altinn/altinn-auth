@@ -11,7 +11,7 @@ namespace Altinn.ResourceRegistry.Tests.Utils
     public static class PrincipalUtil
     {
         public static readonly string AltinnCoreClaimTypesOrg = "urn:altinn:org";
-        
+
         /// <summary>
         /// Gets a user token
         /// </summary>
@@ -73,11 +73,11 @@ namespace Altinn.ResourceRegistry.Tests.Utils
                 claims.Add(new Claim("scope", scope, ClaimValueTypes.String, "maskinporten"));
             }
 
-            if (prefixes is {Length: > 0})
+            if (prefixes is { Length: > 0 })
             {
                 foreach (string prefix in prefixes)
                 {
-                    claims.Add(new Claim("consumer_prefix", prefix, ClaimValueTypes.String,"maskinporten"));
+                    claims.Add(new Claim("consumer_prefix", prefix, ClaimValueTypes.String, "maskinporten"));
                 }
             }
 

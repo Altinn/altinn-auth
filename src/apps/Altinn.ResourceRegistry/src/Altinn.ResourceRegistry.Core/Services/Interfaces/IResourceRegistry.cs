@@ -16,7 +16,7 @@ namespace Altinn.ResourceRegistry.Core.Services.Interfaces
         /// <param name="versionId">The version identifier to retrieve</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
         /// <returns>ServiceResource</returns>
-        Task<ServiceResource> GetResource(string id, int? versionId,  CancellationToken cancellationToken = default);
+        Task<ServiceResource> GetResource(string id, int? versionId, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets a single Altinn app as a <see cref="ServiceResource"/> directly from application storage.

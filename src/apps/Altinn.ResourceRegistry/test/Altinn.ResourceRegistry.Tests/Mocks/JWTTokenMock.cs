@@ -38,7 +38,7 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
         private static SigningCredentials GetSigningCredentials(string issuer)
         {
             string certPath = "selfSignedTestCertificate.pfx";
-            if (!issuer.Equals("UnitTest")  && File.Exists($"{issuer}-org.pfx"))
+            if (!issuer.Equals("UnitTest") && File.Exists($"{issuer}-org.pfx"))
             {
                 certPath = $"{issuer}-org.pfx";
 

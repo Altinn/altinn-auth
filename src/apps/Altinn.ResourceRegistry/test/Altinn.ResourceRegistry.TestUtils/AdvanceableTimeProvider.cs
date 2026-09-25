@@ -3,7 +3,7 @@
 public class AdvanceableTimeProvider : TimeProvider
 {
     private readonly TimeProvider _inner = TimeProvider.System;
-    
+
     private TimeSpan _offset;
 
     public override DateTimeOffset GetUtcNow()

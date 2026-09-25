@@ -33,17 +33,17 @@ public static class StreamExtensions
     /// <param name="cancellationToken">The <see cref="CancellationToken"/>.</param>
     /// <returns>A <see cref="Task"/> representing the result of the asynchronous operation.</returns>
     public static async Task CopyToAsync(
-        this Stream stream, 
-        IBufferWriter<byte> bufferWriter, 
+        this Stream stream,
+        IBufferWriter<byte> bufferWriter,
         int bufferSize,
-        CancellationToken cancellationToken = default) 
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(stream);
 
-        if (!stream.CanRead) 
+        if (!stream.CanRead)
         {
             throw new ArgumentException("Stream is not readable", nameof(stream));
-        } 
+        }
 
         while (true)
         {

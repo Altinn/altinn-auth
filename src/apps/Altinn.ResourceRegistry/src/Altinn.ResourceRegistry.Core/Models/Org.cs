@@ -21,7 +21,7 @@ namespace Altinn.ResourceRegistry.Core.Models
         /// <summary>
         /// The organization number
         /// </summary>
-        public string Orgnr { get; set; }   
+        public string Orgnr { get; set; }
 
         /// <summary>
         /// The homepage

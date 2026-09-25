@@ -116,8 +116,8 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
             await using (var cmd1 = new NpgsqlCommand(
                 @"
                 INSERT INTO resourceregistry.resource_identifier(identifier, created)
-                VALUES (@identifier, @created);", 
-                conn, 
+                VALUES (@identifier, @created);",
+                conn,
                 tx))
             {
                 cmd1.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, resource.Identifier);
@@ -126,7 +126,7 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
             }
 
             ServiceResource serviceResource;
-            
+
             await using (var cmd2 = new NpgsqlCommand(
                 @"
                 INSERT INTO resourceregistry.resources(
@@ -141,8 +141,8 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
                     @modified,
                     @serviceresourcejson
                 )
-                RETURNING identifier, created, modified, serviceresourcejson, version_id;", 
-                conn, 
+                RETURNING identifier, created, modified, serviceresourcejson, version_id;",
+                conn,
                 tx))
             {
                 cmd2.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, resource.Identifier);
@@ -437,13 +437,13 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
             {
                 resourceSubjectsExt.Subjects.Add(subjectMatch);
             }
-            else 
+            else
             {
                 ResourceSubjects resourceSubjects = new ResourceSubjects
                 {
-                   Resource = resourceAttributeMatch,
-                   Subjects = new List<AttributeMatchV2>() { subjectMatch },
-                   ResourceOwner = owner
+                    Resource = resourceAttributeMatch,
+                    Subjects = new List<AttributeMatchV2>() { subjectMatch },
+                    ResourceOwner = owner
                 };
                 allResourceSubjects.Add(resourceSubjects.Resource.Urn, resourceSubjects);
             }
@@ -451,7 +451,7 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
 
         List<ResourceSubjects> subjectResources = new List<ResourceSubjects>();
 
-        foreach (KeyValuePair<string,ResourceSubjects> kvp in allResourceSubjects)
+        foreach (KeyValuePair<string, ResourceSubjects> kvp in allResourceSubjects)
         {
             subjectResources.Add(kvp.Value);
         }

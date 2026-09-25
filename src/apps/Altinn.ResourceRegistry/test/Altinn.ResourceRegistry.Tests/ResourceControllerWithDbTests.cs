@@ -48,7 +48,7 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
     public async Task GetResourceForSubjects()
     {
         await Repository.SetResourceSubjects(CreateResourceSubjects("urn:altinn:resource:skd_mva", ["urn:altinn:rolecode:utinn"], "skd"));
-        await Repository.SetResourceSubjects(CreateResourceSubjects("urn:altinn:resource:skd_flyttemelding", ["urn:altinn:rolecode:utinn", "urn:altinn:rolecode:dagl" ], "skd"));
+        await Repository.SetResourceSubjects(CreateResourceSubjects("urn:altinn:resource:skd_flyttemelding", ["urn:altinn:rolecode:utinn", "urn:altinn:rolecode:dagl"], "skd"));
 
         using var client = CreateAuthenticatedClient();
 
@@ -86,7 +86,7 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
     public async Task GetSubjectsForPolicy()
     {
         await Repository.SetResourceSubjects(CreateResourceSubjects("urn:altinn:resource:skd_mva", ["urn:altinn:rolecode:utinn"], "skd"));
-        await Repository.SetResourceSubjects(CreateResourceSubjects("urn:altinn:resource:skd_flyttemelding", [ "urn:altinn:rolecode:utinn", "urn:altinn:rolecode:dagl" ], "skd"));
+        await Repository.SetResourceSubjects(CreateResourceSubjects("urn:altinn:resource:skd_flyttemelding", ["urn:altinn:rolecode:utinn", "urn:altinn:rolecode:dagl"], "skd"));
 
         using var client = CreateAuthenticatedClient();
 
@@ -126,7 +126,7 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
         string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write");
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-    
+
         string fileName = $"{resource.Identifier}.xml";
         string filePath = $"Data/ResourcePolicies/{fileName}";
 
@@ -441,7 +441,7 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
         Assert.True(subjectResources.Items.All(x => x.Deleted));
         Assert.True(role001Timestamp < UpdatedAtFor("r001"));
         Assert.True(role002Timestamp == UpdatedAtFor("r002"));
-        Assert.True(UpdatedAtFor("r001") == UpdatedAtFor("r003") &&  UpdatedAtFor("r003") == UpdatedAtFor("r004"));
+        Assert.True(UpdatedAtFor("r001") == UpdatedAtFor("r003") && UpdatedAtFor("r003") == UpdatedAtFor("r004"));
 
         // 4. Reenable the resource with r001 and r003
         await Repository.SetResourceSubjects(CreateResourceSubjects("urn:altinn:resource:foo", ["urn:altinn:rolecode:r001", "urn:altinn:rolecode:r003"], "ttd"));
@@ -858,7 +858,7 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
         };
         HttpResponseMessage responseWithVersion = await client.SendAsync(httpRequestMessageWithVersion);
         string responseContentWithVersion = await responseWithVersion.Content.ReadAsStringAsync();
-        ServiceResource? resourceWithVersion = JsonSerializer.Deserialize<ServiceResource>(responseContentWithVersion, _jsonOptions) as ServiceResource;  
+        ServiceResource? resourceWithVersion = JsonSerializer.Deserialize<ServiceResource>(responseContentWithVersion, _jsonOptions) as ServiceResource;
         Assert.NotNull(resourceWithVersion);
         Assert.Equal("skd-migrert-4628-1", resourceWithVersion.Identifier);
         Assert.Equal(oldVersion.VersionId, resourceWithVersion.VersionId);
@@ -1372,11 +1372,11 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
         foreach (string subjecturn in subjecturns)
         {
             resourceSubjects.Subjects.Add(new AttributeMatchV2
-                {
-                    Type = subjecturn.Substring(0, subjecturn.LastIndexOf(':')),
-                    Value = subjecturn.Substring(subjecturn.LastIndexOf(':') + 1),
-                    Urn = subjecturn
-                });
+            {
+                Type = subjecturn.Substring(0, subjecturn.LastIndexOf(':')),
+                Value = subjecturn.Substring(subjecturn.LastIndexOf(':') + 1),
+                Urn = subjecturn
+            });
         }
 
         return resourceSubjects;
@@ -1408,11 +1408,11 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
 
         RegisterResourceRepositoryMock repositoryMock = new();
         ServiceResource? version7658 = await repositoryMock.GetResource("skd-migrert-4628-1-7846", null);
-        if(version7658 != null)
+        if (version7658 != null)
         {
-            await Repository.UpdateResource(version7658);   
+            await Repository.UpdateResource(version7658);
         }
-        
+
         ServiceResource? version9546 = await repositoryMock.GetResource("skd-migrert-4628-1-9546", null);
         if (version9546 != null)
         {
@@ -1423,7 +1423,7 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
 
     private async Task<List<ServiceResource>> GetTestData()
     {
-        List<ServiceResource> resources = new List<ServiceResource>();  
+        List<ServiceResource> resources = new List<ServiceResource>();
 
         RegisterResourceRepositoryMock repositoryMock = new RegisterResourceRepositoryMock();
 

@@ -19,7 +19,7 @@ namespace Altinn.ResourceRegistry.JsonPatch;
 [SwaggerSchemaFilter(typeof(SchemaFilter))]
 public sealed record class JsonPatchDocument
     : IEquatable<JsonPatchDocument>
-{ 
+{
     /// <summary>
     /// Gets the JSON Patch operations.
     /// </summary>

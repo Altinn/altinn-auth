@@ -386,7 +386,7 @@ public class RequestConditionCollectionModelBinderTests
         [HttpPost("/")]
         public string Check(RequestConditionCollection<string> conditions, [FromBody] Entity entity)
         {
-                var result = conditions.Validate(entity);
+            var result = conditions.Validate(entity);
 
             return result.ToString();
         }

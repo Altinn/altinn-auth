@@ -28,7 +28,7 @@ internal partial class ServiceOwnerService
     /// Initializes a new instance of the <see cref="ServiceOwnerService"/> class.
     /// </summary>
     public ServiceOwnerService(
-        ILogger<ServiceOwnerService> logger, 
+        ILogger<ServiceOwnerService> logger,
         IServiceScopeFactory scopeFactory,
         TimeProvider timeProvider)
     {

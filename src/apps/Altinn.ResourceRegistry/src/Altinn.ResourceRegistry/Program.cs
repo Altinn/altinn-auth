@@ -28,6 +28,6 @@ app.Run();
 /// <summary>
 /// Startup class.
 /// </summary>
-public partial class Program 
+public partial class Program
 {
 }

@@ -26,7 +26,7 @@ public class ETagComparer
             return false;
         }
 
-        return x.IsWeak == y.IsWeak 
+        return x.IsWeak == y.IsWeak
             && string.Equals(x.Tag, y.Tag, COMPARISON);
     }
 

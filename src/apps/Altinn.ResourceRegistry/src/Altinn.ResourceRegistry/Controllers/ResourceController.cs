@@ -483,7 +483,7 @@ namespace Altinn.ResourceRegistry.Controllers
 
                 var result = Content($"Delete operation is not allowed in {env} environment");
                 result.StatusCode = StatusCodes.Status403Forbidden;
-                
+
                 return result;
             }
 

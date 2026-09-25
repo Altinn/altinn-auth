@@ -13,7 +13,7 @@ env:
 
 jobs:
   check-repo:
-    name: Check repository layout
+    name: Check repository
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -29,9 +29,9 @@ jobs:
 
           repoctl --version
 
-      # TODO: switch to `repoctl check` once the dotnet format baseline has landed (Altinn/altinn-auth#4072, step 4)
-      - name: Check solution files
-        run: repoctl solutions check
+      # Solution files, release-please config and `dotnet format --verify-no-changes`
+      - name: Check repository
+        run: repoctl check
 
   build-and-test:
     name: Build and Test

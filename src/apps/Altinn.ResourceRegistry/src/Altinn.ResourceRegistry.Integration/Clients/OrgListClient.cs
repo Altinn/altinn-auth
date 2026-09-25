@@ -50,9 +50,9 @@ namespace Altinn.ResourceRegistry.Integration.Clients
             {
                 throw new Exception($"Something went wrong when retrieving Action options", ex);
             }
-            finally 
-            { 
-                response?.Dispose(); 
+            finally
+            {
+                response?.Dispose();
             }
         }
     }

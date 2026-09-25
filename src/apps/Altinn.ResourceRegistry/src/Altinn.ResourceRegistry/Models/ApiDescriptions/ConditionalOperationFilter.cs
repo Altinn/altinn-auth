@@ -11,7 +11,7 @@ namespace Altinn.ResourceRegistry.Models.ApiDescriptions;
 /// An <see cref="IOperationFilter"/> for adding conditional headers to requests and responses.
 /// </summary>
 public class ConditionalOperationFilter : IOperationFilter
-{ 
+{
     /// <inheritdoc />
     public void Apply(OpenApiOperation operation, OperationFilterContext context)
     {
@@ -164,7 +164,7 @@ public class ConditionalOperationFilter : IOperationFilter
         public static Marker Instance { get; } = new();
 
         private Marker()
-        { 
+        {
         }
     }
 }

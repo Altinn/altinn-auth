@@ -8,7 +8,7 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
         public async Task<ApplicationList> GetApplicationList(bool includeMigratedApps, CancellationToken cancellationToken)
         {
             string? testdataFolder = GetAltinn2TestDatafolder();
-            if(testdataFolder != null)
+            if (testdataFolder != null)
             {
                 string applicationsFilePath = Path.Combine(testdataFolder, $"applications.json");
 
@@ -21,7 +21,7 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
                     {
                         applicationList = System.Text.Json.JsonSerializer.Deserialize<ApplicationList>(content, new System.Text.Json.JsonSerializerOptions() { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
                     }
-                
+
                     if (applicationList == null)
                     {
                         applicationList = new ApplicationList();

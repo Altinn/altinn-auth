@@ -46,7 +46,7 @@ public static class ConditionalResult
 /// </summary>
 /// <typeparam name="TValue">The type of the result.</typeparam>
 /// <typeparam name="TTag">The type of the value tag.</typeparam>
-public class ConditionalResult<TValue, TTag> 
+public class ConditionalResult<TValue, TTag>
     : IConvertToActionResult
     where TValue : ITaggedEntity<TTag>
     where TTag : notnull

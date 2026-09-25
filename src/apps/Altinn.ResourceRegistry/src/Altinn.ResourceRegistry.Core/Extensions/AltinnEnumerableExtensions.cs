@@ -18,7 +18,7 @@ public static class AltinnEnumerableExtensions
     /// <param name="comparer">Optional equality comparer.</param>
     /// <returns><see langword="true"/> if <paramref name="enumerable"/> contains any items in <paramref name="items"/>, otherwise <see langword="false"/>.</returns>
     public static bool ContainsAnyOf<T>(
-        this IEnumerable<T> enumerable, 
+        this IEnumerable<T> enumerable,
         ReadOnlySpan<T> items,
         EqualityComparer<T>? comparer = null)
     {

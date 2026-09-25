@@ -10,7 +10,7 @@ namespace Altinn.ResourceRegistry.Persistence.Tests;
 
 public class AccessListsRepositoryTests : DbTests
 {
-    public AccessListsRepositoryTests(DbFixture dbFixture) 
+    public AccessListsRepositoryTests(DbFixture dbFixture)
         : base(dbFixture)
     {
     }
@@ -80,7 +80,7 @@ public class AccessListsRepositoryTests : DbTests
 
     [Fact]
     public async Task LookupNonExisting()
-    { 
+    {
         var info = await Repository.LookupInfo("owner", "identifier");
         Assert.Null(info);
 
@@ -480,7 +480,7 @@ public class AccessListsRepositoryTests : DbTests
         var readyTasks = new List<Task>();
         var resultTasks = new List<Task<ulong>>();
 
-        for(var idx = 0; idx < 10; idx++)
+        for (var idx = 0; idx < 10; idx++)
         {
             var readySource = new TaskCompletionSource();
 
