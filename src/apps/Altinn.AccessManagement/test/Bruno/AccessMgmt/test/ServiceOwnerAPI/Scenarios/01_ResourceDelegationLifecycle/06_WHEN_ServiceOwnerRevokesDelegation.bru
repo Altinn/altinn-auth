@@ -1,0 +1,47 @@
+meta {
+  name: 06_WHEN_ServiceOwnerRevokesDelegation
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/connections/resources/revoke
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "from": "urn:altinn:person:identifier-no:{{grantorPid}}",
+    "to": "urn:altinn:person:identifier-no:{{recipientPid}}",
+    "resource": "{{resource}}"
+  }
+}
+
+docs {
+  WHEN the service owner revokes the delegation. Expects 204. The delegation policy is
+  cleared, and the rettighetshaver assignment is removed as well because the service
+  owner created it and nothing else hangs on it.
+}
+
+script:pre-request {
+  const { td, loginAsServiceOwner, scopes, serviceOwners } = require("./test/ServiceOwnerAPI/Scenarios/helpers.js");
+  const data = td();
+
+  bru.setVar("grantorPid", data.resourceDelegation.grantor.pid);
+  bru.setVar("recipientPid", data.resourceDelegation.recipient.pid);
+  bru.setVar("resource", data.resourceDelegation.resource);
+
+  await loginAsServiceOwner(serviceOwners.digdir, scopes.resourceDelegationWrite);
+}
+
+tests {
+  test("WHEN the delegation is revoked, the request returns 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

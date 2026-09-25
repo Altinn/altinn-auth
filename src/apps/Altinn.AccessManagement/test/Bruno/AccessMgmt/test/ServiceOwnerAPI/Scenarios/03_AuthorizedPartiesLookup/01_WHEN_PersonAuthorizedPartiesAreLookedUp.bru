@@ -1,0 +1,94 @@
+meta {
+  name: 01_WHEN_PersonAuthorizedPartiesAreLookedUp
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/authorizedparties
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{subjectPid}}",
+    "partyFilter": [
+      {
+        "type": "urn:altinn:person:identifier-no",
+        "value": "{{subjectPid}}"
+      }
+    ]
+  }
+}
+
+docs {
+  WHEN the service owner looks up the authorized parties of a person, filtered to the
+  person's own party.
+
+  POST /accessmanagement/api/v1/serviceowner/authorizedparties
+  (also routed as /accessmanagement/api/v1/resourceowner/authorizedparties)
+
+  Scope `altinn:accessmanagement/authorizedparties.resourceowner` (or the
+  `.admin` scope). Body: `type` and `value` identify the subject, with `type`
+  `urn:altinn:person:identifier-no`, `urn:altinn:organization:identifier-no` and the
+  other supported subject URNs; the optional `partyFilter` limits the result to the
+  listed parties.
+
+  Query parameters, all optional: `includeRoles` (default true),
+  `includeAccessPackages` (false), `includeResources` (true), `includeInstances`
+  (true), `includePartiesViaKeyRoles`, `includeSubParties` and
+  `includeInactiveParties` (True, False or Auto; default True), `orgCode` (only
+  parties with access to resources the service owner owns) and `anyOfResourceIds`.
+
+  Returns 200 with a list of parties: `partyUuid`, `partyId`, `name`, `type`
+  (Person or Organization), `personId` or `organizationNumber`, `unitType`,
+  `isDeleted`, the `authorized*` arrays and `subunits`.
+}
+
+script:pre-request {
+  const { td, loginAsServiceOwner, scopes, serviceOwners } = require("./test/ServiceOwnerAPI/Scenarios/helpers.js");
+  const data = td();
+
+  bru.setVar("subjectPid", data.resourceDelegation.grantor.pid);
+  bru.setVar("resource", data.resourceDelegation.resource);
+
+  await loginAsServiceOwner(serviceOwners.digdir, scopes.authorizedParties);
+}
+
+tests {
+  const { td } = require("./test/ServiceOwnerAPI/Scenarios/helpers.js");
+  const grantor = td().resourceDelegation.grantor;
+
+  test("WHEN the authorized parties are looked up, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN only the person's own party is returned, with its fields", function() {
+    const body = res.getBody();
+    expect(body).to.be.an("array").with.lengthOf(1);
+    const party = body[0];
+    expect(party.partyUuid).to.equal(grantor.partyuuid);
+    expect(party.partyId).to.equal(grantor.partyid);
+    expect(party.name).to.equal(grantor.name);
+    expect(party.type).to.equal("Person");
+    expect(party.personId).to.equal(grantor.pid);
+    expect(party.organizationNumber).to.equal(null);
+    expect(party.isDeleted).to.equal(false);
+    expect(party.subunits).to.be.an("array").that.is.empty;
+  });
+
+  test("THEN the person's own party carries the privatperson role", function() {
+    const party = res.getBody()[0];
+    expect(party.authorizedRoles).to.include("privatperson");
+    expect(party.authorizedAccessPackages).to.be.an("array");
+    expect(party.authorizedResources).to.be.an("array");
+    expect(party.authorizedInstances).to.be.an("array");
+  });
+}
