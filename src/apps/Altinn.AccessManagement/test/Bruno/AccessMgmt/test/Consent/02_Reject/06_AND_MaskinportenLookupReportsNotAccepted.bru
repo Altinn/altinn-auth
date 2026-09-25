@@ -1,0 +1,48 @@
+meta {
+  name: 06_AND_MaskinportenLookupReportsNotAccepted
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/maskinporten/consent/lookup
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "id": "{{rejectRequestId}}",
+    "from": "{{consentFrom}}",
+    "to": "{{consentTo}}"
+  }
+}
+
+docs {
+  AND the Maskinporten lookup reports the consent as not accepted.
+
+  POST /accessmanagement/api/v1/maskinporten/consent/lookup
+
+  See scenario 01 step 10 for the endpoint. A rejected request never becomes a consent:
+  the lookup answers 400 with problem code AM-00014, "Consent is not accepted".
+}
+
+script:pre-request {
+  const { loginAsEnterprise, scopes, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  await loginAsEnterprise(td.enterprise, scopes.maskinportenConsentRead);
+}
+
+tests {
+  test("WHEN the rejected request is looked up, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN the problem is AM-00014, consent is not accepted", function() {
+    const body = res.getBody();
+    expect(body.status).to.equal(400);
+    expect(body.code).to.equal("AM-00014");
+    expect(body.detail).to.equal("Consent is not accepted");
+  });
+}

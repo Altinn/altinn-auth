@@ -1,0 +1,61 @@
+meta {
+  name: 13_WHEN_UserRevokesConsent
+  type: http
+  seq: 13
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/bff/consents/:consentId/revoke
+  body: none
+  auth: inherit
+}
+
+params:path {
+  consentId: {{consentRequestId}}
+}
+
+docs {
+  WHEN the person revokes the consent.
+
+  POST /accessmanagement/api/v1/bff/consents/:consentId/revoke
+
+  Revokes an accepted consent. From then on the Maskinporten lookup refuses it and the
+  enterprise sees status Revoked. No body.
+
+  - consentId (path): the consent (request) id.
+  - Token: personal token with scope altinn:portal/enduser. The user must have write
+    access to access management for the from party; otherwise 403.
+
+  Typical response: 200 with the request, field consentRequestStatus Revoked and a
+  Revoked event performed by the user. 400 (AM-00010) when the consent is not in status
+  Accepted. Revoking an already revoked consent returns 200 again.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  await loginAs(td.consentingPerson);
+}
+
+tests {
+  const { testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  test("WHEN the person revokes the consent, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the consent has status Revoked", function() {
+    const body = res.getBody();
+    expect(body.id).to.equal(bru.getVar("consentRequestId"));
+    expect(body.consentRequestStatus).to.equal("Revoked");
+    expect(body.consented).to.be.a("string");
+  });
+
+  test("THEN a Revoked event is recorded, performed by the person", function() {
+    const events = res.getBody().consentRequestEvents;
+    expect(events.map(e => e.eventType)).to.deep.equal(["Created", "Accepted", "Revoked"]);
+    expect(events[2].performedBy).to.equal(`urn:altinn:party:uuid:${td.consentingPerson.partyUuid}`);
+  });
+}

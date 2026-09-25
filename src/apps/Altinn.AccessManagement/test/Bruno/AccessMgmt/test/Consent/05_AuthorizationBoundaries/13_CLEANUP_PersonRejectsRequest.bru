@@ -1,0 +1,43 @@
+meta {
+  name: 13_CLEANUP_PersonRejectsRequest
+  type: http
+  seq: 13
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/bff/consentrequests/:requestId/reject
+  body: none
+  auth: inherit
+}
+
+params:path {
+  requestId: {{boundaryRequestId}}
+}
+
+docs {
+  CLEANUP the request is rejected by the person to close it.
+
+  POST /accessmanagement/api/v1/bff/consentrequests/:requestId/reject
+
+  Consent requests cannot be deleted. Rejecting the request puts it in a final state, so
+  it does not stay pending in the person's portal. It also shows that none of the refused
+  calls above changed the request: it is still in status Created and can be rejected.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  await loginAs(td.consentingPerson);
+}
+
+tests {
+  test("CLEANUP the person rejects the request, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the only events are Created and Rejected", function() {
+    const events = res.getBody().consentRequestEvents;
+    expect(events.map(e => e.eventType)).to.deep.equal(["Created", "Rejected"]);
+  });
+}
