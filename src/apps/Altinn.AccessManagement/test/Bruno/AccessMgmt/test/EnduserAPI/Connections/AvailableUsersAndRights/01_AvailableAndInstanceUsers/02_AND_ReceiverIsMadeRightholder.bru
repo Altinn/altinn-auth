@@ -1,0 +1,59 @@
+meta {
+  name: 02_AND_ReceiverIsMadeRightholder
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{party}}&from={{party}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+}
+
+body:json {
+  {
+    "personIdentifier": "{{receiverPid}}",
+    "lastName": "{{receiverLastName}}"
+  }
+}
+
+docs {
+  AND the delegator makes the receiver a rightholder, identified by person number and
+  last name.
+
+  Expects 200 with the created assignment: fromId is the delegator, toId is the receiver
+  and roleId is the rightholder role.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/Connections/AvailableUsersAndRights/helpers.js");
+  const td = testdata();
+
+  bru.setVar("party", td.delegator.partyUuid);
+  bru.setVar("receiverPid", td.receiver.pid);
+  bru.setVar("receiverLastName", td.receiver.lastname);
+
+  await loginAs(td.delegator);
+}
+
+tests {
+  const { testdata } = require("./test/EnduserAPI/Connections/AvailableUsersAndRights/helpers.js");
+  const td = testdata();
+
+  test("AND the receiver is added as rightholder, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the assignment connects the delegator to the receiver with the rightholder role", function() {
+    const body = res.getBody();
+    expect(body.fromId.toLowerCase()).to.equal(td.delegator.partyUuid.toLowerCase());
+    expect(body.toId.toLowerCase()).to.equal(td.receiver.partyUuid.toLowerCase());
+    expect(body.roleId.toLowerCase()).to.equal("42cae370-2dc1-4fdc-9c67-c2f4b0f0f829");
+    expect(body.id).to.be.a("string").that.is.not.empty;
+  });
+}

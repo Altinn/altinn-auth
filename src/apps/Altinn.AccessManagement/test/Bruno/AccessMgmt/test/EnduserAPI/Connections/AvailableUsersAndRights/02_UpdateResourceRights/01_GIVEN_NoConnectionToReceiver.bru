@@ -1,0 +1,42 @@
+meta {
+  name: 01_GIVEN_NoConnectionToReceiver
+  type: http
+  seq: 1
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{party}}&from={{party}}&to={{to}}&cascade=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{to}}
+  cascade: true
+}
+
+docs {
+  GIVEN the delegator has no connection to the receiver.
+
+  Reset step: removes a rightholder connection left over from an earlier or crashed run,
+  with everything delegated on it (cascade=true). The delete is idempotent and returns 204
+  whether or not a connection exists.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/Connections/AvailableUsersAndRights/helpers.js");
+  const td = testdata();
+
+  bru.setVar("party", td.delegator.partyUuid);
+  bru.setVar("to", td.receiver.partyUuid);
+
+  await loginAs(td.delegator);
+}
+
+tests {
+  test("GIVEN no connection to the receiver, the reset delete returns 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

@@ -1,0 +1,19 @@
+meta {
+  name: 03_RemoveAltinn2Role
+  seq: 3
+}
+
+docs {
+  Scenario: Only Altinn 2 roles can be removed through the roles endpoint
+
+    When the delegator removes an Altinn 2 role the receiver does not hold
+    Then the request succeeds without changing anything
+    And removing an Altinn 3 role such as rightholder is rejected
+    And an unknown role code is rejected
+    And an outsider cannot remove roles on the delegator's behalf
+
+  Altinn 2 role assignments reach Altinn 3 only through the Altinn 2 role import, so the
+  smoke test cannot create one to remove, and removing an imported one would destroy
+  fixture data other suites depend on. The scenario therefore covers the no-op removal
+  and the rejections, and leaves no state behind.
+}

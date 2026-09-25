@@ -1,0 +1,69 @@
+meta {
+  name: 03_WHEN_DelegatorListsAvailableUsers
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/users?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+docs {
+  WHEN the delegator lists the available users.
+
+  `GET /accessmanagement/api/v1/enduser/connections/users?party={party}`
+
+  Returns the parties the selected party already has a connection to, which the portal
+  offers as recipients when the user starts a new delegation (for example of an app
+  instance). Every entry is `{ party, connections }`, where `party` is a simplified party
+  (id, name, type, variant, organizationIdentifier, isDeleted, deletedAt) and
+  `connections` is an empty list. The selected party itself is part of the list.
+
+  - Query: `party` (required), the uuid of the party acting as delegator.
+  - Token: personal token with `altinn:portal/enduser` or
+    `altinn:accessmanagement/enduser:connections:toothers.write`, and the user must be
+    allowed to delegate app instances (`altinn_instance_delegation`, write) for the party.
+  - Responses: 200 with a paginated list; 403 when the user cannot act for the party.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/Connections/AvailableUsersAndRights/helpers.js");
+  const td = testdata();
+
+  bru.setVar("party", td.delegator.partyUuid);
+
+  await loginAs(td.delegator);
+}
+
+tests {
+  const { testdata } = require("./test/EnduserAPI/Connections/AvailableUsersAndRights/helpers.js");
+  const td = testdata();
+
+  test("WHEN the available users are listed, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the receiver is among the available users as a person", function() {
+    const body = res.getBody();
+    expect(body.data).to.be.an("array");
+    const entry = body.data.find(item => item.party.id.toLowerCase() === td.receiver.partyUuid.toLowerCase());
+    expect(entry, "expected the receiver in the available users").to.not.be.undefined;
+    expect(entry.party.type).to.equal("Person");
+    expect(entry.party.variant).to.equal("Person");
+    expect(entry.party.name).to.include(td.receiver.lastname);
+    expect(entry.party.organizationIdentifier).to.equal(null);
+    expect(entry.party.isDeleted).to.equal(false);
+    expect(entry.connections).to.be.an("array");
+  });
+
+  test("THEN the selected party itself is part of the list", function() {
+    const self = res.getBody().data.find(item => item.party.id.toLowerCase() === td.delegator.partyUuid.toLowerCase());
+    expect(self, "expected the delegator in its own list").to.not.be.undefined;
+  });
+}
