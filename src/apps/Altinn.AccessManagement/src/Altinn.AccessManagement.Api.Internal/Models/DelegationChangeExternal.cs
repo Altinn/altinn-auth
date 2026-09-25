@@ -1,9 +1,9 @@
 #nullable enable
 
 using System.Text.Json.Serialization;
-using Altinn.AccessManagement.Enums;
+using Altinn.AccessManagement.Api.Internal.Enums;
 
-namespace Altinn.AccessManagement.Models;
+namespace Altinn.AccessManagement.Api.Internal.Models;
 
 /// <summary>
 /// This is an external model that describes a delegation change as stored in the Authorization postgre DelegationChanges table.

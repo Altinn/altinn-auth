@@ -1,4 +1,4 @@
-﻿using Altinn.AccessManagement.Api.Internal.Controllers;
+﻿using Altinn.AccessManagement.Api.Internal.Controllers.Internal;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Validation;
 using Altinn.AccessMgmt.PersistenceEF.Constants;

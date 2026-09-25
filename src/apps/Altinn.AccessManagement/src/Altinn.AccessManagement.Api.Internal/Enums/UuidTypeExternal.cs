@@ -1,7 +1,6 @@
 ﻿using System.Runtime.Serialization;
-using NpgsqlTypes;
 
-namespace Altinn.AccessManagement.Enums;
+namespace Altinn.AccessManagement.Api.Internal.Enums;
 
 /// <summary>
 /// Enum defining the different uuids used for defining parts in a delegation
@@ -18,27 +17,35 @@ public enum UuidTypeExternal
     /// Defining a person this could also be identified with "Fødselsnummer"/"Dnummer"
     /// </summary>
     [EnumMember(Value = "urn:altinn:person:uuid")]
-    [PgName("urn:altinn:person:uuid")]
     Person,
 
     /// <summary>
     /// Identifies a unit could also be identified with a Organization number
     /// </summary>
     [EnumMember(Value = "urn:altinn:organization:uuid")]
-    [PgName("urn:altinn:organization:uuid")]
     Organization,
 
     /// <summary>
     /// Identifies a systemuser this is a identifier for machine integration it could also be identified with a unique name
     /// </summary>
     [EnumMember(Value = "urn:altinn:systemuser:uuid")]
-    [PgName("urn:altinn:systemuser:uuid")]
     SystemUser,
 
     /// <summary>
     /// Identifies a enterpriseuser this is marked as obsolete and is used for existing integration is also identified with an unique username
     /// </summary>
     [EnumMember(Value = "urn:altinn:enterpriseuser:uuid")]
-    [PgName("urn:altinn:enterpriseuser:uuid")]
-    EnterpriseUser
+    EnterpriseUser,
+
+    /// <summary>
+    /// Identifies a resource that performs the delegation itself, as part of the resource flow (for example parallel signing)
+    /// </summary>
+    [EnumMember(Value = "urn:altinn:resource")]
+    Resource,
+
+    /// <summary>
+    /// Identifies a party, which can be a person, an organization or a system user
+    /// </summary>
+    [EnumMember(Value = "urn:altinn:party:uuid")]
+    Party
 }
