@@ -175,7 +175,7 @@ public class SanitizeOptions
 
     public IReadOnlyCollection<Guid> AllowedToEntityTypes { get; set; } = [];
 
-    public bool PerformToEntityTypeValidation { get; set; } = false;
+    public bool PerformToEntityTypeValidation { get; set; } = true;
 
     /// <summary>
     /// Name of the query parameter holding the target entity, used in validation

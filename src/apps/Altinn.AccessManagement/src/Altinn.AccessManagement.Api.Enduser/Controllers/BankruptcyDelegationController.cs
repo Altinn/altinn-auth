@@ -8,7 +8,6 @@ using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessMgmt.Core.Audit;
 using Altinn.AccessMgmt.Core.Services;
-using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
@@ -23,10 +22,8 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
     [Route("accessmanagement/api/v1/enduser/bankruptcyestate")]
     [Tags("Bankruptcy Delegation")]
     public class BankruptcyDelegationController(
-        IHttpContextAccessor httpContextAccessor,
         IInputValidation inputValidation,
-        IBankruptcyDelegationService bankruptcyDelegationService,
-        IConnectionService ConnectionService) : ControllerBase
+        IBankruptcyDelegationService bankruptcyDelegationService) : ControllerBase
     {
         private Action<ConnectionOptions> ConfigureBankruptcyUserConnections { get; } = options =>
         {
@@ -53,7 +50,6 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
             options.AllowedToEntityTypes = [EntityTypeConstants.Person, EntityTypeConstants.Organization];
             options.EntitiesToValidateForAnyConnections = [EntityTypeConstants.Person];
             options.ToParameterName = "user";
-            options.PerformToEntityTypeValidation = true;
         };
 
         private Action<SanitizeOptions> ConfigureInputValidationCreditor { get; } = options =>
@@ -61,7 +57,6 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
             options.AllowedToEntityTypes = [EntityTypeConstants.Person, EntityTypeConstants.Organization];
             options.EntitiesToValidateForAnyConnections = [EntityTypeConstants.Person];
             options.ToParameterName = "creditor";
-            options.PerformToEntityTypeValidation = true;
         };
 
         /// <summary>

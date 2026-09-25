@@ -496,13 +496,15 @@ namespace Altinn.AccessMgmt.Core.Services
             {
                 if (!availablePackages.Any(p => p.PackageId == packageId))
                 {
+                    // The id here will always be found since we have already validated the package urns in GetPackageListFromUrnList
                     PackageConstants.TryGetById(packageId, out var package);
+                    
                     errorBuilder.Add(
                         ValidationErrors.PackageIsNotDelegable,
                         $"/role/{RoleConstants.EstateAdministrator.Entity.Urn}",
                         [new($"{package.Entity.Urn}", $"Package {package.Entity.Urn} is not delegable for role.")]
                     );
-                }
+                }                
                 else
                 {
                     var rolePackage = availablePackages
