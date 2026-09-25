@@ -10,6 +10,8 @@ public static class JobTypes
     public const string HistoryCleanup = "HistoryCleanup";
     public const string AssignmentSync = "AssignmentSync";
     public const string EntitySync = "EntitySync";
+    public const string ActivityLogBackfill = "ActivityLogBackfill";
+    public const string ActivityLogPartitions = "ActivityLogPartitions";
 }
 
 public class JobSchedulesConfig
@@ -49,6 +51,10 @@ public class JobScheduleEntry
 
     public ScheduledAssignmentOptions? AssignmentOptions { get; set; }
 
+    public ScheduledActivityLogBackfillOptions? ActivityLogBackfillOptions { get; set; }
+
+    public ScheduledActivityLogPartitionOptions? ActivityLogPartitionOptions { get; set; }
+
     // EntitySync has no options beyond Environment — no options object needed.
 }
 
@@ -80,4 +86,22 @@ public class ScheduledAssignmentOptions
 
     /// <summary>UUID of the system account used as changed_by in audit context. Defaults to DBA if empty.</summary>
     public string SystemAccountId { get; set; } = string.Empty;
+}
+
+public class ScheduledActivityLogBackfillOptions
+{
+    /// <summary>A source table from ActivityLogBackfillJob.Sources, or "all".</summary>
+    public string Source { get; set; } = "all";
+
+    public int BatchSize { get; set; } = 5000;
+
+    public int DelayMs { get; set; } = 250;
+
+    /// <summary>Total batch budget per scheduled run; 0 = run until done.</summary>
+    public int MaxBatches { get; set; } = 0;
+}
+
+public class ScheduledActivityLogPartitionOptions
+{
+    public int MonthsAhead { get; set; } = 24;
 }

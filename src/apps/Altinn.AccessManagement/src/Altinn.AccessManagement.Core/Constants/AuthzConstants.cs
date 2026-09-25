@@ -206,6 +206,16 @@
         public const string SCOPE_ENDUSER_REQUESTS_WRITE = "altinn:accessmanagement/enduser:requests.write";
 
         /// <summary>
+        /// Policy tag for authorizing enduser activity log API read access
+        /// </summary>
+        public const string POLICY_ENDUSER_ACTIVITYLOG_READ = "POLICY_ENDUSER_ACTIVITYLOG_READ";
+
+        /// <summary>
+        /// Enduser scope giving access to read operations on the activity log
+        /// </summary>
+        public const string SCOPE_ENDUSER_ACTIVITYLOG_READ = "altinn:accessmanagement/enduser:activitylog.read";
+
+        /// <summary>
         /// Enduser scope giving access to read operations on maskinporten supplier assignments and delegated scopes
         /// </summary>
         public const string SCOPE_ENDUSER_MASKINPORTENSUPPLIERS_READ = "altinn:accessmanagement/enduser:maskinportensuppliers.read";

@@ -140,4 +140,15 @@ public static class AccessMgmtFeatureFlags
     /// so the behavior is fully reversible without clearing stored parent references.
     /// </summary>
     public const string AdosSubunitInheritance = "AccessManagement.Subunit.AdosInheritance";
+
+    /// <summary>
+    /// Enables the activity log endpoint in the enduser API.
+    /// </summary>
+    public const string EnableEnduserActivityLogApi = "AccessManagement.Enduser.ActivityLogApi";
+
+    /// <summary>
+    /// Enables the activity log endpoints in the BFF surface of the internal API — the early
+    /// access for the portal frontend while the enduser API is still gated off.
+    /// </summary>
+    public const string EnableBffActivityLogApi = "AccessManagement.Bff.ActivityLogApi";
 }

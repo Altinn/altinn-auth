@@ -42,6 +42,24 @@ public interface IJobRunner
     JobRun StartAssignmentInstanceCleanup(string environment, AssignmentInstanceCleanupOptions opts);
 
     /// <summary>
+    /// Backfills dbo.activitylog from the live and history tables in throttled batches.
+    /// Idempotent and resumable; progress is tracked in dbo.activitylogbackfillprogress.
+    /// </summary>
+    JobRun StartActivityLogBackfill(string environment, ActivityLogBackfillOptions opts);
+
+    /// <summary>Read-only analysis of what a backfill run would insert, per source and trigger.</summary>
+    JobRun StartActivityLogAnalyze(string environment, string source);
+
+    /// <summary>Manually installs the activity log schema (test environments only, no EF bookkeeping).</summary>
+    JobRun StartActivityLogSchemaInstall(string environment);
+
+    /// <summary>Rolls back a manually installed activity log schema (refuses EF-managed environments).</summary>
+    JobRun StartActivityLogSchemaRollback(string environment);
+
+    /// <summary>Ensures monthly partitions exist ahead of time for dbo.activitylog.</summary>
+    JobRun StartActivityLogPartitions(string environment, ActivityLogPartitionOptions opts);
+
+    /// <summary>
     /// Requests cooperative cancellation of the given run.
     /// Returns false if the run is not found or is already in a terminal state.
     /// </summary>
@@ -234,6 +252,71 @@ public sealed class JobRunner(
         {
             var repo = CreateAccRepo(environment);
             await AssignmentInstanceCleanupJob.RunAsync(repo, run, opts, ct);
+        });
+
+        return run;
+    }
+
+    public JobRun StartActivityLogBackfill(string environment, ActivityLogBackfillOptions opts)
+    {
+        var run = CreateRun($"{ActivityLogBackfillJob.JobName}:{opts.Source}", environment);
+
+        FireAndForget(run, async ct =>
+        {
+            var repo = CreateAccRepo(environment);
+            await ActivityLogBackfillJob.RunAsync(repo, run, opts, ct);
+        });
+
+        return run;
+    }
+
+    public JobRun StartActivityLogAnalyze(string environment, string source)
+    {
+        var run = CreateRun($"{ActivityLogBackfillJob.JobName}:analyze:{source}", environment);
+
+        FireAndForget(run, async ct =>
+        {
+            var repo = CreateAccRepo(environment);
+            await ActivityLogBackfillJob.AnalyzeAsync(repo, run, source, ct);
+        });
+
+        return run;
+    }
+
+    public JobRun StartActivityLogSchemaInstall(string environment)
+    {
+        var run = CreateRun($"{ActivityLogSchemaJob.JobName}:install", environment);
+
+        FireAndForget(run, async ct =>
+        {
+            var repo = CreateAccRepo(environment);
+            await ActivityLogSchemaJob.InstallAsync(repo, run, ct);
+        });
+
+        return run;
+    }
+
+    public JobRun StartActivityLogSchemaRollback(string environment)
+    {
+        var run = CreateRun($"{ActivityLogSchemaJob.JobName}:rollback", environment);
+
+        FireAndForget(run, async ct =>
+        {
+            var repo = CreateAccRepo(environment);
+            await ActivityLogSchemaJob.RollbackAsync(repo, run, ct);
+        });
+
+        return run;
+    }
+
+    public JobRun StartActivityLogPartitions(string environment, ActivityLogPartitionOptions opts)
+    {
+        var run = CreateRun(ActivityLogPartitionJob.JobName, environment);
+
+        FireAndForget(run, async ct =>
+        {
+            var repo = CreateAccRepo(environment);
+            await ActivityLogPartitionJob.RunAsync(repo, run, opts, ct);
         });
 
         return run;

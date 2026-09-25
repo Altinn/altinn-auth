@@ -1,0 +1,1447 @@
+@page "/tools/activitylog"
+@using Altinn.AccessMgmt.PersistenceEF.Constants
+@using Altinn.AccessMgmt.PersistenceEF.Queries
+@using Altinn.Authorization.Api.Contracts.AccessManagement.ActivityLog
+@using Altinn.Authorization.Api.Contracts.AccessManagement.Request
+@using PersistedActivityLog = Altinn.AccessMgmt.PersistenceEF.Models.ActivityLog
+@using PersistenceActivityType = Altinn.AccessMgmt.PersistenceEF.Models.ActivityType
+@inherits EnvironmentPageBase
+@inject ActivityLogPageService PageService
+@inject EntitySearchService SearchService
+
+<PageTitle>Aktivitetslogg</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Aktivitetslogg</MudText>
+<MudText Typo="Typo.body1" Class="mb-6 mud-text-secondary">
+    Bla og filtrer i <code>dbo.activitylog</code> — hendelser for assignments, delegeringer og
+    forespørsler, skrevet av databasetriggere. Nyeste først; ett filter per dimensjon, flere
+    verdier innen hver, og spørringen kjører automatisk når filtrene endres.
+</MudText>
+
+@* ── Filter bar ────────────────────────────────────────────────────────────── *@
+<MudPaper Elevation="1" Class="pa-3 mb-4">
+    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="4" AlignItems="AlignItems.Center">
+        <div style="min-width: 320px;">
+            <EntityLookupField Label="Party" Value="_partyId" ValueChanged="OnPartyChanged" />
+        </div>
+        <MudRadioGroup T="PartyDirection" Value="_direction" ValueChanged="OnDirectionChanged">
+            <MudRadio T="PartyDirection" Value="PartyDirection.From" Dense="true">Gitt til andre</MudRadio>
+            <MudRadio T="PartyDirection" Value="PartyDirection.To" Dense="true">Mottatt av andre</MudRadio>
+            <MudRadio T="PartyDirection" Value="PartyDirection.Via" Dense="true">Fasilitert</MudRadio>
+            <MudRadio T="PartyDirection" Value="PartyDirection.By" Dense="true">Utført av</MudRadio>
+            <MudRadio T="PartyDirection" Value="PartyDirection.All" Dense="true">Alt</MudRadio>
+        </MudRadioGroup>
+    </MudStack>
+    <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mb-2">
+        Party ankrer loggen: retningen styrer hvilken side parten må stå på i hver hendelse.
+        Filtrene under snevrer inn videre.
+    </MudText>
+    <MudDivider Class="mb-3" />
+
+    @* ── Activity type catalog ─────────────────────────────────────────────── *@
+    <div class="d-flex align-center justify-space-between mb-1">
+        <div>
+            <MudText Typo="Typo.subtitle2">Hendelsestype</MudText>
+            <MudText Typo="Typo.caption" Class="mud-text-secondary d-block">
+                Hvert valg filtrerer på hele kombinasjonen av type, subtype, hendelse og status.
+                Velg en gruppe for å ta alt under den; ingen valg betyr alle hendelsestyper.
+            </MudText>
+        </div>
+        <MudToggleGroup T="CatalogView" Value="_catalogView" ValueChanged="v => _catalogView = v"
+                        Size="Size.Small" Color="Color.Primary" Outlined="true" Delimiters="true" Dense="true">
+            <MudToggleItem Value="CatalogView.Tabs" Text="Faner" />
+            <MudToggleItem Value="CatalogView.Tree" Text="Tre" />
+        </MudToggleGroup>
+    </div>
+
+    @if (_catalogView == CatalogView.Tabs)
+    {
+        <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pt-2">
+            @foreach (var typeGroup in CatalogByType)
+            {
+                var mainType = typeGroup.Key;
+                var subtypeGroups = typeGroup.GroupBy(d => d.Entity.Subtype).ToList();
+                var columnWidth = 12 / Math.Max(subtypeGroups.Count, 1);
+                <MudTabPanel Text="@MainTypeLabel(mainType)" BadgeData="@TabBadge(mainType)" BadgeColor="Color.Primary">
+                    <MudCheckBox T="bool?"
+                                 Value="@GroupState(typeGroup.Select(d => d.Id))"
+                                 ValueChanged="@(_ => ToggleGroup(typeGroup.Select(d => d.Id).ToList()))"
+                                 Dense="true"
+                                 Color="Color.Primary"
+                                 Label="@($"Alle {MainTypeLabel(mainType).ToLowerInvariant()}shendelser")" />
+                    <MudGrid Spacing="2" Class="mt-0">
+                        @foreach (var subtypeGroup in subtypeGroups)
+                        {
+                            var members = subtypeGroup.ToList();
+                            <MudItem xs="12" sm="6" md="@columnWidth">
+                                <MudCheckBox T="bool?"
+                                             Value="@GroupState(members.Select(d => d.Id))"
+                                             ValueChanged="@(_ => ToggleGroup(members.Select(d => d.Id).ToList()))"
+                                             Dense="true"
+                                             Color="Color.Primary">
+                                    <MudText Typo="Typo.body2" Class="fw-bold">@SubtypeLabel(mainType, subtypeGroup.Key)</MudText>
+                                </MudCheckBox>
+                                <div class="pl-4">
+                                    @foreach (var definition in members)
+                                    {
+                                        var d = definition;
+                                        <div class="d-flex align-start mb-1">
+                                            <MudCheckBox T="bool"
+                                                         Value="@_selectedActivityTypes.Contains(d.Id)"
+                                                         ValueChanged="@(on => SetActivityType(d.Id, on))"
+                                                         Dense="true"
+                                                         Size="Size.Small"
+                                                         Color="Color.Primary" />
+                                            <div class="ml-1 cursor-pointer" @onclick="@(() => ToggleActivityTypeRow(d.Id))">
+                                                <MudText Typo="Typo.body2">@d.Entity.Name</MudText>
+                                                <MudText Typo="Typo.caption" Class="mud-text-secondary">@d.Entity.Description</MudText>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            </MudItem>
+                        }
+                    </MudGrid>
+                </MudTabPanel>
+            }
+        </MudTabs>
+    }
+    else
+    {
+        <MudPaper Outlined="true" Class="py-1 px-2">
+            @foreach (var typeGroup in CatalogByType)
+            {
+                var mainType = typeGroup.Key;
+                var typeIds = typeGroup.Select(d => d.Id).ToList();
+                var typeSelected = typeIds.Count(_selectedActivityTypes.Contains);
+                <div class="d-flex align-center cursor-pointer" @onclick="@(() => ToggleTypeNode(mainType))">
+                    <MudIcon Icon="@(IsTypeExpanded(mainType) ? Icons.Material.Filled.ExpandMore : Icons.Material.Filled.ChevronRight)"
+                             Size="Size.Small" Class="mud-text-secondary" />
+                    <div @onclick:stopPropagation="true">
+                        <MudCheckBox T="bool?"
+                                     Value="@GroupState(typeIds)"
+                                     ValueChanged="@(_ => ToggleGroup(typeIds))"
+                                     Dense="true"
+                                     Color="Color.Primary" />
+                    </div>
+                    <MudText Typo="Typo.body2" Class="fw-bold">@MainTypeLabel(mainType)</MudText>
+                    @if (typeSelected > 0)
+                    {
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary ml-2">@typeSelected av @typeIds.Count valgt</MudText>
+                    }
+                </div>
+                @if (IsTypeExpanded(mainType))
+                {
+                    @foreach (var subtypeGroup in typeGroup.GroupBy(d => d.Entity.Subtype))
+                    {
+                        var members = subtypeGroup.ToList();
+                        var nodeKey = $"{mainType}:{subtypeGroup.Key}";
+                        <div class="d-flex align-center cursor-pointer ml-6" @onclick="@(() => ToggleSubtypeNode(nodeKey))">
+                            <MudIcon Icon="@(IsSubtypeExpanded(nodeKey) ? Icons.Material.Filled.ExpandMore : Icons.Material.Filled.ChevronRight)"
+                                     Size="Size.Small" Class="mud-text-secondary" />
+                            <div @onclick:stopPropagation="true">
+                                <MudCheckBox T="bool?"
+                                             Value="@GroupState(members.Select(d => d.Id))"
+                                             ValueChanged="@(_ => ToggleGroup(members.Select(d => d.Id).ToList()))"
+                                             Dense="true"
+                                             Color="Color.Primary" />
+                            </div>
+                            <MudText Typo="Typo.body2">@SubtypeLabel(mainType, subtypeGroup.Key)</MudText>
+                        </div>
+                        @if (IsSubtypeExpanded(nodeKey))
+                        {
+                            @foreach (var definition in members)
+                            {
+                                var d = definition;
+                                <div class="d-flex align-center cursor-pointer ml-14" @onclick="@(() => ToggleActivityTypeRow(d.Id))">
+                                    <div @onclick:stopPropagation="true">
+                                        <MudCheckBox T="bool"
+                                                     Value="@_selectedActivityTypes.Contains(d.Id)"
+                                                     ValueChanged="@(on => SetActivityType(d.Id, on))"
+                                                     Dense="true"
+                                                     Size="Size.Small"
+                                                     Color="Color.Primary" />
+                                    </div>
+                                    <MudText Typo="Typo.body2" Style="min-width: 280px;">@d.Entity.Name</MudText>
+                                    <MudText Typo="Typo.caption" Class="mud-text-secondary ml-3">@d.Entity.Description</MudText>
+                                </div>
+                            }
+                        }
+                    }
+                }
+            }
+        </MudPaper>
+    }
+    <MudDivider Class="my-3" />
+
+    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1" AlignItems="AlignItems.Center">
+
+        @foreach (var dim in _active)
+        {
+            var d = dim;
+            <MudChip T="string"
+                     Color="Color.Primary"
+                     Variant="@(d == _editing ? Variant.Filled : Variant.Outlined)"
+                     OnClick="@(() => ToggleEditor(d))"
+                     OnClose="@(() => RemoveDimension(d))">
+                @ChipLabel(d)
+            </MudChip>
+        }
+
+        <MudMenu Label="@(_active.Count == 0 ? "Legg til filter" : "Legg til")"
+                 StartIcon="@Icons.Material.Filled.Add"
+                 Variant="Variant.Outlined"
+                 Color="Color.Primary"
+                 Dense="true">
+            @foreach (var group in DimensionGroups)
+            {
+                if (group != DimensionGroups[0] && group.Any(Available))
+                {
+                    <MudDivider />
+                }
+
+                @foreach (var dim in group.Where(Available))
+                {
+                    var d = dim;
+                    <MudMenuItem OnClick="@(() => AddDimension(d))">@DimensionLabel(d)</MudMenuItem>
+                }
+            }
+        </MudMenu>
+
+        @if (_active.Count > 0)
+        {
+            <MudButton Variant="Variant.Text"
+                       StartIcon="@Icons.Material.Filled.Close"
+                       OnClick="ClearAll">
+                Nullstill
+            </MudButton>
+        }
+
+        <MudSpacer />
+
+        <MudTooltip Text="Maskinporten-skjema (Supplier-rollen) skjules som standard, likt sluttbruker-API-et.">
+            <MudCheckBox T="bool" Value="_includeMps" ValueChanged="OnIncludeMpsChanged" Dense="true" Color="Color.Primary"
+                         Label="Inkluder maskinporten-skjema" />
+        </MudTooltip>
+
+        <div style="width: 140px;">
+            <MudNumericField T="int"
+                             Value="_pageSize"
+                             ValueChanged="OnPageSizeChanged"
+                             Label="Sidestørrelse"
+                             Variant="Variant.Outlined"
+                             Margin="Margin.Dense"
+                             Min="10"
+                             Max="5000" />
+        </div>
+    </MudStack>
+
+    @* ── Value editor for the open chip ─────────────────────────────────────── *@
+    @if (_editing is { } editing)
+    {
+        <MudDivider Class="my-3" />
+        <MudStack Spacing="2">
+            <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center">
+                <MudText Typo="Typo.subtitle2">Velg @DimensionLabel(editing).ToLowerInvariant()</MudText>
+                <MudIconButton Icon="@Icons.Material.Filled.Close"
+                               Size="Size.Small"
+                               aria-label="Lukk"
+                               OnClick="@(() => _editing = null)" />
+            </MudStack>
+
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">@DimensionHint(editing)</MudText>
+
+            @switch (editing)
+            {
+                case FilterDim.From:
+                case FilterDim.To:
+                case FilterDim.Via:
+                case FilterDim.By:
+                    <MudStack Spacing="2" Style="max-width: 560px;">
+                        @FilterValueSearch(editing)
+                        <EntityLookupField Label="Eller lim inn part (UUID)" @bind-Value="_entityDraft" />
+                        <MudStack Row="true" Spacing="2">
+                            <MudButton Variant="Variant.Outlined"
+                                       Size="Size.Small"
+                                       Disabled="@(_entityDraft is null)"
+                                       OnClick="@(() => AddGuidValue(editing, _entityDraft))">
+                                Legg til
+                            </MudButton>
+                        </MudStack>
+                        @SelectedGuidChips(editing)
+                    </MudStack>
+                    break;
+
+                case FilterDim.Date:
+                    <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="2" Style="max-width: 480px;">
+                        <MudDatePicker Label="Fra dato"
+                                       Date="_afterDate"
+                                       DateChanged="@(d => { _afterDate = d; ScheduleQuery(); })"
+                                       Variant="Variant.Outlined"
+                                       Margin="Margin.Dense"
+                                       Clearable="true" />
+                        <MudDatePicker Label="Til dato"
+                                       Date="_beforeDate"
+                                       DateChanged="@(d => { _beforeDate = d; ScheduleQuery(); })"
+                                       Variant="Variant.Outlined"
+                                       Margin="Margin.Dense"
+                                       Clearable="true" />
+                    </MudStack>
+                    break;
+
+                case FilterDim.Source:
+                case FilterDim.Role:
+                case FilterDim.Package:
+                case FilterDim.Resource:
+                    <MudStack Spacing="2" Style="max-width: 560px;">
+                        @FilterValueSearch(editing)
+                        @SelectedGuidChips(editing)
+                    </MudStack>
+                    break;
+
+                case FilterDim.Instance:
+                case FilterDim.Operation:
+                    <MudStack Spacing="2" Style="max-width: 560px;">
+                        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                            <MudTextField @bind-Value="_textDraft"
+                                          Label="@(editing == FilterDim.Instance ? "Instans-URN" : "Operasjons-id")"
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          OnKeyDown="@(e => OnDraftKeyDown(e, editing))"
+                                          Immediate="true"
+                                          FullWidth="true" />
+                            <MudButton Variant="Variant.Outlined"
+                                       Size="Size.Small"
+                                       Disabled="@string.IsNullOrWhiteSpace(_textDraft)"
+                                       OnClick="@(() => AddTextValue(editing))">
+                                Legg til
+                            </MudButton>
+                        </MudStack>
+                        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
+                            @foreach (var value in TextValues(editing))
+                            {
+                                var v = value;
+                                <MudChip T="string"
+                                         Size="Size.Small"
+                                         OnClose="@(() => RemoveTextValue(editing, v))">
+                                    @v
+                                </MudChip>
+                            }
+                        </MudStack>
+                    </MudStack>
+                    break;
+
+                case FilterDim.Item:
+                case FilterDim.Parent:
+                    <MudStack Spacing="2" Style="max-width: 560px;">
+                        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                            <MudTextField @bind-Value="_textDraft"
+                                          Label="UUID"
+                                          Variant="Variant.Outlined"
+                                          Margin="Margin.Dense"
+                                          Placeholder="Lim inn UUID..."
+                                          OnKeyDown="@(e => OnDraftKeyDown(e, editing))"
+                                          Immediate="true"
+                                          FullWidth="true" />
+                            <MudButton Variant="Variant.Outlined"
+                                       Size="Size.Small"
+                                       Disabled="@(!Guid.TryParse(_textDraft?.Trim(), out _))"
+                                       OnClick="@(() => AddGuidDraft(editing))">
+                                Legg til
+                            </MudButton>
+                        </MudStack>
+                        @SelectedGuidChips(editing)
+                    </MudStack>
+                    break;
+            }
+        </MudStack>
+    }
+</MudPaper>
+
+@if (!HasFilter && _items is null && !Loading)
+{
+    <MudText Typo="Typo.body2" Class="mb-4 mud-text-secondary">
+        Legg til minst ett avgrensende filter — part, «Utført av», dato, operasjon eller
+        item-/parent-id — så kjører spørringen automatisk.
+    </MudText>
+}
+
+@* ── Status ────────────────────────────────────────────────────────────────── *@
+@if (Loading)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-4" />
+}
+
+@if (Error is not null)
+{
+    <MudAlert Severity="Severity.Error" Class="mb-4">@Error</MudAlert>
+}
+
+@* ── Results ───────────────────────────────────────────────────────────────── *@
+@if (_items is not null)
+{
+    <MudStack Row="true" Wrap="Wrap.Wrap" AlignItems="AlignItems.Center" Spacing="3" Class="mb-2">
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">
+            @(_hasMore ? $"Mer enn {_items.Count} hendelser" : _items.Count == 1 ? "1 hendelse" : $"{_items.Count} hendelser")
+        </MudText>
+        <MudSpacer />
+        <MudText Typo="Typo.caption" Class="mud-text-secondary">Gruppering</MudText>
+        <MudRadioGroup T="GroupMode" Value="_grouping" ValueChanged="@(m => _grouping = m)">
+            <MudRadio T="GroupMode" Value="GroupMode.None" Dense="true">Ingen</MudRadio>
+            <MudRadio T="GroupMode" Value="GroupMode.Operation" Dense="true">Operasjon</MudRadio>
+            <MudRadio T="GroupMode" Value="GroupMode.Parent" Dense="true">Parent</MudRadio>
+        </MudRadioGroup>
+    </MudStack>
+
+    @if (_grouping != GroupMode.None)
+    {
+        @foreach (var group in GroupedItems())
+        {
+            <MudPaper Elevation="1" Class="mb-3">
+                <MudText Typo="Typo.subtitle2" Class="pa-3 pb-1">@group.Header</MudText>
+                @ResultsGrid(group.Items, false)
+            </MudPaper>
+        }
+    }
+    else
+    {
+        @ResultsGrid(_items, true)
+    }
+
+    @if (_hasMore)
+    {
+        <MudButton Variant="Variant.Outlined"
+                   Color="Color.Primary"
+                   Class="mt-3"
+                   StartIcon="@Icons.Material.Filled.ExpandMore"
+                   Disabled="@Loading"
+                   OnClick="LoadMore">
+            Hent flere
+        </MudButton>
+    }
+}
+
+@code {
+    // ── Filter dimensions ─────────────────────────────────────────────────────
+
+    private enum FilterDim
+    {
+        From,
+        To,
+        Via,
+        By,
+        Date,
+        Source,
+        Role,
+        Package,
+        Resource,
+        Instance,
+        Operation,
+        Item,
+        Parent,
+    }
+
+    private static readonly FilterDim[][] DimensionGroups =
+    [
+        [FilterDim.From, FilterDim.To, FilterDim.Via, FilterDim.By],
+        [FilterDim.Date],
+        [FilterDim.Source],
+        [FilterDim.Role, FilterDim.Package, FilterDim.Resource, FilterDim.Instance],
+        [FilterDim.Operation, FilterDim.Item, FilterDim.Parent],
+    ];
+
+    private static string DimensionLabel(FilterDim dim) => dim switch
+    {
+        FilterDim.From => "Fra",
+        FilterDim.To => "Til",
+        FilterDim.Via => "Via (fasilitator)",
+        FilterDim.By => "Utført av",
+        FilterDim.Date => "Dato",
+        FilterDim.Source => "Kilde",
+        FilterDim.Role => "Rolle",
+        FilterDim.Package => "Pakke",
+        FilterDim.Resource => "Ressurs",
+        FilterDim.Instance => "Instans",
+        FilterDim.Operation => "Operasjon",
+        FilterDim.Item => "ItemId",
+        FilterDim.Parent => "ParentId",
+        _ => dim.ToString(),
+    };
+
+    private static string PluralLabel(FilterDim dim) => dim switch
+    {
+        FilterDim.From or FilterDim.To or FilterDim.Via => "parter",
+        FilterDim.By => "utførere",
+        FilterDim.Source => "kilder",
+        FilterDim.Role => "roller",
+        FilterDim.Package => "pakker",
+        FilterDim.Resource => "ressurser",
+        FilterDim.Instance => "instanser",
+        FilterDim.Operation => "operasjoner",
+        FilterDim.Item => "item-id-er",
+        FilterDim.Parent => "parent-id-er",
+        _ => "valgt",
+    };
+
+    private static string DimensionHint(FilterDim dim) => dim switch
+    {
+        FilterDim.From => "Parten tilgangen er gitt fra (avgiver).",
+        FilterDim.To => "Parten tilgangen er gitt til (rettighetshaver/mottaker).",
+        FilterDim.Via => "Fasilitatoren delegeringen går via (f.eks. regnskapsfører).",
+        FilterDim.By => "Entiteten som utførte endringen — person, systembruker eller internt system.",
+        FilterDim.Date => "Avgrenser på hendelsestidspunktet (fra og med / til og med valgt dag).",
+        FilterDim.Source => "Systemet/kanalen endringen kom gjennom.",
+        FilterDim.Role => "Hendelser der tilgangen gjelder valgt(e) rolle(r).",
+        FilterDim.Package => "Hendelser som gjelder valgt(e) tilgangspakke(r).",
+        FilterDim.Resource => "Hendelser som gjelder valgt(e) ressurs(er).",
+        FilterDim.Instance => "Instans-URN, f.eks. urn:altinn:instance-id:… .",
+        FilterDim.Operation => "Alle hendelser skrevet av samme operasjon (trace-id) — én brukerhandling.",
+        FilterDim.Item => "Rad-id-en til det berørte objektet (teknisk).",
+        FilterDim.Parent => "Hovedradens id, f.eks. AssignmentId for en pakkehendelse.",
+        _ => string.Empty,
+    };
+
+    // ── Filter state ──────────────────────────────────────────────────────────
+
+    private readonly List<FilterDim> _active = [];
+    private FilterDim? _editing;
+
+    // ── Party anchor ──────────────────────────────────────────────────────────
+
+    private enum PartyDirection
+    {
+        All,
+        From,
+        To,
+        Via,
+        By,
+    }
+
+    private Guid? _partyId;
+    private PartyDirection _direction = PartyDirection.All;
+
+    private void OnPartyChanged(Guid? value)
+    {
+        _partyId = value;
+        if (value is { } id)
+        {
+            _ = ResolveEntityNameAsync(id);
+        }
+
+        PurgeAnchoredDimension();
+        ScheduleQuery();
+    }
+
+    private void OnDirectionChanged(PartyDirection value)
+    {
+        _direction = value;
+        PurgeAnchoredDimension();
+        ScheduleQuery();
+    }
+
+    private void PurgeAnchoredDimension()
+    {
+        if (_partyId.HasValue && AnchoredDim() is { } dim && _active.Contains(dim))
+        {
+            RemoveDimension(dim);
+        }
+    }
+
+    private FilterDim? AnchoredDim() => _direction switch
+    {
+        PartyDirection.From => FilterDim.From,
+        PartyDirection.To => FilterDim.To,
+        PartyDirection.Via => FilterDim.Via,
+        PartyDirection.By => FilterDim.By,
+        _ => null,
+    };
+
+    private IReadOnlyCollection<Guid>? AnchoredOrList(FilterDim dim, PartyDirection direction, FilterDim? excludeDim = null) =>
+        _partyId is { } party && _direction == direction ? [party] : (dim == excludeDim ? null : ListOrNull(dim));
+
+    private readonly Dictionary<FilterDim, List<Guid>> _guidValues = [];
+    private readonly Dictionary<FilterDim, List<string>> _textValues = [];
+    private readonly Dictionary<Guid, string> _names = [];
+
+    private Guid? _entityDraft;
+    private string? _textDraft;
+    private string? _filterValueTerm;
+    private bool _filterValueLoading;
+    private bool _filterValueHasMore;
+    private List<ActivityLogFilterValue>? _filterValueResults;
+
+    private DateTime? _afterDate;
+    private DateTime? _beforeDate;
+    private int _pageSize = 200;
+
+    private bool _includeMps;
+
+    private readonly HashSet<Guid> _selectedActivityTypes = [];
+
+    private enum CatalogView
+    {
+        Tabs,
+        Tree,
+    }
+
+    private CatalogView _catalogView = CatalogView.Tree;
+    private readonly HashSet<ActivityLogType> _expandedTypes = [];
+    private readonly HashSet<string> _collapsedSubtypes = [];
+
+    private static readonly IReadOnlyList<IGrouping<ActivityLogType, ConstantDefinition<PersistenceActivityType>>> CatalogByType =
+        ActivityTypeConstants.AllEntities().GroupBy(d => d.Entity.Type).OrderBy(g => g.Key).ToList();
+
+    private static string MainTypeLabel(ActivityLogType type) => type switch
+    {
+        ActivityLogType.Assignment => "Tildeling",
+        ActivityLogType.Delegation => "Delegering",
+        ActivityLogType.Request => "Forespørsel",
+        _ => type.ToString(),
+    };
+
+    private static string SubtypeLabel(ActivityLogType type, ActivityLogSubtype? subtype) => subtype switch
+    {
+        null => type switch
+        {
+            ActivityLogType.Assignment => "Selve tildelingen",
+            ActivityLogType.Delegation => "Selve delegeringen",
+            ActivityLogType.Request => "Selve forespørselen",
+            _ => "Hovedrad",
+        },
+        ActivityLogSubtype.Package => "Tilgangspakke",
+        ActivityLogSubtype.Resource => "Enkelttjeneste",
+        ActivityLogSubtype.Instance => "Instans",
+        _ => subtype.ToString(),
+    };
+
+    private bool IsTypeExpanded(ActivityLogType type) => _expandedTypes.Contains(type);
+
+    private void ToggleTypeNode(ActivityLogType type)
+    {
+        if (!_expandedTypes.Remove(type))
+        {
+            _expandedTypes.Add(type);
+        }
+    }
+
+    private bool IsSubtypeExpanded(string nodeKey) => !_collapsedSubtypes.Contains(nodeKey);
+
+    private void ToggleSubtypeNode(string nodeKey)
+    {
+        if (!_collapsedSubtypes.Remove(nodeKey))
+        {
+            _collapsedSubtypes.Add(nodeKey);
+        }
+    }
+
+    private void ToggleActivityTypeRow(Guid id)
+        => SetActivityType(id, !_selectedActivityTypes.Contains(id));
+
+    private object? TabBadge(ActivityLogType type)
+    {
+        var count = CatalogByType.First(g => g.Key == type).Count(d => _selectedActivityTypes.Contains(d.Id));
+        return count > 0 ? count : null;
+    }
+
+    private bool? GroupState(IEnumerable<Guid> ids)
+    {
+        var all = true;
+        var any = false;
+        foreach (var id in ids)
+        {
+            if (_selectedActivityTypes.Contains(id))
+            {
+                any = true;
+            }
+            else
+            {
+                all = false;
+            }
+        }
+
+        return all && any ? true : any ? null : false;
+    }
+
+    private void ToggleGroup(IReadOnlyCollection<Guid> ids)
+    {
+        if (ids.All(_selectedActivityTypes.Contains))
+        {
+            _selectedActivityTypes.ExceptWith(ids);
+        }
+        else
+        {
+            _selectedActivityTypes.UnionWith(ids);
+        }
+
+        ScheduleQuery();
+    }
+
+    private void SetActivityType(Guid id, bool selected)
+    {
+        if (selected)
+        {
+            _selectedActivityTypes.Add(id);
+        }
+        else
+        {
+            _selectedActivityTypes.Remove(id);
+        }
+
+        ScheduleQuery();
+    }
+
+    // ── Data ──────────────────────────────────────────────────────────────────
+
+    private List<PersistedActivityLog>? _items;
+    private int _pageNo;
+    private bool _hasMore;
+    private CancellationTokenSource? _debounce;
+
+    protected override Task OnEnvironmentChangedAsync()
+    {
+        _items = null;
+        _pageNo = 0;
+        _hasMore = false;
+        _filterValueResults = null;
+        _filterValueHasMore = false;
+        _names.Clear();
+        Error = null;
+        return Task.CompletedTask;
+    }
+
+    // ── Chip bar ──────────────────────────────────────────────────────────────
+
+    private bool Available(FilterDim dim) =>
+        !_active.Contains(dim) && !(_partyId.HasValue && dim == AnchoredDim());
+
+    private void AddDimension(FilterDim dim)
+    {
+        _active.Add(dim);
+        OpenEditor(dim);
+    }
+
+    private void ToggleEditor(FilterDim dim)
+    {
+        if (_editing == dim)
+        {
+            _editing = null;
+        }
+        else
+        {
+            OpenEditor(dim);
+        }
+    }
+
+    private void OpenEditor(FilterDim dim)
+    {
+        _editing = dim;
+        _entityDraft = null;
+        _textDraft = null;
+        _filterValueTerm = null;
+        _filterValueResults = null;
+        _filterValueHasMore = false;
+    }
+
+    private void RemoveDimension(FilterDim dim)
+    {
+        _active.Remove(dim);
+        if (_editing == dim)
+        {
+            _editing = null;
+        }
+
+        switch (dim)
+        {
+            case FilterDim.Date:
+                _afterDate = null;
+                _beforeDate = null;
+                break;
+            case FilterDim.Instance:
+            case FilterDim.Operation:
+                _textValues.Remove(dim);
+                break;
+            default:
+                _guidValues.Remove(dim);
+                break;
+        }
+
+        ScheduleQuery();
+    }
+
+    private void ClearAll()
+    {
+        _active.Clear();
+        _editing = null;
+        _guidValues.Clear();
+        _textValues.Clear();
+        _afterDate = null;
+        _beforeDate = null;
+        _selectedActivityTypes.Clear();
+        _debounce?.Cancel();
+        _items = null;
+        _pageNo = 0;
+        _hasMore = false;
+    }
+
+    private string ChipLabel(FilterDim dim)
+    {
+        switch (dim)
+        {
+            case FilterDim.Date:
+                return (_afterDate, _beforeDate) switch
+                {
+                    (not null, not null) => $"{_afterDate:dd.MM.yy}–{_beforeDate:dd.MM.yy}",
+                    (not null, null) => $"Fra {_afterDate:dd.MM.yy}",
+                    (null, not null) => $"Til {_beforeDate:dd.MM.yy}",
+                    _ => DimensionLabel(dim),
+                };
+            case FilterDim.Instance:
+            case FilterDim.Operation:
+                var texts = TextValues(dim);
+                return texts.Count switch
+                {
+                    0 => DimensionLabel(dim),
+                    1 => Shorten(texts[0]),
+                    _ => $"{texts.Count} {PluralLabel(dim)}",
+                };
+            default:
+                var ids = GuidValues(dim);
+                return ids.Count switch
+                {
+                    0 => DimensionLabel(dim),
+                    1 => NameOrShortId(ids[0]),
+                    _ => $"{ids.Count} {PluralLabel(dim)}",
+                };
+        }
+    }
+
+    private string NameOrShortId(Guid id) =>
+        _names.TryGetValue(id, out var name) ? name : id.ToString()[..8];
+
+    private static string Shorten(string value) =>
+        value.Length <= 24 ? value : value[..21] + "...";
+
+    // ── Value editing ─────────────────────────────────────────────────────────
+
+    private List<Guid> GuidValues(FilterDim dim)
+    {
+        if (!_guidValues.TryGetValue(dim, out var list))
+        {
+            list = [];
+            _guidValues[dim] = list;
+        }
+
+        return list;
+    }
+
+    private List<string> TextValues(FilterDim dim)
+    {
+        if (!_textValues.TryGetValue(dim, out var list))
+        {
+            list = [];
+            _textValues[dim] = list;
+        }
+
+        return list;
+    }
+
+    private void AddGuidValue(FilterDim dim, Guid? id)
+    {
+        if (id is not { } value)
+        {
+            return;
+        }
+
+        var list = GuidValues(dim);
+        if (!list.Contains(value))
+        {
+            list.Add(value);
+            _ = ResolveEntityNameAsync(value);
+            ScheduleQuery();
+        }
+
+        _entityDraft = null;
+    }
+
+    private void AddGuidDraft(FilterDim dim)
+    {
+        if (Guid.TryParse(_textDraft?.Trim(), out var id))
+        {
+            var list = GuidValues(dim);
+            if (!list.Contains(id))
+            {
+                list.Add(id);
+                ScheduleQuery();
+            }
+
+            _textDraft = null;
+        }
+    }
+
+    private void RemoveGuidValue(FilterDim dim, Guid id)
+    {
+        GuidValues(dim).Remove(id);
+        ScheduleQuery();
+    }
+
+    private void AddTextValue(FilterDim dim)
+    {
+        var value = _textDraft?.Trim();
+        if (string.IsNullOrEmpty(value))
+        {
+            return;
+        }
+
+        var list = TextValues(dim);
+        if (!list.Contains(value))
+        {
+            list.Add(value);
+            ScheduleQuery();
+        }
+
+        _textDraft = null;
+    }
+
+    private void RemoveTextValue(FilterDim dim, string value)
+    {
+        TextValues(dim).Remove(value);
+        ScheduleQuery();
+    }
+
+    private void OnDraftKeyDown(KeyboardEventArgs e, FilterDim dim)
+    {
+        if (e.Key != "Enter")
+        {
+            return;
+        }
+
+        if (dim is FilterDim.Item or FilterDim.Parent)
+        {
+            AddGuidDraft(dim);
+        }
+        else
+        {
+            AddTextValue(dim);
+        }
+    }
+
+    private IReadOnlyCollection<ActivityTypeKey>? SelectedActivityTypeKeys()
+    {
+        if (_selectedActivityTypes.Count == 0)
+        {
+            return null;
+        }
+
+        var keys = new List<ActivityTypeKey>(_selectedActivityTypes.Count);
+        foreach (var id in _selectedActivityTypes)
+        {
+            if (ActivityTypeConstants.TryGetById(id, out var definition))
+            {
+                keys.Add(new ActivityTypeKey(definition.Entity.Type, definition.Entity.Subtype, definition.Entity.Trigger, definition.Entity.Status));
+            }
+        }
+
+        return keys;
+    }
+
+    private void AddFilterValue(FilterDim dim, ActivityLogFilterValue value)
+    {
+        var list = GuidValues(dim);
+        if (!list.Contains(value.Id))
+        {
+            list.Add(value.Id);
+            if (value.Name is not null)
+            {
+                _names[value.Id] = value.Name;
+            }
+
+            ScheduleQuery();
+        }
+    }
+
+    private const int FilterValuePageSize = 20;
+
+    private RenderFragment FilterValueSearch(FilterDim dim) => __builder =>
+    {
+        @if (!HasFilter)
+        {
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                Legg til et avgrensende filter først (party, part, dato, operasjon eller id) —
+                da kan du søke blant verdier som faktisk forekommer i loggen.
+            </MudText>
+        }
+        else
+        {
+            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                <MudTextField @bind-Value="_filterValueTerm"
+                              Label="Søk i forekommende verdier"
+                              Variant="Variant.Outlined"
+                              Margin="Margin.Dense"
+                              Placeholder="Tomt søk viser alle, alfabetisk..."
+                              Adornment="Adornment.Start"
+                              AdornmentIcon="@Icons.Material.Filled.Search"
+                              OnKeyDown="OnFilterValueKeyDown"
+                              Immediate="false"
+                              FullWidth="true" />
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           Disabled="@_filterValueLoading"
+                           OnClick="SearchFilterValuesAsync">
+                    Søk
+                </MudButton>
+            </MudStack>
+            @if (_filterValueResults is not null)
+            {
+                <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
+                    @foreach (var hit in _filterValueResults.Where(r => !GuidValues(dim).Contains(r.Id)))
+                    {
+                        var value = hit;
+                        <MudChip T="string"
+                                 Size="Size.Small"
+                                 Variant="Variant.Outlined"
+                                 OnClick="@(() => AddFilterValue(dim, value))">
+                            @(value.Name ?? value.Id.ToString()[..8])
+                        </MudChip>
+                    }
+                </MudStack>
+                @if (_filterValueHasMore)
+                {
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">Flere treff finnes — søk smalere.</MudText>
+                }
+            }
+        }
+    };
+
+    private RenderFragment SelectedGuidChips(FilterDim dim) => __builder =>
+    {
+        <MudStack Row="true" Wrap="Wrap.Wrap" Spacing="1">
+            @foreach (var id in GuidValues(dim))
+            {
+                var v = id;
+                <MudChip T="string"
+                         Size="Size.Small"
+                         OnClose="@(() => RemoveGuidValue(dim, v))">
+                    @NameOrShortId(v)
+                </MudChip>
+            }
+        </MudStack>
+    };
+
+    // ── Filter value search (occurring values) ───────────────────────────────────────
+
+    private Task OnFilterValueKeyDown(KeyboardEventArgs e) =>
+        e.Key == "Enter" ? SearchFilterValuesAsync() : Task.CompletedTask;
+
+    private async Task SearchFilterValuesAsync()
+    {
+        if (_editing is not { } dim || FilterFieldFor(dim) is not { } field || !HasFilter)
+        {
+            return;
+        }
+
+        _filterValueLoading = true;
+        try
+        {
+            var page = await PageService.FilterValuesAsync(EnvState.Current, field, BuildFilter(excludeDim: dim), _filterValueTerm, FilterValuePageSize);
+            _filterValueResults = [.. page.Items];
+            _filterValueHasMore = page.HasMore;
+        }
+        catch (Exception ex)
+        {
+            Error = ex.Message;
+        }
+        finally
+        {
+            _filterValueLoading = false;
+        }
+    }
+
+    private static ActivityLogFilterField? FilterFieldFor(FilterDim dim) => dim switch
+    {
+        FilterDim.From => ActivityLogFilterField.From,
+        FilterDim.To => ActivityLogFilterField.To,
+        FilterDim.Via => ActivityLogFilterField.Via,
+        FilterDim.By => ActivityLogFilterField.By,
+        FilterDim.Role => ActivityLogFilterField.Role,
+        FilterDim.Package => ActivityLogFilterField.Package,
+        FilterDim.Resource => ActivityLogFilterField.Resource,
+        FilterDim.Source => ActivityLogFilterField.Source,
+        _ => null,
+    };
+
+    private async Task ResolveEntityNameAsync(Guid id)
+    {
+        if (_names.ContainsKey(id))
+        {
+            return;
+        }
+
+        try
+        {
+            var hits = await SearchService.SearchAsync(
+                EnvState.Current, id.ToString(), includeDeleted: true, EntitySearchKind.Uuid, maxResults: 1);
+
+            if (hits.FirstOrDefault() is { } entity)
+            {
+                _names[id] = entity.Name;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        catch
+        {
+            // Name lookup is a convenience; an unreachable environment must not break the filter.
+        }
+    }
+
+    // ── Query ─────────────────────────────────────────────────────────────────
+
+    private bool HasFilter =>
+        _partyId.HasValue ||
+        GuidValues(FilterDim.From).Count > 0 ||
+        GuidValues(FilterDim.To).Count > 0 ||
+        GuidValues(FilterDim.Via).Count > 0 ||
+        GuidValues(FilterDim.By).Count > 0 ||
+        GuidValues(FilterDim.Item).Count > 0 ||
+        GuidValues(FilterDim.Parent).Count > 0 ||
+        TextValues(FilterDim.Operation).Count > 0 ||
+        _afterDate.HasValue || _beforeDate.HasValue;
+
+    private void OnPageSizeChanged(int value)
+    {
+        _pageSize = value;
+        ScheduleQuery();
+    }
+
+    private void OnIncludeMpsChanged(bool value)
+    {
+        _includeMps = value;
+        ScheduleQuery();
+    }
+
+    private void ScheduleQuery()
+    {
+        _debounce?.Cancel();
+        var cts = _debounce = new CancellationTokenSource();
+        _ = DebouncedRunAsync(cts.Token);
+    }
+
+    private async Task DebouncedRunAsync(CancellationToken token)
+    {
+        try
+        {
+            await Task.Delay(400, token);
+        }
+        catch (TaskCanceledException)
+        {
+            return;
+        }
+
+        if (!HasFilter)
+        {
+            _items = null;
+            _pageNo = 0;
+            _hasMore = false;
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        await InvokeAsync(RunQuery);
+    }
+
+    private async Task RunQuery()
+    {
+        _items = null;
+        _pageNo = 0;
+        _hasMore = false;
+        await FetchPage();
+    }
+
+    private Task LoadMore()
+    {
+        _pageNo++;
+        return FetchPage();
+    }
+
+    private Task FetchPage() => RunAsync(async ct =>
+    {
+        var page = await PageService.QueryAsync(EnvState.Current, BuildFilter(), _pageSize, _pageNo, ct);
+
+        _items = [.. _items ?? [], .. page.Items];
+        _hasMore = page.HasMore;
+    });
+
+    private ActivityLogQueryFilter BuildFilter(FilterDim? excludeDim = null) => new()
+    {
+        AnyPartyIds = _partyId is { } party && _direction == PartyDirection.All ? [party] : null,
+        FromIds = AnchoredOrList(FilterDim.From, PartyDirection.From, excludeDim),
+        ToIds = AnchoredOrList(FilterDim.To, PartyDirection.To, excludeDim),
+        ViaIds = AnchoredOrList(FilterDim.Via, PartyDirection.Via, excludeDim),
+        ByIds = AnchoredOrList(FilterDim.By, PartyDirection.By, excludeDim),
+        SourceIds = excludeDim == FilterDim.Source ? null : ListOrNull(FilterDim.Source),
+        RoleIds = excludeDim == FilterDim.Role ? null : ListOrNull(FilterDim.Role),
+        ExcludeRoleIds = _includeMps ? null : [RoleConstants.Supplier.Id],
+        PackageIds = excludeDim == FilterDim.Package ? null : ListOrNull(FilterDim.Package),
+        ResourceIds = excludeDim == FilterDim.Resource ? null : ListOrNull(FilterDim.Resource),
+        ItemIds = ListOrNull(FilterDim.Item),
+        ParentIds = ListOrNull(FilterDim.Parent),
+        InstanceIds = TextListOrNull(FilterDim.Instance),
+        OperationIds = TextListOrNull(FilterDim.Operation),
+        ActivityTypeKeys = SelectedActivityTypeKeys(),
+        After = _afterDate is not null ? new DateTimeOffset(_afterDate.Value.Date, TimeSpan.Zero) : null,
+        Before = _beforeDate is not null ? new DateTimeOffset(_beforeDate.Value.Date.AddDays(1), TimeSpan.Zero) : null,
+    };
+
+    private IReadOnlyCollection<Guid>? ListOrNull(FilterDim dim)
+    {
+        var list = GuidValues(dim);
+        return list.Count > 0 ? list : null;
+    }
+
+    private IReadOnlyCollection<string>? TextListOrNull(FilterDim dim)
+    {
+        var list = TextValues(dim);
+        return list.Count > 0 ? list : null;
+    }
+
+    // ── Grouping and results ──────────────────────────────────────────────────
+
+    private enum GroupMode
+    {
+        None,
+        Operation,
+        Parent,
+    }
+
+    private GroupMode _grouping;
+
+    private IEnumerable<(string Header, List<PersistedActivityLog> Items)> GroupedItems()
+    {
+        if (_items is null)
+        {
+            yield break;
+        }
+
+        var groups = _grouping == GroupMode.Operation
+            ? _items.GroupBy(t => t.OperationId ?? t.ItemId.ToString())
+            : _items.GroupBy(t => (t.ParentId ?? t.ItemId).ToString());
+
+        foreach (var group in groups.OrderByDescending(g => g.Max(t => t.When)))
+        {
+            var items = group.OrderByDescending(t => t.When).ThenByDescending(t => t.Id).ToList();
+            var header = _grouping == GroupMode.Operation
+                ? $"Operasjon {Shorten(group.Key)} — {items.Count} hendelser — {items[0].When.ToLocalTime():yyyy-MM-dd HH:mm}"
+                : ParentHeader(group.Key, items);
+            yield return (header, items);
+        }
+    }
+
+    private static string ParentHeader(string key, List<PersistedActivityLog> items)
+    {
+        var main = items.FirstOrDefault(t => t.ParentId is null) ?? items[0];
+        var parties = main.FromName is not null || main.ToName is not null
+            ? $"{main.FromName ?? "?"} → {main.ToName ?? "?"} — "
+            : string.Empty;
+        return $"{main.Type} — {parties}{items.Count} hendelser ({key[..8]})";
+    }
+
+    private void FilterOnOperation(string operationId)
+    {
+        if (!_active.Contains(FilterDim.Operation))
+        {
+            _active.Add(FilterDim.Operation);
+        }
+
+        var list = TextValues(FilterDim.Operation);
+        if (!list.Contains(operationId))
+        {
+            list.Add(operationId);
+            ScheduleQuery();
+        }
+    }
+
+    private void FilterOnParent(Guid parentId)
+    {
+        if (!_active.Contains(FilterDim.Parent))
+        {
+            _active.Add(FilterDim.Parent);
+        }
+
+        var list = GuidValues(FilterDim.Parent);
+        if (!list.Contains(parentId))
+        {
+            list.Add(parentId);
+            ScheduleQuery();
+        }
+    }
+
+    private RenderFragment ResultsGrid(IReadOnlyList<PersistedActivityLog> items, bool fixedHeight) => __builder =>
+    {
+        <MudDataGrid T="PersistedActivityLog"
+                     Items="items"
+                     Dense="true"
+                     Hover="true"
+                     Striped="true"
+                     FixedHeader="@fixedHeight"
+                     Height="@(fixedHeight ? "620px" : null)"
+                     SortMode="SortMode.None">
+            <Columns>
+
+                <HierarchyColumn T="PersistedActivityLog" />
+
+                <TemplateColumn Title="Når">
+                    <CellTemplate>
+                        <MudText Typo="Typo.body2">@context.Item.When.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</MudText>
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn Title="Hendelse">
+                    <CellTemplate>
+                        <MudChip T="string" Size="Size.Small" Color="@TriggerColor(context.Item.Trigger)">
+                            @context.Item.Trigger
+                        </MudChip>
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn Title="Type">
+                    <CellTemplate>
+                        <MudChip T="string" Size="Size.Small" Color="@TypeColor(context.Item.Type)" Variant="Variant.Outlined">
+                            @context.Item.Type@(context.Item.Subtype is not null ? $"/{context.Item.Subtype}" : string.Empty)
+                        </MudChip>
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn Title="Fra">
+                    <CellTemplate>
+                        @if (context.Item.FromId is not null)
+                        {
+                            <MudLink Href="@($"/entity/{context.Item.FromId}")" Typo="Typo.body2">
+                                @(context.Item.FromName ?? context.Item.FromId.ToString())
+                            </MudLink>
+                        }
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn Title="Til">
+                    <CellTemplate>
+                        @if (context.Item.ToId is not null)
+                        {
+                            <MudLink Href="@($"/entity/{context.Item.ToId}")" Typo="Typo.body2">
+                                @(context.Item.ToName ?? context.Item.ToId.ToString())
+                            </MudLink>
+                        }
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn Title="Via">
+                    <CellTemplate>
+                        @if (context.Item.ViaId is not null)
+                        {
+                            <MudText Typo="Typo.body2">@(context.Item.ViaName ?? context.Item.ViaId.ToString())</MudText>
+                        }
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn Title="Rolle">
+                    <CellTemplate>
+                        <MudText Typo="Typo.body2">@context.Item.RoleName</MudText>
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn Title="Objekt">
+                    <CellTemplate>
+                        <MudText Typo="Typo.body2">@ObjectLabel(context.Item)</MudText>
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn Title="Status">
+                    <CellTemplate>
+                        @if (context.Item.Status is not null)
+                        {
+                            <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined">
+                                @context.Item.Status
+                            </MudChip>
+                        }
+                    </CellTemplate>
+                </TemplateColumn>
+
+                <TemplateColumn Title="Utført av">
+                    <CellTemplate>
+                        <MudText Typo="Typo.body2">@(context.Item.ByName ?? context.Item.ById?.ToString())</MudText>
+                    </CellTemplate>
+                </TemplateColumn>
+
+            </Columns>
+
+            <ChildRowContent>
+                <MudPaper Elevation="0" Class="pa-3 mud-background-gray">
+                    <MudStack Spacing="1">
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                            Kilde: @SourceLabel(context.Item.SourceId) — Operasjon:
+                            @if (context.Item.OperationId is not null)
+                            {
+                                <MudLink Typo="Typo.caption"
+                                         OnClick="@(() => FilterOnOperation(context.Item.OperationId))">
+                                    @context.Item.OperationId
+                                </MudLink>
+                            }
+                        </MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                            ItemId: @context.Item.ItemId
+                            @if (context.Item.ParentId is not null)
+                            {
+                                <text> — ParentId: </text>
+                                <MudLink Typo="Typo.caption"
+                                         OnClick="@(() => FilterOnParent(context.Item.ParentId.Value))">
+                                    @context.Item.ParentId
+                                </MudLink>
+                            }
+                        </MudText>
+                        @if (context.Item.ViaRoleName is not null)
+                        {
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                Via-rolle: @context.Item.ViaRoleName
+                            </MudText>
+                        }
+                        @if (context.Item.Details is not null)
+                        {
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                                Detaljer: <code>@context.Item.Details</code>
+                            </MudText>
+                        }
+                    </MudStack>
+                </MudPaper>
+            </ChildRowContent>
+
+        </MudDataGrid>
+    };
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private static string ObjectLabel(PersistedActivityLog item) =>
+        item.PackageName
+        ?? item.ResourceName
+        ?? item.InstanceId
+        ?? (item.PackageId?.ToString() ?? item.ResourceId?.ToString())
+        ?? string.Empty;
+
+    private static string SourceLabel(Guid? sourceId) =>
+        sourceId.HasValue && SystemEntityConstants.TryGetById(sourceId.Value, out var definition)
+            ? definition.Entity.Name
+            : sourceId?.ToString() ?? "ukjent";
+
+    private static Color TriggerColor(ActivityLogTrigger trigger) => trigger switch
+    {
+        ActivityLogTrigger.Created => Color.Success,
+        ActivityLogTrigger.Updated => Color.Warning,
+        ActivityLogTrigger.Deleted => Color.Error,
+        _ => Color.Default
+    };
+
+    private static Color TypeColor(ActivityLogType type) => type switch
+    {
+        ActivityLogType.Assignment => Color.Primary,
+        ActivityLogType.Delegation => Color.Info,
+        ActivityLogType.Request => Color.Secondary,
+        _ => Color.Default
+    };
+}

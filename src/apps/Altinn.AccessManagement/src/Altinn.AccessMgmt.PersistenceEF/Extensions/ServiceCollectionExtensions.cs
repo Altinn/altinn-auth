@@ -6,6 +6,7 @@ using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Data;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Models.Base;
+using Altinn.AccessMgmt.PersistenceEF.Queries;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.Host.Database;
@@ -36,6 +37,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuditAccessor, AuditAccessor>();
         services.AddMemoryCache(); // Add memory cache for translation service
         services.AddScoped<ITranslationService, TranslationService>();
+        services.AddScoped<ActivityLogQuery>();
         services.AddScoped<AppDbContextFactory>();
         services.AddScoped(sp => sp.GetRequiredService<AppDbContextFactory>().CreateDbContext());
 
@@ -208,7 +210,11 @@ public static class ServiceCollectionExtensions
 
     private static void AddAppDbContext(IServiceProvider sp, DbContextOptionsBuilder options, AccessManagementDatabaseOptions databaseOptions)
     {
-        options.UseNpgsql(databaseOptions.AppConnectionString, ConfigureNpgsql);
+        // The custom generator must be registered here too: MigrateAsync also runs with
+        // Source = App (Program.cs Init() in RunIntegrationTests mode), and the plain Npgsql
+        // generator would apply migrations without audit/activitylog trigger DDL, grants and
+        // the activitylog PARTITION BY clause. It only affects migration SQL, never queries.
+        options.UseNpgsql(databaseOptions.AppConnectionString, ConfigureNpgsql).ReplaceService<IMigrationsSqlGenerator, CustomMigrationsSqlGenerator>();
     }
 }
 
