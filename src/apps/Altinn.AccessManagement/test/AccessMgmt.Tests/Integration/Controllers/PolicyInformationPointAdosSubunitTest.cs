@@ -53,7 +53,7 @@ public class PolicyInformationPointAdosSubunitTest : IClassFixture<AccessMgmtApi
         var from = TestData.GetEntity("ADOS Subunit").Id;
         var to = TestData.GetEntity("AdosPer").Id;
 
-        var response = await _client.GetAsync($"accessmanagement/api/v1/internal/policyinformation/roles-and-accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
+        var response = await _client.GetAsync($"accessmanagement/api/v1/policyinformation/roles-and-accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 

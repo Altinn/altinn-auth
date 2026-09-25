@@ -169,7 +169,7 @@ public class PolicyInformationPointResourcesAndInstancesTest
         };
 
         var response = await _client.PostAsJsonAsync(
-            "accessmanagement/api/v1/internal/policyinformation/getdelegationchanges",
+            "accessmanagement/api/v1/policyinformation/getdelegationchanges",
             request,
             TestContext.Current.CancellationToken);
 
@@ -205,7 +205,7 @@ public class PolicyInformationPointResourcesAndInstancesTest
         };
 
         var response = await _client.PostAsJsonAsync(
-            "accessmanagement/api/v1/internal/policyinformation/getdelegationchanges",
+            "accessmanagement/api/v1/policyinformation/getdelegationchanges",
             request,
             TestContext.Current.CancellationToken);
 

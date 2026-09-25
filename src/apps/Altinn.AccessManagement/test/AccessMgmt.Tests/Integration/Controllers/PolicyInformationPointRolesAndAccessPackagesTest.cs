@@ -42,7 +42,7 @@ public class PolicyInformationPointRolesAndAccessPackagesTest
         var from = TestData.GetEntity("Regnskaperne").Id;
         var to = TestData.GetEntity("Petter").Id;
 
-        var response = await _client.GetAsync($"accessmanagement/api/v1/internal/policyinformation/roles-and-accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
+        var response = await _client.GetAsync($"accessmanagement/api/v1/policyinformation/roles-and-accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -73,7 +73,7 @@ public class PolicyInformationPointRolesAndAccessPackagesTest
         var from = TestData.GetEntity("Skrik Frisør").Id;
         var to = TestData.GetEntity("Nina").Id;
 
-        var response = await _client.GetAsync($"accessmanagement/api/v1/internal/policyinformation/roles-and-accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
+        var response = await _client.GetAsync($"accessmanagement/api/v1/policyinformation/roles-and-accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -110,7 +110,7 @@ public class PolicyInformationPointRolesAndAccessPackagesTest
         var from = TestData.GetEntity("Revi").Id;
         var to = TestData.GetEntity("William").Id;
 
-        var response = await _client.GetAsync($"accessmanagement/api/v1/internal/policyinformation/roles-and-accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
+        var response = await _client.GetAsync($"accessmanagement/api/v1/policyinformation/roles-and-accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -141,7 +141,7 @@ public class PolicyInformationPointRolesAndAccessPackagesTest
         var from = TestData.GetEntity("Revi").Id;
         var to = TestData.GetEntity("Terje").Id;
 
-        var response = await _client.GetAsync($"accessmanagement/api/v1/internal/policyinformation/roles-and-accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
+        var response = await _client.GetAsync($"accessmanagement/api/v1/policyinformation/roles-and-accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -171,7 +171,7 @@ public class PolicyInformationPointRolesAndAccessPackagesTest
         var from = TestData.GetEntity("Regnskaperne").Id;
         var to = TestData.GetEntity("Gunnar").Id;
 
-        var response = await _client.GetAsync($"accessmanagement/api/v1/internal/policyinformation/roles-and-accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
+        var response = await _client.GetAsync($"accessmanagement/api/v1/policyinformation/roles-and-accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -191,7 +191,7 @@ public class PolicyInformationPointRolesAndAccessPackagesTest
         var from = TestData.GetEntity("Baker Johnsen").Id;
         var to = TestData.GetEntity("Gunnar").Id;
 
-        var response = await _client.GetAsync($"accessmanagement/api/v1/internal/policyinformation/roles-and-accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
+        var response = await _client.GetAsync($"accessmanagement/api/v1/policyinformation/roles-and-accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -216,7 +216,7 @@ public class PolicyInformationPointRolesAndAccessPackagesTest
         var from = TestData.GetEntity("Baker Johnsen").Id;
         var to = TestData.GetEntity("Petter").Id;
 
-        var response = await _client.GetAsync($"accessmanagement/api/v1/internal/policyinformation/roles-and-accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
+        var response = await _client.GetAsync($"accessmanagement/api/v1/policyinformation/roles-and-accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -240,7 +240,7 @@ public class PolicyInformationPointRolesAndAccessPackagesTest
         var from = TestData.GetEntity("Terje").Id;
         var to = TestData.GetEntity("Terje").Id;
 
-        var response = await _client.GetAsync($"accessmanagement/api/v1/internal/policyinformation/roles-and-accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
+        var response = await _client.GetAsync($"accessmanagement/api/v1/policyinformation/roles-and-accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -268,7 +268,7 @@ public class PolicyInformationPointRolesAndAccessPackagesTest
         var from = Guid.NewGuid();
         var to = Guid.NewGuid();
 
-        var response = await _client.GetAsync($"accessmanagement/api/v1/internal/policyinformation/roles-and-accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
+        var response = await _client.GetAsync($"accessmanagement/api/v1/policyinformation/roles-and-accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -287,7 +287,7 @@ public class PolicyInformationPointRolesAndAccessPackagesTest
         var from = TestData.GetEntity("NUF International Corp").Id;
         var to = TestData.GetEntity("Petter").Id;
 
-        var response = await _client.GetAsync($"accessmanagement/api/v1/internal/policyinformation/roles-and-accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
+        var response = await _client.GetAsync($"accessmanagement/api/v1/policyinformation/roles-and-accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -318,7 +318,7 @@ public class PolicyInformationPointRolesAndAccessPackagesTest
         var from = TestData.GetEntity("Non-NUF Client AS").Id;
         var to = TestData.GetEntity("Petter").Id;
 
-        var response = await _client.GetAsync($"accessmanagement/api/v1/internal/policyinformation/roles-and-accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
+        var response = await _client.GetAsync($"accessmanagement/api/v1/policyinformation/roles-and-accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -346,7 +346,7 @@ public class PolicyInformationPointRolesAndAccessPackagesTest
         var from = TestData.GetEntity("NUF International Corp").Id;
         var to = TestData.GetEntity("Regnskaperne").Id;
 
-        var response = await _client.GetAsync($"accessmanagement/api/v1/internal/policyinformation/accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
+        var response = await _client.GetAsync($"accessmanagement/api/v1/policyinformation/accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -373,7 +373,7 @@ public class PolicyInformationPointRolesAndAccessPackagesTest
         var from = TestData.GetEntity("Non-NUF Client AS").Id;
         var to = TestData.GetEntity("Regnskaperne").Id;
 
-        var response = await _client.GetAsync($"accessmanagement/api/v1/internal/policyinformation/accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
+        var response = await _client.GetAsync($"accessmanagement/api/v1/policyinformation/accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -400,7 +400,7 @@ public class PolicyInformationPointRolesAndAccessPackagesTest
         var from = TestData.GetEntity("NUF International Corp").Id;
         var to = TestData.GetEntity("Siri").Id;
 
-        var response = await _client.GetAsync($"accessmanagement/api/v1/internal/policyinformation/roles-and-accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
+        var response = await _client.GetAsync($"accessmanagement/api/v1/policyinformation/roles-and-accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
@@ -436,7 +436,7 @@ public class PolicyInformationPointRolesAndAccessPackagesTest
         var from = TestData.GetEntity("NUF International Corp").Id;
         var to = TestData.GetEntity("Lars").Id;
 
-        var response = await _client.GetAsync($"accessmanagement/api/v1/internal/policyinformation/roles-and-accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
+        var response = await _client.GetAsync($"accessmanagement/api/v1/policyinformation/roles-and-accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
