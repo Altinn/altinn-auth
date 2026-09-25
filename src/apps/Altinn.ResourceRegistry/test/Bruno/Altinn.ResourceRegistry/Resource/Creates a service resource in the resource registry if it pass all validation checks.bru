@@ -1,0 +1,11 @@
+meta {
+  name: Creates a service resource in the resource registry if it pass all validation checks
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/resourceregistry/api/v1/resource
+  body: json
+  auth: none
+}

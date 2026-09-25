@@ -1,0 +1,73 @@
+meta {
+  name: Create altinn_maskinporten_scope_delegation
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/resourceregistry/api/v1/resource
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "identifier": "altinn_maskinporten_scope_delegation",
+    "title": {
+      "en": "Maskinporten Scope Delegation",
+      "nb": "Maskinporten Scope Delegation",
+      "nn": "Maskinporten Scope Delegation"
+    },
+    "description": {
+      "en": "Maskinporten Scope Delegation",
+      "nb": "Maskinporten Scope Delegation",
+      "nn": "Maskinporten Scope Delegation"
+    },
+    "rightDescription": {
+      "en": "Access to Maskinporten Scope Delegation",
+      "nb": "Access to Maskinporten Scope Delegation",
+      "nn": "Access to Maskinporten Scope Delegation"
+    },
+    "homepage": "https://altinn.no",
+    "status": "Active",
+    "contactPoints": [],
+    "isPartOf": "",
+    "resourceReferences": [],
+    "delegable": false,
+    "visible": false,
+    "hasCompetentAuthority": {
+      "organization": "991825827",
+      "orgcode": "DIGDIR"
+    },
+    "keywords": [],
+    "accessListMode": "Disabled",
+    "selfIdentifiedUserEnabled": false,
+    "enterpriseUserEnabled": true,
+    "resourceType": "SystemResource"
+  }
+}
+
+vars:pre-request {
+  auth_tokenType: Enterprise
+  auth_scopes: altinn:resourceregistry/resource.write
+  auth_org: digdir
+  auth_orgNo: 991825827
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  
+  var getTokenParameters = {
+    auth_orgNo: sharedtestdata.serviceOwners.digdir.orgno,
+    auth_org: sharedtestdata.serviceOwners.digdir.org,
+    auth_tokenType: sharedtestdata.authTokenType.enterprise,
+    auth_scopes: sharedtestdata.auth_scopes.resourceregistryAdmin
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  
+  bru.setVar("bearerToken",  token);
+  
+  
+  
+}

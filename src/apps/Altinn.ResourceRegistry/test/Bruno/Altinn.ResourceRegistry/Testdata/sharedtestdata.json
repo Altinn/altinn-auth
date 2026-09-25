@@ -1,0 +1,24 @@
+{
+    "auth_scopes": {
+        "resourceregistryAdmin": "altinn:resourceregistry/resource.admin",
+        "resourceregistryWrite": "altinn:resourceregistry/resource.write"
+    },
+    "authTokenType": {
+        "personal": "Personal",
+        "enterprise": "Enterprise",
+        "enterpriseUser": "EnterpriseUser",
+        "platformAccess": "PlatformAccess"
+    },
+  "serviceOwners": {
+    "ttd":
+    {
+      "org": "ttd",
+      "orgno": "991825827"
+    },
+    "digdir":
+    {
+      "org": "digdir",
+      "orgno": "991825827"
+    }
+  }
+}

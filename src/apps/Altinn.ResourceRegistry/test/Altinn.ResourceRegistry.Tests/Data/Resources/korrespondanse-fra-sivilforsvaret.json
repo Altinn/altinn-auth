@@ -1,0 +1,49 @@
+{
+  "identifier": "korrespondanse-fra-sivilforsvaret",
+  "version": "7",
+  "title": {
+    "en": "Correspondence from Norwegian Civil Defence",
+    "nb": "Korrespondanse fra Sivilforsvaret",
+    "nn": "Korrespondanse frå Sivilforsvaret"
+  },
+  "description": {
+    "en": "This service is an endpoint for correspondence from the  Norwegian Civil Defense to their conscripted personell",
+    "nb": "Denne tjenesten er et endepunkt for korrespondanse fra Sivilforsvaret til tjenestepliktige sin Altinn Innboks",
+    "nn": "Denne tenesta er eit endepunkt for korrespondanse frå Sivilforsvaret til tenestepliktige sin Altinn Innboks"
+  },
+  "homepage": "",
+  "status": "UnderDevelopment",
+  "contactPoints": [
+    {
+      "category": "Brukerstøtte",
+      "email": "postmottak@dsb.no",
+      "telephone": "",
+      "contactPage": ""
+    }
+  ],
+  "delegable": false,
+  "visible": false,
+  "hasCompetentAuthority": {
+    "name": {
+      "en": "The Norwegian Directorate for Civil Protection",
+      "nb": "Direktoratet for samfunnssikkerhet og beredskap",
+      "nn": "Direktoratet for samfunnssikkerhet og beredskap"
+    },
+    "organization": "974760983",
+    "orgcode": "dsb"
+  },
+  "keywords": [
+    {
+      "word": "sivilforsvaret",
+      "language": "nb"
+    }
+  ],
+  "accessListMode": "Disabled",
+  "selfIdentifiedUserEnabled": false,
+  "enterpriseUserEnabled": false,
+  "resourceType": "CorrespondenceService",
+  "availableForType": [
+    "PrivatePerson"
+  ],
+  "isOneTimeConsent": false
+}

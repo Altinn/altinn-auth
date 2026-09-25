@@ -1,0 +1,15 @@
+meta {
+  name: Get policy altinn_client_administration
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/resourceregistry/api/v1/resource/{{id}}/policy
+  body: none
+  auth: none
+}
+
+vars:pre-request {
+  id: altinn_client_administration
+}
