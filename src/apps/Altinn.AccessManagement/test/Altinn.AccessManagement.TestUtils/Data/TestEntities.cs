@@ -50,6 +50,99 @@ public static class TestEntities
         }
     };
 
+    public static ConstantDefinition<Entity> PersonKasper { get; } = new("a1b2c3d4-0001-0001-0001-000000000004")
+    {
+        Entity = new()
+        {
+            DateOfBirth = new(1949, 12, 7),
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "KASPER BØRSTAD",
+            OrganizationIdentifier = null,
+            Parent = null,
+            ParentId = null,
+            PartyId = 50002598,
+            PersonIdentifier = "07124912037",
+            RefId = "07124912037",
+            TypeId = EntityTypeConstants.Person,
+            UserId = 20000490,
+            Username = null,
+            VariantId = EntityVariantConstants.Person,
+        }
+    };
+
+    public static ConstantDefinition<Entity> PersonMargit { get; } = new("ea070162-f1d4-4050-a096-d5999c53f806")
+    {
+        Entity = new()
+        {
+            DateOfBirth = new(1929, 11, 4),
+            DateOfDeath = new(2025, 12, 7),
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "MARGIT BØRSTAD",
+            OrganizationIdentifier = null,
+            Parent = null,
+            ParentId = null,
+            PartyId = 51000001,
+            PersonIdentifier = "04112912083",
+            RefId = "04112912083",
+            TypeId = EntityTypeConstants.Person,
+            UserId = 51000001,
+            Username = null,
+            VariantId = EntityVariantConstants.Person,
+        }
+    };
+
+    /// <summary>
+    /// A person with no connections seeded anywhere. Use as the "unrelated party" in tests that need
+    /// someone who is not a rightholder, not an agent and has no connection to the acting party — so
+    /// that meaning does not have to be carried by a person who also stands for something else.
+    /// </summary>
+    public static ConstantDefinition<Entity> PersonHenrik { get; } = new("c6a5f4d2-3b17-4f6e-9c58-7ad2e1b40c93")
+    {
+        Entity = new()
+        {
+            DateOfBirth = new(1968, 3, 21),
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "HENRIK BØRSTAD",
+            OrganizationIdentifier = null,
+            Parent = null,
+            ParentId = null,
+            PartyId = 51000003,
+            PersonIdentifier = "21036812041",
+            RefId = "21036812041",
+            TypeId = EntityTypeConstants.Person,
+            UserId = 51000003,
+            Username = null,
+            VariantId = EntityVariantConstants.Person,
+        }
+    };
+
+    public static ConstantDefinition<Entity> PersonMatilde { get; } = new("dd2b3e17-e098-4dca-a345-09a24adb0597")
+    {
+        Entity = new()
+        {
+            DateOfBirth = new(1973, 10, 7),
+            DateOfDeath = null,
+            DeletedAt = null,
+            IsDeleted = false,
+            Name = "MATILDE BØRSTAD",
+            OrganizationIdentifier = null,
+            Parent = null,
+            ParentId = null,
+            PartyId = 51000002,
+            PersonIdentifier = "07107312026",
+            RefId = "07107312026",
+            TypeId = EntityTypeConstants.Person,
+            UserId = 51000002,
+            Username = null,
+            VariantId = EntityVariantConstants.Person,
+        }
+    };
+
     #endregion
 
     #region Organizations
@@ -249,50 +342,6 @@ public static class TestEntities
             UserId = null,
             Username = null,
             VariantId = EntityVariantConstants.AS,
-        }
-    };
-
-    public static ConstantDefinition<Entity> PersonKasper { get; } = new("a1b2c3d4-0001-0001-0001-000000000004")
-    {
-        Entity = new()
-        {
-            DateOfBirth = new(1949, 12, 7),
-            DateOfDeath = null,
-            DeletedAt = null,
-            IsDeleted = false,
-            Name = "KASPER BØRSTAD",
-            OrganizationIdentifier = null,
-            Parent = null,
-            ParentId = null,
-            PartyId = 50002598,
-            PersonIdentifier = "07124912037",
-            RefId = "07124912037",
-            TypeId = EntityTypeConstants.Person,
-            UserId = 20000490,
-            Username = null,
-            VariantId = EntityVariantConstants.Person,
-        }
-    };
-
-    public static ConstantDefinition<Entity> PersonMargit { get; } = new("ea070162-f1d4-4050-a096-d5999c53f806")
-    {
-        Entity = new()
-        {
-            DateOfBirth = new(1929, 11, 4),
-            DateOfDeath = new(2025, 12, 7),
-            DeletedAt = null,
-            IsDeleted = false,
-            Name = "MARGIT BØRSTAD",
-            OrganizationIdentifier = null,
-            Parent = null,
-            ParentId = null,
-            PartyId = 51000001,
-            PersonIdentifier = "04112912083",
-            RefId = "04112912083",
-            TypeId = EntityTypeConstants.Person,
-            UserId = 51000001,
-            Username = null,
-            VariantId = EntityVariantConstants.Person,
         }
     };
 

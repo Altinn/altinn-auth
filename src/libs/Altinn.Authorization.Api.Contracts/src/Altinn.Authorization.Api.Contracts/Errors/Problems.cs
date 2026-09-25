@@ -213,4 +213,10 @@ public static class Problems
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
     public static ProblemDescriptor ResourceDelegationChangedByOther { get; }
     = _factory.Create(50, HttpStatusCode.BadRequest, "The resource is already delegated between these parties by someone other than the service owner. The delegation can only be changed by the party itself.");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor PackageNotAvailableForDelegation { get; }
+    = _factory.Create(51, HttpStatusCode.Forbidden, "The party is not authorized to delegate this access package");
+
+
 }
