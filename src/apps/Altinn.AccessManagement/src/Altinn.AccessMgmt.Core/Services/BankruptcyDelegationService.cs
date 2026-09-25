@@ -519,8 +519,7 @@ namespace Altinn.AccessMgmt.Core.Services
                         delegationPackage = await db.DelegationPackages
                         .AsNoTracking()
                         .Where(dp => dp.DelegationId == delegation.Id && 
-                            dp.PackageId == packageId && 
-                            dp.RolePackageId == rolePackageId)
+                            dp.PackageId == packageId)
                         .FirstOrDefaultAsync(cancellationToken);
                     }
 
@@ -619,7 +618,8 @@ namespace Altinn.AccessMgmt.Core.Services
                     
                     var delegationPackage = await db.DelegationPackages
                         .AsNoTracking()
-                        .Where(dp => dp.DelegationId == delegation.Id && dp.PackageId == packageId && dp.RolePackageId == rolePackageId)
+                        .Where(dp => dp.DelegationId == delegation.Id &&
+                            dp.PackageId == packageId)
                         .FirstOrDefaultAsync(cancellationToken);
 
                     if (delegationPackage is not null)

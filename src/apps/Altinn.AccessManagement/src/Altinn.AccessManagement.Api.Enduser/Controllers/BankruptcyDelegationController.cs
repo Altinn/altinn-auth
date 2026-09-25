@@ -13,6 +13,7 @@ using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.ProblemDetails;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -30,9 +31,9 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
         private Action<ConnectionOptions> ConfigureBankruptcyUserConnections { get; } = options =>
         {
             options.AllowedWriteFromEntityTypes = [EntityTypeConstants.Person];
-            options.AllowedWriteToEntityTypes = [EntityTypeConstants.Organization, EntityTypeConstants.Person, EntityTypeConstants.SystemUser];
+            options.AllowedWriteToEntityTypes = [EntityTypeConstants.Person];
             options.AllowedReadFromEntityTypes = [EntityTypeConstants.Person];
-            options.AllowedReadToEntityTypes = [EntityTypeConstants.Organization, EntityTypeConstants.Person, EntityTypeConstants.SystemUser];
+            options.AllowedReadToEntityTypes = [EntityTypeConstants.Person];
             options.FilterFromEntityTypes = [];
             options.FilterToEntityTypes = [];
         };
@@ -40,11 +41,27 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
         private Action<ConnectionOptions> ConfigureCreditorConnections { get; } = options =>
         {
             options.AllowedWriteFromEntityTypes = [EntityTypeConstants.Organization];
-            options.AllowedWriteToEntityTypes = [EntityTypeConstants.Organization, EntityTypeConstants.Person, EntityTypeConstants.SystemUser];
+            options.AllowedWriteToEntityTypes = [EntityTypeConstants.Organization, EntityTypeConstants.Person];
             options.AllowedReadFromEntityTypes = [EntityTypeConstants.Organization];
-            options.AllowedReadToEntityTypes = [EntityTypeConstants.Organization, EntityTypeConstants.Person, EntityTypeConstants.SystemUser];
+            options.AllowedReadToEntityTypes = [EntityTypeConstants.Organization, EntityTypeConstants.Person];
             options.FilterFromEntityTypes = [];
             options.FilterToEntityTypes = [];
+        };
+
+        private Action<SanitizeOptions> ConfigureInputValidationUser { get; } = options =>
+        {
+            options.AllowedToEntityTypes = [EntityTypeConstants.Person, EntityTypeConstants.Organization];
+            options.EntitiesToValidateForAnyConnections = [EntityTypeConstants.Person];
+            options.ToParameterName = "user";
+            options.PerformToEntityTypeValidation = true;
+        };
+
+        private Action<SanitizeOptions> ConfigureInputValidationCreditor { get; } = options =>
+        {
+            options.AllowedToEntityTypes = [EntityTypeConstants.Person, EntityTypeConstants.Organization];
+            options.EntitiesToValidateForAnyConnections = [EntityTypeConstants.Person];
+            options.ToParameterName = "creditor";
+            options.PerformToEntityTypeValidation = true;
         };
 
         /// <summary>
@@ -70,6 +87,25 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
             return problem;
         }
 
+        private async Task<ValidationProblemInstance> ValidEstate(Guid party, Guid estate, CancellationToken cancellationToken)
+        {
+            var hasConnection = await bankruptcyDelegationService.CheckBankruptcyEstateConnection(party, estate, cancellationToken);
+
+            if (!hasConnection)
+            {
+                ValidationErrorBuilder errorBuilder = default;
+                errorBuilder.Add(
+                    ValidationErrors.InvalidBankruptcyEstate,
+                    "/estate",
+                    [new("estate", $"The party has no connection to an estate with id {estate}.")]);
+
+                errorBuilder.TryBuild(out var problem);
+                return problem;
+            }
+
+            return null;
+        }
+
         #region Creditor methods
 
         [HttpGet("estates/creditors")]
@@ -86,11 +122,11 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
            CancellationToken cancellationToken = default)
         {
             // Check that party has the estate as an active estate
-            var hasConnection = await bankruptcyDelegationService.CheckBankruptcyEstateConnection(party, estate, cancellationToken);
+            var validEstate = await ValidEstate(party, estate, cancellationToken);
 
-            if (!hasConnection)
+            if (validEstate != null)
             {
-                return Forbid();
+                return validEstate.ToActionResult();
             }
 
             var result = await bankruptcyDelegationService.GetCreditors(party, estate, cancellationToken);
@@ -120,22 +156,18 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
             CancellationToken cancellationToken = default)
         {
             // Check that party has the estate as an active estate
-            var hasConnection = await bankruptcyDelegationService.CheckBankruptcyEstateConnection(party, estate, cancellationToken);
+            var validEstate = await ValidEstate(party, estate, cancellationToken);
 
-            if (!hasConnection)
+            if (validEstate != null)
             {
-                return Forbid();
+                return validEstate.ToActionResult();
             }
 
             var entity = await inputValidation.SanitizeToInput(
             estate,
             creditor,
             person,
-            options =>
-            {
-                options.AllowedToEntityTypes = [EntityTypeConstants.Person, EntityTypeConstants.Organization];
-                options.EntitiesToValidateForAnyConnections = [EntityTypeConstants.Person];
-            },
+            ConfigureInputValidationCreditor,
             cancellationToken);
 
             if (entity.IsProblem)
@@ -167,11 +199,11 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
             CancellationToken cancellationToken = default)
         {
             // Check that party has the estate as an active estate
-            var hasConnection = await bankruptcyDelegationService.CheckBankruptcyEstateConnection(party, estate, cancellationToken);
+            var validEstate = await ValidEstate(party, estate, cancellationToken);
 
-            if (!hasConnection)
+            if (validEstate != null)
             {
-                return Forbid();
+                return validEstate.ToActionResult();
             }
 
             var result = await bankruptcyDelegationService.RevokeCreditor(party, estate, creditor, ConfigureCreditorConnections, cancellationToken);
@@ -231,11 +263,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
             party,
             user,
             person,
-            options =>
-            {
-                options.AllowedToEntityTypes = [EntityTypeConstants.Person, EntityTypeConstants.Organization];
-                options.EntitiesToValidateForAnyConnections = [EntityTypeConstants.Person];
-            },
+            ConfigureInputValidationUser,
             cancellationToken);
 
             if (entity.IsProblem)
@@ -299,11 +327,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
             party,
             user,
             person,
-            options =>
-            {
-                options.AllowedToEntityTypes = [EntityTypeConstants.Person, EntityTypeConstants.Organization];
-                options.EntitiesToValidateForAnyConnections = [EntityTypeConstants.Person];
-            },
+            ConfigureInputValidationUser,
             cancellationToken);
 
             if (entity.IsProblem)
@@ -368,6 +392,26 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
             return Ok(PaginatedResult.Create(result.Value, null));
         }
 
+        [HttpGet]
+        [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_BANKRUPTCYDELEGATION_READ)]
+        [Authorize(Policy = AuthzConstants.POLICY_BANKRUPTCYDELEGATION_READ)]
+        [ProducesResponseType<bool>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+        [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        public async Task<IActionResult> HasBankruptcyEstatesForParty(
+            [FromQuery(Name = "party")][Required] Guid party,
+            CancellationToken cancellationToken = default)
+        {
+            var result = await bankruptcyDelegationService.HasBankruptcyEstatesForParty(party, cancellationToken);
+            if (result.IsProblem)
+            {
+                return result.Problem.ToActionResult();
+            }
+
+            return Ok(result.Value);
+        }
+
         #endregion
 
         #region Bankruptcy estate get add revoke methods
@@ -396,7 +440,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
         [HttpGet("estates/users/packages")]
         [Authorize(Policy = AuthzConstants.SCOPE_ENDUSER_BANKRUPTCYDELEGATION_READ)]
         [Authorize(Policy = AuthzConstants.POLICY_BANKRUPTCYDELEGATION_READ)]
-        [ProducesResponseType<PaginatedResult<CompactEntityDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+        [ProducesResponseType<PaginatedResult<PackageDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
         [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -431,11 +475,11 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
             CancellationToken cancellationToken = default)
         {
             // Check that party has the estate as an active estate
-            var hasConnection = await bankruptcyDelegationService.CheckBankruptcyEstateConnection(party, estate, cancellationToken);
+            var validEstate = await ValidEstate(party, estate, cancellationToken);
 
-            if (!hasConnection)
+            if (validEstate != null)
             {
-                return Forbid();
+                return validEstate.ToActionResult();
             }
 
             var packagesProblem = ValidatePackagesNotEmpty(packages);
@@ -469,11 +513,11 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
             CancellationToken cancellationToken = default)
         {
             // Check that party has the estate as an active estate
-            var hasConnection = await bankruptcyDelegationService.CheckBankruptcyEstateConnection(party, estate, cancellationToken);
+            var validEstate = await ValidEstate(party, estate, cancellationToken);
 
-            if (!hasConnection)
+            if (validEstate != null)
             {
-                return Forbid();
+                return validEstate.ToActionResult();
             }
 
             var packagesProblem = ValidatePackagesNotEmpty(packages);

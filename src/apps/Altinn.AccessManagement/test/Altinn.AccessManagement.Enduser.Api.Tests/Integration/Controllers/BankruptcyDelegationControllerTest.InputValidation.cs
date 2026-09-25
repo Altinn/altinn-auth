@@ -76,6 +76,16 @@ public partial class BankruptcyDelegationControllerTest
             return problem;
         }
 
+        private static async Task<AltinnValidationProblemDetails> AssertBadRequest(HttpResponseMessage response)
+        {
+            var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.BadRequest, $"Expected BadRequest but got {response.StatusCode}. Response body: {content}");
+
+            var problem = JsonSerializer.Deserialize<AltinnValidationProblemDetails>(content, JsonOptions);
+            Assert.NotNull(problem);
+            return problem;
+        }
+
         /// <summary>
         /// Neither the uuid query parameter nor a person body: the caller is told that one of the two
         /// is required.
@@ -124,7 +134,7 @@ public partial class BankruptcyDelegationControllerTest
         {
             var problem = await SendAndAssertBadRequest(method, $"{template}&{toParameter}={TestEntities.PersonMargit.Id}");
 
-            Assert.Single(problem.Errors, e => e.ErrorCode == ValidationErrors.EntityNotExists.ErrorCode && e.Extensions != null && e.Extensions.ContainsKey("to") && e.Extensions["to"].ToString() == "Person not available for delegation (deceased).");
+            Assert.Single(problem.Errors, e => e.ErrorCode == ValidationErrors.EntityNotExists.ErrorCode && e.Extensions != null && e.Extensions.ContainsKey(toParameter) && e.Extensions[toParameter].ToString() == "Person not available for delegation (deceased).");
         }
 
         /// <summary>
@@ -163,7 +173,7 @@ public partial class BankruptcyDelegationControllerTest
         [InlineData("GET", "estates/creditors?party={party}&estate={stranger}")]
         [InlineData("POST", "estates/creditors?party={party}&estate={stranger}&creditor={creditor}")]
         [InlineData("DELETE", "estates/creditors?party={party}&estate={stranger}&creditor={creditor}")]
-        public async Task CreditorRoutes_WhenEstateNotAdministratedByParty_ReturnsForbidden(string method, string template)
+        public async Task CreditorRoutes_WhenEstateNotAdministratedByParty_ReturnsBadRequest(string method, string template)
         {
             var client = CreateAdministratorClient();
 
@@ -172,7 +182,10 @@ public partial class BankruptcyDelegationControllerTest
                 new HttpRequestMessage(new HttpMethod(method), ExpandRoute(template)),
                 TestContext.Current.CancellationToken);
 
-            Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+            var problem = await AssertBadRequest(response);
+
+            var error = Assert.Single(problem.Errors);
+            Assert.Equal("AM.VLD-00054", error.ErrorCode.ToString());
         }
     }
 }

@@ -1,8 +1,4 @@
-﻿using System.Net;
-using System.Security.Claims;
-using System.Text;
-using System.Text.Json;
-using Altinn.AccessManagement.Api.Enduser.Controllers;
+﻿using Altinn.AccessManagement.Api.Enduser.Controllers;
 using Altinn.AccessManagement.Api.Enduser.Models;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Models;
@@ -16,8 +12,13 @@ using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 using Altinn.Authorization.ProblemDetails;
+using Azure;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using System.Net;
+using System.Security.Claims;
+using System.Text;
+using System.Text.Json;
 
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers;
 
@@ -632,30 +633,6 @@ public partial class BankruptcyDelegationControllerTest
 
         public ApiFixture Fixture { get; }
 
-        [Fact]
-        public async Task AddAdministrator_ForBankruptcyAdmin_Returns200WithAdminPackage()
-        {
-            var client = CreateClient(Fixture, TestEntities.PersonMatilde.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
-
-            var response = await client.PutAsync(
-                $"{Route}/users/administrators?party={TestEntities.PersonMatilde.Id}&user={TestEntities.OrganizationOrsta.Id}",
-                null,
-                TestContext.Current.CancellationToken);
-
-            var responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-            Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {responseContent}");
-
-            var result = JsonSerializer.Deserialize<AssignmentWithAssignmentPackageDto>(
-                responseContent,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-            Assert.NotNull(result);
-            Assert.Equal(TestEntities.PersonMatilde.Id, result.FromId);
-            Assert.Equal(TestEntities.OrganizationOrsta.Id, result.ToId);
-            Assert.Equal(RoleConstants.Rightholder.Id, result.RoleId);
-            Assert.Contains(result.AssignmentPackages, p => p.PackageId == PackageConstants.KonkursboAdministrator.Id);
-        }
-
         /// <summary>
         /// Adds a person administrator that has no existing relationship to the party by
         /// posting a <see cref="PersonInput"/> body (SSN + last name). The mock
@@ -738,7 +715,7 @@ public partial class BankruptcyDelegationControllerTest
                 var adminAssignment = new Assignment()
                 {
                     FromId = TestEntities.PersonMatilde.Id,
-                    ToId = TestEntities.OrganizationOkernBorettslag.Id,
+                    ToId = TestEntities.PersonPaula.Id,
                     RoleId = RoleConstants.Rightholder,
                 };
                 db.Assignments.Add(adminAssignment);
@@ -760,7 +737,7 @@ public partial class BankruptcyDelegationControllerTest
             var client = CreateClient(Fixture, TestEntities.PersonMatilde.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
 
             var response = await client.DeleteAsync(
-                $"{Route}/users/administrators?party={TestEntities.PersonMatilde.Id}&user={TestEntities.OrganizationOkernBorettslag.Id}",
+                $"{Route}/users/administrators?party={TestEntities.PersonMatilde.Id}&user={TestEntities.PersonPaula.Id}",
                 TestContext.Current.CancellationToken);
 
             var responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
@@ -856,6 +833,16 @@ public partial class BankruptcyDelegationControllerTest
             });
         }
 
+        private static async Task<AltinnValidationProblemDetails> AssertBadRequest(HttpResponseMessage response)
+        {
+            var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.BadRequest, $"Expected BadRequest but got {response.StatusCode}. Response body: {content}");
+
+            var problem = JsonSerializer.Deserialize<AltinnValidationProblemDetails>(content, JsonOptions);
+            Assert.NotNull(problem);
+            return problem;
+        }
+
         public ApiFixture Fixture { get; }
 
         /// <summary>
@@ -919,10 +906,10 @@ public partial class BankruptcyDelegationControllerTest
         /// <summary>
         /// The estate is not administrated by the party (no EstateAdministrator assignment),
         /// so <see cref="IBankruptcyDelegationService.CheckBankruptcyEstateConnection"/> fails and
-        /// the controller returns 403 Forbidden for both add and revoke.
+        /// the controller returns 400 BadRequest with a problemdetail with an errorcode describing the validation error for both add and revoke.
         /// </summary>
         [Fact]
-        public async Task AddAndRevokeBankruptcyEstateForUser_WhenEstateNotAdministratedByParty_ReturnsForbidden()
+        public async Task AddAndRevokeBankruptcyEstateForUser_WhenEstateNotAdministratedByParty_ReturnsBadRequest()
         {
             var client = CreateClient(Fixture, TestEntities.PersonMatilde.Id, AuthzConstants.SCOPE_PORTAL_ENDUSER);
             var url = $"{Route}/estates/users?party={TestEntities.PersonMatilde.Id}&estate={TestEntities.OrganizationOkernBorettslag.Id}&user={TestEntities.PersonPaula.Id}";
@@ -932,14 +919,20 @@ public partial class BankruptcyDelegationControllerTest
                 PackagesContent(PackageConstants.BankruptcyEstateReadAccess.Entity.Urn),
                 TestContext.Current.CancellationToken);
 
-            Assert.Equal(HttpStatusCode.Forbidden, addResponse.StatusCode);
+            var problem = await AssertBadRequest(addResponse);
+
+            var error = Assert.Single(problem.Errors);
+            Assert.Equal("AM.VLD-00054", error.ErrorCode.ToString());
 
             var revokeResponse = await DeleteWithBodyAsync(
                 client,
                 url,
                 PackagesContent(PackageConstants.BankruptcyEstateReadAccess.Entity.Urn));
 
-            Assert.Equal(HttpStatusCode.Forbidden, revokeResponse.StatusCode);
+            problem = await AssertBadRequest(revokeResponse);
+
+            error = Assert.Single(problem.Errors);
+            Assert.Equal("AM.VLD-00054", error.ErrorCode.ToString());
         }
     }
 

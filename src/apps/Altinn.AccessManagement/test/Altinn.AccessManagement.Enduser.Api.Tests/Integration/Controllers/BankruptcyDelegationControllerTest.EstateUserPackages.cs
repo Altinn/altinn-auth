@@ -352,10 +352,10 @@ public partial class BankruptcyDelegationControllerTest
 
         /// <summary>
         /// The empty-list guard runs after the estate-connection check, so a caller that does not
-        /// administrate the estate still gets 403 rather than feedback about the request body.
+        /// administrate the estate still gets 400 BadRequest with error code for not valid estate rather than feedback about the request body.
         /// </summary>
         [Fact]
-        public async Task AddBankruptcyEstateForUser_WithEmptyPackageListAndNoEstateConnection_ReturnsForbidden()
+        public async Task AddBankruptcyEstateForUser_WithEmptyPackageListAndNoEstateConnection_ReturnsBadRequest()
         {
             var client = CreateAdministratorClient();
 
@@ -365,7 +365,10 @@ public partial class BankruptcyDelegationControllerTest
                 PackagesContent(),
                 TestContext.Current.CancellationToken);
 
-            Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+            var problem = await AssertBadRequest(response);
+
+            var error = Assert.Single(problem.Errors);
+            Assert.Equal("AM.VLD-00054", error.ErrorCode.ToString());
         }
 
         /// <summary>

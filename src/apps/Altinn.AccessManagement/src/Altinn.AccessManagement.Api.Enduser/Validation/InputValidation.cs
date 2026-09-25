@@ -5,8 +5,8 @@ using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessManagement.Core.Models.Profile;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessMgmt.Core.Services.Contracts;
-using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
+using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 using Altinn.Authorization.ProblemDetails;
 
@@ -61,11 +61,11 @@ public class InputValidation(
                     errorBuilder.Add(ValidationErrors.EntityNotExists, $"QUERY/{options.ToParameterName}", [new(options.ToParameterName, "Person not available for delegation (deceased).")]);
                 }
 
-                if (options.AllowedToEntityTypes.Count > 0 && !options.AllowedToEntityTypes.Contains(toEntity.TypeId))
+                if (options.PerformToEntityTypeValidation && options.AllowedToEntityTypes.Count > 0 && !options.AllowedToEntityTypes.Contains(toEntity.TypeId))
                 {
                     var supportedEntityTypes = EntityTypeConstants.AllEntities().Select(t => t.Entity).Where(t => options.AllowedToEntityTypes.Contains(t.Id)).ToList();
                     var supportedToTypeNames = string.Join(", ", supportedEntityTypes.Select(t => t.Name));
-                    errorBuilder.Add(ValidationErrors.DisallowedEntityType, $"$QUERY/{options.ToParameterName}", [new(options.ToParameterName, $"Entity type is not supported. Supported types: <{supportedToTypeNames}>.")]);
+                    errorBuilder.Add(ValidationErrors.DisallowedEntityType, $"QUERY/{options.ToParameterName}", [new(options.ToParameterName, $"Entity type is not supported. Supported types: <{supportedToTypeNames}>.")]);
                 }
 
                 if (errorBuilder.TryBuild(out var validationError))
@@ -174,6 +174,8 @@ public class SanitizeOptions
     public IReadOnlyCollection<Guid> EntitiesToValidateForAnyConnections { get; set; } = [];
 
     public IReadOnlyCollection<Guid> AllowedToEntityTypes { get; set; } = [];
+
+    public bool PerformToEntityTypeValidation { get; set; } = false;
 
     /// <summary>
     /// Name of the query parameter holding the target entity, used in validation

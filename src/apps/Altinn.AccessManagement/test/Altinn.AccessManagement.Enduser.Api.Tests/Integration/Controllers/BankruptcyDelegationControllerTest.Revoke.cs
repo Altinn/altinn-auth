@@ -55,9 +55,9 @@ public partial class BankruptcyDelegationControllerTest
                 var paula = Agent(TestEntities.PersonPaula.Id);
                 var kasper = Agent(TestEntities.PersonKasper.Id);
                 var orjan = Agent(TestEntities.PersonOrjan.Id);
-                var orsta = Agent(TestEntities.OrganizationOrsta.Id);
+                var henrik = Agent(TestEntities.PersonHenrik.Id);
 
-                db.Assignments.AddRange(solsiden, okern, paula, kasper, orjan, orsta);
+                db.Assignments.AddRange(solsiden, okern, paula, kasper, orjan, henrik);
 
                 SeedEstateDelegation(db, solsiden, paula, PackageConstants.BankruptcyEstateReadAccess.Id);
                 SeedEstateDelegation(db, okern, kasper, PackageConstants.BankruptcyEstateReadAccess.Id);
@@ -170,7 +170,7 @@ public partial class BankruptcyDelegationControllerTest
         {
             var client = CreateAdministratorClient();
 
-            var response = await client.DeleteAsync(UserUrl(TestEntities.PersonHenrik.Id), TestContext.Current.CancellationToken);
+            var response = await client.DeleteAsync(UserUrl(TestEntities.PersonMargit.Id), TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
         }
@@ -184,7 +184,7 @@ public partial class BankruptcyDelegationControllerTest
             var client = CreateAdministratorClient();
 
             var response = await client.PostAsync(
-                $"{Route}/users/delete?party={TestEntities.PersonMatilde.Id}&user={TestEntities.OrganizationOrsta.Id}",
+                $"{Route}/users/delete?party={TestEntities.PersonMatilde.Id}&user={TestEntities.PersonHenrik.Id}",
                 null,
                 TestContext.Current.CancellationToken);
 
