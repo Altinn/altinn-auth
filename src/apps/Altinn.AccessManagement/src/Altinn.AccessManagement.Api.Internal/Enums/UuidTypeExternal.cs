@@ -35,5 +35,17 @@ public enum UuidTypeExternal
     /// Identifies a enterpriseuser this is marked as obsolete and is used for existing integration is also identified with an unique username
     /// </summary>
     [EnumMember(Value = "urn:altinn:enterpriseuser:uuid")]
-    EnterpriseUser
+    EnterpriseUser,
+
+    /// <summary>
+    /// Identifies a resource that performs the delegation itself, as part of the resource flow (for example parallel signing)
+    /// </summary>
+    [EnumMember(Value = "urn:altinn:resource")]
+    Resource,
+
+    /// <summary>
+    /// Identifies a party, which can be a person, an organization or a system user
+    /// </summary>
+    [EnumMember(Value = "urn:altinn:party:uuid")]
+    Party
 }

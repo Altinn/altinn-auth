@@ -42,20 +42,25 @@ namespace Altinn.AccessManagement.Api.Internal.Extensions
             };
         }
 
-        /// <summary>
-        /// Converts a <see cref="DelegationChangeType"/> to its external counterpart.
-        /// The external enum mirrors the internal one member for member, and the wire contract is the
-        /// numeric value, so the conversion is a value cast. Keep the two enums in sync when either changes.
-        /// </summary>
-        private static DelegationChangeTypeExternal ToExternal(DelegationChangeType core) => (DelegationChangeTypeExternal)core;
+        private static DelegationChangeTypeExternal ToExternal(DelegationChangeType core) => core switch
+        {
+            DelegationChangeType.Undefined => DelegationChangeTypeExternal.Undefined,
+            DelegationChangeType.Grant => DelegationChangeTypeExternal.Grant,
+            DelegationChangeType.Revoke => DelegationChangeTypeExternal.Revoke,
+            DelegationChangeType.RevokeLast => DelegationChangeTypeExternal.RevokeLast,
+            _ => throw new ArgumentOutOfRangeException(nameof(core), core, null),
+        };
 
-        /// <summary>
-        /// Converts a <see cref="UuidType"/> to its external counterpart.
-        /// The wire contract is the numeric value, so the conversion is a value cast. Note that
-        /// <see cref="UuidType.Resource"/> and <see cref="UuidType.Party"/> have no counterpart in
-        /// <see cref="UuidTypeExternal"/> and pass through as their numeric value, which is what the
-        /// AutoMapper profile this replaces did.
-        /// </summary>
-        private static UuidTypeExternal ToExternal(UuidType core) => (UuidTypeExternal)core;
+        private static UuidTypeExternal ToExternal(UuidType core) => core switch
+        {
+            UuidType.NotSpecified => UuidTypeExternal.NotSpecified,
+            UuidType.Person => UuidTypeExternal.Person,
+            UuidType.Organization => UuidTypeExternal.Organization,
+            UuidType.SystemUser => UuidTypeExternal.SystemUser,
+            UuidType.EnterpriseUser => UuidTypeExternal.EnterpriseUser,
+            UuidType.Resource => UuidTypeExternal.Resource,
+            UuidType.Party => UuidTypeExternal.Party,
+            _ => throw new ArgumentOutOfRangeException(nameof(core), core, null),
+        };
     }
 }
