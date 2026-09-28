@@ -11,6 +11,13 @@
         public const string AuditLog = "AuditLog";
 
         /// <summary>
+        /// Feature flag for whether authorization events queued for the audit log should be classified
+        /// as duplicates or not, and counted in the <c>altinn.pdp.auditlog.events</c> metric. Only
+        /// measures, all events are still queued.
+        /// </summary>
+        public const string AuditLogDuplicateMeasurement = nameof(AuditLogDuplicateMeasurement);
+
+        /// <summary>
         /// Feature flag for whether authorization of SystemUsers should include authorization through access packages
         /// </summary>
         public const string SystemUserAccessPackageAuthorization = nameof(SystemUserAccessPackageAuthorization);

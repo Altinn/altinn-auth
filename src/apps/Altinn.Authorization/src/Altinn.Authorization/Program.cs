@@ -229,6 +229,8 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddTransient<ISigningCredentialsResolver, SigningCredentialsResolver>();
     services.AddSingleton<IEventsQueueClient, EventsQueueClient>();
     services.AddSingleton<IEventLog, EventLogService>();
+    services.Configure<AuditLogDeduplicationSettings>(config.GetSection("AuditLogDeduplication"));
+    services.AddSingleton<AuthorizationEventDuplicateTracker>();
     services.TryAddSingleton(TimeProvider.System);
     GeneralSettings generalSettings = config.GetSection("GeneralSettings").Get<GeneralSettings>();
     services.AddAuthentication(JwtCookieDefaults.AuthenticationScheme)

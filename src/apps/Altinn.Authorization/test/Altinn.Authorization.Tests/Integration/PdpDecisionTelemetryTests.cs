@@ -3,8 +3,16 @@ using System.Net;
 using System.Net.Http.Headers;
 using Altinn.Authorization.Tests.Fixtures;
 using Altinn.Authorization.Tests.Util;
+using Altinn.Platform.Authorization.Clients.Interfaces;
+using Altinn.Platform.Authorization.Configuration;
+using Altinn.Platform.Authorization.Models;
+using Altinn.Platform.Authorization.Models.EventLog;
 using Altinn.Platform.Authorization.Telemetry;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.FeatureManagement;
+using Moq;
 
 namespace Altinn.Authorization.Tests.Integration
 {
@@ -18,12 +26,19 @@ namespace Altinn.Authorization.Tests.Integration
     /// billed to the resource owner from those requested by a consumer evaluating access to someone
     /// else's resource.
     /// </para>
+    /// <para>
+    /// Also verifies the <c>altinn.pdp.auditlog.events</c> counter, which measures how many of the
+    /// events queued for the audit log repeat one already seen.
+    /// </para>
     /// </summary>
     [IntegrationTest]
     public class PdpDecisionTelemetryTests : IClassFixture<AuthorizationApiFixture>
     {
         private const string ApiKindTag = "pdp.api.kind";
         private const string CallerKindTag = "pdp.caller.kind";
+        private const string AuditLogDuplicateTag = "auditlog.duplicate";
+        private const string DecisionsInstrument = "altinn.pdp.decisions";
+        private const string AuditLogEventsInstrument = "altinn.pdp.auditlog.events";
 
         /// <summary>
         /// Digdir's organization number, the same in test and production. Callers on this number
@@ -45,7 +60,7 @@ namespace Altinn.Authorization.Tests.Integration
 
             // Listener is filtered to this host's Meter instance, so measurements from
             // other test classes (which build their own host) cannot leak in.
-            using var collector = new PdpDecisionMetricCollector(_fixture.Services);
+            using var collector = new PdpMetricCollector(_fixture.Services.GetRequiredService<IMeterFactory>(), DecisionsInstrument);
 
             HttpRequestMessage request = TestSetupUtil.CreateXacmlRequest("AltinnApps0001");
             HttpResponseMessage response = await client.SendAsync(request, TestContext.Current.CancellationToken);
@@ -69,7 +84,7 @@ namespace Altinn.Authorization.Tests.Integration
             HttpClient client = _fixture.BuildClient();
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
 
-            using var collector = new PdpDecisionMetricCollector(_fixture.Services);
+            using var collector = new PdpMetricCollector(_fixture.Services.GetRequiredService<IMeterFactory>(), DecisionsInstrument);
 
             HttpRequestMessage request = TestSetupUtil.CreateXacmlRequestExternal("AltinnApps0008");
             HttpResponseMessage response = await client.SendAsync(request, TestContext.Current.CancellationToken);
@@ -95,7 +110,7 @@ namespace Altinn.Authorization.Tests.Integration
             HttpClient client = _fixture.BuildClient();
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
 
-            using var collector = new PdpDecisionMetricCollector(_fixture.Services);
+            using var collector = new PdpMetricCollector(_fixture.Services.GetRequiredService<IMeterFactory>(), DecisionsInstrument);
 
             HttpRequestMessage request = TestSetupUtil.CreateXacmlRequestExternal("AltinnApps0008");
             HttpResponseMessage response = await client.SendAsync(request, TestContext.Current.CancellationToken);
@@ -115,68 +130,44 @@ namespace Altinn.Authorization.Tests.Integration
                 tags => Assert.Equal(DecisionTelemetry.DigdirCallerDimensionValue, tags[CallerKindTag]));
         }
 
-        /// <summary>
-        /// Captures <c>altinn.pdp.decisions</c> measurements for a single test host.
-        /// The instrument is resolved through the host's <see cref="IMeterFactory"/>;
-        /// since the factory caches meters by name, this is the very same
-        /// <see cref="Meter"/> instance <see cref="DecisionTelemetry"/> records on,
-        /// and a different host (other test class) has a different instance.
-        /// </summary>
-        private sealed class PdpDecisionMetricCollector : IDisposable
+        [Fact]
+        public async Task PDP_RepeatedDecision_AuditLogDuplicateMeasurement_CountsDuplicate_AndStillQueuesEveryEvent()
         {
-            private readonly MeterListener _listener;
-            private readonly List<IReadOnlyDictionary<string, object?>> _measurements = [];
-            private readonly object _gate = new();
+            Mock<IFeatureManager> featureManager = new();
+            featureManager.Setup(m => m.IsEnabledAsync(FeatureFlags.AuditLog)).ReturnsAsync(true);
+            featureManager.Setup(m => m.IsEnabledAsync(FeatureFlags.AuditLogDuplicateMeasurement)).ReturnsAsync(true);
+            Mock<IEventsQueueClient> eventQueue = new();
+            eventQueue
+                .Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<AuthorizationEvent>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new QueuePostReceipt { Success = true });
 
-            public PdpDecisionMetricCollector(IServiceProvider services)
+            // A host of its own, so the duplicate tracker starts out empty.
+            WebApplicationFactory<Program> factory = _fixture.WithWebHostBuilder(builder => builder.ConfigureTestServices(services =>
             {
-                IMeterFactory meterFactory = services.GetRequiredService<IMeterFactory>();
-                Meter meter = meterFactory.Create(DecisionTelemetry.MeterName);
+                services.AddSingleton(featureManager.Object);
+                services.AddSingleton(eventQueue.Object);
+            }));
+            HttpClient client = factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 
-                _listener = new MeterListener
-                {
-                    InstrumentPublished = (instrument, listener) =>
-                    {
-                        if (ReferenceEquals(instrument.Meter, meter)
-                            && instrument.Name == "altinn.pdp.decisions")
-                        {
-                            listener.EnableMeasurementEvents(instrument);
-                        }
-                    }
-                };
+            using var collector = new PdpMetricCollector(factory.Services.GetRequiredService<IMeterFactory>(), AuditLogEventsInstrument);
 
-                _listener.SetMeasurementEventCallback<long>((_, _, tags, _) =>
-                {
-                    Dictionary<string, object?> snapshot = new(tags.Length);
-                    foreach (KeyValuePair<string, object?> tag in tags)
-                    {
-                        snapshot[tag.Key] = tag.Value;
-                    }
-
-                    lock (_gate)
-                    {
-                        _measurements.Add(snapshot);
-                    }
-                });
-
-                // Start() also replays already-published instruments, so this works
-                // whether or not the DecisionTelemetry singleton was constructed by
-                // an earlier request on this shared host.
-                _listener.Start();
+            for (int i = 0; i < 2; i++)
+            {
+                HttpResponseMessage response = await client.SendAsync(TestSetupUtil.CreateXacmlRequest("AltinnApps0001"), TestContext.Current.CancellationToken);
+                Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             }
 
-            public IReadOnlyList<IReadOnlyDictionary<string, object?>> Measurements
-            {
-                get
-                {
-                    lock (_gate)
-                    {
-                        return _measurements.ToArray();
-                    }
-                }
-            }
+            // Measuring must not change what is logged.
+            eventQueue.Verify(
+                q => q.EnqueueAuthorizationEvent(It.IsAny<AuthorizationEvent>(), It.IsAny<CancellationToken>()),
+                Times.Exactly(2));
 
-            public void Dispose() => _listener.Dispose();
+            IReadOnlyList<IReadOnlyDictionary<string, object?>> measurements = collector.Measurements;
+            Assert.Equal(2, measurements.Count);
+            Assert.Equal("none", measurements[0][AuditLogDuplicateTag]);
+
+            // Two HTTP requests are two traces, so the repeat is a duplicate within the window.
+            Assert.Equal("window", measurements[1][AuditLogDuplicateTag]);
         }
     }
 }
