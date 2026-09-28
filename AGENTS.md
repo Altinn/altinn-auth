@@ -12,7 +12,8 @@ Authorization and access management for Altinn 3: the Policy Decision Point and 
 dotnet build Altinn.Authorization.sln                 # the whole repository
 dotnet build src/apps/Altinn.Authorization/Altinn.Authorization.sln   # one vertical
 dotnet test                                            # every test project
-dotnet test -- --filter-trait "Category=Unit"          # the unit lane only
+dotnet test src/apps/Altinn.Authorization/Altinn.Authorization.sln -- --filter-trait "Category=Unit"
+dotnet test src/apps/Altinn.ResourceRegistry/Altinn.ResourceRegistry.sln   # xUnit v2, see Test gotchas
 dotnet test src/apps/Altinn.AccessManagement/test/Altinn.AccessManagement.Api.Tests
 pwsh eng/testing/run-coverage.ps1                      # coverage, installs dotnet-coverage if missing
 ```
@@ -30,14 +31,14 @@ pwsh eng/testing/run-coverage.ps1                      # coverage, installs dotn
 
 ## Where things live
 
-Code sits in verticals. A vertical owns its own `.sln`, `src/`, `test/`, a `conf.json` declaring its dependencies, Sonar key and infrastructure, and a `Version.props`. CI discovers verticals by globbing the four folders below and reading each `conf.json`, so adding one needs no workflow change.
+Code sits in verticals. A vertical always has its own `.sln`, `src/` and `conf.json`; `test/`, `Version.props`, `Dockerfile` and `infra/` appear where they are needed, and the contents of `conf.json` differ per vertical (dependencies, Sonar key, database, infrastructure). CI discovers verticals by globbing the four folders below and reading each `conf.json`, so adding one needs no workflow change.
 
 | Path | Contents |
 | --- | --- |
 | `src/apps` | Deployable services: `Altinn.Authorization` (PDP/PEP), `Altinn.AccessManagement`, `Altinn.ResourceRegistry`, `Altinn.Register` |
 | `src/libs` | Shared libraries: `Api.Contracts`, `Host`, `Integration`, `Testing` |
 | `src/pkgs` | Published NuGet packages: `Altinn.Authorization.ABAC`, `Altinn.Common.PEP` |
-| `src/tools` | `Altinn.Authorization.Cli` and the `Altinn.AccessMgmt.FFB` admin tool |
+| `src/tools` | `Altinn.Authorization.Cli` and the [`Altinn.AccessMgmt.FFB`](src/tools/Altinn.AccessMgmt.FFB/AGENTS.md) admin tool, which has its own guidance |
 | `docs/testing` | How the test suite is organised, fixtures, mocks, naming |
 | `docs/adr` | Architecture decision records, cross-cutting |
 | `docs/ai` | Background for the working agreement |
@@ -56,10 +57,11 @@ Do not "fix" these without understanding them.
 
 ## Test gotchas
 
-- **Every test needs a category.** Mark the class or method `[UnitTest]` or `[IntegrationTest]` from `Altinn.Authorization.Testing`. CI selects its lanes by that trait, so an uncategorised test would run in neither; `TestCategoryGuard` is compiled into every test assembly and fails the run instead of letting it disappear.
-- Integration tests skip rather than fail when Docker or Podman is unavailable. Start a container runtime before trusting a green run.
+- **In an xUnit v3 vertical, every test needs a category.** Mark the class or method `[UnitTest]` or `[IntegrationTest]` from `Altinn.Authorization.Testing`. CI selects its lanes by that trait, so an uncategorised test would run in neither; `TestCategoryGuard` is linked into those test assemblies and fails the run instead of letting it disappear. The markers and the guard are compiled only when `XUnitVersion` is `v3` (see `src/Directory.Build.targets`).
+- **Resource Registry is the exception, and it is not a small one.** It is an xUnit v2 island: it does not link the category markers or the guard, its tests carry no category, and the trait filter does not exclude them. A repository-wide `dotnet test -- --filter-trait "Category=Unit"` therefore also runs its integration tests, which start a real PostgreSQL rather than skipping. Run the unit lane per vertical instead, and run that vertical through its own solution.
+- Outside that vertical, integration tests skip rather than fail when Docker or Podman is unavailable. Start a container runtime before trusting a green run.
 - Start from [`docs/testing/README.md`](docs/testing/README.md) for fixtures, mocks and the naming convention.
 
-## Known gaps
+## Known tech debt
 
 Per-vertical guidance [#4078](https://github.com/Altinn/altinn-auth/issues/4078), build and test recipes in `just` [#4086](https://github.com/Altinn/altinn-auth/issues/4086), the CI guard for these files [#4081](https://github.com/Altinn/altinn-auth/issues/4081), and which AI review bot we answer to [#4085](https://github.com/Altinn/altinn-auth/issues/4085).
