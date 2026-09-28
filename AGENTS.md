@@ -1,0 +1,65 @@
+# AGENTS.md
+
+Guidance for AI agents, and a useful first page for anyone new to this repository. It is the top of a hierarchy: each vertical gets its own `AGENTS.md` with the detail, and the guidance closest to the code wins. The contract behind this file is [ADR-0002](docs/adr/0002-tool-neutral-agent-contract.md).
+
+## What this is
+
+Authorization and access management for Altinn 3: the Policy Decision Point and Policy Enforcement Point, the Access Management services that administer rights and delegations, and the Resource Registry. This is becoming the monorepo for the whole domain; register, authentication and the Access Management frontend are still being moved in ([#4049](https://github.com/Altinn/altinn-auth/issues/4049)).
+
+## Commands
+
+```bash
+dotnet build Altinn.Authorization.sln                 # the whole repository
+dotnet build src/apps/Altinn.Authorization/Altinn.Authorization.sln   # one vertical
+dotnet test                                            # every test project
+dotnet test -- --filter-trait "Category=Unit"          # the unit lane only
+dotnet test src/apps/Altinn.AccessManagement/test/Altinn.AccessManagement.Api.Tests
+pwsh eng/testing/run-coverage.ps1                      # coverage, installs dotnet-coverage if missing
+```
+
+`.justfile` holds local-development helpers, not build targets: `just dev` starts the containers (Podman on Windows, Docker elsewhere) and `just db-cred` prints database credentials. Build and test recipes are [#4086](https://github.com/Altinn/altinn-auth/issues/4086).
+
+## Critical workflow rules
+
+- **Branch per change, never commit to `main`.** Name it `type/<issue>_<slug>`.
+- **The PR title is a Conventional Commit with the issue number**, for example `fix(#4044): ...`. `main` is squash-only with linear history, and the release automation reads the squash title. A single-commit PR currently squashes under the *commit* title, so check the title in the merge dialog ([#4095](https://github.com/Altinn/altinn-auth/issues/4095)).
+- **A green local `dotnet test` is not proof.** Integration tests skip when no container runtime is running, so the suite can pass having run almost nothing. CI is the gate.
+- **Documentation, `AGENTS.md` and ADRs change in the same PR** as the behaviour they describe.
+- **Text people read starts with a TL;DR** of at most five bullets, and text drafted with a tool says so and names who has read it.
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) is the working agreement, including the rules for AI assistance. Read it before using an assistant here.
+
+## Where things live
+
+Code sits in verticals. A vertical owns its own `.sln`, `src/`, `test/`, a `conf.json` declaring its dependencies, Sonar key and infrastructure, and a `Version.props`. CI discovers verticals by globbing the four folders below and reading each `conf.json`, so adding one needs no workflow change.
+
+| Path | Contents |
+| --- | --- |
+| `src/apps` | Deployable services: `Altinn.Authorization` (PDP/PEP), `Altinn.AccessManagement`, `Altinn.ResourceRegistry`, `Altinn.Register` |
+| `src/libs` | Shared libraries: `Api.Contracts`, `Host`, `Integration`, `Testing` |
+| `src/pkgs` | Published NuGet packages: `Altinn.Authorization.ABAC`, `Altinn.Common.PEP` |
+| `src/tools` | `Altinn.Authorization.Cli` and the `Altinn.AccessMgmt.FFB` admin tool |
+| `docs/testing` | How the test suite is organised, fixtures, mocks, naming |
+| `docs/adr` | Architecture decision records, cross-cutting |
+| `docs/ai` | Background for the working agreement |
+| `eng/testing` | Coverage scripts, thresholds, the test-category guard |
+| `infra` | Infrastructure as code |
+
+Per-vertical `AGENTS.md` files arrive with [#4078](https://github.com/Altinn/altinn-auth/issues/4078); until then a vertical's `README.md` is the best starting point where one exists.
+
+## Landmines
+
+Do not "fix" these without understanding them.
+
+- **`src/apps/Altinn.Register` is a placeholder**, a single `Program.cs`. The real Register arrives with [#4056](https://github.com/Altinn/altinn-auth/issues/4056). Do not build on it or wire anything to it.
+- **`src/apps/Altinn.ResourceRegistry` is deliberately an island** with its own `.editorconfig`, `Directory.Build.props`, `Directory.Packages.props` and `stylecop.json`. That is what let it be imported with its history intact. Do not merge it into the shared build files.
+- **Markdown is LF**, enforced by `.gitattributes`. Do not reformat line endings.
+
+## Test gotchas
+
+- **Every test needs a category.** Mark the class or method `[UnitTest]` or `[IntegrationTest]` from `Altinn.Authorization.Testing`. CI selects its lanes by that trait, so an uncategorised test would run in neither; `TestCategoryGuard` is compiled into every test assembly and fails the run instead of letting it disappear.
+- Integration tests skip rather than fail when Docker or Podman is unavailable. Start a container runtime before trusting a green run.
+- Start from [`docs/testing/README.md`](docs/testing/README.md) for fixtures, mocks and the naming convention.
+
+## Known gaps
+
+Per-vertical guidance [#4078](https://github.com/Altinn/altinn-auth/issues/4078), build and test recipes in `just` [#4086](https://github.com/Altinn/altinn-auth/issues/4086), the CI guard for these files [#4081](https://github.com/Altinn/altinn-auth/issues/4081), and which AI review bot we answer to [#4085](https://github.com/Altinn/altinn-auth/issues/4085).
