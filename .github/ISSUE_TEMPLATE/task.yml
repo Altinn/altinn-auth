@@ -1,0 +1,60 @@
+name: Task
+description: A piece of work that is not a user story or a bug
+type: Task
+labels: ["status/draft"]
+body:
+  - type: textarea
+    id: tldr
+    attributes:
+      label: TL;DR
+      description: At most five bullets. Someone should be able to read only this and know whether the issue concerns them.
+      placeholder: |
+        - What: …
+        - Why: …
+        - Done when: …
+    validations:
+      required: true
+
+  - type: textarea
+    id: background
+    attributes:
+      label: Background and scope
+      description: The detail. What is the situation, what is in scope, and what is deliberately out of it.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Checkboxes a reviewer can verify. Avoid "works well"; write what must be true.
+      placeholder: |
+        - [ ] …
+        - [ ] …
+    validations:
+      required: true
+
+  - type: dropdown
+    id: vertical
+    attributes:
+      label: Vertical
+      description: Which part of the repository this touches. Pick more than one if it spans several.
+      multiple: true
+      options:
+        - Altinn.Authorization (PDP/PEP)
+        - Altinn.AccessManagement
+        - Altinn.ResourceRegistry
+        - Altinn.Register
+        - Shared libraries (src/libs)
+        - Published packages (src/pkgs)
+        - Tools (src/tools)
+        - Build, CI or infrastructure
+        - Documentation
+        - Cross-cutting or not sure
+
+  - type: textarea
+    id: ai
+    attributes:
+      label: AI assistance
+      description: Leave empty if you wrote this yourself. If an assistant drafted it, say so and name who has read it through. An empty name is an honest signal, not a failure.
+      placeholder: Drafted with an AI assistant. Read and vouched for by @…

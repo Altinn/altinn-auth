@@ -1,0 +1,68 @@
+name: User story
+description: A change described from the point of view of whoever benefits from it
+type: User story
+labels: ["status/draft"]
+body:
+  - type: textarea
+    id: tldr
+    attributes:
+      label: TL;DR
+      description: At most five bullets. The need, who has it, and what changes when this is done.
+      placeholder: |
+        - Who: …
+        - Need: …
+        - Done when: …
+    validations:
+      required: true
+
+  - type: textarea
+    id: story
+    attributes:
+      label: The story
+      value: |
+        As a …
+        I want to …
+        so that …
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: Checkboxes a reviewer can verify, written from the user's side where possible.
+      placeholder: |
+        - [ ] …
+        - [ ] …
+    validations:
+      required: true
+
+  - type: textarea
+    id: design
+    attributes:
+      label: Design and references
+      description: Screenshots, a Figma link, an API sketch, related issues.
+
+  - type: dropdown
+    id: vertical
+    attributes:
+      label: Vertical
+      multiple: true
+      options:
+        - Altinn.Authorization (PDP/PEP)
+        - Altinn.AccessManagement
+        - Altinn.ResourceRegistry
+        - Altinn.Register
+        - Shared libraries (src/libs)
+        - Published packages (src/pkgs)
+        - Tools (src/tools)
+        - Build, CI or infrastructure
+        - Documentation
+        - Cross-cutting or not sure
+
+  - type: textarea
+    id: ai
+    attributes:
+      label: AI assistance
+      description: Leave empty if you wrote this yourself. If an assistant drafted it, say so and name who has read it through.
+      placeholder: Drafted with an AI assistant. Read and vouched for by @…

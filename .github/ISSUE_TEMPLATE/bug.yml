@@ -1,0 +1,59 @@
+name: Bug
+description: Something behaves differently from what it should
+type: Bug
+labels: ["status/draft"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not report a security vulnerability here. Follow [SECURITY.md](https://github.com/Altinn/altinn-auth/blob/main/SECURITY.md) instead.
+
+  - type: textarea
+    id: tldr
+    attributes:
+      label: TL;DR
+      description: At most five bullets. What breaks, for whom, and how bad it is.
+      placeholder: |
+        - What happens: …
+        - What should happen: …
+        - Impact: …
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to reproduce
+      description: Numbered steps, the environment, and the smallest case you could find. If an assistant found this, reproduce it yourself first (rule 8 of the working agreement).
+    validations:
+      required: true
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Logs, a failing test, a trace or request id. Never paste secrets, personal data or production data.
+
+  - type: dropdown
+    id: vertical
+    attributes:
+      label: Vertical
+      multiple: true
+      options:
+        - Altinn.Authorization (PDP/PEP)
+        - Altinn.AccessManagement
+        - Altinn.ResourceRegistry
+        - Altinn.Register
+        - Shared libraries (src/libs)
+        - Published packages (src/pkgs)
+        - Tools (src/tools)
+        - Build, CI or infrastructure
+        - Documentation
+        - Cross-cutting or not sure
+
+  - type: textarea
+    id: ai
+    attributes:
+      label: AI assistance
+      description: Say so if an assistant found or drafted this, and name who has read it through.
+      placeholder: Found with an AI assistant and reproduced by me. Read and vouched for by @…
