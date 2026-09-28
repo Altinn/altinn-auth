@@ -80,8 +80,8 @@ public partial class BankruptcyDelegationControllerTest
                 { "GET", "estates/creditors?party={party}&estate={estate}" },
                 { "POST", "estates/creditors?party={party}&estate={estate}&creditor={creditor}" },
                 { "DELETE", "estates/creditors?party={party}&estate={estate}&creditor={creditor}" },
-                { "GET", "estates/users?party={party}&user={user}" },
-                { "GET", "estates/users/packages?party={party}&estate={estate}&user={user}" },
+                { "GET", "users/accesspackages?party={party}&user={user}" },
+                { "GET", "estates/accesspackages?party={party}&estate={estate}" },
                 { "POST", "estates/users?party={party}&estate={estate}&user={user}" },
                 { "DELETE", "estates/users?party={party}&estate={estate}&user={user}" },
             };

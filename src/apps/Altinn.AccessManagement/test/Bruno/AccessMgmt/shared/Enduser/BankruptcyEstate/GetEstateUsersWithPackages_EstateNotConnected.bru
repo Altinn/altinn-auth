@@ -1,29 +1,30 @@
 meta {
-  name: GetEstateUsers
+  name: GetEstateUsersWithPackages_EstateNotConnected
   type: http
-  seq: 8
+  seq: 14
 }
 
 get {
-  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/estates/users?party={{party}}&user={{user}}
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/estates/accesspackages?party={{party}}&estate={{estate}}
   body: none
   auth: inherit
 }
 
 params:query {
   party: {{party}}
-  user: {{user}}
+  estate: {{estate}}
 }
 
 script:pre-request {
   const sharedtestdata = require(`./testdata/sharedtestdata.js`);
   const testdata = require(`./testdata/bankruptcyestate-delegation/${bru.getEnvVar("tokenEnv")}.js`);
-  
-  bru.setVar("requestName", "GET_BankruptcyEstate_GetEstateForUsers");
-  
+
+  bru.setVar("requestName", "GET_BankruptcyEstate_GetEstateUsersWithPackages_EstateNotConnected");
+
   bru.setVar("party", testdata.BOSTYRER.partyUuid);
-  bru.setVar("user", testdata.user_LUN_ANALYSE_GÅSTOL.partyUuid);
-  
+  // A person is never an estate administrated by the party
+  bru.setVar("estate", testdata.user_LUN_ANALYSE_GÅSTOL.partyUuid);
+
   var getTokenParameters = {
     auth_userId: testdata.BOSTYRER.userId,
     auth_partyId: testdata.BOSTYRER.partyId,
@@ -32,10 +33,16 @@ script:pre-request {
     auth_tokenType: sharedtestdata.authTokenType.personal,
     auth_scopes: sharedtestdata.auth_scopes.portalEnduser
   }
-  
+
   const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
   const token = await testTokenGenerator.getToken(getTokenParameters);
   bru.setVar("bearerToken", token);
+}
+
+tests {
+  test(bru.getVar("requestName"), function() {
+    expect(res.status).to.equal(400);
+  });
 }
 
 settings {

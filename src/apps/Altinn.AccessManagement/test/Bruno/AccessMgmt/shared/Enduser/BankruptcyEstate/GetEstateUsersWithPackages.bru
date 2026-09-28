@@ -1,0 +1,76 @@
+meta {
+  name: GetEstateUsersWithPackages
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/estates/accesspackages?party={{party}}&estate={{estate}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  estate: {{estate}}
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  const testdata = require(`./testdata/bankruptcyestate-delegation/${bru.getEnvVar("tokenEnv")}.js`);
+
+  bru.setVar("requestName", "GET_BankruptcyEstate_GetEstateUsersWithPackages");
+
+  bru.setVar("party", testdata.BOSTYRER.partyUuid);
+  bru.setVar("estate", testdata.BOSTYRER.client_BLAUT_FRYKTLØS_ØGLE_KONKURSBO.partyUuid);
+  bru.setVar("user", testdata.user_LUN_ANALYSE_GÅSTOL.partyUuid);
+
+  var getTokenParameters = {
+    auth_userId: testdata.BOSTYRER.userId,
+    auth_partyId: testdata.BOSTYRER.partyId,
+    auth_partyUuid: testdata.BOSTYRER.partyUuid,
+    auth_ssn: testdata.BOSTYRER.pid,
+    auth_tokenType: sharedtestdata.authTokenType.personal,
+    auth_scopes: sharedtestdata.auth_scopes.portalEnduser
+  }
+
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken", token);
+}
+
+tests {
+  // Runs after GiveAccessToEstate: the user must be listed for the estate with the delegated packages
+  test(bru.getVar("requestName"), function() {
+    const body = res.getBody();
+    const data = body.data;
+
+    expect(res.status).to.equal(200);
+    assert.isArray(data, "Expected data in response body to be an array");
+
+    const agent = data.find(a => a.agent?.id === bru.getVar("user"));
+    expect(agent, `Expected user ${bru.getVar("user")} in response`).to.exist;
+    expect(agent.agentAddedAt, "Expected agentAddedAt to be set").to.be.a("string");
+
+    const access = agent.access.find(a => a.role?.urn === "urn:altinn:external-role:ccr:bostyrer");
+    expect(access, "Expected access through the bostyrer role").to.exist;
+
+    const urns = access.packages.map(p => p.urn);
+    const expectedUrns = [
+      "urn:altinn:accesspackage:konkursbo-skrivetilgang",
+      "urn:altinn:accesspackage:a-ordning",
+      "urn:altinn:accesspackage:lonn",
+      "urn:altinn:accesspackage:ordinaer-post-til-virksomheten",
+      "urn:altinn:accesspackage:post-til-virksomheten-med-taushetsbelagt-innhold",
+      "urn:altinn:accesspackage:merverdiavgift",
+      "urn:altinn:accesspackage:skattegrunnlag"
+    ];
+
+    expectedUrns.forEach(urn => expect(urns, `Expected package ${urn}`).to.include(urn));
+  });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}

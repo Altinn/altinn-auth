@@ -400,25 +400,86 @@ namespace Altinn.AccessMgmt.Core.Services
                 .AnyAsync(a => a.ToId == party && a.RoleId == RoleConstants.EstateAdministrator, cancellationToken);
         }
 
-        public async Task<Result<List<CompactEntityDto>>> GetBankruptcyEstatesForUser(Guid party, Guid user, CancellationToken cancellationToken)
+        /// <inheritdoc />
+        public async Task<Result<List<ClientDto>>> GetBankruptcyEstatesWithPackagesForUser(Guid party, Guid user, CancellationToken cancellationToken)
         {
             var query = await db.Delegations
             .AsNoTracking()
-            .Include(d => d.To)
-            .Include(d => d.From).ThenInclude(a => a.From)
-            .Where(d => 
+            .Where(d =>
                 d.FacilitatorId == party &&
                 d.To.FromId == party &&
                 d.To.ToId == user &&
                 d.To.RoleId == RoleConstants.Agent &&
                 d.From.ToId == party &&
                 d.From.RoleId == RoleConstants.EstateAdministrator)
+            .Join(
+                db.DelegationPackages,
+                d => d.Id,
+                dp => dp.DelegationId,
+                (d, dp) => new { Delegation = d, DelegationPackage = dp })
+            .Select(x => new
+            {
+                x.Delegation.From.From,
+                x.Delegation.From.Role,
+                x.DelegationPackage.Package
+            })
+            .GroupBy(x => x.From.Id)
             .ToListAsync(cancellationToken);
 
             var result = query
                 .Select(e =>
-                    DtoMapper.Convert(e.From.From)
-                ).ToList();
+                new ClientDto()
+                {
+                    Client = DtoMapper.Convert(e.First().From),
+                    Access = e.GroupBy(r => r.Role.Id).Select(r => new ClientDto.RoleAccessPackages
+                    {
+                        Role = DtoMapper.ConvertCompactRole(r.First().Role),
+                        Packages = r.Select(r => DtoMapper.ConvertCompactPackage(r.Package)).DistinctBy(p => p.Id).ToArray(),
+                    }).ToList(),
+                }).ToList();
+
+            return result;
+        }
+
+        /// <inheritdoc />
+        public async Task<Result<List<AgentDto>>> GetUsersWithPackagesForBankruptcyEstate(Guid party, Guid estate, CancellationToken cancellationToken)
+        {
+            var query = await db.Delegations
+            .AsNoTracking()
+            .Where(d =>
+                d.FacilitatorId == party &&
+                d.To.FromId == party &&
+                d.To.RoleId == RoleConstants.Agent &&
+                d.From.ToId == party &&
+                d.From.FromId == estate &&
+                d.From.RoleId == RoleConstants.EstateAdministrator)
+            .Join(
+                db.DelegationPackages,
+                d => d.Id,
+                dp => dp.DelegationId,
+                (d, dp) => new { Delegation = d, DelegationPackage = dp })
+            .Select(x => new
+            {
+                x.Delegation.To.To,
+                x.Delegation.From.Role,
+                x.DelegationPackage.Package,
+                AgentAddedAt = x.Delegation.To.Audit_ValidFrom,
+            })
+            .GroupBy(x => x.To.Id)
+            .ToListAsync(cancellationToken);
+
+            var result = query
+                .Select(e =>
+                new AgentDto()
+                {
+                    Agent = DtoMapper.Convert(e.First().To),
+                    AgentAddedAt = e.First().AgentAddedAt,
+                    Access = e.GroupBy(r => r.Role.Id).Select(r => new AgentDto.AgentRoleAccessPackages
+                    {
+                        Role = DtoMapper.ConvertCompactRole(r.First().Role),
+                        Packages = r.Select(r => DtoMapper.ConvertCompactPackage(r.Package)).DistinctBy(p => p.Id).ToArray(),
+                    }).ToList(),
+                }).ToList();
 
             return result;
         }
@@ -655,30 +716,6 @@ namespace Altinn.AccessMgmt.Core.Services
             
             return anyDataDeleted;
         }
-
-        public async Task<Result<List<PackageDto>>> GetBankruptcyEstatePackagesForUser(Guid party, Guid estate, Guid user, CancellationToken cancellationToken)
-        {
-            var query = await db.Delegations
-            .AsNoTracking()
-            .Include(d => d.DelegationPackages)
-            .ThenInclude(dp => dp.Package)
-            .Where(d =>
-                d.FacilitatorId == party &&
-                d.To.FromId == party &&
-                d.To.ToId == user &&
-                d.To.RoleId == RoleConstants.Agent &&
-                d.From.ToId == party &&
-                d.From.FromId == estate &&
-                d.From.RoleId == RoleConstants.EstateAdministrator)
-            .ToListAsync(cancellationToken);
-
-            var result = query
-                .SelectMany(e => e.DelegationPackages)
-                .Select(dp => DtoMapper.Convert(dp.Package))
-                .ToList();
-
-            return result;
-        }
     }
 
     /// <summary>
@@ -802,23 +839,24 @@ namespace Altinn.AccessMgmt.Core.Services
         Task<Result<bool>> HasBankruptcyEstatesForParty(Guid party, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Gets the list of bankruptcy estates for a specific user.
+        /// Gets the bankruptcy estates delegated to a specific user via the party, with the packages the user has for each estate.
         /// </summary>
-        /// <param name="party">The entity the rightholder relationship is defined for</param>
-        /// <param name="user">The user identifier to fetch</param>
+        /// <param name="party">The estate administrator that facilitated the delegations</param>
+        /// <param name="user">The user (agent) to fetch estates for</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        /// <returns>A problem details if some error occurs. List of bankruptcy estates if successful.</returns>
-        Task<Result<List<CompactEntityDto>>> GetBankruptcyEstatesForUser(Guid party, Guid user, CancellationToken cancellationToken);
+        /// <returns>A problem details if some error occurs. List of bankruptcy estates with packages if successful.</returns>
+        Task<Result<List<ClientDto>>> GetBankruptcyEstatesWithPackagesForUser(Guid party, Guid user, CancellationToken cancellationToken);
 
         /// <summary>
-        /// Gets the list of pacgages for a given bankruptcy estate and a specific user.
+        /// Gets the users that a specific bankruptcy estate is delegated to via the party, with the packages each user has for the estate.
+        ///
+        /// It is the callers responsibility to check if the party has access to the estate before calling this method.
         /// </summary>
-        /// <param name="party">The entity the rightholder relationship is defined for</param>
-        /// <param name="estate">The bankruptcyestate identifier to fetch</param>
-        /// <param name="user">The user identifier to fetch</param>
+        /// <param name="party">The estate administrator that facilitated the delegations</param>
+        /// <param name="estate">The bankruptcy estate to fetch users for</param>
         /// <param name="cancellationToken">Cancellation token.</param>
-        /// <returns>A problem details if some error occurs. List of packages if successful.</returns>
-        Task<Result<List<PackageDto>>> GetBankruptcyEstatePackagesForUser(Guid party, Guid estate, Guid user, CancellationToken cancellationToken);
+        /// <returns>A problem details if some error occurs. List of users with packages if successful.</returns>
+        Task<Result<List<AgentDto>>> GetUsersWithPackagesForBankruptcyEstate(Guid party, Guid estate, CancellationToken cancellationToken);
 
         /// <summary>
         /// Gets the list of bankruptcy estates for a specific user.
