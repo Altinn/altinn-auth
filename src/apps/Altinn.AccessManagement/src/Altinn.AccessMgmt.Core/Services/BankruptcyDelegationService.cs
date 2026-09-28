@@ -47,7 +47,7 @@ namespace Altinn.AccessMgmt.Core.Services
                 return errorResult;
             }
 
-            return packageIds;
+return packageIds.Distinct().ToList();
         }
 
         private async Task<List<RolePackage>> GetDelegablePackagesForBankruptcyEstateAdmin( CancellationToken cancellationToken)
