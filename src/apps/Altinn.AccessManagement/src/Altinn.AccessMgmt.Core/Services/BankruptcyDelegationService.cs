@@ -62,7 +62,7 @@ namespace Altinn.AccessMgmt.Core.Services
                 .ToListAsync(cancellationToken);
 
             List<RolePackage> mainAdminPackages = new List<RolePackage>();
-            if (directAvilablePackages.Any(p => p.PackageId.Equals(PackageConstants.MainAdministrator)))
+            if (directAvilablePackages.Any(p => p.PackageId.Equals(PackageConstants.MainAdministrator.Id)))
             {
                 mainAdminPackages = await db.RolePackages
                 .AsNoTracking()
