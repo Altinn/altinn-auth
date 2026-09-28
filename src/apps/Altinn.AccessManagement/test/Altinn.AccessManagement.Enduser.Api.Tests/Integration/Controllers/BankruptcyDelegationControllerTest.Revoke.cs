@@ -196,7 +196,7 @@ public partial class BankruptcyDelegationControllerTest
                 Assert.Null(await db.Assignments
                     .AsNoTracking()
                     .FirstOrDefaultAsync(
-                        a => a.FromId == TestEntities.PersonMatilde.Id && a.ToId == TestEntities.OrganizationOrsta.Id && a.RoleId == RoleConstants.Agent,
+                        a => a.FromId == TestEntities.PersonMatilde.Id && a.ToId == TestEntities.PersonHenrik.Id && a.RoleId == RoleConstants.Agent,
                         TestContext.Current.CancellationToken));
             });
         }
