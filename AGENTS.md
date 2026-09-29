@@ -25,7 +25,7 @@ pwsh eng/testing/run-coverage.ps1                      # coverage, installs dotn
 - **Branch per change, never commit to `main`.** Name it `type/<issue>_<slug>`.
 - **The PR title is a Conventional Commit with the issue number**, for example `fix(#4044): ...`. `main` is squash-only with linear history, and the release automation reads the squash title. A single-commit PR currently squashes under the *commit* title, so check the title in the merge dialog ([#4095](https://github.com/Altinn/altinn-auth/issues/4095)).
 - **A green local `dotnet test` is not proof.** Integration tests skip when no container runtime is running, so the suite can pass having run almost nothing. CI is the gate.
-- **Documentation, `AGENTS.md` and ADRs change in the same PR** as the behaviour they describe.
+- **Documentation, `AGENTS.md` and ADRs change in the same PR** as the behaviour they describe. CI checks them against [ADR-0002](docs/adr/0002-tool-neutral-agent-contract.md); run it locally with `node .github/scripts/agents-docs-validate.mjs`.
 - **Text people read starts with a TL;DR** of at most five bullets, and text drafted with a tool says so and names who has read it.
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) is the working agreement, including the rules for AI assistance. Read it before using an assistant here.
 
@@ -64,4 +64,4 @@ Do not "fix" these without understanding them.
 
 ## Known tech debt
 
-Per-vertical guidance [#4078](https://github.com/Altinn/altinn-auth/issues/4078), build and test recipes in `just` [#4086](https://github.com/Altinn/altinn-auth/issues/4086), the CI guard for these files [#4081](https://github.com/Altinn/altinn-auth/issues/4081), and which AI review bot we answer to [#4085](https://github.com/Altinn/altinn-auth/issues/4085).
+Per-vertical guidance [#4078](https://github.com/Altinn/altinn-auth/issues/4078), `just` build and test recipes [#4086](https://github.com/Altinn/altinn-auth/issues/4086), and the AI review bot we answer to [#4085](https://github.com/Altinn/altinn-auth/issues/4085).

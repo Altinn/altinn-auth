@@ -7,6 +7,9 @@ on:
     paths:
       - "**/AGENTS.md"
       - "**/CLAUDE.md"
+      - ".github/copilot-instructions.md"
+      - "**/docs/adr/*.md"
+      - "docs/adr/*.md"
       - ".github/CODEOWNERS"
       - ".github/scripts/agents-docs-validate.mjs"
       - ".github/workflows/agents-docs-validate.yml"

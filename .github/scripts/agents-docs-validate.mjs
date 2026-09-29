@@ -3,7 +3,8 @@
 //   1. Pairing    every AGENTS.md has a sibling CLAUDE.md that imports it with "@AGENTS.md",
 //                 and no directory has a CLAUDE.md without an AGENTS.md beside it.
 //   2. Pointers   a CLAUDE.md is the import line plus at most five further lines of content.
-//   3. Links      every relative markdown link in an AGENTS.md or CLAUDE.md resolves.
+//   3. Links      every relative markdown link resolves, in AGENTS.md, CLAUDE.md,
+//                 .github/copilot-instructions.md and docs/adr/**.
 //   4. Ownership  every AGENTS.md and CLAUDE.md is named in .github/CODEOWNERS.
 //   5. Coverage   every vertical that has an AGENTS.md is linked from the root AGENTS.md.
 //   6. Presence   every app vertical has an AGENTS.md, except those still listed in
@@ -73,7 +74,9 @@ for (const dir of claudeDirs) {
   if (!lines.some((line) => /(^|\s)@AGENTS\.md(\s|$)/u.test(line))) {
     errors.push(`${pointer}: must import the sibling file with "@AGENTS.md".`);
   }
-  const content = lines.filter((line) => line.trim() && !/(^|\s)@AGENTS\.md(\s|$)/u.test(line) && !/^#\s/u.test(line));
+  // Headings count. The ADR allows five further lines in total, not five plus as many
+  // headings as someone cares to add.
+  const content = lines.filter((line) => line.trim() && !/(^|\s)@AGENTS\.md(\s|$)/u.test(line));
   if (content.length > POINTER_MAX_CONTENT_LINES) {
     errors.push(
       `${pointer}: ${content.length} lines of content beside the import, at most ${POINTER_MAX_CONTENT_LINES} allowed. Move the rest into AGENTS.md.`,
@@ -83,19 +86,31 @@ for (const dir of claudeDirs) {
 
 // --- 3: relative links ---
 
-const LINK = /\[[^\]]*\]\(([^)\s]+)\)/gu;
+// Inline links, with an optional title: [text](path "title") and [text](<path>).
+const INLINE_LINK = /\[[^\]]*\]\(\s*<?([^)<>\s]+)>?(?:\s+["'(][^)]*)?\)/gu;
+// Reference definitions, which is where a reference-style link [text][label] resolves to.
+const LINK_DEFINITION = /^\s{0,3}\[[^\]]+\]:\s*<?([^\s<>]+)>?/gmu;
 
-for (const file of [...agentsFiles, ...claudeFiles]) {
-  for (const match of read(file).matchAll(LINK)) {
-    const target = match[1];
-    if (/^(https?:|mailto:|#)/u.test(target)) continue;
-    const withoutAnchor = target.split("#")[0];
-    if (!withoutAnchor) continue;
-    const resolved = withoutAnchor.startsWith("/")
-      ? withoutAnchor.slice(1)
-      : path.join(path.dirname(file), withoutAnchor);
-    if (!fs.existsSync(resolved)) {
-      errors.push(`${file}: broken link "${target}" (looked for ${resolved}).`);
+const linkedFiles = [
+  ...agentsFiles,
+  ...claudeFiles,
+  ...tracked(".github/copilot-instructions.md", "docs/adr/*.md", "**/docs/adr/*.md").filter((f) => fs.existsSync(f)),
+];
+
+for (const file of linkedFiles) {
+  const text = read(file);
+  for (const pattern of [INLINE_LINK, LINK_DEFINITION]) {
+    for (const match of text.matchAll(pattern)) {
+      const target = match[1];
+      if (/^(https?:|mailto:|tel:|#)/u.test(target)) continue;
+      const withoutAnchor = decodeURIComponent(target.split("#")[0]);
+      if (!withoutAnchor) continue;
+      const resolved = withoutAnchor.startsWith("/")
+        ? withoutAnchor.slice(1)
+        : path.join(path.dirname(file), withoutAnchor);
+      if (!fs.existsSync(resolved)) {
+        errors.push(`${file}: broken link "${target}" (looked for ${resolved}).`);
+      }
     }
   }
 }
@@ -105,12 +120,16 @@ for (const file of [...agentsFiles, ...claudeFiles]) {
 if (!fs.existsSync(CODEOWNERS)) {
   errors.push(`${CODEOWNERS}: missing.`);
 } else {
+  // A line with a pattern and no owners deliberately leaves the path unowned, so it is not
+  // coverage. Only a line that names at least one owner counts.
   const owned = new Set(
     read(CODEOWNERS)
       .split("\n")
       .map((line) => line.replace(/#.*$/u, "").trim())
       .filter(Boolean)
-      .map((line) => line.split(/\s+/u)[0].replace(/^\//u, "")),
+      .map((line) => line.split(/\s+/u))
+      .filter((fields) => fields.length > 1 && fields.slice(1).some((owner) => owner.startsWith("@") || owner.includes("@")))
+      .map((fields) => fields[0].replace(/^\//u, "")),
   );
   for (const file of [...agentsFiles, ...claudeFiles]) {
     if (!owned.has(file)) {
