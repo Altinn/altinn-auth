@@ -26,15 +26,15 @@ pwsh eng/testing/run-coverage.ps1                      # coverage, installs dotn
 - **The PR title is a Conventional Commit with the issue number**, for example `fix(#4044): ...`. `main` is squash-only with linear history, and the release automation reads the squash title. A single-commit PR currently squashes under the *commit* title, so check the title in the merge dialog ([#4095](https://github.com/Altinn/altinn-auth/issues/4095)).
 - **A green local `dotnet test` is not proof.** Integration tests skip when no container runtime is running, so the suite can pass having run almost nothing. CI is the gate.
 - **Documentation, `AGENTS.md` and ADRs change in the same PR** as the behaviour they describe.
-- **Issues, comments and docs start with a TL;DR** of at most five bullets, and text drafted with a tool says so. PR descriptions have their own rules below.
+- **Issues, comments, docs and PR descriptions start with a TL;DR** of at most five bullets. Text drafted with a tool says so near the top, and says the reader is unspecified until a person confirms they have read it.
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) is the working agreement, including the rules for AI assistance. Read it before using an assistant here.
 
-**Write a PR description by these rules, with or without a GitHub template.** This repository has none, so the organisation's shared issue templates stay in the picker.
+**Write a PR description by these rules, with or without a GitHub template.** This repository keeps no local issue templates, so the organisation's shared ones stay in the picker.
 
-- Start with a TL;DR of at most five bullets: the problem, the change, and why it matters. Reference the issue, and use `Closes #<issue>` only when the PR completes it.
+- The TL;DR gives the problem, the change, and why it matters. Reference the issue, and use `Closes #<issue>` only when the PR completes it.
 - State what you verified: the commands or checks, their results, and what you did not run or could not test locally, with the reason. Distinguish skipped tests from passed ones. Never claim a check you did not run.
-- Disclose substantial AI assistance: what the assistant did and how you verified it. Mark an AI-drafted description near the top, and name the human reader only once someone has confirmed they read it, otherwise say it is unspecified.
-- Keep it proportional, with longer background in a `<details>` block. Before publishing, check the description against the final diff and correct it if the scope moved.
+- Say what an assistant did and how you verified its output.
+- Keep it proportional, with longer background in a `<details>` block. Check the description against the final diff before publishing, and correct it if the scope moved.
 
 ## Where things live
 
