@@ -8,3 +8,5 @@
 /src/apps/Altinn.Authorization/CLAUDE.md    @altinn/team-access-management @altinn/team-access-info
 /src/apps/Altinn.AccessManagement/AGENTS.md @altinn/team-access-management @altinn/team-access-info
 /src/apps/Altinn.AccessManagement/CLAUDE.md @altinn/team-access-management @altinn/team-access-info
+/src/apps/Altinn.ResourceRegistry/AGENTS.md @altinn/team-access-management @altinn/team-access-info
+/src/apps/Altinn.ResourceRegistry/CLAUDE.md @altinn/team-access-management @altinn/team-access-info
