@@ -30,6 +30,30 @@ namespace Altinn.Authorization.Tests.MockServices
             {
                 userProfile = new UserProfile { UserId = userId, Party = new Party { SSN = "02056260016", PartyId = 50002203, PartyUuid = Guid.Parse("00000000-0000-0000-0005-000000002203"), PartyTypeName = Register.Enums.PartyType.Person } };
             }
+            else if (userId == 1)
+            {
+                userProfile = new UserProfile { UserId = userId, Party = new Party { PartyId = 1, PartyUuid = Guid.Parse("00000000-0000-0000-0000-000000000001"), PartyTypeName = Register.Enums.PartyType.Person } };
+            }
+            else if (userId == 2)
+            {
+                userProfile = new UserProfile { UserId = userId, Party = new Party { PartyId = 2, PartyUuid = Guid.Parse("00000000-0000-0000-0000-000000000002"), PartyTypeName = Register.Enums.PartyType.Person } };
+            }
+            else if (userId == 20000490)
+            {
+                userProfile = new UserProfile { UserId = userId, Party = new Party { PartyId = 20000490, PartyUuid = Guid.Parse("00000000-0000-0000-0000-000020000490"), PartyTypeName = Register.Enums.PartyType.Person } };
+            }
+            else if (userId == 20990001)
+            {
+                userProfile = new UserProfile { UserId = userId, Party = new Party { PartyId = 20990001, PartyUuid = Guid.Parse("00000000-0000-0000-0000-000020990001"), PartyTypeName = Register.Enums.PartyType.Person } };
+            }
+            else if (userId == 20990002)
+            {
+                userProfile = new UserProfile { UserId = userId, Party = new Party { PartyId = 20990002, PartyUuid = Guid.Parse("00000000-0000-0000-0000-000020990002"), PartyTypeName = Register.Enums.PartyType.Person } };
+            }
+            else if (userId == 20990010)
+            {
+                userProfile = new UserProfile { UserId = userId, Party = new Party { PartyId = 20990010, PartyUuid = Guid.Parse("00000000-0000-0000-0000-000020990010"), PartyTypeName = Register.Enums.PartyType.Person } };
+            }
 
             return Task.FromResult(userProfile);
         }

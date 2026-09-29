@@ -28,7 +28,6 @@ namespace Altinn.Authorization.Tests.Unit;
 public class ContextHandlerUnitTest : IDisposable
 {
     private readonly Mock<IInstanceMetadataRepository> _policyInfoRepoMock = new();
-    private readonly Mock<IRoles> _rolesMock = new();
     private readonly Mock<IOedRoleAssignmentWrapper> _oedRolesMock = new();
     private readonly Mock<IProfile> _profileMock = new();
     private readonly MemoryCache _memoryCache = new(new MemoryCacheOptions());
@@ -44,7 +43,6 @@ public class ContextHandlerUnitTest : IDisposable
     {
         _sut = new TestableContextHandler(
             _policyInfoRepoMock.Object,
-            _rolesMock.Object,
             _oedRolesMock.Object,
             _profileMock.Object,
             _memoryCache,
@@ -459,19 +457,6 @@ public class ContextHandlerUnitTest : IDisposable
     #region Cached lookups
 
     [Fact]
-    public async Task GetRoles_CachesResult()
-    {
-        var roles = new List<Role> { new Role { Value = "DAGL" } };
-        _rolesMock.Setup(r => r.GetDecisionPointRolesForUser(1, 2)).ReturnsAsync(roles);
-
-        var first = await _sut.TestGetRoles(1, 2);
-        var second = await _sut.TestGetRoles(1, 2);
-
-        Assert.Same(first, second);
-        _rolesMock.Verify(r => r.GetDecisionPointRolesForUser(1, 2), Times.Once);
-    }
-
-    [Fact]
     public async Task GetUserProfileByUserId_CachesAndCrossPopulatesSsn()
     {
         var profile = new UserProfile
@@ -530,19 +515,6 @@ public class ContextHandlerUnitTest : IDisposable
     #region Attribute builder helpers
 
     [Fact]
-    public void GetRoleAttribute_BuildsCorrectly()
-    {
-        var roles = new List<Role> { new() { Value = "DAGL" }, new() { Value = "REGNA" } };
-
-        var attr = _sut.TestGetRoleAttribute(roles);
-
-        Assert.Equal(XacmlRequestAttribute.RoleAttribute, attr.AttributeId.OriginalString);
-        Assert.Equal(2, attr.AttributeValues.Count);
-        Assert.Equal("DAGL", attr.AttributeValues.First().Value);
-        Assert.Equal("REGNA", attr.AttributeValues.Last().Value);
-    }
-
-    [Fact]
     public void GetPartyTypeAttribute_Organization()
     {
         var attr = _sut.TestGetPartyTypeAttribute(PartyType.Organisation);
@@ -570,10 +542,10 @@ public class ContextHandlerUnitTest : IDisposable
 
     #endregion
 
-    #region EnrichSubjectAttributes with AccessManagementAsPipForRoles
+    #region EnrichSubjectAttributes
 
     [Fact]
-    public async Task EnrichSubjectAttributes_WithFeatureFlag_EnrichesRolesFromAccessManagement()
+    public async Task EnrichSubjectAttributes_EnrichesRolesFromAccessManagement()
     {
         // Arrange
         int subjectUserId = 1001;
@@ -609,7 +581,7 @@ public class ContextHandlerUnitTest : IDisposable
     }
 
     [Fact]
-    public async Task EnrichSubjectAttributes_WithFeatureFlag_EnrichesAccessPackagesFromAccessManagement()
+    public async Task EnrichSubjectAttributes_EnrichesAccessPackagesFromAccessManagement()
     {
         // Arrange
         int subjectUserId = 1001;
@@ -643,7 +615,7 @@ public class ContextHandlerUnitTest : IDisposable
     }
 
     [Fact]
-    public async Task EnrichSubjectAttributes_WithFeatureFlag_EnrichesRolesAndAccessPackages_CacheEnsuresSingleApiCall()
+    public async Task EnrichSubjectAttributes_EnrichesRolesAndAccessPackages_CacheEnsuresSingleApiCall()
     {
         // Arrange
         int subjectUserId = 1001;
@@ -683,43 +655,7 @@ public class ContextHandlerUnitTest : IDisposable
     }
 
     [Fact]
-    public async Task EnrichSubjectAttributes_WithoutFeatureFlag_UsesLegacyRolesEndpoint()
-    {
-        // Arrange
-        int subjectUserId = 1001;
-        int resourcePartyId = 50001337;
-        Guid subjectPartyUuid = Guid.Parse("00000000-0000-0000-0000-000000001001");
-
-        var legacyRoles = new List<Role> { new() { Value = "DAGL" }, new() { Value = "HADM" } };
-
-        _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.AccessManagementAsPipForRoles)).ReturnsAsync(false);
-        _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.UserAccessPackageAuthorization)).ReturnsAsync(false);
-        _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.SystemUserAccessPackageAuthorization)).ReturnsAsync(false);
-
-        _profileMock.Setup(p => p.GetUserProfile(subjectUserId, It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new UserProfile { UserId = subjectUserId, Party = new Party { SSN = "01017012345", PartyTypeName = PartyType.Person, PartyUuid = subjectPartyUuid } });
-
-        _rolesMock.Setup(r => r.GetDecisionPointRolesForUser(subjectUserId, resourcePartyId)).ReturnsAsync(legacyRoles);
-
-        var policy = CreatePolicyWithSubjectAttributes(policyHasRoles: true, policyHasAccessPackages: false);
-        _prpMock.Setup(p => p.GetPolicyAsync(It.IsAny<XacmlContextRequest>())).ReturnsAsync(policy);
-
-        var (request, resourceAttrs) = CreateEnrichSubjectRequest(subjectUserId, resourcePartyId);
-
-        // Act
-        await _sut.TestEnrichSubjectAttributes(request, resourceAttrs, isExternalRequest: false, TestContext.Current.CancellationToken);
-
-        // Assert
-        var subjectAttrs = request.GetSubjectAttributes();
-        AssertContainsAttributeValue(subjectAttrs, XacmlRequestAttribute.RoleAttribute, "DAGL");
-        AssertContainsAttributeValue(subjectAttrs, XacmlRequestAttribute.RoleAttribute, "HADM");
-
-        _accessMgmtMock.Verify(a => a.GetRolesAndAccessPackages(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
-        _rolesMock.Verify(r => r.GetDecisionPointRolesForUser(subjectUserId, resourcePartyId), Times.Once);
-    }
-
-    [Fact]
-    public async Task EnrichSubjectAttributes_WithFeatureFlag_EmptyPipResponse_NoAttributesAdded()
+    public async Task EnrichSubjectAttributes_EmptyPipResponse_NoAttributesAdded()
     {
         // Arrange
         int subjectUserId = 1001;
@@ -743,7 +679,7 @@ public class ContextHandlerUnitTest : IDisposable
     }
 
     [Fact]
-    public async Task EnrichSubjectAttributes_WithFeatureFlag_NoPartyUuidOnRequest_ResolvesViaEnrichResourceParty_AndEnrichesRoles()
+    public async Task EnrichSubjectAttributes_NoPartyUuidOnRequest_ResolvesViaEnrichResourceParty_AndEnrichesRoles()
     {
         // Arrange: ResourcePartyValue is set but PartyUuid is NOT (Guid.Empty).
         // This simulates a request that only specifies the integer party id.
@@ -795,7 +731,6 @@ public class ContextHandlerUnitTest : IDisposable
         int subjectUserId, int resourcePartyId, Guid subjectPartyUuid, Guid resourcePartyUuid,
         PipResponseDto pipResponse, bool policyHasRoles, bool policyHasAccessPackages)
     {
-        _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.AccessManagementAsPipForRoles)).ReturnsAsync(true);
         _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.UserAccessPackageAuthorization)).ReturnsAsync(true);
         _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.SystemUserAccessPackageAuthorization)).ReturnsAsync(false);
 
@@ -812,7 +747,6 @@ public class ContextHandlerUnitTest : IDisposable
 
         _cachingSut = new TestableContextHandler(
             _policyInfoRepoMock.Object,
-            _rolesMock.Object,
             _oedRolesMock.Object,
             _profileMock.Object,
             _memoryCache,
@@ -927,7 +861,6 @@ public class ContextHandlerUnitTest : IDisposable
     {
         public TestableContextHandler(
             IInstanceMetadataRepository policyInformationRepository,
-            IRoles rolesWrapper,
             IOedRoleAssignmentWrapper oedRolesWrapper,
             IProfile profileWrapper,
             IMemoryCache memoryCache,
@@ -937,7 +870,7 @@ public class ContextHandlerUnitTest : IDisposable
             IAccessManagementWrapper accessManagementWrapper,
             IFeatureManager featureManager,
             IResourceRegistry resourceRegistry)
-            : base(policyInformationRepository, rolesWrapper, oedRolesWrapper, profileWrapper, memoryCache, settings, registerService, prp, accessManagementWrapper, featureManager, resourceRegistry)
+            : base(policyInformationRepository, oedRolesWrapper, profileWrapper, memoryCache, settings, registerService, prp, accessManagementWrapper, featureManager, resourceRegistry)
         {
         }
 
@@ -953,9 +886,6 @@ public class ContextHandlerUnitTest : IDisposable
         public Task TestEnrichResourceParty(XacmlContextAttributes attrs, XacmlResourceAttributes resourceAttrs, bool isExternal, CancellationToken ct = default)
             => EnrichResourceParty(attrs, resourceAttrs, isExternal, ct);
 
-        public Task<List<Role>> TestGetRoles(int userId, int partyId)
-            => GetRoles(userId, partyId);
-
         public Task<UserProfile> TestGetUserProfileByUserId(int userId, CancellationToken ct = default)
             => GetUserProfileByUserId(userId, ct);
 
@@ -967,9 +897,6 @@ public class ContextHandlerUnitTest : IDisposable
 
         public Task TestEnrichSubjectAttributes(XacmlContextRequest request, XacmlResourceAttributes resourceAttrs, bool isExternalRequest, CancellationToken ct = default)
             => EnrichSubjectAttributes(request, resourceAttrs, isExternalRequest, ct);
-
-        public XacmlAttribute TestGetRoleAttribute(List<Role> roles)
-            => GetRoleAttribute(roles);
 
         public XacmlAttribute TestGetPartyTypeAttribute(PartyType partyType)
             => GetPartyTypeAttribute(partyType);
@@ -1015,9 +942,6 @@ public class ContextHandlerUnitTest : IDisposable
 
             return Task.FromResult(result);
         }
-
-        public Task<IEnumerable<AccessPackageUrn>> GetAccessPackages(Guid to, Guid from, CancellationToken cancellationToken = default)
-            => throw new NotImplementedException();
 
         public Task<IEnumerable<DelegationChangeExternal>> GetAllDelegationChanges(DelegationChangeInput input, CancellationToken cancellationToken = default)
             => throw new NotImplementedException();

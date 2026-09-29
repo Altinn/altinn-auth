@@ -7,13 +7,14 @@ namespace Altinn.Authorization.Tests.Util
     /// </summary>
     /// <remarks>
     /// The production <c>ContextHandler</c> enriches a request's subject with <c>urn:altinn:rolecode</c>
-    /// values by looking up <c>Data/Roles/user_{userId}/party_{partyId}/roles.json</c> whenever the
+    /// values from <c>AccessManagementWrapperMock</c>, which reads
+    /// <c>Data/AccessManagement/RolesAndAccessPackages/{partyUuid}/{userPartyUuid}.json</c>, whenever the
     /// resolved policy's Target references that attribute id - it does this for every ResourceRegistry
     /// decision request, not just the ones ported here. So a new cell of the matrix needs only:
     /// (1) the role listed in the resource's policy.xml Target (see
     /// Data/Xacml/3.0/ResourceRegistry/altinn_client_administration/policy.xml for the shape), and
-    /// (2) a roles.json for a user/party pair holding that role - reuse <see cref="ReporteePartyId"/>
-    /// and add a sibling user id here rather than inventing a new party.
+    /// (2) a <c>ProfileMock</c> entry and a roles file for a user/party pair holding that role - reuse
+    /// <see cref="ReporteePartyId"/> and add a sibling user id here rather than inventing a new party.
     /// Request/response fixture pairs live under
     /// Data/Xacml/3.0/ResourceRegistry/ResourceRegistry_SystemResource{Resource}_{Role}_{Outcome}Request.json.
     /// </remarks>
@@ -28,13 +29,13 @@ namespace Altinn.Authorization.Tests.Util
 
         /// <summary>
         /// User id seeded with role DAGL for <see cref="ReporteePartyId"/>
-        /// (Data/Roles/user_20990001/party_50990001/roles.json).
+        /// (Data/AccessManagement/RolesAndAccessPackages/00000000-0000-0000-0000-000050990001/00000000-0000-0000-0000-000020990001.json).
         /// </summary>
         public const int DaglUserId = 20990001;
 
         /// <summary>
         /// User id seeded with role ADMAI only for <see cref="ReporteePartyId"/>
-        /// (Data/Roles/user_20990002/party_50990001/roles.json). ADMAI is not in the
+        /// (Data/AccessManagement/RolesAndAccessPackages/00000000-0000-0000-0000-000050990001/00000000-0000-0000-0000-000020990002.json). ADMAI is not in the
         /// ClientAdministration/MainAdmin allow-lists, so this id is the NotApplicable counterpart
         /// to <see cref="DaglUserId"/> - the only fact that differs between the two cases.
         /// </summary>

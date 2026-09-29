@@ -47,30 +47,6 @@ public class PolicyInformationPointController(
     }
 
     /// <summary>
-    /// Endpoint to lookup all access packages a given to-party uuid has for a given from-party uuid
-    /// </summary>
-    /// <param name="from">The uuid of the party to lookup if the to-party has access packages for</param>
-    /// <param name="to">The uuid of the party to lookup access packages on behalf of the from-party</param>
-    /// <param name="cancellationToken">CancellationToken</param>
-    /// <returns>A list of all access package urns to-party has access to on behalf of the from-party</returns>
-    [ApiExplorerSettings(IgnoreApi = true)]
-    [HttpGet]
-    [Route("accesspackages")]
-    public async Task<ActionResult> GetAccessPackages([FromQuery] Guid from, [FromQuery] Guid to, CancellationToken cancellationToken)
-    {
-        List<AccessPackageUrn> packages = new();
-
-        var filter = new AuthorizedPartiesFilters { IncludeAccessPackages = true, IncludePartiesViaKeyRoles = AuthorizedPartiesIncludeFilter.True, PartyFilter = new SortedDictionary<Guid, Guid> { { from, from } } };
-        var connectionPackages = await authorizedPartyRepoService.GetPipConnectionsFromOthers(to, filters: filter, ct: cancellationToken);
-        if (connectionPackages != null)
-        {
-            packages.AddRange(connectionPackages.SelectMany(conPackage => conPackage.Packages.Select(pkg => AccessPackageUrn.Parse(pkg.Urn))));
-        }
-
-        return Ok(packages);
-    }
-
-    /// <summary>
     /// Endpoint to lookup all roles and access packages a given to-party uuid has for a given from-party uuid
     /// </summary>
     /// <param name="from">The uuid of the party to lookup if the to-party has access packages for</param>

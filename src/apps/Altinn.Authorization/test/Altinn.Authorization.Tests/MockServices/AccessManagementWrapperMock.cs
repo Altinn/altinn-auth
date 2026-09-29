@@ -154,42 +154,6 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
         return Task.FromResult<IEnumerable<AuthorizedPartyDto>>([]);
     }
 
-    public Task<IEnumerable<AccessPackageUrn>> GetAccessPackages(Guid to, Guid from, CancellationToken cancellationToken = default)
-    {
-        var cacheKey = $"AccPkgs|f:{from}|t:{to}";
-
-        if (!_memoryCache.TryGetValue(cacheKey, out IEnumerable<AccessPackageUrn> result))
-        {
-            List<AccessPackageUrn> accessPackages = new();
-            if (from.ToString() == "066148fe-7077-4484-b7ea-44b5ede0014e" && to.ToString() == "e2eba2c3-b369-4ff9-8418-99a810d6bb58")
-            {
-                accessPackages.AddRange(new List<AccessPackageUrn>
-                {
-                    AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked("skatt-naering")),
-                    AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked("ansettelsesforhold")),
-                    AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked("maskinporten-scopes"))
-                });
-            }
-
-            // Person (party uuid) holding the 'ansettelsesforhold' access package on behalf of the reportee,
-            // used by the person-via-access-package decision test (#3498 area 3).
-            if (from == Guid.Parse("066148fe-7077-4484-b7ea-44b5ede0014e") && to == Guid.Parse("00000000-0000-0000-0000-0000000000aa"))
-            {
-                accessPackages.Add(AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked("ansettelsesforhold")));
-            }
-
-            result = accessPackages;
-
-            var cacheEntryOptions = new MemoryCacheEntryOptions()
-            .SetPriority(CacheItemPriority.High)
-            .SetAbsoluteExpiration(new TimeSpan(0, 0, 5, 0));
-
-            _memoryCache.Set(cacheKey, result, cacheEntryOptions);
-        }
-
-        return Task.FromResult(result);
-    }
-
     private static string GetAuthorizedPartiesPath(int userId)
     {
         return Path.Combine("Data", "AccessManagement", "AuthorizedParties", $"{userId}.json");
@@ -225,20 +189,13 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
         {
             result = new PipResponseDto();
 
-            if (from.ToString() == "066148fe-7077-4484-b7ea-44b5ede0014e" && to.ToString() == "e2eba2c3-b369-4ff9-8418-99a810d6bb58")
+            // Roles and access packages the to-party holds on behalf of the from-party, keyed by party uuids
+            // the same way the real endpoint is.
+            string rolesAndAccessPackagesPath = GetRolesAndAccessPackagesPath(from, to);
+            if (File.Exists(rolesAndAccessPackagesPath))
             {
-                result.Roles.AddRange(new List<RoleUrn>
-                {
-                    RoleUrn.Parse("urn:altinn:external-role:ccr:daglig-leder"),
-                    RoleUrn.Parse("urn:altinn:rolecode:dagl"),
-                });
-
-                result.AccessPackages.AddRange(new List<AccessPackageUrn>
-                {
-                    AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked("skatt-naering")),
-                    AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked("ansettelsesforhold")),
-                    AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked("maskinporten-scopes")),
-                });
+                string content = File.ReadAllText(rolesAndAccessPackagesPath);
+                result = JsonSerializer.Deserialize<PipResponseDto>(content, _jsonOptions);
             }
 
             var cacheEntryOptions = new MemoryCacheEntryOptions()
@@ -249,5 +206,10 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
         }
 
         return Task.FromResult(result);
+    }
+
+    private static string GetRolesAndAccessPackagesPath(Guid from, Guid to)
+    {
+        return Path.Combine("Data", "AccessManagement", "RolesAndAccessPackages", from.ToString(), $"{to}.json");
     }
 }

@@ -1,0 +1,9 @@
+{
+  "roles": [
+    "urn:altinn:rolecode:medl",
+    "urn:altinn:rolecode:regna",
+    "urn:altinn:rolecode:utinn",
+    "urn:altinn:rolecode:utomr"
+  ],
+  "accessPackages": []
+}
