@@ -27,7 +27,7 @@ pwsh eng/testing/run-coverage.ps1                      # coverage, installs dotn
 - **A green local `dotnet test` is not proof.** Integration tests skip when no container runtime is running, so the suite can pass having run almost nothing. CI is the gate.
 - **Documentation, `AGENTS.md` and ADRs change in the same PR** as the behaviour they describe. CI checks them against [ADR-0002](docs/adr/0002-tool-neutral-agent-contract.md); run it locally with `node .github/scripts/agents-docs-validate.mjs`.
 - **Text people read starts with a TL;DR** of at most five bullets, and text drafted with a tool says so and names who has read it.
-- [`CONTRIBUTING.md`](CONTRIBUTING.md) is the working agreement, including the rules for AI assistance. Read it before using an assistant here.
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) is the working agreement, including the rules for AI assistance, and [`docs/ai/data-policy.md`](docs/ai/data-policy.md) says what may go into a tool at all. Read both before using an assistant here.
 
 ## Where things live
 
@@ -41,7 +41,7 @@ Code sits in verticals. A vertical always has its own `.sln`, `src/` and `conf.j
 | `src/tools` | `Altinn.Authorization.Cli` and the [`Altinn.AccessMgmt.FFB`](src/tools/Altinn.AccessMgmt.FFB/AGENTS.md) admin tool, which has its own guidance |
 | `docs/testing` | How the test suite is organised, fixtures, mocks, naming |
 | `docs/adr` | Architecture decision records, cross-cutting |
-| `docs/ai` | Background for the working agreement |
+| `docs/ai` | The [data policy](docs/ai/data-policy.md) for AI tools, and the background for the working agreement |
 | `eng/testing` | Coverage scripts, thresholds, the test-category guard |
 | `infra` | Infrastructure as code |
 
