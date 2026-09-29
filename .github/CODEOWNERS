@@ -1,1 +1,6 @@
 /.github/CODEOWNERS                         @altinn/team-access-management
+/AGENTS.md                                  @altinn/team-access-management @altinn/team-access-info
+/CLAUDE.md                                  @altinn/team-access-management @altinn/team-access-info
+/.github/copilot-instructions.md             @altinn/team-access-management @altinn/team-access-info
+/src/tools/Altinn.AccessMgmt.FFB/AGENTS.md  @altinn/team-access-management
+/src/tools/Altinn.AccessMgmt.FFB/CLAUDE.md  @altinn/team-access-management
