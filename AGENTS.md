@@ -24,7 +24,7 @@ pwsh eng/testing/run-coverage.ps1                      # coverage, installs dotn
 
 - **Branch per change, never commit to `main`.** Name it `type/<issue>_<slug>`.
 - **The PR title is a Conventional Commit with the issue number**, for example `fix(#4044): ...`. `main` is squash-only with linear history, and the release automation reads the squash title. A single-commit PR currently squashes under the *commit* title, so check the title in the merge dialog ([#4095](https://github.com/Altinn/altinn-auth/issues/4095)).
-- **A green local `dotnet test` is not proof.** Integration tests skip when no container runtime is running, so the suite can pass having run almost nothing. CI is the gate.
+- **A green local `dotnet test` is not proof, and a red one is not always a defect.** Without a container runtime some integration tests skip and others fail in fixture setup, so which you get is per vertical. CI is the gate.
 - **Documentation, `AGENTS.md` and ADRs change in the same PR** as the behaviour they describe.
 - **Text people read starts with a TL;DR** of at most five bullets, and text drafted with a tool says so and names who has read it.
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) is the working agreement, including the rules for AI assistance. Read it before using an assistant here.
