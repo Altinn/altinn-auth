@@ -1,0 +1,8 @@
+﻿apiVersion: application.dis.altinn.cloud/v1alpha1
+kind: ApplicationIdentity
+metadata:
+  name: app
+  labels:
+    app.kubernetes.io/name: authorization
+    app.kubernetes.io/part-of: authorization
+spec: {}
