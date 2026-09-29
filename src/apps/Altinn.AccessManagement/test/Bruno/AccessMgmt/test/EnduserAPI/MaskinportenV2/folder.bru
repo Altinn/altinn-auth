@@ -1,0 +1,30 @@
+﻿meta {
+	name: MaskinportenV2
+	seq: 4
+}
+
+docs {
+	# Maskinporten v2 scenarios
+
+	Tests for the enduser Maskinporten API at
+	`/accessmanagement/api/v2/enduser/maskinporten/suppliers` and
+	`/accessmanagement/api/v2/enduser/maskinporten/consumers`.
+
+	These are the same scenarios as the v1 `Maskinporten` collection
+	(`/accessmanagement/api/v1/enduser/maskinportensuppliers` and
+	`/accessmanagement/api/v1/enduser/maskinportenconsumers`). Only the routes differ.
+
+	- `Consumers_API`: the supplier's view of the organizations that have made it a
+		Maskinporten supplier, and the resources they have delegated.
+	- `Suppliers_API`: the consumer adds and removes suppliers and delegates
+		MaskinportenSchema resources to them. `Negative_scenarioer` holds the negative cases.
+
+	## Personas and fixtures
+
+	Seed data comes from `testdata/maksinporten-delegation/<env>.js`.
+
+	## Environments
+
+	Runs against AT22. TT02 does not route `/accessmanagement/api/v2/` yet, so the
+	suite cannot pass there until the v2 routes are exposed through the gateway.
+}
