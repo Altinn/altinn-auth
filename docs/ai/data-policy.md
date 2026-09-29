@@ -4,22 +4,24 @@
 
 **TL;DR**
 
-- **Never** put secrets, personal data, production logs or telemetry, incident data, unpublished vulnerabilities, or anything taushetsbelagt, gradert or unntatt offentlighet into an AI tool.
-- Source code in our public repositories and synthetic test data are fine in an approved tool.
+- **Never**, under any circumstance: secrets and tokens, real personal data, and anything gradert, taushetsbelagt or unntatt offentlighet.
+- **Not without a written assessment first:** production logs and telemetry, incident data, unpublished security findings, and data from a service owner.
+- Source code in our public repositories and synthetic test data are fine, in an approved tool.
+- **Only approved tools**, whatever the material. The approved list is in section 2.
 - A tool is approved on requirements, not on brand: no training on our input, known retention, processing in the EEA, an agreement at organisation level.
 - An agent gets the least access the task needs, never production credentials, and never a token it does not need.
 - If something went in by accident, say so the same day. The list of who to tell is at the bottom.
 
 ## 1. What may go where
 
-The classes follow the tiers Digdir and DFØ use for cloud services, applied to the material this team actually touches.
+The classes follow the tiers Digdir and DFØ use for cloud services, applied to the material this team actually touches. **Everything below assumes an approved tool from section 2.** An unapproved tool is not a question of class; it is simply not used for work.
 
-| Class | Examples from our work | Approved tool | Any tool |
-| --- | --- | --- | --- |
-| **Open** | Source code in our public repositories, public documentation, published ADRs, synthetic test data (Tenor, TT02 test users), public API contracts | Yes | Yes |
-| **Internal** | Unpublished design notes, internal architecture sketches, non-sensitive configuration, issue and PR text that is not public | Yes | No |
-| **Sensitive** | Anything about a named person, data from a service owner, unpublished security findings, incident timelines, access logs, production telemetry | No, without a separate assessment | No |
-| **Prohibited** | Secrets and API keys, tokens, `.env` files, connection strings, certificates, real personal data, gradert information, anything taushetsbelagt or unntatt offentlighet | Never | Never |
+| Class | Examples from our work | Rule |
+| --- | --- | --- |
+| **Open** | Source code in our public repositories, public documentation, published ADRs, synthetic test data (Tenor, TT02 test users), public API contracts | Use freely |
+| **Internal** | Unpublished design notes, internal architecture sketches, non-sensitive configuration, issue and PR text that is not public | Use, and keep it out of anything that leaves the approved tool |
+| **Sensitive** | Anything about a named person, data from a service owner, unpublished security findings, incident timelines, access logs, production telemetry | Only after a written assessment for that specific use, recorded with the team lead |
+| **Prohibited** | Secrets and API keys, tokens, `.env` files, connection strings, certificates, real personal data, gradert information, anything taushetsbelagt or unntatt offentlighet | Never, in any tool, under any agreement |
 
 Two things that catch people out:
 
@@ -51,7 +53,7 @@ This table is the operative list. A tool that is not in it is not approved, howe
 
 An MCP server extends an assistant's reach, so it is governed by the same classes as section 1.
 
-- **Allowed:** servers that reach only what the developer may already reach and that carry no sensitive data, such as a fine-grained GitHub token scoped to the repositories you work in, or a local development database in the Aspire environment.
+- **Allowed:** servers that reach only what the developer may already reach and that carry no sensitive data, such as a fine-grained GitHub token scoped to the repositories you work in, or a local development database whose contents are synthetic. A local database is not automatically synthetic: one seeded from a production dump is sensitive, and a server pointed at it is not allowed.
 - **Not allowed:** anything pointed at production, at a database with real personal data, or at an internal system that holds sensitive material.
 - **New servers are added to the list below before use.** A server installed from a registry is still a third party running code on your machine.
 
@@ -85,7 +87,11 @@ Where AI output substantially shaped a decision record, a security assessment or
 It happens, and the useful response is speed, not silence.
 
 1. Stop using that conversation and do not continue in it.
-2. Tell the team lead the same day, and the data protection contact if it involved personal data. A secret that was exposed is rotated, not hoped about.
+2. Tell the right people the same day:
+   - **Always** the team lead.
+   - **A secret, token or credential:** rotate it first, then tell a code owner. Rotation is the fix; reporting is not a substitute for it.
+   - **An unpublished security finding or anything else security-sensitive:** a code owner, following [SECURITY.md](../../SECURITY.md), never a public issue.
+   - **Personal data:** the data protection contact as well.
 3. Write down what was sent, to which tool, and when. That record is what any later assessment needs.
 
 Nobody is disciplined for reporting this quickly. The policy exists to make the mistake recoverable.
