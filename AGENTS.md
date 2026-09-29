@@ -37,7 +37,7 @@ Code sits in verticals. A vertical always has its own `.sln`, `src/` and `conf.j
 | --- | --- |
 | `src/apps` | Deployable services: `Altinn.Authorization` (PDP/PEP), `Altinn.AccessManagement`, `Altinn.ResourceRegistry`, `Altinn.Register` |
 | `src/libs` | Shared libraries: `Api.Contracts`, `Host`, `Integration`, `Testing` |
-| `src/pkgs` | Published NuGet packages: `Altinn.Authorization.ABAC`, `Altinn.Common.PEP` |
+| `src/pkgs` | Published NuGet packages: `Altinn.Authorization.ABAC`, and `Altinn.Authorization.PEP`, which ships as `Altinn.Common.PEP` |
 | `src/tools` | `Altinn.Authorization.Cli` and the [`Altinn.AccessMgmt.FFB`](src/tools/Altinn.AccessMgmt.FFB/AGENTS.md) admin tool, which has its own guidance |
 | `docs/testing` | How the test suite is organised, fixtures, mocks, naming |
 | `docs/adr` | Architecture decision records, cross-cutting |

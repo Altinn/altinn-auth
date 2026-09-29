@@ -1,0 +1,43 @@
+name: "Validate agent guidance"
+
+# The contract is docs/adr/0002-tool-neutral-agent-contract.md. This job keeps it honest:
+# pairing, pointer shape, links, ownership, root-map coverage and the word budget.
+on:
+  pull_request:
+    paths:
+      - "**/AGENTS.md"
+      - "**/CLAUDE.md"
+      - ".github/CODEOWNERS"
+      - ".github/scripts/agents-docs-validate.mjs"
+      - ".github/workflows/agents-docs-validate.yml"
+      - "src/apps/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agents-docs-validate-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate agent guidance
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: "24"
+          package-manager-cache: false
+
+      # No dependencies, so nothing is installed.
+      - name: Validate
+        run: node .github/scripts/agents-docs-validate.mjs
