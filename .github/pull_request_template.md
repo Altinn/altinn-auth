@@ -9,30 +9,44 @@ It becomes the squash commit the release automation reads. Check it in the merge
 
 -
 
-## What and why
-
-<!-- The detail. Put anything long in a <details> block so the TL;DR stays the thing people read. -->
-
 Closes #
 
 ## Verification
 
-<!-- What you actually ran, and what you could not. "Not run" is a fine answer; an unchecked box you ticked anyway is not. -->
+<!--
+What you actually ran, with the result. Proportional to the change: build and the relevant tests for
+code, negative tests and permission boundaries for authorization logic, a link check for docs.
+"Not run, because …" is a fine answer. A ticked box you did not earn is not.
+-->
 
-- [ ] Built and the relevant tests pass
-- [ ] Manually tested, where that makes sense
-- [ ] Says below what could not be tested locally and why
+| What I ran | Result |
+| --- | --- |
+|  |  |
+
+Not run, and why:
+
+Could not be tested locally, and why:
 
 ## AI assistance
 
 <!--
 Rule 2 of the working agreement. Autocomplete, grammar fixes and asking questions need no disclosure.
-Name the category of tool, not the brand, unless the brand matters.
+Name the category of tool rather than the brand, unless the brand is the point.
 -->
 
 - [ ] No substantial AI assistance
-- [ ] An assistant generated or substantially rewrote part of this. What it did, and how I verified it:
+- [ ] An assistant generated or substantially rewrote part of this
+
+If you ticked the second box: what it did, how you verified it, and who has read the result through.
+An empty name is an honest signal, not a failure.
 
 ## Documentation
 
 - [ ] `AGENTS.md`, docs or an ADR updated in this PR, or not needed
+
+<details>
+<summary><b>What and why</b> — the detail, for whoever wants it</summary>
+
+<!-- Background, the approach, alternatives you rejected, anything long. The TL;DR above stays the part people read. -->
+
+</details>
