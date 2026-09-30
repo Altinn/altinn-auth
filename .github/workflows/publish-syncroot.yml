@@ -80,7 +80,7 @@ jobs:
           echo "app_data=$ELEMENT" >> $GITHUB_OUTPUT
       
       - run: |
-          echo ${{ steps.extract-vertical.app_data }}
+          echo ${{ steps.extract-vertical.outputs.app_data }}
 
 #       - name: Build and push syncroot artifact
 #         uses: Altinn/altinn-platform/actions/flux/build-push-image@3535bba3d301df5778ce420f7adf10edd748cc3f # main
