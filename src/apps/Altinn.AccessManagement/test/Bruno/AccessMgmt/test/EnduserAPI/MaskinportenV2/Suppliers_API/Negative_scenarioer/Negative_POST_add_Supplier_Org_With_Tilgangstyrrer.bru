@@ -38,7 +38,7 @@ script:pre-request {
 
 tests {
   const testdata = require(`./testdata/maksinporten-delegation/${bru.getEnvVar("tokenEnv")}.js`); 
-  test("Add maskinporten supplier organization with Tilgangstyyring role", function() {
+  test("Add maskinporten supplier organization with Tilgangstyring role", function() {
      const data = res.getBody();
     expect(res.status).to.equal(403);
      });
