@@ -273,7 +273,8 @@ const readVertical = async (
   let infra: InfraInfo | undefined = void 0;
   let database: DatabaseInfo | undefined = void 0;
   let dis: DisInfo | undefined = void 0; 
-  
+
+  console.log(config);
   if (type === "app") {
     const confImage = config.image ?? { type: "dotnet" };
 
