@@ -56,12 +56,12 @@ namespace Altinn.ResourceRegistry.Controllers
             }
 
             // Map to result
-            IEnumerable<RightDto> decomposedRights = await MapFromInternalToDecomposedRights(rights, id, language, cancellationToken);
+            List<RightDto> decomposedRights = await MapFromInternalToDecomposedRights(rights, id, language, cancellationToken);
 
-            return Ok(decomposedRights);
+            return decomposedRights;
         }
 
-        private async Task<IEnumerable<RightDto>> MapFromInternalToDecomposedRights(List<Right> rights, string resource, string language, CancellationToken cancellationToken = default)
+        private async Task<List<RightDto>> MapFromInternalToDecomposedRights(List<Right> rights, string resource, string language, CancellationToken cancellationToken = default)
         {
             List<RightDto> result = [];
 
