@@ -311,7 +311,7 @@ const readVertical = async (
       database = confDatabase as DatabaseInfo;
     }
 
-    const confDis = config.Dis;
+    const confDis = config.dis;
     if (confDis) {
       dis = confDis as Dis;
     }
