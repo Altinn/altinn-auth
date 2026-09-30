@@ -81,3 +81,42 @@ dev-redis-cli:
   #!{{shebang}}
   $port = {{container-tool}} inspect --format='{{"{{(index .NetworkSettings.Ports \"6379/tcp\" 0).HostPort}}"}}' altinn_authorization_redis
   redis-cli -h localhost -p $port
+
+# ---------------------------------------------------------------------------
+# Quality gates. These mirror what CI runs per vertical (#4086), so that a
+# green `just check` locally is a real prediction of a green pipeline.
+#
+# Every recipe takes an optional path: the repository root by default, or a
+# single vertical, e.g. `just check src/apps/Altinn.Authorization`.
+#
+# CI also passes --no-incremental, -bl and --results-directory. Those change
+# artefacts and build hygiene, not the result, so they are left out here.
+# ---------------------------------------------------------------------------
+
+# Build everything, or one vertical
+@build path=".":
+  dotnet build {{path}} -c Release
+
+# The unit lane, selected exactly as CI selects it.
+# Note: Altinn.ResourceRegistry runs xUnit v2 and carries no category traits,
+# so this filter does not exclude its tests. Run that vertical on its own:
+# `just test src/apps/Altinn.ResourceRegistry`.
+@test-unit path=".":
+  dotnet test {{path}} -c Release -- --filter-trait "Category=Unit" --ignore-exit-code 8
+
+# The integration lane. Needs a container runtime; `just dev` starts one.
+@test-integration path=".":
+  dotnet test {{path}} -c Release -p:TestLane=Integration -- --filter-trait "Category=Integration" --ignore-exit-code 8
+
+# Every test, both lanes and the verticals that have no lanes
+@test path=".":
+  dotnet test {{path}} -c Release
+
+# What to run before asking for review: what CI will run on the fast path
+@check path=".": (build path) (test-unit path)
+
+# There is deliberately no `lint` recipe. CI enforces no formatting gate today,
+# `dotnet format --verify-no-changes` fails on main with StyleCop violations, and
+# it does not scope to the path it is given the way build and test do. Adding a
+# gate that is red on a clean checkout would only teach people to ignore it.
+# Deciding whether to adopt a formatter is separate work; see #4086.
