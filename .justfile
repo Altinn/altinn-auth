@@ -97,11 +97,11 @@ dev-redis-cli:
 @build path=".":
   dotnet build {{path}} -c Release
 
-# The unit lane, selected exactly as CI selects it.
-# Note: Altinn.ResourceRegistry runs xUnit v2 and carries no category traits,
-# so this filter does not exclude its tests. Run that vertical on its own:
-# `just test src/apps/Altinn.ResourceRegistry`.
+# The unit lane, selected exactly as CI selects it
 @test-unit path=".":
+  # Altinn.ResourceRegistry runs xUnit v2 and carries no category traits, so this
+  # filter does not exclude its tests. Run that vertical on its own instead:
+  # `just test src/apps/Altinn.ResourceRegistry`.
   dotnet test {{path}} -c Release -- --filter-trait "Category=Unit" --ignore-exit-code 8
 
 # The integration lane. Needs a container runtime; `just dev` starts one.
