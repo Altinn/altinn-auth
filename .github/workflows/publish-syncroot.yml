@@ -80,12 +80,12 @@ jobs:
           echo "app_data=$ELEMENT" >> $GITHUB_OUTPUT
       
       - run: |
-          echo ${{ steps.extract-vertical.outputs.app_data }}
+          echo ${{ steps.extract-vertical.outputs.app_data.syncroot }}
 
 #       - name: Build and push syncroot artifact
 #         uses: Altinn/altinn-platform/actions/flux/build-push-image@3535bba3d301df5778ce420f7adf10edd748cc3f # main
 #         with:
-#           image_name: { from field == app.syncrootname }
+#           image_name: ${{ steps.extract-vertical.outputs.app_data.syncroot }}
 #           tag: ${{ inputs.environment }}
 #           workdir: src/apps/${{ env.app }}/syncroot
 #           azure_subscription_id: ${{ secrets.DIS_SYNCROOT_AZURE_SUBSCRIPTION_ID }}

@@ -1,4 +1,7 @@
-{
+﻿{
+  "dis": {
+    "syncroot": "register/syncroot"
+  },
   "database": {
     "prefix": "register",
     "name": "register",

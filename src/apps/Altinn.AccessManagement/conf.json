@@ -1,6 +1,6 @@
 ﻿{
-  "deploy": {
-    "dis": true
+  "dis": {
+    "syncroot": "accessmanagement/syncroot"
   },
   "image": {},
   "database": {

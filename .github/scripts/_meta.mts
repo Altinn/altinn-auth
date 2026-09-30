@@ -1,4 +1,4 @@
-import { globby } from "globby";
+﻿import { globby } from "globby";
 import path from "node:path";
 import fs from "node:fs/promises";
 import { z } from "zod";
@@ -130,6 +130,10 @@ export type DatabaseInfo = {
   readonly schema: object;
 };
 
+export type Dis = {
+  readonly syncroot: string;
+};
+
 export type SonarcloudInfo =
   | {
       readonly enabled: false;
@@ -149,6 +153,7 @@ type RawVertical = {
   readonly type: VerticalType;
   readonly name: string;
   readonly shortName: string;
+  readonly dis?: Dis;
   readonly path: string;
   readonly relPath: string;
   readonly image?: ImageInfo;
@@ -166,6 +171,7 @@ export type Vertical = {
   readonly type: VerticalType;
   readonly name: string;
   readonly shortName: string;
+  readonly dis?: Dis;
   readonly path: string;
   readonly relPath: string;
   readonly image?: ImageInfo;
@@ -261,6 +267,8 @@ const readVertical = async (
   let image: ImageInfo | undefined = void 0;
   let infra: InfraInfo | undefined = void 0;
   let database: DatabaseInfo | undefined = void 0;
+  let dis: Dis | undefined = void 0; 
+  
   if (type === "app") {
     const confImage = config.image ?? { type: "dotnet" };
 
@@ -303,14 +311,19 @@ const readVertical = async (
       database = confDatabase as DatabaseInfo;
     }
 
+    const confDis = config.Dis;
+    if (confDis) {
+      dis = confDis as Dis;
+    }
+
     image = confImage as ImageInfo;
   }
 
   const id = `${type}:${name}`;
   const displayName = `${type}: ${shortName}`;
   const slug = slugify(id.replaceAll(/[\.:]/g, "-"), { lower: true });
-
   const confSonarcloud = config.sonarcloud;
+  const syncroot = dis?.syncroot
   const sonarcloud = confSonarcloud.enabled
     ? ({
         enabled: true,
@@ -326,6 +339,7 @@ const readVertical = async (
     type,
     name,
     shortName,
+    syncroot,
     path: verticalPath,
     relPath: dirPath,
     image,

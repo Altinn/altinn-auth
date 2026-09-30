@@ -1,6 +1,6 @@
 ﻿{
-  "deploy": {
-    "dis": true
+  "dis": {
+    "syncroot": "authorization/syncroot"
   },
   "image": {},
   "infra": {

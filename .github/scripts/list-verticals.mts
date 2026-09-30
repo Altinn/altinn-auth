@@ -1,4 +1,4 @@
-import { verticals as sourceVerticals } from "./_ci-verticals.mts";
+﻿import { verticals as sourceVerticals } from "./_ci-verticals.mts";
 import * as actions from "@actions/core";
 import yargs from "yargs";
 import { hideBin } from "yargs/helpers";
@@ -67,6 +67,10 @@ const mapped = sourceVerticals.map((v) => {
       ret.terraform = "true";
       ret.terraformStateFile = v.infra.terraform.stateFile;
     }
+  }
+
+  if (v.dis) {
+    ret.syncroot = v.dis.syncroot;
   }
 
   if (v.database) {

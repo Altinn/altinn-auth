@@ -1,4 +1,7 @@
 {
+  "dis": {
+    "syncroot": "resource-registry/syncroot"
+  },
   "sonarcloud": {
     "projectKey": "Altinn_altinn-resource-registry"
   }
