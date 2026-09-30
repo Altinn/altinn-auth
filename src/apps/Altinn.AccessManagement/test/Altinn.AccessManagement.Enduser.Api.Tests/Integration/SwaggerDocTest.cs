@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Text.Json;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 
@@ -19,6 +19,8 @@ public class SwaggerDocTest
     public const string ClientDelegationV2Route = "/accessmanagement/api/v2/enduser/clientdelegations";
 
     public const string AuthorizedPartiesV1Route = "/accessmanagement/api/v1/enduser/authorizedparties";
+
+    public const string MaskinportenV2Route = "/accessmanagement/api/v2/enduser/maskinporten";
 
     /// <summary>
     /// Fetches a swagger document and returns the response together with the
@@ -74,9 +76,9 @@ public class SwaggerDocTest
     }
 
     /// <summary>
-    /// Tests for the v2 swagger document. Only the client delegation API is
-    /// versioned, so the v2 document must contain its /v2/ paths and nothing
-    /// else.
+    /// Tests for the v2 swagger document. Only the client delegation and
+    /// Maskinporten APIs are versioned, so the v2 document must contain their
+    /// /v2/ paths and nothing else.
     /// </summary>
     [IntegrationTest]
     public class V2Doc : IClassFixture<ApiFixture>
@@ -89,12 +91,23 @@ public class SwaggerDocTest
         private HttpClient Client { get; }
 
         [Fact]
-        public async Task GetSwaggerJson_V2Doc_Returns200WithOnlyClientDelegationV2Paths()
+        public async Task GetSwaggerJson_V2Doc_Returns200WithOnlyClientDelegationAndMaskinportenV2Paths()
         {
             var (_, paths) = await GetSwaggerDoc(Client, "v2");
 
             paths.Should().NotBeEmpty();
-            paths.Should().OnlyContain(p => p.StartsWith($"{ClientDelegationV2Route}/", StringComparison.Ordinal));
+            paths.Should().OnlyContain(p =>
+                p.StartsWith($"{ClientDelegationV2Route}/", StringComparison.Ordinal) ||
+                p.StartsWith($"{MaskinportenV2Route}/", StringComparison.Ordinal));
+        }
+
+        [Fact]
+        public async Task GetSwaggerJson_V2Doc_Returns200WithMaskinportenV2Paths()
+        {
+            var (_, paths) = await GetSwaggerDoc(Client, "v2");
+
+            paths.Should().Contain(p => p.StartsWith($"{MaskinportenV2Route}/consumers", StringComparison.Ordinal));
+            paths.Should().Contain(p => p.StartsWith($"{MaskinportenV2Route}/suppliers", StringComparison.Ordinal));
         }
     }
 }
