@@ -92,7 +92,7 @@ const sonarcloudSchema = z
 const configSchema = z.object({
   name: z.string().optional(),
   shortName: z.string().optional(),
-  disSchema: disSchema.optiona(),
+  disSchema: disSchema.optional(),
   image: imageSchema.optional(),
   infra: infraSchema.optional(),
   database: databaseSchema.optional(),
