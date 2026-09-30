@@ -40,7 +40,8 @@ tests {
   test("GET supplier Org list for consumer org- Supplier Org which is added is in List", function () {
     const data = res.getBody();
   
-    const item = data[0];
+    const item = data.find(entry => entry.party.organizationIdentifier === testdata.supplier_Org.orgno);
+    expect(item, "Expected supplier organization in response").to.exist;
     expect(item.party.type).to.equal("Organisasjon");
     expect(item.party.organizationIdentifier).to.equal(testdata.supplier_Org.orgno);
     expect(item.party.personIdentifier).to.equal(null);
