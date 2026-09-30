@@ -69,6 +69,7 @@ const mapped = sourceVerticals.map((v) => {
     }
   }
 
+  console.log(v.name, v.dis);
   if (v.dis) {
     ret.syncroot = v.dis.syncroot;
   }
