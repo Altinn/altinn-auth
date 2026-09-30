@@ -64,20 +64,41 @@ namespace Altinn.Platform.Authorization.Services.Implementation
 
         private void MeasureDuplicate(AuthorizationEvent authorizationEvent, XacmlContextRequest contextRequest)
         {
-            // The measurement only counts, so a failure in it must never fail the decision the event
-            // belongs to. Failures are counted with every event, but logged only once per instance: a
-            // failure that repeats for every decision would otherwise flood the logs.
+            // The measurement only counts, so nothing in it, including recording or logging a failure,
+            // may fail the decision the event belongs to.
             try
             {
                 _telemetry.RecordAuditLogEvent(_duplicateTracker.Track(authorizationEvent, EventLogHelper.GetResourceInstanceIds(contextRequest)));
             }
             catch (Exception ex)
             {
-                _telemetry.RecordAuditLogEventMeasurementFailure();
+                RecordMeasurementFailure(ex);
+            }
+        }
 
-                if (Interlocked.Exchange(ref _measurementFailureLogged, 1) == 0)
+        private void RecordMeasurementFailure(Exception exception)
+        {
+            // Failures are counted with every event, but logged only once per instance: a failure that
+            // repeats for every decision would otherwise flood the logs. Both are best effort, since the
+            // meter or the logger may be what failed.
+            try
+            {
+                _telemetry.RecordAuditLogEventMeasurementFailure();
+            }
+            catch
+            {
+                // Best effort, see above.
+            }
+
+            if (Interlocked.Exchange(ref _measurementFailureLogged, 1) == 0)
+            {
+                try
                 {
-                    Log.DuplicateMeasurementFailed(_logger, ex);
+                    Log.DuplicateMeasurementFailed(_logger, exception);
+                }
+                catch
+                {
+                    // Best effort, see above.
                 }
             }
         }

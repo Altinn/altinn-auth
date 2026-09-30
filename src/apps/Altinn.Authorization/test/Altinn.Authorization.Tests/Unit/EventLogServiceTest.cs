@@ -187,6 +187,72 @@ public class EventLogServiceTest : IDisposable
             Times.Once);
     }
 
+    [Fact]
+    public async Task CreateAuthorizationEvent_MetricRecordingFails_StillQueuesEvent_AndLogsOnce()
+    {
+        _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.AuditLog)).ReturnsAsync(true);
+        _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.AuditLogDuplicateMeasurement)).ReturnsAsync(true);
+        _queueClientMock
+            .Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<Altinn.Platform.Authorization.Models.EventLog.AuthorizationEvent>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new QueuePostReceipt { Success = true });
+        _loggerMock.Setup(l => l.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
+
+        // A listener that throws on every measurement, so that both the classification and the error
+        // recorded after it fail. Scoped to this test's meter, so other tests are not affected.
+        Meter meter = MeterFactory.Create(DecisionTelemetry.MeterName);
+        using var throwingListener = new MeterListener
+        {
+            InstrumentPublished = (instrument, listener) =>
+            {
+                if (ReferenceEquals(instrument.Meter, meter) && instrument.Name == AuditLogEventsInstrument)
+                {
+                    listener.EnableMeasurementEvents(instrument);
+                }
+            }
+        };
+        throwingListener.SetMeasurementEventCallback<long>((_, _, _, _) => throw new InvalidOperationException("listener failure"));
+        throwingListener.Start();
+
+        var response = new XacmlContextResponse(new XacmlContextResult(XacmlContextDecision.Permit, new XacmlContextStatus(new XacmlContextStatusCode("urn:oasis:names:tc:xacml:1.0:status:ok"))));
+        var service = CreateService();
+
+        await service.CreateAuthorizationEvent(_featureManagerMock.Object, CreateMinimalRequest(), new DefaultHttpContext(), response, TestContext.Current.CancellationToken);
+        await service.CreateAuthorizationEvent(_featureManagerMock.Object, CreateMinimalRequest(), new DefaultHttpContext(), response, TestContext.Current.CancellationToken);
+
+        _queueClientMock.Verify(
+            q => q.EnqueueAuthorizationEvent(It.IsAny<Altinn.Platform.Authorization.Models.EventLog.AuthorizationEvent>(), It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
+        _loggerMock.Verify(
+            l => l.Log(LogLevel.Warning, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<InvalidOperationException>(), It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateAuthorizationEvent_LoggingTheMeasurementFailureFails_StillQueuesEvent()
+    {
+        _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.AuditLog)).ReturnsAsync(true);
+        _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.AuditLogDuplicateMeasurement)).ReturnsAsync(true);
+        _queueClientMock
+            .Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<Altinn.Platform.Authorization.Models.EventLog.AuthorizationEvent>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new QueuePostReceipt { Success = true });
+        _loggerMock.Setup(l => l.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
+        _loggerMock
+            .Setup(l => l.Log(It.IsAny<LogLevel>(), It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<Exception>(), It.IsAny<Func<It.IsAnyType, Exception?, string>>()))
+            .Throws(new AggregateException("logger failure"));
+
+        var failingClock = new Mock<TimeProvider>();
+        failingClock.Setup(t => t.GetUtcNow()).Throws(new InvalidOperationException("clock failure"));
+
+        var response = new XacmlContextResponse(new XacmlContextResult(XacmlContextDecision.Permit, new XacmlContextStatus(new XacmlContextStatusCode("urn:oasis:names:tc:xacml:1.0:status:ok"))));
+        var service = CreateService(trackerTimeProvider: failingClock.Object);
+
+        await service.CreateAuthorizationEvent(_featureManagerMock.Object, CreateMinimalRequest(), new DefaultHttpContext(), response, TestContext.Current.CancellationToken);
+
+        _queueClientMock.Verify(
+            q => q.EnqueueAuthorizationEvent(It.IsAny<Altinn.Platform.Authorization.Models.EventLog.AuthorizationEvent>(), It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
     private static XacmlContextRequest CreateMinimalRequest(string? resourceInstanceId = null)
     {
         var resourceAttrs = new XacmlContextAttributes(new Uri(XacmlConstants.MatchAttributeCategory.Resource));
