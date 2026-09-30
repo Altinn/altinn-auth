@@ -63,6 +63,19 @@ jobs:
       
       - run: |
           echo ${{ needs.find-verticals.outputs }}
+      
+      - run: |
+          # 1. Capture the raw matrix JSON string outputted from your template job
+          MATRIX_DATA='${{ needs.find-verticals.outputs.matrix }}'
+          
+          # 2. Extract the target key from your user input choice (e.g. "Altinn.AccessManagement")
+          TARGET_APP="${{ github.event.inputs.app }}"
+          
+          # 3. Filter down to the single matching object in the include array and compact it
+          ELEMENT=$(echo "$MATRIX_DATA" | jq --arg name "$TARGET_APP" -c '.include[] | select(.name == $name)')
+          
+          # 4. Save to step output
+          echo "app_data=$ELEMENT" >> $GITHUB_OUTPUT
 
 #       - name: Build and push syncroot artifact
 #         uses: Altinn/altinn-platform/actions/flux/build-push-image@3535bba3d301df5778ce420f7adf10edd748cc3f # main
