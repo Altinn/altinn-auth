@@ -51,6 +51,10 @@ const dockerImageSchema = z.object({
   name: z.string().min(5),
 });
 
+const disSchema = z.object({
+  syncroot: z.string().optiona(),
+});
+
 const imageSchema = z
   .object({
     type: z.enum(["dotnet", "docker"]).default("dotnet"),
@@ -88,6 +92,7 @@ const sonarcloudSchema = z
 const configSchema = z.object({
   name: z.string().optional(),
   shortName: z.string().optional(),
+  disSchema: disSchema.optiona(),
   image: imageSchema.optional(),
   infra: infraSchema.optional(),
   database: databaseSchema.optional(),
