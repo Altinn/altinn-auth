@@ -323,7 +323,6 @@ const readVertical = async (
   const displayName = `${type}: ${shortName}`;
   const slug = slugify(id.replaceAll(/[\.:]/g, "-"), { lower: true });
   const confSonarcloud = config.sonarcloud;
-  const syncroot = dis?.syncroot
   const sonarcloud = confSonarcloud.enabled
     ? ({
         enabled: true,
@@ -339,7 +338,7 @@ const readVertical = async (
     type,
     name,
     shortName,
-    syncroot,
+    dis,
     path: verticalPath,
     relPath: dirPath,
     image,
