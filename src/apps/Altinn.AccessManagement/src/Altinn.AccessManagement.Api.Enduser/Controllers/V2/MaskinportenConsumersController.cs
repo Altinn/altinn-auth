@@ -1,4 +1,5 @@
-﻿using Altinn.AccessMgmt.Core.Services.Contracts;
+﻿using Altinn.AccessManagement.Api.Enduser.Controllers.Base;
+using Altinn.AccessMgmt.Core.Services.Contracts;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 
@@ -11,6 +12,6 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers.V2;
 [Route("accessmanagement/api/v{version:apiVersion}/enduser/maskinporten/consumers")]
 public class MaskinportenConsumersController(
     IMaskinportenSupplierService maskinportenSupplierService
-    ) : Controllers.MaskinportenConsumersController(maskinportenSupplierService)
+    ) : MaskinportenConsumersControllerBase(maskinportenSupplierService)
 {
 }
