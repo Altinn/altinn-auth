@@ -81,39 +81,49 @@ dev-redis-cli:
   #!{{shebang}}
   $port = {{container-tool}} inspect --format='{{"{{(index .NetworkSettings.Ports \"6379/tcp\" 0).HostPort}}"}}' altinn_authorization_redis
   redis-cli -h localhost -p $port
-
 # ---------------------------------------------------------------------------
-# Quality gates. These mirror what CI runs per vertical (#4086), so that a
-# green `just check` locally is a real prediction of a green pipeline.
+# Quality gates (#4086).
 #
-# Every recipe takes an optional path: the repository root by default, or a
-# single vertical, e.g. `just check src/apps/Altinn.Authorization`.
+# `check <vertical>` is the fast gate: build plus the unit lane. It is not the
+# whole pipeline — CI also runs the integration lane after a successful build —
+# so a green `check` is a cheap early signal, not a guarantee. `check-full`
+# adds the integration lane and is the one that mirrors CI.
 #
-# CI also passes --no-incremental, -bl and --results-directory. Those change
-# artefacts and build hygiene, not the result, so they are left out here.
+# The lane recipes take a vertical rather than defaulting to the repository,
+# because Altinn.ResourceRegistry runs xUnit v2 and carries no category traits:
+# the trait filter does not exclude its tests, so a repository-wide "unit" run
+# would start its PostgreSQL container. Run that vertical with
+# `just test src/apps/Altinn.ResourceRegistry`.
+#
+# CI also passes --no-incremental, -bl and --results-directory; those change
+# artefacts rather than the result and are left out.
 # ---------------------------------------------------------------------------
 
 # Build everything, or one vertical
 @build path=".":
-  dotnet build {{path}} -c Release
+  dotnet build {{quote(path)}} -c Release
 
-# The unit lane, selected exactly as CI selects it
-@test-unit path=".":
-  # Altinn.ResourceRegistry runs xUnit v2 and carries no category traits, so this
-  # filter does not exclude its tests. Run that vertical on its own instead:
-  # `just test src/apps/Altinn.ResourceRegistry`.
-  dotnet test {{path}} -c Release -- --filter-trait "Category=Unit" --ignore-exit-code 8
+# The unit lane for one vertical, selected as CI selects it
+@test-unit path:
+  dotnet test {{quote(path)}} -c Release -- --filter-trait "Category=Unit" --ignore-exit-code 8
 
-# The integration lane. Needs a container runtime; `just dev` starts one.
-@test-integration path=".":
-  dotnet test {{path}} -c Release -p:TestLane=Integration -- --filter-trait "Category=Integration" --ignore-exit-code 8
+# The integration lane for one vertical
+@test-integration path: require-container-runtime
+  dotnet test {{quote(path)}} -c Release -p:TestLane=Integration -- --filter-trait "Category=Integration" --ignore-exit-code 8
 
-# Every test, both lanes and the verticals that have no lanes
-@test path=".":
-  dotnet test {{path}} -c Release
+# Every test under a path, including verticals that have no lanes
+@test path=".": require-container-runtime
+  dotnet test {{quote(path)}} -c Release
 
-# What to run before asking for review: what CI will run on the fast path
-@check path=".": (build path) (test-unit path)
+# Fail clearly when no container runtime is reachable, instead of reporting an empty green lane
+@require-container-runtime:
+  if (-not (Get-Command {{container-tool}} -ErrorAction SilentlyContinue)) { Write-Host "{{container-tool}} is not installed. Integration tests need a container runtime."; exit 1 }; & {{container-tool}} info *> $null; if ($LASTEXITCODE -ne 0) { Write-Host "{{container-tool}} is installed but not reachable. Start it, or run 'just dev'."; exit 1 }
+
+# The fast gate for a vertical: build and the unit lane. Not the whole pipeline.
+@check path: (build path) (test-unit path)
+
+# Build plus both lanes: what CI actually runs for a vertical
+@check-full path: (check path) (test-integration path)
 
 # There is deliberately no `lint` recipe. CI enforces no formatting gate today,
 # `dotnet format --verify-no-changes` fails on main with StyleCop violations, and

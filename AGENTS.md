@@ -18,7 +18,7 @@ dotnet test src/apps/Altinn.AccessManagement/test/Altinn.AccessManagement.Api.Te
 pwsh eng/testing/run-coverage.ps1                      # coverage, installs dotnet-coverage if missing
 ```
 
-`.justfile` holds local-development helpers, not build targets: `just dev` starts the containers (Podman on Windows, Docker elsewhere) and `just db-cred` prints database credentials. Build and test recipes are [#4086](https://github.com/Altinn/altinn-auth/issues/4086).
+`.justfile` holds the quality gates and local-development helpers. `just check <vertical>` builds and runs the unit lane, `just check-full` adds the integration lane as CI does, and `just dev` starts the containers. `just --list` shows the rest. Recipes need PowerShell 7.
 
 ## Critical workflow rules
 
