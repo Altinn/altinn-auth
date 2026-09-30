@@ -9,6 +9,7 @@ using Altinn.Platform.Authorization.Services.Implementation;
 using Altinn.Platform.Authorization.Telemetry;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 using Moq;
@@ -22,6 +23,7 @@ public class EventLogServiceTest : IDisposable
 
     private readonly Mock<IEventsQueueClient> _queueClientMock = new();
     private readonly Mock<IFeatureManager> _featureManagerMock = new();
+    private readonly Mock<ILogger<EventLogService>> _loggerMock = new();
     private readonly TimeProvider _timeProvider = TimeProvider.System;
     private readonly ServiceProvider _metrics = new ServiceCollection().AddMetrics().BuildServiceProvider();
 
@@ -29,14 +31,15 @@ public class EventLogServiceTest : IDisposable
 
     private IMeterFactory MeterFactory => _metrics.GetRequiredService<IMeterFactory>();
 
-    private EventLogService CreateService()
+    private EventLogService CreateService(TimeProvider? trackerTimeProvider = null)
     {
         var telemetry = new DecisionTelemetry(MeterFactory);
         return new(
             _queueClientMock.Object,
             _timeProvider,
-            new AuthorizationEventDuplicateTracker(Options.Create(new AuditLogDeduplicationSettings()), _timeProvider, telemetry),
-            telemetry);
+            new AuthorizationEventDuplicateTracker(Options.Create(new AuditLogDeduplicationSettings()), trackerTimeProvider ?? _timeProvider, telemetry),
+            telemetry,
+            _loggerMock.Object);
     }
 
     [Fact]
@@ -150,6 +153,38 @@ public class EventLogServiceTest : IDisposable
         await service.CreateAuthorizationEvent(_featureManagerMock.Object, CreateMinimalRequest("message-a"), httpContext, response, TestContext.Current.CancellationToken);
 
         Assert.Equal(new object?[] { "none", "none", "trace" }, collector.Measurements.Select(tags => tags["auditlog.duplicate"]).ToArray());
+    }
+
+    [Fact]
+    public async Task CreateAuthorizationEvent_DuplicateMeasurementFails_StillQueuesEvent_CountsError_AndLogsOnce()
+    {
+        _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.AuditLog)).ReturnsAsync(true);
+        _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.AuditLogDuplicateMeasurement)).ReturnsAsync(true);
+        _queueClientMock
+            .Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<Altinn.Platform.Authorization.Models.EventLog.AuthorizationEvent>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new QueuePostReceipt { Success = true });
+        _loggerMock.Setup(l => l.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
+
+        // The tracker reads the clock for every event, so a failing clock makes every measurement fail.
+        var failingClock = new Mock<TimeProvider>();
+        failingClock.Setup(t => t.GetUtcNow()).Throws(new InvalidOperationException("clock failure"));
+
+        var response = new XacmlContextResponse(new XacmlContextResult(XacmlContextDecision.Permit, new XacmlContextStatus(new XacmlContextStatusCode("urn:oasis:names:tc:xacml:1.0:status:ok"))));
+
+        using var collector = new PdpMetricCollector(MeterFactory, AuditLogEventsInstrument);
+        var service = CreateService(trackerTimeProvider: failingClock.Object);
+
+        await service.CreateAuthorizationEvent(_featureManagerMock.Object, CreateMinimalRequest(), new DefaultHttpContext(), response, TestContext.Current.CancellationToken);
+        await service.CreateAuthorizationEvent(_featureManagerMock.Object, CreateMinimalRequest(), new DefaultHttpContext(), response, TestContext.Current.CancellationToken);
+
+        // The decisions' events are queued regardless, and every failure is counted, but logged once.
+        _queueClientMock.Verify(
+            q => q.EnqueueAuthorizationEvent(It.IsAny<Altinn.Platform.Authorization.Models.EventLog.AuthorizationEvent>(), It.IsAny<CancellationToken>()),
+            Times.Exactly(2));
+        Assert.Equal(new object?[] { "error", "error" }, collector.Measurements.Select(tags => tags["auditlog.duplicate"]).ToArray());
+        _loggerMock.Verify(
+            l => l.Log(LogLevel.Warning, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<InvalidOperationException>(), It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
     }
 
     private static XacmlContextRequest CreateMinimalRequest(string? resourceInstanceId = null)

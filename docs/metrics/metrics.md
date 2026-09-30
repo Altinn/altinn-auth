@@ -48,7 +48,7 @@ A metric consists of the following properties:
     </tr>
     <tr>
       <td><code>auditlog.duplicate</code></td>
-      <td>Whether an authorization event queued for the audit log repeats one already seen within the deduplication window: <code>none</code>, <code>trace</code> (same trace), <code>window</code> (another trace).</td>
+      <td>Whether an authorization event queued for the audit log repeats one already seen within the deduplication window: <code>none</code>, <code>trace</code> (same trace), <code>window</code> (another trace), or <code>error</code> when measuring the event failed.</td>
     </tr>
   </tbody>
 </table>
@@ -88,7 +88,7 @@ Below is a list of applications that publishes metrics, and what those metrics a
     <tr>
       <td><code>Altinn.Authorization.Pdp</code></td>
       <td><code>altinn.pdp.auditlog.events</code></td>
-      <td>The number of authorization events queued for the audit log, by whether they repeat an event already seen. Only recorded when the <code>AuditLogDuplicateMeasurement</code> feature flag is on.</td>
+      <td>The number of authorization events queued for the audit log, by whether they repeat an event already seen. Recorded when both the <code>AuditLog</code> and <code>AuditLogDuplicateMeasurement</code> feature flags are on; the latter is on by default.</td>
       <td>counter</td>
       <td>
         <ul>
