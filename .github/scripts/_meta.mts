@@ -135,7 +135,7 @@ export type DatabaseInfo = {
   readonly schema: object;
 };
 
-export type Dis = {
+export type DisInfo = {
   readonly syncroot: string;
 };
 
@@ -158,9 +158,9 @@ type RawVertical = {
   readonly type: VerticalType;
   readonly name: string;
   readonly shortName: string;
-  readonly dis?: Dis;
   readonly path: string;
   readonly relPath: string;
+  readonly dis?: DisInfo;
   readonly image?: ImageInfo;
   readonly infra?: InfraInfo;
   readonly database?: DatabaseInfo;
@@ -176,9 +176,9 @@ export type Vertical = {
   readonly type: VerticalType;
   readonly name: string;
   readonly shortName: string;
-  readonly dis?: Dis;
   readonly path: string;
   readonly relPath: string;
+  readonly dis?: DisInfo;
   readonly image?: ImageInfo;
   readonly infra?: InfraInfo;
   readonly database?: DatabaseInfo;
@@ -272,7 +272,7 @@ const readVertical = async (
   let image: ImageInfo | undefined = void 0;
   let infra: InfraInfo | undefined = void 0;
   let database: DatabaseInfo | undefined = void 0;
-  let dis: Dis | undefined = void 0; 
+  let dis: DisInfo | undefined = void 0; 
   
   if (type === "app") {
     const confImage = config.image ?? { type: "dotnet" };
@@ -318,7 +318,7 @@ const readVertical = async (
 
     const confDis = config.dis;
     if (confDis) {
-      dis = confDis as Dis;
+      dis = confDis as DisInfo;
     }
 
     image = confImage as ImageInfo;
@@ -343,9 +343,9 @@ const readVertical = async (
     type,
     name,
     shortName,
-    dis,
     path: verticalPath,
     relPath: dirPath,
+    dis,
     image,
     infra,
     database,
