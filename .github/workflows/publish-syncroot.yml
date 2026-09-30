@@ -54,7 +54,7 @@ jobs:
     # Push the manifests the syncroot points at first, so the OCIRepository resolves
     # as soon as Flux picks up the new syncroot.
     # The federated credential backing the OIDC login is scoped to refs/heads/main.
-    # if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
     steps:
@@ -79,15 +79,12 @@ jobs:
           # 4. Save to step output
           echo "app_data=$ELEMENT" >> $GITHUB_OUTPUT
       
-      - run: |
-          echo ${{ steps.extract-vertical.outputs.app_data.syncroot }}
-
-#       - name: Build and push syncroot artifact
-#         uses: Altinn/altinn-platform/actions/flux/build-push-image@3535bba3d301df5778ce420f7adf10edd748cc3f # main
-#         with:
-#           image_name: ${{ steps.extract-vertical.outputs.app_data.syncroot }}
-#           tag: ${{ inputs.environment }}
-#           workdir: src/apps/${{ env.app }}/syncroot
-#           azure_subscription_id: ${{ secrets.DIS_SYNCROOT_AZURE_SUBSCRIPTION_ID }}
-#           azure_app_id: ${{ secrets.DIS_SYNCROOT_AZURE_CLIENT_ID }}
-#           azure_tenant_id: ${{ secrets.DIS_SYNCROOT_AZURE_TENANT_ID }}
+      - name: Build and push syncroot artifact
+        uses: Altinn/altinn-platform/actions/flux/build-push-image@3535bba3d301df5778ce420f7adf10edd748cc3f # main
+        with:
+          image_name: ${{ steps.extract-vertical.outputs.app_data.syncroot }}
+          tag: main
+          workdir: src/apps/${{ env.app }}/syncroot
+          azure_subscription_id: ${{ secrets.DIS_SYNCROOT_AZURE_SUBSCRIPTION_ID }}
+          azure_app_id: ${{ secrets.DIS_SYNCROOT_AZURE_CLIENT_ID }}
+          azure_tenant_id: ${{ secrets.DIS_SYNCROOT_AZURE_TENANT_ID }}
