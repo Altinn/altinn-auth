@@ -4690,7 +4690,7 @@ public static class RoleConstants
     /// - <c>URN:</c> urn:altinn:rolecode:ektj
     /// - <c>Provider:</c> Altinn2
     /// - <c>Code:</c> ektj
-    /// - <c>Description:</c> Ikke-delegerbar roller for tjenester som kun skal delegeres enkeltvis
+    /// - <c>Description:</c> Ikke-delegerbar rolle for tjenester som kun skal delegeres enkeltvis
     /// </remarks>
     public static ConstantDefinition<Role> ExplicitServiceDelegation { get; } = new ConstantDefinition<Role>("1225bc46-4b03-4b63-b6e8-58926b29a97b")
     {
