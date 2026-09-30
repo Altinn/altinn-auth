@@ -52,7 +52,7 @@ const dockerImageSchema = z.object({
 });
 
 const disSchema = z.object({
-  syncroot: z.string().optiona(),
+  syncroot: z.string().optional(),
 });
 
 const imageSchema = z
@@ -92,7 +92,7 @@ const sonarcloudSchema = z
 const configSchema = z.object({
   name: z.string().optional(),
   shortName: z.string().optional(),
-  disSchema: disSchema.optional(),
+  dis: disSchema.optional(),
   image: imageSchema.optional(),
   infra: infraSchema.optional(),
   database: databaseSchema.optional(),
