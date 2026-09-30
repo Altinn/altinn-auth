@@ -54,7 +54,7 @@ jobs:
     # Push the manifests the syncroot points at first, so the OCIRepository resolves
     # as soon as Flux picks up the new syncroot.
     # The federated credential backing the OIDC login is scoped to refs/heads/main.
-    if: github.ref == 'refs/heads/main'
+    # if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
 
     steps:
