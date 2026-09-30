@@ -1,4 +1,4 @@
-{
+﻿{
   "bootstrap-sha": "1e705b7d3d23204a89de5a38f3411be3198a4170",
   "separate-pull-requests": true,
   "pull-request-title-pattern": "release${scope}:${component} ${version}",
@@ -21,6 +21,38 @@
           "type": "xml",
           "path": "Version.props",
           "xpath": "//Project/PropertyGroup/Version"
+        }
+      ]
+    },
+    "src/apps/Altinn.AccessManagement" : {
+      "package-name": "Altinn.AccessManagement",
+      "extra-files": [
+        {
+          "type": "yaml",
+          "glob": true,
+          "path": "manifests/deploy/{tt02,prod}/kustomization.yaml",
+          "jsonpath": "$.images[?(@.name=='ghcr.io/altinn/altinn-auth/access-management')].newTag"
+        },
+        {
+          "type": "yaml",
+          "glob": true,
+          "path": "manifests/deploy/{tt02,prod}/kustomization.yaml",
+          "jsonpath": "$.labels[?(@.pairs)].pairs['app.kubernetes.io/version']"
+        }
+      ]
+    },
+    "src/apps/Altinn.Authorization" : {
+      "package-name": "Altinn.Authorization",
+      "extra-files": [
+        {
+          "type": "yaml",
+          "path": "manifests/deploy/{tt02,prod}/kustomization.yaml",
+          "jsonpath": "$.images[?(@.name=='ghcr.io/altinn/altinn-auth/authorization')].newTag"
+        },
+        {
+          "type": "yaml",
+          "path": "manifests/deploy/{tt02,prod}/kustomization.yaml",
+          "jsonpath": "$.labels[?(@.pairs)].pairs['app.kubernetes.io/version']"
         }
       ]
     }

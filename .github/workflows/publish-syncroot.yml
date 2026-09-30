@@ -4,6 +4,14 @@ run-name: Publish syncroot artifacts to ${{ inputs.environment }}
 on:
   workflow_dispatch:
     inputs:
+      app:
+        description: "Target App"
+        type: choice
+        required: true
+        options:
+          - Altinn.AccessManagement
+          - Altinn.Authorization
+
       environment:
         description: "Target environment"
         type: choice
@@ -35,23 +43,33 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  publish-syncroot:
-    name: Publish syncroot artifact
+  find-verticals:
+    uses: ./.github/workflows/tpl-find-verticals.yml
+    with:
+      type: app
+
+  publish-app-syncroot:
+    name: Publish App artifact
+    needs: find-verticals
     # Push the manifests the syncroot points at first, so the OCIRepository resolves
     # as soon as Flux picks up the new syncroot.
     # The federated credential backing the OIDC login is scoped to refs/heads/main.
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      
+      - run: |
+          echo ${{ needs.find-verticals.outputs }}
 
-      - name: Build and push syncroot artifact
-        uses: Altinn/altinn-platform/actions/flux/build-push-image@3535bba3d301df5778ce420f7adf10edd748cc3f # main
-        with:
-          image_name: ${{ env.SYNCROOT_ARTIFACT_NAME }}
-          tag: ${{ inputs.environment }}
-          workdir: ${{ env.SYNCROOT_WORKDIR }}
-          azure_subscription_id: ${{ secrets.DIS_SYNCROOT_AZURE_SUBSCRIPTION_ID }}
-          azure_app_id: ${{ secrets.DIS_SYNCROOT_AZURE_CLIENT_ID }}
-          azure_tenant_id: ${{ secrets.DIS_SYNCROOT_AZURE_TENANT_ID }}
+#       - name: Build and push syncroot artifact
+#         uses: Altinn/altinn-platform/actions/flux/build-push-image@3535bba3d301df5778ce420f7adf10edd748cc3f # main
+#         with:
+#           image_name: { from field == app.syncrootname }
+#           tag: ${{ inputs.environment }}
+#           workdir: src/apps/${{ env.app }}/syncroot
+#           azure_subscription_id: ${{ secrets.DIS_SYNCROOT_AZURE_SUBSCRIPTION_ID }}
+#           azure_app_id: ${{ secrets.DIS_SYNCROOT_AZURE_CLIENT_ID }}
+#           azure_tenant_id: ${{ secrets.DIS_SYNCROOT_AZURE_TENANT_ID }}

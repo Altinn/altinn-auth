@@ -1,4 +1,7 @@
-{
+﻿{
+  "deploy": {
+    "dis": true
+  },
   "image": {},
   "database": {
     "prefix": "accessmgmt",
