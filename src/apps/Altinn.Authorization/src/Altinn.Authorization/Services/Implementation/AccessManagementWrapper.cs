@@ -64,7 +64,7 @@ public class AccessManagementWrapper : IAccessManagementWrapper
         };
 
         actions.ToList().ForEach(action => action(input));
-        return await GetAllDelegationChanges(input);
+        return await GetAllDelegationChanges(input, cancellationToken);
     }
 
     /// <inheritdoc/>

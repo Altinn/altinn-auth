@@ -1,5 +1,4 @@
 using Altinn.Authorization.Api.Contracts.Authorization;
-using Altinn.Platform.Authorization.Models;
 
 namespace Altinn.Authorization.Tests.Data;
 
