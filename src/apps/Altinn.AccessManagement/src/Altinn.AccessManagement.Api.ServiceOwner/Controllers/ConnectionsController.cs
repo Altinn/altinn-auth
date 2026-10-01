@@ -370,7 +370,9 @@ namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers
 
         /// <summary>
         /// The service owner is authorized for a resource when the organization number from the consumer claim
-        /// equals the organization number of the resource provider.
+        /// equals the organization number of the resource provider. A provider without an organization number,
+        /// like TTD in the test environments, is matched on the org claim of the token against the provider code
+        /// instead, the same way the request endpoint does it.
         /// </summary>
         private bool IsServiceOwnerAuthorizedForResource(Resource resource, out OrganizationNumber? organizationNumber)
         {
@@ -382,7 +384,14 @@ namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers
             }
 
             string providerOrgNo = resource.Provider?.RefId;
-            return !string.IsNullOrWhiteSpace(providerOrgNo) && string.Equals(providerOrgNo, organizationNumber.ToString(), StringComparison.Ordinal);
+            if (!string.IsNullOrWhiteSpace(providerOrgNo))
+            {
+                return string.Equals(providerOrgNo, organizationNumber.ToString(), StringComparison.Ordinal);
+            }
+
+            string providerCode = resource.Provider?.Code;
+            string orgClaim = User.FindFirst(AltinnCoreClaimTypes.Org)?.Value;
+            return !string.IsNullOrWhiteSpace(providerCode) && string.Equals(providerCode, orgClaim, StringComparison.OrdinalIgnoreCase);
         }
 
         private bool IsServiceOwnerAuthorizedForPackage(string packageIdentifier, out OrganizationNumber? organizationNumber)
