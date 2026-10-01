@@ -41,4 +41,4 @@ Navigate to `src/apps/Altinn.Authorization/src/Altinn.Authorization`, and build 
 dotnet run
 ```
 
-The Authorization component is now available locally at http://localhost:5030/api/v1
+The Authorization component is now available locally at http://localhost:5050/authorization/api/v1

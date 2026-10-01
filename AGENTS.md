@@ -24,7 +24,7 @@ pwsh eng/testing/run-coverage.ps1                      # coverage, installs dotn
 
 - **Branch per change, never commit to `main`.** Name it `type/<issue>_<slug>`.
 - **The PR title is a Conventional Commit with the issue number**, for example `fix(#4044): ...`. `main` is squash-only with linear history, and the release automation reads the squash title. A single-commit PR currently squashes under the *commit* title, so check the title in the merge dialog ([#4095](https://github.com/Altinn/altinn-auth/issues/4095)).
-- **A green local `dotnet test` is not proof.** Integration tests skip when no container runtime is running, so the suite can pass having run almost nothing. CI is the gate.
+- **A green local `dotnet test` is not proof, and a red one is not always a defect.** Without a container runtime some integration tests skip and others fail in fixture setup, so which you get is per vertical. CI is the gate.
 - **Documentation, `AGENTS.md` and ADRs change in the same PR** as the behaviour they describe. CI checks them against [ADR-0002](docs/adr/0002-tool-neutral-agent-contract.md); run it locally with `node .github/scripts/agents-docs-validate.mjs`.
 - **Issues, comments, docs and PR descriptions start with a TL;DR** of at most five bullets. Text drafted with a tool says so near the top, and says the reader is unspecified until a person confirms they have read it.
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) is the working agreement, including the rules for AI assistance, and [`docs/ai/data-policy.md`](docs/ai/data-policy.md) says what may go into a tool at all. Read both before using an assistant here.
@@ -42,7 +42,7 @@ Code sits in verticals. A vertical always has its own `.sln`, `src/` and `conf.j
 
 | Path | Contents |
 | --- | --- |
-| `src/apps` | Deployable services: `Altinn.Authorization` (PDP/PEP), `Altinn.AccessManagement`, `Altinn.ResourceRegistry`, `Altinn.Register` |
+| `src/apps` | Deployable services: [`Altinn.Authorization`](src/apps/Altinn.Authorization/AGENTS.md) (PDP), [`Altinn.AccessManagement`](src/apps/Altinn.AccessManagement/AGENTS.md), [`Altinn.ResourceRegistry`](src/apps/Altinn.ResourceRegistry/AGENTS.md), `Altinn.Register` |
 | `src/libs` | Shared libraries: `Api.Contracts`, `Host`, `Integration`, `Testing` |
 | `src/pkgs` | Published NuGet packages: `Altinn.Authorization.ABAC`, and `Altinn.Authorization.PEP`, which ships as `Altinn.Common.PEP` |
 | `src/tools` | `Altinn.Authorization.Cli` and the [`Altinn.AccessMgmt.FFB`](src/tools/Altinn.AccessMgmt.FFB/AGENTS.md) admin tool, which has its own guidance |
