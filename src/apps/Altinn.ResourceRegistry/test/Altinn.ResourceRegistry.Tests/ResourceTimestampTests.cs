@@ -20,11 +20,11 @@ public class ResourceTimestampTests(DbFixture dbFixture, WebApplicationFixture w
     public async Task CreateResource_ClientTimestamps_UsesDatabaseValues()
     {
         var input = new ServiceResource { Identifier = ResourceId, CreatedAt = OriginalTime, UpdatedAt = OriginalTime };
-        var before = DateTimeOffset.UtcNow.AddSeconds(-1);
+        var before = await GetDatabaseTime();
         var created = await Repository.CreateResource(input);
 
         Assert.NotNull(created.CreatedAt);
-        Assert.InRange(created.CreatedAt.Value, before, DateTimeOffset.UtcNow);
+        Assert.InRange(created.CreatedAt.Value, before, await GetDatabaseTime());
         Assert.Equal(created.CreatedAt, created.UpdatedAt);
         Assert.Equal(TimeSpan.Zero, created.CreatedAt.Value.Offset);
         Assert.NotEqual(input.CreatedAt, created.CreatedAt);
@@ -98,6 +98,14 @@ public class ResourceTimestampTests(DbFixture dbFixture, WebApplicationFixture w
 
         Assert.Equal(JsonValueKind.Null, resource.GetProperty("createdAt").ValueKind);
         Assert.Equal(JsonValueKind.Null, resource.GetProperty("updatedAt").ValueKind);
+    }
+
+    private async Task<DateTimeOffset> GetDatabaseTime()
+    {
+        await using var cmd = DataSource.CreateCommand("SELECT now()");
+        await using var reader = await cmd.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync());
+        return reader.GetFieldValue<DateTimeOffset>(0);
     }
 
     private async Task<ServiceResource> CreateHistoricalResource()

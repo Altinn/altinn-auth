@@ -6,7 +6,7 @@
 - `createdAt` is the first registration in this registry; `updatedAt` describes the returned metadata version.
 - Unknown timestamps are returned as JSON `null`, including both timestamps for virtual Storage apps.
 
-Timestamp documentation drafted with Codex (GPT-6). Human reader: not confirmed.
+Timestamp documentation drafted with Codex (GPT-6). Human reader: [@howieandersen, review of PR #4300](https://github.com/Altinn/altinn-auth/pull/4300#pullrequestreview-5376363483).
 
 See [architecture documentation](https://docs.altinn.studio/technology/architecture/components/application/solution/altinn-platform/authorization/resourceregistry/).
 
@@ -21,7 +21,7 @@ See [architecture documentation](https://docs.altinn.studio/technology/architect
 | `createdAt` | First registration in Resource Registry, unchanged across versions. |
 | `updatedAt` | When the returned metadata version was saved. Equal to `createdAt` on creation; null for legacy versions without a recorded modification time. |
 
-Both are nullable ISO 8601 timestamps with UTC offset. POST and PUT ignore client-supplied
+Both are nullable ISO 8601 timestamps with UTC offset, assigned by the database clock. POST and PUT ignore client-supplied
 values; database columns are authoritative. Every successful metadata PUT saves a new
 version and updates `updatedAt`, even when the content is unchanged. Policy uploads do
 not change either field; use the existing `resource/changes` feed for metadata and policy

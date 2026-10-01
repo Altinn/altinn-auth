@@ -6,11 +6,11 @@
 - Read authoritative database columns; ignore timestamps in client metadata JSON.
 - Keep unknown timestamps null and policy changes in the existing change feed.
 
-Drafted with Codex (GPT-6). Human reader: not confirmed.
+Drafted with Codex (GPT-6). Human reader: [@howieandersen, review of PR #4300](https://github.com/Altinn/altinn-auth/pull/4300#pullrequestreview-5376363483).
 
 - **Status:** Proposed
 - **Date:** 2026-10-01
-- **Deciders:** Pending human review
+- **Deciders:** Pending explicit human acceptance.
 
 ## Context
 
@@ -25,6 +25,8 @@ policy timestamps for each metadata version.
 Expose nullable `DateTimeOffset` properties on `ServiceResource`, serialized in UTC:
 `createdAt` comes from `resource_identifier.created`; `updatedAt` comes from the returned
 version's `resources.modified`. All repository return paths use the same mapping.
+Both creation inserts use PostgreSQL `now()` within the same transaction, and updates
+use the same database clock. App-host clock skew cannot change the timestamp ordering.
 
 Database columns are authoritative. Exclude these properties from persisted metadata JSON
 and ignore any historical JSON values during reads. POST and PUT may include the fields

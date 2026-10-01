@@ -23,7 +23,7 @@ namespace Altinn.ResourceRegistry.Core.Models
 
         /// <summary>
         /// When the resource was first registered, in UTC. Server-controlled and unchanged across versions.
-        /// Null for virtual app resources retrieved from Storage.
+        /// Null for virtual app resources retrieved from Storage. Values supplied in POST and PUT are ignored.
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
         public DateTimeOffset? CreatedAt { get; set; }
@@ -31,6 +31,7 @@ namespace Altinn.ResourceRegistry.Core.Models
         /// <summary>
         /// When the returned metadata version was saved, in UTC. Server-controlled; policy uploads do not change it.
         /// An unchanged PUT creates a new version. Null when unknown, including virtual Storage app resources.
+        /// Values supplied in POST and PUT are ignored.
         /// </summary>
         [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
         public DateTimeOffset? UpdatedAt { get; set; }

@@ -1,6 +1,7 @@
 ﻿using System.Data;
 using System.Data.SqlTypes;
 using System.Linq;
+using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using Altinn.Authorization.ProblemDetails;
@@ -30,7 +31,7 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
                 // Timestamps belong to the database columns, never to client-supplied metadata JSON.
                 foreach (var property in typeInfo.Properties)
                 {
-                    if (property.Name is "createdAt" or "updatedAt")
+                    if (property.AttributeProvider is PropertyInfo { Name: nameof(ServiceResource.CreatedAt) or nameof(ServiceResource.UpdatedAt) })
                     {
                         property.Get = null;
                         property.Set = null;
@@ -119,9 +120,6 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
         ArgumentNullException.ThrowIfNull(resource);
         ArgumentNullException.ThrowIfNull(resource.Identifier);
 
-        DateTime created = DateTime.UtcNow;
-        DateTime modified = created;
-
         var json = JsonSerializer.SerializeToDocument(resource, JsonSerializerOptions);
 
         await using var conn = await _conn.OpenConnectionAsync(cancellationToken);
@@ -132,12 +130,11 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
             await using (var cmd1 = new NpgsqlCommand(
                 @"
                 INSERT INTO resourceregistry.resource_identifier(identifier, created)
-                VALUES (@identifier, @created);",
+                VALUES (@identifier, now());",
                 conn,
                 tx))
             {
                 cmd1.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, resource.Identifier);
-                cmd1.Parameters.AddWithValue("created", NpgsqlDbType.TimestampTz, created);
                 await cmd1.ExecuteNonQueryAsync(cancellationToken);
             }
 
@@ -153,8 +150,8 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
                 )
                 VALUES (
                     @identifier,
-                    @created,
-                    @modified,
+                    now(),
+                    now(),
                     @serviceresourcejson
                 )
                 RETURNING identifier, created, modified, serviceresourcejson, version_id;",
@@ -162,8 +159,6 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
                 tx))
             {
                 cmd2.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, resource.Identifier);
-                cmd2.Parameters.AddWithValue("created", NpgsqlDbType.TimestampTz, created);
-                cmd2.Parameters.AddWithValue("modified", NpgsqlDbType.TimestampTz, modified);
                 cmd2.Parameters.AddWithValue("serviceresourcejson", NpgsqlDbType.Jsonb, json);
 
                 await using (var reader = await cmd2.ExecuteReaderAsync(cancellationToken))
