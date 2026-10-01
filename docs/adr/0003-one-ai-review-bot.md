@@ -4,6 +4,14 @@
 - **Date:** 2026-09-30
 - **Deciders:** The altinn-auth maintainers, `@altinn/team-access-management`, through review of the PR that added this ADR
 
+**TL;DR**
+
+- Copilot code review is the only AI review bot in this repository, through the ruleset that already exists.
+- It is advisory: never the required approval, and a person answers or dismisses every comment.
+- Its instructions live in the repository and are derived from `AGENTS.md`, so switching bots is a configuration change.
+- The `.coderabbit.yaml` files in two repositories still to move in are removed during their move.
+- Chosen on evidence from this repository and on the data policy, which would require a separate approval for a second vendor.
+
 ## Context
 
 The repositories being consolidated into this one ([#4049](https://github.com/Altinn/altinn-auth/issues/4049)) use three different AI review setups. This repository has a ruleset, *Copilot review for default branch*, that requests Copilot code review on every pull request to `main`. altinn-register has a three-line `.coderabbit.yaml`, and altinn-access-management-frontend a nineteen-line one. altinn-authentication has none. Once those repositories arrive, two bots on the same pull request would comment on the same lines, and nobody would know which one the team answers to.
