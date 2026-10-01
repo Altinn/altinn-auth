@@ -1,14 +1,13 @@
 #nullable enable
 
 using System.Text.Json.Serialization;
-using Altinn.AccessManagement.Enums;
 
-namespace Altinn.AccessManagement.Models;
+namespace Altinn.Authorization.Api.Contracts.Authorization;
 
 /// <summary>
 /// This is an external model that describes a delegation change as stored in the Authorization postgre DelegationChanges table.
 /// </summary>
-public class DelegationChangeExternal
+public class DelegationChangeDto
 {
     /// <summary>
     /// Gets or sets the delegation change id
@@ -26,7 +25,7 @@ public class DelegationChangeExternal
     /// Gets or sets the delegation change type
     /// </summary>
     [JsonPropertyName("delegationchangetype")]
-    public DelegationChangeTypeExternal DelegationChangeType { get; set; }
+    public DelegationChangeTypeDto DelegationChangeType { get; set; }
 
     /// <summary>
     /// Gets or sets the resource id.
@@ -62,7 +61,7 @@ public class DelegationChangeExternal
     /// The type of party the right is on behalf of (Person, Organization, SystemUser)
     /// </summary>
     [JsonPropertyName("fromuuidtype")]
-    public UuidTypeExternal FromUuidType { get; set; }
+    public UuidTypeDto FromUuidType { get; set; }
 
     /// <summary>
     /// Gets or sets the coveredbypartyid, refering to the party id of the organization having received the delegation. Otherwise Null if the recipient is a user.
@@ -86,7 +85,7 @@ public class DelegationChangeExternal
     /// The type of party holding the right
     /// </summary>
     [JsonPropertyName("touuidtype")]
-    public UuidTypeExternal ToUuidType { get; set; }
+    public UuidTypeDto ToUuidType { get; set; }
 
     /// <summary>
     /// Gets or sets the user id of the user that performed the delegation change (either added or removed rules to the policy, or deleted it entirely).
@@ -110,7 +109,7 @@ public class DelegationChangeExternal
     /// The type of the party that performed the delegation
     /// </summary>
     [JsonPropertyName("performedbyuuidtype")]
-    public UuidTypeExternal PerformedByUuidType { get; set; }
+    public UuidTypeDto PerformedByUuidType { get; set; }
 
     /// <summary>
     /// Gets or sets blobstoragepolicypath.
