@@ -1,6 +1,5 @@
 ﻿using System.Text.Json;
 using Altinn.Authorization.Api.Contracts.Authorization;
-using Altinn.Authorization.Enums;
 using Altinn.Authorization.Tests.Data;
 using Altinn.Authorization.Tests.Util;
 using Altinn.Platform.Authenticaiton.Extensions;
@@ -30,9 +29,9 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
         _memoryCache = memoryCache;
     }
 
-    public Task<IEnumerable<DelegationChangeExternal>> GetAllDelegationChanges(DelegationChangeInput input, CancellationToken cancellationToken = default)
+    public Task<IEnumerable<DelegationChangeDto>> GetAllDelegationChanges(DelegationChangeInput input, CancellationToken cancellationToken = default)
     {
-        var data = new List<Action<DelegationChangeInput, List<DelegationChangeExternal>>>()
+        var data = new List<Action<DelegationChangeInput, List<DelegationChangeDto>>>()
         {
             ConditionalAdd(
                 DelegationChangesTestData.Default(DelegationChangesTestData.WithResourceID("org1/app1"), DelegationChangesTestData.WithOfferedByPartyID(50001337), DelegationChangesTestData.WithCoveredByUserID(20001337)),
@@ -50,22 +49,22 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
                 WithDefaultCondition("org1/app1", new AttributeMatch { Id = XacmlRequestAttribute.PartyAttribute, Value = "50001337" }, new AttributeMatch { Id = XacmlRequestAttribute.UserAttribute, Value = "20001336" }),
                 WithDefaultCondition("org1/app1", new AttributeMatch { Id = XacmlRequestAttribute.PartyAttribute, Value = "50001335" }, new AttributeMatch { Id = XacmlRequestAttribute.UserAttribute, Value = "20001336" })),
             ConditionalAdd(
-                DelegationChangesTestData.Default(DelegationChangesTestData.WithResourceID("skd/taxreport"), DelegationChangesTestData.WithOfferedByPartyID(50005545), DelegationChangesTestData.WithToUuid(UuidType.SystemUser, Guid.Parse("47caea5b-a80b-4343-b1d3-31eb523a4e28"))),
+                DelegationChangesTestData.Default(DelegationChangesTestData.WithResourceID("skd/taxreport"), DelegationChangesTestData.WithOfferedByPartyID(50005545), DelegationChangesTestData.WithToUuid(UuidTypeDto.SystemUser, Guid.Parse("47caea5b-a80b-4343-b1d3-31eb523a4e28"))),
                 WithDefaultCondition("skd/taxreport", new AttributeMatch { Id = XacmlRequestAttribute.PartyAttribute, Value = "50005545" }, new AttributeMatch { Id = XacmlRequestAttribute.SystemUserIdAttribute, Value = "47caea5b-a80b-4343-b1d3-31eb523a4e28" })),
             ConditionalAdd(
-                DelegationChangesTestData.Default(DelegationChangesTestData.WithResourceID("org1/app1"), DelegationChangesTestData.WithOfferedByPartyID(50005545), DelegationChangesTestData.WithToUuid(UuidType.SystemUser, Guid.Parse("47caea5b-a80b-4343-b1d3-31eb523a4e28"))),
+                DelegationChangesTestData.Default(DelegationChangesTestData.WithResourceID("org1/app1"), DelegationChangesTestData.WithOfferedByPartyID(50005545), DelegationChangesTestData.WithToUuid(UuidTypeDto.SystemUser, Guid.Parse("47caea5b-a80b-4343-b1d3-31eb523a4e28"))),
                 WithDefaultCondition("org1/app1", new AttributeMatch { Id = XacmlRequestAttribute.PartyAttribute, Value = "50005545" }, new AttributeMatch { Id = XacmlRequestAttribute.SystemUserIdAttribute, Value = "47caea5b-a80b-4343-b1d3-31eb523a4e28" })),
             ConditionalAdd(
-                DelegationChangesTestData.Default(DelegationChangesTestData.WithResourceID("ttd-externalpdp-resource1"), DelegationChangesTestData.WithOfferedByPartyID(50005545), DelegationChangesTestData.WithToUuid(UuidType.SystemUser, Guid.Parse("47caea5b-a80b-4343-b1d3-31eb523a4e28"))),
+                DelegationChangesTestData.Default(DelegationChangesTestData.WithResourceID("ttd-externalpdp-resource1"), DelegationChangesTestData.WithOfferedByPartyID(50005545), DelegationChangesTestData.WithToUuid(UuidTypeDto.SystemUser, Guid.Parse("47caea5b-a80b-4343-b1d3-31eb523a4e28"))),
                 WithDefaultCondition("ttd-externalpdp-resource1", new AttributeMatch { Id = XacmlRequestAttribute.PartyAttribute, Value = "50005545" }, new AttributeMatch { Id = XacmlRequestAttribute.SystemUserIdAttribute, Value = "47caea5b-a80b-4343-b1d3-31eb523a4e28" })),
             ConditionalAdd(
-                DelegationChangesTestData.Default(DelegationChangesTestData.WithResourceID("ttd-externalpdp-resource2"), DelegationChangesTestData.WithOfferedByPartyID(50005545), DelegationChangesTestData.WithToUuid(UuidType.SystemUser, Guid.Parse("47caea5b-a80b-4343-b1d3-31eb523a4e28"))),
+                DelegationChangesTestData.Default(DelegationChangesTestData.WithResourceID("ttd-externalpdp-resource2"), DelegationChangesTestData.WithOfferedByPartyID(50005545), DelegationChangesTestData.WithToUuid(UuidTypeDto.SystemUser, Guid.Parse("47caea5b-a80b-4343-b1d3-31eb523a4e28"))),
                 WithDefaultCondition("ttd-externalpdp-resource2", new AttributeMatch { Id = XacmlRequestAttribute.PartyAttribute, Value = "50005545" }, new AttributeMatch { Id = XacmlRequestAttribute.SystemUserIdAttribute, Value = "47caea5b-a80b-4343-b1d3-31eb523a4e28" })),
             ConditionalAdd(
-                DelegationChangesTestData.Default(DelegationChangesTestData.WithResourceID("org1/app1"), DelegationChangesTestData.WithResourceInstanceId("f8d3526c-596b-4322-a041-38a8925c2a82"), DelegationChangesTestData.WithFromUuid(UuidType.Organization, Guid.Parse("00000000-0000-0000-0005-000000005545")), DelegationChangesTestData.WithToUuid(UuidType.Person, Guid.Parse("00000000-0000-0000-0005-000000002625"))),
+                DelegationChangesTestData.Default(DelegationChangesTestData.WithResourceID("org1/app1"), DelegationChangesTestData.WithResourceInstanceId("f8d3526c-596b-4322-a041-38a8925c2a82"), DelegationChangesTestData.WithFromUuid(UuidTypeDto.Organization, Guid.Parse("00000000-0000-0000-0005-000000005545")), DelegationChangesTestData.WithToUuid(UuidTypeDto.Person, Guid.Parse("00000000-0000-0000-0005-000000002625"))),
                 WithDefaultCondition("org1/app1", new AttributeMatch { Id = XacmlRequestAttribute.PartyAttribute, Value = "50005545" }, new AttributeMatch { Id = XacmlRequestAttribute.UserAttribute, Value = "20000517" })),
             ConditionalAdd(
-                DelegationChangesTestData.Default(DelegationChangesTestData.WithResourceID("app_org1_app1"), DelegationChangesTestData.WithResourceInstanceId("f8d3526c-596b-4322-a041-38a8925c2a82"), DelegationChangesTestData.WithFromUuid(UuidType.Organization, Guid.Parse("00000000-0000-0000-0005-000000005545")), DelegationChangesTestData.WithCoveredByPartyID(50004222), DelegationChangesTestData.WithToUuid(UuidType.Organization, Guid.Parse("00000000-0000-0000-0005-000000004222"))),
+                DelegationChangesTestData.Default(DelegationChangesTestData.WithResourceID("app_org1_app1"), DelegationChangesTestData.WithResourceInstanceId("f8d3526c-596b-4322-a041-38a8925c2a82"), DelegationChangesTestData.WithFromUuid(UuidTypeDto.Organization, Guid.Parse("00000000-0000-0000-0005-000000005545")), DelegationChangesTestData.WithCoveredByPartyID(50004222), DelegationChangesTestData.WithToUuid(UuidTypeDto.Organization, Guid.Parse("00000000-0000-0000-0005-000000004222"))),
                 WithDefaultCondition("org1/app1", new AttributeMatch { Id = XacmlRequestAttribute.PartyAttribute, Value = "50005545" }, new AttributeMatch { Id = XacmlRequestAttribute.PartyAttribute, Value = "50004222" }),
                 WithDefaultCondition("org1/app1", new AttributeMatch { Id = XacmlRequestAttribute.PartyAttribute, Value = "50005545" }, new AttributeMatch { Id = XacmlRequestAttribute.UserAttribute, Value = "20000095" })),
             ConditionalAdd(
@@ -78,17 +77,17 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
                 DelegationChangesTestData.Default(DelegationChangesTestData.WithResourceID(AccessListTestData.ResourceId), DelegationChangesTestData.WithOfferedByPartyID(AccessListTestData.NonMemberPartyId), DelegationChangesTestData.WithCoveredByUserID(AccessListTestData.DelegationUserId)),
                 WithDefaultCondition(AccessListTestData.ResourceId, new AttributeMatch { Id = XacmlRequestAttribute.PartyAttribute, Value = $"{AccessListTestData.NonMemberPartyId}" }, new AttributeMatch { Id = XacmlRequestAttribute.UserAttribute, Value = $"{AccessListTestData.DelegationUserId}" })),
             ConditionalAdd(
-                DelegationChangesTestData.Default(DelegationChangesTestData.WithResourceID(AccessListTestData.ResourceId), DelegationChangesTestData.WithOfferedByPartyID(AccessListTestData.MemberPartyId), DelegationChangesTestData.WithToUuid(UuidType.SystemUser, Guid.Parse(AccessListTestData.SystemUserUuid))),
+                DelegationChangesTestData.Default(DelegationChangesTestData.WithResourceID(AccessListTestData.ResourceId), DelegationChangesTestData.WithOfferedByPartyID(AccessListTestData.MemberPartyId), DelegationChangesTestData.WithToUuid(UuidTypeDto.SystemUser, Guid.Parse(AccessListTestData.SystemUserUuid))),
                 WithDefaultCondition(AccessListTestData.ResourceId, new AttributeMatch { Id = XacmlRequestAttribute.PartyAttribute, Value = $"{AccessListTestData.MemberPartyId}" }, new AttributeMatch { Id = XacmlRequestAttribute.SystemUserIdAttribute, Value = AccessListTestData.SystemUserUuid })),
         };
 
-        var result = new List<DelegationChangeExternal>();
+        var result = new List<DelegationChangeDto>();
         foreach (var item in data)
         {
             item(input, result);
         }
 
-        return Task.FromResult(result as IEnumerable<DelegationChangeExternal>);
+        return Task.FromResult(result as IEnumerable<DelegationChangeDto>);
     }
 
     public static Func<DelegationChangeInput, bool> WithDefaultCondition(string resourceId, AttributeMatch from, AttributeMatch to) => delegation =>
@@ -119,7 +118,7 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
     public static Func<DelegationChangeInput, bool> IfFromMatch(AttributeMatch from) => delegation =>
         delegation.Party.Id == from.Id && delegation.Party.Value == from.Value;
 
-    public static Action<DelegationChangeInput, List<DelegationChangeExternal>> ConditionalAdd(DelegationChangeExternal data, params Func<DelegationChangeInput, bool>[] actions)
+    public static Action<DelegationChangeInput, List<DelegationChangeDto>> ConditionalAdd(DelegationChangeDto data, params Func<DelegationChangeInput, bool>[] actions)
     {
         return (input, result) =>
         {
@@ -130,7 +129,7 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
         };
     }
 
-    public async Task<IEnumerable<DelegationChangeExternal>> GetAllDelegationChanges(CancellationToken cancellationToken, params Action<DelegationChangeInput>[] actions)
+    public async Task<IEnumerable<DelegationChangeDto>> GetAllDelegationChanges(CancellationToken cancellationToken, params Action<DelegationChangeInput>[] actions)
     {
         var result = new DelegationChangeInput();
         foreach (var action in actions)

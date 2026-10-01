@@ -38,7 +38,7 @@ public class AccessManagementWrapper : IAccessManagementWrapper
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<DelegationChangeExternal>> GetAllDelegationChanges(DelegationChangeInput input, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<DelegationChangeDto>> GetAllDelegationChanges(DelegationChangeInput input, CancellationToken cancellationToken = default)
     {
         var response = await _client.Client.SendAsync(
             new(HttpMethod.Post, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), "policyinformation/getdelegationchanges"))
@@ -49,7 +49,7 @@ public class AccessManagementWrapper : IAccessManagementWrapper
 
         if (response.IsSuccessStatusCode)
         {
-            return await response.Content.ReadFromJsonAsync<IEnumerable<DelegationChangeExternal>>(_serializerOptions, cancellationToken);
+            return await response.Content.ReadFromJsonAsync<IEnumerable<DelegationChangeDto>>(_serializerOptions, cancellationToken);
         }
 
         var content = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -57,7 +57,7 @@ public class AccessManagementWrapper : IAccessManagementWrapper
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<DelegationChangeExternal>> GetAllDelegationChanges(CancellationToken cancellationToken = default, params Action<DelegationChangeInput>[] actions)
+    public async Task<IEnumerable<DelegationChangeDto>> GetAllDelegationChanges(CancellationToken cancellationToken = default, params Action<DelegationChangeInput>[] actions)
     {
         var input = new DelegationChangeInput()
         {

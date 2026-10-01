@@ -1,17 +1,17 @@
-using Altinn.Authorization.Enums;
+using Altinn.Authorization.Api.Contracts.Authorization;
 using Altinn.Platform.Authorization.Models;
 
 namespace Altinn.Authorization.Tests.Data;
 
 public static class DelegationChangesTestData
 {
-    public static DelegationChangeExternal Default(params Action<DelegationChangeExternal>[] actions)
+    public static DelegationChangeDto Default(params Action<DelegationChangeDto>[] actions)
     {
-        var data = new DelegationChangeExternal()
+        var data = new DelegationChangeDto()
         {
             DelegationChangeId = 1337,
             ResourceRegistryDelegationChangeId = 0,
-            DelegationChangeType = DelegationChangeType.Grant,
+            DelegationChangeType = DelegationChangeTypeDto.Grant,
             ResourceId = "ttd/apps-test",
             ResourceType = string.Empty,
             OfferedByPartyId = 0,
@@ -33,7 +33,7 @@ public static class DelegationChangesTestData
         return data;
     }
 
-    public static void WithBlobStorage(DelegationChangeExternal data)
+    public static void WithBlobStorage(DelegationChangeDto data)
     {
         var offeredBy = data.InstanceId != null ? $"Instance{data.InstanceId}" : data.OfferedByPartyId.ToString();
         var coveredBy = data.CoveredByPartyId != null ? $"p{data.CoveredByPartyId}" : $"u{data.CoveredByUserId}";
@@ -41,29 +41,29 @@ public static class DelegationChangesTestData
         data.BlobStoragePolicyPath = $"{data.ResourceId}/{offeredBy}/{coveredBy}/delegationpolicy.xml";
     }
 
-    public static Action<DelegationChangeExternal> WithChangeID(int changeID) => (delegation) => delegation.DelegationChangeId = changeID;
+    public static Action<DelegationChangeDto> WithChangeID(int changeID) => (delegation) => delegation.DelegationChangeId = changeID;
 
-    public static Action<DelegationChangeExternal> WithDelegationChangeType(DelegationChangeType changeType) => (delegation) => delegation.DelegationChangeType = changeType;
+    public static Action<DelegationChangeDto> WithDelegationChangeType(DelegationChangeTypeDto changeType) => (delegation) => delegation.DelegationChangeType = changeType;
 
-    public static Action<DelegationChangeExternal> WithPerformedByUserID(int userID) => (delegation) => delegation.PerformedByUserId = userID;
+    public static Action<DelegationChangeDto> WithPerformedByUserID(int userID) => (delegation) => delegation.PerformedByUserId = userID;
 
-    public static Action<DelegationChangeExternal> WithResourceID(string resourceId) => (delegation) => delegation.ResourceId = resourceId;
+    public static Action<DelegationChangeDto> WithResourceID(string resourceId) => (delegation) => delegation.ResourceId = resourceId;
 
-    public static Action<DelegationChangeExternal> WithCoveredByPartyID(int partyID) => (delegation) => delegation.CoveredByPartyId = partyID;
+    public static Action<DelegationChangeDto> WithCoveredByPartyID(int partyID) => (delegation) => delegation.CoveredByPartyId = partyID;
 
-    public static Action<DelegationChangeExternal> WithCoveredByUserID(int userID) => (delegation) => delegation.CoveredByUserId = userID;
+    public static Action<DelegationChangeDto> WithCoveredByUserID(int userID) => (delegation) => delegation.CoveredByUserId = userID;
 
-    public static Action<DelegationChangeExternal> WithResourceInstanceId(string instanceId) => (delegation) => delegation.InstanceId = instanceId;
+    public static Action<DelegationChangeDto> WithResourceInstanceId(string instanceId) => (delegation) => delegation.InstanceId = instanceId;
 
-    public static Action<DelegationChangeExternal> WithToUuid(UuidType toType, Guid to) => (delegation) =>
+    public static Action<DelegationChangeDto> WithToUuid(UuidTypeDto toType, Guid to) => (delegation) =>
     {
         delegation.ToUuidType = toType;
         delegation.ToUuid = to;
     };
 
-    public static Action<DelegationChangeExternal> WithOfferedByPartyID(int partyID) => (delegation) => delegation.OfferedByPartyId = partyID;
+    public static Action<DelegationChangeDto> WithOfferedByPartyID(int partyID) => (delegation) => delegation.OfferedByPartyId = partyID;
 
-    public static Action<DelegationChangeExternal> WithFromUuid(UuidType fromType, Guid from) => (delegation) =>
+    public static Action<DelegationChangeDto> WithFromUuid(UuidTypeDto fromType, Guid from) => (delegation) =>
     {
         delegation.FromUuidType = fromType;
         delegation.FromUuid = from;
