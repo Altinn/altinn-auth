@@ -18,6 +18,8 @@ docs {
     And the Maskinporten lookup returns the consent
     And the person reads the consent
     And the consent events can be filtered by request id
+    When another person revokes the consent, the request is forbidden
+    Then the enterprise still reads the request with status Accepted
     When the person revokes the consent
     Then the enterprise reads the request with status Revoked
     And the Maskinporten lookup rejects the revoked consent

@@ -1,0 +1,48 @@
+meta {
+  name: 14_THEN_ConsentIsStillAccepted
+  type: http
+  seq: 14
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enterprise/consentrequests/:consentRequestId
+  body: none
+  auth: inherit
+}
+
+params:path {
+  consentRequestId: {{consentRequestId}}
+}
+
+docs {
+  THEN the enterprise still reads the request with status Accepted.
+
+  GET /accessmanagement/api/v1/enterprise/consentrequests/:consentRequestId
+
+  Same endpoint as step 04. The refused revoke in step 13 must leave no trace: the status
+  is still Accepted and no Revoked event has been added.
+}
+
+script:pre-request {
+  const { loginAsEnterprise, scopes, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  await loginAsEnterprise(td.enterprise, scopes.consentRequestsRead);
+}
+
+tests {
+  test("WHEN the enterprise reads the request, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the request still has status Accepted", function() {
+    const body = res.getBody();
+    expect(body.id).to.equal(bru.getVar("consentRequestId"));
+    expect(body.status).to.equal("Accepted");
+  });
+
+  test("THEN no Revoked event has been recorded", function() {
+    const events = res.getBody().consentRequestEvents;
+    expect(events.map(e => e.eventType)).to.deep.equal(["Created", "Accepted"]);
+  });
+}
