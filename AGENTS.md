@@ -58,6 +58,7 @@ Per-vertical `AGENTS.md` files arrive with [#4078](https://github.com/Altinn/alt
 
 Do not "fix" these without understanding them.
 
+- **DIS uses `access-management` and `product-access-management`.** Coordinate namespace, workload identity and publishing changes with `altinn-platform` and `dis-way/core`.
 - **`src/apps/Altinn.Register` is a placeholder**, a single `Program.cs`. The real Register arrives with [#4056](https://github.com/Altinn/altinn-auth/issues/4056). Do not build on it or wire anything to it.
 - **`src/apps/Altinn.ResourceRegistry` is deliberately an island** with its own `.editorconfig`, `Directory.Build.props`, `Directory.Packages.props` and `stylecop.json`. That is what let it be imported with its history intact. Do not merge it into the shared build files.
 - **Markdown is LF**, enforced by `.gitattributes`. Do not reformat line endings.
