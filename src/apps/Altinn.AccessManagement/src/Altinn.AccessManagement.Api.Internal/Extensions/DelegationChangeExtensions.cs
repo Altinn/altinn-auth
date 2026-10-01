@@ -5,7 +5,7 @@ using Altinn.Authorization.Api.Contracts.Authorization;
 namespace Altinn.AccessManagement.Api.Internal.Extensions
 {
     /// <summary>
-    /// Provides extension methods for transforming <see cref="DelegationChange"/> to <see cref="DelegationChangeDto"/>.
+    /// Provides extension methods for mapping delegation change models between core and DTO.
     /// </summary>
     public static class DelegationChangeExtensions
     {
@@ -40,6 +40,24 @@ namespace Altinn.AccessManagement.Api.Internal.Extensions
                 Created = core.Created
             };
         }
+
+        /// <summary>
+        /// Converts a <see cref="DelegationChangeInputDto"/> object to a <see cref="DelegationChangeInput"/> object.
+        /// </summary>
+        /// <param name="dto">The <see cref="DelegationChangeInputDto"/> object to convert.</param>
+        /// <returns>A <see cref="DelegationChangeInput"/> object representing the converted data.</returns>
+        public static DelegationChangeInput ToDelegationChangeInput(this DelegationChangeInputDto dto)
+        {
+            return new DelegationChangeInput
+            {
+                Subject = ToCore(dto.Subject),
+                Party = ToCore(dto.Party),
+                Resource = dto.Resource?.Select(ToCore).ToList(),
+            };
+        }
+
+        private static AttributeMatch ToCore(AttributeMatchDto dto) =>
+            dto is null ? null : new AttributeMatch { Id = dto.Id, Value = dto.Value };
 
         private static DelegationChangeTypeDto ToDto(DelegationChangeType core) => core switch
         {

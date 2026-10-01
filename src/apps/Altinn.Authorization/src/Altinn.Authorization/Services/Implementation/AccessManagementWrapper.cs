@@ -5,7 +5,6 @@ using System.Text.Json;
 using Altinn.Authorization.Api.Contracts.Authorization;
 using Altinn.Platform.Authorization.Clients;
 using Altinn.Platform.Authorization.Configuration;
-using Altinn.Platform.Authorization.Models;
 using Altinn.Platform.Authorization.Models.AccessManagement;
 using Altinn.Platform.Authorization.Services.Interface;
 using AltinnCore.Authentication.Utils;
@@ -38,7 +37,7 @@ public class AccessManagementWrapper : IAccessManagementWrapper
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<DelegationChangeDto>> GetAllDelegationChanges(DelegationChangeInput input, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<DelegationChangeDto>> GetAllDelegationChanges(DelegationChangeInputDto input, CancellationToken cancellationToken = default)
     {
         var response = await _client.Client.SendAsync(
             new(HttpMethod.Post, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), "policyinformation/getdelegationchanges"))
@@ -57,11 +56,11 @@ public class AccessManagementWrapper : IAccessManagementWrapper
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<DelegationChangeDto>> GetAllDelegationChanges(CancellationToken cancellationToken = default, params Action<DelegationChangeInput>[] actions)
+    public async Task<IEnumerable<DelegationChangeDto>> GetAllDelegationChanges(CancellationToken cancellationToken = default, params Action<DelegationChangeInputDto>[] actions)
     {
-        var input = new DelegationChangeInput()
+        var input = new DelegationChangeInputDto()
         {
-            Resource = new List<AttributeMatch>(),
+            Resource = new List<AttributeMatchDto>(),
         };
 
         actions.ToList().ForEach(action => action(input));

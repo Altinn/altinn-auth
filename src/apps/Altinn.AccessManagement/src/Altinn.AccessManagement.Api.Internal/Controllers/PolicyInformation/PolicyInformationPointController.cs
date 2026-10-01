@@ -28,9 +28,9 @@ public class PolicyInformationPointController(
     [ApiExplorerSettings(IgnoreApi = true)]
     [HttpPost]
     [Route("getdelegationchanges")]
-    public async Task<ActionResult<List<DelegationChangeDto>>> GetAllDelegationChanges([FromBody] DelegationChangeInput request, CancellationToken cancellationToken)
+    public async Task<ActionResult<List<DelegationChangeDto>>> GetAllDelegationChanges([FromBody] DelegationChangeInputDto request, CancellationToken cancellationToken)
     {
-        DelegationChangeList response = await pip.GetAllDelegations(request, includeInstanceDelegations: true, cancellationToken);
+        DelegationChangeList response = await pip.GetAllDelegations(request.ToDelegationChangeInput(), includeInstanceDelegations: true, cancellationToken);
 
         if (!response.IsValid)
         {

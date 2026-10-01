@@ -44,7 +44,7 @@ public class PolicyInformationPointControllerTest : IClassFixture<AccessMgmtApiF
     }
 
     /// <summary>
-    /// Sets up test scenarios for <see cref="PolicyInformationPointController.GetAllDelegationChanges(Core.Models.DelegationChangeInput, System.Threading.CancellationToken)"></see>
+    /// Sets up test scenarios for <see cref="PolicyInformationPointController.GetAllDelegationChanges(DelegationChangeInputDto, System.Threading.CancellationToken)"></see>
     /// </summary>
     public static TheoryData<string> Scenarios() => new()
     {

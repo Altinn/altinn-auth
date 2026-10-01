@@ -29,9 +29,9 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
         _memoryCache = memoryCache;
     }
 
-    public Task<IEnumerable<DelegationChangeDto>> GetAllDelegationChanges(DelegationChangeInput input, CancellationToken cancellationToken = default)
+    public Task<IEnumerable<DelegationChangeDto>> GetAllDelegationChanges(DelegationChangeInputDto input, CancellationToken cancellationToken = default)
     {
-        var data = new List<Action<DelegationChangeInput, List<DelegationChangeDto>>>()
+        var data = new List<Action<DelegationChangeInputDto, List<DelegationChangeDto>>>()
         {
             ConditionalAdd(
                 DelegationChangesTestData.Default(DelegationChangesTestData.WithResourceID("org1/app1"), DelegationChangesTestData.WithOfferedByPartyID(50001337), DelegationChangesTestData.WithCoveredByUserID(20001337)),
@@ -90,12 +90,12 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
         return Task.FromResult(result as IEnumerable<DelegationChangeDto>);
     }
 
-    public static Func<DelegationChangeInput, bool> WithDefaultCondition(string resourceId, AttributeMatch from, AttributeMatch to) => delegation =>
+    public static Func<DelegationChangeInputDto, bool> WithDefaultCondition(string resourceId, AttributeMatch from, AttributeMatch to) => delegation =>
         (IfAltinnAppID(resourceId)(delegation) || IfResourceID(resourceId)(delegation)) &&
         IfFromMatch(from)(delegation) &&
         IfToMatch(to)(delegation);
 
-    public static Func<DelegationChangeInput, bool> IfAltinnAppID(string appID) => delegation =>
+    public static Func<DelegationChangeInputDto, bool> IfAltinnAppID(string appID) => delegation =>
     {
         var app = Strings.Join(
             [
@@ -107,18 +107,18 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
         return app == appID;
     };
 
-    public static Func<DelegationChangeInput, bool> IfResourceID(string resourceId) => delegation =>
+    public static Func<DelegationChangeInputDto, bool> IfResourceID(string resourceId) => delegation =>
     {
         return delegation.Resource.FirstOrDefault(resource => resource.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistry)?.Value == resourceId;
     };
 
-    public static Func<DelegationChangeInput, bool> IfToMatch(AttributeMatch to) => delegation =>
+    public static Func<DelegationChangeInputDto, bool> IfToMatch(AttributeMatch to) => delegation =>
         delegation.Subject.Id == to.Id && delegation.Subject.Value == to.Value;
 
-    public static Func<DelegationChangeInput, bool> IfFromMatch(AttributeMatch from) => delegation =>
+    public static Func<DelegationChangeInputDto, bool> IfFromMatch(AttributeMatch from) => delegation =>
         delegation.Party.Id == from.Id && delegation.Party.Value == from.Value;
 
-    public static Action<DelegationChangeInput, List<DelegationChangeDto>> ConditionalAdd(DelegationChangeDto data, params Func<DelegationChangeInput, bool>[] actions)
+    public static Action<DelegationChangeInputDto, List<DelegationChangeDto>> ConditionalAdd(DelegationChangeDto data, params Func<DelegationChangeInputDto, bool>[] actions)
     {
         return (input, result) =>
         {
@@ -129,9 +129,9 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
         };
     }
 
-    public async Task<IEnumerable<DelegationChangeDto>> GetAllDelegationChanges(CancellationToken cancellationToken, params Action<DelegationChangeInput>[] actions)
+    public async Task<IEnumerable<DelegationChangeDto>> GetAllDelegationChanges(CancellationToken cancellationToken, params Action<DelegationChangeInputDto>[] actions)
     {
-        var result = new DelegationChangeInput();
+        var result = new DelegationChangeInputDto();
         foreach (var action in actions)
         {
             action(result);

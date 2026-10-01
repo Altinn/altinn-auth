@@ -85,4 +85,19 @@ public class DelegationChangeExtensionsTest
         result.ToUuidType.Should().HaveSameNameAs(type).And.HaveSameValueAs(type);
         result.PerformedByUuidType.Should().HaveSameNameAs(type).And.HaveSameValueAs(type);
     }
+
+    [Fact]
+    public void ToDelegationChangeInput_WithFullyPopulatedSource_CopiesAllAttributes()
+    {
+        var source = new DelegationChangeInputDto
+        {
+            Subject = new AttributeMatchDto("urn:altinn:userid", "20001337"),
+            Party = new AttributeMatchDto("urn:altinn:partyid", "50001337"),
+            Resource = [new AttributeMatchDto("urn:altinn:org", "ttd"), new AttributeMatchDto("urn:altinn:app", "app1")],
+        };
+
+        var result = source.ToDelegationChangeInput();
+
+        result.Should().BeEquivalentTo(source, options => options.WithStrictOrdering());
+    }
 }
