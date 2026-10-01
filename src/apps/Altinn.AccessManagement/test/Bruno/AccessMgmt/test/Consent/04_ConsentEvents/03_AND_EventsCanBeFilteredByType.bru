@@ -46,4 +46,12 @@ tests {
       expect(["Accepted", "Revoked"]).to.include(e.eventType);
     });
   });
+
+  test("THEN the Accepted events from earlier runs of 01_AcceptAndRevoke are found", function() {
+    // A consent is accepted before it can be revoked, so the oldest event of either
+    // type is an Accepted one.
+    const data = res.getBody().data;
+    expect(data).to.not.be.empty;
+    expect(data[0].eventType).to.equal("Accepted");
+  });
 }

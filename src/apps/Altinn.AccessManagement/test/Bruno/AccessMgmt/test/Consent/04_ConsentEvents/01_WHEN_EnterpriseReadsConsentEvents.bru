@@ -54,6 +54,12 @@ tests {
     expect(body.data).to.be.an("array");
   });
 
+  test("THEN the page holds events from earlier runs of the consent scenarios", function() {
+    // Every run creates requests for this enterprise, and they show up here five
+    // minutes later, so an empty first page means the feed lost them.
+    expect(res.getBody().data).to.not.be.empty;
+  });
+
   test("THEN every event names a request, a known event type and a change date", function() {
     res.getBody().data.forEach(e => {
       expect(e.consentRequestId).to.match(/^[0-9a-f-]{36}$/);
