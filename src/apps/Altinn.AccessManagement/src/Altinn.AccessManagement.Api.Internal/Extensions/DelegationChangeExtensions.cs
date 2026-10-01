@@ -14,34 +14,34 @@ namespace Altinn.AccessManagement.Api.Internal.Extensions
         /// </summary>
         /// <param name="core">The <see cref="DelegationChange"/> object to convert.</param>
         /// <returns>A <see cref="DelegationChangeDto"/> object representing the converted data.</returns>
-        public static DelegationChangeDto ToDelegationChangeExternal(this DelegationChange core)
+        public static DelegationChangeDto ToDelegationChangeDto(this DelegationChange core)
         {
             return new DelegationChangeDto
             {
                 DelegationChangeId = core.DelegationChangeId,
                 ResourceRegistryDelegationChangeId = core.ResourceRegistryDelegationChangeId,
-                DelegationChangeType = ToExternal(core.DelegationChangeType),
+                DelegationChangeType = ToDto(core.DelegationChangeType),
                 ResourceId = core.ResourceId,
                 ResourceType = core.ResourceType,
                 InstanceId = core.InstanceId,
                 OfferedByPartyId = core.OfferedByPartyId,
                 FromUuid = core.FromUuid,
-                FromUuidType = ToExternal(core.FromUuidType),
+                FromUuidType = ToDto(core.FromUuidType),
                 CoveredByPartyId = core.CoveredByPartyId,
                 CoveredByUserId = core.CoveredByUserId,
                 ToUuid = core.ToUuid,
-                ToUuidType = ToExternal(core.ToUuidType),
+                ToUuidType = ToDto(core.ToUuidType),
                 PerformedByUserId = core.PerformedByUserId,
                 PerformedByPartyId = core.PerformedByPartyId,
                 PerformedByUuid = core.PerformedByUuid,
-                PerformedByUuidType = ToExternal(core.PerformedByUuidType),
+                PerformedByUuidType = ToDto(core.PerformedByUuidType),
                 BlobStoragePolicyPath = core.BlobStoragePolicyPath,
                 BlobStorageVersionId = core.BlobStorageVersionId,
                 Created = core.Created
             };
         }
 
-        private static DelegationChangeTypeDto ToExternal(DelegationChangeType core) => core switch
+        private static DelegationChangeTypeDto ToDto(DelegationChangeType core) => core switch
         {
             DelegationChangeType.Undefined => DelegationChangeTypeDto.Undefined,
             DelegationChangeType.Grant => DelegationChangeTypeDto.Grant,
@@ -50,7 +50,7 @@ namespace Altinn.AccessManagement.Api.Internal.Extensions
             _ => throw new ArgumentOutOfRangeException(nameof(core), core, null),
         };
 
-        private static UuidTypeDto ToExternal(UuidType core) => core switch
+        private static UuidTypeDto ToDto(UuidType core) => core switch
         {
             UuidType.NotSpecified => UuidTypeDto.NotSpecified,
             UuidType.Person => UuidTypeDto.Person,

@@ -13,7 +13,7 @@ public class DelegationChangeExtensionsTest
     public static TheoryData<UuidType> UuidTypes => new(Enum.GetValues<UuidType>());
 
     [Fact]
-    public void ToDelegationChangeExternal_WithFullyPopulatedSource_CopiesAllProperties()
+    public void ToDelegationChangeDto_WithFullyPopulatedSource_CopiesAllProperties()
     {
         var source = new DelegationChange
         {
@@ -39,7 +39,7 @@ public class DelegationChangeExtensionsTest
             Created = new DateTime(2026, 9, 25, 12, 0, 0, DateTimeKind.Utc),
         };
 
-        var result = source.ToDelegationChangeExternal();
+        var result = source.ToDelegationChangeDto();
 
         result.Should().BeEquivalentTo(new DelegationChangeDto
         {
@@ -68,18 +68,18 @@ public class DelegationChangeExtensionsTest
 
     [Theory]
     [MemberData(nameof(DelegationChangeTypes))]
-    public void ToDelegationChangeExternal_ForEachDelegationChangeType_MapsToSameNameAndValue(DelegationChangeType type)
+    public void ToDelegationChangeDto_ForEachDelegationChangeType_MapsToSameNameAndValue(DelegationChangeType type)
     {
-        var result = new DelegationChange { DelegationChangeType = type }.ToDelegationChangeExternal();
+        var result = new DelegationChange { DelegationChangeType = type }.ToDelegationChangeDto();
 
         result.DelegationChangeType.Should().HaveSameNameAs(type).And.HaveSameValueAs(type);
     }
 
     [Theory]
     [MemberData(nameof(UuidTypes))]
-    public void ToDelegationChangeExternal_ForEachUuidType_MapsToSameNameAndValue(UuidType type)
+    public void ToDelegationChangeDto_ForEachUuidType_MapsToSameNameAndValue(UuidType type)
     {
-        var result = new DelegationChange { FromUuidType = type, ToUuidType = type, PerformedByUuidType = type }.ToDelegationChangeExternal();
+        var result = new DelegationChange { FromUuidType = type, ToUuidType = type, PerformedByUuidType = type }.ToDelegationChangeDto();
 
         result.FromUuidType.Should().HaveSameNameAs(type).And.HaveSameValueAs(type);
         result.ToUuidType.Should().HaveSameNameAs(type).And.HaveSameValueAs(type);

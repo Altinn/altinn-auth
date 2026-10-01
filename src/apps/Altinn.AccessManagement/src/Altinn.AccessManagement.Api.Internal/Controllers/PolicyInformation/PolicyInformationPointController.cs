@@ -42,7 +42,7 @@ public class PolicyInformationPointController(
             return new ObjectResult(ProblemDetailsFactory.CreateValidationProblemDetails(HttpContext, ModelState));
         }
 
-        return response.DelegationChanges.Select(x => x.ToDelegationChangeExternal()).ToList();
+        return response.DelegationChanges.Select(x => x.ToDelegationChangeDto()).ToList();
     }
 
     /// <summary>
