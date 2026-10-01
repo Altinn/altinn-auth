@@ -2,6 +2,7 @@
 using System.Data.SqlTypes;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization.Metadata;
 using Altinn.Authorization.ProblemDetails;
 using Altinn.ResourceRegistry.Core;
 using Altinn.ResourceRegistry.Core.Errors;
@@ -22,6 +23,21 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
     private static readonly JsonSerializerOptions JsonSerializerOptions = new()
     {
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        TypeInfoResolver = new DefaultJsonTypeInfoResolver().WithAddedModifier(static typeInfo =>
+        {
+            if (typeInfo.Type == typeof(ServiceResource))
+            {
+                // Timestamps belong to the database columns, never to client-supplied metadata JSON.
+                foreach (var property in typeInfo.Properties)
+                {
+                    if (property.Name is "createdAt" or "updatedAt")
+                    {
+                        property.Get = null;
+                        property.Set = null;
+                    }
+                }
+            }
+        }),
     };
 
     private readonly NpgsqlDataSource _conn;
@@ -196,9 +212,10 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
                 WHERE ri.identifier = @identifier
                   AND EXISTS (SELECT 1 FROM del)
             )
-            SELECT identifier, created, modified, serviceresourcejson, version_id
+            SELECT del.identifier, ri.created, del.modified, del.serviceresourcejson, del.version_id
             FROM del
-            ORDER BY version_id DESC
+            JOIN resourceregistry.resource_identifier ri ON ri.identifier = del.identifier
+            ORDER BY del.version_id DESC
             LIMIT 1
             ";
 
@@ -238,8 +255,9 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
         {
             // Get the latest version using the current_resources view
             query = /*strpsql*/@"
-            SELECT identifier, created, modified, serviceresourcejson, version_id
+            SELECT res.identifier, ri.created, res.modified, res.serviceresourcejson, res.version_id
             FROM resourceregistry.current_resources res
+            JOIN resourceregistry.resource_identifier ri ON ri.identifier = res.identifier
             WHERE res.identifier = @identifier";
         }
 
@@ -325,7 +343,9 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
                 FROM ins
                 WHERE ri.identifier = ins.identifier
             )
-            SELECT identifier, created, modified, serviceresourcejson, version_id FROM ins
+            SELECT ins.identifier, ri.created, ins.modified, ins.serviceresourcejson, ins.version_id
+            FROM ins
+            JOIN resourceregistry.resource_identifier ri ON ri.identifier = ins.identifier
             ";
 
         ArgumentNullException.ThrowIfNull(resource);
@@ -652,6 +672,10 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
             throw new SqlNullValueException("Got null when trying to parse ServiceResource");
 
         resource.VersionId = versionId;
+        resource.CreatedAt = await reader.GetFieldValueAsync<DateTimeOffset>("created", cancellationToken);
+        resource.UpdatedAt = await reader.IsDBNullAsync(reader.GetOrdinal("modified"), cancellationToken)
+            ? null
+            : await reader.GetFieldValueAsync<DateTimeOffset>("modified", cancellationToken);
         return resource;
     }
 }
