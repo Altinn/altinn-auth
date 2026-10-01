@@ -161,7 +161,7 @@ namespace Altinn.AccessManagement.Tests.Utils
         /// </summary>
         /// <param name="expected">An instance with the expected values.</param>
         /// <param name="actual">The instance to verify.</param>
-        public static void AssertEqual(List<DelegationChangeExternal> expected, List<DelegationChangeExternal> actual)
+        public static void AssertEqual(List<DelegationChangeDto> expected, List<DelegationChangeDto> actual)
         {
             Assert.Equal(expected.Count, actual.Count);
             Assert.Equal(expected.Count, actual.Count);
@@ -744,7 +744,7 @@ namespace Altinn.AccessManagement.Tests.Utils
             Assert.Equal(expected.Title, actual.Title);
         }
 
-        private static void AssertEqual(DelegationChangeExternal expected, DelegationChangeExternal actual)
+        private static void AssertEqual(DelegationChangeDto expected, DelegationChangeDto actual)
         {
             Assert.Equal(expected.DelegationChangeId, actual.DelegationChangeId);
             Assert.Equal(expected.ResourceRegistryDelegationChangeId, actual.ResourceRegistryDelegationChangeId);

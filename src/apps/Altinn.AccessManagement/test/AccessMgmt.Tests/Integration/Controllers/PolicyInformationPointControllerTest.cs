@@ -1,9 +1,8 @@
 ﻿using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
-using Altinn.AccessManagement.Controllers;
+using Altinn.AccessManagement.Api.Internal.Controllers.PolicyInformation;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
-using Altinn.AccessManagement.Models;
 using Altinn.AccessManagement.Tests.Fixtures;
 using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.Tests.Utils;
@@ -45,7 +44,7 @@ public class PolicyInformationPointControllerTest : IClassFixture<AccessMgmtApiF
     }
 
     /// <summary>
-    /// Sets up test scenarios for <see cref="PolicyInformationPointController.GetAllDelegationChanges(Core.Models.DelegationChangeInput, System.Threading.CancellationToken)"></see>
+    /// Sets up test scenarios for <see cref="PolicyInformationPointController.GetAllDelegationChanges(DelegationChangeInputDto, System.Threading.CancellationToken)"></see>
     /// </summary>
     public static TheoryData<string> Scenarios() => new()
     {
@@ -82,7 +81,7 @@ public class PolicyInformationPointControllerTest : IClassFixture<AccessMgmtApiF
         // Assert
         Assert.Equal(HttpStatusCode.OK, actualResponse.StatusCode);
 
-        List<DelegationChangeExternal> actualDelegationChanges = JsonSerializer.Deserialize<List<DelegationChangeExternal>>(await actualResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), options);
+        List<DelegationChangeDto> actualDelegationChanges = JsonSerializer.Deserialize<List<DelegationChangeDto>>(await actualResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), options);
         AssertionUtil.AssertEqual(GetExpected(scenario), actualDelegationChanges);
     }
 
@@ -114,9 +113,9 @@ public class PolicyInformationPointControllerTest : IClassFixture<AccessMgmtApiF
         return content;
     }
 
-    private List<DelegationChangeExternal> GetExpected(string scenario)
+    private List<DelegationChangeDto> GetExpected(string scenario)
     {
         string expectedContent = File.ReadAllText($"Data/PolicyInformationPoint/Expected/{scenario}.json");
-        return (List<DelegationChangeExternal>)JsonSerializer.Deserialize(expectedContent, typeof(List<DelegationChangeExternal>), options);
+        return (List<DelegationChangeDto>)JsonSerializer.Deserialize(expectedContent, typeof(List<DelegationChangeDto>), options);
     }
 }

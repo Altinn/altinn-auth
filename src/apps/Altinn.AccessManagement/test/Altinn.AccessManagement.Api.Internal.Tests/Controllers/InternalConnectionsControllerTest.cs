@@ -1,7 +1,7 @@
 ﻿using System.Net;
 using System.Security.Claims;
 using System.Text.Json;
-using Altinn.AccessManagement.Api.Internal.Controllers;
+using Altinn.AccessManagement.Api.Internal.Controllers.Internal;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.TestUtils;
 using Altinn.AccessManagement.TestUtils.Data;
@@ -81,7 +81,7 @@ public class InternalConnectionsControllerTest
         public async Task PostSelfIdentifiedUser_SameGuidFromAndTo_Email_PlatformIssuerWithRegisterAppClaim_Returns200WithSelfRegisteredUserAssignment()
         {
             var client = CreateClientWithPlatformToken("register");
-            
+
             var entityId = TestEntities.EmailUserHarryPotter.Id;
             var response = await client.PostAsync($"{Route}/selfidentifiedusers?from={entityId}&to={entityId}", null, TestContext.Current.CancellationToken);
 

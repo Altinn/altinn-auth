@@ -5,6 +5,7 @@ using Altinn.Authorization.ABAC;
 using Altinn.Authorization.ABAC.Utils;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
+using Altinn.Authorization.Api.Contracts.Authorization;
 using Altinn.Authorization.Enums;
 using Altinn.Authorization.Models;
 using Altinn.Authorization.Models.Register;
@@ -614,9 +615,10 @@ namespace Altinn.Platform.Authorization.Controllers
             !int.TryParse(resourceAttributes.ResourcePartyValue, out var _) ||
             !(IsTypeApp(resourceAttributes) || IsTypeResource(resourceAttributes));
 
-        private Action<DelegationChangeInput> WithDefaultGetAllDelegationChangesInput(XacmlResourceAttributes resourceAttributes, XacmlContextRequest decisionRequest) => (input) =>
+        private Action<DelegationChangeInputDto> WithDefaultGetAllDelegationChangesInput(XacmlResourceAttributes resourceAttributes, XacmlContextRequest decisionRequest) => (input) =>
         {
-            input.Subject = _delegationContextHandler.GetSubjectAttributeMatch(decisionRequest, [XacmlRequestAttribute.UserAttribute, XacmlRequestAttribute.PartyAttribute, XacmlRequestAttribute.SystemUserIdAttribute]);
+            AttributeMatch subject = _delegationContextHandler.GetSubjectAttributeMatch(decisionRequest, [XacmlRequestAttribute.UserAttribute, XacmlRequestAttribute.PartyAttribute, XacmlRequestAttribute.SystemUserIdAttribute]);
+            input.Subject = new(subject.Id, subject.Value);
             input.Party = new(AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute, resourceAttributes.ResourcePartyValue);
         };
 
@@ -633,10 +635,10 @@ namespace Altinn.Platform.Authorization.Controllers
             }
 
             // Look up delegations from (cached) AccessManagement PIP API
-            IEnumerable<DelegationChangeExternal> delegations = new List<DelegationChangeExternal>();
+            IEnumerable<DelegationChangeDto> delegations = new List<DelegationChangeDto>();
             if (IsTypeApp(resourceAttributes))
             {
-                delegations = await GetAllCachedDelegationChanges(cancellationToken, WithDefaultGetAllDelegationChangesInput(resourceAttributes, decisionRequest), input => input.Resource = new List<AttributeMatch>()
+                delegations = await GetAllCachedDelegationChanges(cancellationToken, WithDefaultGetAllDelegationChangesInput(resourceAttributes, decisionRequest), input => input.Resource = new List<AttributeMatchDto>()
                 {
                     new(AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute, resourceAttributes.OrgValue),
                     new(AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute, resourceAttributes.AppValue),
@@ -645,7 +647,7 @@ namespace Altinn.Platform.Authorization.Controllers
 
             if (IsTypeResource(resourceAttributes))
             {
-                delegations = await GetAllCachedDelegationChanges(cancellationToken, WithDefaultGetAllDelegationChangesInput(resourceAttributes, decisionRequest), input => input.Resource = new List<AttributeMatch>()
+                delegations = await GetAllCachedDelegationChanges(cancellationToken, WithDefaultGetAllDelegationChangesInput(resourceAttributes, decisionRequest), input => input.Resource = new List<AttributeMatchDto>()
                 {
                     new(AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistry, resourceAttributes.ResourceRegistryId)
                 });
@@ -678,7 +680,7 @@ namespace Altinn.Platform.Authorization.Controllers
 
             // trust AccessManagement lookup to not return delegations with coveredByPartyId or organization toUuids unless the subject userId actually has keyrole or client-delegated access to these
             var orgAccessPartyIds = delegations.Where(d => d.CoveredByPartyId.HasValue).Select(d => d.CoveredByPartyId.Value).Distinct().ToList();
-            var orgAccessPartyUuids = delegations.Where(d => d.ToUuidType == UuidType.Organization && d.ToUuid.HasValue).Select(d => d.ToUuid.Value).Distinct().ToList();
+            var orgAccessPartyUuids = delegations.Where(d => d.ToUuidType == UuidTypeDto.Organization && d.ToUuid.HasValue).Select(d => d.ToUuid.Value).Distinct().ToList();
 
             XacmlContextAttributes subjectContextAttributes = decisionRequest.GetSubjectAttributes();
             await _delegationContextHandler.EnrichRequestSubjectAttributes(subjectContextAttributes, orgAccessPartyIds, orgAccessPartyUuids, isInstanceAccessRequest, cancellationToken);
@@ -686,9 +688,9 @@ namespace Altinn.Platform.Authorization.Controllers
             return await ProcessDelegationResult(decisionRequest, delegations, resourcePolicy, cancellationToken);
         }
 
-        private async Task<IEnumerable<DelegationChangeExternal>> GetAllCachedDelegationChanges(CancellationToken cancellationToken = default, params Action<DelegationChangeInput>[] actions)
+        private async Task<IEnumerable<DelegationChangeDto>> GetAllCachedDelegationChanges(CancellationToken cancellationToken = default, params Action<DelegationChangeInputDto>[] actions)
         {
-            var delegation = new DelegationChangeInput();
+            var delegation = new DelegationChangeInputDto();
             foreach (var action in actions)
             {
                 action(delegation);
@@ -700,7 +702,7 @@ namespace Altinn.Platform.Authorization.Controllers
                 $"a:{delegation.Resource.FirstOrDefault(r => r.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute)?.Value}/{delegation.Resource.FirstOrDefault(r => r.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute)?.Value}",
                 $"r:{delegation.Resource.FirstOrDefault(r => r.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistry)?.Value}");
 
-            if (!_memoryCache.TryGetValue(cacheKey, out IEnumerable<DelegationChangeExternal> result))
+            if (!_memoryCache.TryGetValue(cacheKey, out IEnumerable<DelegationChangeDto> result))
             {
                 result = await _accessManagement.GetAllDelegationChanges(cancellationToken, actions);
                 var cacheEntryOptions = new MemoryCacheEntryOptions()
@@ -713,9 +715,9 @@ namespace Altinn.Platform.Authorization.Controllers
             return result;
         }
 
-        private async Task<XacmlContextResponse> ProcessDelegationResult(XacmlContextRequest decisionRequest, IEnumerable<DelegationChangeExternal> delegations, XacmlPolicy resourcePolicy, CancellationToken cancellationToken = default)
+        private async Task<XacmlContextResponse> ProcessDelegationResult(XacmlContextRequest decisionRequest, IEnumerable<DelegationChangeDto> delegations, XacmlPolicy resourcePolicy, CancellationToken cancellationToken = default)
         {
-            foreach (DelegationChangeExternal delegation in delegations.Where(d => d.DelegationChangeType != DelegationChangeType.RevokeLast))
+            foreach (DelegationChangeDto delegation in delegations.Where(d => d.DelegationChangeType != DelegationChangeTypeDto.RevokeLast))
             {
                 XacmlPolicy delegationPolicy = await _prp.GetPolicyVersionAsync(delegation.BlobStoragePolicyPath, delegation.BlobStorageVersionId, cancellationToken);
                 if (delegationPolicy.ObligationExpressions.Count == 0)
