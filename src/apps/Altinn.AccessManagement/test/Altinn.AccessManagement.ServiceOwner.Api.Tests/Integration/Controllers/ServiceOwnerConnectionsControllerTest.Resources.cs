@@ -209,10 +209,10 @@ public partial class ServiceOwnerConnectionsControllerTest
         /// <summary>
         /// Delegates all available right keys on the resource from one party to another as the test service owner.
         /// </summary>
-        private async Task<ServiceOwnerResourceDelegation> AddResource(ServiceOwnerConnectionPartyUrn from, ServiceOwnerConnectionPartyUrn to)
+        private async Task<ServiceOwnerResourceDelegation> AddResource(ServiceOwnerConnectionPartyUrn from, ServiceOwnerConnectionPartyUrn to, string resource = Resource, string orgCode = "SKD")
         {
-            var request = CreateRequest(from, to, await GetAvailableRightKeys());
-            var response = await CreateClient().PostAsJsonAsync($"{Route}/resources", request, TestContext.Current.CancellationToken);
+            var request = CreateRequest(from, to, await GetAvailableRightKeys(resource, orgCode), resource);
+            var response = await CreateClient(orgCode: orgCode).PostAsJsonAsync($"{Route}/resources", request, TestContext.Current.CancellationToken);
 
             var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {content}");
@@ -779,6 +779,44 @@ public partial class ServiceOwnerConnectionsControllerTest
             Assert.NotNull(assignmentResource);
             Assert.Equal(TestData.StorMektigTenesteeier.Id, assignmentResource.Audit_ChangedBy);
             Assert.Equal(rightKeys.Count, GetWrittenPolicyRuleCount(assignmentResource.PolicyPath));
+        }
+
+        /// <summary>
+        /// A service owner without an organization number revokes a delegation of its own resource with the same
+        /// consumer organization it delegated with. The revoke guard compares the recorded actor with that
+        /// organization, so the assignment resource, the delegation policy and the assignment are removed.
+        /// </summary>
+        [Fact]
+        public async Task RevokeResource_AsProviderWithoutOrganizationNumber_WithMatchingOrgClaim_Returns204AndRemovesAssignment()
+        {
+            var request = await AddResource(Person(TestData.LarsBakke), Person(TestData.HildeStrand), TtdResource, orgCode: "ttd");
+            AssignmentResource assignmentResource = await GetAssignmentResource(TestData.LarsBakke.Id, TestData.HildeStrand.Id, TtdResourceId);
+            Assert.NotNull(assignmentResource);
+
+            var response = await CreateClient(orgCode: "ttd").PostAsJsonAsync($"{Route}/resources/revoke", request, TestContext.Current.CancellationToken);
+
+            var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.NoContent, $"Expected NoContent but got {response.StatusCode}. Response body: {content}");
+
+            Assert.Null(await GetAssignmentResource(TestData.LarsBakke.Id, TestData.HildeStrand.Id, TtdResourceId));
+            Assert.Null(await GetRightholderAssignment(TestData.LarsBakke.Id, TestData.HildeStrand.Id));
+            Assert.Equal(0, GetWrittenPolicyRuleCount(assignmentResource.PolicyPath));
+        }
+
+        /// <summary>
+        /// The org claim only decides who owns the resource. A token with the matching org claim but another
+        /// consumer organization is a different actor, so it cannot revoke a delegation the first one made.
+        /// </summary>
+        [Fact]
+        public async Task RevokeResource_AsProviderWithoutOrganizationNumber_WithOtherConsumerOrganization_Returns400ResourceNotRevocableFromAssignment()
+        {
+            var request = await AddResource(Person(TestData.SteinarAndreassen), Person(TestData.LarsBakke), TtdResource, orgCode: "ttd");
+
+            var response = await CreateClient(TestData.BakerJohnsen.Entity.OrganizationIdentifier, orgCode: "ttd").PostAsJsonAsync($"{Route}/resources/revoke", request, TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            await AssertProblemCode(response, "AM-00049");
+            Assert.NotNull(await GetAssignmentResource(TestData.SteinarAndreassen.Id, TestData.LarsBakke.Id, TtdResourceId));
         }
 
         private static ServiceOwnerResourceDelegation CreateMaskinportenSchemaRequest()
