@@ -1,9 +1,9 @@
-namespace Altinn.AccessManagement.Api.Internal.Models
+namespace Altinn.Authorization.Api.Contracts.Authorization
 {
     /// <summary>
     /// The type of delegation change
     /// </summary>
-    public enum DelegationChangeTypeExternal
+    public enum DelegationChangeTypeDto
     {
         /// <summary>
         /// Undefined default value

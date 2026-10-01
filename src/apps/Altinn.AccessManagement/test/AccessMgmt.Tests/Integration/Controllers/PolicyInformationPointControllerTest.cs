@@ -2,7 +2,6 @@
 using System.Net.Http.Headers;
 using System.Text.Json;
 using Altinn.AccessManagement.Api.Internal.Controllers.PolicyInformation;
-using Altinn.AccessManagement.Api.Internal.Models;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Tests.Fixtures;
 using Altinn.AccessManagement.Tests.Mocks;
@@ -82,7 +81,7 @@ public class PolicyInformationPointControllerTest : IClassFixture<AccessMgmtApiF
         // Assert
         Assert.Equal(HttpStatusCode.OK, actualResponse.StatusCode);
 
-        List<DelegationChangeExternal> actualDelegationChanges = JsonSerializer.Deserialize<List<DelegationChangeExternal>>(await actualResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), options);
+        List<DelegationChangeDto> actualDelegationChanges = JsonSerializer.Deserialize<List<DelegationChangeDto>>(await actualResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), options);
         AssertionUtil.AssertEqual(GetExpected(scenario), actualDelegationChanges);
     }
 
@@ -114,9 +113,9 @@ public class PolicyInformationPointControllerTest : IClassFixture<AccessMgmtApiF
         return content;
     }
 
-    private List<DelegationChangeExternal> GetExpected(string scenario)
+    private List<DelegationChangeDto> GetExpected(string scenario)
     {
         string expectedContent = File.ReadAllText($"Data/PolicyInformationPoint/Expected/{scenario}.json");
-        return (List<DelegationChangeExternal>)JsonSerializer.Deserialize(expectedContent, typeof(List<DelegationChangeExternal>), options);
+        return (List<DelegationChangeDto>)JsonSerializer.Deserialize(expectedContent, typeof(List<DelegationChangeDto>), options);
     }
 }

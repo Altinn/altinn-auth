@@ -1,11 +1,11 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Altinn.AccessManagement.Api.Internal.Models;
 using Altinn.AccessManagement.Tests.Fixtures;
 using Altinn.AccessManagement.TestUtils.Data;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.Authorization.Api.Contracts.Authorization;
 using Microsoft.Extensions.Configuration;
 
 namespace Altinn.AccessManagement.Tests.Integration.Controllers;
@@ -363,7 +363,7 @@ public class PolicyInformationPointRuntimeDelegatedSigningTest
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var result = await response.Content.ReadFromJsonAsync<List<DelegationChangeExternal>>(
+        var result = await response.Content.ReadFromJsonAsync<List<DelegationChangeDto>>(
             _options, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.Equal(2, result.Count);
@@ -404,7 +404,7 @@ public class PolicyInformationPointRuntimeDelegatedSigningTest
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var result = await response.Content.ReadFromJsonAsync<List<DelegationChangeExternal>>(
+        var result = await response.Content.ReadFromJsonAsync<List<DelegationChangeDto>>(
             _options, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.Equal(3, result.Count);
@@ -445,7 +445,7 @@ public class PolicyInformationPointRuntimeDelegatedSigningTest
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var result = await response.Content.ReadFromJsonAsync<List<DelegationChangeExternal>>(
+        var result = await response.Content.ReadFromJsonAsync<List<DelegationChangeDto>>(
             _options, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.Equal(3, result.Count);
@@ -485,7 +485,7 @@ public class PolicyInformationPointRuntimeDelegatedSigningTest
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var result = await response.Content.ReadFromJsonAsync<List<DelegationChangeExternal>>(
+        var result = await response.Content.ReadFromJsonAsync<List<DelegationChangeDto>>(
             _options, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.Single(result);
@@ -518,7 +518,7 @@ public class PolicyInformationPointRuntimeDelegatedSigningTest
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var result = await response.Content.ReadFromJsonAsync<List<DelegationChangeExternal>>(
+        var result = await response.Content.ReadFromJsonAsync<List<DelegationChangeDto>>(
             _options, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
 

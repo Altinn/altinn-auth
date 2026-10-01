@@ -1,11 +1,11 @@
 ﻿using System.Runtime.Serialization;
 
-namespace Altinn.AccessManagement.Api.Internal.Enums;
+namespace Altinn.Authorization.Api.Contracts.Authorization;
 
 /// <summary>
 /// Enum defining the different uuids used for defining parts in a delegation
 /// </summary>
-public enum UuidTypeExternal
+public enum UuidTypeDto
 {
     /// <summary>
     /// Placeholder when type is not specified should only happen when there is no Uuid to match it with

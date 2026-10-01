@@ -1,8 +1,7 @@
-using Altinn.AccessManagement.Api.Internal.Enums;
 using Altinn.AccessManagement.Api.Internal.Extensions;
-using Altinn.AccessManagement.Api.Internal.Models;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Enums;
+using Altinn.Authorization.Api.Contracts.Authorization;
 
 namespace Altinn.AccessManagement.Api.Internal.Tests.Extensions;
 
@@ -42,25 +41,25 @@ public class DelegationChangeExtensionsTest
 
         var result = source.ToDelegationChangeExternal();
 
-        result.Should().BeEquivalentTo(new DelegationChangeExternal
+        result.Should().BeEquivalentTo(new DelegationChangeDto
         {
             DelegationChangeId = source.DelegationChangeId,
             ResourceRegistryDelegationChangeId = source.ResourceRegistryDelegationChangeId,
-            DelegationChangeType = DelegationChangeTypeExternal.Revoke,
+            DelegationChangeType = DelegationChangeTypeDto.Revoke,
             ResourceId = source.ResourceId,
             ResourceType = source.ResourceType,
             InstanceId = source.InstanceId,
             OfferedByPartyId = source.OfferedByPartyId,
             FromUuid = source.FromUuid,
-            FromUuidType = UuidTypeExternal.Person,
+            FromUuidType = UuidTypeDto.Person,
             CoveredByPartyId = source.CoveredByPartyId,
             CoveredByUserId = source.CoveredByUserId,
             ToUuid = source.ToUuid,
-            ToUuidType = UuidTypeExternal.Organization,
+            ToUuidType = UuidTypeDto.Organization,
             PerformedByUserId = source.PerformedByUserId,
             PerformedByPartyId = source.PerformedByPartyId,
             PerformedByUuid = source.PerformedByUuid,
-            PerformedByUuidType = UuidTypeExternal.SystemUser,
+            PerformedByUuidType = UuidTypeDto.SystemUser,
             BlobStoragePolicyPath = source.BlobStoragePolicyPath,
             BlobStorageVersionId = source.BlobStorageVersionId,
             Created = source.Created,
