@@ -8,5 +8,5 @@ The full guidance for this repository is in [`AGENTS.md`](../AGENTS.md). Read it
 - A green local test run is not proof: integration tests skip when no container runtime is running. CI is the gate.
 - Every test must be marked `[UnitTest]` or `[IntegrationTest]`, or the run fails. This applies to the xUnit v3 verticals. `src/apps/Altinn.ResourceRegistry` is an xUnit v2 island: no categories, the trait filter does not exclude its tests, and they start a real database.
 - `src/apps/Altinn.Register` is a placeholder and `src/apps/Altinn.ResourceRegistry` is an intentional build island. Do not "tidy" either.
-- Documentation, `AGENTS.md` and ADRs change in the same PR as the behaviour they describe.
+- Update affected documentation and agent guidance in the same PR. Require an ADR only for significant architectural decisions or lasting trade-offs; follow the [ADR threshold](../CONTRIBUTING.md#when-an-adr-is-required). Routine API/model extensions and bug fixes do not automatically require one.
 - [`CONTRIBUTING.md`](../CONTRIBUTING.md) is the working agreement, including the rules for AI assistance.

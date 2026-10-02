@@ -2,6 +2,12 @@
 
 An ADR captures a single architectural decision: its **context**, the **decision**, and its **consequences**. ADRs explain the *why*, the thing source code and git history don't preserve and that humans and AI agents otherwise re-derive at great cost.
 
+## When to write an ADR
+
+Use the [ADR threshold in CONTRIBUTING.md](../../CONTRIBUTING.md#when-an-adr-is-required): record significant architectural decisions and lasting trade-offs. An API or model change alone is not a trigger. Small backward-compatible extensions, existing metadata exposed through an API, and fixes that preserve the intended design normally belong in ordinary documentation and tests.
+
+This scope clarification was drafted with Codex (GPT-6). Human reader of the revised wording: not confirmed.
+
 ## Where ADRs live
 
 | Scope | Folder |
