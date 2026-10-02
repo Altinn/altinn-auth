@@ -1,6 +1,7 @@
 ﻿using System.Net;
 using System.Text.Json;
 using Altinn.AccessManagement.TestUtils.Fixtures;
+using Altinn.AccessMgmt.Core;
 
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration;
 
@@ -85,6 +86,7 @@ public class SwaggerDocTest
     {
         public V2Doc(ApiFixture fixture)
         {
+            fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.EnableEnduserMaskinportenAdminApi);
             Client = fixture.BuildConfiguration();
         }
 
