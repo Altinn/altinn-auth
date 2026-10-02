@@ -16,6 +16,10 @@ using Microsoft.FeatureManagement.Mvc;
 namespace Altinn.AccessManagement.Api.Enduser.Controllers.Base;
 
 /// <summary>
+/// /// NOTE! This controller is only meant to hold shared logic for the versioned controllers. 
+/// It is not meant to be used directly, and should not get new logic added that needs to be versioned. 
+/// If you need to add new logic, add it to the versioned controller instead.
+/// 
 /// Shared actions for managing Maskinporten supplier assignments and scope delegations.
 /// Holds no route; each versioned controller owns its own route metadata.
 /// </summary>

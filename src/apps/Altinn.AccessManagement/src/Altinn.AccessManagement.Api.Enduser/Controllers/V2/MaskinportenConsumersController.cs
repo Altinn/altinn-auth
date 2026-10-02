@@ -6,7 +6,10 @@ using Microsoft.AspNetCore.Mvc;
 namespace Altinn.AccessManagement.Api.Enduser.Controllers.V2;
 
 /// <summary>
-/// Version 2 of <see cref="Controllers.MaskinportenConsumersController"/>. Only the route differs.
+/// Version 2 of <see cref="Controllers.MaskinportenConsumersController"/>. 
+/// 
+/// NOTE! New functionality should be added here, and not in the base controller, 
+/// as it would result in it also being available in v1, which is not desired.
 /// </summary>
 [ApiVersion(2.0)]
 [Route("accessmanagement/api/v{version:apiVersion}/enduser/maskinporten/consumers")]
