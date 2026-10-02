@@ -1,0 +1,51 @@
+meta {
+  name: DraftAndCounts
+  seq: 3
+}
+
+auth {
+  mode: inherit
+}
+
+docs {
+  # Delegation requests: draft lookup and counts
+
+  BDD scenarios for three enduser endpoints under `/accessmanagement/api/v1/enduser/request`:
+
+  - `GET draft`: the draft a service owner prepared for the user, before the user
+    confirms and sends it.
+  - `GET sent/count`: how many requests a party has sent.
+  - `GET received/count`: how many requests a party has received.
+
+  Each subfolder is one scenario, with steps named `NN_GIVEN|WHEN|THEN|AND|CLEANUP_...`
+  and ordered by `seq`. Every scenario starts by having the service owner create a draft
+  package request through
+  `POST /accessmanagement/api/v1/serviceowner/delegationrequests/package`. The create is
+  idempotent for drafts (an open draft for the same parties and package is returned
+  instead of a new one), and every scenario ends by withdrawing the draft, so the folder
+  can run repeatedly. Requests cannot be deleted, so every run leaves one withdrawn
+  request behind; the assertions never depend on the absolute number of requests.
+
+  ## Personas and fixtures
+
+  Seed data comes from the `draftAndCounts` section of
+  `testdata/delegationrequest-scenarios/<env>.js`, which picks the personas from the
+  existing testdata files instead of copying their ids:
+
+  - requester: a private person the service owner asks access for.
+  - organization: the organization the access is asked at, acting through its daglig
+    leder.
+  - outsider: a private person with no relation to either.
+  - The service owner is ttd, with the `altinn:serviceowner/delegationrequests.write`
+    scope.
+
+  Every step mints its own token through `helpers.js` (`loginAs(persona, scopes?)` and
+  `loginAsServiceOwner()`).
+
+  ## Environments
+
+  Runs against AT22. The request endpoints sit behind the feature flags
+  `AccessMgmt.Controller.RequestAssignment.Resource` and
+  `AccessMgmt.Controller.RequestAssignment.Package`; with both off every endpoint here
+  returns 404.
+}

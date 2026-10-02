@@ -1,0 +1,62 @@
+meta {
+  name: 02_WHEN_RequesterCountsSentDrafts
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/request/sent/count?party={{party}}&status=Draft
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  status: Draft
+}
+
+docs {
+  WHEN the requester counts its sent requests in status Draft.
+
+  `GET /accessmanagement/api/v1/enduser/request/sent/count?party={party}`
+
+  Counts the requests where party is the one asking for access (the from side of the
+  request), for example to show a badge in the portal without loading the list.
+
+  - Query: `party` (required), the uuid of the requesting party; `to` (optional), only
+    requests sent to this party; `status` (optional, repeatable), any of Draft, Pending,
+    Approved, Rejected, Withdrawn, all statuses when left out; `type` (optional),
+    `package` or `resource`, both when left out. The filters are the same as on
+    `GET request/sent`, so the count equals the length of that list.
+  - Token: personal token with `altinn:portal/enduser` or
+    `altinn:accessmanagement/enduser:requests.read` (used here), and the user must have
+    read access to access management (`altinn_access_management`) for the party.
+  - Response: 200 with a bare JSON number; 403 when the user cannot act for the party.
+}
+
+script:pre-request {
+  const { loginAs, testdata, scopes } = require("./test/DelegationRequest/DraftAndCounts/helpers.js");
+  const td = testdata();
+
+  bru.setVar("party", td.requester.partyUuid);
+
+  await loginAs(td.requester, scopes.sluttbrukerdelegationrequestread);
+}
+
+script:post-response {
+  if (res.status === 200) {
+    bru.setVar("dac_sentDraftCount", res.getBody());
+  }
+}
+
+tests {
+  test("WHEN the sent drafts are counted, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the count is a number that includes the new draft", function() {
+    const count = res.getBody();
+    expect(count).to.be.a("number");
+    expect(count).to.be.at.least(1);
+  });
+}

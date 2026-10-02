@@ -1,0 +1,48 @@
+meta {
+  name: ServiceOwnerDelegationRequests
+  seq: 4
+}
+
+auth {
+  mode: inherit
+}
+
+docs {
+  # Delegation requests: generic service owner endpoint
+
+  BDD scenarios for the generic service owner delegation request endpoints under
+  `/accessmanagement/api/v1/serviceowner/delegationrequests`. They double as usage
+  documentation: every request carries a `docs` block with what the endpoint does, the
+  parameters it takes, the token and scope it needs, and the response it returns.
+
+  Each subfolder is one scenario. The files inside are the scenario steps, named
+  `NN_GIVEN|WHEN|THEN|AND|CLEANUP_...` and ordered by `seq`. A scenario starts from a
+  known state, removes what it created, and can run standalone or repeatedly.
+
+  ## Endpoints
+
+  - `GET delegationrequests/_meta/urns/party`: the party URN prefixes `from` and `to`
+    accept. Anonymous.
+  - `POST delegationrequests`: a service owner asks a party to grant another party a
+    resource or an access package. Exactly one of `resource` or `package` is set. Scope
+    `altinn:serviceowner/delegationrequests.write`, behind the feature flags
+    `AccessMgmt.Controller.RequestAssignment.Resource` and `.Package`.
+  - `GET delegationrequests/{id}/status` and `PUT delegationrequests/{id}/withdraw`: the
+    service owner reads the status of its request and withdraws it again. Scopes
+    `altinn:serviceowner/delegationrequests.read` and `.write`.
+
+  The package and resource specific variants are covered by the flat folders
+  `AccPkg_DelegationRequest` and `Resource_DelegationRequest`.
+
+  ## Tokens and fixtures
+
+  Every step mints a Maskinporten enterprise token for ttd through `helpers.js`
+  (`loginAsServiceOwner(serviceOwner, scope)`); ttd owns the requested resource. The
+  service owners come from `testdata/sharedtestdata.js`. The personas, resource and
+  package come from `testdata/delegationrequest-scenarios/<env>.js`, which picks them
+  from the existing testdata files instead of copying their ids.
+
+  ## Environments
+
+  Written for and verified on AT22. There is no seed file for other environments yet.
+}
