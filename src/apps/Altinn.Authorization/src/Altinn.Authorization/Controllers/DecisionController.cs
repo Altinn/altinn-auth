@@ -364,17 +364,10 @@ namespace Altinn.Platform.Authorization.Controllers
 
         private async Task<XacmlContextResponse> Authorize(XacmlContextRequest decisionRequest, bool isExernalRequest, bool logEvent = true, CancellationToken cancellationToken = default)
         {
-            decisionRequest = await this._contextHandler.Enrich(decisionRequest, isExernalRequest, _appInstanceInfo);
-
-            XacmlPolicy policy = await _prp.GetPolicyAsync(decisionRequest);
-
-            if (policy == null)
-            {
-                throw new ArgumentException("Policy not found for resource");
-            }
-
             // The authorization context mode is specified per request via the urn:altinn:authorization:auth-context
             // resource attribute, so it is resolved from the parsed request rather than a call-wide parameter.
+            // Validated before enrichment so untrusted mode/via-party values never reach policy retrieval or the
+            // AccessManagement PIP, and so each invalid sub-request in a multi-request gets its own status response.
             XacmlResourceAttributes resourceAttributes = _delegationContextHandler.GetResourceAttributes(decisionRequest);
             AuthContext authContext = resourceAttributes.AuthContext;
 
@@ -413,7 +406,16 @@ namespace Altinn.Platform.Authorization.Controllers
                 });
             }
 
-            // In ClientAccess mode the subject attributes (access packages/roles) have already been limited by the
+            decisionRequest = await this._contextHandler.Enrich(decisionRequest, isExernalRequest, _appInstanceInfo);
+
+            XacmlPolicy policy = await _prp.GetPolicyAsync(decisionRequest);
+
+            if (policy == null)
+            {
+                throw new ArgumentException("Policy not found for resource");
+            }
+
+            // In ClientAccess mode the subject
             // AccessManagement PIP to client delegations received through the via-party organization, so the
             // role-based evaluation only reflects client access.
             XacmlContextResponse rolesContextResponse = _pdp.Authorize(decisionRequest, policy);

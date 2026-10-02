@@ -212,6 +212,27 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         /// <summary>
+        /// Auth-context validation happens before enrichment and policy retrieval. Sub-requests with an invalid mode or a
+        /// missing via-party targeting a resource without a policy must still get their own validation status, instead of
+        /// the policy lookup failure replacing all results in the multi-request.
+        /// </summary>
+        [Fact]
+        public async Task PDPExternal_Decision_MultiRequest_InvalidAuthContextValidatedBeforeEnrichment()
+        {
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize altinn:authorization/authorize.admin");
+            string testCase = "AltinnResourceRegistry0104";
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
+            HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateXacmlRequestExternal(testCase);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+
+            // Act
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(_client, httpRequestMessage);
+
+            // Assert
+            AssertionUtil.AssertEqual(expected, contextResponse);
+        }
+
+        /// <summary>
         /// Scenario where org is listed in policy. Should work. Policy org is digir. Authz subject org is digdir
         /// </summary>
         [Fact]

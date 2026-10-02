@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Altinn.AccessManagement.Tests.Fixtures;
@@ -43,11 +43,11 @@ public class PolicyInformationPointResourcesAndInstancesTest
     private const int OrgAcmePartyId = 50900010;
 
     // Main-unit / subunit inheritance test entities
-    private static readonly Guid OrgMainUnitId = Guid.Parse("0196b000-0001-7001-8001-000000000020");
-    private static readonly Guid OrgSubUnitId = Guid.Parse("0196b000-0001-7001-8001-000000000021");
-    private static readonly Guid AssignMainUnitToBobDirect = Guid.Parse("0196b000-0002-7001-8001-000000000004");
-    private const int OrgMainUnitPartyId = 50900020;
-    private const int OrgSubUnitPartyId = 50900021;
+    private static readonly Guid OrgMainUnitId = Guid.Parse("0196b000-0001-7001-8001-000000000050");
+    private static readonly Guid OrgSubUnitId = Guid.Parse("0196b000-0001-7001-8001-000000000051");
+    private static readonly Guid AssignMainUnitToBobDirect = Guid.Parse("0196b000-0002-7001-8001-000000000050");
+    private const int OrgMainUnitPartyId = 50900050;
+    private const int OrgSubUnitPartyId = 50900051;
 
     public PolicyInformationPointResourcesAndInstancesTest(AccessMgmtApiFixture fixture)
     {
@@ -109,8 +109,8 @@ public class PolicyInformationPointResourcesAndInstancesTest
                     Name = "Main Unit AS",
                     TypeId = EntityTypeConstants.Organization,
                     VariantId = EntityVariantConstants.AS,
-                    OrganizationIdentifier = "399900020",
-                    RefId = "399900020",
+                    OrganizationIdentifier = "399900050",
+                    RefId = "399900050",
                     PartyId = OrgMainUnitPartyId,
                 },
                 new Entity()
@@ -119,8 +119,8 @@ public class PolicyInformationPointResourcesAndInstancesTest
                     Name = "Sub Unit",
                     TypeId = EntityTypeConstants.Organization,
                     VariantId = EntityVariantConstants.BEDR,
-                    OrganizationIdentifier = "399900021",
-                    RefId = "399900021",
+                    OrganizationIdentifier = "399900051",
+                    RefId = "399900051",
                     PartyId = OrgSubUnitPartyId,
                     ParentId = OrgMainUnitId,
                 });
@@ -189,7 +189,7 @@ public class PolicyInformationPointResourcesAndInstancesTest
             {
                 AssignmentId = AssignMainUnitToBobDirect,
                 ResourceId = TestData.NavSykepengerDialog.Id,
-                PolicyPath = "nav_sykepenger_dialog/50900020/u20900002/delegationpolicy.xml",
+                PolicyPath = "nav_sykepenger_dialog/50900050/u20900002/delegationpolicy.xml",
                 PolicyVersion = "2024-01-03T00:00:00.0000000Z",
                 DelegationChangeId = 99000003,
             });
