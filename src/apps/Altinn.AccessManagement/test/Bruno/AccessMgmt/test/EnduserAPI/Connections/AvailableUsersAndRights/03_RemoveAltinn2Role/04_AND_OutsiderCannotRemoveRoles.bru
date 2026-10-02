@@ -1,0 +1,40 @@
+meta {
+  name: 04_AND_OutsiderCannotRemoveRoles
+  type: http
+  seq: 4
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/roles?party={{party}}&from={{party}}&to={{to}}&rolecode=a0212
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{to}}
+  rolecode: a0212
+}
+
+docs {
+  AND an outsider cannot remove roles on the delegator's behalf. The authorization check
+  on the party fails before the role is looked up, so the request returns 403 with no
+  body.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/Connections/AvailableUsersAndRights/helpers.js");
+  const td = testdata();
+
+  bru.setVar("party", td.delegator.partyUuid);
+  bru.setVar("to", td.receiver.partyUuid);
+
+  await loginAs(td.outsider);
+}
+
+tests {
+  test("AND the outsider is refused with 403", function() {
+    expect(res.status).to.equal(403);
+  });
+}

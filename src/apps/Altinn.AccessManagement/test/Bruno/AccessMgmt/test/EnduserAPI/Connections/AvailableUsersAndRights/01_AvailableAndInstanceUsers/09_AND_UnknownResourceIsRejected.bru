@@ -1,0 +1,52 @@
+meta {
+  name: 09_AND_UnknownResourceIsRejected
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources/instances/users?party={{party}}&resource=bruno-resource-that-does-not-exist&instance={{instance}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  resource: bruno-resource-that-does-not-exist
+  instance: {{instance}}
+}
+
+docs {
+  AND an unknown resource is rejected.
+
+  Expects 400 with error code AM-00027 (the resource is invalid). The problem body echoes
+  the resource and the instance the request was made with.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/Connections/AvailableUsersAndRights/helpers.js");
+  const td = testdata();
+
+  bru.setVar("party", td.delegator.partyUuid);
+  bru.setVar("instance", td.app.instanceUrn);
+
+  await loginAs(td.delegator);
+}
+
+tests {
+  const { testdata } = require("./test/EnduserAPI/Connections/AvailableUsersAndRights/helpers.js");
+  const td = testdata();
+
+  test("AND the request is rejected with 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("AND the problem body names the unknown resource", function() {
+    const body = res.getBody();
+    expect(body.status).to.equal(400);
+    expect(body.code).to.equal("AM-00027");
+    expect(body.detail).to.equal("The resource is invalid");
+    expect(body.resource).to.equal("bruno-resource-that-does-not-exist");
+    expect(body.instance).to.equal(td.app.instanceUrn);
+  });
+}
