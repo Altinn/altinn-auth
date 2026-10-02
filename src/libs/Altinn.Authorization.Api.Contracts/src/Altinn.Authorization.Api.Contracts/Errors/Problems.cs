@@ -201,4 +201,16 @@ public static class Problems
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
     public static ProblemDescriptor IdPortenAuthorizationInternalServerError { get; }
     = _factory.Create(47, HttpStatusCode.InternalServerError, "An internal server error occurred while processing the IdPorten authorization request");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor ResourceDelegationNotAuthorized { get; }
+    = _factory.Create(48, HttpStatusCode.Forbidden, "Service owner is not authorized to delegate this resource");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor ResourceNotRevocableFromAssignment { get; }
+    = _factory.Create(49, HttpStatusCode.BadRequest, "The resource is not delegated by the entity trying to revoke so it is denied");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor ResourceDelegationChangedByOther { get; }
+    = _factory.Create(50, HttpStatusCode.BadRequest, "The resource is already delegated between these parties by someone other than the service owner. The delegation can only be changed by the party itself.");
 }

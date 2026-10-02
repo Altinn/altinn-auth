@@ -1,4 +1,4 @@
-﻿# AwesomeAssertions Usage Guidelines
+# AwesomeAssertions Usage Guidelines
 
 **Status:** Adopted.
 **Scope:** All test projects in this repository.

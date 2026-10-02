@@ -1,8 +1,7 @@
-using Altinn.AccessManagement.Api.Internal.Enums;
 using Altinn.AccessManagement.Api.Internal.Extensions;
-using Altinn.AccessManagement.Api.Internal.Models;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Enums;
+using Altinn.Authorization.Api.Contracts.Authorization;
 
 namespace Altinn.AccessManagement.Api.Internal.Tests.Extensions;
 
@@ -14,7 +13,7 @@ public class DelegationChangeExtensionsTest
     public static TheoryData<UuidType> UuidTypes => new(Enum.GetValues<UuidType>());
 
     [Fact]
-    public void ToDelegationChangeExternal_WithFullyPopulatedSource_CopiesAllProperties()
+    public void ToDelegationChangeDto_WithFullyPopulatedSource_CopiesAllProperties()
     {
         var source = new DelegationChange
         {
@@ -40,27 +39,27 @@ public class DelegationChangeExtensionsTest
             Created = new DateTime(2026, 9, 25, 12, 0, 0, DateTimeKind.Utc),
         };
 
-        var result = source.ToDelegationChangeExternal();
+        var result = source.ToDelegationChangeDto();
 
-        result.Should().BeEquivalentTo(new DelegationChangeExternal
+        result.Should().BeEquivalentTo(new DelegationChangeDto
         {
             DelegationChangeId = source.DelegationChangeId,
             ResourceRegistryDelegationChangeId = source.ResourceRegistryDelegationChangeId,
-            DelegationChangeType = DelegationChangeTypeExternal.Revoke,
+            DelegationChangeType = DelegationChangeTypeDto.Revoke,
             ResourceId = source.ResourceId,
             ResourceType = source.ResourceType,
             InstanceId = source.InstanceId,
             OfferedByPartyId = source.OfferedByPartyId,
             FromUuid = source.FromUuid,
-            FromUuidType = UuidTypeExternal.Person,
+            FromUuidType = UuidTypeDto.Person,
             CoveredByPartyId = source.CoveredByPartyId,
             CoveredByUserId = source.CoveredByUserId,
             ToUuid = source.ToUuid,
-            ToUuidType = UuidTypeExternal.Organization,
+            ToUuidType = UuidTypeDto.Organization,
             PerformedByUserId = source.PerformedByUserId,
             PerformedByPartyId = source.PerformedByPartyId,
             PerformedByUuid = source.PerformedByUuid,
-            PerformedByUuidType = UuidTypeExternal.SystemUser,
+            PerformedByUuidType = UuidTypeDto.SystemUser,
             BlobStoragePolicyPath = source.BlobStoragePolicyPath,
             BlobStorageVersionId = source.BlobStorageVersionId,
             Created = source.Created,
@@ -69,21 +68,36 @@ public class DelegationChangeExtensionsTest
 
     [Theory]
     [MemberData(nameof(DelegationChangeTypes))]
-    public void ToDelegationChangeExternal_ForEachDelegationChangeType_MapsToSameNameAndValue(DelegationChangeType type)
+    public void ToDelegationChangeDto_ForEachDelegationChangeType_MapsToSameNameAndValue(DelegationChangeType type)
     {
-        var result = new DelegationChange { DelegationChangeType = type }.ToDelegationChangeExternal();
+        var result = new DelegationChange { DelegationChangeType = type }.ToDelegationChangeDto();
 
         result.DelegationChangeType.Should().HaveSameNameAs(type).And.HaveSameValueAs(type);
     }
 
     [Theory]
     [MemberData(nameof(UuidTypes))]
-    public void ToDelegationChangeExternal_ForEachUuidType_MapsToSameNameAndValue(UuidType type)
+    public void ToDelegationChangeDto_ForEachUuidType_MapsToSameNameAndValue(UuidType type)
     {
-        var result = new DelegationChange { FromUuidType = type, ToUuidType = type, PerformedByUuidType = type }.ToDelegationChangeExternal();
+        var result = new DelegationChange { FromUuidType = type, ToUuidType = type, PerformedByUuidType = type }.ToDelegationChangeDto();
 
         result.FromUuidType.Should().HaveSameNameAs(type).And.HaveSameValueAs(type);
         result.ToUuidType.Should().HaveSameNameAs(type).And.HaveSameValueAs(type);
         result.PerformedByUuidType.Should().HaveSameNameAs(type).And.HaveSameValueAs(type);
+    }
+
+    [Fact]
+    public void ToDelegationChangeInput_WithFullyPopulatedSource_CopiesAllAttributes()
+    {
+        var source = new DelegationChangeInputDto
+        {
+            Subject = new AttributeMatchDto("urn:altinn:userid", "20001337"),
+            Party = new AttributeMatchDto("urn:altinn:partyid", "50001337"),
+            Resource = [new AttributeMatchDto("urn:altinn:org", "ttd"), new AttributeMatchDto("urn:altinn:app", "app1")],
+        };
+
+        var result = source.ToDelegationChangeInput();
+
+        result.Should().BeEquivalentTo(source, options => options.WithStrictOrdering());
     }
 }

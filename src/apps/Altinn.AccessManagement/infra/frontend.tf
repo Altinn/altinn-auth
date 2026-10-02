@@ -38,6 +38,12 @@ module "frontend_appsettings" {
       label       = "${lower(var.environment)}-access-management-ui"
       default     = false
     },
+    {
+      name        = "AccessManagementUI.EnableSingleRightsTabInPoaOverview"
+      description = "Whether or not to show single rights tab in powers of attorney overview."
+      label       = "${lower(var.environment)}-access-management-ui"
+      default     = false
+    },
   ]
 
   providers = {

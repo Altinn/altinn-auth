@@ -1,5 +1,4 @@
 ﻿using Altinn.AccessManagement.Api.Internal.Extensions;
-using Altinn.AccessManagement.Api.Internal.Models;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessMgmt.Core.Services.Contracts;
@@ -29,9 +28,9 @@ public class PolicyInformationPointController(
     [ApiExplorerSettings(IgnoreApi = true)]
     [HttpPost]
     [Route("getdelegationchanges")]
-    public async Task<ActionResult<List<DelegationChangeExternal>>> GetAllDelegationChanges([FromBody] DelegationChangeInput request, CancellationToken cancellationToken)
+    public async Task<ActionResult<List<DelegationChangeDto>>> GetAllDelegationChanges([FromBody] DelegationChangeInputDto request, CancellationToken cancellationToken)
     {
-        DelegationChangeList response = await pip.GetAllDelegations(request, includeInstanceDelegations: true, cancellationToken);
+        DelegationChangeList response = await pip.GetAllDelegations(request.ToDelegationChangeInput(), includeInstanceDelegations: true, cancellationToken);
 
         if (!response.IsValid)
         {
@@ -43,7 +42,7 @@ public class PolicyInformationPointController(
             return new ObjectResult(ProblemDetailsFactory.CreateValidationProblemDetails(HttpContext, ModelState));
         }
 
-        return response.DelegationChanges.Select(x => x.ToDelegationChangeExternal()).ToList();
+        return response.DelegationChanges.Select(x => x.ToDelegationChangeDto()).ToList();
     }
 
     /// <summary>

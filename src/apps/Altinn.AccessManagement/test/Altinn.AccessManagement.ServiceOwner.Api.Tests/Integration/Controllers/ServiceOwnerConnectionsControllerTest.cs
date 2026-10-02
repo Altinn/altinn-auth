@@ -18,7 +18,7 @@ namespace Altinn.AccessManagement.ServiceOwner.Api.Tests.Integration.Controllers
 /// <summary>
 /// Tests for <see cref="ConnectionsController"/> in the ServiceOwner API.
 /// </summary>
-public class ServiceOwnerConnectionsControllerTest
+public partial class ServiceOwnerConnectionsControllerTest
 {
     public const string Route = "accessmanagement/api/v1/serviceowner/connections";
 

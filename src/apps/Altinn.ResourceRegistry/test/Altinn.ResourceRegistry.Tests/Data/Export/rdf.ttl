@@ -1,0 +1,25 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix cpsv: <http://purl.org/vocab/cpsv#>.
+@prefix dct: <http://purl.org/dc/terms/>.
+@prefix cv: <http://data.europa.eu/m8g/>.
+@prefix skos: <http://www.w3.org/2004/02/skos/core#>.
+@prefix dcat: <http://www.w3.org/ns/dcat#>.
+@prefix schema: <http://schema.org/>.
+@prefix eli: <http://data.europa.eu/eli/ontology#>.
+@prefix foaf: <http://xmlns.com/foaf/0.1/>.
+
+<https://platform.altinn.no/resourceRegistry/altinn_access_management> cv:hasCompetentAuthority <https://organization-catalogue.fellesdatakatalog.digdir.no/organizations/991825827>;
+                                                                       dct:description "Funksjonalitet for � tilgangsstyring I Altinn"@nb;
+                                                                       dct:identifier "altinn_access_management";
+                                                                       dct:title "Tilgangsstyring Altinn"@nb;
+                                                                       a cpsv:PublicService.
+<https://platform.altinn.no/resourceRegistry/nav_tiltakAvtaleOmArbeidstrening> cv:hasCompetentAuthority <https://organization-catalogue.fellesdatakatalog.digdir.no/organizations/889640782>;
+                                                                               dct:description "Avtalen skal bidra til at personer med behov for bistand fra NAV skal f� eller beholde en jobb, samtidig som den st�tter arbeidsgivere som inkluderer deg som har nedsatt arbeidsevne. Avtalen inng�s mellom arbeidsgiver, arbeidss�ker og NAV."@nb-no,
+                                                                                               "The agreement will help people who need assistance from NAV to get or keep a job, while supporting employers who include those who have reduced working capacity. The agreement is entered into between the employer, the jobseeker and NAV."@en;
+                                                                               dct:identifier "nav_tiltakAvtaleOmArbeidstrening";
+                                                                               dct:keyword "D�dsbo"@nb;
+                                                                               dct:title "Avtale om arbeidstrening"@nb,
+                                                                                         "Agreement on work training"@en;
+                                                                               a cpsv:PublicService.

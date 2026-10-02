@@ -1,0 +1,15 @@
+meta {
+  name: Updates a service resource in the resource registry if it pass all validation checks
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/resourceregistry/api/v1/resource/{{id}}
+  body: json
+  auth: none
+}
+
+vars:pre-request {
+  id: 
+}

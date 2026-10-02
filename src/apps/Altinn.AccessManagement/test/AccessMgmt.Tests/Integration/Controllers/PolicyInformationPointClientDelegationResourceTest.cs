@@ -1,12 +1,12 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
-using Altinn.AccessManagement.Api.Internal.Models;
 using Altinn.AccessManagement.Tests.Fixtures;
 using Altinn.AccessManagement.TestUtils.Data;
 using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.Authorization.Api.Contracts.Authorization;
 using Microsoft.Extensions.Configuration;
 
 namespace Altinn.AccessManagement.Tests.Integration.Controllers;
@@ -235,7 +235,7 @@ public class PolicyInformationPointClientDelegationResourceTest
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var result = await response.Content.ReadFromJsonAsync<List<DelegationChangeExternal>>(_options, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<List<DelegationChangeDto>>(_options, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         var delegation = Assert.Single(result, d =>
             d.ResourceId == "nav_sykepenger_dialog" &&
@@ -270,7 +270,7 @@ public class PolicyInformationPointClientDelegationResourceTest
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var result = await response.Content.ReadFromJsonAsync<List<DelegationChangeExternal>>(_options, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<List<DelegationChangeDto>>(_options, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         var delegation = Assert.Single(result, d =>
             d.ResourceId == "nav_sykepenger_dialog" &&
@@ -304,7 +304,7 @@ public class PolicyInformationPointClientDelegationResourceTest
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var result = await response.Content.ReadFromJsonAsync<List<DelegationChangeExternal>>(_options, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<List<DelegationChangeDto>>(_options, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.Contains(result, d =>
             d.ResourceId == "nav_sykepenger_dialog" &&
@@ -336,7 +336,7 @@ public class PolicyInformationPointClientDelegationResourceTest
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var result = await response.Content.ReadFromJsonAsync<List<DelegationChangeExternal>>(_options, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<List<DelegationChangeDto>>(_options, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.Contains(result, d =>
             d.BlobStoragePolicyPath == AppPolicyPath);
@@ -363,7 +363,7 @@ public class PolicyInformationPointClientDelegationResourceTest
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var result = await response.Content.ReadFromJsonAsync<List<DelegationChangeExternal>>(_options, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<List<DelegationChangeDto>>(_options, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.DoesNotContain(result, d => d.BlobStoragePolicyPath == ResourcePolicyPath);
     }
@@ -389,7 +389,7 @@ public class PolicyInformationPointClientDelegationResourceTest
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var result = await response.Content.ReadFromJsonAsync<List<DelegationChangeExternal>>(_options, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<List<DelegationChangeDto>>(_options, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.DoesNotContain(result, d => d.BlobStoragePolicyPath == ResourcePolicyPath);
     }
@@ -415,7 +415,7 @@ public class PolicyInformationPointClientDelegationResourceTest
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var result = await response.Content.ReadFromJsonAsync<List<DelegationChangeExternal>>(_options, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<List<DelegationChangeDto>>(_options, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.DoesNotContain(result, d => d.BlobStoragePolicyPath == ResourcePolicyPath);
     }
@@ -517,7 +517,7 @@ public class PolicyInformationPointClientDelegationsDisabledTest : IClassFixture
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
-        var result = await response.Content.ReadFromJsonAsync<List<DelegationChangeExternal>>(_options, TestContext.Current.CancellationToken);
+        var result = await response.Content.ReadFromJsonAsync<List<DelegationChangeDto>>(_options, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
         Assert.DoesNotContain(result, d => d.BlobStoragePolicyPath == PolicyPath);
     }

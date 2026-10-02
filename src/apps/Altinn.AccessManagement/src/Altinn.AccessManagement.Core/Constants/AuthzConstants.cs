@@ -271,6 +271,11 @@
         public const string SCOPE_SERVICEOWNER_PACKAGE_DELEGATION_WRITE = "altinn:serviceowner/delegations:accesspackage.write";
 
         /// <summary>
+        /// Scope giving service owners access to delegate resources between two parties. Limited to resources owned by the service owner.
+        /// </summary>
+        public const string SCOPE_SERVICEOWNER_RESOURCE_DELEGATION_WRITE = "altinn:serviceowner/delegations:resource.write";
+
+        /// <summary>
         /// Claim for scopes from maskinporten token
         /// </summary>
         public const string CLAIM_MASKINPORTEN_SCOPE = "scope";

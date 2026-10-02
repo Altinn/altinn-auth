@@ -1,65 +1,82 @@
-﻿using Altinn.AccessManagement.Api.Internal.Enums;
-using Altinn.AccessManagement.Api.Internal.Models;
-using Altinn.AccessManagement.Core.Models;
+﻿using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Enums;
+using Altinn.Authorization.Api.Contracts.Authorization;
 
 namespace Altinn.AccessManagement.Api.Internal.Extensions
 {
     /// <summary>
-    /// Provides extension methods for transforming <see cref="DelegationChange"/> to <see cref="DelegationChangeExternal"/>.
+    /// Provides extension methods for mapping delegation change models between core and DTO.
     /// </summary>
     public static class DelegationChangeExtensions
     {
         /// <summary>
-        /// Converts a <see cref="DelegationChange"/> object to a <see cref="DelegationChangeExternal"/> object.
+        /// Converts a <see cref="DelegationChange"/> object to a <see cref="DelegationChangeDto"/> object.
         /// </summary>
         /// <param name="core">The <see cref="DelegationChange"/> object to convert.</param>
-        /// <returns>A <see cref="DelegationChangeExternal"/> object representing the converted data.</returns>
-        public static DelegationChangeExternal ToDelegationChangeExternal(this DelegationChange core)
+        /// <returns>A <see cref="DelegationChangeDto"/> object representing the converted data.</returns>
+        public static DelegationChangeDto ToDelegationChangeDto(this DelegationChange core)
         {
-            return new DelegationChangeExternal
+            return new DelegationChangeDto
             {
                 DelegationChangeId = core.DelegationChangeId,
                 ResourceRegistryDelegationChangeId = core.ResourceRegistryDelegationChangeId,
-                DelegationChangeType = ToExternal(core.DelegationChangeType),
+                DelegationChangeType = ToDto(core.DelegationChangeType),
                 ResourceId = core.ResourceId,
                 ResourceType = core.ResourceType,
                 InstanceId = core.InstanceId,
                 OfferedByPartyId = core.OfferedByPartyId,
                 FromUuid = core.FromUuid,
-                FromUuidType = ToExternal(core.FromUuidType),
+                FromUuidType = ToDto(core.FromUuidType),
                 CoveredByPartyId = core.CoveredByPartyId,
                 CoveredByUserId = core.CoveredByUserId,
                 ToUuid = core.ToUuid,
-                ToUuidType = ToExternal(core.ToUuidType),
+                ToUuidType = ToDto(core.ToUuidType),
                 PerformedByUserId = core.PerformedByUserId,
                 PerformedByPartyId = core.PerformedByPartyId,
                 PerformedByUuid = core.PerformedByUuid,
-                PerformedByUuidType = ToExternal(core.PerformedByUuidType),
+                PerformedByUuidType = ToDto(core.PerformedByUuidType),
                 BlobStoragePolicyPath = core.BlobStoragePolicyPath,
                 BlobStorageVersionId = core.BlobStorageVersionId,
                 Created = core.Created
             };
         }
 
-        private static DelegationChangeTypeExternal ToExternal(DelegationChangeType core) => core switch
+        /// <summary>
+        /// Converts a <see cref="DelegationChangeInputDto"/> object to a <see cref="DelegationChangeInput"/> object.
+        /// </summary>
+        /// <param name="dto">The <see cref="DelegationChangeInputDto"/> object to convert.</param>
+        /// <returns>A <see cref="DelegationChangeInput"/> object representing the converted data.</returns>
+        public static DelegationChangeInput ToDelegationChangeInput(this DelegationChangeInputDto dto)
         {
-            DelegationChangeType.Undefined => DelegationChangeTypeExternal.Undefined,
-            DelegationChangeType.Grant => DelegationChangeTypeExternal.Grant,
-            DelegationChangeType.Revoke => DelegationChangeTypeExternal.Revoke,
-            DelegationChangeType.RevokeLast => DelegationChangeTypeExternal.RevokeLast,
+            return new DelegationChangeInput
+            {
+                Subject = ToCore(dto.Subject),
+                Party = ToCore(dto.Party),
+                Resource = dto.Resource?.Select(ToCore).ToList(),
+            };
+        }
+
+        private static AttributeMatch ToCore(AttributeMatchDto dto) =>
+            dto is null ? null : new AttributeMatch { Id = dto.Id, Value = dto.Value };
+
+        private static DelegationChangeTypeDto ToDto(DelegationChangeType core) => core switch
+        {
+            DelegationChangeType.Undefined => DelegationChangeTypeDto.Undefined,
+            DelegationChangeType.Grant => DelegationChangeTypeDto.Grant,
+            DelegationChangeType.Revoke => DelegationChangeTypeDto.Revoke,
+            DelegationChangeType.RevokeLast => DelegationChangeTypeDto.RevokeLast,
             _ => throw new ArgumentOutOfRangeException(nameof(core), core, null),
         };
 
-        private static UuidTypeExternal ToExternal(UuidType core) => core switch
+        private static UuidTypeDto ToDto(UuidType core) => core switch
         {
-            UuidType.NotSpecified => UuidTypeExternal.NotSpecified,
-            UuidType.Person => UuidTypeExternal.Person,
-            UuidType.Organization => UuidTypeExternal.Organization,
-            UuidType.SystemUser => UuidTypeExternal.SystemUser,
-            UuidType.EnterpriseUser => UuidTypeExternal.EnterpriseUser,
-            UuidType.Resource => UuidTypeExternal.Resource,
-            UuidType.Party => UuidTypeExternal.Party,
+            UuidType.NotSpecified => UuidTypeDto.NotSpecified,
+            UuidType.Person => UuidTypeDto.Person,
+            UuidType.Organization => UuidTypeDto.Organization,
+            UuidType.SystemUser => UuidTypeDto.SystemUser,
+            UuidType.EnterpriseUser => UuidTypeDto.EnterpriseUser,
+            UuidType.Resource => UuidTypeDto.Resource,
+            UuidType.Party => UuidTypeDto.Party,
             _ => throw new ArgumentOutOfRangeException(nameof(core), core, null),
         };
     }
