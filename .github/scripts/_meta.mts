@@ -53,7 +53,7 @@ const dockerImageSchema = z.object({
 
 const disSchema = z.object({
   syncroot: z.string().optional(),
-  manifests: z.string().optional(),
+  manifest: z.string().optional(),
   deploy: z.boolean().default(false),
 });
 
