@@ -26,6 +26,19 @@ Podman's socket.
 
 ## Running the tests
 
+### The gate before a pull request
+
+```
+just check src/apps/Altinn.Authorization
+```
+
+Builds the vertical and runs its unit lane, which is the fast part of what CI
+does. `just check-full <vertical>` adds the integration lane, which is what CI
+actually runs, and needs a container runtime. The lane recipes take a vertical
+rather than the whole repository, because `Altinn.ResourceRegistry` runs
+xUnit v2 and ignores the lane filters; run that one with
+`just test src/apps/Altinn.ResourceRegistry`. Recipes need PowerShell 7.
+
 ### All tests
 
 ```
