@@ -20,4 +20,8 @@
         <ProjectReference Include="..\Altinn.AccessMgmt.Core\Altinn.AccessMgmt.Core.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Controllers\Base\" />
+    </ItemGroup>
+
 </Project>
