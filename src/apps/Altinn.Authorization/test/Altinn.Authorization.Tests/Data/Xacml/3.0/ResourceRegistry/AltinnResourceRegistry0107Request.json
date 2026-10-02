@@ -5,8 +5,8 @@
       {
         "Attribute": [
           {
-            "AttributeId": "urn:altinn:person:identifier-no",
-            "Value": "01039012345"
+            "AttributeId": "urn:altinn:systemuser:uuid",
+            "Value": "47caea5b-a80b-4343-b1d3-31eb523a4e28"
           }
         ]
       }
@@ -30,8 +30,8 @@
             "Value": "ttd-externalpdp-resource1"
           },
           {
-            "AttributeId": "urn:altinn:person:identifier-no",
-            "Value": "01038712345"
+            "AttributeId": "urn:altinn:organization:identifier-no",
+            "Value": "910459880"
           },
           {
             "AttributeId": "urn:altinn:authorization:auth-context",
@@ -39,7 +39,7 @@
           },
           {
             "AttributeId": "urn:altinn:via-party:organization:identifier-no",
-            "Value": "   "
+            "Value": "910000002"
           }
         ]
       }
