@@ -1,0 +1,21 @@
+meta {
+  name: 04_ConsentEvents
+  seq: 4
+}
+
+docs {
+  Scenario: An enterprise follows status changes on its consent requests
+
+    When the enterprise reads its consent events
+    And follows the next link to the following page
+    And filters the events by event type
+    And filters the events to a time window with no events
+    When the event type is unknown, the request fails with a validation error
+    When the time window is inverted, the request fails with a validation error
+    When the continuation token is malformed, the request fails with a validation error
+    When no token is sent, the request is unauthorized
+
+  Read only. The enterprise's events come from earlier runs of the consent scenarios;
+  events younger than five minutes are held back by the API, so this scenario asserts the
+  shape, order and filtering of whatever older events exist and never an exact count.
+}

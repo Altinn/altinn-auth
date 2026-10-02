@@ -1,0 +1,48 @@
+meta {
+  name: 15_AND_MaskinportenLookupRejectsRevokedConsent
+  type: http
+  seq: 15
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/maskinporten/consent/lookup
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "id": "{{consentRequestId}}",
+    "from": "{{consentFrom}}",
+    "to": "{{consentTo}}"
+  }
+}
+
+docs {
+  AND the Maskinporten lookup rejects the revoked consent.
+
+  POST /accessmanagement/api/v1/maskinporten/consent/lookup
+
+  Same endpoint as step 10. A revoked consent can no longer be exchanged for a consent
+  token: the lookup answers 400 with problem code AM-00011, "Consent is revoked".
+}
+
+script:pre-request {
+  const { loginAsEnterprise, scopes, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  await loginAsEnterprise(td.enterprise, scopes.maskinportenConsentRead);
+}
+
+tests {
+  test("WHEN the revoked consent is looked up, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN the problem is AM-00011, consent is revoked", function() {
+    const body = res.getBody();
+    expect(body.status).to.equal(400);
+    expect(body.code).to.equal("AM-00011");
+    expect(body.detail).to.equal("Consent is revoked");
+  });
+}

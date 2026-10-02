@@ -1,0 +1,94 @@
+meta {
+  name: 01_WHEN_EnterpriseReadsConsentEvents
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enterprise/consentrequests/events
+  body: none
+  auth: inherit
+}
+
+docs {
+  WHEN the enterprise reads its consent events.
+
+  GET /accessmanagement/api/v1/enterprise/consentrequests/events
+
+  A feed of status changes on every consent request addressed to or handled by the
+  enterprise, oldest first, so an enterprise can poll for accepted, rejected and revoked
+  consents instead of reading each request.
+
+  - Token: Maskinporten token with scope altinn:consentrequests.read (or .write).
+  - All query parameters are optional:
+    - consentRequestId: only events for this request.
+    - eventType: rejected, accepted, revoked, deleted or used, lower case; repeat the
+      parameter for several types.
+    - createdAfter, createdBefore: ISO 8601 timestamps; createdAfter must be earlier.
+    - continuationToken: opaque cursor from links.next of the previous page.
+
+  Only events older than five minutes are returned, so a page does not change once read.
+  The page size is set per environment (Consent:EventsPageSize).
+
+  Typical response: 200 with links.next (null on the last page) and data, a list of
+  consentRequestId, eventType (Created, Accepted, Rejected, Revoked, ...) and changedDate.
+}
+
+script:pre-request {
+  const { loginAsEnterprise, scopes, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  await loginAsEnterprise(td.enterprise, scopes.consentRequestsRead);
+}
+
+tests {
+  const knownTypes = ["Created", "Rejected", "Accepted", "Revoked", "Deleted", "Expired", "Used"];
+
+  test("WHEN the enterprise reads its events, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN a page is returned with a data array and a links object", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("links");
+    expect(body.data).to.be.an("array");
+  });
+
+  test("THEN every event names a request, a known event type and a change date", function() {
+    res.getBody().data.forEach(e => {
+      expect(e.consentRequestId).to.match(/^[0-9a-f-]{36}$/);
+      expect(knownTypes).to.include(e.eventType);
+      expect(Number.isNaN(new Date(e.changedDate).getTime())).to.be.false;
+    });
+  });
+
+  test("THEN every event is older than the five minute safety lag", function() {
+    // One minute of slack for clock differences between the runner and the server.
+    const bound = Date.now() - 4 * 60 * 1000;
+    res.getBody().data.forEach(e => {
+      expect(new Date(e.changedDate).getTime()).to.be.below(bound);
+    });
+  });
+
+  test("THEN the events are ordered oldest first", function() {
+    const times = res.getBody().data.map(e => new Date(e.changedDate).getTime());
+    for (let i = 1; i < times.length; i++) {
+      expect(times[i]).to.be.at.least(times[i - 1]);
+    }
+  });
+
+  test("THEN a next link, when present, carries a continuation token", function() {
+    const body = res.getBody();
+    const data = body.data;
+    bru.setVar("eventsLastChangedDate", data.length ? data[data.length - 1].changedDate : "");
+    if (body.links.next) {
+      // The token is base64 and may hold +, / and =; the link carries it URL encoded,
+      // and it is stored that way so the next step can put it straight into its URL.
+      const match = /[?&]continuationToken=([^&]+)/.exec(body.links.next);
+      expect(match, "expected a continuationToken in links.next").to.not.be.null;
+      bru.setVar("eventsContinuationToken", match[1]);
+    } else {
+      bru.setVar("eventsContinuationToken", "");
+    }
+  });
+}

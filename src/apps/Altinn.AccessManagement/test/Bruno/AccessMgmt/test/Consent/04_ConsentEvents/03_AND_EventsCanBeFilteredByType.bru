@@ -1,0 +1,49 @@
+meta {
+  name: 03_AND_EventsCanBeFilteredByType
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enterprise/consentrequests/events?eventType=accepted&eventType=revoked
+  body: none
+  auth: inherit
+}
+
+params:query {
+  eventType: accepted
+  eventType: revoked
+}
+
+docs {
+  AND the enterprise filters the events by event type.
+
+  GET /accessmanagement/api/v1/enterprise/consentrequests/events?eventType=accepted&eventType=revoked
+
+  Repeat eventType for several types. Valid values are rejected, accepted, revoked,
+  deleted and used, in lower case. The response spells the type with a capital first
+  letter.
+
+  Known issue: the validation ignores case, but the database does not, so a capitalised
+  value such as eventType=Accepted passes validation and fails with 500.
+}
+
+script:pre-request {
+  const { loginAsEnterprise, scopes, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  await loginAsEnterprise(td.enterprise, scopes.consentRequestsRead);
+}
+
+tests {
+  test("WHEN the events are filtered by type, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+    expect(res.getBody().data).to.be.an("array");
+  });
+
+  test("THEN only Accepted and Revoked events are returned", function() {
+    res.getBody().data.forEach(e => {
+      expect(["Accepted", "Revoked"]).to.include(e.eventType);
+    });
+  });
+}

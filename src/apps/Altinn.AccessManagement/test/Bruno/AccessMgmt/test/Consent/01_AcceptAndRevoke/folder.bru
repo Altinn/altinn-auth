@@ -1,0 +1,27 @@
+meta {
+  name: 01_AcceptAndRevoke
+  seq: 1
+}
+
+docs {
+  Scenario: A person accepts a consent request and later revokes the consent
+
+    Given the number of pending consent requests for the person is recorded
+    When the enterprise creates a consent request for the person
+    And the enterprise repeats the create call with the same id
+    Then the enterprise reads the request with status Created
+    And the person reads the request in the portal
+    And the pending count for the person has increased
+    And the request is listed for the person
+    When the person accepts the request
+    Then the enterprise reads the request with status Accepted
+    And the Maskinporten lookup returns the consent
+    And the person reads the consent
+    And the consent events can be filtered by request id
+    When the person revokes the consent
+    Then the enterprise reads the request with status Revoked
+    And the Maskinporten lookup rejects the revoked consent
+
+  The request cannot be deleted. Revoking it is the last step and leaves it in a final
+  state.
+}

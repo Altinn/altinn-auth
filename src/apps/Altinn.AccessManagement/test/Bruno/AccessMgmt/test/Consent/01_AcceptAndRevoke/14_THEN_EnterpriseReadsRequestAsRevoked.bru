@@ -1,0 +1,52 @@
+meta {
+  name: 14_THEN_EnterpriseReadsRequestAsRevoked
+  type: http
+  seq: 14
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enterprise/consentrequests/:consentRequestId
+  body: none
+  auth: inherit
+}
+
+params:path {
+  consentRequestId: {{consentRequestId}}
+}
+
+docs {
+  THEN the enterprise reads the request with status Revoked.
+
+  GET /accessmanagement/api/v1/enterprise/consentrequests/:consentRequestId
+
+  Same endpoint as step 04. This step uses a token with the write scope, which also
+  grants read.
+}
+
+script:pre-request {
+  const { loginAsEnterprise, scopes, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  await loginAsEnterprise(td.enterprise, scopes.consentRequestsWrite);
+}
+
+tests {
+  const { testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  test("WHEN the enterprise reads the revoked request, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the request has status Revoked", function() {
+    const body = res.getBody();
+    expect(body.id).to.equal(bru.getVar("consentRequestId"));
+    expect(body.status).to.equal("Revoked");
+  });
+
+  test("THEN the event history ends with the Revoked event by the person", function() {
+    const events = res.getBody().consentRequestEvents;
+    expect(events.map(e => e.eventType)).to.deep.equal(["Created", "Accepted", "Revoked"]);
+    expect(events[2].performedBy).to.equal(`urn:altinn:person:identifier-no:${td.consentingPerson.pid}`);
+  });
+}

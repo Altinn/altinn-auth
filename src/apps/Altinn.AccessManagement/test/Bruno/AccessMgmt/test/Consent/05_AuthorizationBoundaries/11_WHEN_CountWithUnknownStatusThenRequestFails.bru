@@ -1,0 +1,50 @@
+meta {
+  name: 11_WHEN_CountWithUnknownStatusThenRequestFails
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/bff/consentrequests/count/:partyUuid?status=pending
+  body: none
+  auth: inherit
+}
+
+params:query {
+  status: pending
+}
+
+params:path {
+  partyUuid: {{partyUuid}}
+}
+
+docs {
+  WHEN the person counts with an unknown status, the request fails validation.
+
+  GET /accessmanagement/api/v1/bff/consentrequests/count/:partyUuid?status=pending
+
+  status must be one of created, rejected, accepted, revoked, deleted or expired. Any
+  other value is rejected by ASP.NET model binding with the framework's validation
+  problem, an errors map keyed by status.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  bru.setVar("partyUuid", td.consentingPerson.partyUuid);
+
+  await loginAs(td.consentingPerson);
+}
+
+tests {
+  test("WHEN the status is unknown, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN the validation problem points at the status parameter", function() {
+    const body = res.getBody();
+    expect(body.status).to.equal(400);
+    expect(body.errors).to.have.property("status");
+  });
+}
