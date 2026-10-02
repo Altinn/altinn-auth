@@ -250,6 +250,33 @@ public class PolicyInformationPointClientDelegationResourceTest
     }
 
     /// <summary>
+    /// ClientAccess without a via-party organization can't be scoped.
+    /// Expects no delegations, even though a matching client delegation exists.
+    /// </summary>
+    [Fact]
+    public async Task GetDelegationChanges_ClientAccessWithoutViaParty_ReturnsEmpty()
+    {
+        var request = new
+        {
+            subject = new { id = "urn:altinn:userid", value = RecipientUserId.ToString() },
+            party = new { id = "urn:altinn:partyid", value = OrgMainUnitPartyId.ToString() },
+            resource = new[] { new { id = "urn:altinn:resource", value = "nav_sykepenger_dialog" } },
+            authContext = "ClientAccess"
+        };
+
+        var response = await _client.PostAsJsonAsync(
+            "accessmanagement/api/v1/policyinformation/getdelegationchanges",
+            request,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var result = await response.Content.ReadFromJsonAsync<List<DelegationChangeDto>>(_options, TestContext.Current.CancellationToken);
+        Assert.NotNull(result);
+        Assert.Empty(result);
+    }
+
+    /// <summary>
     /// Subject is a system user UUID, party matches the delegating org.
     /// Expects the client-delegated resource to be returned.
     /// </summary>

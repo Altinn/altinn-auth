@@ -22,7 +22,8 @@ public enum AuthContext
     ClientAccess = 1,
 
     /// <summary>
-    /// Only direct/keyrole access is considered. All client-delegated access is excluded.
+    /// Only access held directly by the subject (direct delegations and main-unit inheritance) is considered.
+    /// Both client-delegated access and keyrole (org-to-org) inherited access are excluded.
     /// </summary>
     [EnumMember(Value = "DirectAccess")]
     DirectAccess = 2,

@@ -398,13 +398,19 @@ namespace Altinn.AccessManagement.Core.Services
             if (authContext == AuthContext.ClientAccess)
             {
                 delegations.Clear();
+
+                // ClientAccess without a via-party can't be scoped and must never grant access.
+                if (string.IsNullOrWhiteSpace(viaPartyOrganizationNumber))
+                {
+                    return delegations;
+                }
             }
 
             if (authContext != AuthContext.DirectAccess && await _featureManager.IsEnabledAsync("AccessManagement.Pip.IncludeClientDelegatedResources", cancellationToken))
             {
                 var clientDelegations = await GetClientDelegatedResources(subjectUserId, subjectUuid, subjectUuidType, from, resourceId, resourceMatchType, cancellationToken);
 
-                if (authContext == AuthContext.ClientAccess && !string.IsNullOrEmpty(viaPartyOrganizationNumber))
+                if (authContext == AuthContext.ClientAccess)
                 {
                     var viaPartyEntity = await _dbContext.Entities
                         .AsNoTracking()
