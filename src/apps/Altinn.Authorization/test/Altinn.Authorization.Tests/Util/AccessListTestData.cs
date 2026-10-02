@@ -14,7 +14,7 @@ namespace Altinn.Authorization.Tests.Util
     /// <para>
     /// The subject side is seeded the way the production <c>ContextHandler</c> resolves it, never by
     /// putting the decisive attribute in the request itself:
-    /// <see cref="DaglUserId"/> gets its role from <c>Data/Roles/user_20990010/party_{partyId}/roles.json</c>
+    /// <see cref="DaglUserId"/> gets its role from <c>Data/AccessManagement/RolesAndAccessPackages/{partyUuid}/00000000-0000-0000-0000-000020990010.json</c>
     /// (the policy Target of <c>Data/Xacml/3.0/ResourceRegistry/ttd-accesslist-resource/policy.xml</c>
     /// references <c>urn:altinn:rolecode</c>, which is what triggers the role lookup), while
     /// <see cref="DelegationUserId"/> and <see cref="SystemUserUuid"/> hold no role at all and reach
