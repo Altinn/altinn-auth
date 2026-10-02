@@ -4700,7 +4700,7 @@ public static class RoleConstants
             ProviderId = ProviderConstants.Altinn2,
             Name = "Eksplisitt tjenestedelegering",
             Code = "ektj",
-            Description = "Ikke-delegerbar roller for tjenester som kun skal delegeres enkeltvis",
+            Description = "Ikke-delegerbar rolle for tjenester som kun skal delegeres enkeltvis",
             Urn = "urn:altinn:rolecode:ektj",
             IsKeyRole = false,
             IsAvailableForServiceOwners = true,
