@@ -1,4 +1,4 @@
-name: "Template: Terraform CD"
+﻿name: "Template: Terraform CD"
 
 on:
   workflow_call:
@@ -113,3 +113,4 @@ jobs:
         if: always()
         run: |
           shred -u .github/openvpn.config || true
+

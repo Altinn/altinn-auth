@@ -1,5 +1,7 @@
 ﻿{
   "dis": {
+    "deploy": false,
+    "manifest": "register/manifest",
     "syncroot": "register/syncroot"
   },
   "database": {

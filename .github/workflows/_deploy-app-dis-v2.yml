@@ -1,0 +1,50 @@
+﻿name: "Template: Release App V2"
+
+on:
+  workflow_call:
+    app:
+      type: string
+      description: Name of the app
+      required: true
+
+    environment:
+      type: string
+      description: GitHub environment
+      required: true
+    
+    manifest:
+      type: string
+      description: Path of the manifest
+      required: true
+
+permissions:
+  contents: read
+  packages: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  deploy-app:
+    runs-on: ubuntu-latest
+    name: Deploy ${{ inputs.environment }} to DIS ${{ inputs.app }}
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Setup Flux CLI
+        uses: fluxcd/flux2/action@main
+
+      - name: Push manifests
+        run: |
+            flux push artifact "oci://ghcr.io/altinn/${{ inputs.manifest }}:${{ github.sha }}" \
+            --path="./src/apps/${{ inputs.app }}/manifests" \
+            --source="$(git config --get remote.origin.url)" \
+            --revision="$(git branch --show-current)@sha1:$(git rev-parse HEAD)"
+
+      - name: Deploy manifests to ${{ inputs.environment }}
+        run: |
+          flux tag artifact "oci://ghcr.io/altinn/${{ inputs.manifest }}:${{ github.sha }}" --tag ${{ inputs.environment }}

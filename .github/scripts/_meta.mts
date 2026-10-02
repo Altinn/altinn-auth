@@ -15,7 +15,7 @@ const enqueue = <T extends unknown>(fn: () => Promise<T>): Promise<T> => {
   var task = _queue.then(() => within(fn));
   _queue = task.then(
     (_) => {},
-    (_) => {}
+    (_) => {},
   );
   return task;
 };
@@ -53,6 +53,8 @@ const dockerImageSchema = z.object({
 
 const disSchema = z.object({
   syncroot: z.string().optional(),
+  manifests: z.string().optional(),
+  deploy: z.boolean().default(false),
 });
 
 const imageSchema = z
@@ -86,13 +88,13 @@ const sonarcloudSchema = z
     z.object({
       enabled: z.boolean().default(true),
       projectKey: z.string().optional(),
-    })
+    }),
   );
 
 const configSchema = z.object({
   name: z.string().optional(),
   shortName: z.string().optional(),
-  dis: disSchema.optional(),
+  dis: disSchema.default({ deploy: false }),
   image: imageSchema.optional(),
   infra: infraSchema.optional(),
   database: databaseSchema.optional(),
@@ -136,7 +138,9 @@ export type DatabaseInfo = {
 };
 
 export type DisInfo = {
+  readonly deploy: boolean;
   readonly syncroot: string;
+  readonly manifest: string;
 };
 
 export type SonarcloudInfo =
@@ -213,7 +217,7 @@ const last = (arr: string[]) => arr[arr.length - 1];
 const readProjects = async (
   verticalPath: string,
   verticalRelPath: string,
-  type: ProjectType
+  type: ProjectType,
 ): Promise<readonly Project[]> => {
   const projectFiles = await globby(`${type}/*/*.*proj`, { cwd: verticalPath });
   return projectFiles.map((file) => {
@@ -234,7 +238,7 @@ const readProjects = async (
 
 const readVertical = async (
   type: VerticalType,
-  dirPath: string
+  dirPath: string,
 ): Promise<RawVertical> => {
   const verticalPath = path.resolve(dirPath);
   const dirName = path.basename(verticalPath);
@@ -272,7 +276,7 @@ const readVertical = async (
   let image: ImageInfo | undefined = void 0;
   let infra: InfraInfo | undefined = void 0;
   let database: DatabaseInfo | undefined = void 0;
-  let dis: DisInfo | undefined = void 0; 
+  let dis: DisInfo | undefined = void 0;
 
   console.log(config);
   if (type === "app") {
@@ -381,7 +385,9 @@ for (const raw of rawVerticals) {
   for (const dep of raw.deps) {
     const resolved = lookup.get(`${dep.type}:${dep.name}`);
     if (!resolved) {
-      throw new Error(`Dependency of ${vertical.displayName} not found: ${dep.type}:${dep.name}`);
+      throw new Error(
+        `Dependency of ${vertical.displayName} not found: ${dep.type}:${dep.name}`,
+      );
     }
 
     (vertical.deps as Vertical[]).push(resolved);

@@ -1,6 +1,8 @@
 ﻿{
   "dis": {
-    "syncroot": "accessmanagement/syncroot"
+    "deploy": true,
+    "manifest": "access-management/manifests",
+    "syncroot": "access-management/syncroot"
   },
   "image": {},
   "database": {

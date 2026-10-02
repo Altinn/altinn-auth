@@ -1,6 +1,6 @@
 ﻿apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: product-accessmanagement
+namespace: product-access-management
 resources:
   - ../base
 patches:
@@ -18,22 +18,23 @@ patches:
 
   - target:
       kind: Kustomization
-      name: pre-deployment
+      name: access-management-pre-deploy
     patch: |-
       apiVersion: kustomize.toolkit.fluxcd.io/v1
       kind: Kustomization
       metadata:
-        name: pre-deployment
+        name: access-management-pre-deploy
       spec:
         path: ./pre-deploy/at22
 
   - target:
       kind: Kustomization
-      name: deployment
+      name: access-management-deploy
     patch: |-
       apiVersion: kustomize.toolkit.fluxcd.io/v1
       kind: Kustomization
       metadata:
-        name: deployment
+        name: access-management-deploy
       spec:
         path: ./deploy/at22
+  

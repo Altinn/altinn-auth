@@ -4,7 +4,6 @@ metadata:
   name: migrate-database
   labels:
     app.kubernetes.io/name: access-management-migrate-database
-    app.kubernetes.io/part-of: accessmanagement
 spec:
   activeDeadlineSeconds: 86400 # 24 hours
   backoffLimit: 0
@@ -12,11 +11,9 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: access-management-migrate-database
-        app.kubernetes.io/part-of: accessmanagement
         azure.workload.identity/use: "true"
     spec:
-      serviceAccountName: pre-deploy
-
+      serviceAccountName: access-management-pre-deploy
       restartPolicy: Never
       securityContext:
         runAsUser: 1000
@@ -24,7 +21,7 @@ spec:
         allowPrivilegeEscalation: false
 
       containers:
-        - name: accessmanagement
+        - name: access-management
           image: ghcr.io/altinn/altinn-auth/accessmanagement:{{GIT_SHA}}
           imagePullPolicy: Always
 

@@ -71,7 +71,9 @@ const mapped = sourceVerticals.map((v) => {
 
   console.log(v.name, v.dis);
   if (v.dis) {
-    ret.syncroot = v.dis.syncroot;
+    ret.disSyncroot = v.dis.syncroot;
+    ret.disManifest = v.dis.manifest;
+    ret.disDeploy = v.dis.deploy.toString();
   }
 
   if (v.database) {

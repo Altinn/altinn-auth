@@ -1,4 +1,4 @@
-﻿name: "Template: Deploy app"
+﻿name: "Template: Deploy app V2"
 
 on:
   workflow_call:
@@ -12,6 +12,16 @@ on:
         required: true
         description: Path to the app
         type: string
+      
+      manifest:
+        required: false
+        description: Path to the manifest
+        type: string
+      
+      dis-deploy:
+        description: Whether to deploy to DIS
+        type: boolean
+        default: false
 
       terraform:
         description: Whether to deploy terraform
@@ -75,7 +85,7 @@ jobs:
           echo "Image: ${IMAGE}"
           echo "Tag: ${TAG}"
 
-  deploy-terraform-test:
+  deploy-app-terraform-test:
     name: Terraform
     if: inputs.terraform
     secrets: inherit
@@ -91,36 +101,18 @@ jobs:
       environment: ${{ matrix.environment }}
       working_dir: ${{ inputs.path }}/infra
       tf_state: ${{ inputs.terraformStateFile }}
-
-  deploy-terraform-staging:
-    name: Terraform
-    if: inputs.terraform
+  
+  deploy-app-dis-test:
+    name: Deploy to DIS
+    if: deploy-app-terraform-test.outcome == 'skipped' || deploy-app-terraform-test.outcome == 'success' 
     secrets: inherit
+    uses: ./.github/workflows/_deploy-app-dis-v2.yml
     strategy:
       fail-fast: false
       matrix:
-        environment: [tt02]
+        environment: [at22, at23, at24, yt01]
     needs:
-      - deploy-terraform-test
-
-    uses: ./.github/workflows/_deploy-app-terraform.yml
-    with:
-      environment: ${{ matrix.environment }}
-      working_dir: ${{ inputs.path }}/infra
-      tf_state: ${{ inputs.terraformStateFile }}
-
-  deploy-terraform-prod:
-    name: Terraform
-    if: inputs.terraform
-    secrets: inherit
-    strategy:
-      fail-fast: false
-      matrix:
-        environment: [prod]
-    needs:
-      - deploy-terraform-staging
-
-    uses: ./.github/workflows/_deploy-app-terraform.yml
+      - build-push
     with:
       environment: ${{ matrix.environment }}
       working_dir: ${{ inputs.path }}/infra

@@ -19,7 +19,7 @@ spec:
         allowPrivilegeEscalation: false
 
       containers:
-        - name: accessmanagement
+        - name: authorization
           image: ghcr.io/altinn/altinn-auth/authorization:{{GIT_SHA}}
           imagePullPolicy: Always
           resources:
@@ -36,7 +36,7 @@ spec:
 
           env:
             - name: K8S_CONTAINER_NAME
-              value: accessmanagement
+              value: authorization
             - name: K8S_POD_NAME
               valueFrom:
                 fieldRef:
@@ -85,12 +85,14 @@ spec:
               periodSeconds: 10
               timeoutSeconds: 10
 
+          # TODO: probably don't need this
           volumeMounts:
             - name: altinn-appsettings
               mountPath: "/altinn-appsettings"
             - name: accesstoken
               mountPath: "/accesstoken"
 
+      # TODO: probably don't need this
       volumes:
         - name: altinn-appsettings
           secret:

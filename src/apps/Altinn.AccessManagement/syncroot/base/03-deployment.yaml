@@ -1,16 +1,14 @@
 ﻿apiVersion: kustomize.toolkit.fluxcd.io/v1
 kind: Kustomization
 metadata:
-  name: deployment
+  name: access-management-deploy
 spec:
   interval: 60m
   path: ./fake
   prune: true
-  targetNamespace: product-accessmanagement
-
+  targetNamespace: product-access-management
   sourceRef:
     kind: OCIRepository
     name: manifests
-
   dependsOn:
-    - name: 'pre-deployment'
+    - name: 'access-management-pre-deploy'

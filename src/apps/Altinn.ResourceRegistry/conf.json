@@ -1,5 +1,7 @@
 {
   "dis": {
+    "deploy": false,
+    "manifest": "resource-registry/manifest",
     "syncroot": "resource-registry/syncroot"
   },
   "sonarcloud": {
