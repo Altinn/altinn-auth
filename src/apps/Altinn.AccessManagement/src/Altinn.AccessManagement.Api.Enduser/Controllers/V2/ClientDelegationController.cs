@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.Net.Mime;
 using Altinn.AccessManagement.Api.Enduser.Models;
 using Altinn.AccessManagement.Api.Enduser.Validation;
@@ -280,6 +280,7 @@ public class ClientDelegationController(
                 options.AllowedToEntityTypes = [EntityTypeConstants.Person, EntityTypeConstants.SystemUser];
                 options.EntitiesToValidateForAnyConnections = [EntityTypeConstants.Person];
                 options.ToParameterName = "agent";
+                options.PerformToEntityTypeValidation = false;
             },
             cancellationToken);
 
