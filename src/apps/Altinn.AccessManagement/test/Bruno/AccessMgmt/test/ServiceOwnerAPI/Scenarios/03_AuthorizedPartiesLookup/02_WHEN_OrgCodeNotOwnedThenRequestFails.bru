@@ -1,0 +1,63 @@
+meta {
+  name: 02_WHEN_OrgCodeNotOwnedThenRequestFails
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/authorizedparties?orgCode={{foreignOrgCode}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  orgCode: {{foreignOrgCode}}
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "type": "urn:altinn:person:identifier-no",
+    "value": "{{subjectPid}}"
+  }
+}
+
+docs {
+  WHEN the service owner filters on an `orgCode` it does not own the request fails with
+  400. The check compares the org code with the token's org claim, or with the provider
+  registered for the organization number in the consumer claim; the `.admin` scope may
+  use any org code. This endpoint answers with the ASP.NET validation problem shape,
+  with the org code as the `errors` key.
+}
+
+script:pre-request {
+  const { td, loginAsServiceOwner, scopes, serviceOwners } = require("./test/ServiceOwnerAPI/Scenarios/helpers.js");
+  const data = td();
+
+  bru.setVar("subjectPid", data.resourceDelegation.grantor.pid);
+  bru.setVar("resource", data.resourceDelegation.resource);
+  bru.setVar("foreignOrgCode", serviceOwners.skd.org);
+
+  await loginAsServiceOwner(serviceOwners.digdir, scopes.authorizedParties);
+}
+
+tests {
+  const { serviceOwners } = require("./test/ServiceOwnerAPI/Scenarios/helpers.js");
+  const orgCode = serviceOwners.skd.org;
+
+  test("WHEN the org code is not owned by the service owner, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN the validation problem names the org code", function() {
+    const body = res.getBody();
+    expect(body.status).to.equal(400);
+    expect(body.title).to.equal("One or more validation errors occurred.");
+    expect(body.errors).to.have.property(orgCode);
+    expect(body.errors[orgCode][0]).to.equal("Authenticated service owner organization is not authorized/owner of org code: " + orgCode + ".");
+  });
+}
