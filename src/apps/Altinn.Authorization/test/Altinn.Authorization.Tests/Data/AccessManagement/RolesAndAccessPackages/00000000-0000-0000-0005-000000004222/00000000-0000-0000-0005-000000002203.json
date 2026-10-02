@@ -1,7 +1,0 @@
-{
-  "roles": [
-    "urn:altinn:rolecode:dagl",
-    "urn:altinn:rolecode:apiadm"
-  ],
-  "accessPackages": []
-}
