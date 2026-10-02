@@ -29,6 +29,7 @@ public class DelegationChangeInputDto
     /// Controls how client-delegated access is considered when looking up delegation changes.
     /// Defaults to <see cref="AuthContextDto.All"/>.
     /// </summary>
+    [EnumDataType(typeof(AuthContextDto))]
     public AuthContextDto AuthContext { get; set; } = AuthContextDto.All;
 
     /// <summary>

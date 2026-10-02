@@ -415,7 +415,7 @@ namespace Altinn.Platform.Authorization.Controllers
                 throw new ArgumentException("Policy not found for resource");
             }
 
-            // In ClientAccess mode the subject
+            // In ClientAccess mode the subject enrichment above scopes the roles and access packages returned by the
             // AccessManagement PIP to client delegations received through the via-party organization, so the
             // role-based evaluation only reflects client access.
             XacmlContextResponse rolesContextResponse = _pdp.Authorize(decisionRequest, policy);
