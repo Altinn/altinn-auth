@@ -261,6 +261,44 @@ public class PolicyInformationPointRolesAndAccessPackagesTest
     }
 
     [Fact]
+    public async Task GetRolesAndAccessPackages_ClientAccess_GunnarFromBakerJohnsenSubunitViaRegnskaperne_ReturnsMainUnitInheritedClientDelegatedPackages()
+    {
+        // The client delegation is given by the main unit Baker Johnsen through Regnskaperne. Main-unit inheritance
+        // must still apply for the subunit, even though the hierarchy projection replaces the via-party with the main unit.
+        var from = TestData.GetEntity("Baker Johnsen - Oslo").Id;
+        var to = TestData.GetEntity("Gunnar").Id;
+        var viaParty = TestData.GetEntity("Regnskaperne").OrganizationIdentifier;
+
+        var response = await _client.GetAsync($"accessmanagement/api/v1/policyinformation/roles-and-accesspackages?from={from}&to={to}&authContext=ClientAccess&viaParty={viaParty}", TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var result = await response.Content.ReadFromJsonAsync<PipResponseDto>(_options, TestContext.Current.CancellationToken);
+        Assert.NotNull(result);
+        Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:regnskapsforer-med-signeringsrettighet"));
+        Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:regnskapsforer-lonn"));
+        Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:regnskapsforer-uten-signeringsrettighet"));
+    }
+
+    [Fact]
+    public async Task GetRolesAndAccessPackages_ClientAccess_GunnarFromBakerJohnsenSubunitViaOtherParty_ReturnsEmpty()
+    {
+        // The hierarchy record's via-party is the main unit itself; it must not be accepted as the via-party.
+        var from = TestData.GetEntity("Baker Johnsen - Oslo").Id;
+        var to = TestData.GetEntity("Gunnar").Id;
+        var viaParty = TestData.GetEntity("Baker Johnsen").OrganizationIdentifier;
+
+        var response = await _client.GetAsync($"accessmanagement/api/v1/policyinformation/roles-and-accesspackages?from={from}&to={to}&authContext=ClientAccess&viaParty={viaParty}", TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var result = await response.Content.ReadFromJsonAsync<PipResponseDto>(_options, TestContext.Current.CancellationToken);
+        Assert.NotNull(result);
+        Assert.Empty(result.AccessPackages);
+        Assert.Empty(result.Roles);
+    }
+
+    [Fact]
     public async Task GetRolesAndAccessPackages_ClientAccess_PetterFromBakerJohnsenViaKeyRole_ExcludesKeyRoleInheritedPackages()
     {
         var from = TestData.GetEntity("Baker Johnsen").Id;

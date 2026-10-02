@@ -159,6 +159,25 @@ public class AuthorizedPartyRepoServiceEf(AppDbContext db, ConnectionQuery conne
             ct);
     }
 
+    /// <inheritdoc />
+    public async Task<HashSet<Guid>> GetDelegationIdsViaParty(IEnumerable<Guid> delegationIds, Guid viaPartyId, CancellationToken ct = default)
+    {
+        var ids = delegationIds.Distinct().ToList();
+        if (ids.Count == 0)
+        {
+            return [];
+        }
+
+        // Same via-party semantics as the connection query: the to-party of the delegation's from-assignment.
+        var result = await db.Delegations
+            .AsNoTracking()
+            .Where(d => ids.Contains(d.Id) && d.From.ToId == viaPartyId)
+            .Select(d => d.Id)
+            .ToListAsync(ct);
+
+        return result.ToHashSet();
+    }
+
     public async Task<List<Resource>> GetResources(string? providerCode = null, IEnumerable<string>? resourceIds = null, CancellationToken ct = default)
     {
         return await db.Resources

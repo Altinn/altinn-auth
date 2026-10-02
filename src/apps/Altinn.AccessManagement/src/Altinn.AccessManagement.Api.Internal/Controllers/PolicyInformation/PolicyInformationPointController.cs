@@ -151,8 +151,16 @@ public class PolicyInformationPointController(
             return connections;
         }
 
-        return connections
-            .Where(c => c.Reason == ConnectionReason.Delegation && c.DelegationId.HasValue && c.ViaId == viaPartyId)
+        // Client delegations inherited from a main unit are projected as Reason.Hierarchy with the via-party replaced
+        // by the main unit, so the original via-party is resolved from the delegation itself.
+        var clientDelegations = connections
+            .Where(c => c.DelegationId.HasValue && (c.Reason == ConnectionReason.Delegation || c.Reason == ConnectionReason.Hierarchy))
+            .ToList();
+
+        var delegationIdsViaParty = await authorizedPartyRepoService.GetDelegationIdsViaParty(clientDelegations.Select(c => c.DelegationId.Value), viaPartyId.Value, cancellationToken);
+
+        return clientDelegations
+            .Where(c => delegationIdsViaParty.Contains(c.DelegationId.Value))
             .ToList();
     }
 }
