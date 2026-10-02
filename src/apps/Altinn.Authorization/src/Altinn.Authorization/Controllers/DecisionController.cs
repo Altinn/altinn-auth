@@ -398,7 +398,7 @@ namespace Altinn.Platform.Authorization.Controllers
 
             // ClientAccess requires the via-party organization attribute to scope both access package and delegation lookups.
             // Validated before evaluation so the missing-attribute result is returned as-is for this request.
-            if (authContext == AuthContext.ClientAccess && string.IsNullOrEmpty(resourceAttributes.ViaPartyOrganizationNumber))
+            if (authContext == AuthContext.ClientAccess && string.IsNullOrWhiteSpace(resourceAttributes.ViaPartyOrganizationNumber))
             {
                 return new XacmlContextResponse(new XacmlContextResult(XacmlContextDecision.Indeterminate)
                 {

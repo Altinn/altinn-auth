@@ -193,6 +193,25 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         /// <summary>
+        /// A whitespace-only via-party organization attribute is treated as missing for ClientAccess.
+        /// </summary>
+        [Fact]
+        public async Task PDPExternal_Decision_ClientAccessWithWhitespaceViaParty_ReturnsIndeterminate()
+        {
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize altinn:authorization/authorize.admin");
+            string testCase = "AltinnResourceRegistry0105";
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
+            HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateXacmlRequestExternal(testCase);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+
+            // Act
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(_client, httpRequestMessage);
+
+            // Assert
+            AssertionUtil.AssertEqual(expected, contextResponse);
+        }
+
+        /// <summary>
         /// In a multi-request each request carries its own auth-context and is evaluated independently.
         /// </summary>
         [Fact]
