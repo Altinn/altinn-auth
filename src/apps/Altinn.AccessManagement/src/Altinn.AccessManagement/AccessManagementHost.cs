@@ -419,7 +419,8 @@ internal static partial class AccessManagementHost
             })
             .AddPolicy(AuthzConstants.POLICY_ENDUSER_CONNECTIONS_WRITE_TOOTHERS, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE])))
             .AddPolicy(AuthzConstants.POLICY_ENDUSER_REQUESTS_READ, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_REQUESTS_READ])))
-            .AddPolicy(AuthzConstants.POLICY_ENDUSER_REQUESTS_WRITE, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_REQUESTS_WRITE])));
+            .AddPolicy(AuthzConstants.POLICY_ENDUSER_REQUESTS_WRITE, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_REQUESTS_WRITE])))
+            .AddPolicy(AuthzConstants.SCOPE_ENDUSER_SYSTEMUSER_REQUESTS_WRITE, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_ENDUSER_SYSTEMUSER_REQUESTS_WRITE])));
 
         builder.Services.AddScoped<IAuthorizationHandler, AccessTokenHandler>();
         builder.Services.AddScoped<IAuthorizationHandler, ClaimAccessHandler>();

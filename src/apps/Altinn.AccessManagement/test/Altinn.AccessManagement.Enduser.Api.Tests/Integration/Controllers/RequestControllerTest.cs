@@ -744,6 +744,70 @@ public class RequestControllerTest
     }
 
     [IntegrationTest]
+    public class ApproveSystemUserPackageRequestTest : IClassFixture<ApiFixture>
+    {
+        private static readonly Guid PendingPackageRequestId = Guid.Parse("0196b00d-0000-7000-8000-000000000002");
+
+        public ApproveSystemUserPackageRequestTest(ApiFixture fixture)
+        {
+            Fixture = fixture;
+            EnableFeatureFlags(fixture);
+            fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.EnableSystemUserRequests);
+            fixture.EnsureSeedOnce<ApproveSystemUserPackageRequestTest>(db =>
+            {
+                // A system user requests the Agriculture package from Dumbo Adventures (the receiver).
+                // Dumbo's managing director (Malin) can delegate the package, so approval should succeed
+                // and delegate the package to the system user requester.
+                var reqAssignment = new RequestAssignment
+                {
+                    FromId = TestEntities.SystemUserStandard.Id,
+                    ToId = TestData.DumboAdventures.Id,
+                    ById = TestEntities.SystemUserStandard.Id,
+                    RoleId = RoleConstants.Rightholder,
+                };
+                db.RequestAssignments.Add(reqAssignment);
+                db.SaveChanges();
+
+                db.RequestAssignmentPackages.Add(new RequestAssignmentPackage
+                {
+                    Id = PendingPackageRequestId,
+                    AssignmentId = reqAssignment.Id,
+                    PackageId = PackageConstants.Agriculture.Id,
+                    Status = RequestStatus.Pending,
+                });
+                db.SaveChanges();
+            });
+        }
+
+        public ApiFixture Fixture { get; }
+
+        /// <summary>
+        /// Malin (managing director of DumboAdventures, the request's receiver party) approves a
+        /// system user's pending request for the Agriculture package. Approval gets-or-creates the
+        /// Dumbo to system-user rightholder connection and delegates the package on Dumbo's behalf,
+        /// so the request transitions to Approved even though the delegation target is a system user.
+        /// </summary>
+        [Fact]
+        public async Task Receiver_ApprovesPendingSystemUserPackageRequest_ReturnsApproved()
+        {
+            var client = CreateSystemClient(Fixture, TestData.MalinEmilie.Id);
+
+            var response = await client.PutAsync(
+                $"{Route}/received/approve?party={TestData.DumboAdventures.Id}&id={PendingPackageRequestId}",
+                null,
+                TestContext.Current.CancellationToken);
+
+            string content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {content}");
+
+            var result = JsonSerializer.Deserialize<RequestDto>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            Assert.NotNull(result);
+            Assert.Equal(RequestStatus.Approved, result.Status);
+            Assert.Equal(TestEntities.SystemUserStandard.Id, result.From.Id);
+        }
+    }
+
+    [IntegrationTest]
     public class ApproveResourceRequestTest : IClassFixture<ApiFixture>
     {
         private static readonly ResourceType TestResourceType = new()

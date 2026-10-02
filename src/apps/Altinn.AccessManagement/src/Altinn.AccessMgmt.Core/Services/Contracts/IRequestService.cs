@@ -55,6 +55,14 @@ public interface IRequestService
     Task<Result<RequestDto>> CreatePackageRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, string package, RequestStatus status = RequestStatus.Pending, CancellationToken ct = default);
 
     /// <summary>
+    /// Creates a new package request where the requester (from-party) is a system user.
+    /// The <paramref name="systemUserId"/> must resolve to a system user entity, the
+    /// <see cref="AccessMgmtFeatureFlags.EnableSystemUserRequests"/> feature must be enabled and the
+    /// recipient (<paramref name="toId"/>) must be an organization.
+    /// </summary>
+    Task<Result<RequestDto>> CreateSystemUserPackageRequest(Guid toId, Guid systemUserId, Guid roleId, string package, RequestStatus status = RequestStatus.Pending, CancellationToken ct = default);
+
+    /// <summary>
     /// Updates the status of a request.
     /// </summary>
     Task<Result<RequestDto>> UpdateRequest(Guid partyUuid, Guid requestId, RequestStatus status, CancellationToken ct = default);
