@@ -14,9 +14,21 @@ This guide applies to everyone who changes this repository, whether you type eve
 - The PR title is a [Conventional Commit](https://www.conventionalcommits.org/) with the issue number: `fix(#4044): remove every delegation when a client is removed`. `main` is squash-only, and the release automation reads the squash commit's title. Today that title is the PR title for a PR with several commits but the commit title for a PR with one, so check it in the merge dialog before you merge (#4095 makes it always the PR title). `feat` and `fix` on a package under `src/pkgs` bump its version.
 - Keep PRs small: aim for under **400 changed lines**, not counting mechanically generated files (generated clients, lock files) and test data. Code an assistant wrote counts in full. Split larger work, and agree the split with a reviewer before you start.
 - One approving review from a person and green required checks are needed to merge. Open a draft PR early if you want feedback.
-- Documentation, `AGENTS.md` and ADRs are updated in the same PR as the behaviour they describe. Write an ADR in [`docs/adr/`](docs/adr/README.md) (cross-cutting) or the vertical's `docs/adr/` when a change alters an authorization flow or policy evaluation, a public API contract, a data model, a dependency between verticals, or a build, release or repository-structure convention, and for any choice that should survive being asked about in two years.
+- Update affected documentation and agent guidance in the same PR as the behaviour they describe. An ADR is required only for a significant architectural decision or a lasting trade-off; touching an API contract, data model or authorization code does not by itself require one. See [When an ADR is required](#when-an-adr-is-required).
 - Tests are production code: reviewed with the same care, and never deleted or weakened without a reason a reviewer has agreed to. See the [testing guide](docs/testing/README.md). Say in the PR what you could not test locally.
 - Write for the reader. Anything a person is meant to read, whether an issue, a PR description, a comment or a doc, starts with a **TL;DR of at most five bullets**. An issue keeps under 200 words above the fold and puts the rest in a collapsed `<details>` block. A PR description is the TL;DR plus what you verified. A text drafted with a tool says so at the top, and leaves the reader unspecified until a person confirms they have read it. An unnamed reader is an honest signal, not a failure.
+
+## When an ADR is required
+
+Write an ADR when a change introduces or revises a significant architectural decision whose rationale needs to outlive the PR. Typical cases are a change to trust boundaries or authorization semantics, service responsibilities or dependencies between verticals, data ownership or storage strategy, a breaking API contract with migration consequences, or a substantial build or release strategy. Record meaningful alternatives, the chosen trade-off and its lasting consequences.
+
+An ADR is **not required** for a small, backward-compatible API or model extension that follows the existing design, exposing already-stored metadata, a bug fix restoring intended behaviour, a refactoring that preserves behaviour, or a routine configuration, tooling or documentation adjustment. Document the contract and relevant choices in the README, OpenAPI or other existing documentation, and verify behaviour with appropriate tests. For example, exposing existing resource creation and update timestamps does not require a separate ADR.
+
+Judge the significance of the decision, not the number of changed lines or the kind of file touched. A small code change can still alter a trust boundary. If the change introduces no significant architectural choice or lasting trade-off, ordinary documentation and the PR explanation are sufficient; no separate approval or ADR is needed just to confirm that exception.
+
+When required, add the ADR in [`docs/adr/`](docs/adr/README.md) for cross-cutting decisions or in the vertical's `docs/adr/`, in the same PR as the change. If it changes an accepted architectural decision, supersede that ADR rather than editing its history.
+
+This clarification of ADR scope was drafted with Codex (GPT-6). Human reader of the revised wording: not confirmed.
 
 ## Working with AI assistance
 

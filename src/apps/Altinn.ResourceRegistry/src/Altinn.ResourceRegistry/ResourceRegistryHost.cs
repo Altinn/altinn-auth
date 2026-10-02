@@ -162,6 +162,7 @@ internal static class ResourceRegistryHost
             c.SupportNonNullableReferenceTypes();
             c.OperationFilter<ConditionalOperationFilter>();
             c.SchemaFilter<AccessListIncludesSchemaFilter>();
+            c.SchemaFilter<ServiceResourceSchemaFilter>();
 
             var originalIdSelector = c.SchemaGeneratorOptions.SchemaIdSelector;
             c.SchemaGeneratorOptions.SchemaIdSelector = (Type t) =>
