@@ -17,8 +17,8 @@ on:
           - prod
 
 env:
-  SYNCROOT_ARTIFACT_NAME: accessmanagement/syncroot
-  APP_ARTIFACT_NAME: accessmanagement/altinn-auth
+  SYNCROOT_ARTIFACT_NAME: access-management/syncroot
+  APP_ARTIFACT_NAME: access-management/altinn-auth
   SYNCROOT_WORKDIR: ./src/apps/Altinn.AccessManagement/syncroot
   # Scopes what gets published, not what gets validated: validate-manifests.sh
   # renders every app under src/apps/*/manifests, this ships one of them. The

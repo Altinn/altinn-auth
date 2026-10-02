@@ -8,7 +8,7 @@ spec:
   prune: true
   wait: true
   force: true
-  targetNamespace: product-accessmanagement
+  targetNamespace: product-access-management
 
   sourceRef:
     kind: OCIRepository

@@ -4,7 +4,7 @@ metadata:
   name: migrate-database
   labels:
     app.kubernetes.io/name: access-management-migrate-database
-    app.kubernetes.io/part-of: accessmanagement
+    app.kubernetes.io/part-of: access-management
 spec:
   activeDeadlineSeconds: 86400 # 24 hours
   backoffLimit: 0
@@ -12,7 +12,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: access-management-migrate-database
-        app.kubernetes.io/part-of: accessmanagement
+        app.kubernetes.io/part-of: access-management
         azure.workload.identity/use: "true"
     spec:
       serviceAccountName: pre-deploy

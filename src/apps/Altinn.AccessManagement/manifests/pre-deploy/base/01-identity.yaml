@@ -4,7 +4,7 @@ metadata:
   name: pre-deploy
   labels:
     app.kubernetes.io/name: access-management-pre-deploy
-    app.kubernetes.io/part-of: accessmanagement
+    app.kubernetes.io/part-of: access-management
 spec: {}
 
 ---
@@ -14,5 +14,5 @@ metadata:
   name: app
   labels:
     app.kubernetes.io/name: access-management
-    app.kubernetes.io/part-of: accessmanagement
+    app.kubernetes.io/part-of: access-management
 spec: {}
