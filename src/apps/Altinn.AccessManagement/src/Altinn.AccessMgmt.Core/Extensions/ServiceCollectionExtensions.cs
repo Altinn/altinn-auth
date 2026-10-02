@@ -80,6 +80,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuthorizedPartiesService, AuthorizedPartiesServiceEf>();
         services.AddScoped<IServiceOwnerConnectionService, ServiceOwnerConnectionService>();
         services.AddScoped<IConsentDelegationCheckService, ConsentDelegationCheckService>();
+        services.AddScoped<IActivityLogService, ActivityLogService>();
 
         services.AddScoped<IAuthorizationScopeProvider, DefaultAuthorizationScopeProvider>();
         services.AddScoped<IAuthorizationHandler, ScopeConditionAuthorizationHandler>();

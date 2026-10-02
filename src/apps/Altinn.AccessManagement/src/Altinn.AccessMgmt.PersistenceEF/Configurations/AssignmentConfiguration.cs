@@ -13,6 +13,7 @@ public class AssignmentConfiguration : IEntityTypeConfiguration<Assignment>
     {
         builder.ToDefaultTable();
         builder.EnableAudit();
+        builder.EnableActivityLog();
 
         builder.HasKey(p => p.Id);
 
