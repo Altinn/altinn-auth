@@ -15,6 +15,8 @@ namespace Altinn.Authorization.PEP.Tests
         private const string App = "App";
         private const string ActionType = "read";
         private const int PartyId = 1000;
+        private const string PolicyObligationMinAuthnLevel = "urn:altinn:minimum-authenticationlevel";
+        private const string PolicyObligationMinAuthnLevelSystemUser = "urn:altinn:minimum-authenticationlevel-systemuser";
 
         /// <summary>
         /// Test case: Send attributes and creates request out of it 
@@ -604,6 +606,169 @@ namespace Altinn.Authorization.PEP.Tests
 
             // Assert
             Assert.True(valid);
+        }
+
+        /// <summary>
+        /// Test case: System user without an authlevel claim authorizes against a policy requiring level 4 in
+        /// general, but level 3 for system users.
+        /// Expected: The system user is treated as authentication level 3 and is authorized.
+        /// </summary>
+        [Fact]
+        public void ValidateDecisionResult_SystemUser_MeetsSystemUserMinAuthLevel_ReturnsTrue()
+        {
+            // Arrange
+            XacmlJsonResult result = CreateResultWithAuthLevelObligations("4", PolicyObligationMinAuthnLevelSystemUser, "3");
+
+            // Act
+            bool valid = DecisionHelper.ValidateDecisionResult(result, CreateSystemUserClaims());
+
+            // Assert
+            Assert.True(valid);
+        }
+
+        /// <summary>
+        /// Test case: System user authorizes against a policy requiring level 4 for system users.
+        /// Expected: The system user is not authorized, as a system user never exceeds authentication level 3.
+        /// </summary>
+        [Fact]
+        public void ValidateDecisionResult_SystemUser_DoesNotMeetSystemUserMinAuthLevel_ReturnsFalse()
+        {
+            // Arrange
+            XacmlJsonResult result = CreateResultWithAuthLevelObligations("4", PolicyObligationMinAuthnLevelSystemUser, "4");
+
+            // Act
+            bool valid = DecisionHelper.ValidateDecisionResult(result, CreateSystemUserClaims());
+
+            // Assert
+            Assert.False(valid);
+        }
+
+        /// <summary>
+        /// Test case: System user authorizes against a policy without the system user obligation.
+        /// Expected: The general requirement applies, unchanged from before the system user obligation existed.
+        /// </summary>
+        [Theory]
+        [InlineData("3", true)]
+        [InlineData("4", false)]
+        public void ValidateDecisionResult_SystemUser_NoSystemUserObligation_EnforcesGeneralMinAuthLevel(string minAuthLevel, bool expected)
+        {
+            // Arrange
+            XacmlJsonResult result = CreateResultWithAuthLevelObligations(minAuthLevel);
+
+            // Act
+            bool valid = DecisionHelper.ValidateDecisionResult(result, CreateSystemUserClaims("3"));
+
+            // Assert
+            Assert.Equal(expected, valid);
+        }
+
+        /// <summary>
+        /// Test case: End user on authentication level 2 authorizes against a policy requiring level 4 in general,
+        /// but level 2 for system users.
+        /// Expected: The system user obligation is ignored for anyone but a system user.
+        /// </summary>
+        [Fact]
+        public void ValidateDecisionResult_EndUser_SystemUserMinAuthLevelNotApplied_ReturnsFalse()
+        {
+            // Arrange
+            XacmlJsonResult result = CreateResultWithAuthLevelObligations("4", PolicyObligationMinAuthnLevelSystemUser, "2");
+
+            // Act
+            bool valid = DecisionHelper.ValidateDecisionResult(result, CreateUserClaims(false));
+
+            // Assert
+            Assert.False(valid);
+        }
+
+        /// <summary>
+        /// Test case: System user does not meet the system user requirement, validated with the detailed result.
+        /// Expected: The failed obligation reports the system user requirement, not the general one.
+        /// </summary>
+        [Fact]
+        public void ValidatePdpDecisionDetailed_SystemUserDoesNotMeetSystemUserMinAuthLevel_ReturnsSystemUserObligation()
+        {
+            // Arrange
+            List<XacmlJsonResult> results = new List<XacmlJsonResult>
+            {
+                CreateResultWithAuthLevelObligations("3", PolicyObligationMinAuthnLevelSystemUser, "4")
+            };
+
+            // Act
+            EnforcementResult result = DecisionHelper.ValidatePdpDecisionDetailed(results, CreateSystemUserClaims());
+
+            // Assert
+            Assert.False(result.Authorized);
+            Assert.Contains(AltinnObligations.RequiredAuthenticationLevel, result.FailedObligations.Keys);
+            Assert.Equal("4", result.FailedObligations[AltinnObligations.RequiredAuthenticationLevel]);
+        }
+
+        /// <summary>
+        /// Test case: A principal carrying an authorization_details claim that is not valid system user json.
+        /// Expected: The claim is ignored and the general requirement applies.
+        /// </summary>
+        [Fact]
+        public void ValidateDecisionResult_InvalidAuthorizationDetailsClaim_EnforcesGeneralMinAuthLevel()
+        {
+            // Arrange
+            XacmlJsonResult result = CreateResultWithAuthLevelObligations("4", PolicyObligationMinAuthnLevelSystemUser, "3");
+
+            List<Claim> claims = new List<Claim>
+            {
+                new Claim("urn:altinn:authlevel", "2", "string", "org"),
+                new Claim("authorization_details", "not json", "string", "maskinporten")
+            };
+
+            // Act
+            bool valid = DecisionHelper.ValidateDecisionResult(result, new ClaimsPrincipal(new ClaimsIdentity(claims)));
+
+            // Assert
+            Assert.False(valid);
+        }
+
+        private static XacmlJsonResult CreateResultWithAuthLevelObligations(string minAuthLevel, string additionalObligationCategory = null, string additionalObligationValue = null)
+        {
+            XacmlJsonResult result = new XacmlJsonResult
+            {
+                Decision = XacmlContextDecision.Permit.ToString(),
+                Obligations = new List<XacmlJsonObligationOrAdvice>
+                {
+                    new XacmlJsonObligationOrAdvice
+                    {
+                        AttributeAssignment = new List<XacmlJsonAttributeAssignment>
+                        {
+                            new XacmlJsonAttributeAssignment { Category = PolicyObligationMinAuthnLevel, Value = minAuthLevel }
+                        }
+                    }
+                }
+            };
+
+            if (additionalObligationCategory != null)
+            {
+                result.Obligations.Add(new XacmlJsonObligationOrAdvice
+                {
+                    AttributeAssignment = new List<XacmlJsonAttributeAssignment>
+                    {
+                        new XacmlJsonAttributeAssignment { Category = additionalObligationCategory, Value = additionalObligationValue }
+                    }
+                });
+            }
+
+            return result;
+        }
+
+        private static ClaimsPrincipal CreateSystemUserClaims(string authLevel = null)
+        {
+            List<Claim> claims = new List<Claim>
+            {
+                new Claim("authorization_details", "{\"type\":\"urn:altinn:systemuser\",\"systemuser_id\":[\"f58fe166-bc22-4899-beb7-c3e8e3332f43\"]}", "string", "maskinporten")
+            };
+
+            if (authLevel != null)
+            {
+                claims.Add(new Claim("urn:altinn:authlevel", authLevel, "string", "maskinporten"));
+            }
+
+            return new ClaimsPrincipal(new ClaimsIdentity(claims));
         }
 
         [Fact]

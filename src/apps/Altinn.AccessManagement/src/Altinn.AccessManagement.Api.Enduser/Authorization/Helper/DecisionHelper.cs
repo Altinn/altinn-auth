@@ -22,6 +22,13 @@ namespace Altinn.AccessManagement.Api.Enduser.Authorization.Helper
         private const string DefaultType = "string";
 
         private const string PolicyObligationMinAuthnLevel = "urn:altinn:minimum-authenticationlevel";
+        private const string PolicyObligationMinAuthnLevelSystemUser = "urn:altinn:minimum-authenticationlevel-systemuser";
+
+        /// <summary>
+        /// A logged in system user always has authentication level 3. This is a fixed property of the system user
+        /// login, and the token does not necessarily carry an urn:altinn:authlevel claim.
+        /// </summary>
+        private const int SystemUserAuthenticationLevel = 3;
 
         private static readonly JsonSerializerOptions Options = new() { PropertyNameCaseInsensitive = true };
 
@@ -182,10 +189,22 @@ namespace Altinn.AccessManagement.Api.Enduser.Authorization.Helper
                 if (attributeMinLvAuth != null)
                 {
                     string minAuthenticationLevel = attributeMinLvAuth.Value;
-                    Claim usersAuthenticationLevel = user.Claims.First(c => c.Type == "urn:altinn:authlevel");
+
+                    // A logged in system user always has authentication level 3. When the policy states a separate
+                    // requirement for system users, that requirement replaces the general one.
+                    if (IsSystemUser(user))
+                    {
+                        XacmlJsonAttributeAssignment attributeMinLvAuthSystemUser = GetObligation(PolicyObligationMinAuthnLevelSystemUser, obligationList);
+                        if (attributeMinLvAuthSystemUser != null)
+                        {
+                            return Convert.ToInt32(attributeMinLvAuthSystemUser.Value) <= SystemUserAuthenticationLevel;
+                        }
+                    }
+
+                    string usersAuthenticationLevel = user.Claims.FirstOrDefault(c => c.Type == "urn:altinn:authlevel")?.Value;
 
                     // Checks that the user meets the minimum authentication level
-                    if (Convert.ToInt32(usersAuthenticationLevel.Value) < Convert.ToInt32(minAuthenticationLevel))
+                    if (Convert.ToInt32(usersAuthenticationLevel) < Convert.ToInt32(minAuthenticationLevel))
                     {
                         return false;
                     }
@@ -287,21 +306,29 @@ namespace Altinn.AccessManagement.Api.Enduser.Authorization.Helper
 
         private static bool IsSystemUserClaim(Claim claim, out SystemUserClaim userClaim)
         {
-            if (claim.Type.Equals("authorization_details"))
-            {
-                userClaim = JsonSerializer.Deserialize<SystemUserClaim>(claim.Value, Options);
-                if (userClaim?.Systemuser_id != null && userClaim.Systemuser_id.Count > 0)
-                {
-                    return true;
-                }
+            userClaim = null;
 
+            if (!claim.Type.Equals("authorization_details"))
+            {
                 return false;
             }
-            else
+
+            try
+            {
+                userClaim = JsonSerializer.Deserialize<SystemUserClaim>(claim.Value, Options);
+            }
+            catch (JsonException)
             {
                 userClaim = null;
                 return false;
             }
+
+            return userClaim?.Systemuser_id != null && userClaim.Systemuser_id.Count > 0;
+        }
+
+        private static bool IsSystemUser(ClaimsPrincipal user)
+        {
+            return user.Claims.Any(claim => IsSystemUserClaim(claim, out _));
         }
 
         private static bool IsUserIdClaim(string name)
