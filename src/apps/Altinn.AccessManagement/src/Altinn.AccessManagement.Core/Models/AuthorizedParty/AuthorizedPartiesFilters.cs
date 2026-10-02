@@ -21,6 +21,8 @@ public class AuthorizedPartiesFilters
 
     public AuthorizedPartiesIncludeFilter IncludeInactiveParties { get; set; } = AuthorizedPartiesIncludeFilter.True;
 
+    public bool IncludeClientDelegations { get; set; } = true;
+
     public SortedDictionary<Guid, Guid>? PartyFilter { get; set; } = null;
 
     public SortedDictionary<string, string>? RoleFilter { get; set; } = null;

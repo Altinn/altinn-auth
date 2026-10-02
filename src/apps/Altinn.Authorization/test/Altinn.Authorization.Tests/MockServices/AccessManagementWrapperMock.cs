@@ -153,9 +153,9 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
         return Task.FromResult<IEnumerable<AuthorizedPartyDto>>([]);
     }
 
-    public Task<IEnumerable<AccessPackageUrn>> GetAccessPackages(Guid to, Guid from, CancellationToken cancellationToken = default)
+    public Task<IEnumerable<AccessPackageUrn>> GetAccessPackages(Guid to, Guid from, Altinn.Authorization.Enums.AuthContext authContext = Altinn.Authorization.Enums.AuthContext.All, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default)
     {
-        var cacheKey = $"AccPkgs|f:{from}|t:{to}";
+        var cacheKey = $"AccPkgs|f:{from}|t:{to}|ac:{authContext}|vp:{viaPartyOrganizationNumber}";
 
         if (!_memoryCache.TryGetValue(cacheKey, out IEnumerable<AccessPackageUrn> result))
         {
@@ -216,9 +216,9 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
         return null;
     }
 
-    public Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, CancellationToken cancellationToken = default)
+    public Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, Altinn.Authorization.Enums.AuthContext authContext = Altinn.Authorization.Enums.AuthContext.All, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default)
     {
-        var cacheKey = $"RolesAndAccPkgs|f:{from}|t:{to}";
+        var cacheKey = $"RolesAndAccPkgs|f:{from}|t:{to}|ac:{authContext}|vp:{viaPartyOrganizationNumber}";
 
         if (!_memoryCache.TryGetValue(cacheKey, out PipResponseDto result))
         {

@@ -379,6 +379,24 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                     resourceAttributes.OrganizationNumber = attribute.AttributeValues.First().Value;
                 }
 
+                if (attribute.AttributeId.OriginalString.Equals(XacmlRequestAttribute.ViaPartyOrganizationIdentifierNoAttribute))
+                {
+                    resourceAttributes.ViaPartyOrganizationNumber = attribute.AttributeValues.First().Value;
+                }
+
+                if (attribute.AttributeId.OriginalString.Equals(XacmlRequestAttribute.AuthContextAttribute))
+                {
+                    string authContextValue = attribute.AttributeValues.First().Value;
+                    if (Enum.TryParse<global::Altinn.Authorization.Enums.AuthContext>(authContextValue, true, out var parsedAuthContext) && Enum.IsDefined(parsedAuthContext))
+                    {
+                        resourceAttributes.AuthContext = parsedAuthContext;
+                    }
+                    else
+                    {
+                        resourceAttributes.HasInvalidAuthContext = true;
+                    }
+                }
+
                 if (attribute.AttributeId.OriginalString.Equals(XacmlRequestAttribute.LegacyOrganizationNumberAttribute))
                 {
                     // For supporting legacy use of this attribute. (old PEPS)
@@ -557,11 +575,11 @@ namespace Altinn.Platform.Authorization.Services.Implementation
             {
                 if (await _featureManager.IsEnabledAsync(FeatureFlags.SystemUserAccessPackageAuthorization) && subjectSystemUser != Guid.Empty)
                 {
-                    await AddAccessPackageAttributes(subjectContextAttributes, subjectSystemUser, resourceAttr.PartyUuid, cancellationToken);
+                    await AddAccessPackageAttributes(subjectContextAttributes, subjectSystemUser, resourceAttr.PartyUuid, resourceAttr.AuthContext, resourceAttr.ViaPartyOrganizationNumber, cancellationToken);
                 }
                 else if (await _featureManager.IsEnabledAsync(FeatureFlags.UserAccessPackageAuthorization) && subjectPartyUuid != Guid.Empty)
                 {
-                    await AddAccessPackageAttributes(subjectContextAttributes, subjectPartyUuid, resourceAttr.PartyUuid, cancellationToken);
+                    await AddAccessPackageAttributes(subjectContextAttributes, subjectPartyUuid, resourceAttr.PartyUuid, resourceAttr.AuthContext, resourceAttr.ViaPartyOrganizationNumber, cancellationToken);
                 }
             }
 
@@ -610,7 +628,11 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 return;
             }
 
-            if (policySubjectAttributes.ContainsKey(AltinnXacmlConstants.MatchAttributeIdentifiers.OedRoleAttribute))
+            // In ClientAccess mode only access received through client delegations via the via-party is considered.
+            // OED and legacy (non AccessManagement PIP) role sources can't be scoped by via-party and are therefore skipped.
+            bool isClientAccess = resourceAttr.AuthContext == Altinn.Authorization.Enums.AuthContext.ClientAccess;
+
+            if (!isClientAccess && policySubjectAttributes.ContainsKey(AltinnXacmlConstants.MatchAttributeIdentifiers.OedRoleAttribute))
             {
                 if (string.IsNullOrEmpty(subjectSsn))
                 {
@@ -635,10 +657,10 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 {
                     if (subjectPartyUuid != Guid.Empty && resourceAttr.PartyUuid != Guid.Empty)
                     {
-                        await AddRoleAttributes(subjectContextAttributes, subjectPartyUuid, resourceAttr.PartyUuid, cancellationToken);
+                        await AddRoleAttributes(subjectContextAttributes, subjectPartyUuid, resourceAttr.PartyUuid, resourceAttr.AuthContext, resourceAttr.ViaPartyOrganizationNumber, cancellationToken);
                     }
                 }
-                else
+                else if (!isClientAccess)
                 {
                     List<Role> roleList = await GetRoles(subjectUserId, resourcePartyId);
                     if (roleList.Count != 0)
@@ -655,18 +677,20 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         /// <param name="subjectContextAttributes">The subject attribute collection to enrich with access packages (if any) the subject user has for the party</param>
         /// <param name="toSubjectPartyUuid">The subject party uuid to check if has any access packages for the party</param>
         /// <param name="resourceParty">The party to check if subject party has any access packages for.</param>
+        /// <param name="authContext">The authorization context limiting which kinds of access are considered</param>
+        /// <param name="viaPartyOrganizationNumber">The via-party organization number used for client access</param>
         /// <param name="cancellationToken">The cancellation token</param>
-        protected async Task AddAccessPackageAttributes(XacmlContextAttributes subjectContextAttributes, Guid toSubjectPartyUuid, Guid resourceParty, CancellationToken cancellationToken = default)
+        protected async Task AddAccessPackageAttributes(XacmlContextAttributes subjectContextAttributes, Guid toSubjectPartyUuid, Guid resourceParty, Altinn.Authorization.Enums.AuthContext authContext = Altinn.Authorization.Enums.AuthContext.All, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default)
         {
             IEnumerable<AccessPackageUrn> accessPackages;
             if (await _featureManager.IsEnabledAsync(FeatureFlags.AccessManagementAsPipForRoles))
             {
-                var result = await _accessManagementWrapper.GetRolesAndAccessPackages(toSubjectPartyUuid, resourceParty, cancellationToken);
+                var result = await _accessManagementWrapper.GetRolesAndAccessPackages(toSubjectPartyUuid, resourceParty, authContext, viaPartyOrganizationNumber, cancellationToken);
                 accessPackages = result.AccessPackages;
             }
             else
             {
-                accessPackages = await _accessManagementWrapper.GetAccessPackages(toSubjectPartyUuid, resourceParty, cancellationToken);
+                accessPackages = await _accessManagementWrapper.GetAccessPackages(toSubjectPartyUuid, resourceParty, authContext, viaPartyOrganizationNumber, cancellationToken);
             }
 
             foreach (AccessPackageUrn accessPackage in accessPackages)
@@ -681,10 +705,12 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         /// <param name="subjectContextAttributes">The subject attribute collection to enrich with roles (if any) the subject user has for the party</param>
         /// <param name="toSubjectPartyUuid">The subject party uuid to check if has any roles for the party</param>
         /// <param name="resourceParty">The party to check if subject party has any roles for.</param>
+        /// <param name="authContext">The authorization context limiting which kinds of access are considered</param>
+        /// <param name="viaPartyOrganizationNumber">The via-party organization number used for client access</param>
         /// <param name="cancellationToken">The cancellation token</param>
-        protected async Task AddRoleAttributes(XacmlContextAttributes subjectContextAttributes, Guid toSubjectPartyUuid, Guid resourceParty, CancellationToken cancellationToken = default)
+        protected async Task AddRoleAttributes(XacmlContextAttributes subjectContextAttributes, Guid toSubjectPartyUuid, Guid resourceParty, Altinn.Authorization.Enums.AuthContext authContext = Altinn.Authorization.Enums.AuthContext.All, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default)
         {
-            var result = await _accessManagementWrapper.GetRolesAndAccessPackages(toSubjectPartyUuid, resourceParty, cancellationToken);
+            var result = await _accessManagementWrapper.GetRolesAndAccessPackages(toSubjectPartyUuid, resourceParty, authContext, viaPartyOrganizationNumber, cancellationToken);
             foreach (RoleUrn role in result.Roles)
             {
                 subjectContextAttributes.Attributes.Add(GetStringAttribute(role.PrefixSpan.ToString(), role.ValueSpan.ToString()));

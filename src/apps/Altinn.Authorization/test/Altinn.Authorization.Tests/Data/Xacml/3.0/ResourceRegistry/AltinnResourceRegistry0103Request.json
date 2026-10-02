@@ -1,0 +1,74 @@
+﻿{
+  "Request": {
+    "ReturnPolicyIdList": true,
+    "AccessSubject": [
+      {
+        "Id": "s1",
+        "Attribute": [
+          {
+            "AttributeId": "urn:altinn:person:identifier-no",
+            "Value": "01039012345"
+          }
+        ]
+      }
+    ],
+    "Action": [
+      {
+        "Id": "a1",
+        "Attribute": [
+          {
+            "AttributeId": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+            "Value": "read",
+            "DataType": "http://www.w3.org/2001/XMLSchema#string"
+          }
+        ]
+      }
+    ],
+    "Resource": [
+      {
+        "Id": "r1",
+        "Attribute": [
+          {
+            "AttributeId": "urn:altinn:resource",
+            "Value": "ttd-externalpdp-resource1"
+          },
+          {
+            "AttributeId": "urn:altinn:person:identifier-no",
+            "Value": "01038712345"
+          },
+          {
+            "AttributeId": "urn:altinn:authorization:auth-context",
+            "Value": "Bogus"
+          }
+        ]
+      },
+      {
+        "Id": "r2",
+        "Attribute": [
+          {
+            "AttributeId": "urn:altinn:resource",
+            "Value": "ttd-externalpdp-resource1"
+          },
+          {
+            "AttributeId": "urn:altinn:person:identifier-no",
+            "Value": "01038712345"
+          },
+          {
+            "AttributeId": "urn:altinn:authorization:auth-context",
+            "Value": "ClientAccess"
+          }
+        ]
+      }
+    ],
+    "MultiRequests": {
+      "RequestReference": [
+        {
+          "ReferenceId": [ "s1", "a1", "r1" ]
+        },
+        {
+          "ReferenceId": [ "s1", "a1", "r2" ]
+        }
+      ]
+    }
+  }
+}

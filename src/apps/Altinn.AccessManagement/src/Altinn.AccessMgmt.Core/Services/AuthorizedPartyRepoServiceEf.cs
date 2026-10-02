@@ -149,7 +149,7 @@ public class AuthorizedPartyRepoServiceEf(AppDbContext db, ConnectionQuery conne
                 IncludeSubConnections = true,
                 IncludeKeyRole = filters?.IncludePartiesViaKeyRoles == AuthorizedPartiesIncludeFilter.True ? true : false,
                 IncludeMainUnitConnections = true,
-                IncludeDelegation = true,
+                IncludeDelegation = filters?.IncludeClientDelegations ?? true,
                 IncludePackages = filters?.IncludeAccessPackages ?? true,
                 IncludeResources = false,
                 EnrichPackageResources = false,

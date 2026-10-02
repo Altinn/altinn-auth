@@ -24,4 +24,16 @@ public class DelegationChangeInputDto
     /// </summary>
     [Required]
     public List<AttributeMatchDto> Resource { get; set; }
+
+    /// <summary>
+    /// Controls how client-delegated access is considered when looking up delegation changes.
+    /// Defaults to <see cref="AuthContextDto.All"/>.
+    /// </summary>
+    public AuthContextDto AuthContext { get; set; } = AuthContextDto.All;
+
+    /// <summary>
+    /// When <see cref="AuthContext"/> is <see cref="AuthContextDto.ClientAccess"/>,
+    /// of the via-party organization through which client-delegated access must have been received.
+    /// </summary>
+    public string ViaPartyOrganizationNumber { get; set; }
 }
