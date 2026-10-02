@@ -1545,6 +1545,7 @@ public static partial class StaticDataIngest
             new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.InnbyggerTollAvgift.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.InnbyggerStotteTilskudd.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.InnbyggerInnkreving.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = rolePriv, PackageId = PackageConstants.KonkursboAdministrator.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
 
             new RolePackage() { RoleId = RoleConstants.BankRepresentationDailyBanking, PackageId = PackageConstants.VergemalBankRepresentationDailyBanking.Id, EntityVariantId = null, CanDelegate = false, HasAccess = true },
             new RolePackage() { RoleId = RoleConstants.BankTakingOutLoanscredits, PackageId = PackageConstants.VergemalBankTakingOutLoanscredits.Id, EntityVariantId = null, CanDelegate = false, HasAccess = true },
