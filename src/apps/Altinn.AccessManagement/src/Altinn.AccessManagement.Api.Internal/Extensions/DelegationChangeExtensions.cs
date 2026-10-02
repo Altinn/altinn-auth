@@ -53,8 +53,18 @@ namespace Altinn.AccessManagement.Api.Internal.Extensions
                 Subject = ToCore(dto.Subject),
                 Party = ToCore(dto.Party),
                 Resource = dto.Resource?.Select(ToCore).ToList(),
+                AuthContext = ToCore(dto.AuthContext),
+                ViaPartyOrganizationNumber = dto.ViaPartyOrganizationNumber,
             };
         }
+
+        private static AuthContext ToCore(AuthContextDto dto) => dto switch
+        {
+            AuthContextDto.All => AuthContext.All,
+            AuthContextDto.ClientAccess => AuthContext.ClientAccess,
+            AuthContextDto.DirectAccess => AuthContext.DirectAccess,
+            _ => throw new ArgumentOutOfRangeException(nameof(dto), dto, null),
+        };
 
         private static AttributeMatch ToCore(AttributeMatchDto dto) =>
             dto is null ? null : new AttributeMatch { Id = dto.Id, Value = dto.Value };

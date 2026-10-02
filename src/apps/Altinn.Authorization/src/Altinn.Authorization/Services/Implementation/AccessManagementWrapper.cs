@@ -3,6 +3,7 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using Altinn.Authorization.Api.Contracts.Authorization;
+using Altinn.Authorization.Enums;
 using Altinn.Platform.Authorization.Clients;
 using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Models.AccessManagement;
@@ -116,14 +117,14 @@ public class AccessManagementWrapper : IAccessManagementWrapper
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<AccessPackageUrn>> GetAccessPackages(Guid to, Guid from, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<AccessPackageUrn>> GetAccessPackages(Guid to, Guid from, AuthContext authContext = AuthContext.All, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default)
     {
-        var cacheKey = $"AccPkgs|f:{from}|t:{to}";
+        var cacheKey = $"AccPkgs|f:{from}|t:{to}|ac:{authContext}|vp:{viaPartyOrganizationNumber}";
 
         if (!_memoryCache.TryGetValue(cacheKey, out IEnumerable<AccessPackageUrn> result))
         {
             var response = await _client.Client.SendAsync(
-                new(HttpMethod.Get, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), $"policyinformation/accesspackages?to={to}&from={from}")),
+                new(HttpMethod.Get, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), $"policyinformation/accesspackages?to={to}&from={from}&authContext={authContext}{ViaPartyQuery(viaPartyOrganizationNumber)}")),
                 cancellationToken);
 
             if (response.IsSuccessStatusCode)
@@ -147,14 +148,14 @@ public class AccessManagementWrapper : IAccessManagementWrapper
     }
 
     /// <inheritdoc/>
-    public async Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, CancellationToken cancellationToken = default)
+    public async Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, AuthContext authContext = AuthContext.All, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default)
     {   
-        var cacheKey = $"RolesAndAccPkgs|f:{from}|t:{to}";
+        var cacheKey = $"RolesAndAccPkgs|f:{from}|t:{to}|ac:{authContext}|vp:{viaPartyOrganizationNumber}";
 
         if (!_memoryCache.TryGetValue(cacheKey, out PipResponseDto result))
         {
             var response = await _client.Client.SendAsync(
-                new(HttpMethod.Get, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), $"policyinformation/roles-and-accesspackages?to={to}&from={from}")),
+                new(HttpMethod.Get, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), $"policyinformation/roles-and-accesspackages?to={to}&from={from}&authContext={authContext}{ViaPartyQuery(viaPartyOrganizationNumber)}")),
                 cancellationToken);
 
             if (response.IsSuccessStatusCode)
@@ -178,4 +179,7 @@ public class AccessManagementWrapper : IAccessManagementWrapper
 
         return result;
     }
+
+    private static string ViaPartyQuery(string viaPartyOrganizationNumber) =>
+        string.IsNullOrWhiteSpace(viaPartyOrganizationNumber) ? string.Empty : $"&viaParty={Uri.EscapeDataString(viaPartyOrganizationNumber)}";
 }

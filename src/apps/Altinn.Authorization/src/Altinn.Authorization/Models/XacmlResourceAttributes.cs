@@ -1,5 +1,7 @@
 ﻿namespace Altinn.Platform.Authorization.Models
 {
+    using Altinn.Authorization.Enums;
+
     /// <summary>
     /// Defines the resource attributes in a xacml request
     /// </summary>
@@ -54,6 +56,26 @@
         /// Gets or sets the OrganizationNumber for the org owning the resource
         /// </summary>
         public string OrganizationNumber { get; set; }
+
+        /// <summary>
+        /// Gets or sets the via-party organization number (Norwegian organization number) through which
+        /// client-delegated access should be resolved. Populated from the
+        /// <c>urn:altinn:via-party:organization:identifier-no</c> attribute.
+        /// </summary>
+        public string ViaPartyOrganizationNumber { get; set; }
+
+        /// <summary>
+        /// Gets or sets the authorization context mode controlling how client-delegated access is considered
+        /// when authorizing the request. Populated from the <c>urn:altinn:authorization:auth-context</c>
+        /// attribute (per request, Resource category). Defaults to <see cref="AuthContext.All"/>.
+        /// </summary>
+        public AuthContext AuthContext { get; set; } = AuthContext.All;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether the <c>urn:altinn:authorization:auth-context</c> attribute
+        /// was present but could not be parsed into a valid <see cref="Enums.AuthContext"/> value.
+        /// </summary>
+        public bool HasInvalidAuthContext { get; set; }
 
         /// <summary>
         /// Gets or sets the ssn for the person owning the resource

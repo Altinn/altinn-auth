@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Altinn.AccessManagement.Core.Models
 {
@@ -24,5 +24,17 @@ namespace Altinn.AccessManagement.Core.Models
         /// </summary>
         [Required]
         public List<AttributeMatch> Resource { get; set; }
+
+        /// <summary>
+        /// Controls how client-delegated access is considered when looking up delegation changes.
+        /// Defaults to <see cref="AuthContext.All"/>.
+        /// </summary>
+        public AuthContext AuthContext { get; set; } = AuthContext.All;
+
+        /// <summary>
+        /// When <see cref="AuthContext"/> is <see cref="AuthContext.ClientAccess"/>, the Norwegian organization number
+        /// of the via-party organization through which client-delegated access must have been received.
+        /// </summary>
+        public string ViaPartyOrganizationNumber { get; set; }
     }
 }

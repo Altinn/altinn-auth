@@ -11,12 +11,12 @@ using Altinn.Authorization.Models;
 using Altinn.Authorization.Models.Register;
 using Altinn.Authorization.Models.ResourceRegistry;
 using Altinn.Authorization.ProblemDetails;
+using Altinn.Platform.Authenticaiton.Extensions;
 using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Constants;
 using Altinn.Platform.Authorization.Helpers;
 using Altinn.Platform.Authorization.ModelBinding;
 using Altinn.Platform.Authorization.Models;
-using Altinn.Platform.Authorization.Models.AccessManagement;
 using Altinn.Platform.Authorization.Models.External;
 using Altinn.Platform.Authorization.Repositories.Interface;
 using Altinn.Platform.Authorization.Services.Interface;
@@ -364,6 +364,48 @@ namespace Altinn.Platform.Authorization.Controllers
 
         private async Task<XacmlContextResponse> Authorize(XacmlContextRequest decisionRequest, bool isExernalRequest, bool logEvent = true, CancellationToken cancellationToken = default)
         {
+            // The authorization context mode is specified per request via the urn:altinn:authorization:auth-context
+            // resource attribute, so it is resolved from the parsed request rather than a call-wide parameter.
+            // Validated before enrichment so untrusted mode/via-party values never reach policy retrieval or the
+            // AccessManagement PIP, and so each invalid sub-request in a multi-request gets its own status response.
+            XacmlResourceAttributes resourceAttributes = _delegationContextHandler.GetResourceAttributes(decisionRequest);
+            AuthContext authContext = resourceAttributes.AuthContext;
+
+            // An auth-context attribute that could not be parsed into a valid mode is a client error for this request.
+            if (resourceAttributes.HasInvalidAuthContext)
+            {
+                return new XacmlContextResponse(new XacmlContextResult(XacmlContextDecision.Indeterminate)
+                {
+                    Status = new XacmlContextStatus(XacmlContextStatusCode.SyntaxError)
+                    {
+                        StatusMessage = $"Invalid value for the '{XacmlRequestAttribute.AuthContextAttribute}' attribute."
+                    }
+                });
+            }
+
+            // The non-default client-delegation authorization modes are only available to admin scope callers.
+            // Enforced per request so that one privileged sub-request does not fail sibling requests in a multi-request.
+            if (authContext != AuthContext.All && !HttpContext.User.HasScope(AuthzConstants.AUTHORIZE_ADMIN_SCOPE))
+            {
+                return new XacmlContextResponse(new XacmlContextResult(XacmlContextDecision.Indeterminate)
+                {
+                    Status = new XacmlContextStatus(XacmlContextStatusCode.ProcessingError)
+                    {
+                        StatusMessage = $"The '{authContext}' authorization context requires the '{AuthzConstants.AUTHORIZE_ADMIN_SCOPE}' scope."
+                    }
+                });
+            }
+
+            // ClientAccess requires the via-party organization attribute to scope both access package and delegation lookups.
+            // Validated before evaluation so the missing-attribute result is returned as-is for this request.
+            if (authContext == AuthContext.ClientAccess && string.IsNullOrWhiteSpace(resourceAttributes.ViaPartyOrganizationNumber))
+            {
+                return new XacmlContextResponse(new XacmlContextResult(XacmlContextDecision.Indeterminate)
+                {
+                    Status = new XacmlContextStatus(XacmlContextStatusCode.MissingAttribute) { StatusMessage = $"The '{AuthContext.ClientAccess}' authorization context requires the '{XacmlRequestAttribute.ViaPartyOrganizationIdentifierNoAttribute}' attribute." },
+                });
+            }
+
             decisionRequest = await this._contextHandler.Enrich(decisionRequest, isExernalRequest, _appInstanceInfo);
 
             XacmlPolicy policy = await _prp.GetPolicyAsync(decisionRequest);
@@ -373,6 +415,9 @@ namespace Altinn.Platform.Authorization.Controllers
                 throw new ArgumentException("Policy not found for resource");
             }
 
+            // In ClientAccess mode the subject enrichment above scopes the roles and access packages returned by the
+            // AccessManagement PIP to client delegations received through the via-party organization, so the
+            // role-based evaluation only reflects client access.
             XacmlContextResponse rolesContextResponse = _pdp.Authorize(decisionRequest, policy);
             XacmlContextResult roleResult = rolesContextResponse.Results.First();
 
@@ -381,7 +426,7 @@ namespace Altinn.Platform.Authorization.Controllers
             {
                 try
                 {
-                    delegationContextResponse = await AuthorizeUsingDelegations(decisionRequest, policy, cancellationToken);
+                    delegationContextResponse = await AuthorizeUsingDelegations(decisionRequest, policy, authContext, cancellationToken);
                 }
                 catch (Exception ex)
                 {
@@ -615,14 +660,21 @@ namespace Altinn.Platform.Authorization.Controllers
             !int.TryParse(resourceAttributes.ResourcePartyValue, out var _) ||
             !(IsTypeApp(resourceAttributes) || IsTypeResource(resourceAttributes));
 
-        private Action<DelegationChangeInputDto> WithDefaultGetAllDelegationChangesInput(XacmlResourceAttributes resourceAttributes, XacmlContextRequest decisionRequest) => (input) =>
+        private Action<DelegationChangeInputDto> WithDefaultGetAllDelegationChangesInput(XacmlResourceAttributes resourceAttributes, XacmlContextRequest decisionRequest, AuthContext authContext = AuthContext.All) => (input) =>
         {
             AttributeMatch subject = _delegationContextHandler.GetSubjectAttributeMatch(decisionRequest, [XacmlRequestAttribute.UserAttribute, XacmlRequestAttribute.PartyAttribute, XacmlRequestAttribute.SystemUserIdAttribute]);
             input.Subject = new(subject.Id, subject.Value);
             input.Party = new(AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute, resourceAttributes.ResourcePartyValue);
+            input.AuthContext = authContext switch
+            {
+                AuthContext.ClientAccess => AuthContextDto.ClientAccess,
+                AuthContext.DirectAccess => AuthContextDto.DirectAccess,
+                _ => AuthContextDto.All,
+            };
+            input.ViaPartyOrganizationNumber = resourceAttributes.ViaPartyOrganizationNumber;
         };
 
-        private async Task<XacmlContextResponse> AuthorizeUsingDelegations(XacmlContextRequest decisionRequest, XacmlPolicy resourcePolicy, CancellationToken cancellationToken = default)
+        private async Task<XacmlContextResponse> AuthorizeUsingDelegations(XacmlContextRequest decisionRequest, XacmlPolicy resourcePolicy, AuthContext authContext = AuthContext.All, CancellationToken cancellationToken = default)
         {
             var resourceAttributes = _delegationContextHandler.GetResourceAttributes(decisionRequest);
 
@@ -638,7 +690,7 @@ namespace Altinn.Platform.Authorization.Controllers
             IEnumerable<DelegationChangeDto> delegations = new List<DelegationChangeDto>();
             if (IsTypeApp(resourceAttributes))
             {
-                delegations = await GetAllCachedDelegationChanges(cancellationToken, WithDefaultGetAllDelegationChangesInput(resourceAttributes, decisionRequest), input => input.Resource = new List<AttributeMatchDto>()
+                delegations = await GetAllCachedDelegationChanges(cancellationToken, WithDefaultGetAllDelegationChangesInput(resourceAttributes, decisionRequest, authContext), input => input.Resource = new List<AttributeMatchDto>()
                 {
                     new(AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute, resourceAttributes.OrgValue),
                     new(AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute, resourceAttributes.AppValue),
@@ -647,7 +699,7 @@ namespace Altinn.Platform.Authorization.Controllers
 
             if (IsTypeResource(resourceAttributes))
             {
-                delegations = await GetAllCachedDelegationChanges(cancellationToken, WithDefaultGetAllDelegationChangesInput(resourceAttributes, decisionRequest), input => input.Resource = new List<AttributeMatchDto>()
+                delegations = await GetAllCachedDelegationChanges(cancellationToken, WithDefaultGetAllDelegationChangesInput(resourceAttributes, decisionRequest, authContext), input => input.Resource = new List<AttributeMatchDto>()
                 {
                     new(AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistry, resourceAttributes.ResourceRegistryId)
                 });
@@ -700,7 +752,9 @@ namespace Altinn.Platform.Authorization.Controllers
                 $"s:{delegation.Subject.Id}:{delegation.Subject.Value}",
                 $"p:{delegation.Party.Value}",
                 $"a:{delegation.Resource.FirstOrDefault(r => r.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute)?.Value}/{delegation.Resource.FirstOrDefault(r => r.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute)?.Value}",
-                $"r:{delegation.Resource.FirstOrDefault(r => r.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistry)?.Value}");
+                $"r:{delegation.Resource.FirstOrDefault(r => r.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistry)?.Value}",
+                $"ac:{delegation.AuthContext}",
+                $"vp:{delegation.ViaPartyOrganizationNumber}");
 
             if (!_memoryCache.TryGetValue(cacheKey, out IEnumerable<DelegationChangeDto> result))
             {

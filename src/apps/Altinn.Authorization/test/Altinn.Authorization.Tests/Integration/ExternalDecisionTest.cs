@@ -133,6 +133,177 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         /// <summary>
+        /// An unparseable urn:altinn:authorization:auth-context resource attribute is a client error for that request
+        /// and must return Indeterminate with a syntax-error status.
+        /// </summary>
+        [Fact]
+        public async Task PDPExternal_Decision_InvalidAuthContext_ReturnsIndeterminate()
+        {
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
+            string testCase = "AltinnResourceRegistry0100";
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
+            HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateXacmlRequestExternal(testCase);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+
+            // Act
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(_client, httpRequestMessage);
+
+            // Assert
+            AssertionUtil.AssertEqual(expected, contextResponse);
+        }
+
+        /// <summary>
+        /// A non-default authorization context (ClientAccess) requires the admin scope. A caller without the admin
+        /// scope must get Indeterminate with a processing-error status for that request.
+        /// </summary>
+        [Fact]
+        public async Task PDPExternal_Decision_ClientAccessWithoutAdminScope_ReturnsIndeterminate()
+        {
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
+            string testCase = "AltinnResourceRegistry0101";
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
+            HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateXacmlRequestExternal(testCase);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+
+            // Act
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(_client, httpRequestMessage);
+
+            // Assert
+            AssertionUtil.AssertEqual(expected, contextResponse);
+        }
+
+        /// <summary>
+        /// ClientAccess requires the via-party organization attribute. An admin-scoped caller omitting it
+        /// must get Indeterminate with a missing-attribute status.
+        /// </summary>
+        [Fact]
+        public async Task PDPExternal_Decision_ClientAccessWithoutViaParty_ReturnsIndeterminate()
+        {
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize altinn:authorization/authorize.admin");
+            string testCase = "AltinnResourceRegistry0102";
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
+            HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateXacmlRequestExternal(testCase);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+
+            // Act
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(_client, httpRequestMessage);
+
+            // Assert
+            AssertionUtil.AssertEqual(expected, contextResponse);
+        }
+
+        /// <summary>
+        /// A whitespace-only via-party organization attribute is treated as missing for ClientAccess.
+        /// </summary>
+        [Fact]
+        public async Task PDPExternal_Decision_ClientAccessWithWhitespaceViaParty_ReturnsIndeterminate()
+        {
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize altinn:authorization/authorize.admin");
+            string testCase = "AltinnResourceRegistry0105";
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
+            HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateXacmlRequestExternal(testCase);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+
+            // Act
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(_client, httpRequestMessage);
+
+            // Assert
+            AssertionUtil.AssertEqual(expected, contextResponse);
+        }
+
+        /// <summary>
+        /// Admin-scoped ClientAccess request where the system user has a client delegation received through the
+        /// requested via-party. The auth-context and via-party must be propagated to AccessManagement and give Permit.
+        /// </summary>
+        [Fact]
+        public async Task PDPExternal_Decision_ClientAccessWithMatchingViaParty_ReturnsPermit()
+        {
+            await AssertAdminScopedDecision("AltinnResourceRegistry0106");
+        }
+
+        /// <summary>
+        /// Admin-scoped ClientAccess request through a via-party the system user has no client delegation through.
+        /// Should give NotApplicable even though a direct delegation exists for the same resource party.
+        /// </summary>
+        [Fact]
+        public async Task PDPExternal_Decision_ClientAccessWithOtherViaParty_ReturnsNotApplicable()
+        {
+            await AssertAdminScopedDecision("AltinnResourceRegistry0107");
+        }
+
+        /// <summary>
+        /// Admin-scoped DirectAccess request where the system user has a direct delegation. Should give Permit.
+        /// </summary>
+        [Fact]
+        public async Task PDPExternal_Decision_DirectAccessWithDelegation_ReturnsPermit()
+        {
+            await AssertAdminScopedDecision("AltinnResourceRegistry0108");
+        }
+
+        /// <summary>
+        /// Admin-scoped DirectAccess request where the system user has no delegation. Should give NotApplicable.
+        /// </summary>
+        [Fact]
+        public async Task PDPExternal_Decision_DirectAccessWithoutDelegation_ReturnsNotApplicable()
+        {
+            await AssertAdminScopedDecision("AltinnResourceRegistry0109");
+        }
+
+        private async Task AssertAdminScopedDecision(string testCase)
+        {
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize altinn:authorization/authorize.admin");
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
+            HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateXacmlRequestExternal(testCase);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+
+            // Act
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(_client, httpRequestMessage);
+
+            // Assert
+            AssertionUtil.AssertEqual(expected, contextResponse);
+        }
+
+        /// <summary>
+        /// In a multi-request each request carries its own auth-context and is evaluated independently.
+        /// </summary>
+        [Fact]
+        public async Task PDPExternal_Decision_MultiRequest_PerRequestAuthContext_EvaluatedIndependently()
+        {
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
+            string testCase = "AltinnResourceRegistry0103";
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
+            HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateXacmlRequestExternal(testCase);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+
+            // Act
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(_client, httpRequestMessage);
+
+            // Assert
+            AssertionUtil.AssertEqual(expected, contextResponse);
+        }
+
+        /// <summary>
+        /// Auth-context validation happens before enrichment and policy retrieval. Sub-requests with an invalid mode or a
+        /// missing via-party targeting a resource without a policy must still get their own validation status, instead of
+        /// the policy lookup failure replacing all results in the multi-request.
+        /// </summary>
+        [Fact]
+        public async Task PDPExternal_Decision_MultiRequest_InvalidAuthContextValidatedBeforeEnrichment()
+        {
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize altinn:authorization/authorize.admin");
+            string testCase = "AltinnResourceRegistry0104";
+            _client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
+            HttpRequestMessage httpRequestMessage = TestSetupUtil.CreateXacmlRequestExternal(testCase);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+
+            // Act
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(_client, httpRequestMessage);
+
+            // Assert
+            AssertionUtil.AssertEqual(expected, contextResponse);
+        }
+
+        /// <summary>
         /// Scenario where org is listed in policy. Should work. Policy org is digir. Authz subject org is digdir
         /// </summary>
         [Fact]

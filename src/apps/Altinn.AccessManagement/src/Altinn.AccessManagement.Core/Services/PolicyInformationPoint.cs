@@ -151,7 +151,7 @@ namespace Altinn.AccessManagement.Core.Services
                 return result;
             }
 
-            result.DelegationChanges = await FindAllDelegations(subjectUserId, subjectPartyId, subjectUuid, subjectUuidType, partyId, resourceId, resourceMatchType, includeInstanceDelegations, cancellationToken);
+            result.DelegationChanges = await FindAllDelegations(subjectUserId, subjectPartyId, subjectUuid, subjectUuidType, partyId, resourceId, resourceMatchType, request.AuthContext, request.ViaPartyOrganizationNumber, includeInstanceDelegations, cancellationToken);
             return result;
         }
 
@@ -243,7 +243,7 @@ namespace Altinn.AccessManagement.Core.Services
             return validParty ? result : null;
         }
 
-        private async Task<List<DelegationChange>> FindAllDelegations(int subjectUserId, int subjectPartyId, Guid subjectUuid, UuidType subjectUuidType, int reporteePartyId, string resourceId, ResourceAttributeMatchType resourceMatchType, bool includeInstanceDelegations = false, CancellationToken cancellationToken = default)
+        private async Task<List<DelegationChange>> FindAllDelegations(int subjectUserId, int subjectPartyId, Guid subjectUuid, UuidType subjectUuidType, int reporteePartyId, string resourceId, ResourceAttributeMatchType resourceMatchType, AuthContext authContext = AuthContext.All, string viaPartyOrganizationNumber = null, bool includeInstanceDelegations = false, CancellationToken cancellationToken = default)
         {
             if (resourceMatchType == ResourceAttributeMatchType.None)
             {
@@ -311,10 +311,12 @@ namespace Altinn.AccessManagement.Core.Services
             }
 
             // 2. Direct party delegations incl. any keyrole units
+            // In DirectAccess mode keyrole (org-to-org) inheritance must be excluded, so the keyrole
+            // assignments are not resolved and only the direct subject party (if any) is considered.
             List<int> coveredByPartyIds = subjectPartyId > 0 ? new List<int> { subjectPartyId } : new List<int>();
             List<Guid> coveredByPartyUuids = new List<Guid>();
 
-            if (subjectUserId > 0)
+            if (subjectUserId > 0 && authContext != AuthContext.DirectAccess)
             {
                 var subject = await _dbContext.Entities
                     .AsNoTracking()
@@ -388,9 +390,38 @@ namespace Altinn.AccessManagement.Core.Services
             }
 
             // 4. Client-delegated resources (v2)
-            if (await _featureManager.IsEnabledAsync("AccessManagement.Pip.IncludeClientDelegatedResources", cancellationToken))
+            // Authorization context controls whether client-delegated access is considered:
+            // - DirectAccess: exclude all client-delegated access (and keyrole (org-to-org) inheritance, see step 2).
+            // - ClientAccess: consider only client-delegated access received through the specified via-party organization,
+            //   excluding all direct/keyrole/instance delegations gathered above.
+            // - All (default): include client-delegated access in addition to direct access.
+            if (authContext == AuthContext.ClientAccess)
+            {
+                delegations.Clear();
+
+                // ClientAccess without a via-party can't be scoped and must never grant access.
+                if (string.IsNullOrWhiteSpace(viaPartyOrganizationNumber))
+                {
+                    return delegations;
+                }
+            }
+
+            if (authContext != AuthContext.DirectAccess && await _featureManager.IsEnabledAsync("AccessManagement.Pip.IncludeClientDelegatedResources", cancellationToken))
             {
                 var clientDelegations = await GetClientDelegatedResources(subjectUserId, subjectUuid, subjectUuidType, from, resourceId, resourceMatchType, cancellationToken);
+
+                if (authContext == AuthContext.ClientAccess)
+                {
+                    var viaPartyEntity = await _dbContext.Entities
+                        .AsNoTracking()
+                        .Where(e => e.OrganizationIdentifier == viaPartyOrganizationNumber)
+                        .FirstOrDefaultAsync(cancellationToken);
+
+                    clientDelegations = viaPartyEntity == null
+                        ? new List<DelegationChange>()
+                        : clientDelegations.Where(d => d.ToUuid == viaPartyEntity.Id).ToList();
+                }
+
                 delegations.AddRange(clientDelegations);
             }
 
