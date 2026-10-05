@@ -1,0 +1,9 @@
+﻿<Project>
+    <!-- Shared by every package under src/pkgs; each package imports this from its own Directory.Packages.props. -->
+    <PropertyGroup>
+        <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    </PropertyGroup>
+    <ItemGroup>
+        <GlobalPackageReference Include="DotNet.ReproducibleBuilds" Version="2.0.5" PrivateAssets="all" />
+    </ItemGroup>
+</Project>
