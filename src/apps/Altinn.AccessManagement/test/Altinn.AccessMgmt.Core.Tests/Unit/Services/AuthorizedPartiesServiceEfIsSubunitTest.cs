@@ -27,7 +27,8 @@ public class AuthorizedPartiesServiceEfIsSubunitTest
             contextRetrievalService: null!,
             repoService: null!,
             memoryCache: null!,
-            lifecycleFeatures: new AppLifecycleFeatures { AdosSubunitInheritance = adosSubunitInheritance });
+            lifecycleFeatures: new AppLifecycleFeatures { AdosSubunitInheritance = adosSubunitInheritance },
+            featureManager: null!);
 
     private static Entity Entity(Guid variantId, Guid? parentId) => new()
     {

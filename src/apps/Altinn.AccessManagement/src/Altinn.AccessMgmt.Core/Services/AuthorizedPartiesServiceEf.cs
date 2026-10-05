@@ -5,6 +5,7 @@ using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Enums;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Services.Interfaces;
+using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.Core.Appsettings;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils.Helper;
@@ -13,6 +14,7 @@ using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.FeatureManagement;
 
 namespace Altinn.AccessManagement.Core.Services;
 
@@ -21,7 +23,8 @@ public class AuthorizedPartiesServiceEf(
     IContextRetrievalService contextRetrievalService,
     IAuthorizedPartyRepoServiceEf repoService,
     IMemoryCache memoryCache,
-    AppLifecycleFeatures lifecycleFeatures) : IAuthorizedPartiesService
+    AppLifecycleFeatures lifecycleFeatures,
+    IFeatureManager featureManager) : IAuthorizedPartiesService
 {
     private static readonly MemoryCacheEntryOptions _cacheEntryOptions = new() { AbsoluteExpirationRelativeToNow = new TimeSpan(0, 5, 0) };
 
@@ -58,6 +61,13 @@ public class AuthorizedPartiesServiceEf(
                 // ServiceOwner or Resource filter specified, but no resources found matching.
                 return new List<AuthorizedParty>();
             }
+        }
+
+        if (!await featureManager.IsEnabledAsync(AccessMgmtFeatureFlags.AuthorizedPartiesSubAndInactivePartiesFilters))
+        {
+            // Filters not rolled out: keep returning every subunit and deleted party, regardless of request or profile settings
+            filter.IncludeSubParties = AuthorizedPartiesIncludeFilter.True;
+            filter.IncludeInactiveParties = AuthorizedPartiesIncludeFilter.True;
         }
 
         filter = await ProcessAutoFilters(filter, subject, cancellationToken);
@@ -308,6 +318,12 @@ public class AuthorizedPartiesServiceEf(
         if (filter.ProviderCode != null || filter.AnyOfResourceIds?.Length > 0)
         {
             connections = FilterConnections(connections, filter);
+        }
+
+        if (filter.IncludeSubParties == AuthorizedPartiesIncludeFilter.False)
+        {
+            // The query leaves out inherited subunit access; direct access to a subunit is left out here as well
+            connections = connections.Where(c => !IsSubunit(c.From)).ToList();
         }
 
         var fromEntities = connections.Select(c => c.From).DistinctBy(e => e.Id).ToList();
@@ -662,11 +678,8 @@ public class AuthorizedPartiesServiceEf(
             subject.TypeId != EntityTypeConstants.SelfIdentified.Id &&
             subject.TypeId != EntityTypeConstants.EnterpriseUser.Id)
         {
-            // Only users have profile settings, for other entity types we default to including all
-            filters.IncludePartiesViaKeyRoles = AuthorizedPartiesIncludeFilter.True;
-            filters.IncludeSubParties = AuthorizedPartiesIncludeFilter.True;
-            filters.IncludeInactiveParties = AuthorizedPartiesIncludeFilter.True;
-            return filters;
+            // Only users have profile settings, for other entity types auto defaults to including all
+            return ResolveAutoFiltersToTrue(filters);
         }
 
         if (!subject.UserId.HasValue)
@@ -677,11 +690,8 @@ public class AuthorizedPartiesServiceEf(
         var userProfile = await contextRetrievalService.GetNewUserProfile(subject.UserId.Value, cancellationToken);
         if (userProfile == null)
         {
-            // Should not happen, but if it does (brand new user perhaps?) we default to including all
-            filters.IncludePartiesViaKeyRoles = AuthorizedPartiesIncludeFilter.True;
-            filters.IncludeSubParties = AuthorizedPartiesIncludeFilter.True;
-            filters.IncludeInactiveParties = AuthorizedPartiesIncludeFilter.True;
-            return filters;
+            // Should not happen, but if it does (brand new user perhaps?) auto defaults to including all
+            return ResolveAutoFiltersToTrue(filters);
         }
 
         if (filters.IncludePartiesViaKeyRoles == AuthorizedPartiesIncludeFilter.Auto)
@@ -697,6 +707,29 @@ public class AuthorizedPartiesServiceEf(
         if (filters.IncludeInactiveParties == AuthorizedPartiesIncludeFilter.Auto)
         {
             filters.IncludeInactiveParties = userProfile.ProfileSettingPreference.ShouldShowDeletedEntities ? AuthorizedPartiesIncludeFilter.True : AuthorizedPartiesIncludeFilter.False;
+        }
+
+        return filters;
+    }
+
+    /// <summary>
+    /// Resolves the include filters set to auto to true. Filters the caller set explicitly are kept.
+    /// </summary>
+    private static AuthorizedPartiesFilters ResolveAutoFiltersToTrue(AuthorizedPartiesFilters filters)
+    {
+        if (filters.IncludePartiesViaKeyRoles == AuthorizedPartiesIncludeFilter.Auto)
+        {
+            filters.IncludePartiesViaKeyRoles = AuthorizedPartiesIncludeFilter.True;
+        }
+
+        if (filters.IncludeSubParties == AuthorizedPartiesIncludeFilter.Auto)
+        {
+            filters.IncludeSubParties = AuthorizedPartiesIncludeFilter.True;
+        }
+
+        if (filters.IncludeInactiveParties == AuthorizedPartiesIncludeFilter.Auto)
+        {
+            filters.IncludeInactiveParties = AuthorizedPartiesIncludeFilter.True;
         }
 
         return filters;
