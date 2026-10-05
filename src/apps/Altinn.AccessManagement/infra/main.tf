@@ -497,6 +497,12 @@ module "appsettings" {
       value       = false
     },
     {
+      name        = "AccessManagement.AuthorizedParties.SubAndInactivePartiesFilters"
+      description = "Specifies if AuthorizedParty should use the new filter attributes for include sub- abd inactive- entities or just set them to true by default."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
       name        = "AccessManagement.Altinn2CacheInvalidation.Disable"
       description = "Setting this flag to true disables SblBridge calls for invalidating cache in Altinn 2."
       label       = "${lower(var.environment)}-access-management"
