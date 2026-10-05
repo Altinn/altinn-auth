@@ -267,6 +267,14 @@ namespace Altinn.AccessManagement.Core.Services
                     .AsNoTracking() 
                     .Where(e => e.PartyId == reporteePartyId)
                     .FirstOrDefaultAsync(cancellationToken);
+
+            // ClientAccess only considers client-delegated access received through the via-party organization,
+            // so the direct, keyrole and instance delegation lookups (steps 1-3) are skipped entirely.
+            if (authContext == AuthContext.ClientAccess)
+            {
+                return await FindClientAccessDelegations(subjectUserId, subjectUuid, subjectUuidType, from, resourceId, resourceMatchType, viaPartyOrganizationNumber, cancellationToken);
+            }
+
             if (includeInstanceDelegations)
             {
                 fromParty = from?.Id;
@@ -392,40 +400,35 @@ namespace Altinn.AccessManagement.Core.Services
             // 4. Client-delegated resources (v2)
             // Authorization context controls whether client-delegated access is considered:
             // - DirectAccess: exclude all client-delegated access (and keyrole (org-to-org) inheritance, see step 2).
-            // - ClientAccess: consider only client-delegated access received through the specified via-party organization,
-            //   excluding all direct/keyrole/instance delegations gathered above.
+            // - ClientAccess: handled up front by FindClientAccessDelegations.
             // - All (default): include client-delegated access in addition to direct access.
-            if (authContext == AuthContext.ClientAccess)
-            {
-                delegations.Clear();
-
-                // ClientAccess without a via-party can't be scoped and must never grant access.
-                if (string.IsNullOrWhiteSpace(viaPartyOrganizationNumber))
-                {
-                    return delegations;
-                }
-            }
-
             if (authContext != AuthContext.DirectAccess && await _featureManager.IsEnabledAsync("AccessManagement.Pip.IncludeClientDelegatedResources", cancellationToken))
             {
-                var clientDelegations = await GetClientDelegatedResources(subjectUserId, subjectUuid, subjectUuidType, from, resourceId, resourceMatchType, cancellationToken);
-
-                if (authContext == AuthContext.ClientAccess)
-                {
-                    var viaPartyEntity = await _dbContext.Entities
-                        .AsNoTracking()
-                        .Where(e => e.OrganizationIdentifier == viaPartyOrganizationNumber)
-                        .FirstOrDefaultAsync(cancellationToken);
-
-                    clientDelegations = viaPartyEntity == null
-                        ? new List<DelegationChange>()
-                        : clientDelegations.Where(d => d.ToUuid == viaPartyEntity.Id).ToList();
-                }
-
-                delegations.AddRange(clientDelegations);
+                delegations.AddRange(await GetClientDelegatedResources(subjectUserId, subjectUuid, subjectUuidType, from, resourceId, resourceMatchType, cancellationToken));
             }
 
             return delegations;
+        }
+
+        private async Task<List<DelegationChange>> FindClientAccessDelegations(int subjectUserId, Guid subjectUuid, UuidType subjectUuidType, DbModels.Entity from, string resourceId, ResourceAttributeMatchType resourceMatchType, string viaPartyOrganizationNumber, CancellationToken cancellationToken)
+        {
+            // ClientAccess without a via-party can't be scoped and must never grant access.
+            if (string.IsNullOrWhiteSpace(viaPartyOrganizationNumber) || !await _featureManager.IsEnabledAsync("AccessManagement.Pip.IncludeClientDelegatedResources", cancellationToken))
+            {
+                return [];
+            }
+
+            var viaPartyEntity = await _dbContext.Entities
+                .AsNoTracking()
+                .Where(e => e.OrganizationIdentifier == viaPartyOrganizationNumber)
+                .FirstOrDefaultAsync(cancellationToken);
+            if (viaPartyEntity == null)
+            {
+                return [];
+            }
+
+            var clientDelegations = await GetClientDelegatedResources(subjectUserId, subjectUuid, subjectUuidType, from, resourceId, resourceMatchType, cancellationToken);
+            return clientDelegations.Where(d => d.ToUuid == viaPartyEntity.Id).ToList();
         }
 
         private async Task<IEnumerable<DelegationChange>> GetInstanceDelegations(List<string> resourceIds, Guid from, List<Guid> to, List<Guid> toAppControlledRightholders, CancellationToken cancellationToken = default)

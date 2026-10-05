@@ -277,6 +277,69 @@ public class PolicyInformationPointClientDelegationResourceTest
     }
 
     /// <summary>
+    /// ClientAccess through the via-party the client delegation was received through.
+    /// Expects the client-delegated resource to be returned.
+    /// </summary>
+    [Fact]
+    public async Task GetDelegationChanges_ClientAccessWithMatchingViaParty_ReturnsDelegation()
+    {
+        var result = await PostAuthContextRequest("ClientAccess", "399900023");
+
+        var delegation = Assert.Single(result);
+        Assert.Equal("nav_sykepenger_dialog", delegation.ResourceId);
+        Assert.Equal(ResourcePolicyPath, delegation.BlobStoragePolicyPath);
+        Assert.Equal(ClientProviderId, delegation.ToUuid);
+        Assert.Equal(ClientProviderPartyId, delegation.CoveredByPartyId);
+    }
+
+    /// <summary>
+    /// ClientAccess through an existing organization that is not the via-party of the client delegation.
+    /// Expects no delegations.
+    /// </summary>
+    [Fact]
+    public async Task GetDelegationChanges_ClientAccessWithNonMatchingViaParty_ReturnsEmpty()
+    {
+        var result = await PostAuthContextRequest("ClientAccess", "399900020");
+
+        Assert.Empty(result);
+    }
+
+    /// <summary>
+    /// DirectAccess excludes client-delegated access, even though a matching client delegation exists.
+    /// Expects no delegations.
+    /// </summary>
+    [Fact]
+    public async Task GetDelegationChanges_DirectAccessWithClientDelegatedResource_ReturnsEmpty()
+    {
+        var result = await PostAuthContextRequest("DirectAccess", null);
+
+        Assert.DoesNotContain(result, d => d.BlobStoragePolicyPath == ResourcePolicyPath);
+    }
+
+    private async Task<List<DelegationChangeDto>> PostAuthContextRequest(string authContext, string viaPartyOrganizationNumber)
+    {
+        var request = new
+        {
+            subject = new { id = "urn:altinn:userid", value = RecipientUserId.ToString() },
+            party = new { id = "urn:altinn:partyid", value = OrgMainUnitPartyId.ToString() },
+            resource = new[] { new { id = "urn:altinn:resource", value = "nav_sykepenger_dialog" } },
+            authContext,
+            viaPartyOrganizationNumber
+        };
+
+        var response = await _client.PostAsJsonAsync(
+            "accessmanagement/api/v1/policyinformation/getdelegationchanges",
+            request,
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        var result = await response.Content.ReadFromJsonAsync<List<DelegationChangeDto>>(_options, TestContext.Current.CancellationToken);
+        Assert.NotNull(result);
+        return result;
+    }
+
+    /// <summary>
     /// Subject is a system user UUID, party matches the delegating org.
     /// Expects the client-delegated resource to be returned.
     /// </summary>
