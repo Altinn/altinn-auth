@@ -142,13 +142,25 @@ public static class AccessMgmtFeatureFlags
     public const string AdosSubunitInheritance = "AccessManagement.Subunit.AdosInheritance";
 
     /// <summary>
-    /// Enables the activity log endpoint in the enduser API.
-    /// </summary>
-    public const string EnableEnduserActivityLogApi = "AccessManagement.Enduser.ActivityLogApi";
-
-    /// <summary>
     /// Enables the activity log endpoints in the BFF surface of the internal API — the early
-    /// access for the portal frontend while the enduser API is still gated off.
+    /// access for the portal frontend while the enduser surfaces are still gated off.
     /// </summary>
     public const string EnableBffActivityLogApi = "AccessManagement.Bff.ActivityLogApi";
+
+    /// <summary>
+    /// Enables the activity log endpoints under enduser/connections (assignment and
+    /// delegation events).
+    /// </summary>
+    public const string EnableEnduserConnectionsActivityLogApi = "AccessManagement.Enduser.ConnectionsActivityLogApi";
+
+    /// <summary>
+    /// Enables the activity log endpoints under enduser/request (access request events).
+    /// </summary>
+    public const string EnableEnduserRequestActivityLogApi = "AccessManagement.Enduser.RequestActivityLogApi";
+
+    /// <summary>
+    /// Enables the activity log endpoints under enduser/maskinporten (Maskinporten schema
+    /// delegation events — the Supplier-role slice of the log).
+    /// </summary>
+    public const string EnableEnduserMaskinportenActivityLogApi = "AccessManagement.Enduser.MaskinportenActivityLogApi";
 }

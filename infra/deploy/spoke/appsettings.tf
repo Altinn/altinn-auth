@@ -33,9 +33,19 @@ module "app_configuration" {
       description = "Activity log endpoints in the BFF surface of the internal API."
     },
     {
-      name        = "AccessManagement.Enduser.ActivityLogApi"
+      name        = "AccessManagement.Enduser.ConnectionsActivityLogApi"
       label       = lower(var.environment)
-      description = "Activity log endpoints in the enduser API."
+      description = "Activity log endpoints under enduser/connections."
+    },
+    {
+      name        = "AccessManagement.Enduser.RequestActivityLogApi"
+      label       = lower(var.environment)
+      description = "Activity log endpoints under enduser/request."
+    },
+    {
+      name        = "AccessManagement.Enduser.MaskinportenActivityLogApi"
+      label       = lower(var.environment)
+      description = "Activity log endpoints under enduser/maskinporten."
     },
   ]
 

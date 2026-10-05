@@ -41,21 +41,30 @@ The FFB tool has a complete page against all environments — party anchor with 
 
 **Why triggers won:** complete (captures every write path, including manual ones), atomic (same transaction, same guarantee as audit), correct snapshots at event time, one read-optimized table with no joins — and zero new infrastructure, since the pattern (trigger DDL in migrations, audit attribution) is already proven in this schema.
 
-## Enduser API
+## Enduser API (v2 areas)
 
-The API surface is three endpoints under `accessmanagement/api/v1/enduser/activitylog`, gated by the `EnableEnduserActivityLogApi` feature flag:
+The enduser surface is split into three **areas**, each mounted under its domain root in the v2 API (`Controllers/V2`, `accessmanagement/api/v{version}/enduser/…`). The area is the authorization boundary and decides which slice of the log exists there — there is no cross-area type filter and no role matrix on these routes:
 
-| Endpoint | Purpose | Auth |
-|---|---|---|
-| `GET /activitylog` | The log itself: entries involving a party, newest first | Enduser activity log read + access management enduser read |
-| `GET /activitylog/filters/{field}` | Filter values: the values occurring in the party's log for one field, for populating filter pickers | Same as above |
-| `GET /activitylog/types` | The activity type catalog: every valid event combination with display name and description | Anonymous, response-cached 1h |
+| Area root | Events | Feature flag | Auth |
+|---|---|---|---|
+| `…/enduser/connections/activitylog` | Assignment + Delegation (Maskinporten schema events excluded) | `AccessManagement.Enduser.ConnectionsActivityLogApi` | Activity log scope + access-management party read |
+| `…/enduser/request/activitylog` | Access requests incl. package/resource children and status changes | `AccessManagement.Enduser.RequestActivityLogApi` | Same as connections |
+| `…/enduser/maskinporten/activitylog` | Maskinporten schema delegations (the Supplier-role slice) | `AccessManagement.Enduser.MaskinportenActivityLogApi` | The maskinporten supplier scopes, like the neighboring maskinporten endpoints |
 
-### 1. Main query — `GET /activitylog`
+Every area exposes the same four routes:
 
-Returns log entries involving `party`, ordered newest first (`when` descending, id as tiebreaker).
+| Route | Purpose |
+|---|---|
+| `GET {area}` | The area's log entries, newest first |
+| `GET {area}/filter/{field}` | Values occurring in the party's slice for one filter field |
+| `GET {area}/filter/fields` | The filter fields the area offers (static, anonymous, cached 1h) |
+| `GET {area}/types` | The catalog entries the area accepts as `typeId` input (static, anonymous, cached 1h) |
 
-**Anchoring:** `party` (required) must be involved in every entry. The optional `direction` pins which side: `From` (access given by the party), `To` (access received), `Via` (delegations facilitated by the party). Without `direction`, any involvement matches (from, to, via or performed by).
+### 1. Main query — `GET {area}`
+
+Returns the area's log entries for the party, ordered newest first (`when` descending, id as tiebreaker).
+
+**Anchoring:** `party` and `direction` are both **required**. `direction` is `from` (given by the party) or `to` (received by the party) — `via` is not a direction in the area surfaces; the facilitator perspective returns with the client-administration needs. The required direction makes the per-call authorization check unambiguous.
 
 **Filters** (all repeatable; values within one parameter are OR'ed, different parameters are AND'ed):
 
@@ -70,21 +79,21 @@ Returns log entries involving `party`, ordered newest first (`when` descending, 
 | `itemId` / `parentId` | guid | The affected row / its main record |
 | `after` / `before` | datetime | Bounds on `when` |
 
-**typeId expansion:** each `typeId` references one catalog entry and expands to its whole `(type, subtype, trigger, status)` combination; multiple values are OR'ed as complete combinations. A catalog entry with `subtype = null` matches only main-record entries (exact null match), while `status = null` is a wildcard matching any status. Unknown ids give `400`.
+**typeId expansion:** each `typeId` references one catalog entry and expands to its whole `(type, subtype, trigger, status)` combination; multiple values are OR'ed as complete combinations. A catalog entry with `subtype = null` matches only main-record entries (exact null match), while `status = null` is a wildcard matching any status. Unknown ids — and ids outside the area's accepted set (`GET {area}/types`) — give `400`.
 
 **Paging:** page-based via `pageSize` (default 100, clamped to 1–1000) and `pageNo` (0-based). The response is the standard paginated envelope: the items plus `links.next`, a ready-to-follow URL present only when more entries exist (built from the request with `pageNo` incremented).
 
 **Response items** (`ActivityLogDto`): the event dimensions (`type`, `subtype`, `trigger`, `status`), `when`, actor and channel (`byId`/`byName`, `sourceId`/`sourceName`), `operationId`, the relation with name snapshots (`fromId`/`fromName`/`fromType`, `toId`/`toName`/`toType`, `viaId`/`viaName`/`viaType`, `roleId`/`roleName`, `viaRoleId`/`viaRoleName`), the object (`packageId`/`packageName`, `resourceId`/`resourceName`, `instanceId`), row identity (`itemId`, `parentId`), a `details` JSON blob (previous status, request action, provenance), and `activityTypeId` — the catalog entry resolved with the most-specific-wins rule (exact status match, else the status-null fallback), so clients can display catalog name/description without mapping the raw dimensions themselves.
 
 ```
-GET /accessmanagement/api/v1/enduser/activitylog?party={guid}&direction=From&typeId={guid}&after=2026-01-01T00:00:00Z&pageSize=50
+GET /accessmanagement/api/v2/enduser/connections/activitylog?party={guid}&direction=From&typeId={guid}&after=2026-01-01T00:00:00Z&pageSize=50
 ```
 
-### 2. Filter value endpoints — `GET /activitylog/filters/{field}`
+### 2. Filter value endpoints — `GET {area}/filter/{field}`
 
 *(They return the distinct values occurring in the log, scoped to the current search.)*
 
-Returns the distinct `(id, name)` pairs occurring in the party's log for one field, so filter pickers only offer values that actually give hits. `field` is one of `from`, `to`, `via`, `by`, `role`, `package`, `resource`, `source`, `activitytype`.
+Returns the distinct `(id, name)` pairs occurring in the party's slice of the area for one field, so filter pickers only offer values that actually give hits. `field` must be one of the fields the area offers (`GET {area}/filter/fields`) — e.g. the maskinporten area offers no `role` field, since the Supplier role is pinned; anything else gives `400`.
 
 - **Same filter surface as the main query** — party, direction and all filter parameters apply, so the picker narrows along with the search the user has already built.
 - **Own-field rule:** the filter for the field being looked up is ignored (a lookup on `package` disregards any `package` filter), so users can extend a multi-select without the list collapsing to their current choices. The `party` anchor is never ignored.
@@ -95,30 +104,30 @@ Returns the distinct `(id, name)` pairs occurring in the party's log for one fie
 - **Paging and envelope:** identical to the main query (`pageSize`/`pageNo`, `links.next`).
 
 ```
-GET /accessmanagement/api/v1/enduser/activitylog/filters/package?party={guid}&term=skatt&pageSize=20
+GET /accessmanagement/api/v2/enduser/connections/activitylog/filter/package?party={guid}&direction=From&term=skatt&pageSize=20
 ```
 
-### 3. Activity type catalog — `GET /activitylog/types`
+### 3. Area discovery — `GET {area}/filter/fields` and `GET {area}/types`
 
-Returns all valid event combinations (currently 35) as `ActivityTypeDto`: `id`, the key fields (`type`, `subtype`, `trigger`, `status`), `name` and `description`. The hierarchy is Type → Subtype (`null` = the main record itself) → Trigger → Status (`null` = fallback for any status; entries with a status override it for that value).
+`filter/fields` lists the filter fields the area offers (the valid values for the filter route), and `types` lists the catalog entries the area accepts as `typeId` input — `ActivityTypeDto` with `id`, the key fields (`type`, `subtype`, `trigger`, `status`), `name` and `description`. The maskinporten slice cannot be derived from the global catalog (Supplier events share the assignment type), which is why each area serves its own accepted subset.
 
-Static metadata without personal data, hence anonymous and response-cached (1 hour, any location). Content only changes on deploy; the source of truth is `ActivityTypeConstants`, which also seeds the `dbo.activitytype` helper table. The `id` values are fixed guids and are what the `typeId` filter accepts.
+Both are static metadata without personal data, hence anonymous and response-cached (1 hour, any location). Content only changes on deploy; the source of truth is `ActivityTypeConstants`, which also seeds the `dbo.activitytype` helper table.
 
 ```
-GET /accessmanagement/api/v1/enduser/activitylog/types
+GET /accessmanagement/api/v2/enduser/maskinporten/activitylog/types
 ```
 
 ### Cross-cutting behavior
 
-- **Maskinporten schema events are hidden by default:** the Supplier role is used exclusively for Maskinporten schema delegations, so the service excludes it from both entries and filter values — the same rule connection queries apply. An `includeMps` flag on the service brings them back for internal callers; it is not exposed as an API parameter.
-- **Validation:** empty `party` and unknown `typeId` values return `400` with problem details.
-- **Feature flag:** the whole controller sits behind `EnableEnduserActivityLogApi`.
+- **Maskinporten schema events live only in the maskinporten area:** the Supplier role is used exclusively for Maskinporten schema delegations; the connections and request areas (and the internal surface by default) exclude it, and the maskinporten area pins it.
+- **Validation:** empty `party`, missing/`via` `direction`, `typeId` values outside the area, and filter fields the area does not offer all return `400` with problem details.
+- **Feature flags:** one per area — `AccessManagement.Enduser.{Connections|Request|Maskinporten}ActivityLogApi` — all declared in the deploy terraform.
 - **Ordering guarantee:** `(when desc, id desc)` — stable and duplicate-free across pages while paging.
 - **No joins at read time:** every name in the response is a denormalized snapshot from the log table itself; the log is served from a single range-partitioned table.
 
 ## BFF surface (early access)
 
-While the enduser API is gated off, the portal frontend gets the same functionality through the BFF surface of the internal API: `accessmanagement/api/v1/bff/activitylog`, `…/filters/{field}` and `…/types`, behind its own feature flag `AccessManagement.Bff.ActivityLogApi`. Both activity log flags are declared in the deploy terraform (created disabled; toggled per environment in App Configuration). The endpoints take the same query surface (a shared parameter model) and return the same shapes as the enduser API, with two differences:
+While the enduser areas are gated off, the portal frontend gets the complete log through the BFF surface of the internal API: `accessmanagement/api/v1/bff/activitylog`, `…/filters/{field}` and `…/types`, behind its own feature flag `AccessManagement.Bff.ActivityLogApi`. All activity log flags are declared in the deploy terraform (created disabled; toggled per environment in App Configuration). The endpoints take the same query surface (a shared parameter model) and return the same shapes as the enduser areas, with these differences:
 
 - **Portal only:** the endpoints require the portal scope plus access-management read for the party.
 - **Role matrix:** what the caller may see is decided by their effective roles and access packages for the party (currently resolved through the connection query; the goal is resolving this from the token): access managers see the assignment part including requests, client administrators the delegation part, and main administrators everything. Every query — entries and filter values alike — is constrained to the visible types. Asking only for types outside the caller's set returns an empty page; a caller with no matrix role gets 403. The matrix is a code table (`ActivityLogRoleMatrix`) meant to be extended as the log gains data points.
