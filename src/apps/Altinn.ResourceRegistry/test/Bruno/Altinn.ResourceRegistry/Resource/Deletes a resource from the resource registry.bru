@@ -1,0 +1,15 @@
+meta {
+  name: Deletes a resource from the resource registry
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/resourceregistry/api/v1/resource/{{id}}
+  body: none
+  auth: none
+}
+
+vars:pre-request {
+  id: 
+}

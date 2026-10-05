@@ -1,0 +1,15 @@
+meta {
+  name: Updates a XACML policy for a resource
+  type: http
+  seq: 8
+}
+
+put {
+  url: {{baseUrl}}/resourceregistry/api/v1/resource/{{id}}/policy
+  body: none
+  auth: none
+}
+
+vars:pre-request {
+  id: 
+}

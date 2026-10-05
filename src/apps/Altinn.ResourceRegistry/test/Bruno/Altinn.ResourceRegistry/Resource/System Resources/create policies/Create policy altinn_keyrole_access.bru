@@ -1,0 +1,41 @@
+meta {
+  name: Create policy altinn_keyrole_access
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/resourceregistry/api/v1/resource/{{id}}/policy
+  body: multipartForm
+  auth: inherit
+}
+
+headers {
+  Content-Type: multipart/form-data
+}
+
+body:multipart-form {
+  policyFile: @file(Testdata/Policies/altinn_keyrole_access.xacml)
+}
+
+vars:pre-request {
+  id: altinn_keyrole_access
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  
+  var getTokenParameters = {
+    auth_orgNo: sharedtestdata.serviceOwners.digdir.orgno,
+    auth_org: sharedtestdata.serviceOwners.digdir.org,
+    auth_tokenType: sharedtestdata.authTokenType.enterprise,
+    auth_scopes: sharedtestdata.auth_scopes.resourceregistryAdmin
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  
+  bru.setVar("bearerToken", token);
+  
+  
+  
+}

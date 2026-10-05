@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "Altinn.ResourceRegistry",
+  "type": "collection",
+  "presets": {
+    "requestType": "http",
+    "requestUrl": "{{baseUrl}}/resourceregistry/api/v1"
+  }
+}

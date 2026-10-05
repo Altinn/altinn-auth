@@ -1,0 +1,15 @@
+meta {
+  name: Get altinn_maskinporten_scope_delegation
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/resourceregistry/api/v1/resource/{{id}}
+  body: none
+  auth: none
+}
+
+vars:pre-request {
+  id: altinn_maskinporten_scope_delegation
+}

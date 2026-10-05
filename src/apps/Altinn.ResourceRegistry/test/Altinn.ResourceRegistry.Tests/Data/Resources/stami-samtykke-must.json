@@ -1,0 +1,61 @@
+{
+  "identifier": "stami-samtykke-must",
+  "version": "1.6",
+  "title": {
+    "en": "Samtykkeerklæring Medarbeiderundersøkelsen i staten - MUST",
+    "nb": "Samtykkeerklæring Medarbeiderundersøkelsen i staten - MUST",
+    "nn": "Samtykkeerklæring Medarbeiderundersøkelsen i staten - MUST"
+  },
+  "description": {
+    "en": "Samtykkeerklæring Medarbeiderundersøkelsen i staten - MUST",
+    "nb": "Samtykkeerklæring Medarbeiderundersøkelsen i staten - MUST",
+    "nn": "Samtykkeerklæring Medarbeiderundersøkelsen i staten - MUST"
+  },
+  "rightDescription": {
+    "en": "Test",
+    "nb": "Test",
+    "nn": "Test"
+  },
+  "status": "UnderDevelopment",
+  "contactPoints": [
+    {
+      "category": "Tilbakemeldinger",
+      "email": "survey@stami.no",
+      "telephone": "",
+      "contactPage": ""
+    }
+  ],
+  "delegable": true,
+  "visible": false,
+  "hasCompetentAuthority": {
+    "name": {
+      "en": "The National Institute of Occupational Health",
+      "nb": "Statens arbeidsmiljøinstitutt",
+      "nn": "Statens arbeidsmiljøinstitutt"
+    },
+    "organization": "874761222",
+    "orgcode": "stami"
+  },
+  "accessListMode": "Disabled",
+  "selfIdentifiedUserEnabled": false,
+  "enterpriseUserEnabled": false,
+  "resourceType": "Consent",
+  "availableForType": [
+    "PrivatePerson"
+  ],
+  "consentTemplate": "samtykkemal_simpleconsent",
+  "consentText": {
+    "en": "[Les informasjonsskrivet på nytt her (åpnes i ny fane)]({samtykkelink})\n\nJeg har mottatt og forstått informasjonen om MUST, og har fått anledning til å stille spørsmål. Jeg er informert om at hvis jeg samtykker, vil mine opplysninger brukes i STAMI sin forskning, og oppbevares inntil 5 år etter at prosjektet er avsluttet - inntil 31.12.2045 - eller før dette om jeg trekker mitt samtykke.\n\nKlikk «Ja, jeg gir samtykke» for **tillatelse** til at **STAMI kan bruke dine opplysninger** i sin **forskning på arbeidsmiljø og helse** - slik det fremkommer i informasjonsskrivet. Samtykket kan trekkes igjen senere – se «Samtykker og fullmakter», under din profil i Altinn.\n\nKlikk «Nei, jeg gir ikke samtykke» hvis du **kun vil** at **dine opplysninger** skal inngå i **resultatrapportene** som {virksomhet} mottar etter endt medarbeiderundersøkelse.",
+    "nb": "[Les informasjonsskrivet på nytt her (åpnes i ny fane)]({samtykkelink})\n\nJeg har mottatt og forstått informasjonen om MUST, og har fått anledning til å stille spørsmål. Jeg er informert om at hvis jeg samtykker, vil mine opplysninger brukes i STAMI sin forskning, og oppbevares inntil 5 år etter at prosjektet er avsluttet - inntil 31.12.2045 - eller før dette om jeg trekker mitt samtykke.\n\nKlikk «Ja, jeg gir samtykke» for **tillatelse** til at **STAMI kan bruke dine opplysninger** i sin **forskning på arbeidsmiljø og helse** - slik det fremkommer i informasjonsskrivet. Samtykket kan trekkes igjen senere – se «Samtykker og fullmakter», under din profil i Altinn.\n\nKlikk «Nei, jeg gir ikke samtykke» hvis du **kun vil** at **dine opplysninger** skal inngå i **resultatrapportene** som {virksomhet} mottar etter endt medarbeiderundersøkelse.",
+    "nn": "[Les informasjonsskrivet på nytt her (åpnes i ny fane)]({samtykkelink})\n\nJeg har mottatt og forstått informasjonen om MUST, og har fått anledning til å stille spørsmål. Jeg er informert om at hvis jeg samtykker, vil mine opplysninger brukes i STAMI sin forskning, og oppbevares inntil 5 år etter at prosjektet er avsluttet - inntil 31.12.2045 - eller før dette om jeg trekker mitt samtykke.\n\nKlikk «Ja, jeg gir samtykke» for **tillatelse** til at **STAMI kan bruke dine opplysninger** i sin **forskning på arbeidsmiljø og helse** - slik det fremkommer i informasjonsskrivet. Samtykket kan trekkes igjen senere – se «Samtykker og fullmakter», under din profil i Altinn.\n\nKlikk «Nei, jeg gir ikke samtykke» hvis du **kun vil** at **dine opplysninger** skal inngå i **resultatrapportene** som {virksomhet} mottar etter endt medarbeiderundersøkelse."
+  },
+  "consentMetadata": {
+    "virksomhet": {
+      "optional": false
+    },
+    "samtykkelink": {
+      "optional": false
+    }
+  },
+  "isOneTimeConsent": false
+}
