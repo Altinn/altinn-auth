@@ -196,9 +196,13 @@ namespace Altinn.AccessManagement.Api.Enduser.Authorization.Helper
                     if (Convert.ToInt32(usersAuthenticationLevel) < Convert.ToInt32(minAuthenticationLevel))
                     {
                         // A logged in system user always has authentication level 3. The system user obligation
-                        // can only relax the general requirement, never tighten it.
+                        // can only relax the general requirement, never tighten it. When the policy has the system
+                        // user obligation, the fixed level is also checked against the general requirement, since
+                        // the token does not necessarily carry an authlevel claim.
                         XacmlJsonAttributeAssignment attributeMinLvAuthSystemUser = IsSystemUser(user) ? GetObligation(PolicyObligationMinAuthnLevelSystemUser, obligationList) : null;
-                        if (attributeMinLvAuthSystemUser == null || SystemUserAuthenticationLevel < Convert.ToInt32(attributeMinLvAuthSystemUser.Value))
+                        if (attributeMinLvAuthSystemUser == null
+                            || (SystemUserAuthenticationLevel < Convert.ToInt32(attributeMinLvAuthSystemUser.Value)
+                                && SystemUserAuthenticationLevel < Convert.ToInt32(minAuthenticationLevel)))
                         {
                             return false;
                         }

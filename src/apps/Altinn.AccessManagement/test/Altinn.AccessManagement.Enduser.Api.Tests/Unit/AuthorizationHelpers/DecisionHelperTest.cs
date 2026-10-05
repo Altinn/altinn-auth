@@ -248,14 +248,21 @@ public class DecisionHelperTest
         DecisionHelper.ValidatePdpDecision(response, user).Should().BeTrue();
     }
 
-    [Fact]
-    public void ValidatePdpDecision_SystemUser_MeetsGeneralMinAuthLevel_StricterSystemUserObligationIgnored()
+    [Theory]
+    [InlineData(null)]
+    [InlineData("3")]
+    public void ValidatePdpDecision_SystemUser_MeetsGeneralMinAuthLevel_StricterSystemUserObligationIgnored(string authLevel)
     {
-        // The system user obligation only relaxes the general requirement, never tightens it
+        // The system user obligation only relaxes the general requirement, never tightens it, also without an authlevel claim
         var response = ResponseWithMinAuthLevel("2", "4");
 
-        var user = new ClaimsPrincipal(new ClaimsIdentity(
-            [new Claim("authorization_details", SystemUserClaimValue), new Claim("urn:altinn:authlevel", "3")], "test"));
+        List<Claim> claims = [new Claim("authorization_details", SystemUserClaimValue)];
+        if (authLevel != null)
+        {
+            claims.Add(new Claim("urn:altinn:authlevel", authLevel));
+        }
+
+        var user = new ClaimsPrincipal(new ClaimsIdentity(claims, "test"));
 
         DecisionHelper.ValidatePdpDecision(response, user).Should().BeTrue();
     }

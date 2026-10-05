@@ -648,18 +648,20 @@ namespace Altinn.Authorization.PEP.Tests
         }
 
         /// <summary>
-        /// Test case: System user on authentication level 3 authorizes against a policy requiring level 2 in general,
-        /// but level 4 for system users.
+        /// Test case: System user on authentication level 3, with or without an authlevel claim, authorizes against a
+        /// policy requiring level 2 in general, but level 4 for system users.
         /// Expected: The system user obligation only relaxes the general requirement, so the system user is authorized.
         /// </summary>
-        [Fact]
-        public void ValidateDecisionResult_SystemUser_MeetsGeneralMinAuthLevel_StricterSystemUserObligationIgnored()
+        [Theory]
+        [InlineData(null)]
+        [InlineData("3")]
+        public void ValidateDecisionResult_SystemUser_MeetsGeneralMinAuthLevel_StricterSystemUserObligationIgnored(string authLevel)
         {
             // Arrange
             XacmlJsonResult result = CreateResultWithAuthLevelObligations("2", PolicyObligationMinAuthnLevelSystemUser, "4");
 
             // Act
-            bool valid = DecisionHelper.ValidateDecisionResult(result, CreateSystemUserClaims("3"));
+            bool valid = DecisionHelper.ValidateDecisionResult(result, CreateSystemUserClaims(authLevel));
 
             // Assert
             Assert.True(valid);
@@ -720,8 +722,9 @@ namespace Altinn.Authorization.PEP.Tests
         }
 
         /// <summary>
-        /// Test case: System user does not meet the system user requirement, validated with the detailed result.
-        /// Expected: The failed obligation reports the system user requirement, not the general one.
+        /// Test case: System user meets neither the general nor the system user requirement, validated with the
+        /// detailed result.
+        /// Expected: The system user is not authorized, and the failed obligation reports the required level.
         /// </summary>
         [Fact]
         public void ValidatePdpDecisionDetailed_SystemUserDoesNotMeetSystemUserMinAuthLevel_ReturnsSystemUserObligation()
@@ -729,7 +732,7 @@ namespace Altinn.Authorization.PEP.Tests
             // Arrange
             List<XacmlJsonResult> results = new List<XacmlJsonResult>
             {
-                CreateResultWithAuthLevelObligations("3", PolicyObligationMinAuthnLevelSystemUser, "4")
+                CreateResultWithAuthLevelObligations("4", PolicyObligationMinAuthnLevelSystemUser, "4")
             };
 
             // Act
