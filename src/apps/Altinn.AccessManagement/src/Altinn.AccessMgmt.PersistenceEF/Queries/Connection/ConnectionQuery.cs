@@ -153,6 +153,12 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
                 : _baseQueryBuilder.ToOthers(db, filter);
 
             var result = baseQuery.Select(ToDtoEmpty).ToList();
+            if (filter.ExcludeDeleted)
+            {
+                // Before packages and resources are loaded, so no work is spent on connections that are dropped
+                result = await RemoveDeletedPartiesAsync(result, direction, ct);
+            }
+
             if (filter.IncludePackages || filter.EnrichPackageResources)
             {
                 try
@@ -242,6 +248,38 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
         {
             throw new InvalidOperationException($"Failed to get connections with filter: {JsonSerializer.Serialize(filter)}", ex);
         }
+    }
+
+    /// <summary>
+    /// Removes connections to deleted parties, and to parties whose main unit is deleted, for <see cref="ConnectionQueryFilter.ExcludeDeleted"/>.
+    /// The party is <c>From</c> for FromOthers and <c>To</c> for ToOthers. Only the parties already found through the connections
+    /// are looked up, by primary key, so the cost follows the size of the result and not the number of deleted entities.
+    /// </summary>
+    private async Task<List<ConnectionQueryExtendedRecord>> RemoveDeletedPartiesAsync(List<ConnectionQueryExtendedRecord> result, ConnectionQueryDirection direction, CancellationToken ct)
+    {
+        if (result.Count == 0)
+        {
+            return result;
+        }
+
+        Func<ConnectionQueryExtendedRecord, Guid> partyId = direction == ConnectionQueryDirection.FromOthers ? r => r.FromId : r => r.ToId;
+        var partyIds = result.Select(partyId).ToHashSet();
+
+        var deletedPartyIds = await db.Entities
+            .AsNoTracking()
+            .Where(e => partyIds.Contains(e.Id))
+            .Where(e => e.IsDeleted || (e.Parent != null && e.Parent.IsDeleted))
+            .Select(e => e.Id)
+            .ToListAsync(ct);
+
+        if (deletedPartyIds.Count == 0)
+        {
+            return result;
+        }
+
+        var deletedSet = deletedPartyIds.ToHashSet();
+        result.RemoveAll(r => deletedSet.Contains(partyId(r)));
+        return result;
     }
 
     private static List<ConnectionQueryExtendedRecord> Attach<T>(IEnumerable<ConnectionQueryExtendedRecord> results, ConnectionIndex<T> index, Func<T, Guid> idSelector, Action<ConnectionQueryExtendedRecord, List<T>> assign)
