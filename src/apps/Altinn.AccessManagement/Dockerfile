@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine@sha256:d8ee39817ca03a3757288e83c37ed73cc969a286c603b827c7cbe33add1c2d1c AS build
+﻿FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine@sha256:d8ee39817ca03a3757288e83c37ed73cc969a286c603b827c7cbe33add1c2d1c AS build
 WORKDIR /app
 WORKDIR /src
 COPY src/ .
@@ -9,6 +9,9 @@ FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine@sha256:27b6b84beeede74fd1688617
 EXPOSE 5110
 WORKDIR /app
 COPY --from=build /app .
+
+# Install tzdata for timezone support, which is needed for correct handling of dates and times in the application
+RUN apk add --no-cache tzdata krb5-libs
 
 # setup the user and group
 # the user will have no password, using shell /bin/false and using the group dotnet

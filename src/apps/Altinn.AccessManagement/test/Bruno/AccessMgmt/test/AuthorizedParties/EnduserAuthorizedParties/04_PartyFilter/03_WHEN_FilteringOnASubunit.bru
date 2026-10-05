@@ -19,8 +19,9 @@ params:query {
 docs {
   WHEN the list is filtered on a subunit, the subunit is returned nested under its main
   unit, since a subunit is never returned at the top level. The subunit carries the
-  access delegated to it as well as the access it inherits from the main unit, while the
-  main unit itself is only a hierarchy carrier with no access information of its own.
+  access delegated to it as well as the access it inherits from the main unit, and the
+  main unit carries the access the caller holds on it. Keeping the main unit's own access
+  is what lets the caller tell inherited access apart from access given on the subunit.
 }
 
 script:pre-request {
@@ -67,12 +68,10 @@ tests {
     ]);
   });
 
-  test("THEN the main unit is only a hierarchy carrier with no access info of its own", function() {
+  test("THEN the main unit carries the access the caller holds on it", function() {
     const mainUnit = res.getBody().data[0];
-    expect(mainUnit.onlyHierarchyElementWithNoAccess, "the main unit did not match the filter").to.be.true;
-    expect(mainUnit.authorizedRoles).to.be.empty;
-    expect(mainUnit.authorizedAccessPackages).to.be.empty;
-    expect(mainUnit.authorizedResources).to.be.empty;
-    expect(mainUnit.authorizedInstances).to.be.empty;
+    expect(mainUnit.onlyHierarchyElementWithNoAccess, "the main unit is not a bare hierarchy carrier").to.be.false;
+    expect(mainUnit.authorizedAccessPackages).to.include(client.packageDelegatedToPerson);
+    expect(mainUnit.authorizedResources).to.include(client.resourceIdDelegatedToPerson);
   });
 }

@@ -1,0 +1,28 @@
+meta {
+  name: Put authz-bruno access list
+  type: http
+  seq: 1
+}
+
+put {
+  url: {{baseUrl}}/resourceregistry/api/v1/access-lists/{{resourceOwner}}/{{listIdentifier}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: 
+}
+
+body:json {
+  {
+    "name": "Authorization Bruno Access List",
+    "description": "AccessList used for testdata in automated Bruno tests for Authorization"
+  }
+}
+
+vars:pre-request {
+  auth_tokenType: Enterprise
+  resourceOwner: ttd
+  listIdentifier: authz-bruno
+}

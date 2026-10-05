@@ -759,6 +759,138 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
         }
 
         /// <summary>
+        /// Test get consent request that has a HandledBy party, authenticated as the HandledBy party.
+        /// Expect the consent request in response.
+        /// </summary>
+        /// <returns></returns>
+        [Fact]
+        public async Task CreateConsentRequestHandledByParty_GetAsHandledByParty_Returns200WithConsentRequest()
+        {
+            SetupMockPartyRepository();
+
+            Guid requestID = Guid.CreateVersion7();
+            ConsentRequestDto consentRequest = new ConsentRequestDto
+            {
+                Id = requestID,
+                From = ConsentPartyUrn.PersonId.Create(PersonIdentifier.Parse("01025161013")),
+                To = ConsentPartyUrn.OrganizationId.Create(OrganizationNumber.Parse("810419512")),
+                ValidTo = DateTimeOffset.UtcNow.AddDays(1),
+                ConsentRights = new List<ConsentRightDto>
+                {
+                    new ConsentRightDto
+                    {
+                        Action = new List<string> { "read" },
+                        Resource = new List<ConsentResourceAttributeDto>
+                        {
+                            new ConsentResourceAttributeDto
+                            {
+                                Type = "urn:altinn:resource",
+                                Value = "ttd_inntektsopplysninger"
+                            }
+                        },
+                        Metadata = new Dictionary<string, string>
+                        {
+                            { "INNTEKTSAAR", "ADSF" }
+                        }
+                    }
+                },
+                RequestMessage = new Dictionary<string, string>
+                {
+                    { "en", "Please approve this consent request" }
+                },
+                RedirectUrl = "https://www.dnb.no"
+            };
+
+            HttpClient client = GetTestClient();
+            string url = $"/accessmanagement/api/v1/enterprise/consentrequests/";
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            // Create the request as the To party (810419512), with HandledBy supplier 810418192.
+            string token = PrincipalUtil.GetOrgToken(null, "810419512", "altinn:consentrequests.write", "810418192");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            HttpResponseMessage response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"), TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+            string location = response.Headers.Location.ToString();
+
+            // Retrieve the request authenticated as the HandledBy party itself (810418192).
+            token = PrincipalUtil.GetOrgToken(null, "810418192", "altinn:consentrequests.read", "810418192");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            HttpResponseMessage getResponse = await client.GetAsync(location, TestContext.Current.CancellationToken);
+            string getResponseConsent = await getResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+            Assert.NotNull(getResponseConsent);
+            ConsentRequestDetailsDto consentInfoFromGet = JsonSerializer.Deserialize<ConsentRequestDetailsDto>(getResponseConsent, _jsonOptions);
+            Assert.Equal("urn:altinn:organization:identifier-no:810418192", consentInfoFromGet.HandledBy.ToString());
+            Assert.Equal(consentRequest.To, consentInfoFromGet.To);
+            Assert.Equal(consentRequest.From, consentInfoFromGet.From);
+        }
+
+        /// <summary>
+        /// Test get consent request that has a HandledBy party, authenticated as an organization that is
+        /// neither the To party nor the HandledBy party. Expect forbidden.
+        /// </summary>
+        /// <returns></returns>
+        [Fact]
+        public async Task CreateConsentRequestHandledByParty_GetAsUnrelatedParty_Returns403()
+        {
+            SetupMockPartyRepository();
+
+            Guid requestID = Guid.CreateVersion7();
+            ConsentRequestDto consentRequest = new ConsentRequestDto
+            {
+                Id = requestID,
+                From = ConsentPartyUrn.PersonId.Create(PersonIdentifier.Parse("01025161013")),
+                To = ConsentPartyUrn.OrganizationId.Create(OrganizationNumber.Parse("810419512")),
+                ValidTo = DateTimeOffset.UtcNow.AddDays(1),
+                ConsentRights = new List<ConsentRightDto>
+                {
+                    new ConsentRightDto
+                    {
+                        Action = new List<string> { "read" },
+                        Resource = new List<ConsentResourceAttributeDto>
+                        {
+                            new ConsentResourceAttributeDto
+                            {
+                                Type = "urn:altinn:resource",
+                                Value = "ttd_inntektsopplysninger"
+                            }
+                        },
+                        Metadata = new Dictionary<string, string>
+                        {
+                            { "INNTEKTSAAR", "ADSF" }
+                        }
+                    }
+                },
+                RequestMessage = new Dictionary<string, string>
+                {
+                    { "en", "Please approve this consent request" }
+                },
+                RedirectUrl = "https://www.dnb.no"
+            };
+
+            HttpClient client = GetTestClient();
+            string url = $"/accessmanagement/api/v1/enterprise/consentrequests/";
+            client.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+            // Create the request as the To party (810419512), with HandledBy supplier 810418192.
+            string token = PrincipalUtil.GetOrgToken(null, "810419512", "altinn:consentrequests.write", "810418192");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+            HttpResponseMessage response = await client.PostAsync(url, new StringContent(JsonSerializer.Serialize(consentRequest, _jsonOptions), Encoding.UTF8, "application/json"), TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+            string location = response.Headers.Location.ToString();
+
+            // Retrieve the request authenticated as an unrelated org (910459880) that is neither To nor HandledBy.
+            token = PrincipalUtil.GetOrgToken(null, "910459880", "altinn:consentrequests.read", "810418192");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+            HttpResponseMessage getResponse = await client.GetAsync(location, TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.Forbidden, getResponse.StatusCode);
+        }
+
+        /// <summary>
         /// Test get consent. Expect a consent in response
         /// </summary>
         /// <returns></returns>

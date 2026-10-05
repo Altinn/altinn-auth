@@ -1,0 +1,39 @@
+﻿apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: product-accessmanagement
+resources:
+  - ../base
+patches:
+  - target:
+      kind: OCIRepository
+      name: manifests
+    patch: |-
+      apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: manifests
+      spec:
+        ref:
+          tag: at24
+
+  - target:
+      kind: Kustomization
+      name: pre-deployment
+    patch: |-
+      apiVersion: kustomize.toolkit.fluxcd.io/v1
+      kind: Kustomization
+      metadata:
+        name: pre-deployment
+      spec:
+        path: ./pre-deploy/at24
+
+  - target:
+      kind: Kustomization
+      name: deployment
+    patch: |-
+      apiVersion: kustomize.toolkit.fluxcd.io/v1
+      kind: Kustomization
+      metadata:
+        name: deployment
+      spec:
+        path: ./deploy/at24

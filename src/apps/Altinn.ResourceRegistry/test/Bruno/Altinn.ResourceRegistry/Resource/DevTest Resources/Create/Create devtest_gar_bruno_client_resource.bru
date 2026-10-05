@@ -1,0 +1,68 @@
+meta {
+  name: Create devtest_gar_bruno_client_resource
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/resourceregistry/api/v1/resource
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+      "identifier": "devtest_gar_bruno_client_resource",
+      "title": {
+        "en": "Bruno automated test resource for client delegation",
+        "nb": "Bruno automatisert test ressurs for klientdelegering",
+        "nn": "Bruno automatisert test ressurs for klientdelegering"
+      },
+      "description": {
+        "en": "Bruno automated test resource for client delegation scenarios in access management and authorization",
+        "nb": "Bruno automatisert test ressurs for klientdelegering scenario i tilgangsstyring og autorisasjon",
+        "nn": "Bruno automatisert test ressurs for klientdelegering scenario i tilgongsstyring og autorisasjon"
+      },
+      "rightDescription": {
+        "en": "Not really a relevant resource for direct delegation.",
+        "nb": "Ikke egentlig en relevant ressurs og enkeltdelegere.",
+        "nn": "Ikkje eigentleg ein relevant ressurs og enkeltdelegere."
+      },
+      "homepage": "",
+      "status": "Active",
+      "contactPoints": [],
+      "isPartOf": "",
+      "resourceReferences": [],
+      "delegable": true,
+      "visible": true,
+      "hasCompetentAuthority": {
+        "name": {},
+        "organization": "991825827",
+        "orgcode": "ttd"
+      },
+      "keywords": [],
+      "accessListMode": "Disabled",
+      "selfIdentifiedUserEnabled": false,
+      "enterpriseUserEnabled": true,
+      "resourceType": "GenericAccessResource"
+    }
+}
+
+script:pre-request {
+  //const token = await tokenGenerator.getToken();
+  const sharedtestdata = require(`./Testdata/sharedtestdata.json`);
+  
+  var getTokenParameters = {
+    auth_orgNo: sharedtestdata.serviceOwners.ttd.orgno,
+    auth_org: sharedtestdata.serviceOwners.ttd.org,
+    auth_tokenType: sharedtestdata.authTokenType.enterprise,
+    auth_scopes: sharedtestdata.auth_scopes.resourceregistryWrite
+  }
+  
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  
+  bru.setVar("bearerToken",  token);
+  
+  
+  
+}

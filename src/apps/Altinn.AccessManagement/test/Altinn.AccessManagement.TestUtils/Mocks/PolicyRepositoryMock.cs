@@ -78,6 +78,11 @@ namespace Altinn.AccessManagement.TestUtils.Mocks
         {
             string fullpath = ResolveUnderBlobPath(GetDataInputBlobPath(), Filepath);
 
+            if (WrittenPolicies != null && WrittenPolicies.ContainsKey(Filepath))
+            {
+                return Task.FromResult(true);
+            }
+
             if (File.Exists(fullpath))
             {
                 return Task.FromResult(true);

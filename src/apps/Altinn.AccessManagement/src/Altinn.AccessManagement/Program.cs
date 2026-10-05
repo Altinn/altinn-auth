@@ -14,6 +14,7 @@ domain.SetData("REGEX_DEFAULT_MATCH_TIMEOUT", TimeSpan.FromSeconds(2));
 WebApplication app = AccessManagementHost.Create(args);
 using var scope = app.Services.CreateScope();
 var appsettings = scope.ServiceProvider.GetRequiredService<IOptions<AccessManagementAppsettings>>().Value;
+await app.Services.InitializeAppLifecycleFeaturesAsync();
 
 if (appsettings.RunInitOnly)
 {

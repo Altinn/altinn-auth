@@ -1,4 +1,4 @@
-using Altinn.AccessMgmt.FFB.Services.Contracts;
+﻿using Altinn.AccessMgmt.FFB.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
@@ -28,7 +28,7 @@ public sealed class ConnectionQueryService(IEnvironmentDbContextFactory dbFactor
         CancellationToken ct = default)
     {
         using var db = dbFactory.CreateContext(environment);
-        var query = new ConnectionQuery(db);
+        var query = new ConnectionQuery(db, adosSubunitInheritanceEnabled: true);
 
         return direction == ConnectionQueryDirection.FromOthers
             ? await query.GetConnectionsFromOthersAsync(filter, ct: ct)
