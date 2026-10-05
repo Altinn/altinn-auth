@@ -627,6 +627,45 @@ namespace Altinn.Authorization.PEP.Tests
         }
 
         /// <summary>
+        /// Test case: System user whose token carries an authlevel claim below 3 authorizes against a policy requiring
+        /// level 4 in general, but level 3 for system users.
+        /// Expected: The authlevel claim is not consulted for the system user requirement. A logged in system user is
+        /// level 3, so the system user is authorized.
+        /// </summary>
+        [Theory]
+        [InlineData("0")]
+        [InlineData("2")]
+        public void ValidateDecisionResult_SystemUser_AuthLevelClaimBelowThree_MeetsSystemUserMinAuthLevel(string authLevel)
+        {
+            // Arrange
+            XacmlJsonResult result = CreateResultWithAuthLevelObligations("4", PolicyObligationMinAuthnLevelSystemUser, "3");
+
+            // Act
+            bool valid = DecisionHelper.ValidateDecisionResult(result, CreateSystemUserClaims(authLevel));
+
+            // Assert
+            Assert.True(valid);
+        }
+
+        /// <summary>
+        /// Test case: System user on authentication level 3 authorizes against a policy requiring level 2 in general,
+        /// but level 4 for system users.
+        /// Expected: The system user obligation only relaxes the general requirement, so the system user is authorized.
+        /// </summary>
+        [Fact]
+        public void ValidateDecisionResult_SystemUser_MeetsGeneralMinAuthLevel_StricterSystemUserObligationIgnored()
+        {
+            // Arrange
+            XacmlJsonResult result = CreateResultWithAuthLevelObligations("2", PolicyObligationMinAuthnLevelSystemUser, "4");
+
+            // Act
+            bool valid = DecisionHelper.ValidateDecisionResult(result, CreateSystemUserClaims("3"));
+
+            // Assert
+            Assert.True(valid);
+        }
+
+        /// <summary>
         /// Test case: System user authorizes against a policy requiring level 4 for system users.
         /// Expected: The system user is not authorized, as a system user never exceeds authentication level 3.
         /// </summary>
@@ -716,6 +755,33 @@ namespace Altinn.Authorization.PEP.Tests
             {
                 new Claim("urn:altinn:authlevel", "2", "string", "org"),
                 new Claim("authorization_details", "not json", "string", "maskinporten")
+            };
+
+            // Act
+            bool valid = DecisionHelper.ValidateDecisionResult(result, new ClaimsPrincipal(new ClaimsIdentity(claims)));
+
+            // Assert
+            Assert.False(valid);
+        }
+
+        /// <summary>
+        /// Test case: A principal carrying an authorization_details claim with a system user id, but without the
+        /// system user type.
+        /// Expected: The principal is not a system user, and the general requirement applies.
+        /// </summary>
+        [Theory]
+        [InlineData("{\"systemuser_id\":[\"f58fe166-bc22-4899-beb7-c3e8e3332f43\"]}")]
+        [InlineData("{\"type\":\"urn:altinn:other\",\"systemuser_id\":[\"f58fe166-bc22-4899-beb7-c3e8e3332f43\"]}")]
+        [InlineData("[{\"type\":\"urn:altinn:systemuser\",\"systemuser_id\":[\"f58fe166-bc22-4899-beb7-c3e8e3332f43\"]}]")]
+        public void ValidateDecisionResult_AuthorizationDetailsWithoutSystemUserType_EnforcesGeneralMinAuthLevel(string authorizationDetails)
+        {
+            // Arrange
+            XacmlJsonResult result = CreateResultWithAuthLevelObligations("4", PolicyObligationMinAuthnLevelSystemUser, "3");
+
+            List<Claim> claims = new List<Claim>
+            {
+                new Claim("urn:altinn:authlevel", "2", "string", "org"),
+                new Claim("authorization_details", authorizationDetails, "string", "maskinporten")
             };
 
             // Act
@@ -827,6 +893,27 @@ namespace Altinn.Authorization.PEP.Tests
             Assert.NotNull(requestRoot);
             var subjectAttrs = requestRoot.Request.AccessSubject[0].Attribute;
             Assert.Contains(subjectAttrs, a => a.AttributeId == "urn:altinn:systemuser:uuid" && a.Value == "some-uuid-value");
+        }
+
+        [Fact]
+        public void CreateDecisionRequest_WithAuthorizationDetailsWithoutSystemUserType_DoesNotAddSystemUserUuidAttribute()
+        {
+            // Arrange
+            var authorizationDetailsJson = "{\"type\":\"urn:altinn:other\",\"systemuser_id\":[\"some-uuid-value\"]}";
+            var claims = new List<Claim>
+            {
+                new Claim("urn:altinn:authlevel", "2", "string", "org"),
+                new Claim("authorization_details", authorizationDetailsJson, "string", "maskinporten")
+            };
+            var user = new ClaimsPrincipal(new ClaimsIdentity(claims));
+
+            // Act
+            var requestRoot = DecisionHelper.CreateDecisionRequest(Org, App, user, ActionType);
+
+            // Assert
+            Assert.NotNull(requestRoot);
+            var subjectAttrs = requestRoot.Request.AccessSubject[0].Attribute;
+            Assert.DoesNotContain(subjectAttrs, a => a.AttributeId == "urn:altinn:systemuser:uuid");
         }
 
         [Fact]

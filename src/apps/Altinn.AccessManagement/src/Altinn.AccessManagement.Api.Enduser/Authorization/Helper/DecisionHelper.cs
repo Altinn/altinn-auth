@@ -23,6 +23,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Authorization.Helper
 
         private const string PolicyObligationMinAuthnLevel = "urn:altinn:minimum-authenticationlevel";
         private const string PolicyObligationMinAuthnLevelSystemUser = "urn:altinn:minimum-authenticationlevel-systemuser";
+        private const string SystemUserClaimType = "urn:altinn:systemuser";
 
         /// <summary>
         /// A logged in system user always has authentication level 3. This is a fixed property of the system user
@@ -189,24 +190,18 @@ namespace Altinn.AccessManagement.Api.Enduser.Authorization.Helper
                 if (attributeMinLvAuth != null)
                 {
                     string minAuthenticationLevel = attributeMinLvAuth.Value;
-
-                    // A logged in system user always has authentication level 3. When the policy states a separate
-                    // requirement for system users, that requirement replaces the general one.
-                    if (IsSystemUser(user))
-                    {
-                        XacmlJsonAttributeAssignment attributeMinLvAuthSystemUser = GetObligation(PolicyObligationMinAuthnLevelSystemUser, obligationList);
-                        if (attributeMinLvAuthSystemUser != null)
-                        {
-                            return Convert.ToInt32(attributeMinLvAuthSystemUser.Value) <= SystemUserAuthenticationLevel;
-                        }
-                    }
-
                     string usersAuthenticationLevel = user.Claims.FirstOrDefault(c => c.Type == "urn:altinn:authlevel")?.Value;
 
                     // Checks that the user meets the minimum authentication level
                     if (Convert.ToInt32(usersAuthenticationLevel) < Convert.ToInt32(minAuthenticationLevel))
                     {
-                        return false;
+                        // A logged in system user always has authentication level 3. The system user obligation
+                        // can only relax the general requirement, never tighten it.
+                        XacmlJsonAttributeAssignment attributeMinLvAuthSystemUser = IsSystemUser(user) ? GetObligation(PolicyObligationMinAuthnLevelSystemUser, obligationList) : null;
+                        if (attributeMinLvAuthSystemUser == null || SystemUserAuthenticationLevel < Convert.ToInt32(attributeMinLvAuthSystemUser.Value))
+                        {
+                            return false;
+                        }
                     }
                 }
             }
@@ -315,7 +310,13 @@ namespace Altinn.AccessManagement.Api.Enduser.Authorization.Helper
 
             try
             {
-                userClaim = JsonSerializer.Deserialize<SystemUserClaim>(claim.Value, Options);
+                using JsonDocument document = JsonDocument.Parse(claim.Value);
+                if (!HasSystemUserType(document.RootElement))
+                {
+                    return false;
+                }
+
+                userClaim = document.RootElement.Deserialize<SystemUserClaim>(Options);
             }
             catch (JsonException)
             {
@@ -324,6 +325,14 @@ namespace Altinn.AccessManagement.Api.Enduser.Authorization.Helper
             }
 
             return userClaim?.Systemuser_id != null && userClaim.Systemuser_id.Count > 0;
+        }
+
+        private static bool HasSystemUserType(JsonElement authorizationDetails)
+        {
+            return authorizationDetails.ValueKind == JsonValueKind.Object
+                && authorizationDetails.TryGetProperty("type", out JsonElement type)
+                && type.ValueKind == JsonValueKind.String
+                && type.GetString() == SystemUserClaimType;
         }
 
         private static bool IsSystemUser(ClaimsPrincipal user)

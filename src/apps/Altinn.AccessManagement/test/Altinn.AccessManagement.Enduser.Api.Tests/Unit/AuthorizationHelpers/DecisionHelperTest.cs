@@ -234,6 +234,48 @@ public class DecisionHelperTest
         DecisionHelper.ValidatePdpDecision(response, user).Should().Be(expected);
     }
 
+    [Theory]
+    [InlineData("0")]
+    [InlineData("2")]
+    public void ValidatePdpDecision_SystemUser_AuthLevelClaimBelowThree_MeetsSystemUserMinAuthLevel(string authLevel)
+    {
+        // The authlevel claim is not consulted for the system user requirement, a logged in system user is level 3
+        var response = ResponseWithMinAuthLevel("4", "3");
+
+        var user = new ClaimsPrincipal(new ClaimsIdentity(
+            [new Claim("authorization_details", SystemUserClaimValue), new Claim("urn:altinn:authlevel", authLevel)], "test"));
+
+        DecisionHelper.ValidatePdpDecision(response, user).Should().BeTrue();
+    }
+
+    [Fact]
+    public void ValidatePdpDecision_SystemUser_MeetsGeneralMinAuthLevel_StricterSystemUserObligationIgnored()
+    {
+        // The system user obligation only relaxes the general requirement, never tightens it
+        var response = ResponseWithMinAuthLevel("2", "4");
+
+        var user = new ClaimsPrincipal(new ClaimsIdentity(
+            [new Claim("authorization_details", SystemUserClaimValue), new Claim("urn:altinn:authlevel", "3")], "test"));
+
+        DecisionHelper.ValidatePdpDecision(response, user).Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData("not json")]
+    [InlineData("""{"systemuser_id":["f58fe166-bc22-4899-beb7-c3e8e3332f43"]}""")]
+    [InlineData("""{"type":"urn:altinn:other","systemuser_id":["f58fe166-bc22-4899-beb7-c3e8e3332f43"]}""")]
+    [InlineData("""[{"type":"urn:altinn:systemuser","systemuser_id":["f58fe166-bc22-4899-beb7-c3e8e3332f43"]}]""")]
+    public void ValidatePdpDecision_AuthorizationDetailsNotSystemUser_EnforcesGeneralMinAuthLevel(string authorizationDetails)
+    {
+        // Invalid json, or json without the system user type, is not a system user, so the general requirement applies
+        var response = ResponseWithMinAuthLevel("4", "3");
+
+        var user = new ClaimsPrincipal(new ClaimsIdentity(
+            [new Claim("authorization_details", authorizationDetails), new Claim("urn:altinn:authlevel", "2")], "test"));
+
+        DecisionHelper.ValidatePdpDecision(response, user).Should().BeFalse();
+    }
+
     [Fact]
     public void ValidatePdpDecision_SystemUser_NoSystemUserObligation_EnforcesGeneralMinAuthLevel()
     {

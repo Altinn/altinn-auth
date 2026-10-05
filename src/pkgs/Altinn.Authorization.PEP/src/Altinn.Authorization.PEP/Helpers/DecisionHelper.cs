@@ -35,6 +35,7 @@ namespace Altinn.Common.PEP.Helpers
         private const string PolicyObligationMinAuthnLevel = "urn:altinn:minimum-authenticationlevel";
         private const string PolicyObligationMinAuthnLevelOrg = "urn:altinn:minimum-authenticationlevel-org";
         private const string PolicyObligationMinAuthnLevelSystemUser = "urn:altinn:minimum-authenticationlevel-systemuser";
+        private const string SystemUserClaimType = "urn:altinn:systemuser";
 
         /// <summary>
         /// A logged in system user always has authentication level 3. This is a fixed property of the system user
@@ -492,8 +493,14 @@ namespace Altinn.Common.PEP.Helpers
 
             try
             {
+                using JsonDocument document = JsonDocument.Parse(claim.Value);
+                if (!HasSystemUserType(document.RootElement))
+                {
+                    return false;
+                }
+
                 JsonSerializerOptions jsonOptions = new(JsonSerializerDefaults.Web);
-                userClaim = JsonSerializer.Deserialize<SystemUserClaim>(claim.Value, jsonOptions);
+                userClaim = document.RootElement.Deserialize<SystemUserClaim>(jsonOptions);
             }
             catch (JsonException)
             {
@@ -502,6 +509,14 @@ namespace Altinn.Common.PEP.Helpers
             }
 
             return userClaim?.Systemuser_id != null && userClaim.Systemuser_id.Count > 0;
+        }
+
+        private static bool HasSystemUserType(JsonElement authorizationDetails)
+        {
+            return authorizationDetails.ValueKind == JsonValueKind.Object
+                && authorizationDetails.TryGetProperty("type", out JsonElement type)
+                && type.ValueKind == JsonValueKind.String
+                && type.GetString() == SystemUserClaimType;
         }
 
         /// <summary>
@@ -664,24 +679,6 @@ namespace Altinn.Common.PEP.Helpers
             }
 
             string minAuthenticationLevel = attributeMinLvAuth.Value;
-
-            // A logged in system user always has authentication level 3. When the policy states a separate
-            // requirement for system users, that requirement replaces the general one.
-            if (IsSystemUser(user))
-            {
-                XacmlJsonAttributeAssignment attributeMinLvAuthSystemUser = GetObligation(PolicyObligationMinAuthnLevelSystemUser, obligationList);
-                if (attributeMinLvAuthSystemUser != null)
-                {
-                    if (Convert.ToInt32(attributeMinLvAuthSystemUser.Value) <= SystemUserAuthenticationLevel)
-                    {
-                        return true;
-                    }
-
-                    requiredAuthenticationLevel = attributeMinLvAuthSystemUser.Value;
-                    return false;
-                }
-            }
-
             string usersAuthenticationLevel = user.Claims.FirstOrDefault(c => c.Type.Equals("urn:altinn:authlevel"))?.Value;
 
             // Checks that the user meets the minimum authentication level
@@ -701,6 +698,22 @@ namespace Altinn.Common.PEP.Helpers
                     }
 
                     minAuthenticationLevel = attributeMinLvAuthOrg.Value;
+                }
+            }
+
+            // A logged in system user always has authentication level 3. Like the org obligation, the system user
+            // obligation can only relax the general requirement, never tighten it.
+            if (IsSystemUser(user))
+            {
+                XacmlJsonAttributeAssignment attributeMinLvAuthSystemUser = GetObligation(PolicyObligationMinAuthnLevelSystemUser, obligationList);
+                if (attributeMinLvAuthSystemUser != null)
+                {
+                    if (SystemUserAuthenticationLevel >= Convert.ToInt32(attributeMinLvAuthSystemUser.Value))
+                    {
+                        return true;
+                    }
+
+                    minAuthenticationLevel = attributeMinLvAuthSystemUser.Value;
                 }
             }
 
