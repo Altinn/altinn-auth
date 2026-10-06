@@ -40,12 +40,12 @@ namespace Altinn.ResourceRegistry.Controllers
 
         /// <summary>
         /// Returns a list of rights for a resource in V2 version with new model. A right is a combination of resource and action.
-        /// Response is grouped by right.
+        /// Response is a flat list with one entry per right.
         /// </summary>
         [HttpGet("{id}/policy/rights")]
         [Produces("application/json")]
         [Consumes("application/json")]
-        public async Task<ActionResult<ResourceDecomposedDto>> GetRights(string id, bool includeServiceOwnerRights = false, bool includeAppRights = false, CancellationToken cancellationToken = default)
+        public async Task<ActionResult<IEnumerable<RightDto>>> GetRights(string id, bool includeServiceOwnerRights = false, bool includeAppRights = false, CancellationToken cancellationToken = default)
         {
             List<Right> rights = await _resourceRegistry.GetPolicyRightsV2(id, includeServiceOwnerRights, includeAppRights, cancellationToken);
 
@@ -56,12 +56,12 @@ namespace Altinn.ResourceRegistry.Controllers
             }
 
             // Map to result
-            IEnumerable<RightDto> decomposedRights = await MapFromInternalToDecomposedRights(rights, id, language, cancellationToken);
+            List<RightDto> decomposedRights = await MapFromInternalToDecomposedRights(rights, id, language, cancellationToken);
 
-            return Ok(decomposedRights);
+            return decomposedRights;
         }
 
-        private async Task<IEnumerable<RightDto>> MapFromInternalToDecomposedRights(List<Right> rights, string resource, string language, CancellationToken cancellationToken = default)
+        private async Task<List<RightDto>> MapFromInternalToDecomposedRights(List<Right> rights, string resource, string language, CancellationToken cancellationToken = default)
         {
             List<RightDto> result = [];
 

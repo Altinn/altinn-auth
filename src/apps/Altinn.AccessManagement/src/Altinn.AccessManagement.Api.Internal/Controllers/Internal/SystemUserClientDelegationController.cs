@@ -10,7 +10,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using CreateSystemDelegationRequestDto = Altinn.Authorization.Api.Contracts.AccessManagement.CreateSystemDelegationRequestDto;
 
-namespace Altinn.AccessManagement.Api.Internal.Controllers;
+namespace Altinn.AccessManagement.Api.Internal.Controllers.Internal;
 
 /// <summary>
 /// Controller for internal api operations for system user client delegation.
