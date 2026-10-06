@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.0](https://github.com/Altinn/altinn-auth/compare/Altinn.Authorization.ABAC-v0.1.1...Altinn.Authorization.ABAC-v0.2.0) (2026-10-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* **#4322:** Altinn.Common.PEP and Altinn.Authorization.ABAC no longer target net8.0. Consumers must be on .NET 9 or later.
+
+### Bug Fixes
+
+* **#4322:** drop net8.0 from published packages, embed symbols and reproducible builds ([#4323](https://github.com/Altinn/altinn-auth/issues/4323)) ([99e9396](https://github.com/Altinn/altinn-auth/commit/99e93960abaca3adf6b0f8771653c261a4b2a689))
+* clear S2259 + S2955 null-deref findings ([#3150](https://github.com/Altinn/altinn-auth/issues/3150)) ([c24e8f0](https://github.com/Altinn/altinn-auth/commit/c24e8f0b66bf4d9444798b2610160b212961bbfc))
+* combine rule decisions per the XACML 3.0 combining algorithm tables ([#3901](https://github.com/Altinn/altinn-auth/issues/3901)) ([b79b15c](https://github.com/Altinn/altinn-auth/commit/b79b15c2a6d89429efc7e72c114da619e82fff5a))
+
 ## [0.1.1](https://github.com/Altinn/altinn-auth/compare/Altinn.Authorization.ABAC-v0.1.0...Altinn.Authorization.ABAC-v0.1.1) (2025-11-04)
 
 
