@@ -72,7 +72,7 @@ This guide follows the key terms defined in [RFC 2119](https://datatracker.ietf.
 - A new release is created only when a version change is required.
 
 ## Publishing
-When a release is created, `.github/workflows/cd-pkgs.yml` runs three jobs for each released package:
+When a release is created, `.github/workflows/release.yml` runs three jobs for each released package:
 
 1. **publish** builds, tests and packs the package, then attaches the `.nupkg` files to the GitHub release.
 2. **publish-github-packages** pushes it to the Altinn GitHub Packages feed.
@@ -80,7 +80,7 @@ When a release is created, `.github/workflows/cd-pkgs.yml` runs three jobs for e
 
 Trusted Publishing depends on settings outside this repository:
 
-- A nuget.org Trusted Publishing policy owned by `altinn` (the owner of the packages), with repository owner `Altinn`, repository `altinn-auth`, workflow file `cd-pkgs.yml` and environment `nuget`.
+- A nuget.org Trusted Publishing policy owned by `altinn` (the owner of the packages), with repository owner `Altinn`, repository `altinn-auth`, workflow file `release.yml` and environment `nuget`.
 - A `nuget` GitHub environment in this repository, limited to `main`, with the variable `NUGET_USER` set to the nuget.org profile name (not email) of the policy's creator.
 
 All pushes use `--skip-duplicate`, so rerunning a job does not fail on versions that are already published.
