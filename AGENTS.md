@@ -38,7 +38,7 @@ pwsh eng/testing/run-coverage.ps1                      # coverage, installs dotn
 
 ## Where things live
 
-Code sits in verticals. A vertical always has its own `.sln`, `src/` and `conf.json`; `test/`, `Version.props`, `Dockerfile` and `infra/` appear where they are needed, and the contents of `conf.json` differ per vertical (dependencies, Sonar key, database, infrastructure). CI discovers verticals by globbing the four folders below and reading each `conf.json`, so adding one needs no workflow change.
+Code sits in verticals. A vertical always has its own `.sln`, `src/` and `conf.json`; `test/`, `Version.props`, `Dockerfile` and `infra/` appear where needed, and `conf.json` differs per vertical. CI discovers verticals by globbing the four folders below and reading each `conf.json`, so adding one needs no workflow change.
 
 | Path | Contents |
 | --- | --- |
@@ -65,7 +65,7 @@ Do not "fix" these without understanding them.
 ## Test gotchas
 
 - **In an xUnit v3 vertical, every test needs a category.** Mark the class or method `[UnitTest]` or `[IntegrationTest]` from `Altinn.Authorization.Testing`. CI selects its lanes by that trait, so an uncategorised test would run in neither; `TestCategoryGuard` is linked into those test assemblies and fails the run instead of letting it disappear. The markers and the guard are compiled only when `XUnitVersion` is `v3` (see `src/Directory.Build.targets`).
-- **Resource Registry is the exception, and it is not a small one.** It is an xUnit v2 island whose tests carry no category, so a repository-wide `dotnet test -- --filter-trait "Category=Unit"` also runs its integration tests, which start a real PostgreSQL. Run the unit lane per vertical, and that vertical through its own solution; [its `AGENTS.md`](src/apps/Altinn.ResourceRegistry/AGENTS.md) explains why.
+- **Resource Registry is the exception.** It is an xUnit v2 island whose tests carry no category, so a repository-wide `dotnet test -- --filter-trait "Category=Unit"` also runs its integration tests, which start a real PostgreSQL. Run the unit lane per vertical, and that vertical through its own solution; [its `AGENTS.md`](src/apps/Altinn.ResourceRegistry/AGENTS.md) explains why.
 - **Without Docker or Podman, each vertical behaves differently.** Authorization's database tests skip when they check `SkipReason`, Access Management's fail in fixture setup, and Resource Registry's try to start a container. Start a runtime before trusting a run, green or red.
 - Start from [`docs/testing/README.md`](docs/testing/README.md) for fixtures, mocks and the naming convention.
 
