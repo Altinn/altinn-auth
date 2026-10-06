@@ -255,6 +255,44 @@ public class RequestController(
     }
 
     /// <summary>
+    /// Get the number of received requests for each subunit of the party.
+    /// Every direct subunit is included, also those with no requests. Returns an empty list if the party has no subunits.
+    /// </summary>
+    /// <param name="party">The party (main unit) whose subunits are counted</param>
+    /// <param name="from">Only count requests from this party. All requesters are counted if omitted</param>
+    /// <param name="status">Status filter. Defaults to Draft, Pending, Approved, Rejected and Withdrawn</param>
+    /// <param name="type">resource or package. Both are counted if omitted</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <response code="200">The number of received requests per subunit</response>
+    /// <response code="400">Bad request</response>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    [HttpGet("received/count/subunits")]
+    [FeatureGate(RequirementType.Any, AccessMgmtFeatureFlags.EnableRequestAssignmentResource, AccessMgmtFeatureFlags.EnableRequestAssignmentPackage)]
+    [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_REQUESTS_READ)]
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_READ)]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+    [ProducesResponseType<IEnumerable<ReceivedRequestCountSubunitDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetReceivedRequestsCountForSubunits(
+        [FromQuery][Required] Guid party,
+        [FromQuery] Guid? from,
+        [FromQuery] RequestStatus[]? status,
+        [FromQuery] string? type,
+        CancellationToken ct = default
+        )
+    {
+        var statusFilter = status == null || !status.Any()
+            ? DefaultStatusFilter
+            : status;
+
+        var result = await requestService.GetReceivedRequestsCountForSubunits(party, from, statusFilter, type, ct);
+        return result.IsSuccess ? Ok(result.Value) : result.Problem.ToActionResult();
+    }
+
+    /// <summary>
     /// Approve a pending request — runs the same delegation logic as AddPackages/AddResourceRights
     /// </summary>
     [HttpPut("received/approve")]

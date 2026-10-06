@@ -1,0 +1,123 @@
+meta {
+  name: GET_RequestCount_Subunits_HaveSubUnits_NoRequests
+  type: http
+  seq: 16
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/request/received/count/subunits?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+script:pre-request {
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+    const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+    bru.setVar("party", testdata.Bot_Org_SubUnits.partyuuid);
+    var getTokenParameters = {
+      auth_userId: testdata.Bot_Org_SubUnits.dagligleder.userid,
+      auth_partyId: testdata.Bot_Org_SubUnits.dagligleder.partyid,
+      auth_partyUuid: testdata.Bot_Org_SubUnits.dagligleder.partyuuid,
+      auth_ssn: testdata.Bot_Org_SubUnits.dagligleder.pid,
+      auth_tokenType: sharedtestdata.authTokenType.personal,
+      auth_scopes: sharedtestdata.auth_scopes.sluttbrukerdelegationrequestread
+    }
+    const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+    const token = await testTokenGenerator.getToken(getTokenParameters);
+    bru.setVar("bearerToken", token)
+}
+
+tests {
+  const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
+    test("GET received request count subunits no subunits", function() {
+      const data = res.getBody();
+      expect(res.status).to.equal(200);
+      expect(data).to.exist;
+      expect(data).to.be.an("array");
+  
+      var match = data.find(b => b.party.id === testdata.Bot_Org_SubUnits.underenhet01.partyuuid);
+      expect(match).to.be.an("object");
+      expect(match.count).to.equal(0);
+      
+      match = data.find(b => b.party.id === testdata.Bot_Org_SubUnits.underenhet02.partyuuid);
+      expect(match).to.be.an("object");
+      expect(match.count).to.equal(0);
+      
+      match = data.find(b => b.party.id === testdata.Bot_Org_SubUnits.underenhet03.partyuuid);
+      expect(match).to.be.an("object");
+      expect(match.count).to.equal(0);
+      
+      match = data.find(b => b.party.id === testdata.Bot_Org_SubUnits.underenhet04.partyuuid);
+      expect(match).to.be.an("object");
+      expect(match.count).to.equal(0);
+      
+      match = data.find(b => b.party.id === testdata.Bot_Org_SubUnits.underenhet05.partyuuid);
+      expect(match).to.be.an("object");
+      expect(match.count).to.equal(0);
+      
+      match = data.find(b => b.party.id === testdata.Bot_Org_SubUnits.underenhet06.partyuuid);
+      expect(match).to.be.an("object");
+      expect(match.count).to.equal(0);
+      
+      match = data.find(b => b.party.id === testdata.Bot_Org_SubUnits.underenhet07.partyuuid);
+      expect(match).to.be.an("object");
+      expect(match.count).to.equal(0);
+      
+      match = data.find(b => b.party.id === testdata.Bot_Org_SubUnits.underenhet08.partyuuid);
+      expect(match).to.be.an("object");
+      expect(match.count).to.equal(0);
+      
+      match = data.find(b => b.party.id === testdata.Bot_Org_SubUnits.underenhet09.partyuuid);
+      expect(match).to.be.an("object");
+      expect(match.count).to.equal(0);
+      
+      match = data.find(b => b.party.id === testdata.Bot_Org_SubUnits.underenhet10.partyuuid);
+      expect(match).to.be.an("object");
+      expect(match.count).to.equal(0);
+      
+      match = data.find(b => b.party.id === testdata.Bot_Org_SubUnits.underenhet11.partyuuid);
+      expect(match).to.be.an("object");
+      expect(match.count).to.equal(0);
+      
+      match = data.find(b => b.party.id === testdata.Bot_Org_SubUnits.underenhet12.partyuuid);
+      expect(match).to.be.an("object");
+      expect(match.count).to.equal(0);
+      
+      match = data.find(b => b.party.id === testdata.Bot_Org_SubUnits.underenhet13.partyuuid);
+      expect(match).to.be.an("object");
+      expect(match.count).to.equal(0);
+      
+      match = data.find(b => b.party.id === testdata.Bot_Org_SubUnits.underenhet14.partyuuid);
+      expect(match).to.be.an("object");
+      expect(match.count).to.equal(0);
+      
+      match = data.find(b => b.party.id === testdata.Bot_Org_SubUnits.underenhet15.partyuuid);
+      expect(match).to.be.an("object");
+      expect(match.count).to.equal(0);
+      
+      match = data.find(b => b.party.id === testdata.Bot_Org_SubUnits.underenhet16.partyuuid);
+      expect(match).to.be.an("object");
+      expect(match.count).to.equal(0);
+      
+      match = data.find(b => b.party.id === testdata.Bot_Org_SubUnits.underenhet17.partyuuid);
+      expect(match).to.be.an("object");
+      expect(match.count).to.equal(0);
+      
+      match = data.find(b => b.party.id === testdata.Bot_Org_SubUnits.underenhet18.partyuuid);
+      expect(match).to.be.an("object");
+      expect(match.count).to.equal(0);
+      
+      match = data.find(b => b.party.id === testdata.Bot_Org_SubUnits.underenhet19.partyuuid);
+      expect(match).to.be.an("object");
+      expect(match.count).to.equal(0);
+    });
+}
+
+settings {
+  encodeUrl: true
+  timeout: 0
+}
