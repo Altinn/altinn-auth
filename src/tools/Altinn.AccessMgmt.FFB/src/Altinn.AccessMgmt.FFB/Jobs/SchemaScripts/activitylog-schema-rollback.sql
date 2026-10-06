@@ -3,6 +3,9 @@ DROP TABLE IF EXISTS dbo.activitytype;
 
 DROP TABLE IF EXISTS dbo_history.auditactivitytype;
 
+DROP FUNCTION IF EXISTS dbo.audit_activitytype_insert_fn();
+DROP FUNCTION IF EXISTS dbo.audit_activitytype_update_fn();
+DROP FUNCTION IF EXISTS dbo.audit_activitytype_delete_fn();
 
 COMMIT;
 
@@ -66,9 +69,9 @@ DROP FUNCTION IF EXISTS dbo.activitylog_role_name(uuid);
 DROP FUNCTION IF EXISTS dbo.activitylog_entity_name(uuid);
 DROP FUNCTION IF EXISTS dbo.activitylog_entity_info(uuid);
 
-DROP TABLE dbo.activitylog;
+DROP TABLE IF EXISTS dbo.activitylog;
 
-DROP TABLE dbo.activitylogbackfillprogress;
+DROP TABLE IF EXISTS dbo.activitylogbackfillprogress;
 
 DROP FUNCTION IF EXISTS dbo.uuid_generate_v7();
 
