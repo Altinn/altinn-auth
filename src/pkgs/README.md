@@ -74,7 +74,7 @@ This guide follows the key terms defined in [RFC 2119](https://datatracker.ietf.
 ## Publishing
 When a release is created, `.github/workflows/cd-pkgs.yml` runs three jobs for each released package:
 
-1. **publish** builds, tests and packs the package, then attaches its `.nupkg` to the GitHub release. Only the package's own output is published, not the packages of its project references (PEP's pack also writes ABAC).
+1. **publish** builds, tests and packs the package, then attaches the `.nupkg` files to the GitHub release.
 2. **publish-github-packages** pushes it to the Altinn GitHub Packages feed.
 3. **publish-nuget** pushes it to nuget.org with [Trusted Publishing](https://learn.microsoft.com/nuget/nuget-org/trusted-publishing). No API key is stored. `NuGet/login` exchanges the job's GitHub OIDC token for a short-lived key.
 

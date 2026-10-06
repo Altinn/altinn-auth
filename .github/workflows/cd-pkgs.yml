@@ -80,26 +80,18 @@ jobs:
         working-directory: ${{ matrix.path }}
         run: dotnet pack -c Release --no-build
 
-      # Pack also writes packages for project references (PEP packs ABAC). Keep only
-      # this package's own output, which lands in artifacts/<folder name>/.
-      - name: Resolve package artifacts
-        id: package
-        env:
-          PACKAGE_PATH: ${{ matrix.path }}
-        run: echo "glob=artifacts/$(basename "$PACKAGE_PATH")/*.nupkg" >> "$GITHUB_OUTPUT"
-
       - name: Create artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ fromJSON(needs.release-please.outputs.full)[format('{0}--tag_name', matrix.path)] }}
-          path: ${{ steps.package.outputs.glob }}
+          path: artifacts/**/*.nupkg
           if-no-files-found: error
 
       - name: Upload packages to release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_REPOSITORY: ${{ github.repository }}
-          FILES_GLOB: ${{ steps.package.outputs.glob }}
+          FILES_GLOB: artifacts/**/*.nupkg
           RELEASE_ID: ${{ fromJSON(needs.release-please.outputs.full)[format('{0}--id', matrix.path)] }}
         run: tsx ./.github/scripts/upload-packages-to-release.mts
 
@@ -150,7 +142,7 @@ jobs:
       - name: Publish to GitHub Packages
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          FILES_GLOB: artifacts/*.nupkg
+          FILES_GLOB: artifacts/**/*.nupkg
         run: |
           dotnet nuget add source --username Altinn --password $GITHUB_TOKEN --store-password-in-clear-text --name github "https://nuget.pkg.github.com/Altinn/index.json"
           tsx ./.github/scripts/publish-to-github-packages.mts
@@ -212,5 +204,5 @@ jobs:
       - name: Publish to NuGet
         env:
           NUGET_APIKEY: ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
-          FILES_GLOB: artifacts/*.nupkg
+          FILES_GLOB: artifacts/**/*.nupkg
         run: tsx ./.github/scripts/publish-to-nuget.mts
