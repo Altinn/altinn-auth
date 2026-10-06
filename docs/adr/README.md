@@ -31,3 +31,4 @@ Each folder numbers its own ADRs from `0001`. A repository that is moved into th
 | --- | --- | --- |
 | [0001](0001-record-architecture-decisions.md) | Record architecture decisions | Accepted |
 | [0002](0002-tool-neutral-agent-contract.md) | Tool-neutral agent contract: `AGENTS.md` as the single source | Accepted |
+| [0003](0003-one-ai-review-bot.md) | One AI review bot, Copilot code review, advisory only | Accepted |
