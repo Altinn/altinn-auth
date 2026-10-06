@@ -10,7 +10,7 @@
 - It is advisory: never the required approval, and a person answers or dismisses every comment.
 - Its instructions live in the repository and are derived from `AGENTS.md`, so switching bots is a configuration change.
 - The `.coderabbit.yaml` files in two repositories still to move in are removed during their move.
-- Chosen on evidence from this repository and on the data policy, which would require a separate approval for a second vendor.
+- Chosen on evidence from this repository, and because the data policy would make a second vendor a second assessment. Whether Copilot itself meets the policy is for the security review to confirm.
 
 ## Context
 
@@ -20,7 +20,7 @@ There is now evidence from this repository to decide on. Across the nine pull re
 
 Two limits on that evidence. All nine pull requests were documentation and configuration, written with AI assistance by one author, so the hit rate may not carry over to product code. And a different class of defect came from elsewhere: a separate AI-assisted review that ran the code found that a test filter did not exclude what it was documented to exclude, and that a path with spaces broke a command; human reviewers found a wrong issue reference and line-ending damage. The bot is one reviewer among several, not a gate.
 
-The [data policy](../ai/data-policy.md) matters here too. It approves a tool on requirements, among them an agreement at organisation level and known retention. Copilot is already covered by the organisation's GitHub agreement. A second vendor would need its own assessment before it could see our code.
+The [data policy](../ai/data-policy.md) matters here too, although it is still a draft and not yet in force. It approves a tool on six requirements, of which an agreement at organisation level is one; its table of approved tools is empty. Copilot is used today under the organisation's GitHub agreement, and whether it meets section 2 of the policy is for the security review to confirm. A second vendor would need the same assessment, so the policy is an argument for one vendor rather than two, not proof that this one is approved.
 
 ## Decision
 
@@ -31,7 +31,7 @@ The [data policy](../ai/data-policy.md) matters here too. It approves a tool on 
 
 ### Alternatives considered
 
-- **CodeRabbit.** Richer configuration, including path instructions, and already in use in two of the repositories moving in. Rejected for now: it is a second vendor that would need approval under the data policy, and a second configuration to keep consistent with `AGENTS.md`, for a capability the evidence above does not show we are missing.
+- **CodeRabbit.** Richer configuration, including path instructions, and already in use in two of the repositories moving in. Rejected for now: it is a second vendor that would need its own assessment under the data policy, and a second configuration to keep consistent with `AGENTS.md`, for a capability the evidence above does not show we are missing.
 - **Both bots.** Duplicate comments on the same lines and two vendors. Rejected.
 - **No bot.** Would have removed a reviewer that found real defects in almost every pull request above. Rejected.
 
