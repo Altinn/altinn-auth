@@ -145,6 +145,21 @@ namespace Altinn.Platform.Authorization.Telemetry
         }
 
         /// <summary>
+        /// Records an authorization event queued for the audit log that could not be classified, because
+        /// measuring it failed. Counted in the same instrument, so that its total stays the number of
+        /// events queued.
+        /// </summary>
+        public void RecordAuditLogEventMeasurementFailure()
+        {
+            TagList tags = new()
+            {
+                { AuditLogDuplicateTag, "error" },
+            };
+
+            _auditLogEvents.Add(1, tags);
+        }
+
+        /// <summary>
         /// Records that the audit log duplicate tracker was full and started a new generation early,
         /// forgetting its oldest events before their window ended. Above zero means the effective window
         /// is shorter than configured, and duplicates are undercounted.

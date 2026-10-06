@@ -13,7 +13,9 @@
         /// <summary>
         /// Feature flag for whether authorization events queued for the audit log should be classified
         /// as duplicates or not, and counted in the <c>altinn.pdp.auditlog.events</c> metric. Only
-        /// measures, all events are still queued.
+        /// measures, all events are still queued. On by default in <c>appsettings.json</c>, so it follows
+        /// <see cref="AuditLog"/>; set <c>FeatureManagement__AuditLogDuplicateMeasurement=false</c> to
+        /// turn it off in an environment.
         /// </summary>
         public const string AuditLogDuplicateMeasurement = nameof(AuditLogDuplicateMeasurement);
 
