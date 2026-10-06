@@ -37,7 +37,7 @@
     </PropertyGroup>
 
     <PropertyGroup Condition=" Exists('$(ChangelogPath)') ">
-        <PackageReleaseNotes>changelog.md</PackageReleaseNotes>
+        <PackageReleaseNotes>$([System.IO.File]::ReadAllText("$(ChangelogPath)"))</PackageReleaseNotes>
     </PropertyGroup>
 
     <Import Project="$(VersionFilePath)" Condition="Exists('$(VersionFilePath)')" />

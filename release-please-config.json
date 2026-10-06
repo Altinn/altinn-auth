@@ -6,6 +6,7 @@
   "packages": {
     "src/pkgs/Altinn.Authorization.ABAC": {
       "component": "Altinn.Authorization.ABAC",
+      "bump-minor-pre-major": true,
       "extra-files": [
         {
           "type": "xml",
