@@ -47,7 +47,7 @@ Sluttbrukerflaten er delt i tre **områder**, hvert montert under sin domenerot 
 
 | Områderot | Hendelser | Feature-flagg | Autorisasjon |
 |---|---|---|---|
-| `…/enduser/connections/activitylog` | Assignment + Delegation (maskinportenschema-hendelser ekskludert) | `AccessManagement.Enduser.ConnectionsActivityLogApi` | Portal-scope + tilgangsstyring-les for party |
+| `…/enduser/connections/activitylog` | Assignment + Delegation (maskinportenschema-hendelser ekskludert) | `AccessManagement.Enduser.ConnectionsActivityLogApi` | Connections-endepunktenes egne policies (betingede retningsscopes + personregelen for tilgangsstyrere) + tilgangsstyring-les for party |
 | `…/enduser/request/activitylog` | Tilgangsforespørsler inkl. pakke-/tjenestebarn og statusendringer | `AccessManagement.Enduser.RequestActivityLogApi` | De eksisterende requests-lesescopene + tilgangsstyring-les for party, som naboendepunktene for forespørsler |
 | `…/enduser/maskinporten/activitylog` | Maskinportenschema-delegeringer (Supplier-rolle-utsnittet) | `AccessManagement.Enduser.MaskinportenActivityLogApi` | Maskinporten supplier-scopene, som naboendepunktene |
 
@@ -64,7 +64,7 @@ Hvert område eksponerer de samme fire rutene:
 
 Returnerer områdets logghendelser for partyen, sortert nyeste først (`when` synkende, id som tiebreaker).
 
-**Forankring:** `party` og `direction` er begge **påkrevd**. `direction` er `from` (gitt av partyen) eller `to` (mottatt av partyen) — `via` er ikke en retning i områdeflatene; fasilitatorperspektivet kommer tilbake med klientadministrasjonsbehovet. Påkrevd retning gjør autorisasjonssjekken per kall entydig.
+**Forankring:** `party` er **påkrevd**, og spørringen må forankres på samme måte som connections-endepunktene: `from=party` (gitt) eller `to=party` (mottatt); den andre av de to forblir et motpartsfilter. De betingede retningsscopene og personregelen for tilgangsstyrere nøkler på nøyaktig disse rå parameterne — det er det som lar områdene gjenbruke nabopoliciene uendret. `direction` brukes ikke på disse endepunktene (den lever videre på BFF-flaten), og `via`-forankring kommer tilbake med klientadministrasjonsbehovet.
 
 **Filtre** (alle kan gjentas; verdier innenfor én parameter OR-es, ulike parametere AND-es):
 
@@ -86,7 +86,7 @@ Returnerer områdets logghendelser for partyen, sortert nyeste først (`when` sy
 **Responselementer** (`ActivityLogDto`): hendelsesdimensjonene (`type`, `subtype`, `trigger`, `status`), `when`, aktør og kanal (`byId`/`byName`, `sourceId`/`sourceName`), `operationId`, relasjonen med navnesnapshots (`fromId`/`fromName`/`fromType`, `toId`/`toName`/`toType`, `viaId`/`viaName`/`viaType`, `roleId`/`roleName`, `viaRoleId`/`viaRoleName`), objektet (`packageId`/`packageName`, `resourceId`/`resourceName`, `instanceId`), radidentitet (`itemId`, `parentId`), en `details`-JSON (forrige status, forespørselshandling, proveniens), og `activityTypeId` — katalogoppføringen slått opp med mest-spesifikk-vinner-regelen (eksakt statusmatch, ellers status-null-fallbacken), slik at klienter kan vise katalognavn/-beskrivelse uten å mappe rådimensjonene selv.
 
 ```
-GET /accessmanagement/api/v2/enduser/connections/activitylog?party={guid}&direction=From&typeId={guid}&after=2026-01-01T00:00:00Z&pageSize=50
+GET /accessmanagement/api/v2/enduser/connections/activitylog?party={party}&from={party}&typeId={guid}&after=2026-01-01T00:00:00Z&pageSize=50
 ```
 
 ### 2. Filterverdi-endepunktene — `GET {area}/filter/{field}`
@@ -104,7 +104,7 @@ Returnerer de distinkte `(id, name)`-parene som forekommer i partyens utsnitt av
 - **Paging og konvolutt:** identisk med hovedspørringen (`pageSize`/`pageNo`, `links.next`).
 
 ```
-GET /accessmanagement/api/v2/enduser/connections/activitylog/filter/package?party={guid}&direction=From&term=skatt&pageSize=20
+GET /accessmanagement/api/v2/enduser/connections/activitylog/filter/package?party={party}&from={party}&term=skatt&pageSize=20
 ```
 
 ### 3. Områdediscovery — `GET {area}/filter/fields` og `GET {area}/types`
@@ -120,7 +120,7 @@ GET /accessmanagement/api/v2/enduser/maskinporten/activitylog/types
 ### Tverrgående oppførsel
 
 - **Maskinportenschema-hendelser finnes bare i maskinporten-området:** Supplier-rollen brukes utelukkende for maskinportenschema-delegeringer; connections- og request-områdene (og den interne flaten som standard) ekskluderer den, og maskinporten-området låser den.
-- **Validering:** tom `party`, manglende/`via` `direction`, `typeId`-verdier utenfor området, og filterfelt området ikke tilbyr gir alle `400` med problem details.
+- **Validering:** tom `party`, manglende from/to-forankring, oppgitt `direction`, `typeId`-verdier utenfor området, og filterfelt området ikke tilbyr gir alle `400` med problem details. Merk at scope-policyen på connections-området nøkler på de samme forankringsparameterne, så en uforankret spørring avvises der med `403` før valideringen kjører — samme karakteristikk som connections-endepunktene selv har.
 - **Feature-flagg:** ett per område — `AccessManagement.Enduser.{Connections|Request|Maskinporten}ActivityLogApi` — alle deklarert i deploy-terraformen.
 - **Sorteringsgaranti:** `(when desc, id desc)` — stabil og duplikatfri på tvers av sider under paging.
 - **Ingen joins ved lesing:** hvert navn i responsen er et denormalisert snapshot fra selve loggtabellen; loggen serveres fra én range-partisjonert tabell.

@@ -113,9 +113,11 @@ public static class ActivityLogAreas
 /// <summary>
 /// Shared implementation for the per-area activity log endpoints. Every area exposes the same
 /// four routes over the same query surface: the log itself, filter value lookups, the fields
-/// the area offers, and the catalog entries it accepts. party and direction (from/to) are
-/// required on the authorized endpoints; the two discovery endpoints are static, anonymous
-/// and cached.
+/// the area offers, and the catalog entries it accepts. The authorized endpoints use the same
+/// anchor convention as the connections endpoints — from=party (access given) or to=party
+/// (access received) — because the directional scope policies and the person access-manager
+/// rule key on those raw parameters. The two discovery endpoints are static, anonymous and
+/// cached.
 /// </summary>
 public abstract class ActivityLogAreaControllerBase(IActivityLogService activityLogService, ActivityLogArea area) : ControllerBase
 {
@@ -124,8 +126,8 @@ public abstract class ActivityLogAreaControllerBase(IActivityLogService activity
     private const int MaxPageSize = 1000;
 
     /// <summary>
-    /// Get the area's activity log entries for the party, newest first. direction is
-    /// required: from (given by the party) or to (received by the party).
+    /// Get the area's activity log entries for the party, newest first. The query must be
+    /// anchored with from=party (access given) or to=party (access received).
     /// </summary>
     [HttpGet]
     [ProducesResponseType<PaginatedResult<ActivityLogDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
@@ -136,14 +138,14 @@ public abstract class ActivityLogAreaControllerBase(IActivityLogService activity
         [FromQuery] ActivityLogQueryParameters query,
         CancellationToken cancellationToken = default)
     {
-        if (!TryPrepare(query, out var filter, out var size, out var page, out var error))
+        if (!TryPrepare(query, out var filter, out var direction, out var size, out var page, out var error))
         {
             return error;
         }
 
         var result = await activityLogService.GetActivityLog(
             query.Party,
-            query.Direction,
+            direction,
             filter,
             size,
             page,
@@ -174,14 +176,14 @@ public abstract class ActivityLogAreaControllerBase(IActivityLogService activity
             return ValidationProblem(ModelState);
         }
 
-        if (!TryPrepare(query, out var filter, out var size, out var page, out var error))
+        if (!TryPrepare(query, out var filter, out var direction, out var size, out var page, out var error))
         {
             return error;
         }
 
         var result = await activityLogService.GetActivityLogFilterValues(
             query.Party,
-            query.Direction,
+            direction,
             field,
             filter,
             query.Term,
@@ -219,9 +221,10 @@ public abstract class ActivityLogAreaControllerBase(IActivityLogService activity
             .Select(DtoMapper.ToActivityTypeDto)
             .ToList());
 
-    private bool TryPrepare(ActivityLogQueryParameters query, out ActivityLogQueryFilter filter, out int size, out int page, out IActionResult error)
+    private bool TryPrepare(ActivityLogQueryParameters query, out ActivityLogQueryFilter filter, out ActivityLogDirection direction, out int size, out int page, out IActionResult error)
     {
         filter = null;
+        direction = default;
         size = 0;
         page = 0;
         error = null;
@@ -233,9 +236,28 @@ public abstract class ActivityLogAreaControllerBase(IActivityLogService activity
             return false;
         }
 
-        if (query.Direction is not (ActivityLogDirection.From or ActivityLogDirection.To))
+        if (query.Direction is not null)
         {
-            ModelState.AddModelError("direction", "direction is required and must be 'from' or 'to'.");
+            ModelState.AddModelError("direction", "direction is not used on this endpoint; anchor the query with from or to equal to party.");
+            error = ValidationProblem(ModelState);
+            return false;
+        }
+
+        // Same anchor convention as the connections endpoints, because the directional scope
+        // policies and the person access-manager rule key on the raw party/from/to query
+        // parameters. from wins when both sides equal the party, mirroring the policy's rule
+        // order; the non-anchoring side stays a counterpart filter.
+        if (query.From is [var fromParty] && fromParty == query.Party)
+        {
+            direction = ActivityLogDirection.From;
+        }
+        else if (query.To is [var toParty] && toParty == query.Party)
+        {
+            direction = ActivityLogDirection.To;
+        }
+        else
+        {
+            ModelState.AddModelError("from", "The query must be anchored with from=party (access given) or to=party (access received).");
             error = ValidationProblem(ModelState);
             return false;
         }
