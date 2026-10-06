@@ -118,12 +118,13 @@ dev-redis-cli:
 # Fail clearly when no container runtime is reachable, instead of reporting an empty green lane
 @require-container-runtime:
   if (-not (Get-Command {{container-tool}} -ErrorAction SilentlyContinue)) { Write-Host "{{container-tool}} is not installed. Integration tests need a container runtime."; exit 1 }; & {{container-tool}} info *> $null; if ($LASTEXITCODE -ne 0) { Write-Host "{{container-tool}} is installed but not reachable. Start it, or run 'just dev'."; exit 1 }
+  if ($IsWindows -and -not $env:DOCKER_HOST -and -not (Test-Path '\\.\pipe\docker_engine')) { Write-Host "{{container-tool}} is running, but Testcontainers cannot reach it: DOCKER_HOST is not set and the docker_engine pipe does not exist. See docs/testing/GETTING_STARTED.md."; exit 1 }
 
 # The fast gate for a vertical: build and the unit lane. Not the whole pipeline.
 @check path: (build path) (test-unit path)
 
 # Build plus both lanes: what CI actually runs for a vertical
-@check-full path: (check path) (test-integration path)
+@check-full path: require-container-runtime (check path) (test-integration path)
 
 # There is deliberately no `lint` recipe. CI enforces no formatting gate today,
 # `dotnet format --verify-no-changes` fails on main with StyleCop violations, and
