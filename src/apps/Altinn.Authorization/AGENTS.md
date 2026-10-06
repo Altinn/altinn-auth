@@ -24,7 +24,7 @@ The XACML roles map onto files, and knowing that mapping is most of what it take
 | Policy information, the attributes a decision needs | `Services/Implementation/PolicyInformationPoint.cs`, with `ContextHandler` and `DelegationContextHandler` building the request context |
 | Policy administration | `Services/Implementation/PolicyAdministrationPoint.cs` |
 | Evaluation engine | `Altinn.Authorization.ABAC`, referenced from `src/pkgs` as a project |
-| Enforcement, used by consumers rather than here | `Altinn.Authorization.PEP`, published as `Altinn.Common.PEP` |
+| Enforcement, published to consumers as `Altinn.Common.PEP`, and also guarding this app's own endpoints (`ClaimAccessHandler`, `ScopeAccessHandler` in `Program.cs`) | `Altinn.Authorization.PEP`, referenced from `src/pkgs` as a project |
 
 Outbound calls to other services go through wrappers in `Services/Implementation` (`AccessManagementWrapper`, `ProfileWrapper`, `OedRoleAssignmentWrapper`), not directly from controllers.
 
@@ -34,7 +34,7 @@ _Nothing recorded yet._ This section is the reason the file exists, and it can o
 
 ## Test gotchas
 
-- **Two fixtures, opposite purposes.** `AuthorizationApiFixture` boots the host with `PostgreSQLSettings:EnableDBConnection=false` and mock repositories, because otherwise every fixture runs EF migrations against the configured Postgres, which is unnecessary and racy when several test classes share one database. `AuthorizationDbFixture` is for tests that need a real database.
+- **Two fixtures, opposite purposes.** `AuthorizationApiFixture` boots the host with `PostgreSQLSettings:EnableDBConnection=false` and mock repositories, so the host never runs migrations, even if `EnableDBConnection` is turned on in configuration. Both `appsettings.json` files already set it to `false`; the override is a guard. `AuthorizationDbFixture` is for tests that need a real database.
 - **`AuthorizationDbFixture` does not start a container per test class.** It uses the shared `PostgresTestEngine`: migrations are applied once into a template database, and each test class gets a fast `CREATE DATABASE ... WITH TEMPLATE` clone. Treat it as cheap, and do not add container management around it.
 - **Skipping without a container runtime is not automatic.** `PostgresTestEngine` records a `SkipReason` rather than throwing, and `AuthorizationDbFixture` exposes it so tests can call `Assert.SkipWhen(...)`. A test that needs the database and does not check it will fail rather than skip. Both fixtures are documented in [`docs/testing/FIXTURES.md`](../../../docs/testing/FIXTURES.md).
 - Tests are split into `Unit/` and `Integration/`, and every test needs `[UnitTest]` or `[IntegrationTest]` or the run fails.

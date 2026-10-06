@@ -7,6 +7,7 @@ Administration of rights and delegations: who may act on behalf of whom, for whi
 ```bash
 dotnet build src/apps/Altinn.AccessManagement/Altinn.AccessManagement.sln
 dotnet test src/apps/Altinn.AccessManagement/Altinn.AccessManagement.sln -- --filter-trait "Category=Unit"
+dotnet run --project src/apps/Altinn.AccessManagement/src/Altinn.AccessManagement -- --RunInitOnly=true   # once per fresh database: EF migrations and static data
 dotnet run --project src/apps/Altinn.AccessManagement/src/Altinn.AccessManagement
 ```
 

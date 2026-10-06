@@ -52,7 +52,7 @@ Code sits in verticals. A vertical always has its own `.sln`, `src/` and `conf.j
 | `eng/testing` | Coverage scripts, thresholds, the test-category guard |
 | `infra` | Infrastructure as code |
 
-Per-vertical `AGENTS.md` files arrive with [#4078](https://github.com/Altinn/altinn-auth/issues/4078); until then a vertical's `README.md` is the best starting point where one exists.
+Before changing a vertical, read its `AGENTS.md`. Where there is none yet, as in Register today, start from its `README.md` if it has one.
 
 ## Landmines
 
@@ -65,8 +65,8 @@ Do not "fix" these without understanding them.
 ## Test gotchas
 
 - **In an xUnit v3 vertical, every test needs a category.** Mark the class or method `[UnitTest]` or `[IntegrationTest]` from `Altinn.Authorization.Testing`. CI selects its lanes by that trait, so an uncategorised test would run in neither; `TestCategoryGuard` is linked into those test assemblies and fails the run instead of letting it disappear. The markers and the guard are compiled only when `XUnitVersion` is `v3` (see `src/Directory.Build.targets`).
-- **Resource Registry is the exception, and it is not a small one.** It is an xUnit v2 island: it does not link the category markers or the guard, its tests carry no category, and the trait filter does not exclude them. A repository-wide `dotnet test -- --filter-trait "Category=Unit"` therefore also runs its integration tests, which start a real PostgreSQL rather than skipping. Run the unit lane per vertical instead, and run that vertical through its own solution.
-- Outside that vertical, integration tests skip rather than fail when Docker or Podman is unavailable. Start a container runtime before trusting a green run.
+- **Resource Registry is the exception, and it is not a small one.** It is an xUnit v2 island whose tests carry no category, so a repository-wide `dotnet test -- --filter-trait "Category=Unit"` also runs its integration tests, which start a real PostgreSQL. Run the unit lane per vertical, and that vertical through its own solution; [its `AGENTS.md`](src/apps/Altinn.ResourceRegistry/AGENTS.md) explains why.
+- **Without Docker or Podman, each vertical behaves differently.** Authorization's database tests skip when they check `SkipReason`, Access Management's fail in fixture setup, and Resource Registry's try to start a container. Start a runtime before trusting a run, green or red.
 - Start from [`docs/testing/README.md`](docs/testing/README.md) for fixtures, mocks and the naming convention.
 
 ## Known tech debt

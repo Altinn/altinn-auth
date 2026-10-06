@@ -12,7 +12,7 @@ dotnet test src/apps/Altinn.ResourceRegistry/Altinn.ResourceRegistry.sln
 dotnet run --project src/apps/Altinn.ResourceRegistry/src/Altinn.ResourceRegistry   # http://localhost:5100, opens Swagger
 ```
 
-Routes are under `resourceregistry/api/v1/`. Use this vertical's own solution rather than the repository-wide commands, for the reasons below.
+Routes are under `resourceregistry/api/v1/`, except `ResourceV2Controller` at `resourceregistry/api/v2/resource`. Use this vertical's own solution rather than the repository-wide commands, for the reasons below.
 
 ## Where things live
 
@@ -22,7 +22,7 @@ Four source projects: `Altinn.ResourceRegistry` (the host and its controllers fo
 
 - **This is an intentional build island.** It carries its own `.editorconfig`, `Directory.Build.props`, `Directory.Build.targets`, `Directory.Packages.props` and `stylecop.json`, rather than inheriting the repository's. That islanding is what made it possible to import the repository with its history intact. Do not merge these into the shared build files without a deliberate decision.
 - **It is on xUnit v2 while the rest of the repository is on v3** (`xunit` 2.9.3, run through `xunit.runner.visualstudio` and VSTest rather than the Microsoft Testing Platform). Three consequences follow, and all three have already caused confusion:
-  - Its tests carry no `[UnitTest]` or `[IntegrationTest]` marker, because those are linked into test assemblies only when `XUnitVersion` is `v3` (see `src/Directory.Build.targets`).
+  - Its tests carry no `[UnitTest]` or `[IntegrationTest]` marker, because this island does not import `src/Directory.Build.targets`, which is where the markers are linked in. Setting `XUnitVersion` to `v3` here does nothing; xUnit 2 comes from this folder's own `Directory.Build.targets`.
   - `TestCategoryGuard` is not compiled here, so nothing fails when a test has no category.
   - **The repository-wide unit lane does not exclude these tests.** `dotnet test -- --filter-trait "Category=Unit"` run from the root also runs this vertical's integration tests. That was verified: a PostgreSQL test here runs and passes under that filter.
 - **Its integration tests start a real database rather than skipping.** `DbFixture` builds and starts a PostgreSQL container through Testcontainers, with no skip path when no runtime is available. Elsewhere in the repository a missing runtime either skips or fails in fixture setup; here it will try to start a container.
