@@ -17,7 +17,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers.V2;
 [ApiVersion(2.0)]
 [Route("accessmanagement/api/v{version:apiVersion}/enduser/connections/activitylog")]
 [FeatureGate(AccessMgmtFeatureFlags.EnableEnduserConnectionsActivityLogApi)]
-[Authorize(Policy = AuthzConstants.POLICY_ENDUSER_ACTIVITYLOG_READ)]
+[Authorize(Policy = AuthzConstants.SCOPE_PORTAL_ENDUSER)]
 [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_READ)]
 public class ConnectionsActivityLogController(IActivityLogService activityLogService)
     : ActivityLogAreaControllerBase(activityLogService, ActivityLogAreas.Connections)
