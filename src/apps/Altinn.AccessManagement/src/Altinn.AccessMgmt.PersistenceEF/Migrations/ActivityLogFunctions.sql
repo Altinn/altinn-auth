@@ -227,8 +227,15 @@ BEGIN
         v_name := 'activitylog_p' || to_char(v_month, 'YYYYMM');
         IF to_regclass('dbo.' || v_name) IS NULL THEN
             BEGIN
+                -- CREATE ... PARTITION OF takes ACCESS EXCLUSIVE on dbo.activitylog and queues
+                -- every trigger write behind any long reader; LIKE + ATTACH only needs
+                -- SHARE UPDATE EXCLUSIVE on the parent. The exception block is a
+                -- subtransaction, so a lost race rolls back both statements together.
                 EXECUTE format(
-                    'CREATE TABLE dbo.%I PARTITION OF dbo.activitylog FOR VALUES FROM (%L) TO (%L)',
+                    'CREATE TABLE dbo.%I (LIKE dbo.activitylog INCLUDING ALL)',
+                    v_name);
+                EXECUTE format(
+                    'ALTER TABLE dbo.activitylog ATTACH PARTITION dbo.%I FOR VALUES FROM (%L) TO (%L)',
                     v_name,
                     v_month::text || ' 00:00:00+00',
                     v_next::text || ' 00:00:00+00');
