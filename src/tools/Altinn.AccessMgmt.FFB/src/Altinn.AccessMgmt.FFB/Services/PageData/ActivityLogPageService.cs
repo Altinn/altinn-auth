@@ -34,6 +34,6 @@ public sealed class ActivityLogPageService(IEnvironmentDbContextFactory dbFactor
         using var db = dbFactory.CreateContext(environment);
         var query = new ActivityLogQuery(db);
 
-        return await query.GetFilterValuesAsync(field, filter, term, ActivityLogFilterValueOrder.Name, pageSize, 0, ct);
+        return await query.GetFilterValuesAsync(field, filter, term, ActivityLogFilterValueOrder.Name, pageSize, 0, cancellationToken: ct);
     }
 }
