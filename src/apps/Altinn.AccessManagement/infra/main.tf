@@ -520,7 +520,6 @@ module "appsettings" {
       label       = "${lower(var.environment)}-access-management"
       value       = false
     },
-    ## Activity log
     {
       name        = "AccessManagement.Bff.ActivityLogApi"
       description = "Activity log endpoints in the BFF surface of the internal API."
