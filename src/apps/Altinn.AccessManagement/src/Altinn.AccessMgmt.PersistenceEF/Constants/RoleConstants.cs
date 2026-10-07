@@ -182,6 +182,40 @@ public static class RoleConstants
     };
 
     /// <summary>
+    /// Represents the 'Konkursbo administrator' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> e8f2e3bc-41e8-4ea6-87d3-3308934d471d
+    /// - <c>URN:</c> urn:altinn:role:konkursbo-tilgangsstyrer
+    /// - <c>Provider:</c> Altinn3
+    /// - <c>Code:</c> konkursbo-tilgangsstyrer
+    /// - <c>Description:</c> Gir mulighet til å administrere alle konkursbo for en gitt bostyrer
+    /// </remarks>
+    public static ConstantDefinition<Role> BankruptcyEstateAdministrator { get; } = new ConstantDefinition<Role>("e8f2e3bc-41e8-4ea6-87d3-3308934d471d")
+    {
+        Entity = new()
+        {
+            Name = "Konkursbo administrator",
+            Code = "konkursbo-tilgangsstyrer",
+            Description = "Gir mulighet til å administrere alle konkursbo for en gitt bostyrer",
+            Urn = "urn:altinn:role:konkursbo-tilgangsstyrer",
+            IsKeyRole = false,
+            IsAssignable = true,
+            IsAvailableForServiceOwners = false,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.Altinn3,            
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Bankruptcy estate administrator"),
+            KeyValuePair.Create("Description", "Provides the ability to administer all bankruptcy estates for a given trustee")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Konkursbo administrator"),
+            KeyValuePair.Create("Description", "Gir moglegheit til å administrere alle konkursbo for ein gitt bostyrar")
+        ),
+    };
+
+    /// <summary>
     /// Represents the 'Supplier' role.
     /// </summary>
     /// <remarks>

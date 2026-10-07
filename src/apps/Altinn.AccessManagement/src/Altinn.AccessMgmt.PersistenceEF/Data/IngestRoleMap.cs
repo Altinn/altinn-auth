@@ -129,7 +129,7 @@ public static partial class StaticDataIngest
         var roleUTINN = RoleConstants.ReporterSender.Id;
         /*UTOMR*/
         var roleUTOMR = RoleConstants.EnergyEnvironmentAndClimate.Id;
-
+        
         var roleMaps = new List<RoleMap>()
         {
             new RoleMap() { HasRoleId = roleBest, GetRoleId = roleA0212 },
@@ -448,6 +448,9 @@ public static partial class StaticDataIngest
             new RoleMap() { HasRoleId = rolePriv, GetRoleId = roleUTOMR },
             new RoleMap() { HasRoleId = roleRepr, GetRoleId = roleUTOMR },
             new RoleMap() { HasRoleId = roleSam,  GetRoleId = roleUTOMR },
+
+            // We add a konkursbo-admin as a role actual to bostyrer gets for himself so it has to be connected to priv role for all that has a bobe connection to anyone it does nothing.
+            new RoleMap() { HasRoleId = RoleConstants.PrivatePerson.Id, GetRoleId = RoleConstants.BankruptcyEstateAdministrator.Id },
 
             // Add delegable role mapping for Hovedadministrator
             new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.ManagingDirector.Id },
