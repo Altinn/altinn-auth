@@ -520,6 +520,31 @@ module "appsettings" {
       label       = "${lower(var.environment)}-access-management"
       value       = false
     },
+    ## Activity log
+    {
+      name        = "AccessManagement.Bff.ActivityLogApi"
+      description = "Activity log endpoints in the BFF surface of the internal API."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
+      name        = "AccessManagement.Enduser.ConnectionsActivityLogApi"
+      description = "Activity log endpoints under enduser/connections."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
+      name        = "AccessManagement.Enduser.RequestActivityLogApi"
+      description = "Activity log endpoints under enduser/request."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
+      name        = "AccessManagement.Enduser.MaskinportenActivityLogApi"
+      description = "Activity log endpoints under enduser/maskinporten."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
   ]
   providers = {
     azurerm.hub = azurerm.hub

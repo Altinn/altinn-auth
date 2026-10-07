@@ -24,31 +24,6 @@ module "app_configuration" {
       label = lower(var.environment)
   }]
 
-  # Feature flags are created disabled and toggled in App Configuration afterwards
-  # (the module ignores changes to "enabled").
-  feature_flags = [
-    {
-      name        = "AccessManagement.Bff.ActivityLogApi"
-      label       = lower(var.environment)
-      description = "Activity log endpoints in the BFF surface of the internal API."
-    },
-    {
-      name        = "AccessManagement.Enduser.ConnectionsActivityLogApi"
-      label       = lower(var.environment)
-      description = "Activity log endpoints under enduser/connections."
-    },
-    {
-      name        = "AccessManagement.Enduser.RequestActivityLogApi"
-      label       = lower(var.environment)
-      description = "Activity log endpoints under enduser/request."
-    },
-    {
-      name        = "AccessManagement.Enduser.MaskinportenActivityLogApi"
-      label       = lower(var.environment)
-      description = "Activity log endpoints under enduser/maskinporten."
-    },
-  ]
-
   providers = {
     azurerm.hub = azurerm.hub
   }
