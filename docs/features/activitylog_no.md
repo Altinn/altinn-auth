@@ -95,11 +95,12 @@ GET /accessmanagement/api/v2/enduser/connections/activitylog?party={party}&from=
 
 Returnerer de distinkte `(id, name)`-parene som forekommer i partyens utsnitt av området for ett felt, slik at filtervelgere bare tilbyr verdier som faktisk gir treff. `field` må være blant feltene området tilbyr (`GET {area}/filter/fields`) — maskinporten-området tilbyr f.eks. ikke `role`, siden Supplier-rollen er låst; alt annet gir `400`.
 
-- **Samme filterflate som hovedspørringen** — party, retning og alle filterparametere gjelder, så velgeren snevres inn sammen med søket brukeren allerede har bygget.
+- **Samme filterflate som hovedspørringen** — party, from/to-ankeret og alle filterparametere gjelder, så velgeren snevres inn sammen med søket brukeren allerede har bygget.
 - **Eget-felt-regelen:** filteret for feltet som slås opp ignoreres (et oppslag på `package` ser bort fra ethvert `package`-filter), slik at brukere kan utvide et flervalg uten at listen kollapser til det de alt har valgt. `party`-ankeret ignoreres aldri.
 - **`term`:** case-insensitivt delstrengsøk kun på navn.
 - **`orderBy`:** `Name` (default, alfabetisk — stabil på tvers av sider) eller `When` (nyeste forekomst per verdi først — nye hendelser kan forskyve sider).
 - **Duplikater er tilsiktet:** navn er snapshots fra hendelsestidspunktet, så samme id kan gjenta seg med ulike navn (f.eks. etter navnebytte); alle par returneres slik at hver historisk etikett er søkbar. For `source` og `activitytype` kommer navnene fra de respektive katalogene i stedet for snapshots.
+- **Språk:** `activitytype`-verdier oversettes fra katalogen (bokmål, nynorsk, engelsk via `Accept-Language`) før term-matching og sortering, slik at termen matcher navnene brukeren faktisk ser. Snapshot-navn er data og oversettes aldri.
 - **Supplier-rollen dukker aldri opp som verdi:** maskinportenschema-hendelser skjules som standard (se tverrgående oppførsel), så rollen deres tilbys heller ikke.
 - **Paging og konvolutt:** identisk med hovedspørringen (`pageSize`/`pageNo`, `links.next`).
 
@@ -111,7 +112,7 @@ GET /accessmanagement/api/v2/enduser/connections/activitylog/filter/package?part
 
 `filter/fields` lister filterfeltene området tilbyr (de gyldige verdiene for filterruten), og `types` lister katalogoppføringene området tar imot som `typeId`-input — `ActivityTypeDto` med `id`, nøkkelfeltene (`type`, `subtype`, `trigger`, `status`), `name` og `description`. Maskinporten-utsnittet kan ikke avledes fra den globale katalogen (Supplier-hendelser deler assignment-typen), og derfor serverer hvert område sin egen aksepterte delmengde.
 
-Begge er statisk metadata uten persondata, derfor anonyme og respons-cachet (1 time, alle lokasjoner). Innholdet endres bare ved deploy; kilden er `ActivityTypeConstants`, som også seeder hjelpetabellen `dbo.activitytype`.
+Begge er statisk metadata uten persondata, derfor anonyme og respons-cachet (1 time, alle lokasjoner; `types` varierer på `Accept-Language`). `types` serverer `name` og `description` på forespurt språk — bokmål, nynorsk eller engelsk, oversatt i minnet fra de samme konstantlistene som ingest skriver til oversettelsestabellen. Innholdet endres bare ved deploy; kilden er `ActivityTypeConstants`, som også seeder hjelpetabellen `dbo.activitytype`.
 
 ```
 GET /accessmanagement/api/v2/enduser/maskinporten/activitylog/types
@@ -121,13 +122,13 @@ GET /accessmanagement/api/v2/enduser/maskinporten/activitylog/types
 
 - **Maskinportenschema-hendelser finnes bare i maskinporten-området:** Supplier-rollen brukes utelukkende for maskinportenschema-delegeringer; connections- og request-områdene (og den interne flaten som standard) ekskluderer den, og maskinporten-området låser den.
 - **Validering:** tom `party`, manglende from/to-forankring, oppgitt `direction`, `typeId`-verdier utenfor området, og filterfelt området ikke tilbyr gir alle `400` med problem details. Merk at scope-policyen på connections-området nøkler på de samme forankringsparameterne, så en uforankret spørring avvises der med `403` før valideringen kjører — samme karakteristikk som connections-endepunktene selv har.
-- **Feature-flagg:** ett per område — `AccessManagement.Enduser.{Connections|Request|Maskinporten}ActivityLogApi` — alle deklarert i deploy-terraformen.
+- **Feature-flagg:** ett per område — `AccessManagement.Enduser.{Connections|Request|Maskinporten}ActivityLogApi` — alle deklarert i appens egen terraform sammen med de andre AccessManagement-flaggene.
 - **Sorteringsgaranti:** `(when desc, id desc)` — stabil og duplikatfri på tvers av sider under paging.
 - **Ingen joins ved lesing:** hvert navn i responsen er et denormalisert snapshot fra selve loggtabellen; loggen serveres fra én range-partisjonert tabell.
 
 ## BFF-flaten (tidlig tilgang)
 
-Mens sluttbrukerområdene er avslått, får portal-frontenden hele loggen gjennom BFF-flaten i det interne API-et: `accessmanagement/api/v1/bff/activitylog`, `…/filters/{field}` og `…/types`, bak sitt eget feature-flagg `AccessManagement.Bff.ActivityLogApi`. Alle aktivitetslogg-flaggene er deklarert i deploy-terraformen (opprettes avslått; togles per miljø i App Configuration). Endepunktene tar samme spørreflate (en delt parametermodell) og returnerer samme former som sluttbrukerområdene, med disse forskjellene:
+Mens sluttbrukerområdene er avslått, får portal-frontenden hele loggen gjennom BFF-flaten i det interne API-et: `accessmanagement/api/v1/bff/activitylog`, `…/filters/{field}` og `…/types`, bak sitt eget feature-flagg `AccessManagement.Bff.ActivityLogApi`. Alle aktivitetslogg-flaggene er deklarert i appens egen terraform, sammen med de andre AccessManagement-flaggene (opprettes avslått; togles per miljø i App Configuration). Endepunktene tar samme spørreflate (en delt parametermodell) og returnerer samme former som sluttbrukerområdene, med disse forskjellene:
 
 - **Kun portal:** endepunktene krever portal-scope pluss tilgangsstyring-les for partyen.
 - **Rollematrise:** hva kalleren får se avgjøres av deres effektive roller og tilgangspakker for partyen (foreløpig løst opp gjennom connection-spørringen; målet er å hente dette fra tokenet): tilgangsstyrere ser assignment-delen inkludert forespørsler, klientadministratorer delegation-delen, og hovedadministratorer alt. Hver spørring — både hendelser og filterverdier — begrenses til de synlige typene. Ber man bare om typer utenfor sitt sett, returneres en tom side; en kaller uten matriserolle får 403. Matrisen er en kodetabell (`ActivityLogRoleMatrix`) ment å utvides etter hvert som loggen får flere datapunkter.

@@ -541,4 +541,24 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
         Assert.Equal(SystemEntityConstants.StaticDataIngest.Id, sourcePair.Id);
         Assert.Equal("StaticDataIngest", sourcePair.Name);
     }
+
+    [Fact]
+    public async Task FilterValueQuery_TranslatesActivityTypeNamesBeforeTermMatch()
+    {
+        var (from, _, _) = await SeedAssignment();
+        var filter = new ActivityLogQueryFilter { InvolvedIds = [from.Id] };
+
+        var english = await _query.GetFilterValuesAsync(ActivityLogFilterField.ActivityType, filter, term: null, ActivityLogFilterValueOrder.Name, 100, languageCode: "eng", cancellationToken: TestContext.Current.CancellationToken);
+        Assert.Contains(english.Items, p => p.Id == ActivityTypeConstants.AssignmentCreated.Id && p.Name == "Role assignment created");
+
+        // The term matches the translated name, not the bokmål one.
+        var englishTerm = await _query.GetFilterValuesAsync(ActivityLogFilterField.ActivityType, filter, term: "role assignment", ActivityLogFilterValueOrder.Name, 100, languageCode: "eng", cancellationToken: TestContext.Current.CancellationToken);
+        Assert.Contains(englishTerm.Items, p => p.Id == ActivityTypeConstants.AssignmentCreated.Id);
+
+        var bokmalTermInEnglish = await _query.GetFilterValuesAsync(ActivityLogFilterField.ActivityType, filter, term: "rolletildeling", ActivityLogFilterValueOrder.Name, 100, languageCode: "eng", cancellationToken: TestContext.Current.CancellationToken);
+        Assert.DoesNotContain(bokmalTermInEnglish.Items, p => p.Id == ActivityTypeConstants.AssignmentCreated.Id);
+
+        var unknownCodeFallsBack = await _query.GetFilterValuesAsync(ActivityLogFilterField.ActivityType, filter, term: null, ActivityLogFilterValueOrder.Name, 100, languageCode: "xyz", cancellationToken: TestContext.Current.CancellationToken);
+        Assert.Contains(unknownCodeFallsBack.Items, p => p.Id == ActivityTypeConstants.AssignmentCreated.Id && p.Name == ActivityTypeConstants.AssignmentCreated.Entity.Name);
+    }
 }

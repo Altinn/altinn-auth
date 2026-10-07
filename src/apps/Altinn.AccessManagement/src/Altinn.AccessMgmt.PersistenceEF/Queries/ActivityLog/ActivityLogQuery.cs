@@ -86,6 +86,8 @@ public sealed class ActivityLogQuery(AppDbContext db)
     /// <param name="orderBy">Value ordering; name is stable across pages, when is newest first.</param>
     /// <param name="pageSize">Maximum number of values to return.</param>
     /// <param name="pageNumber">Zero-based page number.</param>
+    /// <param name="languageCode">Three-letter language code for catalog-backed value names
+    /// ("eng", "nno"); applied before term matching and ordering. Null means bokmål.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
     public async Task<ActivityLogFilterValueQueryPage> GetFilterValuesAsync(
         ActivityLogFilterField field,
@@ -94,6 +96,7 @@ public sealed class ActivityLogQuery(AppDbContext db)
         ActivityLogFilterValueOrder orderBy,
         int pageSize,
         int pageNumber = 0,
+        string languageCode = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(filter);
@@ -113,7 +116,7 @@ public sealed class ActivityLogQuery(AppDbContext db)
             ActivityLogFilterField.Package => await PageSnapshotValuesAsync(source.Where(t => t.PackageId != null).Select(t => new ValueRow { Id = t.PackageId.Value, Name = t.PackageName, When = t.When }), term, orderBy, pageSize, pageNumber, cancellationToken),
             ActivityLogFilterField.Resource => await PageSnapshotValuesAsync(source.Where(t => t.ResourceId != null).Select(t => new ValueRow { Id = t.ResourceId.Value, Name = t.ResourceName, When = t.When }), term, orderBy, pageSize, pageNumber, cancellationToken),
             ActivityLogFilterField.Source => await PageSourceValuesAsync(source, term, orderBy, pageSize, pageNumber, cancellationToken),
-            ActivityLogFilterField.ActivityType => await PageActivityTypeValuesAsync(source, term, orderBy, pageSize, pageNumber, cancellationToken),
+            ActivityLogFilterField.ActivityType => await PageActivityTypeValuesAsync(source, term, orderBy, pageSize, pageNumber, languageCode, cancellationToken),
             _ => throw new ArgumentOutOfRangeException(nameof(field), field, "Unknown filter field."),
         };
     }
@@ -182,6 +185,7 @@ public sealed class ActivityLogQuery(AppDbContext db)
         ActivityLogFilterValueOrder orderBy,
         int pageSize,
         int pageNumber,
+        string languageCode,
         CancellationToken cancellationToken)
     {
         var combos = await source
@@ -189,13 +193,15 @@ public sealed class ActivityLogQuery(AppDbContext db)
             .Select(g => new { g.Key.Type, g.Key.Subtype, g.Key.Trigger, g.Key.Status, When = g.Max(t => t.When) })
             .ToListAsync(cancellationToken);
 
+        // Translate before PageInMemory so the term match and the name ordering apply to the
+        // names the caller actually sees.
         var values = combos
             .Select(c => (Definition: ActivityTypeConstants.Resolve(c.Type, c.Subtype, c.Trigger, c.Status), c.When))
             .Where(x => x.Definition is not null)
             .GroupBy(x => x.Definition.Id)
             .Select(g => (
                 Id: g.Key,
-                Name: g.First().Definition.Entity.Name,
+                Name: g.First().Definition.TranslateField(languageCode, "Name", g.First().Definition.Entity.Name),
                 When: g.Max(x => x.When)));
 
         return PageInMemory(values, term, orderBy, pageSize, pageNumber);

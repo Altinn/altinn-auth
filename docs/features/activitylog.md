@@ -100,6 +100,7 @@ Returns the distinct `(id, name)` pairs occurring in the party's slice of the ar
 - **`term`:** case-insensitive substring match on name only.
 - **`orderBy`:** `Name` (default, alphabetical — stable across pages) or `When` (newest occurrence per value first — new events can shift pages).
 - **Duplicates are intentional:** names are point-in-time snapshots, so one id can recur with different names (e.g. after a rename); all pairs are returned so every historical label is findable. For `source` and `activitytype` the names come from the respective catalogs instead of snapshots.
+- **Language:** `activitytype` values are translated from the catalog (bokmål, nynorsk, english via `Accept-Language`) before term matching and ordering, so the term matches the names the user actually sees. Snapshot names are data and are never translated.
 - **The Supplier role never appears as a value:** Maskinporten schema events are hidden by default (see cross-cutting behavior), so their role is not offered either.
 - **Paging and envelope:** identical to the main query (`pageSize`/`pageNo`, `links.next`).
 
@@ -111,7 +112,7 @@ GET /accessmanagement/api/v2/enduser/connections/activitylog/filter/package?part
 
 `filter/fields` lists the filter fields the area offers (the valid values for the filter route), and `types` lists the catalog entries the area accepts as `typeId` input — `ActivityTypeDto` with `id`, the key fields (`type`, `subtype`, `trigger`, `status`), `name` and `description`. The maskinporten slice cannot be derived from the global catalog (Supplier events share the assignment type), which is why each area serves its own accepted subset.
 
-Both are static metadata without personal data, hence anonymous and response-cached (1 hour, any location). Content only changes on deploy; the source of truth is `ActivityTypeConstants`, which also seeds the `dbo.activitytype` helper table.
+Both are static metadata without personal data, hence anonymous and response-cached (1 hour, any location; `types` varies on `Accept-Language`). `types` serves `name` and `description` in the requested language — bokmål, nynorsk or english, translated in memory from the same constant lists the ingest writes to the translation table. Content only changes on deploy; the source of truth is `ActivityTypeConstants`, which also seeds the `dbo.activitytype` helper table.
 
 ```
 GET /accessmanagement/api/v2/enduser/maskinporten/activitylog/types
@@ -121,13 +122,13 @@ GET /accessmanagement/api/v2/enduser/maskinporten/activitylog/types
 
 - **Maskinporten schema events live only in the maskinporten area:** the Supplier role is used exclusively for Maskinporten schema delegations; the connections and request areas (and the internal surface by default) exclude it, and the maskinporten area pins it.
 - **Validation:** empty `party`, a missing from/to anchor, a supplied `direction`, `typeId` values outside the area, and filter fields the area does not offer all return `400` with problem details. Note that on the connections area the scope policy keys on the same anchor parameters, so an unanchored query is rejected there with `403` before validation runs — the same characteristic the connections endpoints have.
-- **Feature flags:** one per area — `AccessManagement.Enduser.{Connections|Request|Maskinporten}ActivityLogApi` — all declared in the deploy terraform.
+- **Feature flags:** one per area — `AccessManagement.Enduser.{Connections|Request|Maskinporten}ActivityLogApi` — all declared in the app's own terraform next to the other AccessManagement flags.
 - **Ordering guarantee:** `(when desc, id desc)` — stable and duplicate-free across pages while paging.
 - **No joins at read time:** every name in the response is a denormalized snapshot from the log table itself; the log is served from a single range-partitioned table.
 
 ## BFF surface (early access)
 
-While the enduser areas are gated off, the portal frontend gets the complete log through the BFF surface of the internal API: `accessmanagement/api/v1/bff/activitylog`, `…/filters/{field}` and `…/types`, behind its own feature flag `AccessManagement.Bff.ActivityLogApi`. All activity log flags are declared in the deploy terraform (created disabled; toggled per environment in App Configuration). The endpoints take the same query surface (a shared parameter model) and return the same shapes as the enduser areas, with these differences:
+While the enduser areas are gated off, the portal frontend gets the complete log through the BFF surface of the internal API: `accessmanagement/api/v1/bff/activitylog`, `…/filters/{field}` and `…/types`, behind its own feature flag `AccessManagement.Bff.ActivityLogApi`. All activity log flags are declared in the app's own terraform, next to the other AccessManagement flags (created disabled; toggled per environment in App Configuration). The endpoints take the same query surface (a shared parameter model) and return the same shapes as the enduser areas, with these differences:
 
 - **Portal only:** the endpoints require the portal scope plus access-management read for the party.
 - **Role matrix:** what the caller may see is decided by their effective roles and access packages for the party (currently resolved through the connection query; the goal is resolving this from the token): access managers see the assignment part including requests, client administrators the delegation part, and main administrators everything. Every query — entries and filter values alike — is constrained to the visible types. Asking only for types outside the caller's set returns an empty page; a caller with no matrix role gets 403. The matrix is a code table (`ActivityLogRoleMatrix`) meant to be extended as the log gains data points.

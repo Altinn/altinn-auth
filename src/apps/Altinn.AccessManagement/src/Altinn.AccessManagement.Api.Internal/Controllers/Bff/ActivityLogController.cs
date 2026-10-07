@@ -3,6 +3,7 @@ using Altinn.AccessManagement.Api.Internal.Utils;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessMgmt.Core;
+using Altinn.AccessMgmt.Core.Extensions;
 using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
@@ -156,6 +157,7 @@ public class ActivityLogController(IActivityLogService activityLogService, IConn
             size,
             page,
             includeMps: query.IncludeMps && ActivityLogRoleMatrix.MaySeeMaskinportenSchema(granted),
+            languageCode: this.GetLanguageCode(),
             cancellationToken: cancellationToken);
 
         return Ok(PaginatedResult.Create(result.Items, result.HasMore ? NextLink(size, page + 1) : null));
@@ -163,15 +165,18 @@ public class ActivityLogController(IActivityLogService activityLogService, IConn
 
     /// <summary>
     /// Get the activity type catalog: every valid activity log combination with display name
-    /// and description. Static metadata without personal data, hence anonymous; the content
-    /// only changes on deploy.
+    /// and description in the requested language. Static metadata without personal data,
+    /// hence anonymous and cached per Accept-Language; the content only changes on deploy.
     /// </summary>
     [HttpGet("types")]
     [AllowAnonymous]
-    [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
+    [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any, VaryByHeader = "Accept-Language")]
     [ProducesResponseType<List<ActivityTypeDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
     public IActionResult GetActivityTypes()
-        => Ok(ActivityTypeConstants.AllEntities().Select(DtoMapper.ToActivityTypeDto).ToList());
+    {
+        var languageCode = this.GetLanguageCode();
+        return Ok(ActivityTypeConstants.AllEntities().Select(d => DtoMapper.ToActivityTypeDto(d, languageCode)).ToList());
+    }
 
     /// <summary>
     /// Resolves the caller's effective roles and access packages for the party (direct,

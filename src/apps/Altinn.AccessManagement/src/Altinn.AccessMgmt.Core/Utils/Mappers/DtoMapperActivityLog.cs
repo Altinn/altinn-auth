@@ -62,15 +62,15 @@ public partial class DtoMapper : IDtoMapper
     /// <summary>
     /// Maps an activity type catalog constant to its external contract.
     /// </summary>
-    public static ActivityTypeDto ToActivityTypeDto(ConstantDefinition<ActivityType> definition) => new()
+    public static ActivityTypeDto ToActivityTypeDto(ConstantDefinition<ActivityType> definition, string languageCode = null) => new()
     {
         Id = definition.Id,
         Type = definition.Entity.Type,
         Subtype = definition.Entity.Subtype,
         Trigger = definition.Entity.Trigger,
         Status = definition.Entity.Status,
-        Name = definition.Entity.Name,
-        Description = definition.Entity.Description,
+        Name = definition.TranslateField(languageCode, "Name", definition.Entity.Name),
+        Description = definition.TranslateField(languageCode, "Description", definition.Entity.Description),
     };
 
     private static string ResolveSystemEntityName(Guid? sourceId)

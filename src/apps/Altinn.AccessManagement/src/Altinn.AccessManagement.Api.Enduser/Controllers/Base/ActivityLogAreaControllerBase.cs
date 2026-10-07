@@ -1,5 +1,6 @@
 using System.Net.Mime;
 using Altinn.AccessManagement.Core.Models;
+using Altinn.AccessMgmt.Core.Extensions;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
@@ -191,6 +192,7 @@ public abstract class ActivityLogAreaControllerBase(IActivityLogService activity
             size,
             page,
             includeMps: area.IncludeMaskinportenSchema,
+            languageCode: this.GetLanguageCode(),
             cancellationToken: cancellationToken);
 
         return Ok(PaginatedResult.Create(result.Items, result.HasMore ? NextLink(size, page + 1) : null));
@@ -209,17 +211,21 @@ public abstract class ActivityLogAreaControllerBase(IActivityLogService activity
 
     /// <summary>
     /// Get the activity type catalog entries this area accepts as typeId input, with display
-    /// name and description. Static metadata, hence anonymous and cached.
+    /// name and description in the requested language. Static metadata, hence anonymous and
+    /// cached per Accept-Language.
     /// </summary>
     [HttpGet("types")]
     [AllowAnonymous]
-    [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any)]
+    [ResponseCache(Duration = 3600, Location = ResponseCacheLocation.Any, VaryByHeader = "Accept-Language")]
     [ProducesResponseType<List<ActivityTypeDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
     public IActionResult GetActivityTypes()
-        => Ok(ActivityTypeConstants.AllEntities()
+    {
+        var languageCode = this.GetLanguageCode();
+        return Ok(ActivityTypeConstants.AllEntities()
             .Where(d => area.AcceptsCatalogEntry(d.Entity.Type, d.Entity.Subtype))
-            .Select(DtoMapper.ToActivityTypeDto)
+            .Select(d => DtoMapper.ToActivityTypeDto(d, languageCode))
             .ToList());
+    }
 
     private bool TryPrepare(ActivityLogQueryParameters query, out ActivityLogQueryFilter filter, out ActivityLogDirection direction, out int size, out int page, out IActionResult error)
     {

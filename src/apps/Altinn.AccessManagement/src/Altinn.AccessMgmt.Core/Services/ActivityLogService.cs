@@ -21,12 +21,12 @@ public class ActivityLogService(ActivityLogQuery activityLogQuery) : IActivityLo
     }
 
     /// <inheritdoc />
-    public async Task<ActivityLogFilterValuePage> GetActivityLogFilterValues(Guid party, ActivityLogDirection? direction, ActivityLogFilterField field, ActivityLogQueryFilter filter, string term, ActivityLogFilterValueOrder orderBy, int pageSize, int pageNumber, bool includeMps = false, CancellationToken cancellationToken = default)
+    public async Task<ActivityLogFilterValuePage> GetActivityLogFilterValues(Guid party, ActivityLogDirection? direction, ActivityLogFilterField field, ActivityLogQueryFilter filter, string term, ActivityLogFilterValueOrder orderBy, int pageSize, int pageNumber, bool includeMps = false, string languageCode = null, CancellationToken cancellationToken = default)
     {
         var baseFilter = WithoutOwnField(field, filter ?? new ActivityLogQueryFilter());
         var anchoredFilter = WithoutMaskinportenSchema(Anchor(party, direction, baseFilter), includeMps);
 
-        var page = await activityLogQuery.GetFilterValuesAsync(field, anchoredFilter, term, orderBy, pageSize, pageNumber, cancellationToken);
+        var page = await activityLogQuery.GetFilterValuesAsync(field, anchoredFilter, term, orderBy, pageSize, pageNumber, languageCode, cancellationToken);
 
         var items = page.Items.Select(DtoMapper.ToActivityLogFilterValueDto).ToList();
         return new ActivityLogFilterValuePage(items, page.HasMore);

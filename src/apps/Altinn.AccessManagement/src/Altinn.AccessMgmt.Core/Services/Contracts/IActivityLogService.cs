@@ -39,8 +39,11 @@ public interface IActivityLogService
     /// <param name="pageNumber">Zero-based page number.</param>
     /// <param name="includeMps">Whether to include Maskinporten schema events (the Supplier role).
     /// By default they are hidden, so the Supplier role never appears as a filter value either.</param>
+    /// <param name="languageCode">Three-letter language code ("eng", "nno") for catalog-backed
+    /// value names (the activity type field); applied before term matching and ordering.
+    /// Null means bokmål. Snapshot names are data and are never translated.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    Task<ActivityLogFilterValuePage> GetActivityLogFilterValues(Guid party, ActivityLogDirection? direction, ActivityLogFilterField field, ActivityLogQueryFilter filter, string term, ActivityLogFilterValueOrder orderBy, int pageSize, int pageNumber, bool includeMps = false, CancellationToken cancellationToken = default);
+    Task<ActivityLogFilterValuePage> GetActivityLogFilterValues(Guid party, ActivityLogDirection? direction, ActivityLogFilterField field, ActivityLogQueryFilter filter, string term, ActivityLogFilterValueOrder orderBy, int pageSize, int pageNumber, bool includeMps = false, string languageCode = null, CancellationToken cancellationToken = default);
 }
 
 /// <summary>
