@@ -117,14 +117,14 @@ public class AccessManagementWrapper : IAccessManagementWrapper
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<AccessPackageUrn>> GetAccessPackages(Guid to, Guid from, AuthContext authContext = AuthContext.All, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<AccessPackageUrn>> GetAccessPackages(Guid to, Guid from, AccessRestriction accessRestriction = AccessRestriction.None, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default)
     {
-        var cacheKey = $"AccPkgs|f:{from}|t:{to}|ac:{authContext}|vp:{viaPartyOrganizationNumber}";
+        var cacheKey = $"AccPkgs|f:{from}|t:{to}|ac:{accessRestriction}|vp:{viaPartyOrganizationNumber}";
 
         if (!_memoryCache.TryGetValue(cacheKey, out IEnumerable<AccessPackageUrn> result))
         {
             var response = await _client.Client.SendAsync(
-                new(HttpMethod.Get, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), $"policyinformation/accesspackages?to={to}&from={from}&authContext={authContext}{ViaPartyQuery(viaPartyOrganizationNumber)}")),
+                new(HttpMethod.Get, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), $"policyinformation/accesspackages?to={to}&from={from}&accessRestriction={accessRestriction}{ViaPartyQuery(viaPartyOrganizationNumber)}")),
                 cancellationToken);
 
             if (response.IsSuccessStatusCode)
@@ -148,14 +148,14 @@ public class AccessManagementWrapper : IAccessManagementWrapper
     }
 
     /// <inheritdoc/>
-    public async Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, AuthContext authContext = AuthContext.All, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default)
+    public async Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, AccessRestriction accessRestriction = AccessRestriction.None, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default)
     {   
-        var cacheKey = $"RolesAndAccPkgs|f:{from}|t:{to}|ac:{authContext}|vp:{viaPartyOrganizationNumber}";
+        var cacheKey = $"RolesAndAccPkgs|f:{from}|t:{to}|ac:{accessRestriction}|vp:{viaPartyOrganizationNumber}";
 
         if (!_memoryCache.TryGetValue(cacheKey, out PipResponseDto result))
         {
             var response = await _client.Client.SendAsync(
-                new(HttpMethod.Get, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), $"policyinformation/roles-and-accesspackages?to={to}&from={from}&authContext={authContext}{ViaPartyQuery(viaPartyOrganizationNumber)}")),
+                new(HttpMethod.Get, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), $"policyinformation/roles-and-accesspackages?to={to}&from={from}&accessRestriction={accessRestriction}{ViaPartyQuery(viaPartyOrganizationNumber)}")),
                 cancellationToken);
 
             if (response.IsSuccessStatusCode)

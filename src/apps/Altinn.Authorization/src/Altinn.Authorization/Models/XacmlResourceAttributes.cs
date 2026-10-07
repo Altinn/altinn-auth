@@ -1,4 +1,4 @@
-﻿namespace Altinn.Platform.Authorization.Models
+namespace Altinn.Platform.Authorization.Models
 {
     using Altinn.Authorization.Enums;
 
@@ -65,17 +65,17 @@
         public string ViaPartyOrganizationNumber { get; set; }
 
         /// <summary>
-        /// Gets or sets the authorization context mode controlling how client-delegated access is considered
-        /// when authorizing the request. Populated from the <c>urn:altinn:authorization:auth-context</c>
-        /// attribute (per request, Resource category). Defaults to <see cref="AuthContext.All"/>.
+        /// Gets or sets the access restriction mode controlling how client-delegated access is considered
+        /// when authorizing the request. Populated from the <c>urn:altinn:authorization:access-restriction</c>
+        /// attribute (per request, Resource category). Defaults to <see cref="AccessRestriction.None"/>.
         /// </summary>
-        public AuthContext AuthContext { get; set; } = AuthContext.All;
+        public AccessRestriction AccessRestriction { get; set; } = AccessRestriction.None;
 
         /// <summary>
-        /// Gets or sets a value indicating whether the <c>urn:altinn:authorization:auth-context</c> attribute
-        /// was present but could not be parsed into a valid <see cref="Enums.AuthContext"/> value.
+        /// Gets or sets a value indicating whether the <c>urn:altinn:authorization:access-restriction</c> attribute
+        /// was present but could not be parsed into a valid <see cref="Enums.AccessRestriction"/> value.
         /// </summary>
-        public bool HasInvalidAuthContext { get; set; }
+        public bool HasInvalidAccessRestriction { get; set; }
 
         /// <summary>
         /// Gets or sets the ssn for the person owning the resource

@@ -250,18 +250,18 @@ public class PolicyInformationPointClientDelegationResourceTest
     }
 
     /// <summary>
-    /// ClientAccess without a via-party organization can't be scoped.
+    /// ClientDelegation without a via-party organization can't be scoped.
     /// Expects no delegations, even though a matching client delegation exists.
     /// </summary>
     [Fact]
-    public async Task GetDelegationChanges_ClientAccessWithoutViaParty_ReturnsEmpty()
+    public async Task GetDelegationChanges_ClientDelegationWithoutViaParty_ReturnsEmpty()
     {
         var request = new
         {
             subject = new { id = "urn:altinn:userid", value = RecipientUserId.ToString() },
             party = new { id = "urn:altinn:partyid", value = OrgMainUnitPartyId.ToString() },
             resource = new[] { new { id = "urn:altinn:resource", value = "nav_sykepenger_dialog" } },
-            authContext = "ClientAccess"
+            AccessRestriction = "ClientDelegation"
         };
 
         var response = await _client.PostAsJsonAsync(
@@ -277,13 +277,13 @@ public class PolicyInformationPointClientDelegationResourceTest
     }
 
     /// <summary>
-    /// ClientAccess through the via-party the client delegation was received through.
+    /// ClientDelegation through the via-party the client delegation was received through.
     /// Expects the client-delegated resource to be returned.
     /// </summary>
     [Fact]
-    public async Task GetDelegationChanges_ClientAccessWithMatchingViaParty_ReturnsDelegation()
+    public async Task GetDelegationChanges_ClientDelegationWithMatchingViaParty_ReturnsDelegation()
     {
-        var result = await PostAuthContextRequest("ClientAccess", "399900023");
+        var result = await PostAccessRestrictionRequest("ClientDelegation", "399900023");
 
         var delegation = Assert.Single(result);
         Assert.Equal("nav_sykepenger_dialog", delegation.ResourceId);
@@ -293,37 +293,37 @@ public class PolicyInformationPointClientDelegationResourceTest
     }
 
     /// <summary>
-    /// ClientAccess through an existing organization that is not the via-party of the client delegation.
+    /// ClientDelegation through an existing organization that is not the via-party of the client delegation.
     /// Expects no delegations.
     /// </summary>
     [Fact]
-    public async Task GetDelegationChanges_ClientAccessWithNonMatchingViaParty_ReturnsEmpty()
+    public async Task GetDelegationChanges_ClientDelegationWithNonMatchingViaParty_ReturnsEmpty()
     {
-        var result = await PostAuthContextRequest("ClientAccess", "399900020");
+        var result = await PostAccessRestrictionRequest("ClientDelegation", "399900020");
 
         Assert.Empty(result);
     }
 
     /// <summary>
-    /// DirectAccess excludes client-delegated access, even though a matching client delegation exists.
+    /// DirectAndHierarchy excludes client-delegated access, even though a matching client delegation exists.
     /// Expects no delegations.
     /// </summary>
     [Fact]
-    public async Task GetDelegationChanges_DirectAccessWithClientDelegatedResource_ReturnsEmpty()
+    public async Task GetDelegationChanges_DirectAndHierarchyWithClientDelegatedResource_ReturnsEmpty()
     {
-        var result = await PostAuthContextRequest("DirectAccess", null);
+        var result = await PostAccessRestrictionRequest("DirectAndHierarchy", null);
 
         Assert.DoesNotContain(result, d => d.BlobStoragePolicyPath == ResourcePolicyPath);
     }
 
-    private async Task<List<DelegationChangeDto>> PostAuthContextRequest(string authContext, string viaPartyOrganizationNumber)
+    private async Task<List<DelegationChangeDto>> PostAccessRestrictionRequest(string accessRestriction, string viaPartyOrganizationNumber)
     {
         var request = new
         {
             subject = new { id = "urn:altinn:userid", value = RecipientUserId.ToString() },
             party = new { id = "urn:altinn:partyid", value = OrgMainUnitPartyId.ToString() },
             resource = new[] { new { id = "urn:altinn:resource", value = "nav_sykepenger_dialog" } },
-            authContext,
+            accessRestriction,
             viaPartyOrganizationNumber
         };
 

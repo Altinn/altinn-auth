@@ -1,4 +1,4 @@
-﻿{
+{
   "Request": {
     "ReturnPolicyIdList": true,
     "AccessSubject": [
@@ -37,7 +37,7 @@
             "Value": "01038712345"
           },
           {
-            "AttributeId": "urn:altinn:authorization:auth-context",
+            "AttributeId": "urn:altinn:authorization:access-restriction",
             "Value": "Bogus"
           }
         ]
@@ -54,8 +54,8 @@
             "Value": "01038712345"
           },
           {
-            "AttributeId": "urn:altinn:authorization:auth-context",
-            "Value": "ClientAccess"
+            "AttributeId": "urn:altinn:authorization:access-restriction",
+            "Value": "ClientDelegation"
           }
         ]
       }

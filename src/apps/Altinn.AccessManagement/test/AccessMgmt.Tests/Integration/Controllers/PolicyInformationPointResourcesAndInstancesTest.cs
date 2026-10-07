@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Altinn.AccessManagement.Tests.Fixtures;
@@ -154,7 +154,7 @@ public class PolicyInformationPointResourcesAndInstancesTest
             });
 
             // Main Unit delegates resource directly to Bob (org-to-person). Used to verify main-unit
-            // inheritance is still honored for a subunit reportee under DirectAccess.
+            // inheritance is still honored for a subunit reportee under DirectAndHierarchy.
             db.Assignments.Add(new Assignment()
             {
                 Id = AssignMainUnitToBobDirect,
@@ -271,20 +271,20 @@ public class PolicyInformationPointResourcesAndInstancesTest
     }
 
     /// <summary>
-    /// Test: DirectAccess authorization context excludes keyrole (org-to-org) inherited access.
+    /// Test: DirectAndHierarchy access restriction excludes keyrole (org-to-org) inherited access.
     /// Alice delegated NavSykepengerDialog to Acme Corp and Charlie is Managing Director of Acme Corp.
-    /// When querying delegation changes for Charlie with AuthContext.DirectAccess, the keyrole-inherited
+    /// When querying delegation changes for Charlie with AccessRestriction.DirectAndHierarchy, the keyrole-inherited
     /// delegation to Acme Corp must NOT be returned.
     /// </summary>
     [Fact]
-    public async Task GetDelegationChanges_DirectAccess_ExcludesKeyRoleInheritedDelegation_ReturnsEmpty()
+    public async Task GetDelegationChanges_DirectAndHierarchy_ExcludesKeyRoleInheritedDelegation_ReturnsEmpty()
     {
         var request = new
         {
             subject = new { id = "urn:altinn:userid", value = CharlieUserId.ToString() },
             party = new { id = "urn:altinn:partyid", value = AlicePartyId.ToString() },
             resource = new[] { new { id = "urn:altinn:resource", value = "nav_sykepenger_dialog" } },
-            authContext = "DirectAccess"
+            AccessRestriction = "DirectAndHierarchy"
         };
 
         var response = await _client.PostAsJsonAsync(
@@ -297,27 +297,27 @@ public class PolicyInformationPointResourcesAndInstancesTest
         var result = await response.Content.ReadFromJsonAsync<List<DelegationChangeDto>>(_options, TestContext.Current.CancellationToken);
         Assert.NotNull(result);
 
-        // The keyrole-inherited delegation to Acme Corp must be excluded in DirectAccess mode.
+        // The keyrole-inherited delegation to Acme Corp must be excluded in DirectAndHierarchy mode.
         Assert.DoesNotContain(result, d =>
             d.ResourceId == "nav_sykepenger_dialog" &&
             d.CoveredByPartyId == OrgAcmePartyId);
     }
 
     /// <summary>
-    /// Test: DirectAccess authorization context still returns direct person-to-person delegations.
+    /// Test: DirectAndHierarchy access restriction still returns direct person-to-person delegations.
     /// Alice delegated NavSykepengerDialog directly to Bob.
-    /// When querying delegation changes for Bob with AuthContext.DirectAccess, the direct delegation
+    /// When querying delegation changes for Bob with AccessRestriction.DirectAndHierarchy, the direct delegation
     /// must still be returned since it is access held directly by the subject.
     /// </summary>
     [Fact]
-    public async Task GetDelegationChanges_DirectAccess_ReturnsDirectPersonToPersonDelegation()
+    public async Task GetDelegationChanges_DirectAndHierarchy_ReturnsDirectPersonToPersonDelegation()
     {
         var request = new
         {
             subject = new { id = "urn:altinn:userid", value = BobUserId.ToString() },
             party = new { id = "urn:altinn:partyid", value = AlicePartyId.ToString() },
             resource = new[] { new { id = "urn:altinn:resource", value = "nav_sykepenger_dialog" } },
-            authContext = "DirectAccess"
+            AccessRestriction = "DirectAndHierarchy"
         };
 
         var response = await _client.PostAsJsonAsync(
@@ -331,7 +331,7 @@ public class PolicyInformationPointResourcesAndInstancesTest
         Assert.NotNull(result);
         Assert.NotEmpty(result);
 
-        // The direct person-to-person delegation must still be returned in DirectAccess mode.
+        // The direct person-to-person delegation must still be returned in DirectAndHierarchy mode.
         Assert.Contains(result, d =>
             d.ResourceId == "nav_sykepenger_dialog" &&
             d.OfferedByPartyId == AlicePartyId &&
@@ -339,20 +339,20 @@ public class PolicyInformationPointResourcesAndInstancesTest
     }
 
     /// <summary>
-    /// Test: DirectAccess authorization context still honors main-unit inheritance for a subunit reportee.
+    /// Test: DirectAndHierarchy access restriction still honors main-unit inheritance for a subunit reportee.
     /// Main Unit delegated NavSykepengerDialog directly to Bob, and the query party is the subunit.
-    /// When querying delegation changes for Bob with AuthContext.DirectAccess and the subunit as party,
+    /// When querying delegation changes for Bob with AccessRestriction.DirectAndHierarchy and the subunit as party,
     /// the main-unit delegation must still be returned (main-unit inheritance covers subunits).
     /// </summary>
     [Fact]
-    public async Task GetDelegationChanges_DirectAccess_ReturnsMainUnitDelegationForSubUnitReportee()
+    public async Task GetDelegationChanges_DirectAndHierarchy_ReturnsMainUnitDelegationForSubUnitReportee()
     {
         var request = new
         {
             subject = new { id = "urn:altinn:userid", value = BobUserId.ToString() },
             party = new { id = "urn:altinn:partyid", value = OrgSubUnitPartyId.ToString() },
             resource = new[] { new { id = "urn:altinn:resource", value = "nav_sykepenger_dialog" } },
-            authContext = "DirectAccess"
+            AccessRestriction = "DirectAndHierarchy"
         };
 
         var response = await _client.PostAsJsonAsync(
@@ -366,7 +366,7 @@ public class PolicyInformationPointResourcesAndInstancesTest
         Assert.NotNull(result);
         Assert.NotEmpty(result);
 
-        // The main-unit delegation must be returned for the subunit reportee even in DirectAccess mode.
+        // The main-unit delegation must be returned for the subunit reportee even in DirectAndHierarchy mode.
         Assert.Contains(result, d =>
             d.ResourceId == "nav_sykepenger_dialog" &&
             d.OfferedByPartyId == OrgMainUnitPartyId &&

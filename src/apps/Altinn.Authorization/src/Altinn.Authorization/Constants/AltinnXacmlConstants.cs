@@ -1,4 +1,4 @@
-﻿namespace Altinn.Platform.Authorization.Constants
+namespace Altinn.Platform.Authorization.Constants
 {
     /// <summary>
     /// Altinn specific XACML constants used for urn identifiers and attributes
@@ -128,10 +128,10 @@
             public const string ViaPartyOrganizationIdentifierNoAttribute = "urn:altinn:via-party:organization:identifier-no";
 
             /// <summary>
-            /// Authorization context attribute match identifier. Controls how client-delegated access is
+            /// access restriction attribute match identifier. Controls how client-delegated access is
             /// considered when authorizing the request. Specified per request in the Resource category.
             /// </summary>
-            public const string AuthContextAttribute = "urn:altinn:authorization:auth-context";
+            public const string AccessRestrictionAttribute = "urn:altinn:authorization:access-restriction";
         }
 
         /// <summary>

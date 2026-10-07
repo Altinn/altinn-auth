@@ -83,8 +83,8 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
 
         var result = new List<DelegationChangeDto>();
 
-        // ClientAccess only considers client delegations received through the requested via-party.
-        if (input.AuthContext == AuthContextDto.ClientAccess)
+        // ClientDelegation only considers client delegations received through the requested via-party.
+        if (input.AccessRestriction == AccessRestrictionDto.ClientDelegation)
         {
             ConditionalAdd(
                 DelegationChangesTestData.Default(DelegationChangesTestData.WithResourceID("ttd-externalpdp-resource1"), DelegationChangesTestData.WithOfferedByPartyID(50005545), DelegationChangesTestData.WithToUuid(UuidTypeDto.SystemUser, Guid.Parse("47caea5b-a80b-4343-b1d3-31eb523a4e28"))),
@@ -170,9 +170,9 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
         return Task.FromResult<IEnumerable<AuthorizedPartyDto>>([]);
     }
 
-    public Task<IEnumerable<AccessPackageUrn>> GetAccessPackages(Guid to, Guid from, Altinn.Authorization.Enums.AuthContext authContext = Altinn.Authorization.Enums.AuthContext.All, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default)
+    public Task<IEnumerable<AccessPackageUrn>> GetAccessPackages(Guid to, Guid from, Altinn.Authorization.Enums.AccessRestriction accessRestriction = Altinn.Authorization.Enums.AccessRestriction.None, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default)
     {
-        var cacheKey = $"AccPkgs|f:{from}|t:{to}|ac:{authContext}|vp:{viaPartyOrganizationNumber}";
+        var cacheKey = $"AccPkgs|f:{from}|t:{to}|ac:{accessRestriction}|vp:{viaPartyOrganizationNumber}";
 
         if (!_memoryCache.TryGetValue(cacheKey, out IEnumerable<AccessPackageUrn> result))
         {
@@ -233,9 +233,9 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
         return null;
     }
 
-    public Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, Altinn.Authorization.Enums.AuthContext authContext = Altinn.Authorization.Enums.AuthContext.All, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default)
+    public Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, Altinn.Authorization.Enums.AccessRestriction accessRestriction = Altinn.Authorization.Enums.AccessRestriction.None, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default)
     {
-        var cacheKey = $"RolesAndAccPkgs|f:{from}|t:{to}|ac:{authContext}|vp:{viaPartyOrganizationNumber}";
+        var cacheKey = $"RolesAndAccPkgs|f:{from}|t:{to}|ac:{accessRestriction}|vp:{viaPartyOrganizationNumber}";
 
         if (!_memoryCache.TryGetValue(cacheKey, out PipResponseDto result))
         {

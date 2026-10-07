@@ -1,4 +1,4 @@
-﻿namespace Altinn.Platform.Authorization.Constants
+namespace Altinn.Platform.Authorization.Constants
 {
     /// <summary>
     /// Attribute representations in XACML
@@ -72,10 +72,10 @@
         public const string ViaPartyOrganizationIdentifierNoAttribute = "urn:altinn:via-party:organization:identifier-no";
 
         /// <summary>
-        /// xacml string that represents the authorization context mode controlling how client-delegated
+        /// xacml string that represents the access restriction mode controlling how client-delegated
         /// access is considered when authorizing the request. Specified per request (Resource category).
         /// </summary>
-        public const string AuthContextAttribute = "urn:altinn:authorization:auth-context";
+        public const string AccessRestrictionAttribute = "urn:altinn:authorization:access-restriction";
 
         /// <summary>
         /// Legacy xacml string that represents organization number. Can be removed when all peps are updated

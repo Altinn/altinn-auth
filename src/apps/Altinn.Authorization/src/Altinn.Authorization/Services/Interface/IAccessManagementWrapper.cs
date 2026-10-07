@@ -37,11 +37,11 @@ public interface IAccessManagementWrapper
     /// Endpoint to find all access packages a given to-party has for a given from-party
     /// </summary>
     /// <returns>List of all access package urns if any</returns>
-    public Task<IEnumerable<AccessPackageUrn>> GetAccessPackages(Guid to, Guid from, AuthContext authContext = AuthContext.All, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default);
+    public Task<IEnumerable<AccessPackageUrn>> GetAccessPackages(Guid to, Guid from, AccessRestriction accessRestriction = AccessRestriction.None, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Endpoint to find all roles and access packages a given to-party has for a given from-party
     /// </summary>
     /// <returns>Dto response of all role and access package urns</returns>
-    public Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, AuthContext authContext = AuthContext.All, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default);
+    public Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, AccessRestriction accessRestriction = AccessRestriction.None, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default);
 }

@@ -1,4 +1,4 @@
-﻿{
+{
   "Request": {
     "ReturnPolicyIdList": true,
     "AccessSubject": [
@@ -34,8 +34,8 @@
             "Value": "910459880"
           },
           {
-            "AttributeId": "urn:altinn:authorization:auth-context",
-            "Value": "ClientAccess"
+            "AttributeId": "urn:altinn:authorization:access-restriction",
+            "Value": "ClientDelegation"
           },
           {
             "AttributeId": "urn:altinn:via-party:organization:identifier-no",

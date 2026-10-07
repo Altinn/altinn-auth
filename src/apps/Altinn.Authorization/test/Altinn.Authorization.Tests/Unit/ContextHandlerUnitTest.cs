@@ -1,4 +1,4 @@
-using Altinn.Authorization.ABAC.Constants;
+﻿using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.Api.Contracts.Authorization;
 using Altinn.Platform.Authorization.Configuration;
@@ -251,7 +251,7 @@ public class ContextHandlerUnitTest : IDisposable
     }
 
     [Fact]
-    public void GetResourceAttributeValues_AuthContextAbsent_DefaultsToAll()
+    public void GetResourceAttributeValues_AccessRestrictionAbsent_DefaultsToNone()
     {
         var attrs = CreateResourceAttributes(
             (XacmlRequestAttribute.OrgAttribute, "ttd"),
@@ -259,39 +259,39 @@ public class ContextHandlerUnitTest : IDisposable
 
         var result = _sut.TestGetResourceAttributeValues(attrs);
 
-        Assert.Equal(Altinn.Authorization.Enums.AuthContext.All, result.AuthContext);
-        Assert.False(result.HasInvalidAuthContext);
+        Assert.Equal(Altinn.Authorization.Enums.AccessRestriction.None, result.AccessRestriction);
+        Assert.False(result.HasInvalidAccessRestriction);
     }
 
     [Theory]
-    [InlineData("ClientAccess", Altinn.Authorization.Enums.AuthContext.ClientAccess)]
-    [InlineData("clientaccess", Altinn.Authorization.Enums.AuthContext.ClientAccess)]
-    [InlineData("DirectAccess", Altinn.Authorization.Enums.AuthContext.DirectAccess)]
-    [InlineData("All", Altinn.Authorization.Enums.AuthContext.All)]
-    public void GetResourceAttributeValues_AuthContext_ParsedCaseInsensitively(string value, Altinn.Authorization.Enums.AuthContext expected)
+    [InlineData("ClientDelegation", Altinn.Authorization.Enums.AccessRestriction.ClientDelegation)]
+    [InlineData("clientdelegation", Altinn.Authorization.Enums.AccessRestriction.ClientDelegation)]
+    [InlineData("DirectAndHierarchy", Altinn.Authorization.Enums.AccessRestriction.DirectAndHierarchy)]
+    [InlineData("None", Altinn.Authorization.Enums.AccessRestriction.None)]
+    public void GetResourceAttributeValues_AccessRestriction_ParsedCaseInsensitively(string value, Altinn.Authorization.Enums.AccessRestriction expected)
     {
         var attrs = CreateResourceAttributes(
-            (XacmlRequestAttribute.AuthContextAttribute, value));
+            (XacmlRequestAttribute.AccessRestrictionAttribute, value));
 
         var result = _sut.TestGetResourceAttributeValues(attrs);
 
-        Assert.Equal(expected, result.AuthContext);
-        Assert.False(result.HasInvalidAuthContext);
+        Assert.Equal(expected, result.AccessRestriction);
+        Assert.False(result.HasInvalidAccessRestriction);
     }
 
     [Theory]
     [InlineData("Bogus")]
     [InlineData("42")]
     [InlineData("")]
-    public void GetResourceAttributeValues_AuthContextInvalid_FlagsInvalidAndDefaultsToAll(string value)
+    public void GetResourceAttributeValues_AccessRestrictionInvalid_FlagsInvalidAndDefaultsToNone(string value)
     {
         var attrs = CreateResourceAttributes(
-            (XacmlRequestAttribute.AuthContextAttribute, value));
+            (XacmlRequestAttribute.AccessRestrictionAttribute, value));
 
         var result = _sut.TestGetResourceAttributeValues(attrs);
 
-        Assert.Equal(Altinn.Authorization.Enums.AuthContext.All, result.AuthContext);
-        Assert.True(result.HasInvalidAuthContext);
+        Assert.Equal(Altinn.Authorization.Enums.AccessRestriction.None, result.AccessRestriction);
+        Assert.True(result.HasInvalidAccessRestriction);
     }
 
     [Fact]
@@ -769,12 +769,12 @@ public class ContextHandlerUnitTest : IDisposable
         AssertContainsAttributeValue(subjectAttrs, XacmlRequestAttribute.RoleAttribute, "DAGL");
         AssertContainsAttributeValue(subjectAttrs, XacmlRequestAttribute.RoleAttribute, "HADM");
 
-        _accessMgmtMock.Verify(a => a.GetRolesAndAccessPackages(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Altinn.Authorization.Enums.AuthContext>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _accessMgmtMock.Verify(a => a.GetRolesAndAccessPackages(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<Altinn.Authorization.Enums.AccessRestriction>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
         _rolesMock.Verify(r => r.GetDecisionPointRolesForUser(subjectUserId, resourcePartyId), Times.Once);
     }
 
     [Fact]
-    public async Task EnrichSubjectAttributes_ClientAccess_WithoutFeatureFlag_SkipsLegacyRoles()
+    public async Task EnrichSubjectAttributes_ClientDelegation_WithoutFeatureFlag_SkipsLegacyRoles()
     {
         // Arrange
         int subjectUserId = 1001;
@@ -792,18 +792,18 @@ public class ContextHandlerUnitTest : IDisposable
         _prpMock.Setup(p => p.GetPolicyAsync(It.IsAny<XacmlContextRequest>())).ReturnsAsync(policy);
 
         var (request, resourceAttrs) = CreateEnrichSubjectRequest(subjectUserId, resourcePartyId);
-        resourceAttrs.AuthContext = Altinn.Authorization.Enums.AuthContext.ClientAccess;
+        resourceAttrs.AccessRestriction = Altinn.Authorization.Enums.AccessRestriction.ClientDelegation;
         resourceAttrs.ViaPartyOrganizationNumber = "910000000";
 
         // Act
         await _sut.TestEnrichSubjectAttributes(request, resourceAttrs, isExternalRequest: false, TestContext.Current.CancellationToken);
 
-        // Assert: legacy roles can't be scoped by via-party and must not be used in ClientAccess mode
+        // Assert: legacy roles can't be scoped by via-party and must not be used in ClientDelegation mode
         _rolesMock.Verify(r => r.GetDecisionPointRolesForUser(It.IsAny<int>(), It.IsAny<int>()), Times.Never);
     }
 
     [Fact]
-    public async Task EnrichSubjectAttributes_ClientAccess_PassesAuthContextAndViaPartyToPip()
+    public async Task EnrichSubjectAttributes_ClientDelegation_PassesAccessRestrictionAndViaPartyToPip()
     {
         // Arrange
         int subjectUserId = 1001;
@@ -819,14 +819,14 @@ public class ContextHandlerUnitTest : IDisposable
         _profileMock.Setup(p => p.GetUserProfile(subjectUserId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new UserProfile { UserId = subjectUserId, Party = new Party { SSN = "01017012345", PartyTypeName = PartyType.Person, PartyUuid = subjectPartyUuid } });
 
-        _accessMgmtMock.Setup(a => a.GetRolesAndAccessPackages(subjectPartyUuid, resourcePartyUuid, Altinn.Authorization.Enums.AuthContext.ClientAccess, viaParty, It.IsAny<CancellationToken>()))
+        _accessMgmtMock.Setup(a => a.GetRolesAndAccessPackages(subjectPartyUuid, resourcePartyUuid, Altinn.Authorization.Enums.AccessRestriction.ClientDelegation, viaParty, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new PipResponseDto { Roles = [], AccessPackages = [AccessPackageUrn.Parse("urn:altinn:accesspackage:regnskapsforer-lonn")] });
 
         var policy = CreatePolicyWithSubjectAttributes(policyHasRoles: true, policyHasAccessPackages: true);
         _prpMock.Setup(p => p.GetPolicyAsync(It.IsAny<XacmlContextRequest>())).ReturnsAsync(policy);
 
         var (request, resourceAttrs) = CreateEnrichSubjectRequest(subjectUserId, resourcePartyId, resourcePartyUuid);
-        resourceAttrs.AuthContext = Altinn.Authorization.Enums.AuthContext.ClientAccess;
+        resourceAttrs.AccessRestriction = Altinn.Authorization.Enums.AccessRestriction.ClientDelegation;
         resourceAttrs.ViaPartyOrganizationNumber = viaParty;
 
         // Act
@@ -834,8 +834,8 @@ public class ContextHandlerUnitTest : IDisposable
 
         // Assert
         AssertContainsAttributeValue(request.GetSubjectAttributes(), "urn:altinn:accesspackage", "regnskapsforer-lonn");
-        _accessMgmtMock.Verify(a => a.GetRolesAndAccessPackages(It.IsAny<Guid>(), It.IsAny<Guid>(), It.Is<Altinn.Authorization.Enums.AuthContext>(c => c != Altinn.Authorization.Enums.AuthContext.ClientAccess), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
-        _accessMgmtMock.Verify(a => a.GetRolesAndAccessPackages(subjectPartyUuid, resourcePartyUuid, Altinn.Authorization.Enums.AuthContext.ClientAccess, viaParty, It.IsAny<CancellationToken>()), Times.AtLeastOnce);
+        _accessMgmtMock.Verify(a => a.GetRolesAndAccessPackages(It.IsAny<Guid>(), It.IsAny<Guid>(), It.Is<Altinn.Authorization.Enums.AccessRestriction>(c => c != Altinn.Authorization.Enums.AccessRestriction.ClientDelegation), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _accessMgmtMock.Verify(a => a.GetRolesAndAccessPackages(subjectPartyUuid, resourcePartyUuid, Altinn.Authorization.Enums.AccessRestriction.ClientDelegation, viaParty, It.IsAny<CancellationToken>()), Times.AtLeastOnce);
     }
 
     [Fact]
@@ -1117,7 +1117,7 @@ public class ContextHandlerUnitTest : IDisposable
             _pipResponse = pipResponse;
         }
 
-        public Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, Altinn.Authorization.Enums.AuthContext authContext = Altinn.Authorization.Enums.AuthContext.All, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default)
+        public Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, Altinn.Authorization.Enums.AccessRestriction accessRestriction = Altinn.Authorization.Enums.AccessRestriction.None, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default)
         {
             var cacheKey = $"RolesAndAccPkgs|f:{from}|t:{to}";
 
@@ -1136,7 +1136,7 @@ public class ContextHandlerUnitTest : IDisposable
             return Task.FromResult(result);
         }
 
-        public Task<IEnumerable<AccessPackageUrn>> GetAccessPackages(Guid to, Guid from, Altinn.Authorization.Enums.AuthContext authContext = Altinn.Authorization.Enums.AuthContext.All, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default)
+        public Task<IEnumerable<AccessPackageUrn>> GetAccessPackages(Guid to, Guid from, Altinn.Authorization.Enums.AccessRestriction accessRestriction = Altinn.Authorization.Enums.AccessRestriction.None, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default)
             => throw new NotImplementedException();
 
         public Task<IEnumerable<DelegationChangeDto>> GetAllDelegationChanges(DelegationChangeInputDto input, CancellationToken cancellationToken = default)
