@@ -224,13 +224,6 @@ public abstract class ActivityLogAreaControllerBase(IActivityLogService activity
             return false;
         }
 
-        if (query.Direction is not null)
-        {
-            ModelState.AddModelError("direction", "direction is not used on this endpoint; anchor the query with from or to equal to party.");
-            error = ValidationProblem(ModelState);
-            return false;
-        }
-
         // Same anchor convention as the connections endpoints, because the directional scope
         // policies and the person access-manager rule key on the raw party/from/to query
         // parameters. from wins when both sides equal the party, mirroring the policy's rule

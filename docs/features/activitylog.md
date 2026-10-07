@@ -43,7 +43,7 @@ The FFB tool has a complete page against all environments — party anchor with 
 
 ## Enduser API (v2 areas)
 
-The enduser surface is split into three **areas**, each mounted under its domain root in the v2 API (`Controllers/V2`, `accessmanagement/api/v{version}/enduser/…`). The area is the authorization boundary and decides which slice of the log exists there — there is no cross-area type filter and no role matrix on these routes:
+The enduser surface is split into three **areas**, each mounted under its domain root in the v2 API (`Controllers/V2`, `accessmanagement/api/v{version}/enduser/…`). The area is the authorization boundary and decides which slice of the log exists there — there is no cross-area type filter:
 
 | Area root | Events | Feature flag | Auth |
 |---|---|---|---|
@@ -64,7 +64,7 @@ Every area exposes the same four routes:
 
 Returns the area's log entries for the party, ordered newest first (`when` descending, id as tiebreaker).
 
-**Anchoring:** `party` is **required**, and the query must be anchored the same way as the connections endpoints: `from=party` (access given) or `to=party` (access received); the other of the two stays a counterpart filter. The directional scope policies and the person access-manager rule key on exactly these raw parameters, which is what lets the areas reuse the neighboring policies unchanged. `direction` is not used on these endpoints (it remains on the BFF surface), and `via` anchoring returns with the client-administration needs.
+**Anchoring:** `party` is **required**, and the query must be anchored the same way as the connections endpoints: `from=party` (access given) or `to=party` (access received); the other of the two stays a counterpart filter. The directional scope policies and the person access-manager rule key on exactly these raw parameters, which is what lets the areas reuse the neighboring policies unchanged. There is no `direction` parameter — the from/to anchor is the direction — and `via` anchoring returns with the client-administration needs.
 
 **Filters** (all repeatable; values within one parameter are OR'ed, different parameters are AND'ed):
 
@@ -120,16 +120,8 @@ GET /accessmanagement/api/v2/enduser/maskinporten/activitylog/types
 
 ### Cross-cutting behavior
 
-- **Maskinporten schema events live only in the maskinporten area, and the two slices never mix:** the Supplier role is used exclusively for Maskinporten schema delegations, and the service itself has two disjoint surfaces — the regular one always excludes the role (connections, request and the internal BFF surface), the maskinporten one serves only it. There is no opt-in flag; no caller combination can produce a mixed result.
+- **Maskinporten schema events live only in the maskinporten area, and the two slices never mix:** the Supplier role is used exclusively for Maskinporten schema delegations, and the service itself has two disjoint surfaces — the regular one always excludes the role (connections and request), the maskinporten one serves only it. There is no opt-in flag; no caller combination can produce a mixed result.
 - **Validation:** empty `party`, a missing from/to anchor, a supplied `direction`, `typeId` values outside the area, and filter fields the area does not offer all return `400` with problem details. Note that on the connections area the scope policy keys on the same anchor parameters, so an unanchored query is rejected there with `403` before validation runs — the same characteristic the connections endpoints have.
-- **Feature flags:** one per area — `AccessManagement.Enduser.{Connections|Request|Maskinporten}ActivityLogApi` — all declared in the app's own terraform next to the other AccessManagement flags.
+- **Feature flags:** one per area — `AccessManagement.Enduser.{Connections|Request|Maskinporten}ActivityLogApi` — all declared in the app's own terraform next to the other AccessManagement flags (created disabled; toggled per environment in App Configuration). The portal frontend uses these same area endpoints; there is no separate internal surface.
 - **Ordering guarantee:** `(when desc, id desc)` — stable and duplicate-free across pages while paging.
 - **No joins at read time:** every name in the response is a denormalized snapshot from the log table itself; the log is served from a single range-partitioned table.
-
-## BFF surface (early access)
-
-While the enduser areas are gated off, the portal frontend gets the complete log through the BFF surface of the internal API: `accessmanagement/api/v1/bff/activitylog`, `…/filters/{field}` and `…/types`, behind its own feature flag `AccessManagement.Bff.ActivityLogApi`. All activity log flags are declared in the app's own terraform, next to the other AccessManagement flags (created disabled; toggled per environment in App Configuration). The endpoints take the same query surface (a shared parameter model) and return the same shapes as the enduser areas, with these differences:
-
-- **Portal only:** the endpoints require the portal scope plus access-management read for the party.
-- **Role matrix:** what the caller may see is decided by their effective roles and access packages for the party (currently resolved through the connection query; the goal is resolving this from the token): access managers see the assignment part including requests, client administrators the delegation part, and main administrators everything. Every query — entries and filter values alike — is constrained to the visible types. Asking only for types outside the caller's set returns an empty page; a caller with no matrix role gets 403. The matrix is a code table (`ActivityLogRoleMatrix`) meant to be extended as the log gains data points.
-- **Maskinporten schema events** are never served here; that slice lives in the enduser maskinporten area.

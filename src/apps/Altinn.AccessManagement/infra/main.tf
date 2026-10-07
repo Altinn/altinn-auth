@@ -521,12 +521,6 @@ module "appsettings" {
       value       = false
     },
     {
-      name        = "AccessManagement.Bff.ActivityLogApi"
-      description = "Activity log endpoints in the BFF surface of the internal API."
-      label       = "${lower(var.environment)}-access-management"
-      value       = false
-    },
-    {
       name        = "AccessManagement.Enduser.ConnectionsActivityLogApi"
       description = "Activity log endpoints under enduser/connections."
       label       = "${lower(var.environment)}-access-management"

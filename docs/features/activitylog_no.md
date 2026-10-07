@@ -43,7 +43,7 @@ FFB-verktøyet har en komplett side mot alle miljøer — party-anker med retnin
 
 ## Sluttbruker-API (v2-områder)
 
-Sluttbrukerflaten er delt i tre **områder**, hvert montert under sin domenerot i v2-API-et (`Controllers/V2`, `accessmanagement/api/v{version}/enduser/…`). Området er autorisasjonsgrensen og avgjør hvilken del av loggen som finnes der — det er ingen typefilter på tvers av områder og ingen rollematrise på disse rutene:
+Sluttbrukerflaten er delt i tre **områder**, hvert montert under sin domenerot i v2-API-et (`Controllers/V2`, `accessmanagement/api/v{version}/enduser/…`). Området er autorisasjonsgrensen og avgjør hvilken del av loggen som finnes der — det er ingen typefilter på tvers av områder:
 
 | Områderot | Hendelser | Feature-flagg | Autorisasjon |
 |---|---|---|---|
@@ -64,7 +64,7 @@ Hvert område eksponerer de samme fire rutene:
 
 Returnerer områdets logghendelser for partyen, sortert nyeste først (`when` synkende, id som tiebreaker).
 
-**Forankring:** `party` er **påkrevd**, og spørringen må forankres på samme måte som connections-endepunktene: `from=party` (gitt) eller `to=party` (mottatt); den andre av de to forblir et motpartsfilter. De betingede retningsscopene og personregelen for tilgangsstyrere nøkler på nøyaktig disse rå parameterne — det er det som lar områdene gjenbruke nabopoliciene uendret. `direction` brukes ikke på disse endepunktene (den lever videre på BFF-flaten), og `via`-forankring kommer tilbake med klientadministrasjonsbehovet.
+**Forankring:** `party` er **påkrevd**, og spørringen må forankres på samme måte som connections-endepunktene: `from=party` (gitt) eller `to=party` (mottatt); den andre av de to forblir et motpartsfilter. De betingede retningsscopene og personregelen for tilgangsstyrere nøkler på nøyaktig disse rå parameterne — det er det som lar områdene gjenbruke nabopoliciene uendret. Det finnes ingen `direction`-parameter — from/to-ankeret er retningen — og `via`-forankring kommer tilbake med klientadministrasjonsbehovet.
 
 **Filtre** (alle kan gjentas; verdier innenfor én parameter OR-es, ulike parametere AND-es):
 
@@ -120,16 +120,8 @@ GET /accessmanagement/api/v2/enduser/maskinporten/activitylog/types
 
 ### Tverrgående oppførsel
 
-- **Maskinportenschema-hendelser finnes bare i maskinporten-området, og de to utsnittene blandes aldri:** Supplier-rollen brukes utelukkende for maskinportenschema-delegeringer, og selve servicen har to disjunkte flater — den vanlige ekskluderer alltid rollen (connections, request og den interne BFF-flaten), maskinporten-flaten serverer kun den. Det finnes ingen opt-in; ingen kallerkombinasjon kan gi et blandet resultat.
+- **Maskinportenschema-hendelser finnes bare i maskinporten-området, og de to utsnittene blandes aldri:** Supplier-rollen brukes utelukkende for maskinportenschema-delegeringer, og selve servicen har to disjunkte flater — den vanlige ekskluderer alltid rollen (connections og request), maskinporten-flaten serverer kun den. Det finnes ingen opt-in; ingen kallerkombinasjon kan gi et blandet resultat.
 - **Validering:** tom `party`, manglende from/to-forankring, oppgitt `direction`, `typeId`-verdier utenfor området, og filterfelt området ikke tilbyr gir alle `400` med problem details. Merk at scope-policyen på connections-området nøkler på de samme forankringsparameterne, så en uforankret spørring avvises der med `403` før valideringen kjører — samme karakteristikk som connections-endepunktene selv har.
-- **Feature-flagg:** ett per område — `AccessManagement.Enduser.{Connections|Request|Maskinporten}ActivityLogApi` — alle deklarert i appens egen terraform sammen med de andre AccessManagement-flaggene.
+- **Feature-flagg:** ett per område — `AccessManagement.Enduser.{Connections|Request|Maskinporten}ActivityLogApi` — alle deklarert i appens egen terraform sammen med de andre AccessManagement-flaggene (opprettes avslått; togles per miljø i App Configuration). Portal-frontenden bruker de samme områdeendepunktene; det finnes ingen egen intern flate.
 - **Sorteringsgaranti:** `(when desc, id desc)` — stabil og duplikatfri på tvers av sider under paging.
 - **Ingen joins ved lesing:** hvert navn i responsen er et denormalisert snapshot fra selve loggtabellen; loggen serveres fra én range-partisjonert tabell.
-
-## BFF-flaten (tidlig tilgang)
-
-Mens sluttbrukerområdene er avslått, får portal-frontenden hele loggen gjennom BFF-flaten i det interne API-et: `accessmanagement/api/v1/bff/activitylog`, `…/filters/{field}` og `…/types`, bak sitt eget feature-flagg `AccessManagement.Bff.ActivityLogApi`. Alle aktivitetslogg-flaggene er deklarert i appens egen terraform, sammen med de andre AccessManagement-flaggene (opprettes avslått; togles per miljø i App Configuration). Endepunktene tar samme spørreflate (en delt parametermodell) og returnerer samme former som sluttbrukerområdene, med disse forskjellene:
-
-- **Kun portal:** endepunktene krever portal-scope pluss tilgangsstyring-les for partyen.
-- **Rollematrise:** hva kalleren får se avgjøres av deres effektive roller og tilgangspakker for partyen (foreløpig løst opp gjennom connection-spørringen; målet er å hente dette fra tokenet): tilgangsstyrere ser assignment-delen inkludert forespørsler, klientadministratorer delegation-delen, og hovedadministratorer alt. Hver spørring — både hendelser og filterverdier — begrenses til de synlige typene. Ber man bare om typer utenfor sitt sett, returneres en tom side; en kaller uten matriserolle får 403. Matrisen er en kodetabell (`ActivityLogRoleMatrix`) ment å utvides etter hvert som loggen får flere datapunkter.
-- **Maskinportenschema-hendelser** serveres aldri her; det utsnittet bor i maskinporten-området på sluttbrukerflaten.

@@ -17,13 +17,6 @@ public class ActivityLogQueryParameters
     public Guid Party { get; set; }
 
     /// <summary>
-    /// How the party anchors the entries: From (given), To (received) or Via (facilitator).
-    /// Without it any involvement matches. Used by the internal (BFF) surface only; the
-    /// enduser area endpoints anchor with from/to equal to party instead and reject it.
-    /// </summary>
-    public ActivityLogDirection? Direction { get; set; }
-
-    /// <summary>
     /// Activity type catalog ids, each expanding to its whole type/subtype/trigger/status
     /// combination; combinations are OR'ed.
     /// </summary>
