@@ -22,19 +22,17 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers.Base;
 /// </summary>
 /// <param name="Types">The main record types the area serves.</param>
 /// <param name="Subtypes">The subtypes the area accepts in typeId input and lists under
-/// types, or null for all. Query rows are already scoped by <paramref name="Types"/> and
-/// <paramref name="ForcedRoleIds"/>.</param>
-/// <param name="ForcedRoleIds">Role ids forced onto every query (the Maskinporten area pins
-/// the Supplier role), or null to let the caller's role filter apply.</param>
-/// <param name="IncludeMaskinportenSchema">Whether the area serves the Maskinporten schema
-/// events every other area hides.</param>
+/// types, or null for all. Query rows are already scoped by <paramref name="Types"/> and the
+/// service slice.</param>
+/// <param name="MaskinportenSchema">Whether the area serves the Maskinporten schema slice of
+/// the log (only Supplier-role events, through the service's maskinporten surface) instead of
+/// the regular slice that always excludes them. The two slices can never mix.</param>
 /// <param name="Fields">The filter fields the area offers; filter lookups on other fields
 /// are rejected.</param>
 public sealed record ActivityLogArea(
     IReadOnlyList<ActivityLogType> Types,
     IReadOnlyList<ActivityLogSubtype?> Subtypes,
-    IReadOnlyList<Guid> ForcedRoleIds,
-    bool IncludeMaskinportenSchema,
+    bool MaskinportenSchema,
     IReadOnlyList<ActivityLogFilterField> Fields)
 {
     /// <summary>
@@ -57,8 +55,7 @@ public static class ActivityLogAreas
     public static readonly ActivityLogArea Connections = new(
         Types: [ActivityLogType.Assignment, ActivityLogType.Delegation],
         Subtypes: null,
-        ForcedRoleIds: null,
-        IncludeMaskinportenSchema: false,
+        MaskinportenSchema: false,
         Fields:
         [
             ActivityLogFilterField.From,
@@ -78,8 +75,7 @@ public static class ActivityLogAreas
     public static readonly ActivityLogArea Request = new(
         Types: [ActivityLogType.Request],
         Subtypes: null,
-        ForcedRoleIds: null,
-        IncludeMaskinportenSchema: false,
+        MaskinportenSchema: false,
         Fields:
         [
             ActivityLogFilterField.From,
@@ -98,8 +94,7 @@ public static class ActivityLogAreas
     public static readonly ActivityLogArea Maskinporten = new(
         Types: [ActivityLogType.Assignment],
         Subtypes: [null, ActivityLogSubtype.Resource],
-        ForcedRoleIds: [RoleConstants.Supplier.Id],
-        IncludeMaskinportenSchema: true,
+        MaskinportenSchema: true,
         Fields:
         [
             ActivityLogFilterField.From,
@@ -144,14 +139,9 @@ public abstract class ActivityLogAreaControllerBase(IActivityLogService activity
             return error;
         }
 
-        var result = await activityLogService.GetActivityLog(
-            query.Party,
-            direction,
-            filter,
-            size,
-            page,
-            includeMps: area.IncludeMaskinportenSchema,
-            cancellationToken: cancellationToken);
+        var result = area.MaskinportenSchema
+            ? await activityLogService.GetMaskinportenSchemaActivityLog(query.Party, direction, filter, size, page, cancellationToken)
+            : await activityLogService.GetActivityLog(query.Party, direction, filter, size, page, cancellationToken);
 
         return Ok(PaginatedResult.Create(result.Items, result.HasMore ? NextLink(size, page + 1) : null));
     }
@@ -182,18 +172,10 @@ public abstract class ActivityLogAreaControllerBase(IActivityLogService activity
             return error;
         }
 
-        var result = await activityLogService.GetActivityLogFilterValues(
-            query.Party,
-            direction,
-            field,
-            filter,
-            query.Term,
-            query.OrderBy,
-            size,
-            page,
-            includeMps: area.IncludeMaskinportenSchema,
-            languageCode: this.GetLanguageCode(),
-            cancellationToken: cancellationToken);
+        var languageCode = this.GetLanguageCode();
+        var result = area.MaskinportenSchema
+            ? await activityLogService.GetMaskinportenSchemaActivityLogFilterValues(query.Party, direction, field, filter, query.Term, query.OrderBy, size, page, languageCode, cancellationToken)
+            : await activityLogService.GetActivityLogFilterValues(query.Party, direction, field, filter, query.Term, query.OrderBy, size, page, languageCode, cancellationToken);
 
         return Ok(PaginatedResult.Create(result.Items, result.HasMore ? NextLink(size, page + 1) : null));
     }
@@ -295,7 +277,7 @@ public abstract class ActivityLogAreaControllerBase(IActivityLogService activity
             return false;
         }
 
-        filter = filter with { Types = types, RoleIds = area.ForcedRoleIds ?? filter.RoleIds };
+        filter = filter with { Types = types };
 
         size = Math.Clamp(query.PageSize ?? DefaultPageSize, 1, MaxPageSize);
         page = Math.Clamp(query.PageNo ?? 0, 0, (int.MaxValue / size) - 1);

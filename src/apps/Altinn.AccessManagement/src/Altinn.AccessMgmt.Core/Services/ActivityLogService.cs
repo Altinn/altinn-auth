@@ -10,9 +10,25 @@ namespace Altinn.AccessMgmt.Core.Services;
 public class ActivityLogService(ActivityLogQuery activityLogQuery) : IActivityLogService
 {
     /// <inheritdoc />
-    public async Task<ActivityLogPage> GetActivityLog(Guid party, ActivityLogDirection? direction, ActivityLogQueryFilter filter, int pageSize, int pageNumber, bool includeMps = false, CancellationToken cancellationToken = default)
+    public Task<ActivityLogPage> GetActivityLog(Guid party, ActivityLogDirection? direction, ActivityLogQueryFilter filter, int pageSize, int pageNumber, CancellationToken cancellationToken = default)
+        => GetCore(party, direction, filter, maskinportenSchema: false, pageSize, pageNumber, cancellationToken);
+
+    /// <inheritdoc />
+    public Task<ActivityLogPage> GetMaskinportenSchemaActivityLog(Guid party, ActivityLogDirection? direction, ActivityLogQueryFilter filter, int pageSize, int pageNumber, CancellationToken cancellationToken = default)
+        => GetCore(party, direction, filter, maskinportenSchema: true, pageSize, pageNumber, cancellationToken);
+
+    /// <inheritdoc />
+    public Task<ActivityLogFilterValuePage> GetActivityLogFilterValues(Guid party, ActivityLogDirection? direction, ActivityLogFilterField field, ActivityLogQueryFilter filter, string term, ActivityLogFilterValueOrder orderBy, int pageSize, int pageNumber, string languageCode = null, CancellationToken cancellationToken = default)
+        => GetFilterValuesCore(party, direction, field, filter, maskinportenSchema: false, term, orderBy, pageSize, pageNumber, languageCode, cancellationToken);
+
+    /// <inheritdoc />
+    public Task<ActivityLogFilterValuePage> GetMaskinportenSchemaActivityLogFilterValues(Guid party, ActivityLogDirection? direction, ActivityLogFilterField field, ActivityLogQueryFilter filter, string term, ActivityLogFilterValueOrder orderBy, int pageSize, int pageNumber, string languageCode = null, CancellationToken cancellationToken = default)
+        => GetFilterValuesCore(party, direction, field, filter, maskinportenSchema: true, term, orderBy, pageSize, pageNumber, languageCode, cancellationToken);
+
+    private async Task<ActivityLogPage> GetCore(Guid party, ActivityLogDirection? direction, ActivityLogQueryFilter filter, bool maskinportenSchema, int pageSize, int pageNumber, CancellationToken cancellationToken)
     {
-        var anchoredFilter = WithoutMaskinportenSchema(Anchor(party, direction, filter ?? new ActivityLogQueryFilter()), includeMps);
+        var sliced = Slice(filter ?? new ActivityLogQueryFilter(), maskinportenSchema);
+        var anchoredFilter = Anchor(party, direction, sliced);
 
         var page = await activityLogQuery.GetAsync(anchoredFilter, pageSize, pageNumber, cancellationToken);
 
@@ -20,11 +36,11 @@ public class ActivityLogService(ActivityLogQuery activityLogQuery) : IActivityLo
         return new ActivityLogPage(items, page.HasMore);
     }
 
-    /// <inheritdoc />
-    public async Task<ActivityLogFilterValuePage> GetActivityLogFilterValues(Guid party, ActivityLogDirection? direction, ActivityLogFilterField field, ActivityLogQueryFilter filter, string term, ActivityLogFilterValueOrder orderBy, int pageSize, int pageNumber, bool includeMps = false, string languageCode = null, CancellationToken cancellationToken = default)
+    private async Task<ActivityLogFilterValuePage> GetFilterValuesCore(Guid party, ActivityLogDirection? direction, ActivityLogFilterField field, ActivityLogQueryFilter filter, bool maskinportenSchema, string term, ActivityLogFilterValueOrder orderBy, int pageSize, int pageNumber, string languageCode, CancellationToken cancellationToken)
     {
+        // Slice after WithoutOwnField so a role-field lookup cannot escape the slice.
         var baseFilter = WithoutOwnField(field, filter ?? new ActivityLogQueryFilter());
-        var anchoredFilter = WithoutMaskinportenSchema(Anchor(party, direction, baseFilter), includeMps);
+        var anchoredFilter = Anchor(party, direction, Slice(baseFilter, maskinportenSchema));
 
         var page = await activityLogQuery.GetFilterValuesAsync(field, anchoredFilter, term, orderBy, pageSize, pageNumber, languageCode, cancellationToken);
 
@@ -32,14 +48,16 @@ public class ActivityLogService(ActivityLogQuery activityLogQuery) : IActivityLo
         return new ActivityLogFilterValuePage(items, page.HasMore);
     }
 
-    // The Supplier role is used exclusively for Maskinporten schema delegations, so excluding
-    // it hides those events entirely — the same rule connection queries apply. The exclusion
-    // survives WithoutOwnField, so the Supplier role never shows up as a role filter value.
-    private static ActivityLogQueryFilter WithoutMaskinportenSchema(ActivityLogQueryFilter filter, bool includeMps)
+    // The Supplier role is used exclusively for Maskinporten schema delegations, so the two
+    // slices are disjoint by construction: the regular surface always excludes the role (the
+    // same rule connection queries apply), the maskinporten surface serves only it — no caller
+    // combination can mix them. The exclusion survives WithoutOwnField, so the Supplier role
+    // never shows up as a role filter value either.
+    private static ActivityLogQueryFilter Slice(ActivityLogQueryFilter filter, bool maskinportenSchema)
     {
-        if (includeMps)
+        if (maskinportenSchema)
         {
-            return filter;
+            return filter with { RoleIds = [RoleConstants.Supplier.Id], ExcludeRoleIds = null };
         }
 
         IReadOnlyCollection<Guid> excluded = filter.ExcludeRoleIds is { Count: > 0 }

@@ -101,7 +101,7 @@ Returnerer de distinkte `(id, name)`-parene som forekommer i partyens utsnitt av
 - **`orderBy`:** `Name` (default, alfabetisk — stabil på tvers av sider) eller `When` (nyeste forekomst per verdi først — nye hendelser kan forskyve sider).
 - **Duplikater er tilsiktet:** navn er snapshots fra hendelsestidspunktet, så samme id kan gjenta seg med ulike navn (f.eks. etter navnebytte); alle par returneres slik at hver historisk etikett er søkbar. For `source` og `activitytype` kommer navnene fra de respektive katalogene i stedet for snapshots.
 - **Språk:** `activitytype`-verdier oversettes fra katalogen (bokmål, nynorsk, engelsk via `Accept-Language`) før term-matching og sortering, slik at termen matcher navnene brukeren faktisk ser. Snapshot-navn er data og oversettes aldri.
-- **Supplier-rollen dukker aldri opp som verdi:** maskinportenschema-hendelser skjules som standard (se tverrgående oppførsel), så rollen deres tilbys heller ikke.
+- **Supplier-rollen dukker aldri opp som verdi:** maskinportenschema-hendelser når aldri de vanlige flatene (se tverrgående oppførsel), så rollen deres tilbys heller ikke.
 - **Paging og konvolutt:** identisk med hovedspørringen (`pageSize`/`pageNo`, `links.next`).
 
 ```
@@ -120,7 +120,7 @@ GET /accessmanagement/api/v2/enduser/maskinporten/activitylog/types
 
 ### Tverrgående oppførsel
 
-- **Maskinportenschema-hendelser finnes bare i maskinporten-området:** Supplier-rollen brukes utelukkende for maskinportenschema-delegeringer; connections- og request-områdene (og den interne flaten som standard) ekskluderer den, og maskinporten-området låser den.
+- **Maskinportenschema-hendelser finnes bare i maskinporten-området, og de to utsnittene blandes aldri:** Supplier-rollen brukes utelukkende for maskinportenschema-delegeringer, og selve servicen har to disjunkte flater — den vanlige ekskluderer alltid rollen (connections, request og den interne BFF-flaten), maskinporten-flaten serverer kun den. Det finnes ingen opt-in; ingen kallerkombinasjon kan gi et blandet resultat.
 - **Validering:** tom `party`, manglende from/to-forankring, oppgitt `direction`, `typeId`-verdier utenfor området, og filterfelt området ikke tilbyr gir alle `400` med problem details. Merk at scope-policyen på connections-området nøkler på de samme forankringsparameterne, så en uforankret spørring avvises der med `403` før valideringen kjører — samme karakteristikk som connections-endepunktene selv har.
 - **Feature-flagg:** ett per område — `AccessManagement.Enduser.{Connections|Request|Maskinporten}ActivityLogApi` — alle deklarert i appens egen terraform sammen med de andre AccessManagement-flaggene.
 - **Sorteringsgaranti:** `(when desc, id desc)` — stabil og duplikatfri på tvers av sider under paging.
@@ -132,4 +132,4 @@ Mens sluttbrukerområdene er avslått, får portal-frontenden hele loggen gjenno
 
 - **Kun portal:** endepunktene krever portal-scope pluss tilgangsstyring-les for partyen.
 - **Rollematrise:** hva kalleren får se avgjøres av deres effektive roller og tilgangspakker for partyen (foreløpig løst opp gjennom connection-spørringen; målet er å hente dette fra tokenet): tilgangsstyrere ser assignment-delen inkludert forespørsler, klientadministratorer delegation-delen, og hovedadministratorer alt. Hver spørring — både hendelser og filterverdier — begrenses til de synlige typene. Ber man bare om typer utenfor sitt sett, returneres en tom side; en kaller uten matriserolle får 403. Matrisen er en kodetabell (`ActivityLogRoleMatrix`) ment å utvides etter hvert som loggen får flere datapunkter.
-- **Maskinportenschema-hendelser** forblir skjult med mindre requesten setter `includeMps=true` *og* kalleren har tilgangspakken Maskinporten administrator.
+- **Maskinportenschema-hendelser** serveres aldri her; det utsnittet bor i maskinporten-området på sluttbrukerflaten.

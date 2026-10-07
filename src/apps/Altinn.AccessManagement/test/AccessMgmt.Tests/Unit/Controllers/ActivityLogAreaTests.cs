@@ -60,9 +60,12 @@ public class ActivityLogAreaTests
         Assert.DoesNotContain(ActivityLogFilterField.Via, ActivityLogAreas.Request.Fields);
         Assert.DoesNotContain(ActivityLogFilterField.Role, ActivityLogAreas.Request.Fields);
 
-        // The maskinporten area pins the Supplier role, so role is not a filter field there.
+        // The maskinporten area is the Supplier-role slice, so role is not a filter field
+        // there — and it is the only area on the maskinporten service surface.
         Assert.DoesNotContain(ActivityLogFilterField.Role, ActivityLogAreas.Maskinporten.Fields);
-        Assert.Equal([RoleConstants.Supplier.Id], ActivityLogAreas.Maskinporten.ForcedRoleIds);
+        Assert.True(ActivityLogAreas.Maskinporten.MaskinportenSchema);
+        Assert.False(ActivityLogAreas.Connections.MaskinportenSchema);
+        Assert.False(ActivityLogAreas.Request.MaskinportenSchema);
 
         foreach (var area in new[] { ActivityLogAreas.Connections, ActivityLogAreas.Request, ActivityLogAreas.Maskinporten })
         {

@@ -35,16 +35,6 @@ public class ActivityLogRoleMatrixTests
     }
 
     [Fact]
-    public void MaySeeMaskinportenSchema_RequiresTheMaskinportenAdministratorPackage()
-    {
-        Assert.True(ActivityLogRoleMatrix.MaySeeMaskinportenSchema([PackageConstants.MaskinportenAdministrator.Id]));
-        Assert.True(ActivityLogRoleMatrix.MaySeeMaskinportenSchema([RoleConstants.AccessManager.Id, PackageConstants.MaskinportenAdministrator.Id]));
-        Assert.False(ActivityLogRoleMatrix.MaySeeMaskinportenSchema([RoleConstants.MainAdministrator.Id]));
-        Assert.False(ActivityLogRoleMatrix.MaySeeMaskinportenSchema([]));
-        Assert.False(ActivityLogRoleMatrix.MaySeeMaskinportenSchema(null));
-    }
-
-    [Fact]
     public void TryConstrain_LimitsTypesToTheAllowedSet()
     {
         var allowed = ActivityLogRoleMatrix.AllowedTypes([RoleConstants.AccessManager.Id]);

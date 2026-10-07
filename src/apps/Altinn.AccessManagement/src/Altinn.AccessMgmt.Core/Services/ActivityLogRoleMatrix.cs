@@ -29,14 +29,6 @@ public static class ActivityLogRoleMatrix
         [RoleConstants.MainAdministratorA2.Id] = AllTypes,
     };
 
-    // Maskinporten schema events are hidden by default everywhere; these unlock them when the
-    // caller asks for them. Maskinporten administration is granted as an access package, not a
-    // role, so the id here is a package id — the matrix keys are simply "granted thing" ids.
-    private static readonly IReadOnlySet<Guid> MaskinportenSchemaViewers = new HashSet<Guid>
-    {
-        PackageConstants.MaskinportenAdministrator.Id,
-    };
-
     /// <summary>
     /// Returns the union of log types the given effective roles and packages may see. Ids
     /// outside the matrix contribute nothing; an empty result means the caller may not see
@@ -59,12 +51,6 @@ public static class ActivityLogRoleMatrix
 
         return allowed;
     }
-
-    /// <summary>
-    /// Whether the given effective roles and packages unlock Maskinporten schema events.
-    /// </summary>
-    public static bool MaySeeMaskinportenSchema(IEnumerable<Guid> roleOrPackageIds)
-        => roleOrPackageIds?.Any(MaskinportenSchemaViewers.Contains) == true;
 
     /// <summary>
     /// Constrains a filter to the allowed types: the type list becomes the allowed set (or its

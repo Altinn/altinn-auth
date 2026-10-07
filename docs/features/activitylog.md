@@ -101,7 +101,7 @@ Returns the distinct `(id, name)` pairs occurring in the party's slice of the ar
 - **`orderBy`:** `Name` (default, alphabetical — stable across pages) or `When` (newest occurrence per value first — new events can shift pages).
 - **Duplicates are intentional:** names are point-in-time snapshots, so one id can recur with different names (e.g. after a rename); all pairs are returned so every historical label is findable. For `source` and `activitytype` the names come from the respective catalogs instead of snapshots.
 - **Language:** `activitytype` values are translated from the catalog (bokmål, nynorsk, english via `Accept-Language`) before term matching and ordering, so the term matches the names the user actually sees. Snapshot names are data and are never translated.
-- **The Supplier role never appears as a value:** Maskinporten schema events are hidden by default (see cross-cutting behavior), so their role is not offered either.
+- **The Supplier role never appears as a value:** Maskinporten schema events never reach the regular surfaces (see cross-cutting behavior), so their role is not offered either.
 - **Paging and envelope:** identical to the main query (`pageSize`/`pageNo`, `links.next`).
 
 ```
@@ -120,7 +120,7 @@ GET /accessmanagement/api/v2/enduser/maskinporten/activitylog/types
 
 ### Cross-cutting behavior
 
-- **Maskinporten schema events live only in the maskinporten area:** the Supplier role is used exclusively for Maskinporten schema delegations; the connections and request areas (and the internal surface by default) exclude it, and the maskinporten area pins it.
+- **Maskinporten schema events live only in the maskinporten area, and the two slices never mix:** the Supplier role is used exclusively for Maskinporten schema delegations, and the service itself has two disjoint surfaces — the regular one always excludes the role (connections, request and the internal BFF surface), the maskinporten one serves only it. There is no opt-in flag; no caller combination can produce a mixed result.
 - **Validation:** empty `party`, a missing from/to anchor, a supplied `direction`, `typeId` values outside the area, and filter fields the area does not offer all return `400` with problem details. Note that on the connections area the scope policy keys on the same anchor parameters, so an unanchored query is rejected there with `403` before validation runs — the same characteristic the connections endpoints have.
 - **Feature flags:** one per area — `AccessManagement.Enduser.{Connections|Request|Maskinporten}ActivityLogApi` — all declared in the app's own terraform next to the other AccessManagement flags.
 - **Ordering guarantee:** `(when desc, id desc)` — stable and duplicate-free across pages while paging.
@@ -132,4 +132,4 @@ While the enduser areas are gated off, the portal frontend gets the complete log
 
 - **Portal only:** the endpoints require the portal scope plus access-management read for the party.
 - **Role matrix:** what the caller may see is decided by their effective roles and access packages for the party (currently resolved through the connection query; the goal is resolving this from the token): access managers see the assignment part including requests, client administrators the delegation part, and main administrators everything. Every query — entries and filter values alike — is constrained to the visible types. Asking only for types outside the caller's set returns an empty page; a caller with no matrix role gets 403. The matrix is a code table (`ActivityLogRoleMatrix`) meant to be extended as the log gains data points.
-- **Maskinporten schema events** stay hidden unless the request sets `includeMps=true` *and* the caller holds the Maskinporten administrator access package.
+- **Maskinporten schema events** are never served here; that slice lives in the enduser maskinporten area.

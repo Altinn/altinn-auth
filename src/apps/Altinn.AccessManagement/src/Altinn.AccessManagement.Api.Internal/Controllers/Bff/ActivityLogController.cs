@@ -36,8 +36,8 @@ public class ActivityLogController(IActivityLogService activityLogService, IConn
     /// <summary>
     /// Get activity log entries involving the specified party, newest first, limited to the
     /// log types the caller's roles for the party may see. Same query surface as the enduser
-    /// endpoint. Maskinporten schema events are included only when includeMps is set and the
-    /// caller holds the Maskinporten administrator package.
+    /// endpoint. Maskinporten schema events are never served here — that slice lives in the
+    /// enduser maskinporten area.
     /// </summary>
     [HttpGet]
     [Authorize(Policy = AuthzConstants.SCOPE_PORTAL_ENDUSER)]
@@ -90,8 +90,7 @@ public class ActivityLogController(IActivityLogService activityLogService, IConn
             constrained,
             size,
             page,
-            includeMps: query.IncludeMps && ActivityLogRoleMatrix.MaySeeMaskinportenSchema(granted),
-            cancellationToken: cancellationToken);
+            cancellationToken);
 
         return Ok(PaginatedResult.Create(result.Items, result.HasMore ? NextLink(size, page + 1) : null));
     }
@@ -156,7 +155,6 @@ public class ActivityLogController(IActivityLogService activityLogService, IConn
             query.OrderBy,
             size,
             page,
-            includeMps: query.IncludeMps && ActivityLogRoleMatrix.MaySeeMaskinportenSchema(granted),
             languageCode: this.GetLanguageCode(),
             cancellationToken: cancellationToken);
 

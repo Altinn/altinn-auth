@@ -489,7 +489,7 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
     }
 
     [Fact]
-    public async Task Service_HidesMaskinportenSchemaEventsUnlessIncluded()
+    public async Task Service_NeverMixesMaskinportenSchemaEvents()
     {
         var (from, to, rightholderAssignment) = await SeedAssignment();
         var supplierAssignment = new Assignment { Id = Guid.CreateVersion7(), FromId = from.Id, ToId = to.Id, RoleId = RoleConstants.Supplier };
@@ -498,9 +498,10 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
 
         var service = new Altinn.AccessMgmt.Core.Services.ActivityLogService(_query);
 
-        // Default: the Supplier-role (Maskinporten schema) event is hidden from entries and filter values.
+        // The regular surface always hides the Supplier-role (Maskinporten schema) events,
+        // from entries and filter values alike.
         var entries = await service.GetActivityLog(
-            from.Id, direction: null, new ActivityLogQueryFilter(), 100, 0, cancellationToken: TestContext.Current.CancellationToken);
+            from.Id, direction: null, new ActivityLogQueryFilter(), 100, 0, TestContext.Current.CancellationToken);
         Assert.DoesNotContain(entries.Items, e => e.ItemId == supplierAssignment.Id);
         Assert.Contains(entries.Items, e => e.ItemId == rightholderAssignment.Id);
 
@@ -509,10 +510,17 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
             term: null, ActivityLogFilterValueOrder.Name, 100, 0, cancellationToken: TestContext.Current.CancellationToken);
         Assert.DoesNotContain(roles.Items, r => r.Id == RoleConstants.Supplier.Id);
 
-        // includeMps: true returns them again.
-        var included = await service.GetActivityLog(
-            from.Id, direction: null, new ActivityLogQueryFilter(), 100, 0, includeMps: true, TestContext.Current.CancellationToken);
-        Assert.Contains(included.Items, e => e.ItemId == supplierAssignment.Id);
+        // The maskinporten surface serves only that slice — the two can never mix.
+        var mps = await service.GetMaskinportenSchemaActivityLog(
+            from.Id, direction: null, new ActivityLogQueryFilter(), 100, 0, TestContext.Current.CancellationToken);
+        Assert.Contains(mps.Items, e => e.ItemId == supplierAssignment.Id);
+        Assert.DoesNotContain(mps.Items, e => e.ItemId == rightholderAssignment.Id);
+
+        // Even a role-field lookup stays inside the slice.
+        var mpsRoles = await service.GetMaskinportenSchemaActivityLogFilterValues(
+            from.Id, direction: null, ActivityLogFilterField.Role, new ActivityLogQueryFilter(),
+            term: null, ActivityLogFilterValueOrder.Name, 100, 0, cancellationToken: TestContext.Current.CancellationToken);
+        Assert.All(mpsRoles.Items, r => Assert.Equal(RoleConstants.Supplier.Id, r.Id));
 
         // The raw query has no default exclusion, and the exclusion alone must not count as
         // a narrowing filter.
