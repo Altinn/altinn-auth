@@ -7,9 +7,11 @@ using Altinn.AccessManagement.TestUtils;
 using Altinn.AccessManagement.TestUtils.Data;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.Core;
+using Altinn.AccessMgmt.Core.Notifications;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
+using Microsoft.EntityFrameworkCore;
 
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers;
 
@@ -98,6 +100,16 @@ public class SystemUserRequestControllerTest
             var obj = await response.Content.ReadFromJsonAsync<RequestDto>(TestContext.Current.CancellationToken);
             Assert.Equal(RequestStatus.Pending, obj.Status);
             Assert.Equal(TestEntities.SystemUserStandard.Id, obj.From.Id);
+
+            // The receiving organization is notified about the pending request.
+            var expectedRefId = $"{RequestPendingNotification.Handler}_{TestEntities.SystemUserStandard.Id}_{TestData.BakerJohnsen.Id}";
+            await Fixture.QueryDb(async db =>
+            {
+                var outbox = await db.OutboxMessages
+                    .Where(m => m.RefId == expectedRefId)
+                    .FirstOrDefaultAsync(TestContext.Current.CancellationToken);
+                Assert.NotNull(outbox);
+            });
         }
 
         [Fact]

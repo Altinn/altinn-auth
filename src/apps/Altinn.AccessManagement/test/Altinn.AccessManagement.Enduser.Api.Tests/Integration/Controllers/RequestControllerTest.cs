@@ -8,10 +8,12 @@ using Altinn.AccessManagement.TestUtils;
 using Altinn.AccessManagement.TestUtils.Data;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.Core;
+using Altinn.AccessMgmt.Core.Notifications;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers;
@@ -845,6 +847,17 @@ public class RequestControllerTest
             Assert.NotNull(result);
             Assert.Equal(RequestStatus.Approved, result.Status);
             Assert.Equal(TestEntities.SystemUserStandard.Id, result.From.Id);
+
+            // System users cannot receive notifications, so approval must not queue any for the system user.
+            var systemUserId = TestEntities.SystemUserStandard.Id.ToString();
+            await Fixture.QueryDb(async db =>
+            {
+                var outbox = await db.OutboxMessages
+                    .Where(m => m.Handler == AccessAddedNotification.Handler || m.Handler == RequestReviewedNotification.Handler)
+                    .Where(m => m.RefId.Contains(systemUserId))
+                    .ToListAsync(TestContext.Current.CancellationToken);
+                Assert.Empty(outbox);
+            });
         }
     }
 

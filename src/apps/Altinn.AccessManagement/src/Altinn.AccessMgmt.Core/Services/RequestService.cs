@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessMgmt.Core.Appsettings;
 using Altinn.AccessMgmt.Core.Notifications;
@@ -526,6 +526,15 @@ public class RequestService(
         );
     }
 
+    /// <summary>
+    /// System users cannot receive notifications, so notifications addressed to them are suppressed.
+    /// </summary>
+    private Task<bool> IsSystemUser(Guid entityId, CancellationToken ct)
+    {
+        var systemUserTypeId = EntityTypeConstants.SystemUser.Id;
+        return db.Entities.AsNoTracking().AnyAsync(e => e.Id == entityId && e.TypeId == systemUserTypeId, ct);
+    }
+
     private async Task<Result<RequestDto>> UpdatePackageRequestStatus(Guid id, RequestStatus status, CancellationToken ct = default)
     {
         ValidationErrorBuilder errorBuilder = default;
@@ -554,12 +563,16 @@ public class RequestService(
             );
         }
 
-        if (status == RequestStatus.Approved || status == RequestStatus.Rejected)
+        var notifyRequester = !await IsSystemUser(request.Assignment.FromId, ct);
+        if (notifyRequester && (status == RequestStatus.Approved || status == RequestStatus.Rejected))
         {
             await UpsertOutboxMessage(status, request, ct);
         }
 
-        if (await db.SaveChangesWithOutboxRetry(() => UpsertOutboxMessage(status, request, ct), ct) == 0)
+        var saved = notifyRequester
+            ? await db.SaveChangesWithOutboxRetry(() => UpsertOutboxMessage(status, request, ct), ct)
+            : await db.SaveChangesAsync(ct);
+        if (saved == 0)
         {
             errorBuilder.Add(ValidationErrors.DbNoRowsAffected, nameof(db.RequestAssignmentPackages));
         }
@@ -614,12 +627,16 @@ public class RequestService(
             );
         }
 
-        if (status == RequestStatus.Approved || status == RequestStatus.Rejected)
+        var notifyRequester = !await IsSystemUser(request.Assignment.FromId, ct);
+        if (notifyRequester && (status == RequestStatus.Approved || status == RequestStatus.Rejected))
         {
             await UpsertOutboxMessage(status, request, ct);
         }
 
-        if (await db.SaveChangesWithOutboxRetry(() => UpsertOutboxMessage(status, request, ct), ct) == 0)
+        var saved = notifyRequester
+            ? await db.SaveChangesWithOutboxRetry(() => UpsertOutboxMessage(status, request, ct), ct)
+            : await db.SaveChangesAsync(ct);
+        if (saved == 0)
         {
             errorBuilder.Add(ValidationErrors.DbNoRowsAffected, nameof(db.RequestAssignmentResources));
         }
