@@ -3,13 +3,16 @@ using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text.Json;
 using Altinn.AccessManagement.Core.Constants;
+using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.TestUtils;
 using Altinn.AccessManagement.TestUtils.Data;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.Core;
+using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers;
 
@@ -134,6 +137,44 @@ public class RequestControllerTest
                 TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task CreateResourceRequest_ToSystemUser_ReturnsSystemUserRequestNotAllowed()
+        {
+            using var scope = Fixture.Server.Services.CreateScope();
+            var requestService = scope.ServiceProvider.GetRequiredService<IRequestService>();
+
+            var result = await requestService.CreateResourceRequest(
+                toId: TestEntities.SystemUserStandard.Id,
+                fromId: TestData.KnutVik.Id,
+                byId: TestData.KnutVik.Id,
+                roleId: RoleConstants.Rightholder.Id,
+                resourceId: TestResourceId,
+                ct: TestContext.Current.CancellationToken);
+
+            Assert.True(result.IsProblem);
+            Assert.Equal(Problems.SystemUserRequestNotAllowed.ErrorCode, result.Problem.ErrorCode);
+            Assert.Equal(HttpStatusCode.Forbidden, result.Problem.StatusCode);
+        }
+
+        [Fact]
+        public async Task CreatePackageRequest_ToSystemUser_ReturnsSystemUserRequestNotAllowed()
+        {
+            using var scope = Fixture.Server.Services.CreateScope();
+            var requestService = scope.ServiceProvider.GetRequiredService<IRequestService>();
+
+            var result = await requestService.CreatePackageRequest(
+                toId: TestEntities.SystemUserStandard.Id,
+                fromId: TestData.KnutVik.Id,
+                byId: TestData.KnutVik.Id,
+                roleId: RoleConstants.Rightholder.Id,
+                package: PackageConstants.Agriculture.Entity.Urn,
+                ct: TestContext.Current.CancellationToken);
+
+            Assert.True(result.IsProblem);
+            Assert.Equal(Problems.SystemUserRequestNotAllowed.ErrorCode, result.Problem.ErrorCode);
+            Assert.Equal(HttpStatusCode.Forbidden, result.Problem.StatusCode);
         }
     }
 
