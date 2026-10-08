@@ -27,7 +27,7 @@ public sealed class ExportErrorsCommand(CancellationToken cancellationToken)
     : BaseCommand<ExportErrorsCommand.Settings>(cancellationToken)
 {
     /// <inheritdoc/>
-    protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
+    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         using var mongo = await ErrorDbHelper.GetClient(cancellationToken);
         var sb = ServiceBusHandle.Create(settings.ConnectionString);
