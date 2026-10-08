@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using Altinn.AccessManagement.Tests.Fixtures;
@@ -206,6 +206,28 @@ public class PolicyInformationPointRolesAndAccessPackagesTest
         Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:regnskapsforer-med-signeringsrettighet"));
         Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:regnskapsforer-lonn"));
         Assert.Contains(result.AccessPackages, p => p == AccessPackageUrn.Parse("urn:altinn:accesspackage:regnskapsforer-uten-signeringsrettighet"));
+    }
+
+    [Fact]
+    public async Task GetRolesAndAccessPackages_UndefinedAccessRestriction_Returns400BadRequest()
+    {
+        var from = TestData.GetEntity("Baker Johnsen").Id;
+        var to = TestData.GetEntity("Gunnar").Id;
+
+        var response = await _client.GetAsync($"accessmanagement/api/v1/policyinformation/roles-and-accesspackages?from={from}&to={to}&accessRestriction=99", TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task GetAccessPackages_UndefinedAccessRestriction_Returns400BadRequest()
+    {
+        var from = TestData.GetEntity("Baker Johnsen").Id;
+        var to = TestData.GetEntity("Gunnar").Id;
+
+        var response = await _client.GetAsync($"accessmanagement/api/v1/policyinformation/accesspackages?from={from}&to={to}&accessRestriction=99", TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
     }
 
     [Fact]

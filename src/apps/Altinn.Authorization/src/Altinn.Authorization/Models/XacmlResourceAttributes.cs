@@ -1,4 +1,4 @@
-namespace Altinn.Platform.Authorization.Models
+﻿namespace Altinn.Platform.Authorization.Models
 {
     using Altinn.Authorization.Enums;
 
@@ -73,7 +73,7 @@ namespace Altinn.Platform.Authorization.Models
 
         /// <summary>
         /// Gets or sets a value indicating whether the <c>urn:altinn:authorization:access-restriction</c> attribute
-        /// was present but could not be parsed into a valid <see cref="Enums.AccessRestriction"/> value.
+        /// was present but could not be parsed into a valid <see cref="AccessRestriction"/> value.
         /// </summary>
         public bool HasInvalidAccessRestriction { get; set; }
 

@@ -1,4 +1,5 @@
-﻿using Altinn.AccessManagement.Api.Internal.Extensions;
+﻿using System.ComponentModel.DataAnnotations;
+using Altinn.AccessManagement.Api.Internal.Extensions;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessMgmt.Core.Services.Contracts;
@@ -59,7 +60,7 @@ public class PolicyInformationPointController(
     [ApiExplorerSettings(IgnoreApi = true)]
     [HttpGet]
     [Route("accesspackages")]
-    public async Task<ActionResult> GetAccessPackages([FromQuery] Guid from, [FromQuery] Guid to, [FromQuery] AccessRestriction accessRestriction = AccessRestriction.None, [FromQuery] string viaParty = null, CancellationToken cancellationToken = default)
+    public async Task<ActionResult> GetAccessPackages([FromQuery] Guid from, [FromQuery] Guid to, [FromQuery][EnumDataType(typeof(AccessRestriction))] AccessRestriction accessRestriction = AccessRestriction.None, [FromQuery] string viaParty = null, CancellationToken cancellationToken = default)
     {
         List<AccessPackageUrn> packages = new();
 
@@ -84,7 +85,7 @@ public class PolicyInformationPointController(
     [ApiExplorerSettings(IgnoreApi = true)]
     [HttpGet]
     [Route("roles-and-accesspackages")]
-    public async Task<ActionResult> GetRolesAndAccessPackages([FromQuery] Guid from, [FromQuery] Guid to, [FromQuery] AccessRestriction accessRestriction = AccessRestriction.None, [FromQuery] string viaParty = null, CancellationToken cancellationToken = default)
+    public async Task<ActionResult> GetRolesAndAccessPackages([FromQuery] Guid from, [FromQuery] Guid to, [FromQuery][EnumDataType(typeof(AccessRestriction))] AccessRestriction accessRestriction = AccessRestriction.None, [FromQuery] string viaParty = null, CancellationToken cancellationToken = default)
     {
         PipResponseDto pipResponse = new();
 
@@ -114,7 +115,7 @@ public class PolicyInformationPointController(
 
     /// <summary>
     /// Gets the connections from the from-party to the to-party, limited by the access restriction:
-    /// - All: every connection (direct, keyrole, delegation and hierarchy).
+    /// - None: every connection
     /// - DirectAndHierarchy: excludes keyrole (org-to-org) inheritance and client delegations.
     /// - ClientDelegation: only client delegations received through the given via-party organization.
     /// </summary>
