@@ -1,4 +1,5 @@
 using Altinn.AccessManagement.Api.Enduser.Controllers.Base;
+using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.Authorization.Api.Contracts.AccessManagement.ActivityLog;
 
@@ -61,11 +62,15 @@ public class ActivityLogAreaTests
         Assert.DoesNotContain(ActivityLogFilterField.Role, ActivityLogAreas.Request.Fields);
 
         // The maskinporten area is the Supplier-role slice, so role is not a filter field
-        // there — and it is the only area on the maskinporten service surface.
+        // there. Each area rides its own service surface, and the area's type set IS the
+        // slice's — one source, so validation and the service clamp can never disagree.
         Assert.DoesNotContain(ActivityLogFilterField.Role, ActivityLogAreas.Maskinporten.Fields);
-        Assert.True(ActivityLogAreas.Maskinporten.MaskinportenSchema);
-        Assert.False(ActivityLogAreas.Connections.MaskinportenSchema);
-        Assert.False(ActivityLogAreas.Request.MaskinportenSchema);
+        Assert.Equal(ActivityLogSlice.Connections, ActivityLogAreas.Connections.Slice);
+        Assert.Equal(ActivityLogSlice.Request, ActivityLogAreas.Request.Slice);
+        Assert.Equal(ActivityLogSlice.Maskinporten, ActivityLogAreas.Maskinporten.Slice);
+        Assert.Same(ActivityLogSlices.Connections, ActivityLogAreas.Connections.Types);
+        Assert.Same(ActivityLogSlices.Request, ActivityLogAreas.Request.Types);
+        Assert.Same(ActivityLogSlices.Maskinporten, ActivityLogAreas.Maskinporten.Types);
 
         foreach (var area in new[] { ActivityLogAreas.Connections, ActivityLogAreas.Request, ActivityLogAreas.Maskinporten })
         {

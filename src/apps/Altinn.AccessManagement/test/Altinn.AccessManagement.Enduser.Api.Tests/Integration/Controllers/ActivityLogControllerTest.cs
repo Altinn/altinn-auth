@@ -144,6 +144,29 @@ public class ActivityLogControllerTest : IClassFixture<ApiFixture>
         Assert.DoesNotContain(result.Items, e => e.ToId == Paula);
     }
 
+    /// <summary>
+    /// The bound model must ignore prefixed keys (query.party=…): the authorization handlers
+    /// read the raw party/direction keys, so binding from the prefixed ones would let a
+    /// caller authorize one party and query another.
+    /// </summary>
+    [Fact]
+    public async Task Connections_ConflictingPrefixedParameters_AreIgnored()
+    {
+        var client = CreateClient(Verdiq, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
+
+        var response = await client.GetAsync(
+            $"{ConnectionsRoute}?party={Verdiq}&direction=from&query.party={Nordis}&query.direction=from",
+            TestContext.Current.CancellationToken);
+
+        var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Body: {body}");
+
+        var result = JsonSerializer.Deserialize<PaginatedResult<ActivityLogDto>>(body, JsonOpts);
+        Assert.NotNull(result);
+        Assert.Contains(result.Items, e => e.FromId == Verdiq);
+        Assert.DoesNotContain(result.Items, e => e.FromId == Nordis);
+    }
+
     [Fact]
     public async Task Connections_TypeIdOutsideArea_Returns400()
     {

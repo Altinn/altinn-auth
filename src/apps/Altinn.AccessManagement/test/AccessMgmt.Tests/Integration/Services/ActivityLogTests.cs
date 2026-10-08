@@ -475,13 +475,13 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
         var (from, to, _) = await SeedAssignment();
         var service = new Altinn.AccessMgmt.Core.Services.ActivityLogService(_query);
 
-        var ownFieldIgnored = await service.GetActivityLogFilterValues(
+        var ownFieldIgnored = await service.GetConnectionsActivityLogFilterValues(
             from.Id, direction: null, ActivityLogFilterField.To,
             new ActivityLogQueryFilter { ToIds = [Guid.NewGuid()] },
             term: null, ActivityLogFilterValueOrder.Name, 100, 0, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Contains(ownFieldIgnored.Items, p => p.Id == to.Id);
 
-        var otherFieldApplies = await service.GetActivityLogFilterValues(
+        var otherFieldApplies = await service.GetConnectionsActivityLogFilterValues(
             from.Id, direction: null, ActivityLogFilterField.Role,
             new ActivityLogQueryFilter { ToIds = [Guid.NewGuid()] },
             term: null, ActivityLogFilterValueOrder.Name, 100, 0, cancellationToken: TestContext.Current.CancellationToken);
@@ -500,12 +500,12 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
 
         // The regular surface always hides the Supplier-role (Maskinporten schema) events,
         // from entries and filter values alike.
-        var entries = await service.GetActivityLog(
+        var entries = await service.GetConnectionsActivityLog(
             from.Id, direction: null, new ActivityLogQueryFilter(), 100, 0, TestContext.Current.CancellationToken);
         Assert.DoesNotContain(entries.Items, e => e.ItemId == supplierAssignment.Id);
         Assert.Contains(entries.Items, e => e.ItemId == rightholderAssignment.Id);
 
-        var roles = await service.GetActivityLogFilterValues(
+        var roles = await service.GetConnectionsActivityLogFilterValues(
             from.Id, direction: null, ActivityLogFilterField.Role, new ActivityLogQueryFilter(),
             term: null, ActivityLogFilterValueOrder.Name, 100, 0, cancellationToken: TestContext.Current.CancellationToken);
         Assert.DoesNotContain(roles.Items, r => r.Id == RoleConstants.Supplier.Id);
@@ -568,5 +568,34 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
 
         var unknownCodeFallsBack = await _query.GetFilterValuesAsync(ActivityLogFilterField.ActivityType, filter, term: null, ActivityLogFilterValueOrder.Name, 100, languageCode: "xyz", cancellationToken: TestContext.Current.CancellationToken);
         Assert.Contains(unknownCodeFallsBack.Items, p => p.Id == ActivityTypeConstants.AssignmentCreated.Id && p.Name == ActivityTypeConstants.AssignmentCreated.Entity.Name);
+    }
+
+    [Fact]
+    public async Task Service_AreaSurfacesClampTypesToTheirSlice()
+    {
+        var (from, _, assignment) = await SeedAssignment();
+        var service = new Altinn.AccessMgmt.Core.Services.ActivityLogService(_query);
+
+        // A type filter outside the slice narrows to nothing — it never widens the surface.
+        var requestsWithAssignmentType = await service.GetRequestActivityLog(
+            from.Id, direction: null, new ActivityLogQueryFilter { Types = [ActivityLogType.Assignment] }, 100, 0, TestContext.Current.CancellationToken);
+        Assert.Empty(requestsWithAssignmentType.Items);
+
+        var connectionsWithRequestType = await service.GetConnectionsActivityLog(
+            from.Id, direction: null, new ActivityLogQueryFilter { Types = [ActivityLogType.Request] }, 100, 0, TestContext.Current.CancellationToken);
+        Assert.Empty(connectionsWithRequestType.Items);
+
+        // Catalog combinations outside the slice clamp the same way instead of degrading to
+        // no-filter.
+        var requestsWithAssignmentKey = await service.GetRequestActivityLogFilterValues(
+            from.Id, direction: null, ActivityLogFilterField.To,
+            new ActivityLogQueryFilter { ActivityTypeKeys = [new(ActivityLogType.Assignment, null, ActivityLogTrigger.Created, null)] },
+            term: null, ActivityLogFilterValueOrder.Name, 100, 0, cancellationToken: TestContext.Current.CancellationToken);
+        Assert.Empty(requestsWithAssignmentKey.Items);
+
+        // The slice's own surface still serves its events.
+        var connections = await service.GetConnectionsActivityLog(
+            from.Id, direction: null, new ActivityLogQueryFilter(), 100, 0, TestContext.Current.CancellationToken);
+        Assert.Contains(connections.Items, e => e.ItemId == assignment.Id);
     }
 }

@@ -1,6 +1,7 @@
 using System.Net.Mime;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessMgmt.Core.Extensions;
+using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
@@ -20,19 +21,34 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers.Base;
 /// boundary — the concrete controller declares route, feature flag and policies, and the
 /// base constrains every query to the area.
 /// </summary>
-/// <param name="Types">The main record types the area serves.</param>
+/// <summary>
+/// The per-area service surface an area is served by. The slices are disjoint and clamped in
+/// the service itself, so they can never mix.
+/// </summary>
+public enum ActivityLogSlice
+{
+    /// <summary>Assignment and delegation events, Maskinporten schema events excluded.</summary>
+    Connections,
+
+    /// <summary>Access request events.</summary>
+    Request,
+
+    /// <summary>Only the Maskinporten schema (Supplier-role) events.</summary>
+    Maskinporten,
+}
+
+/// <param name="Types">The main record types the area serves (the slice's types, used for
+/// catalog gating and the 400-level validation; the service clamps to the same slice).</param>
 /// <param name="Subtypes">The subtypes the area accepts in typeId input and lists under
 /// types, or null for all. Query rows are already scoped by <paramref name="Types"/> and the
 /// service slice.</param>
-/// <param name="MaskinportenSchema">Whether the area serves the Maskinporten schema slice of
-/// the log (only Supplier-role events, through the service's maskinporten surface) instead of
-/// the regular slice that always excludes them. The two slices can never mix.</param>
+/// <param name="Slice">The service surface serving this area.</param>
 /// <param name="Fields">The filter fields the area offers; filter lookups on other fields
 /// are rejected.</param>
 public sealed record ActivityLogArea(
     IReadOnlyList<ActivityLogType> Types,
     IReadOnlyList<ActivityLogSubtype?> Subtypes,
-    bool MaskinportenSchema,
+    ActivityLogSlice Slice,
     IReadOnlyList<ActivityLogFilterField> Fields)
 {
     /// <summary>
@@ -53,9 +69,9 @@ public static class ActivityLogAreas
     /// everywhere else.
     /// </summary>
     public static readonly ActivityLogArea Connections = new(
-        Types: [ActivityLogType.Assignment, ActivityLogType.Delegation],
+        Types: ActivityLogSlices.Connections,
         Subtypes: null,
-        MaskinportenSchema: false,
+        Slice: ActivityLogSlice.Connections,
         Fields:
         [
             ActivityLogFilterField.From,
@@ -73,9 +89,9 @@ public static class ActivityLogAreas
     /// Access request events, including their package/resource children and status changes.
     /// </summary>
     public static readonly ActivityLogArea Request = new(
-        Types: [ActivityLogType.Request],
+        Types: ActivityLogSlices.Request,
         Subtypes: null,
-        MaskinportenSchema: false,
+        Slice: ActivityLogSlice.Request,
         Fields:
         [
             ActivityLogFilterField.From,
@@ -92,9 +108,9 @@ public static class ActivityLogAreas
     /// the Supplier role, which every other area hides.
     /// </summary>
     public static readonly ActivityLogArea Maskinporten = new(
-        Types: [ActivityLogType.Assignment],
+        Types: ActivityLogSlices.Maskinporten,
         Subtypes: [null, ActivityLogSubtype.Resource],
-        MaskinportenSchema: true,
+        Slice: ActivityLogSlice.Maskinporten,
         Fields:
         [
             ActivityLogFilterField.From,
@@ -131,7 +147,9 @@ public abstract class ActivityLogAreaControllerBase(IActivityLogService activity
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetActivityLog(
-        [FromQuery] ActivityLogQueryParameters query,
+        // Name = "" pins the empty binding prefix: the authorization handlers read the raw
+        // party/direction keys, so binding must never prefer query.*-prefixed duplicates.
+        [FromQuery(Name = "")] ActivityLogQueryParameters query,
         CancellationToken cancellationToken = default)
     {
         if (!TryPrepare(query, out var filter, out var direction, out var size, out var page, out var error))
@@ -139,9 +157,12 @@ public abstract class ActivityLogAreaControllerBase(IActivityLogService activity
             return error;
         }
 
-        var result = area.MaskinportenSchema
-            ? await activityLogService.GetMaskinportenSchemaActivityLog(query.Party, direction, filter, size, page, cancellationToken)
-            : await activityLogService.GetActivityLog(query.Party, direction, filter, size, page, cancellationToken);
+        var result = area.Slice switch
+        {
+            ActivityLogSlice.Maskinporten => await activityLogService.GetMaskinportenSchemaActivityLog(query.Party, direction, filter, size, page, cancellationToken),
+            ActivityLogSlice.Request => await activityLogService.GetRequestActivityLog(query.Party, direction, filter, size, page, cancellationToken),
+            _ => await activityLogService.GetConnectionsActivityLog(query.Party, direction, filter, size, page, cancellationToken),
+        };
 
         return Ok(PaginatedResult.Create(result.Items, result.HasMore ? NextLink(size, page + 1) : null));
     }
@@ -158,7 +179,7 @@ public abstract class ActivityLogAreaControllerBase(IActivityLogService activity
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetActivityLogFilterValues(
         [FromRoute(Name = "field")] ActivityLogFilterField field,
-        [FromQuery] ActivityLogFilterValueQueryParameters query,
+        [FromQuery(Name = "")] ActivityLogFilterValueQueryParameters query,
         CancellationToken cancellationToken = default)
     {
         if (!area.Fields.Contains(field))
@@ -173,9 +194,12 @@ public abstract class ActivityLogAreaControllerBase(IActivityLogService activity
         }
 
         var languageCode = this.GetLanguageCode();
-        var result = area.MaskinportenSchema
-            ? await activityLogService.GetMaskinportenSchemaActivityLogFilterValues(query.Party, direction, field, filter, query.Term, query.OrderBy, size, page, languageCode, cancellationToken)
-            : await activityLogService.GetActivityLogFilterValues(query.Party, direction, field, filter, query.Term, query.OrderBy, size, page, languageCode, cancellationToken);
+        var result = area.Slice switch
+        {
+            ActivityLogSlice.Maskinporten => await activityLogService.GetMaskinportenSchemaActivityLogFilterValues(query.Party, direction, field, filter, query.Term, query.OrderBy, size, page, languageCode, cancellationToken),
+            ActivityLogSlice.Request => await activityLogService.GetRequestActivityLogFilterValues(query.Party, direction, field, filter, query.Term, query.OrderBy, size, page, languageCode, cancellationToken),
+            _ => await activityLogService.GetConnectionsActivityLogFilterValues(query.Party, direction, field, filter, query.Term, query.OrderBy, size, page, languageCode, cancellationToken),
+        };
 
         return Ok(PaginatedResult.Create(result.Items, result.HasMore ? NextLink(size, page + 1) : null));
     }
