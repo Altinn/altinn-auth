@@ -1895,19 +1895,22 @@ END;
 $$;
 
 -- Backfill cutoff = the moment the activity log triggers went live. The backfill job only
--- synthesizes events strictly before the cutoff, so it can never duplicate trigger-written rows.
+-- synthesizes events strictly before the cutoff, so it can never duplicate trigger-written
+-- rows. clock_timestamp() on purpose: now() is frozen at transaction start, which predates
+-- the trigger DDL above — a row committed in between would then be neither trigger-logged
+-- nor backfilled. Statement time after the trigger DDL leaves no such gap.
 INSERT INTO dbo.activitylogbackfillprogress (source, cutoff)
 VALUES
-    ('assignment', now()),
-    ('assignmentpackage', now()),
-    ('assignmentresource', now()),
-    ('assignmentinstance', now()),
-    ('delegation', now()),
-    ('delegationpackage', now()),
-    ('delegationresource', now()),
-    ('requestassignment', now()),
-    ('requestassignmentpackage', now()),
-    ('requestassignmentresource', now())
+    ('assignment', clock_timestamp()),
+    ('assignmentpackage', clock_timestamp()),
+    ('assignmentresource', clock_timestamp()),
+    ('assignmentinstance', clock_timestamp()),
+    ('delegation', clock_timestamp()),
+    ('delegationpackage', clock_timestamp()),
+    ('delegationresource', clock_timestamp()),
+    ('requestassignment', clock_timestamp()),
+    ('requestassignmentpackage', clock_timestamp()),
+    ('requestassignmentresource', clock_timestamp())
 ON CONFLICT (source) DO NOTHING;
 
 
