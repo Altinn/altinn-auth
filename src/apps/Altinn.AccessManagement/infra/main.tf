@@ -498,7 +498,7 @@ module "appsettings" {
     },
     {
       name        = "AccessManagement.AuthorizedParties.SubAndInactivePartiesFilters"
-      description = "Specifies if AuthorizedParty should use the new filter attributes for include sub- abd inactive- entities or just set them to true by default."
+      description = "Specifies whether AuthorizedParties applies the includeSubParties and includeInactiveParties filters or retains the legacy behavior of treating both as true."
       label       = "${lower(var.environment)}-access-management"
       value       = false
     },
