@@ -226,22 +226,21 @@ public abstract class ActivityLogAreaControllerBase(IActivityLogService activity
 
         // Same anchor convention as the connections endpoints, because the directional scope
         // policies and the person access-manager rule key on the raw party/from/to query
-        // parameters. from wins when both sides equal the party, mirroring the policy's rule
-        // order; the non-anchoring side stays a counterpart filter.
-        if (query.From is [var fromParty] && fromParty == query.Party)
+        // parameters; the non-anchoring side stays a counterpart filter. Anchoring both sides
+        // at once is rejected: the scope policy passes on either directional scope when both
+        // of its rules match, so the direction chosen here could be one the caller's scope
+        // does not cover once an own-field lookup drops the counterpart filter.
+        var fromIsParty = query.From is [var fromParty] && fromParty == query.Party;
+        var toIsParty = query.To is [var toParty] && toParty == query.Party;
+
+        if (fromIsParty == toIsParty)
         {
-            direction = ActivityLogDirection.From;
-        }
-        else if (query.To is [var toParty] && toParty == query.Party)
-        {
-            direction = ActivityLogDirection.To;
-        }
-        else
-        {
-            ModelState.AddModelError("from", "The query must be anchored with from=party (access given) or to=party (access received).");
+            ModelState.AddModelError("from", "The query must be anchored with exactly one of from=party (access given) or to=party (access received).");
             error = ValidationProblem(ModelState);
             return false;
         }
+
+        direction = fromIsParty ? ActivityLogDirection.From : ActivityLogDirection.To;
 
         if (!ActivityLogQueryMapper.TryResolveTypeKeys(query.TypeId, out var activityTypeKeys, out var unknownTypeId))
         {
