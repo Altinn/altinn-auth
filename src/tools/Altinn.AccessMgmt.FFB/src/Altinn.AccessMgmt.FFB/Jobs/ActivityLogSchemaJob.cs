@@ -12,9 +12,10 @@ namespace Altinn.AccessMgmt.FFB.Jobs;
 /// real migrations ship. The dbo.activitytype catalog table is created but left unseeded
 /// (seeding happens via StaticDataIngest when the release deploys); the runtime resolves the
 /// catalog from ActivityTypeConstants in memory, so nothing depends on the table content.
-/// Guards refuse both operations in any environment where EF has applied the migrations, and
-/// the install refuses when dbo.activitylog already exists — so an EF-managed environment can
-/// never be touched. Roll back before the real migrations run, since they are not idempotent.
+/// Guards restrict both operations to an allowlist of known test environments, refuse any
+/// environment where EF has applied the migrations, and the install refuses when
+/// dbo.activitylog already exists — so a production or EF-managed environment can never be
+/// touched. Roll back before the real migrations run, since they are not idempotent.
 /// The embedded scripts must be regenerated whenever an activity log migration changes.
 /// </summary>
 public static class ActivityLogSchemaJob
@@ -23,8 +24,18 @@ public static class ActivityLogSchemaJob
 
     private const string MigrationId = "20260901142849_ActivityLog";
 
+    // Default-deny any environment not on this list: the migration-ran check below cannot
+    // tell a test database from a production one that simply has not been migrated yet, so
+    // a configured production connection must never reach the scripts.
+    private static readonly string[] AllowedEnvironments = ["Local", "AT22", "AT23", "AT24", "YT01", "TT02"];
+
     public static async Task InstallAsync(DuoRepo repo, JobRun run, CancellationToken ct)
     {
+        if (DeniedEnvironment(run))
+        {
+            return;
+        }
+
         await using var conn = repo.CreateAccConnection();
         await conn.OpenAsync(ct);
 
@@ -47,6 +58,11 @@ public static class ActivityLogSchemaJob
 
     public static async Task RollbackAsync(DuoRepo repo, JobRun run, CancellationToken ct)
     {
+        if (DeniedEnvironment(run))
+        {
+            return;
+        }
+
         await using var conn = repo.CreateAccConnection();
         await conn.OpenAsync(ct);
 
@@ -68,6 +84,17 @@ public static class ActivityLogSchemaJob
         run.AddLog($"Rolling back the activity log schema — dropping dbo.activitylog with {rows:N0} logged events, all triggers and support functions...");
         await conn.ExecuteAsync(new CommandDefinition(ReadScript("activitylog-schema-rollback.sql"), commandTimeout: 0, cancellationToken: ct));
         run.AddLog("Schema rolled back — the environment is back to its pre-activitylog state, and the EF migration can be applied normally later.");
+    }
+
+    private static bool DeniedEnvironment(JobRun run)
+    {
+        if (AllowedEnvironments.Contains(run.Environment, StringComparer.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        run.AddLog($"Environment '{run.Environment}' is not an allowed test environment for manual schema changes (allowed: {string.Join(", ", AllowedEnvironments)}).", isError: true);
+        return true;
     }
 
     private static async Task<bool> EfHasMigrationAsync(NpgsqlConnection conn, CancellationToken ct)
