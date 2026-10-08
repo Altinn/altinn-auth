@@ -56,26 +56,45 @@ FROM consent.consentevent;
 ```
 `to_filled` should start increasing as events are created.
 
-## Phase 2 — Backfill existing rows  (manual, batched)
-Run against prod in a session that is NOT inside a long transaction. Reconciles both columns with the
-parent request; `IS DISTINCT FROM` makes it null-safe (a request with no handler yields a null handler
-on its events, which is correct). Repeat until it reports `UPDATE 0`; each batch commits on its own, so
-it is safe to pause/resume.
+## Phase 2 — Backfill existing rows  (manual, batched by primary key)
+Reconciles both columns with the parent request; `IS DISTINCT FROM` makes it null-safe (a request with no
+handler yields a null handler on its events, which is correct). Batching walks the `consenteventid`
+primary key in fixed ranges, so every batch is bounded and no batch re-scans rows earlier batches already
+fixed. Each batch commits on its own and the `NOTICE` prints the id to resume from, so it is safe to
+pause, resume, or restart.
+
+> **Run it in autocommit** (plain `psql`). `COMMIT` inside a `DO` block only works when the block is not
+> already inside a transaction — a client with autocommit off (or an explicit `BEGIN`) will error on the
+> first `COMMIT`. To resume after a stop, set the starting `from_id` to the last id the `NOTICE` printed.
+
 ```sql
-WITH batch AS (
-    SELECT ce.consenteventid
-    FROM consent.consentevent ce
-    JOIN consent.consentrequest cr ON cr.consentrequestid = ce.consentrequestid
-    WHERE ce.topartyuuid        IS DISTINCT FROM cr.topartyuuid
-       OR ce.handledbypartyuuid IS DISTINCT FROM cr.handledbypartyuuid
-    LIMIT 50000
-)
-UPDATE consent.consentevent ce
-SET topartyuuid        = cr.topartyuuid,
-    handledbypartyuuid = cr.handledbypartyuuid
-FROM consent.consentrequest cr, batch
-WHERE ce.consenteventid = batch.consenteventid
-  AND cr.consentrequestid = ce.consentrequestid;
+DO $$
+DECLARE
+    from_id uuid := '00000000-0000-0000-0000-000000000000';
+    to_id   uuid;
+BEGIN
+    LOOP
+        SELECT b.consenteventid INTO to_id
+        FROM (SELECT consenteventid FROM consent.consentevent
+              WHERE consenteventid > from_id
+              ORDER BY consenteventid LIMIT 50000) b
+        ORDER BY b.consenteventid DESC LIMIT 1;
+        EXIT WHEN to_id IS NULL;
+
+        UPDATE consent.consentevent ce
+        SET topartyuuid        = cr.topartyuuid,
+            handledbypartyuuid = cr.handledbypartyuuid
+        FROM consent.consentrequest cr
+        WHERE ce.consenteventid > from_id AND ce.consenteventid <= to_id
+          AND cr.consentrequestid = ce.consentrequestid
+          AND (ce.topartyuuid        IS DISTINCT FROM cr.topartyuuid
+            OR ce.handledbypartyuuid IS DISTINCT FROM cr.handledbypartyuuid);
+
+        COMMIT;
+        RAISE NOTICE 'reconciled up to %', to_id;
+        from_id := to_id;
+    END LOOP;
+END $$;
 ```
 
 **Exit gate:** must be 0 before Phase 4 — every event reconciled with its parent.

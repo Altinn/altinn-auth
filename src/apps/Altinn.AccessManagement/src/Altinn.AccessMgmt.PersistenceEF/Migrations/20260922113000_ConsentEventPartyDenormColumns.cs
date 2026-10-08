@@ -19,8 +19,14 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            // ADD COLUMN takes an ACCESS EXCLUSIVE lock on consentevent, and the init job applies this
+            // while old pods still serve traffic. If a slow feed query holds the table, the ALTER — and
+            // every read/insert queued behind it — would wait for that query to finish. lock_timeout
+            // bounds the wait so the migration fails fast and is retried instead of stalling consent
+            // writes. SET LOCAL scopes it to this migration's transaction.
             migrationBuilder.Sql(
                 """
+                SET LOCAL lock_timeout = '5s';
                 ALTER TABLE consent.consentevent ADD COLUMN IF NOT EXISTS topartyuuid uuid;
                 ALTER TABLE consent.consentevent ADD COLUMN IF NOT EXISTS handledbypartyuuid uuid;
                 """);
@@ -29,6 +35,9 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            // Intentionally empty. On fresh databases the columns come from ConsentSchema.sql,
+            // so dropping them here would leave the schema out of line with the baseline.
+            // Leaving them on rollback is harmless: they are nullable and older code never writes them.
         }
     }
 }
