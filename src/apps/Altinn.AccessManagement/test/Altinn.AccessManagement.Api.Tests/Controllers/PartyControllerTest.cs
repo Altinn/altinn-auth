@@ -1,6 +1,6 @@
 ﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using Altinn.AccessManagement.Controllers;
+using Altinn.AccessManagement.Api.Internal.Controllers.Internal;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Validation;

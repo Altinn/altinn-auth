@@ -1,7 +1,7 @@
 using System.Net;
 using System.Security.Claims;
 using System.Text.Json;
-using Altinn.AccessManagement.Api.Internal.Controllers;
+using Altinn.AccessManagement.Api.Internal.Controllers.Internal;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.TestUtils;
 using Altinn.AccessManagement.TestUtils.Data;

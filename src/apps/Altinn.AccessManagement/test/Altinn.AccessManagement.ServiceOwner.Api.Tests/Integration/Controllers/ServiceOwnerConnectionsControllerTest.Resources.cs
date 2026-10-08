@@ -39,6 +39,8 @@ public partial class ServiceOwnerConnectionsControllerTest
     /// - Provider "Skatteetaten" with the organization number of Stor og Mektig Tjenesteeier as RefId
     /// - Resource "Skattemelding" (app_skd_sirius-skattemelding-v1) moved to the Skatteetaten provider, so the
     ///   test service owner owns the resource
+    /// - Provider "Testdepartementet" (ttd) without an organization number, owning the resource
+    ///   ttd_inntektsopplysninger, like TTD in the test environments
     /// </para>
     /// <para>
     /// Mocks:
@@ -66,6 +68,12 @@ public partial class ServiceOwnerConnectionsControllerTest
         private const string NonDelegableResource = "app_skd_taxreport";
 
         private static readonly Guid NonDelegableResourceId = Guid.Parse("0196b130-0000-7000-8000-000000000004");
+
+        private const string TtdResource = "ttd_inntektsopplysninger";
+
+        private static readonly Guid TtdProviderId = Guid.Parse("0196b130-0000-7000-8000-000000000005");
+
+        private static readonly Guid TtdResourceId = Guid.Parse("0196b130-0000-7000-8000-000000000006");
 
         public AddRevokeResources(ApiFixture fixture)
         {
@@ -115,17 +123,40 @@ public partial class ServiceOwnerConnectionsControllerTest
                     ProviderId = SkatteetatenProviderId,
                 });
                 db.SaveChanges();
+
+                db.Providers.Add(new Provider()
+                {
+                    Id = TtdProviderId,
+                    Name = "Testdepartementet",
+                    Code = "ttd",
+                    RefId = string.Empty,
+                    TypeId = ProviderTypeConstants.ServiceOwner,
+                });
+                db.Resources.Add(new Resource()
+                {
+                    Id = TtdResourceId,
+                    Name = "Inntektsopplysninger",
+                    Description = "Resource owned by a service owner without an organization number",
+                    RefId = TtdResource,
+                    TypeId = resource.TypeId,
+                    ProviderId = TtdProviderId,
+                });
+                db.SaveChanges();
             });
         }
 
         public ApiFixture Fixture { get; }
 
-        private HttpClient CreateClient(string orgNumber = null, string scope = AuthzConstants.SCOPE_SERVICEOWNER_RESOURCE_DELEGATION_WRITE)
+        private HttpClient CreateClient(string orgNumber = null, string scope = AuthzConstants.SCOPE_SERVICEOWNER_RESOURCE_DELEGATION_WRITE, string orgCode = "SKD")
         {
             var client = Fixture.Server.CreateClient();
             var token = TestTokenGenerator.CreateToken(new ClaimsIdentity("mock"), claims =>
             {
-                claims.Add(new Claim(AltinnCoreClaimTypes.Org, "SKD"));
+                if (orgCode is not null)
+                {
+                    claims.Add(new Claim(AltinnCoreClaimTypes.Org, orgCode));
+                }
+
                 claims.Add(new Claim("scope", scope));
                 claims.Add(new Claim("consumer", GetConsumerClaimJson(orgNumber ?? TestData.StorMektigTenesteeier.Entity.OrganizationIdentifier)));
             });
@@ -138,13 +169,13 @@ public partial class ServiceOwnerConnectionsControllerTest
             return $$"""{ "authority":"iso6523-actorid-upis", "ID":"0192:{{orgNumber}}"}""";
         }
 
-        private static ServiceOwnerResourceDelegation CreateRequest(ServiceOwnerConnectionPartyUrn from, ServiceOwnerConnectionPartyUrn to, IEnumerable<string> rightKeys = null)
+        private static ServiceOwnerResourceDelegation CreateRequest(ServiceOwnerConnectionPartyUrn from, ServiceOwnerConnectionPartyUrn to, IEnumerable<string> rightKeys = null, string resource = Resource)
         {
             return new ServiceOwnerResourceDelegation()
             {
                 From = from,
                 To = to,
-                Resource = Resource,
+                Resource = resource,
                 RightKeys = rightKeys is null ? null : new RightKeyListDto { DirectRightKeys = rightKeys },
             };
         }
@@ -162,10 +193,10 @@ public partial class ServiceOwnerConnectionsControllerTest
         /// <summary>
         /// Gets the available right keys for the resource through the rights endpoint.
         /// </summary>
-        private async Task<List<string>> GetAvailableRightKeys()
+        private async Task<List<string>> GetAvailableRightKeys(string resource = Resource, string orgCode = "SKD")
         {
-            var client = CreateClient();
-            var response = await client.GetAsync($"{Route}/resources/rights?resource={Resource}", TestContext.Current.CancellationToken);
+            var client = CreateClient(orgCode: orgCode);
+            var response = await client.GetAsync($"{Route}/resources/rights?resource={resource}", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
             var rights = await response.Content.ReadFromJsonAsync<List<RightDto>>(TestContext.Current.CancellationToken);
@@ -178,10 +209,10 @@ public partial class ServiceOwnerConnectionsControllerTest
         /// <summary>
         /// Delegates all available right keys on the resource from one party to another as the test service owner.
         /// </summary>
-        private async Task<ServiceOwnerResourceDelegation> AddResource(ServiceOwnerConnectionPartyUrn from, ServiceOwnerConnectionPartyUrn to)
+        private async Task<ServiceOwnerResourceDelegation> AddResource(ServiceOwnerConnectionPartyUrn from, ServiceOwnerConnectionPartyUrn to, string resource = Resource, string orgCode = "SKD")
         {
-            var request = CreateRequest(from, to, await GetAvailableRightKeys());
-            var response = await CreateClient().PostAsJsonAsync($"{Route}/resources", request, TestContext.Current.CancellationToken);
+            var request = CreateRequest(from, to, await GetAvailableRightKeys(resource, orgCode), resource);
+            var response = await CreateClient(orgCode: orgCode).PostAsJsonAsync($"{Route}/resources", request, TestContext.Current.CancellationToken);
 
             var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {content}");
@@ -189,8 +220,9 @@ public partial class ServiceOwnerConnectionsControllerTest
             return request;
         }
 
-        private async Task<AssignmentResource> GetAssignmentResource(Guid fromId, Guid toId)
+        private async Task<AssignmentResource> GetAssignmentResource(Guid fromId, Guid toId, Guid? resourceId = null)
         {
+            Guid expectedResourceId = resourceId ?? TestData.SiriusSkattemelding.Id;
             AssignmentResource assignmentResource = null;
             await Fixture.QueryDb(async db =>
             {
@@ -199,7 +231,7 @@ public partial class ServiceOwnerConnectionsControllerTest
                     .Where(ar => ar.Assignment.FromId == fromId)
                     .Where(ar => ar.Assignment.ToId == toId)
                     .Where(ar => ar.Assignment.RoleId == RoleConstants.Rightholder)
-                    .Where(ar => ar.ResourceId == TestData.SiriusSkattemelding.Id)
+                    .Where(ar => ar.ResourceId == expectedResourceId)
                     .FirstOrDefaultAsync(TestContext.Current.CancellationToken);
             });
 
@@ -260,7 +292,8 @@ public partial class ServiceOwnerConnectionsControllerTest
         }
 
         /// <summary>
-        /// A service owner that does not own the resource is denied.
+        /// A service owner that does not own the resource is denied. The org claim matches the provider code, but it
+        /// is only consulted for a provider without an organization number.
         /// </summary>
         [Fact]
         public async Task GetResourceRights_AsOtherServiceOwner_Returns403ResourceDelegationNotAuthorized()
@@ -687,6 +720,103 @@ public partial class ServiceOwnerConnectionsControllerTest
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
             await AssertProblemCode(response, "AM-00042");
+        }
+
+        /// <summary>
+        /// A service owner without an organization number, like TTD in the test environments, owns a resource when
+        /// the org claim of the token equals the provider code.
+        /// </summary>
+        [Fact]
+        public async Task GetResourceRights_AsProviderWithoutOrganizationNumber_WithMatchingOrgClaim_Returns200WithRightKeys()
+        {
+            var client = CreateClient(orgCode: "ttd");
+
+            var response = await client.GetAsync($"{Route}/resources/rights?resource={TtdResource}", TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            var rights = await response.Content.ReadFromJsonAsync<List<RightDto>>(TestContext.Current.CancellationToken);
+            Assert.NotNull(rights);
+            Assert.NotEmpty(rights);
+        }
+
+        /// <summary>
+        /// A provider without an organization number is never matched on the consumer organization number, so a token
+        /// with another org claim, or without one, is denied even when the consumer is a service owner.
+        /// </summary>
+        [Theory]
+        [InlineData("SKD")]
+        [InlineData(null)]
+        public async Task GetResourceRights_AsProviderWithoutOrganizationNumber_WithoutMatchingOrgClaim_Returns403ResourceDelegationNotAuthorized(string orgCode)
+        {
+            var client = CreateClient(orgCode: orgCode);
+
+            var response = await client.GetAsync($"{Route}/resources/rights?resource={TtdResource}", TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+            await AssertProblemCode(response, "AM-00048");
+        }
+
+        /// <summary>
+        /// A service owner without an organization number delegates its own resource. The organization behind the
+        /// consumer claim is still the one recorded as the actor.
+        /// </summary>
+        [Fact]
+        public async Task AddResource_AsProviderWithoutOrganizationNumber_WithMatchingOrgClaim_Returns200AndCreatesAssignmentResource()
+        {
+            List<string> rightKeys = await GetAvailableRightKeys(TtdResource, orgCode: "ttd");
+            var request = CreateRequest(Person(TestData.MortenDahl), Person(TestData.GreteHolm), rightKeys, TtdResource);
+
+            var response = await CreateClient(orgCode: "ttd").PostAsJsonAsync($"{Route}/resources", request, TestContext.Current.CancellationToken);
+
+            var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {content}");
+
+            var result = await response.Content.ReadFromJsonAsync<AssignmentResourceDto>(TestContext.Current.CancellationToken);
+            Assert.NotNull(result);
+            Assert.Equal(TtdResourceId, result.ResourceId);
+
+            AssignmentResource assignmentResource = await GetAssignmentResource(TestData.MortenDahl.Id, TestData.GreteHolm.Id, TtdResourceId);
+            Assert.NotNull(assignmentResource);
+            Assert.Equal(TestData.StorMektigTenesteeier.Id, assignmentResource.Audit_ChangedBy);
+            Assert.Equal(rightKeys.Count, GetWrittenPolicyRuleCount(assignmentResource.PolicyPath));
+        }
+
+        /// <summary>
+        /// A service owner without an organization number revokes a delegation of its own resource with the same
+        /// consumer organization it delegated with. The revoke guard compares the recorded actor with that
+        /// organization, so the assignment resource, the delegation policy and the assignment are removed.
+        /// </summary>
+        [Fact]
+        public async Task RevokeResource_AsProviderWithoutOrganizationNumber_WithMatchingOrgClaim_Returns204AndRemovesAssignment()
+        {
+            var request = await AddResource(Person(TestData.LarsBakke), Person(TestData.HildeStrand), TtdResource, orgCode: "ttd");
+            AssignmentResource assignmentResource = await GetAssignmentResource(TestData.LarsBakke.Id, TestData.HildeStrand.Id, TtdResourceId);
+            Assert.NotNull(assignmentResource);
+
+            var response = await CreateClient(orgCode: "ttd").PostAsJsonAsync($"{Route}/resources/revoke", request, TestContext.Current.CancellationToken);
+
+            var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.NoContent, $"Expected NoContent but got {response.StatusCode}. Response body: {content}");
+
+            Assert.Null(await GetAssignmentResource(TestData.LarsBakke.Id, TestData.HildeStrand.Id, TtdResourceId));
+            Assert.Null(await GetRightholderAssignment(TestData.LarsBakke.Id, TestData.HildeStrand.Id));
+            Assert.Equal(0, GetWrittenPolicyRuleCount(assignmentResource.PolicyPath));
+        }
+
+        /// <summary>
+        /// The org claim only decides who owns the resource. A token with the matching org claim but another
+        /// consumer organization is a different actor, so it cannot revoke a delegation the first one made.
+        /// </summary>
+        [Fact]
+        public async Task RevokeResource_AsProviderWithoutOrganizationNumber_WithOtherConsumerOrganization_Returns400ResourceNotRevocableFromAssignment()
+        {
+            var request = await AddResource(Person(TestData.SteinarAndreassen), Person(TestData.LarsBakke), TtdResource, orgCode: "ttd");
+
+            var response = await CreateClient(TestData.BakerJohnsen.Entity.OrganizationIdentifier, orgCode: "ttd").PostAsJsonAsync($"{Route}/resources/revoke", request, TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            await AssertProblemCode(response, "AM-00049");
+            Assert.NotNull(await GetAssignmentResource(TestData.SteinarAndreassen.Id, TestData.LarsBakke.Id, TtdResourceId));
         }
 
         private static ServiceOwnerResourceDelegation CreateMaskinportenSchemaRequest()

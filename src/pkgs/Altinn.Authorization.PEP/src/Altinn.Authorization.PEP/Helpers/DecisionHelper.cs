@@ -34,6 +34,14 @@ namespace Altinn.Common.PEP.Helpers
         private const string OrganizationNumberHeader = "Altinn-Party-OrganizationNumber";
         private const string PolicyObligationMinAuthnLevel = "urn:altinn:minimum-authenticationlevel";
         private const string PolicyObligationMinAuthnLevelOrg = "urn:altinn:minimum-authenticationlevel-org";
+        private const string PolicyObligationMinAuthnLevelSystemUser = "urn:altinn:minimum-authenticationlevel-systemuser";
+        private const string SystemUserClaimType = "urn:altinn:systemuser";
+
+        /// <summary>
+        /// A logged in system user always has authentication level 3. This is a fixed property of the system user
+        /// login, and the token does not necessarily carry an urn:altinn:authlevel claim.
+        /// </summary>
+        private const int SystemUserAuthenticationLevel = 3;
 
         /// <summary>
         /// Create decision request based for policy decision point.
@@ -476,22 +484,49 @@ namespace Altinn.Common.PEP.Helpers
 
         private static bool IsSystemUserClaim(Claim claim, out SystemUserClaim userClaim)
         {
-            if (claim.Type.Equals("authorization_details"))
-            {
-                JsonSerializerOptions jsonOptions = new(JsonSerializerDefaults.Web);
-                userClaim = JsonSerializer.Deserialize<SystemUserClaim>(claim.Value, jsonOptions);
-                if (userClaim?.Systemuser_id != null && userClaim.Systemuser_id.Count > 0)
-                {
-                    return true;
-                }
+            userClaim = null;
 
+            if (!claim.Type.Equals("authorization_details"))
+            {
                 return false;
             }
-            else
+
+            try
+            {
+                using JsonDocument document = JsonDocument.Parse(claim.Value);
+                if (!HasSystemUserType(document.RootElement))
+                {
+                    return false;
+                }
+
+                JsonSerializerOptions jsonOptions = new(JsonSerializerDefaults.Web);
+                userClaim = document.RootElement.Deserialize<SystemUserClaim>(jsonOptions);
+            }
+            catch (JsonException)
             {
                 userClaim = null;
                 return false;
             }
+
+            return userClaim?.Systemuser_id != null && userClaim.Systemuser_id.Count > 0;
+        }
+
+        private static bool HasSystemUserType(JsonElement authorizationDetails)
+        {
+            return authorizationDetails.ValueKind == JsonValueKind.Object
+                && authorizationDetails.TryGetProperty("type", out JsonElement type)
+                && type.ValueKind == JsonValueKind.String
+                && type.GetString() == SystemUserClaimType;
+        }
+
+        /// <summary>
+        /// Checks whether the given principal is a logged in system user.
+        /// </summary>
+        /// <param name="user">The <see cref="ClaimsPrincipal"/></param>
+        /// <returns>True if the principal carries a system user claim</returns>
+        private static bool IsSystemUser(ClaimsPrincipal user)
+        {
+            return user.Claims.Any(claim => IsSystemUserClaim(claim, out _));
         }
 
         /// <summary>
@@ -568,39 +603,7 @@ namespace Altinn.Common.PEP.Helpers
                 return false;
             }
 
-            // Checks if the result contains obligation
-            if (result.Obligations != null)
-            {
-                List<XacmlJsonObligationOrAdvice> obligationList = result.Obligations;
-                XacmlJsonAttributeAssignment attributeMinLvAuth = GetObligation(PolicyObligationMinAuthnLevel, obligationList);
-
-                // Checks if the obligation contains a minimum authentication level attribute
-                if (attributeMinLvAuth != null)
-                {
-                    string minAuthenticationLevel = attributeMinLvAuth.Value;
-                    string usersAuthenticationLevel = user.Claims.FirstOrDefault(c => c.Type.Equals("urn:altinn:authlevel"))?.Value;
-
-                    // Checks that the user meets the minimum authentication level
-                    if (Convert.ToInt32(usersAuthenticationLevel) < Convert.ToInt32(minAuthenticationLevel))
-                    {
-                        if (user.Claims.FirstOrDefault(c => c.Type.Equals("urn:altinn:org")) != null)
-                        {
-                            XacmlJsonAttributeAssignment attributeMinLvAuthOrg = GetObligation(PolicyObligationMinAuthnLevelOrg, obligationList);
-                            if (attributeMinLvAuthOrg != null)
-                            {
-                                if (Convert.ToInt32(usersAuthenticationLevel) >= Convert.ToInt32(attributeMinLvAuthOrg.Value))
-                                {
-                                    return true;
-                                }
-                            }
-                        }
-
-                        return false;
-                    }
-                }
-            }
-
-            return true;
+            return ValidateAuthenticationLevelObligations(result, user, out _);
         }
 
         /// <summary>
@@ -634,48 +637,91 @@ namespace Altinn.Common.PEP.Helpers
                 return new EnforcementResult() { Authorized = false };
             }
 
-            // Checks if the result contains obligation
-            if (result.Obligations != null)
+            if (ValidateAuthenticationLevelObligations(result, user, out string requiredAuthenticationLevel))
             {
-                List<XacmlJsonObligationOrAdvice> obligationList = result.Obligations;
-                XacmlJsonAttributeAssignment attributeMinLvAuth = GetObligation(PolicyObligationMinAuthnLevel, obligationList);
+                return new EnforcementResult() { Authorized = true };
+            }
 
-                // Checks if the obligation contains a minimum authentication level attribute
-                if (attributeMinLvAuth != null)
+            return new EnforcementResult()
+            {
+                Authorized = false,
+                FailedObligations = new Dictionary<string, string>()
                 {
-                    string minAuthenticationLevel = attributeMinLvAuth.Value;
-                    string usersAuthenticationLevel = user.Claims.FirstOrDefault(c => c.Type.Equals("urn:altinn:authlevel"))?.Value;
+                    { AltinnObligations.RequiredAuthenticationLevel, requiredAuthenticationLevel }
+                }
+            };
+        }
 
-                    // Checks that the user meets the minimum authentication level
-                    if (Convert.ToInt32(usersAuthenticationLevel) < Convert.ToInt32(minAuthenticationLevel))
+        /// <summary>
+        /// Validates the minimum authentication level obligations of a PDP result against the given principal.
+        /// </summary>
+        /// <param name="result">The result to validate</param>
+        /// <param name="user">The <see cref="ClaimsPrincipal"/></param>
+        /// <param name="requiredAuthenticationLevel">The authentication level the principal failed to meet, if any</param>
+        /// <returns>True if the principal meets the required authentication level</returns>
+        private static bool ValidateAuthenticationLevelObligations(XacmlJsonResult result, ClaimsPrincipal user, out string requiredAuthenticationLevel)
+        {
+            requiredAuthenticationLevel = null;
+
+            // Checks if the result contains obligation
+            if (result.Obligations == null)
+            {
+                return true;
+            }
+
+            List<XacmlJsonObligationOrAdvice> obligationList = result.Obligations;
+            XacmlJsonAttributeAssignment attributeMinLvAuth = GetObligation(PolicyObligationMinAuthnLevel, obligationList);
+
+            // Checks if the obligation contains a minimum authentication level attribute
+            if (attributeMinLvAuth == null)
+            {
+                return true;
+            }
+
+            string minAuthenticationLevel = attributeMinLvAuth.Value;
+            string usersAuthenticationLevel = user.Claims.FirstOrDefault(c => c.Type.Equals("urn:altinn:authlevel"))?.Value;
+
+            // Checks that the user meets the minimum authentication level
+            if (Convert.ToInt32(usersAuthenticationLevel) >= Convert.ToInt32(minAuthenticationLevel))
+            {
+                return true;
+            }
+
+            if (user.Claims.FirstOrDefault(c => c.Type.Equals("urn:altinn:org")) != null)
+            {
+                XacmlJsonAttributeAssignment attributeMinLvAuthOrg = GetObligation(PolicyObligationMinAuthnLevelOrg, obligationList);
+                if (attributeMinLvAuthOrg != null)
+                {
+                    if (Convert.ToInt32(usersAuthenticationLevel) >= Convert.ToInt32(attributeMinLvAuthOrg.Value))
                     {
-                        if (user.Claims.FirstOrDefault(c => c.Type.Equals("urn:altinn:org")) != null)
-                        {
-                            XacmlJsonAttributeAssignment attributeMinLvAuthOrg = GetObligation(PolicyObligationMinAuthnLevelOrg, obligationList);
-                            if (attributeMinLvAuthOrg != null)
-                            {
-                                if (Convert.ToInt32(usersAuthenticationLevel) >= Convert.ToInt32(attributeMinLvAuthOrg.Value))
-                                {
-                                    return new EnforcementResult() { Authorized = true };
-                                }
-
-                                minAuthenticationLevel = attributeMinLvAuthOrg.Value;
-                            }
-                        }
-
-                        return new EnforcementResult()
-                        {
-                            Authorized = false,
-                            FailedObligations = new Dictionary<string, string>()
-                            {
-                                { AltinnObligations.RequiredAuthenticationLevel, minAuthenticationLevel }
-                            }
-                        };
+                        return true;
                     }
+
+                    minAuthenticationLevel = attributeMinLvAuthOrg.Value;
                 }
             }
 
-            return new EnforcementResult() { Authorized = true };
+            // A logged in system user always has authentication level 3. Like the org obligation, the system user
+            // obligation can only relax the general requirement, never tighten it. When the policy has the system
+            // user obligation, the fixed level is also checked against the general requirement, since the token
+            // does not necessarily carry an authlevel claim.
+            if (IsSystemUser(user))
+            {
+                XacmlJsonAttributeAssignment attributeMinLvAuthSystemUser = GetObligation(PolicyObligationMinAuthnLevelSystemUser, obligationList);
+                if (attributeMinLvAuthSystemUser != null)
+                {
+                    if (SystemUserAuthenticationLevel >= Convert.ToInt32(attributeMinLvAuthSystemUser.Value)
+                        || SystemUserAuthenticationLevel >= Convert.ToInt32(attributeMinLvAuth.Value))
+                    {
+                        return true;
+                    }
+
+                    minAuthenticationLevel = attributeMinLvAuthSystemUser.Value;
+                }
+            }
+
+            requiredAuthenticationLevel = minAuthenticationLevel;
+            return false;
         }
 
         private static XacmlJsonAttributeAssignment GetObligation(string category, List<XacmlJsonObligationOrAdvice> obligations)

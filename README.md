@@ -111,6 +111,25 @@ Open [`http://localhost:8000`](http://localhost:8000) and log in with
 
 - [Testing guide](docs/testing/README.md): how the test suite is organised and run.
 - [SonarCloud](docs/SONARCLOUD.md): static analysis, exclusions, and the quality gate.
+- [Architecture decision records](docs/adr/README.md): the *why* behind cross-cutting
+  decisions. Each vertical keeps its own under `src/apps/<Vertical>/docs/adr/`.
+
+## Working with AI agents
+
+This repository follows the [AGENTS.md](https://agents.md/) convention, decided in
+[ADR-0002](docs/adr/0002-tool-neutral-agent-contract.md): `AGENTS.md` is the single
+source of guidance for AI coding agents, at the root for what is common and in each
+vertical (`src/apps/<Vertical>/AGENTS.md`) for that vertical's commands, landmines
+and test gotchas. `CLAUDE.md` imports it, and `.github/copilot-instructions.md`
+carries a short summary and a link. If your tool does not read `AGENTS.md` on its
+own, point it there.
+
+Rollout: the root `AGENTS.md` and its pointer files come with
+[#4077](https://github.com/Altinn/altinn-auth/issues/4077), the first vertical files
+with [#4078](https://github.com/Altinn/altinn-auth/issues/4078). Until then this
+README is the guidance. Using an agent is optional. The bar for a contribution is
+the same either way: you own what you submit, and it goes through the same build,
+tests and review.
 
 ## Contributing
 

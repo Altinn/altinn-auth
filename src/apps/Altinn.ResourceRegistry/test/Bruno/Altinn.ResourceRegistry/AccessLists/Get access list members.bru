@@ -1,0 +1,17 @@
+meta {
+  name: Get access list members
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/resourceregistry/api/v1/access-lists/{{resourceOwner}}/{{listIdentifier}}/members
+  body: none
+  auth: inherit
+}
+
+vars:pre-request {
+  auth_tokenType: Enterprise
+  resourceOwner: ttd
+  listIdentifier: over-100
+}

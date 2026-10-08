@@ -1,0 +1,32 @@
+{
+  "identifier": "skd-with_invalid.identifier",
+  "description": {
+    "nb": "test oppdatering med ulovlig identifier"
+  },
+  "title": {
+    "nb": "Tilgangsstyring Altinn"
+  },
+  "hasCompetentAuthority": {
+    "name": {
+      "en": "Norwegian Tax Administration",
+      "nb": "Skatteetaten",
+      "nn": "Skatteetaten"
+    },
+    "organization": "974761076",
+    "orgcode": "SKD"
+  },
+  "contactpoint": [
+    {
+      "phone": "1231324",
+      "email": "online@digdir.no"
+    }
+  ],
+  "resourceType": "GenericAccessResource",
+  "isPartOf": "altiinnportal",
+  "hasPart": "delegationrequests",
+  "homepage": "www.altinn.no",
+  "status": "Completed",
+  "thematicArea": "http://publications.europa.eu/resource/authority/eurovoc/2468",
+  "type": [],
+  "sector": []
+}
