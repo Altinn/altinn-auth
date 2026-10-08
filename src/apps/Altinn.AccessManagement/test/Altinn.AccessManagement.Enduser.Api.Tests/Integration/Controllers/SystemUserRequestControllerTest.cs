@@ -8,6 +8,7 @@ using Altinn.AccessManagement.TestUtils.Data;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
+using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers;
@@ -16,12 +17,38 @@ public class SystemUserRequestControllerTest
 {
     public const string Route = "accessmanagement/api/v1/systemuser/request";
 
+    private const string KommOrgNo = "910000004";
+    private const string FylkOrgNo = "920000002";
+    private const string StatOrgNo = "930000000";
+
+    private static void SeedConsumers(ApiFixture fixture)
+    {
+        fixture.EnsureSeedOnce<SystemUserRequestControllerTest>(db =>
+        {
+            db.Entities.AddRange(
+                ConsumerOrg("5c0e8f0a-1d1f-4b8e-9a51-0b6a6f3f0a01", KommOrgNo, "Test Kommune", EntityVariantConstants.KOMM.Id),
+                ConsumerOrg("5c0e8f0a-1d1f-4b8e-9a51-0b6a6f3f0a02", FylkOrgNo, "Test Fylkeskommune", EntityVariantConstants.FYLK.Id),
+                ConsumerOrg("5c0e8f0a-1d1f-4b8e-9a51-0b6a6f3f0a03", StatOrgNo, "Test Direktorat", EntityVariantConstants.STAT.Id));
+            db.SaveChanges();
+        });
+    }
+
+    private static Entity ConsumerOrg(string id, string orgNo, string name, Guid variantId) => new()
+    {
+        Id = Guid.Parse(id),
+        Name = name,
+        OrganizationIdentifier = orgNo,
+        RefId = orgNo,
+        TypeId = EntityTypeConstants.Organization,
+        VariantId = variantId,
+    };
+
     /// <summary>
     /// Creates an HTTP client with a system user token (Maskinporten integration) carrying the
     /// dedicated system user requests write scope and an <c>authorization_details</c> claim
     /// identifying the system user.
     /// </summary>
-    private static HttpClient CreateSystemUserClient(ApiFixture fixture, Guid systemUserId, string scope = AuthzConstants.SCOPE_ENDUSER_SYSTEMUSER_REQUESTS_WRITE)
+    private static HttpClient CreateSystemUserClient(ApiFixture fixture, Guid systemUserId, string scope = AuthzConstants.SCOPE_ENDUSER_SYSTEMUSER_REQUESTS_WRITE, string consumerOrgNo = KommOrgNo)
     {
         var client = fixture.Server.CreateClient();
         var authorizationDetails = $$"""{"type":"urn:altinn:systemuser","systemuser_id":["{{systemUserId}}"]}""";
@@ -29,6 +56,10 @@ public class SystemUserRequestControllerTest
         {
             claims.Add(new Claim("scope", scope));
             claims.Add(new Claim("authorization_details", authorizationDetails));
+            if (consumerOrgNo is not null)
+            {
+                claims.Add(new Claim("consumer", JsonSerializer.Serialize(new { authority = "iso6523-actorid-upis", ID = $"0192:{consumerOrgNo}" })));
+            }
         });
         client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
         return client;
@@ -43,18 +74,22 @@ public class SystemUserRequestControllerTest
         {
             Fixture = fixture;
             fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.EnableSystemUserRequests);
+            SeedConsumers(fixture);
         }
 
         public ApiFixture Fixture { get; }
 
-        [Fact]
-        public async Task SystemUserWithScope_CanCreatePackageRequest_ReturnsPending()
+        [Theory]
+        [InlineData(KommOrgNo)]
+        [InlineData(FylkOrgNo)]
+        [InlineData(StatOrgNo)]
+        public async Task SystemUserWithScope_CanCreatePackageRequest_ReturnsPending(string consumerOrgNo)
         {
-            var client = CreateSystemUserClient(Fixture, TestEntities.SystemUserStandard.Id);
+            var client = CreateSystemUserClient(Fixture, TestEntities.SystemUserStandard.Id, consumerOrgNo: consumerOrgNo);
             var packageUrn = PackageConstants.Agriculture.Entity.Urn;
 
             var response = await client.PostAsync(
-                $"{Route}/package?to={TestData.BakerJohnsen.Id}&package={packageUrn}",
+                $"{Route}/package?organization={TestData.BakerJohnsen.Entity.OrganizationIdentifier}&package={packageUrn}",
                 null,
                 TestContext.Current.CancellationToken);
 
@@ -66,17 +101,62 @@ public class SystemUserRequestControllerTest
         }
 
         [Fact]
-        public async Task SystemUserAsRecipient_IsHardBlocked_ReturnsForbidden()
+        public async Task ConsumerNotPublicSector_IsRejected_ReturnsForbidden()
+        {
+            var client = CreateSystemUserClient(Fixture, TestEntities.SystemUserStandard.Id, consumerOrgNo: TestData.DumboAdventures.Entity.OrganizationIdentifier);
+            var packageUrn = PackageConstants.Agriculture.Entity.Urn;
+
+            var response = await client.PostAsync(
+                $"{Route}/package?organization={TestData.BakerJohnsen.Entity.OrganizationIdentifier}&package={packageUrn}",
+                null,
+                TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task MissingConsumerClaim_IsRejected_ReturnsForbidden()
+        {
+            var client = CreateSystemUserClient(Fixture, TestEntities.SystemUserStandard.Id, consumerOrgNo: null);
+            var packageUrn = PackageConstants.Agriculture.Entity.Urn;
+
+            var response = await client.PostAsync(
+                $"{Route}/package?organization={TestData.BakerJohnsen.Entity.OrganizationIdentifier}&package={packageUrn}",
+                null,
+                TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        }
+
+        [Theory]
+        [InlineData("12345678")]
+        [InlineData("913456786")]
+        [InlineData("a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d")]
+        public async Task InvalidOrganizationNumber_ReturnsBadRequest(string organization)
         {
             var client = CreateSystemUserClient(Fixture, TestEntities.SystemUserStandard.Id);
             var packageUrn = PackageConstants.Agriculture.Entity.Urn;
 
             var response = await client.PostAsync(
-                $"{Route}/package?to={TestEntities.SystemUserClient.Id}&package={packageUrn}",
+                $"{Route}/package?organization={organization}&package={packageUrn}",
                 null,
                 TestContext.Current.CancellationToken);
 
-            Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task UnknownOrganization_ReturnsBadRequest()
+        {
+            var client = CreateSystemUserClient(Fixture, TestEntities.SystemUserStandard.Id);
+            var packageUrn = PackageConstants.Agriculture.Entity.Urn;
+
+            var response = await client.PostAsync(
+                $"{Route}/package?organization=940000009&package={packageUrn}",
+                null,
+                TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         }
 
         [Fact]
@@ -88,7 +168,7 @@ public class SystemUserRequestControllerTest
             var packageUrn = PackageConstants.Agriculture.Entity.Urn;
 
             var response = await client.PostAsync(
-                $"{Route}/package?to={TestData.BakerJohnsen.Id}&package={packageUrn}",
+                $"{Route}/package?organization={TestData.DumboAdventures.Entity.OrganizationIdentifier}&package={packageUrn}",
                 null,
                 TestContext.Current.CancellationToken);
 
@@ -119,7 +199,7 @@ public class SystemUserRequestControllerTest
             var packageUrn = PackageConstants.Agriculture.Entity.Urn;
 
             var response = await client.PostAsync(
-                $"{Route}/package?to={TestData.BakerJohnsen.Id}&package={packageUrn}",
+                $"{Route}/package?organization={TestData.BakerJohnsen.Entity.OrganizationIdentifier}&package={packageUrn}",
                 null,
                 TestContext.Current.CancellationToken);
 
@@ -149,7 +229,7 @@ public class SystemUserRequestControllerTest
             var packageUrn = PackageConstants.Agriculture.Entity.Urn;
 
             var response = await client.PostAsync(
-                $"{Route}/package?to={TestData.BakerJohnsen.Id}&package={packageUrn}",
+                $"{Route}/package?organization={TestData.BakerJohnsen.Entity.OrganizationIdentifier}&package={packageUrn}",
                 null,
                 TestContext.Current.CancellationToken);
 

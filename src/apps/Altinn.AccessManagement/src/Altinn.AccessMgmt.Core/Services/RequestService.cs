@@ -188,15 +188,29 @@ public class RequestService(
     }
 
     /// <inheritdoc/>
-    public async Task<Result<RequestDto>> CreateSystemUserPackageRequest(Guid toId, Guid systemUserId, Guid roleId, string package, RequestStatus status = RequestStatus.Pending, CancellationToken ct = default)
+    public async Task<Result<RequestDto>> CreateSystemUserPackageRequest(string organizationNo, Guid systemUserId, string consumerOrgNo, Guid roleId, string package, RequestStatus status = RequestStatus.Pending, CancellationToken ct = default)
     {
-        var systemUserProblem = await ValidateSystemUserSender(systemUserId, toId, ct);
+        var systemUserProblem = await ValidateSystemUserSender(systemUserId, consumerOrgNo, ct);
         if (systemUserProblem is { } senderGuard)
         {
             return senderGuard;
         }
 
-        return await CreatePackageRequestInternal(toId, systemUserId, systemUserId, roleId, package, status, ct);
+        var organizationTypeId = EntityTypeConstants.Organization.Id;
+        var toId = await db.Entities.AsNoTracking()
+            .Where(e => e.OrganizationIdentifier == organizationNo && e.TypeId == organizationTypeId)
+            .Select(e => (Guid?)e.Id)
+            .FirstOrDefaultAsync(ct);
+
+        if (toId is null)
+        {
+            ValidationErrorBuilder errors = default;
+            errors.Add(ValidationErrors.EntityNotExists, "QUERY/organization");
+            errors.TryBuild(out var notFound);
+            return notFound;
+        }
+
+        return await CreatePackageRequestInternal(toId.Value, systemUserId, systemUserId, roleId, package, status, ct);
     }
 
     private async Task<Result<RequestDto>> CreatePackageRequestInternal(Guid toId, Guid fromId, Guid byId, Guid roleId, string package, RequestStatus status, CancellationToken ct)
@@ -260,15 +274,16 @@ public class RequestService(
 
     /// <summary>
     /// Enforces the system-user sender rules for the dedicated system-user request path:
-    /// the requester (<paramref name="fromId"/>) must resolve to a system user entity, the
-    /// <see cref="AccessMgmtFeatureFlags.EnableSystemUserRequests"/> feature must be enabled and the
-    /// recipient (<paramref name="toId"/>) must be an organization.
+    /// the <see cref="AccessMgmtFeatureFlags.EnableSystemUserRequests"/> feature must be enabled, the
+    /// requester (<paramref name="fromId"/>) must resolve to a system user entity and the consumer
+    /// organization (<paramref name="consumerOrgNo"/>) must be a KOMM, FYLK or STAT organization.
     /// </summary>
     /// <returns>A <see cref="Problems.SystemUserRequestNotAllowed"/> descriptor when the request is not allowed; otherwise <c>null</c>.</returns>
-    private async Task<ProblemDescriptor?> ValidateSystemUserSender(Guid fromId, Guid toId, CancellationToken ct)
+    private async Task<ProblemDescriptor?> ValidateSystemUserSender(Guid fromId, string consumerOrgNo, CancellationToken ct)
     {
         var systemUserTypeId = EntityTypeConstants.SystemUser.Id;
         var organizationTypeId = EntityTypeConstants.Organization.Id;
+        Guid[] allowedConsumerVariants = [EntityVariantConstants.KOMM.Id, EntityVariantConstants.FYLK.Id, EntityVariantConstants.STAT.Id];
 
         var featureEnabled = await featureManager.IsEnabledAsync(AccessMgmtFeatureFlags.EnableSystemUserRequests);
         if (!featureEnabled)
@@ -284,10 +299,10 @@ public class RequestService(
             return Problems.SystemUserRequestNotAllowed;
         }
 
-        // A system user may only send requests to an organization.
-        var toIsOrganization = await db.Entities.AsNoTracking()
-            .AnyAsync(e => e.Id == toId && e.TypeId == organizationTypeId, ct);
-        if (!toIsOrganization)
+        // Only system users owned by public sector consumers (KOMM, FYLK, STAT) may send requests.
+        var consumerIsAllowed = !string.IsNullOrEmpty(consumerOrgNo) && await db.Entities.AsNoTracking()
+            .AnyAsync(e => e.OrganizationIdentifier == consumerOrgNo && e.TypeId == organizationTypeId && allowedConsumerVariants.Contains(e.VariantId), ct);
+        if (!consumerIsAllowed)
         {
             return Problems.SystemUserRequestNotAllowed;
         }

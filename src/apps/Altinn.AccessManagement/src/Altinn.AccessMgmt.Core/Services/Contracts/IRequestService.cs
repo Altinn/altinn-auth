@@ -57,10 +57,11 @@ public interface IRequestService
     /// <summary>
     /// Creates a new package request where the requester (from-party) is a system user.
     /// The <paramref name="systemUserId"/> must resolve to a system user entity, the
-    /// <see cref="AccessMgmtFeatureFlags.EnableSystemUserRequests"/> feature must be enabled and the
-    /// recipient (<paramref name="toId"/>) must be an organization.
+    /// <see cref="AccessMgmtFeatureFlags.EnableSystemUserRequests"/> feature must be enabled, the
+    /// consumer organization (<paramref name="consumerOrgNo"/>) must be a public sector organization
+    /// (KOMM, FYLK or STAT) and the recipient is the organization identified by <paramref name="organizationNo"/>.
     /// </summary>
-    Task<Result<RequestDto>> CreateSystemUserPackageRequest(Guid toId, Guid systemUserId, Guid roleId, string package, RequestStatus status = RequestStatus.Pending, CancellationToken ct = default);
+    Task<Result<RequestDto>> CreateSystemUserPackageRequest(string organizationNo, Guid systemUserId, string consumerOrgNo, Guid roleId, string package, RequestStatus status = RequestStatus.Pending, CancellationToken ct = default);
 
     /// <summary>
     /// Updates the status of a request.
