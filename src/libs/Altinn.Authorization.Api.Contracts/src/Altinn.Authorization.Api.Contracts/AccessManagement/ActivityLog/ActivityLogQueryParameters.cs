@@ -17,6 +17,14 @@ public class ActivityLogQueryParameters
     public Guid Party { get; set; }
 
     /// <summary>
+    /// How the party anchors the entries: from (access given) or to (access received).
+    /// Required on the authorized endpoints; the party overwrites the corresponding filter
+    /// field, and the directional scope policies key on this parameter. Via returns with the
+    /// client-administration needs.
+    /// </summary>
+    public ActivityLogDirection? Direction { get; set; }
+
+    /// <summary>
     /// Activity type catalog ids, each expanding to its whole type/subtype/trigger/status
     /// combination; combinations are OR'ed.
     /// </summary>

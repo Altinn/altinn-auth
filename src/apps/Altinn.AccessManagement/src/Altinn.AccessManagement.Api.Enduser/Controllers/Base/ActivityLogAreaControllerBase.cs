@@ -109,10 +109,10 @@ public static class ActivityLogAreas
 /// <summary>
 /// Shared implementation for the per-area activity log endpoints. Every area exposes the same
 /// four routes over the same query surface: the log itself, filter value lookups, the fields
-/// the area offers, and the catalog entries it accepts. The authorized endpoints use the same
-/// anchor convention as the connections endpoints — from=party (access given) or to=party
-/// (access received) — because the directional scope policies and the person access-manager
-/// rule key on those raw parameters. The two discovery endpoints are static, anonymous and
+/// the area offers, and the catalog entries it accepts. party and direction (from/to) are
+/// required on the authorized endpoints — the directional scope policies and the person
+/// access-manager rule key on the direction parameter, so from/to stay plain counterpart
+/// filters and may equal the party. The two discovery endpoints are static, anonymous and
 /// cached.
 /// </summary>
 public abstract class ActivityLogAreaControllerBase(IActivityLogService activityLogService, ActivityLogArea area) : ControllerBase
@@ -122,8 +122,8 @@ public abstract class ActivityLogAreaControllerBase(IActivityLogService activity
     private const int MaxPageSize = 1000;
 
     /// <summary>
-    /// Get the area's activity log entries for the party, newest first. The query must be
-    /// anchored with from=party (access given) or to=party (access received).
+    /// Get the area's activity log entries for the party, newest first. direction is
+    /// required: from (access given by the party) or to (access received by the party).
     /// </summary>
     [HttpGet]
     [ProducesResponseType<PaginatedResult<ActivityLogDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
@@ -224,23 +224,17 @@ public abstract class ActivityLogAreaControllerBase(IActivityLogService activity
             return false;
         }
 
-        // Same anchor convention as the connections endpoints, because the directional scope
-        // policies and the person access-manager rule key on the raw party/from/to query
-        // parameters; the non-anchoring side stays a counterpart filter. Anchoring both sides
-        // at once is rejected: the scope policy passes on either directional scope when both
-        // of its rules match, so the direction chosen here could be one the caller's scope
-        // does not cover once an own-field lookup drops the counterpart filter.
-        var fromIsParty = query.From is [var fromParty] && fromParty == query.Party;
-        var toIsParty = query.To is [var toParty] && toParty == query.Party;
-
-        if (fromIsParty == toIsParty)
+        // The directional scope policies and the person access-manager rule key on this
+        // parameter, so from/to stay plain counterpart filters and may equal the party
+        // (self-events); the service overwrites the anchored side with the party.
+        if (query.Direction is not (ActivityLogDirection.From or ActivityLogDirection.To))
         {
-            ModelState.AddModelError("from", "The query must be anchored with exactly one of from=party (access given) or to=party (access received).");
+            ModelState.AddModelError("direction", "direction is required and must be 'from' or 'to'.");
             error = ValidationProblem(ModelState);
             return false;
         }
 
-        direction = fromIsParty ? ActivityLogDirection.From : ActivityLogDirection.To;
+        direction = query.Direction.Value;
 
         if (!ActivityLogQueryMapper.TryResolveTypeKeys(query.TypeId, out var activityTypeKeys, out var unknownTypeId))
         {

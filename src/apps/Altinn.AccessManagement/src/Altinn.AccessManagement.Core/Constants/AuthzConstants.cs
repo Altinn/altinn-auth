@@ -226,11 +226,20 @@
         public const string SCOPE_ENDUSER_MASKINPORTENCONSUMERS_WRITE = "altinn:accessmanagement/enduser:maskinportenconsumers.write";
 
         /// <summary>
-        /// Policy tag for authorizing enduser maskinporten activity log read access per anchor
-        /// direction: the supplier read scope for from=party, the consumer read scope for
-        /// to=party, mirroring the neighboring suppliers/consumers endpoints.
+        /// Policy tag for authorizing enduser maskinporten activity log read access per
+        /// direction: the supplier read scope for direction=from, the consumer read scope for
+        /// direction=to, mirroring the neighboring suppliers/consumers endpoints.
         /// </summary>
         public const string POLICY_ENDUSER_MASKINPORTEN_BIDIRECTIONAL_READ = "POLICY_ENDUSER_MASKINPORTEN_BIDIRECTIONAL_READ";
+
+        /// <summary>
+        /// Policy tag for authorizing enduser connections activity log read access per
+        /// direction: the to-others read scope for direction=from (access given), the
+        /// from-others read scope for direction=to (access received), with the person
+        /// access-manager rule — the same model as the connections endpoints, keyed on the
+        /// activity log's direction parameter.
+        /// </summary>
+        public const string POLICY_ENDUSER_CONNECTIONS_ACTIVITYLOG_READ = "POLICY_ENDUSER_CONNECTIONS_ACTIVITYLOG_READ";
 
         /// <summary>
         /// Scope giving access to getting authorized parties for a given subject.

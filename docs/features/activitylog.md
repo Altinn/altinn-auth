@@ -47,9 +47,9 @@ The enduser surface is split into three **areas**, each mounted under its domain
 
 | Area root | Events | Feature flag | Auth |
 |---|---|---|---|
-| `…/enduser/connections/activitylog` | Assignment + Delegation (Maskinporten schema events excluded) | `AccessManagement.Enduser.ConnectionsActivityLogApi` | The connections endpoints' own policies (conditional directional scopes + the person access-manager rule) + access-management party read |
+| `…/enduser/connections/activitylog` | Assignment + Delegation (Maskinporten schema events excluded) | `AccessManagement.Enduser.ConnectionsActivityLogApi` | The connections model keyed on `direction`: directional read scopes + the person access-manager rule, + access-management party read |
 | `…/enduser/request/activitylog` | Access requests incl. package/resource children and status changes | `AccessManagement.Enduser.RequestActivityLogApi` | The existing requests read scopes + access-management party read, like the neighboring request endpoints |
-| `…/enduser/maskinporten/activitylog` | Maskinporten schema delegations (the Supplier-role slice) | `AccessManagement.Enduser.MaskinportenActivityLogApi` | Directional maskinporten scopes like the neighboring endpoints — supplier read for `from=party`, consumer read for `to=party` — + the maskinporten PDP read policy |
+| `…/enduser/maskinporten/activitylog` | Maskinporten schema delegations (the Supplier-role slice) | `AccessManagement.Enduser.MaskinportenActivityLogApi` | Directional maskinporten scopes like the neighboring endpoints — supplier read for `direction=from`, consumer read for `direction=to` — + the maskinporten PDP read policy |
 
 Every area exposes the same four routes:
 
@@ -64,7 +64,7 @@ Every area exposes the same four routes:
 
 Returns the area's log entries for the party, ordered newest first (`when` descending, id as tiebreaker).
 
-**Anchoring:** `party` is **required**, and the query must be anchored the same way as the connections endpoints: **exactly one** of `from=party` (access given) or `to=party` (access received); the other of the two stays a counterpart filter, and anchoring both sides at once gives `400` (the directional scope check would otherwise be ambiguous). The directional scope policies and the person access-manager rule key on exactly these raw parameters, which is what lets the areas reuse the neighboring policies unchanged. There is no `direction` parameter — the from/to anchor is the direction — and `via` anchoring returns with the client-administration needs.
+**Anchoring:** `party` and `direction` are both **required**. `direction` is `from` (access given by the party) or `to` (access received by the party) — the directional scope policies and the person access-manager rule key on this parameter, and `via` returns with the client-administration needs. `from` and `to` are plain counterpart filters: they may equal the party (self-events are a valid query), and the service overwrites the anchored side with the party.
 
 **Filters** (all repeatable; values within one parameter are OR'ed, different parameters are AND'ed):
 
@@ -86,7 +86,7 @@ Returns the area's log entries for the party, ordered newest first (`when` desce
 **Response items** (`ActivityLogDto`): the event dimensions (`type`, `subtype`, `trigger`, `status`), `when`, actor and channel (`byId`/`byName`, `sourceId`/`sourceName`), `operationId`, the relation with name snapshots (`fromId`/`fromName`/`fromType`, `toId`/`toName`/`toType`, `viaId`/`viaName`/`viaType`, `roleId`/`roleName`, `viaRoleId`/`viaRoleName`), the object (`packageId`/`packageName`, `resourceId`/`resourceName`, `instanceId`), row identity (`itemId`, `parentId`), a `details` JSON blob (previous status, request action, provenance), and `activityTypeId` — the catalog entry resolved with the most-specific-wins rule (exact status match, else the status-null fallback), so clients can display catalog name/description without mapping the raw dimensions themselves.
 
 ```
-GET /accessmanagement/api/v2/enduser/connections/activitylog?party={party}&from={party}&typeId={guid}&after=2026-01-01T00:00:00Z&pageSize=50
+GET /accessmanagement/api/v2/enduser/connections/activitylog?party={party}&direction=from&typeId={guid}&after=2026-01-01T00:00:00Z&pageSize=50
 ```
 
 ### 2. Filter value endpoints — `GET {area}/filter/{field}`
@@ -95,7 +95,7 @@ GET /accessmanagement/api/v2/enduser/connections/activitylog?party={party}&from=
 
 Returns the distinct `(id, name)` pairs occurring in the party's slice of the area for one field, so filter pickers only offer values that actually give hits. `field` must be one of the fields the area offers (`GET {area}/filter/fields`) — e.g. the maskinporten area offers no `role` field, since the Supplier role is pinned; anything else gives `400`.
 
-- **Same filter surface as the main query** — party, the from/to anchor and all filter parameters apply, so the picker narrows along with the search the user has already built.
+- **Same filter surface as the main query** — party, direction and all filter parameters apply, so the picker narrows along with the search the user has already built.
 - **Own-field rule:** the filter for the field being looked up is ignored (a lookup on `package` disregards any `package` filter), so users can extend a multi-select without the list collapsing to their current choices. The `party` anchor is never ignored.
 - **`term`:** case-insensitive substring match on name only.
 - **`orderBy`:** `Name` (default, alphabetical — stable across pages) or `When` (newest occurrence per value first — new events can shift pages).
@@ -105,7 +105,7 @@ Returns the distinct `(id, name)` pairs occurring in the party's slice of the ar
 - **Paging and envelope:** identical to the main query (`pageSize`/`pageNo`, `links.next`).
 
 ```
-GET /accessmanagement/api/v2/enduser/connections/activitylog/filter/package?party={party}&from={party}&term=skatt&pageSize=20
+GET /accessmanagement/api/v2/enduser/connections/activitylog/filter/package?party={party}&direction=from&term=skatt&pageSize=20
 ```
 
 ### 3. Area discovery — `GET {area}/filter/fields` and `GET {area}/types`
@@ -121,7 +121,7 @@ GET /accessmanagement/api/v2/enduser/maskinporten/activitylog/types
 ### Cross-cutting behavior
 
 - **Maskinporten schema events live only in the maskinporten area, and the two slices never mix:** the Supplier role is used exclusively for Maskinporten schema delegations, and the service itself has two disjoint surfaces — the regular one always excludes the role (connections and request), the maskinporten one serves only it. There is no opt-in flag; no caller combination can produce a mixed result.
-- **Validation:** empty `party`, a missing from/to anchor, a supplied `direction`, `typeId` values outside the area, and filter fields the area does not offer all return `400` with problem details. Note that on the connections area the scope policy keys on the same anchor parameters, so an unanchored query is rejected there with `403` before validation runs — the same characteristic the connections endpoints have.
+- **Validation:** empty `party`, missing/`via` `direction`, `typeId` values outside the area, and filter fields the area does not offer all return `400` with problem details. The directional scope policies key on the same `direction` parameter, so on the connections and maskinporten areas a query without a valid direction is rejected with `403` before validation runs.
 - **Feature flags:** one per area — `AccessManagement.Enduser.{Connections|Request|Maskinporten}ActivityLogApi` — all declared in the app's own terraform next to the other AccessManagement flags (created disabled; toggled per environment in App Configuration). The portal frontend uses these same area endpoints; there is no separate internal surface.
 - **Ordering:** `(when desc, id desc)` — a total, stable order. Page traversal uses OFFSET, so events arriving mid-traversal can shift rows between pages; pin the window with `before` (and `after`) when a stable walk through a live log matters.
 - **No joins at read time:** every name in the response is a denormalized snapshot from the log table itself; the log is served from a single range-partitioned table.

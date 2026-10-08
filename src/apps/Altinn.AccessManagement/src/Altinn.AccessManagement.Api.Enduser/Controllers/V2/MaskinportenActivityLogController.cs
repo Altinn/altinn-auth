@@ -12,8 +12,8 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers.V2;
 /// <summary>
 /// Activity log for the maskinporten area: Maskinporten schema delegation events (the
 /// Supplier-role slice of the log, hidden from every other area). Uses the same scopes as
-/// the other maskinporten endpoints, per anchor direction: the supplier read scope for
-/// from=party, the consumer read scope for to=party.
+/// the other maskinporten endpoints, per direction: the supplier read scope for
+/// direction=from, the consumer read scope for direction=to.
 /// </summary>
 [ApiController]
 [ApiVersion(2.0)]
