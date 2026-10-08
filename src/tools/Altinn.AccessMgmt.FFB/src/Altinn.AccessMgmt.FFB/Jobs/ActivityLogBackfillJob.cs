@@ -22,9 +22,10 @@ public record ActivityLogBackfillOptions(string Source = "all", int BatchSize = 
 /// (live + history ordered by validfrom): the first version becomes a Created event, a history
 /// version whose successor changes a trigger-relevant value becomes an Updated event, and a
 /// final history version with no live row becomes a Deleted event — the same semantics as the
-/// database triggers. The events land in a session temp table with names resolved through the
-/// dbo.activitylog_* helper functions, and are then copied into dbo.activitylog in small
-/// throttled batches. Only events strictly before the cutoff are staged, and an anti-join on
+/// database triggers. The events land in a session temp table with names resolved as of each
+/// event's time through session-local as-of resolvers (see <c>AsOfResolverSql</c>), so
+/// backfilled rows carry event-time name snapshots like trigger-written rows, and are then
+/// copied into dbo.activitylog in small throttled batches. Only events strictly before the cutoff are staged, and an anti-join on
 /// (itemid, trigger, when) skips events that already exist, so the job is idempotent and can be
 /// stopped and resumed freely. Progress (latest event time copied) is written back to
 /// dbo.activitylogbackfillprogress after every batch, and completedat marks a finished source.
@@ -34,7 +35,8 @@ public record ActivityLogBackfillOptions(string Source = "all", int BatchSize = 
 /// legacy scripts) do not refresh the audit columns, so for those versions the history only
 /// knows the original creator — the true updater identity was never persisted and cannot be
 /// backfilled. Version chains are ordered by (audit_validfrom, audit_validto) for the same
-/// reason: raw-SQL updates leave audit_validfrom unchanged across versions.
+/// reason: raw-SQL updates leave audit_validfrom unchanged across versions — and the as-of
+/// name resolution inherits the same imprecision for rows whose history was written that way.
 /// </remarks>
 public static class ActivityLogBackfillJob
 {
@@ -691,6 +693,7 @@ public static class ActivityLogBackfillJob
         """;
 
     private static string Stage(string table, string dataColumns, string leadColumns, string eventBranches) => $"""
+        {AsOfResolverSql}
         CREATE TEMP TABLE alstage AS
         {VersionChain(table, dataColumns, leadColumns)},
         events AS (
@@ -698,23 +701,96 @@ public static class ActivityLogBackfillJob
         )
         SELECT row_number() OVER (ORDER BY e.ev_when, e.itemid, e.ev_trigger) AS rn,
                e.ev_trigger, e.ev_when, e.byid,
-               dbo.activitylog_entity_name(e.byid) AS byname,
+               pg_temp.al_entity_name_at(e.byid, e.ev_when) AS byname,
                e.sourceid, e.operationid, e.type, e.subtype, e.status,
                e.fromid, f.o_name AS fromname, f.o_type AS fromtype,
                e.toid, t.o_name AS toname, t.o_type AS totype,
                e.viaid, via.o_name AS vianame, via.o_type AS viatype,
-               e.roleid, dbo.activitylog_role_name(e.roleid) AS rolename,
-               e.viaroleid, dbo.activitylog_role_name(e.viaroleid) AS viarolename,
-               e.packageid, dbo.activitylog_package_name(e.packageid) AS packagename,
-               e.resourceid, dbo.activitylog_resource_name(e.resourceid) AS resourcename,
+               e.roleid, pg_temp.al_role_name_at(e.roleid, e.ev_when) AS rolename,
+               e.viaroleid, pg_temp.al_role_name_at(e.viaroleid, e.ev_when) AS viarolename,
+               e.packageid, pg_temp.al_package_name_at(e.packageid, e.ev_when) AS packagename,
+               e.resourceid, pg_temp.al_resource_name_at(e.resourceid, e.ev_when) AS resourcename,
                e.instanceid, e.itemid, e.parentid, e.details
         FROM events e
-        CROSS JOIN LATERAL dbo.activitylog_entity_info(e.fromid) f
-        CROSS JOIN LATERAL dbo.activitylog_entity_info(e.toid) t
-        CROSS JOIN LATERAL dbo.activitylog_entity_info(e.viaid) via
+        CROSS JOIN LATERAL pg_temp.al_entity_info_at(e.fromid, e.ev_when) f
+        CROSS JOIN LATERAL pg_temp.al_entity_info_at(e.toid, e.ev_when) t
+        CROSS JOIN LATERAL pg_temp.al_entity_info_at(e.viaid, e.ev_when) via
         WHERE e.ev_when < @cutoff
           AND NOT EXISTS (
               SELECT 1 FROM dbo.activitylog al
               WHERE al.itemid = e.itemid AND al."trigger" = e.ev_trigger AND al."when" = e.ev_when);
+        """;
+
+    // Session-local as-of name resolvers for staging: the version with the greatest
+    // audit_validfrom at or before the event time wins (live row or its history twin); when
+    // every version starts after the event (rows written later, raw-SQL audit quirks), the
+    // earliest version is used. pg_temp on purpose: the dbo.activitylog_* resolvers stay
+    // timestamp-free because the triggers run inside the changing transaction, where the live
+    // row already is the event-time state.
+    private const string AsOfResolverSql = """
+        CREATE OR REPLACE FUNCTION pg_temp.al_entity_info_at(p_id uuid, p_at timestamptz, OUT o_name text, OUT o_type text)
+        LANGUAGE plpgsql STABLE AS $fn$
+        BEGIN
+            IF p_id IS NULL THEN
+                RETURN;
+            END IF;
+
+            SELECT v.name, et.name INTO o_name, o_type
+            FROM (
+                SELECT e.name, e.typeid, e.audit_validfrom FROM dbo.entity e WHERE e.id = p_id
+                UNION ALL
+                SELECT h.name, h.typeid, h.audit_validfrom FROM dbo_history.auditentity h WHERE h.id = p_id
+            ) v
+            LEFT JOIN dbo.entitytype et ON et.id = v.typeid
+            ORDER BY (v.audit_validfrom <= p_at) DESC,
+                     CASE WHEN v.audit_validfrom <= p_at THEN v.audit_validfrom END DESC,
+                     v.audit_validfrom ASC
+            LIMIT 1;
+        END;
+        $fn$;
+
+        CREATE OR REPLACE FUNCTION pg_temp.al_entity_name_at(p_id uuid, p_at timestamptz)
+        RETURNS text LANGUAGE sql STABLE STRICT AS $fn$
+            SELECT (pg_temp.al_entity_info_at(p_id, p_at)).o_name;
+        $fn$;
+
+        CREATE OR REPLACE FUNCTION pg_temp.al_role_name_at(p_id uuid, p_at timestamptz)
+        RETURNS text LANGUAGE sql STABLE STRICT AS $fn$
+            SELECT v.name FROM (
+                SELECT r.name, r.audit_validfrom FROM dbo.role r WHERE r.id = p_id
+                UNION ALL
+                SELECT h.name, h.audit_validfrom FROM dbo_history.auditrole h WHERE h.id = p_id
+            ) v
+            ORDER BY (v.audit_validfrom <= p_at) DESC,
+                     CASE WHEN v.audit_validfrom <= p_at THEN v.audit_validfrom END DESC,
+                     v.audit_validfrom ASC
+            LIMIT 1;
+        $fn$;
+
+        CREATE OR REPLACE FUNCTION pg_temp.al_package_name_at(p_id uuid, p_at timestamptz)
+        RETURNS text LANGUAGE sql STABLE STRICT AS $fn$
+            SELECT v.name FROM (
+                SELECT p.name, p.audit_validfrom FROM dbo.package p WHERE p.id = p_id
+                UNION ALL
+                SELECT h.name, h.audit_validfrom FROM dbo_history.auditpackage h WHERE h.id = p_id
+            ) v
+            ORDER BY (v.audit_validfrom <= p_at) DESC,
+                     CASE WHEN v.audit_validfrom <= p_at THEN v.audit_validfrom END DESC,
+                     v.audit_validfrom ASC
+            LIMIT 1;
+        $fn$;
+
+        CREATE OR REPLACE FUNCTION pg_temp.al_resource_name_at(p_id uuid, p_at timestamptz)
+        RETURNS text LANGUAGE sql STABLE STRICT AS $fn$
+            SELECT v.name FROM (
+                SELECT r.name, r.audit_validfrom FROM dbo.resource r WHERE r.id = p_id
+                UNION ALL
+                SELECT h.name, h.audit_validfrom FROM dbo_history.auditresource h WHERE h.id = p_id
+            ) v
+            ORDER BY (v.audit_validfrom <= p_at) DESC,
+                     CASE WHEN v.audit_validfrom <= p_at THEN v.audit_validfrom END DESC,
+                     v.audit_validfrom ASC
+            LIMIT 1;
+        $fn$;
         """;
 }

@@ -26,7 +26,7 @@ The migration creates all of this up front, including monthly partitions 24 mont
 
 ### History and rollout
 
-A backfill job generates events from existing data, with a read-only analysis mode first (PROD ≈ 86.6 million events, roughly 50–80 GB — manageable). A manual install/rollback script installs the whole schema in test environments without EF migration bookkeeping, so triggers, analysis and backfill can be tried at scale before the real migration ships; guards refuse both operations in any EF-managed environment.
+A backfill job generates events from existing data, with a read-only analysis mode first (PROD ≈ 86.6 million events, roughly 50–80 GB — manageable). Names on backfilled events are resolved **as of each event's time** from the audit history (the version valid at the event wins), so they carry the same point-in-time snapshots as trigger-written events — with the precision the audit history itself has (raw-SQL writers that never refreshed the audit columns stay imprecise). A manual install/rollback script installs the whole schema in test environments without EF migration bookkeeping, so triggers, analysis and backfill can be tried at scale before the real migration ships; guards refuse both operations in any EF-managed environment.
 
 ### Dogfooding
 

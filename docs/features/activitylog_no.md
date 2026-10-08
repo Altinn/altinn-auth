@@ -26,7 +26,7 @@ Migreringen oppretter alt dette på forhånd, inkludert månedlige partisjoner 2
 
 ### Historikk og utrulling
 
-En backfill-jobb genererer hendelser fra eksisterende data, med en read-only analysemodus først (PROD ≈ 86,6 millioner hendelser, omtrent 50–80 GB — håndterbart). Et manuelt install-/rollback-skript installerer hele skjemaet i testmiljøer uten EF-migreringsbokføring, slik at triggere, analyse og backfill kan prøves i stor skala før den ekte migreringen shippes; vakter avviser begge operasjonene i ethvert EF-forvaltet miljø.
+En backfill-jobb genererer hendelser fra eksisterende data, med en read-only analysemodus først (PROD ≈ 86,6 millioner hendelser, omtrent 50–80 GB — håndterbart). Navn på backfillede hendelser løses opp **per hendelsestidspunkt** fra audit-historikken (versjonen som gjaldt ved hendelsen vinner), så de bærer samme punkt-i-tid-snapshots som trigger-skrevne hendelser — med den presisjonen audit-historikken selv har (raw-SQL-skrivere som aldri oppdaterte audit-kolonnene forblir upresise). Et manuelt install-/rollback-skript installerer hele skjemaet i testmiljøer uten EF-migreringsbokføring, slik at triggere, analyse og backfill kan prøves i stor skala før den ekte migreringen shippes; vakter avviser begge operasjonene i ethvert EF-forvaltet miljø.
 
 ### Dogfooding
 
