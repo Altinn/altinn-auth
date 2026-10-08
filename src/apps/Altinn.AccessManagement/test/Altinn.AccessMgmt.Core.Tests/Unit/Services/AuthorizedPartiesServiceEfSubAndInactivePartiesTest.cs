@@ -1,5 +1,7 @@
 using Altinn.AccessManagement.Core.Models;
+using Altinn.AccessManagement.Core.Models.Profile;
 using Altinn.AccessManagement.Core.Services;
+using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.Core.Appsettings;
 using Altinn.AccessMgmt.Core.Services;
@@ -72,21 +74,34 @@ public class AuthorizedPartiesServiceEfSubAndInactivePartiesTest
         IncludeInactiveParties = includeInactiveParties,
     };
 
-    private static (AuthorizedPartiesServiceEf Service, List<AuthorizedPartiesFilters> SentToRepo) CreateService(bool featureEnabled, List<ConnectionQueryExtendedRecord> connections)
+    private static readonly Entity UserSubject = new()
+    {
+        Id = Guid.NewGuid(),
+        Name = "Person",
+        TypeId = EntityTypeConstants.Person.Id,
+        VariantId = EntityVariantConstants.Person.Id,
+        UserId = 20001234,
+    };
+
+    private static (AuthorizedPartiesServiceEf Service, List<AuthorizedPartiesFilters> SentToRepo) CreateService(bool featureEnabled, List<ConnectionQueryExtendedRecord> connections, ProfileSettingPreference? profileSettings = null)
     {
         var sentToRepo = new List<AuthorizedPartiesFilters>();
 
         var repo = new Mock<IAuthorizedPartyRepoServiceEf>();
-        repo.Setup(r => r.GetConnectionsFromOthers(Subject.Id, It.IsAny<AuthorizedPartiesFilters>(), true, It.IsAny<CancellationToken>()))
+        repo.Setup(r => r.GetConnectionsFromOthers(It.IsAny<Guid>(), It.IsAny<AuthorizedPartiesFilters>(), true, It.IsAny<CancellationToken>()))
             .Callback<Guid, AuthorizedPartiesFilters, bool, CancellationToken>((_, filters, _, _) => sentToRepo.Add(filters))
             .ReturnsAsync(connections);
+
+        var contextRetrieval = new Mock<IContextRetrievalService>();
+        contextRetrieval.Setup(c => c.GetNewUserProfile(UserSubject.UserId!.Value, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(profileSettings == null ? null! : new NewUserProfile { UserId = UserSubject.UserId!.Value, ProfileSettingPreference = profileSettings });
 
         var featureManager = new Mock<IFeatureManager>();
         featureManager.Setup(f => f.IsEnabledAsync(AccessMgmtFeatureFlags.AuthorizedPartiesSubAndInactivePartiesFilters))
             .ReturnsAsync(featureEnabled);
 
         var service = new AuthorizedPartiesServiceEf(
-            contextRetrievalService: null!,
+            contextRetrievalService: contextRetrieval.Object,
             repoService: repo.Object,
             memoryCache: null!,
             lifecycleFeatures: new AppLifecycleFeatures(),
@@ -170,6 +185,70 @@ public class AuthorizedPartiesServiceEfSubAndInactivePartiesTest
         sent.IncludePartiesViaKeyRoles.Should().Be(AuthorizedPartiesIncludeFilter.True);
         sent.IncludeSubParties.Should().Be(AuthorizedPartiesIncludeFilter.False);
         sent.IncludeInactiveParties.Should().Be(AuthorizedPartiesIncludeFilter.False);
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task AutoForUser_ProfileSettingsDecideFilters(bool shouldShowSubEntities, bool shouldShowDeletedEntities)
+    {
+        var profile = new ProfileSettingPreference
+        {
+            ShowClientUnits = true,
+            ShouldShowSubEntities = shouldShowSubEntities,
+            ShouldShowDeletedEntities = shouldShowDeletedEntities,
+        };
+        var (service, sentToRepo) = CreateService(featureEnabled: true, [], profile);
+
+        await service.GetAuthorizedPartiesByEntity(UserSubject, Filters(AuthorizedPartiesIncludeFilter.Auto, AuthorizedPartiesIncludeFilter.Auto), TestContext.Current.CancellationToken);
+
+        var sent = sentToRepo.Should().ContainSingle().Which;
+        sent.IncludeSubParties.Should().Be(shouldShowSubEntities ? AuthorizedPartiesIncludeFilter.True : AuthorizedPartiesIncludeFilter.False);
+        sent.IncludeInactiveParties.Should().Be(shouldShowDeletedEntities ? AuthorizedPartiesIncludeFilter.True : AuthorizedPartiesIncludeFilter.False);
+
+        // And the resolved filters reach the ConnectionQuery as IncludeSubConnections and ExcludeDeleted
+        var queryFilter = AuthorizedPartyRepoServiceEf.BuildFromOthersFilter(UserSubject.Id, sent, enrichEntities: true, includeDelegationResources: false);
+        queryFilter.IncludeSubConnections.Should().Be(shouldShowSubEntities);
+        queryFilter.ExcludeDeleted.Should().Be(!shouldShowDeletedEntities);
+    }
+
+    [Fact]
+    public async Task AutoForUser_ProfileHidingSubEntities_LeavesOutSubunitWithDirectAccess()
+    {
+        var profile = new ProfileSettingPreference { ShowClientUnits = true, ShouldShowSubEntities = false, ShouldShowDeletedEntities = true };
+        var (service, _) = CreateService(featureEnabled: true, [Connection(MainUnit, ConnectionReason.Assignment), Connection(Subunit, ConnectionReason.Assignment)], profile);
+
+        var result = await service.GetAuthorizedPartiesByEntity(UserSubject, Filters(AuthorizedPartiesIncludeFilter.Auto, AuthorizedPartiesIncludeFilter.Auto), TestContext.Current.CancellationToken);
+
+        var mainUnit = result.Should().ContainSingle().Which;
+        mainUnit.Subunits.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task AutoForUser_ProfileShowingSubEntities_NestsSubunit()
+    {
+        var profile = new ProfileSettingPreference { ShowClientUnits = true, ShouldShowSubEntities = true, ShouldShowDeletedEntities = true };
+        var (service, _) = CreateService(featureEnabled: true, [Connection(MainUnit, ConnectionReason.Assignment), Connection(Subunit, ConnectionReason.Assignment)], profile);
+
+        var result = await service.GetAuthorizedPartiesByEntity(UserSubject, Filters(AuthorizedPartiesIncludeFilter.Auto, AuthorizedPartiesIncludeFilter.Auto), TestContext.Current.CancellationToken);
+
+        var mainUnit = result.Should().ContainSingle().Which;
+        mainUnit.Subunits.Should().ContainSingle(s => s.PartyUuid == Subunit.Id);
+    }
+
+    [Fact]
+    public async Task AutoForUser_FeatureDisabled_IgnoresProfileHidingSubAndDeletedEntities()
+    {
+        var profile = new ProfileSettingPreference { ShowClientUnits = true, ShouldShowSubEntities = false, ShouldShowDeletedEntities = false };
+        var (service, sentToRepo) = CreateService(featureEnabled: false, [], profile);
+
+        await service.GetAuthorizedPartiesByEntity(UserSubject, Filters(AuthorizedPartiesIncludeFilter.Auto, AuthorizedPartiesIncludeFilter.Auto), TestContext.Current.CancellationToken);
+
+        var sent = sentToRepo.Should().ContainSingle().Which;
+        sent.IncludeSubParties.Should().Be(AuthorizedPartiesIncludeFilter.True);
+        sent.IncludeInactiveParties.Should().Be(AuthorizedPartiesIncludeFilter.True);
     }
 
     [Theory]
