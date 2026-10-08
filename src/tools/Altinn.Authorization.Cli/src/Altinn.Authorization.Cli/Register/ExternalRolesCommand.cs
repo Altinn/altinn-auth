@@ -17,7 +17,7 @@ public class ExternalRolesCommand(CancellationToken ct)
     : BaseCommand<ExternalRolesCommand.Settings>(ct)
 {
     /// <inheritdoc/>
-    protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
+    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         await using var db = await DbHelper.Create(settings.ConnectionString!, cancellationToken);
         await using var cmd = db.CreateCommand(
