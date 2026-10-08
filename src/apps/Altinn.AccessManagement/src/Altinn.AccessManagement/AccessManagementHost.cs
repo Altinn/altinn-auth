@@ -419,7 +419,15 @@ internal static partial class AccessManagementHost
             })
             .AddPolicy(AuthzConstants.POLICY_ENDUSER_CONNECTIONS_WRITE_TOOTHERS, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE])))
             .AddPolicy(AuthzConstants.POLICY_ENDUSER_REQUESTS_READ, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_REQUESTS_READ])))
-            .AddPolicy(AuthzConstants.POLICY_ENDUSER_REQUESTS_WRITE, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_REQUESTS_WRITE])));
+            .AddPolicy(AuthzConstants.POLICY_ENDUSER_REQUESTS_WRITE, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_REQUESTS_WRITE])))
+            .AddPolicy(AuthzConstants.POLICY_ENDUSER_MASKINPORTEN_BIDIRECTIONAL_READ, policy =>
+            {
+                // from=party is the supplier perspective and to=party the consumer perspective,
+                // guarded by the same scopes as the neighboring suppliers/consumers endpoints.
+                policy.AddRequirementConditionalScope(
+                    new ConditionalScope(ConditionalScope.ToOthers, AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_MASKINPORTENSUPPLIERS_READ),
+                    new ConditionalScope(ConditionalScope.FromOthers, AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_MASKINPORTENCONSUMERS_READ));
+            });
 
         builder.Services.AddScoped<IAuthorizationHandler, AccessTokenHandler>();
         builder.Services.AddScoped<IAuthorizationHandler, ClaimAccessHandler>();

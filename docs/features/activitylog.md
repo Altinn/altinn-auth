@@ -49,7 +49,7 @@ The enduser surface is split into three **areas**, each mounted under its domain
 |---|---|---|---|
 | `…/enduser/connections/activitylog` | Assignment + Delegation (Maskinporten schema events excluded) | `AccessManagement.Enduser.ConnectionsActivityLogApi` | The connections endpoints' own policies (conditional directional scopes + the person access-manager rule) + access-management party read |
 | `…/enduser/request/activitylog` | Access requests incl. package/resource children and status changes | `AccessManagement.Enduser.RequestActivityLogApi` | The existing requests read scopes + access-management party read, like the neighboring request endpoints |
-| `…/enduser/maskinporten/activitylog` | Maskinporten schema delegations (the Supplier-role slice) | `AccessManagement.Enduser.MaskinportenActivityLogApi` | The maskinporten supplier scopes, like the neighboring maskinporten endpoints |
+| `…/enduser/maskinporten/activitylog` | Maskinporten schema delegations (the Supplier-role slice) | `AccessManagement.Enduser.MaskinportenActivityLogApi` | Directional maskinporten scopes like the neighboring endpoints — supplier read for `from=party`, consumer read for `to=party` — + the maskinporten PDP read policy |
 
 Every area exposes the same four routes:
 

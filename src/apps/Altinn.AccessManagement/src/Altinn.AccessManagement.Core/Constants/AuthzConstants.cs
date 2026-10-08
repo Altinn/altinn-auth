@@ -226,6 +226,13 @@
         public const string SCOPE_ENDUSER_MASKINPORTENCONSUMERS_WRITE = "altinn:accessmanagement/enduser:maskinportenconsumers.write";
 
         /// <summary>
+        /// Policy tag for authorizing enduser maskinporten activity log read access per anchor
+        /// direction: the supplier read scope for from=party, the consumer read scope for
+        /// to=party, mirroring the neighboring suppliers/consumers endpoints.
+        /// </summary>
+        public const string POLICY_ENDUSER_MASKINPORTEN_BIDIRECTIONAL_READ = "POLICY_ENDUSER_MASKINPORTEN_BIDIRECTIONAL_READ";
+
+        /// <summary>
         /// Scope giving access to getting authorized parties for a given subject.
         /// </summary>
         public const string SCOPE_AUTHORIZEDPARTIES_ENDUSERSYSTEM = "altinn:accessmanagement/authorizedparties";

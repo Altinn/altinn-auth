@@ -49,7 +49,7 @@ Sluttbrukerflaten er delt i tre **områder**, hvert montert under sin domenerot 
 |---|---|---|---|
 | `…/enduser/connections/activitylog` | Assignment + Delegation (maskinportenschema-hendelser ekskludert) | `AccessManagement.Enduser.ConnectionsActivityLogApi` | Connections-endepunktenes egne policies (betingede retningsscopes + personregelen for tilgangsstyrere) + tilgangsstyring-les for party |
 | `…/enduser/request/activitylog` | Tilgangsforespørsler inkl. pakke-/tjenestebarn og statusendringer | `AccessManagement.Enduser.RequestActivityLogApi` | De eksisterende requests-lesescopene + tilgangsstyring-les for party, som naboendepunktene for forespørsler |
-| `…/enduser/maskinporten/activitylog` | Maskinportenschema-delegeringer (Supplier-rolle-utsnittet) | `AccessManagement.Enduser.MaskinportenActivityLogApi` | Maskinporten supplier-scopene, som naboendepunktene |
+| `…/enduser/maskinporten/activitylog` | Maskinportenschema-delegeringer (Supplier-rolle-utsnittet) | `AccessManagement.Enduser.MaskinportenActivityLogApi` | Retningsstyrte maskinporten-scopes som naboendepunktene — supplier-les for `from=party`, consumer-les for `to=party` — + maskinporten-PDP-les |
 
 Hvert område eksponerer de samme fire rutene:
 
