@@ -64,6 +64,18 @@ public interface IRequestService
     Task<Result<RequestDto>> CreateSystemUserPackageRequest(string organizationNo, Guid systemUserId, string consumerOrgNo, Guid roleId, string package, RequestStatus status = RequestStatus.Pending, CancellationToken ct = default);
 
     /// <summary>
+    /// Gets the requests sent by a system user, optionally filtered by the recipient organization number.
+    /// Applies the same sender rules as <see cref="CreateSystemUserPackageRequest"/>.
+    /// </summary>
+    Task<Result<IEnumerable<RequestDto>>> GetSystemUserSentRequests(Guid systemUserId, string consumerOrgNo, string? toOrganizationNo, IEnumerable<RequestStatus> status, string? type, CancellationToken ct = default);
+
+    /// <summary>
+    /// Withdraws a request sent by a system user.
+    /// Applies the same sender rules as <see cref="CreateSystemUserPackageRequest"/>.
+    /// </summary>
+    Task<Result<RequestDto>> WithdrawSystemUserRequest(Guid systemUserId, string consumerOrgNo, Guid requestId, CancellationToken ct = default);
+
+    /// <summary>
     /// Updates the status of a request.
     /// </summary>
     Task<Result<RequestDto>> UpdateRequest(Guid partyUuid, Guid requestId, RequestStatus status, CancellationToken ct = default);

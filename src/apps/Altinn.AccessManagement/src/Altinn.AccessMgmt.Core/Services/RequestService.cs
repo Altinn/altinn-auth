@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessMgmt.Core.Appsettings;
 using Altinn.AccessMgmt.Core.Notifications;
@@ -196,21 +196,65 @@ public class RequestService(
             return senderGuard;
         }
 
-        var organizationTypeId = EntityTypeConstants.Organization.Id;
-        var toId = await db.Entities.AsNoTracking()
-            .Where(e => e.OrganizationIdentifier == organizationNo && e.TypeId == organizationTypeId)
-            .Select(e => (Guid?)e.Id)
-            .FirstOrDefaultAsync(ct);
+        var toId = await GetOrganizationIdByOrgNo(organizationNo, ct);
 
         if (toId is null)
         {
-            ValidationErrorBuilder errors = default;
-            errors.Add(ValidationErrors.EntityNotExists, "QUERY/organization");
-            errors.TryBuild(out var notFound);
-            return notFound;
+            return OrganizationNotFoundProblem();
         }
 
         return await CreatePackageRequestInternal(toId.Value, systemUserId, systemUserId, roleId, package, status, ct);
+    }
+
+    /// <inheritdoc/>
+    public async Task<Result<IEnumerable<RequestDto>>> GetSystemUserSentRequests(Guid systemUserId, string consumerOrgNo, string? toOrganizationNo, IEnumerable<RequestStatus> status, string? type, CancellationToken ct = default)
+    {
+        var senderProblem = await ValidateSystemUserSender(systemUserId, consumerOrgNo, ct);
+        if (senderProblem is { } senderGuard)
+        {
+            return senderGuard;
+        }
+
+        Guid? toId = null;
+        if (!string.IsNullOrEmpty(toOrganizationNo))
+        {
+            toId = await GetOrganizationIdByOrgNo(toOrganizationNo, ct);
+            if (toId is null)
+            {
+                return OrganizationNotFoundProblem();
+            }
+        }
+
+        return await GetSentRequests(systemUserId, toId, status, type, ct);
+    }
+
+    /// <inheritdoc/>
+    public async Task<Result<RequestDto>> WithdrawSystemUserRequest(Guid systemUserId, string consumerOrgNo, Guid requestId, CancellationToken ct = default)
+    {
+        var senderProblem = await ValidateSystemUserSender(systemUserId, consumerOrgNo, ct);
+        if (senderProblem is { } senderGuard)
+        {
+            return senderGuard;
+        }
+
+        return await UpdateRequest(systemUserId, requestId, RequestStatus.Withdrawn, ct);
+    }
+
+    private async Task<Guid?> GetOrganizationIdByOrgNo(string organizationNo, CancellationToken ct)
+    {
+        var organizationTypeId = EntityTypeConstants.Organization.Id;
+        return await db.Entities.AsNoTracking()
+            .Where(e => e.OrganizationIdentifier == organizationNo && e.TypeId == organizationTypeId)
+            .Select(e => (Guid?)e.Id)
+            .FirstOrDefaultAsync(ct);
+    }
+
+    private static ValidationProblemInstance OrganizationNotFoundProblem()
+    {
+        ValidationErrorBuilder errors = default;
+        errors.Add(ValidationErrors.EntityNotExists, "QUERY/organization");
+        errors.TryBuild(out var notFound);
+        return notFound;
     }
 
     private async Task<Result<RequestDto>> CreatePackageRequestInternal(Guid toId, Guid fromId, Guid byId, Guid roleId, string package, RequestStatus status, CancellationToken ct)

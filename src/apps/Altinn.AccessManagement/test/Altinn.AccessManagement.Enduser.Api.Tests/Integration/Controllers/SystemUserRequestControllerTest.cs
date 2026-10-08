@@ -178,6 +178,116 @@ public class SystemUserRequestControllerTest
 
     #endregion
 
+    #region GET /sent and PUT /sent/withdraw
+
+    [IntegrationTest]
+    public class SentRequests : IClassFixture<ApiFixture>
+    {
+        public SentRequests(ApiFixture fixture)
+        {
+            Fixture = fixture;
+            fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.EnableSystemUserRequests);
+            SeedConsumers(fixture);
+        }
+
+        public ApiFixture Fixture { get; }
+
+        private async Task<RequestDto> CreateRequest(HttpClient client, string organization)
+        {
+            var response = await client.PostAsync(
+                $"{Route}/package?organization={organization}&package={PackageConstants.Agriculture.Entity.Urn}",
+                null,
+                TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            return await response.Content.ReadFromJsonAsync<RequestDto>(TestContext.Current.CancellationToken);
+        }
+
+        private static async Task<List<Guid>> GetSentIds(HttpClient client, string query)
+        {
+            var response = await client.GetAsync($"{Route}/sent{query}", TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+            return doc.RootElement.GetProperty("data").EnumerateArray().Select(e => e.GetProperty("id").GetGuid()).ToList();
+        }
+
+        [Fact]
+        public async Task SystemUser_CanListAndWithdrawOwnRequest()
+        {
+            var client = CreateSystemUserClient(Fixture, TestEntities.SystemUserClient.Id);
+            var created = await CreateRequest(client, TestData.SvendsenAutomobil.Entity.OrganizationIdentifier);
+
+            var pending = await GetSentIds(client, $"?organization={TestData.SvendsenAutomobil.Entity.OrganizationIdentifier}&status=Pending");
+            Assert.Contains(created.Id, pending);
+
+            var otherOrg = await GetSentIds(client, $"?organization={TestData.FredriksonsFabrikk.Entity.OrganizationIdentifier}");
+            Assert.DoesNotContain(created.Id, otherOrg);
+
+            var withdraw = await client.PutAsync($"{Route}/sent/withdraw?id={created.Id}", null, TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.OK, withdraw.StatusCode);
+            var withdrawn = await withdraw.Content.ReadFromJsonAsync<RequestDto>(TestContext.Current.CancellationToken);
+            Assert.Equal(RequestStatus.Withdrawn, withdrawn.Status);
+
+            var stillPending = await GetSentIds(client, "?status=Pending");
+            Assert.DoesNotContain(created.Id, stillPending);
+        }
+
+        [Fact]
+        public async Task SystemUser_CannotWithdrawAnotherSystemUsersRequest()
+        {
+            var owner = CreateSystemUserClient(Fixture, TestEntities.SystemUserClient.Id);
+            var created = await CreateRequest(owner, TestData.FredriksonsFabrikk.Entity.OrganizationIdentifier);
+
+            var other = CreateSystemUserClient(Fixture, TestEntities.SystemUserStandard.Id);
+            var otherSent = await GetSentIds(other, string.Empty);
+            Assert.DoesNotContain(created.Id, otherSent);
+
+            var withdraw = await other.PutAsync($"{Route}/sent/withdraw?id={created.Id}", null, TestContext.Current.CancellationToken);
+            Assert.False(withdraw.IsSuccessStatusCode);
+        }
+
+        [Fact]
+        public async Task GetSent_InvalidOrganizationNumber_ReturnsBadRequest()
+        {
+            var client = CreateSystemUserClient(Fixture, TestEntities.SystemUserStandard.Id);
+
+            var response = await client.GetAsync($"{Route}/sent?organization=12345678", TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task GetSent_ConsumerNotPublicSector_ReturnsForbidden()
+        {
+            var client = CreateSystemUserClient(Fixture, TestEntities.SystemUserStandard.Id, consumerOrgNo: TestData.DumboAdventures.Entity.OrganizationIdentifier);
+
+            var response = await client.GetAsync($"{Route}/sent", TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task Withdraw_ConsumerNotPublicSector_ReturnsForbidden()
+        {
+            var client = CreateSystemUserClient(Fixture, TestEntities.SystemUserStandard.Id, consumerOrgNo: TestData.DumboAdventures.Entity.OrganizationIdentifier);
+
+            var response = await client.PutAsync($"{Route}/sent/withdraw?id={Guid.NewGuid()}", null, TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task GetSent_WithoutScope_ReturnsForbidden()
+        {
+            var client = CreateSystemUserClient(Fixture, TestEntities.SystemUserStandard.Id, AuthzConstants.SCOPE_ENDUSER_REQUESTS_WRITE);
+
+            var response = await client.GetAsync($"{Route}/sent", TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        }
+    }
+
+    #endregion
+
     #region POST /package — Authorization
 
     [IntegrationTest]
