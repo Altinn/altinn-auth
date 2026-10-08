@@ -34,7 +34,9 @@ CREATE TABLE IF NOT EXISTS consent.consentevent (
     consentrequestid uuid NOT NULL,
     eventtype consent.event_type NOT NULL,
     created timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    performedbyparty uuid NOT NULL
+    performedbyparty uuid NOT NULL,
+    topartyuuid uuid,
+    handledbypartyuuid uuid
 );
 
 CREATE TABLE IF NOT EXISTS consent.consentrequest (
