@@ -1,78 +1,80 @@
-name: Feil
-description: Noe virker ikke som det skal i en av autorisasjonskomponentene.
-type: Bug
+name: "Bug"
+description: "Something does not work as it should in one of the authorization components."
+type: "Bug"
 labels: ["status/triage"]
 body:
   - type: markdown
     attributes:
       value: |
-        Takk for at du melder fra! Bare Komponent må fylles ut. En setning holder, så fyller teamet ut resten i triage. Søk gjerne i [åpne og lukkede issues](https://github.com/Altinn/altinn-auth/issues?q=is%3Aissue) først, i tilfelle feilen allerede er meldt.
+        You can write in **English or Norwegian**. Du kan skrive på **engelsk eller norsk**.
 
-        **Sikkerhetssårbarheter skal ikke meldes her.** Følg [sikkerhetspolicyen](https://github.com/Altinn/altinn-auth/security/policy) i stedet.
+        Only **Component** is required. One sentence is enough; the team fills in the rest in triage. Please search [open and closed issues](https://github.com/Altinn/altinn-auth/issues?q=is%3Aissue) first.
 
-        **Ikke lim inn** fødselsnummer, tokens, API-nøkler, produksjonslogger eller annen taushetsbelagt informasjon. Bruk testdata og korrelasjons-ID.
+        **Do not report security vulnerabilities here.** Follow the [security policy](https://github.com/Altinn/altinn-auth/security/policy) instead.
+
+        **Do not paste** national identity numbers, tokens, API keys, production logs or other confidential information. Use test data and a correlation ID.
 
   - type: textarea
     id: tldr
     attributes:
-      label: TL;DR
-      description: Inntil fem punkter. Hva skjedde, hvem rammes, og hvor alvorlig er det?
+      label: "TL;DR"
+      description: "Up to five bullets. What happened, who is affected, and how serious is it?"
       value: |
         -
 
   - type: dropdown
     id: component
     attributes:
-      label: Komponent
-      description: Hvor ser du feilen? Velg alle som gjelder, eller «Vet ikke» hvis du er usikker. Da hjelper teamet deg i triage.
+      label: "Component"
+      description: "Where do you see the bug? Select all that apply, or \"Don't know\" and the team will help in triage."
       multiple: true
       options:
-        - Access Management – backend og API (access-management)
-        - Access Management – brukerflate og BFF (access-management-frontend)
-        - Authorization – PDP og autoriserte parter (authorization)
-        - Authentication – innlogging, tokens og systembruker (authentication)
-        - Register – parter og roller (register)
-        - Resource Registry – ressurser og tilgangslister (resource-registry)
-        - Auditlog – lagring av autorisasjons- og autentiseringshendelser (auditlog)
-        - NuGet-pakker – PEP og ABAC (packages)
-        - Felles biblioteker (libs)
-        - Verktøy – CLI og FFB (tools)
-        - Felles plattform – CI/CD, felles Terraform og Flux (infra)
-        - Lokalt utviklingsmiljø og repo-verktøy (devex)
-        - Dokumentasjon (docs)
-        - Vet ikke
+        - "Access Management – backend and API (access-management)"
+        - "Access Management – UI and BFF (access-management-frontend)"
+        - "Authorization – PDP and authorized parties (authorization)"
+        - "Authentication – login, tokens and system user (authentication)"
+        - "Register – parties and roles (register)"
+        - "Resource Registry – resources and access lists (resource-registry)"
+        - "Auditlog – storage of authorization and authentication events (auditlog)"
+        - "NuGet packages – PEP and ABAC (packages)"
+        - "Shared libraries (libs)"
+        - "Tools – CLI and FFB (tools)"
+        - "Shared platform – CI/CD, shared Terraform and Flux (infra)"
+        - "Local development and repo tooling (devex)"
+        - "Documentation (docs)"
+        - "Don't know"
     validations:
       required: true
 
   - type: dropdown
     id: environment
     attributes:
-      label: Miljø
+      label: "Environment"
       multiple: true
       options:
-        - Produksjon
-        - TT02
-        - AT
-        - YT01
-        - Lokalt
-        - Vet ikke
+        - "Production"
+        - "TT02"
+        - "AT"
+        - "YT01"
+        - "Local"
+        - "Don't know"
 
   - type: textarea
     id: steps
     attributes:
-      label: Steg for å gjenskape
+      label: "Steps to reproduce"
       placeholder: |
-        1. Logg inn som ...
-        2. Kall `GET /accessmanagement/api/v1/...`
-        3. Se at ...
+        1. Log in as ...
+        2. Call `GET /accessmanagement/api/v1/...`
+        3. See that ...
 
   - type: textarea
     id: expected
     attributes:
-      label: Forventet oppførsel
+      label: "Expected and actual behaviour"
 
   - type: textarea
     id: details
     attributes:
-      label: Tilleggsinformasjon
-      description: Korrelasjons-ID, tidspunkt, ressurs-ID, skjermbilder, eller lenke til Slack-tråd.
+      label: "Additional information"
+      description: "Correlation ID, time, resource ID, screenshots, or a link to a Slack thread."

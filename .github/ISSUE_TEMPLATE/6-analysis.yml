@@ -1,66 +1,71 @@
-name: Analyse
-description: Et spørsmål som må utredes før teamet kan planlegge eller bestemme noe.
-type: Task
+name: "Analysis"
+description: "A question that needs investigating before the team can plan or decide."
+type: "Task"
 labels: ["kind/analysis", "status/draft"]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        You can write in **English or Norwegian**. Du kan skrive på **engelsk eller norsk**.
+
   - type: textarea
     id: tldr
     attributes:
-      label: TL;DR
-      description: Inntil fem punkter. Hva skal utredes, hvorfor nå, og hva skal komme ut av det?
+      label: "TL;DR"
+      description: "Up to five bullets. What is investigated, why now, and what should come out of it?"
       value: |
         -
 
   - type: dropdown
     id: component
     attributes:
-      label: Komponent
-      description: Velg alle komponentene analysen gjelder.
+      label: "Component"
+      description: "Select all the components the analysis concerns."
       multiple: true
       options:
-        - Access Management – backend og API (access-management)
-        - Access Management – brukerflate og BFF (access-management-frontend)
-        - Authorization – PDP og autoriserte parter (authorization)
-        - Authentication – innlogging, tokens og systembruker (authentication)
-        - Register – parter og roller (register)
-        - Resource Registry – ressurser og tilgangslister (resource-registry)
-        - Auditlog – lagring av autorisasjons- og autentiseringshendelser (auditlog)
-        - NuGet-pakker – PEP og ABAC (packages)
-        - Felles biblioteker (libs)
-        - Verktøy – CLI og FFB (tools)
-        - Felles plattform – CI/CD, felles Terraform og Flux (infra)
-        - Lokalt utviklingsmiljø og repo-verktøy (devex)
-        - Dokumentasjon (docs)
-        - Vet ikke
+        - "Access Management – backend and API (access-management)"
+        - "Access Management – UI and BFF (access-management-frontend)"
+        - "Authorization – PDP and authorized parties (authorization)"
+        - "Authentication – login, tokens and system user (authentication)"
+        - "Register – parties and roles (register)"
+        - "Resource Registry – resources and access lists (resource-registry)"
+        - "Auditlog – storage of authorization and authentication events (auditlog)"
+        - "NuGet packages – PEP and ABAC (packages)"
+        - "Shared libraries (libs)"
+        - "Tools – CLI and FFB (tools)"
+        - "Shared platform – CI/CD, shared Terraform and Flux (infra)"
+        - "Local development and repo tooling (devex)"
+        - "Documentation (docs)"
+        - "Don't know"
     validations:
       required: true
 
   - type: textarea
     id: question
     attributes:
-      label: Hva skal besvares?
-      description: Ett eller noen få konkrete spørsmål.
+      label: "What needs answering?"
+      description: "One or a few concrete questions."
 
   - type: textarea
     id: background
     attributes:
-      label: Bakgrunn
-      description: Hva vet vi allerede, og hvorfor trenger vi svaret nå?
+      label: "Background"
+      description: "What do we already know, and why do we need the answer now?"
 
   - type: dropdown
     id: deliverable
     attributes:
-      label: Hva skal analysen levere?
+      label: "What should the analysis deliver?"
       multiple: true
       options:
-        - Anbefaling i issuet
-        - ADR
-        - Nye issues eller en epic
-        - Prototype
-        - Dokumentasjon
+        - "Recommendation in the issue"
+        - "ADR"
+        - "New issues or an epic"
+        - "Prototype"
+        - "Documentation"
 
   - type: input
     id: timebox
     attributes:
-      label: Tidsramme
-      placeholder: f.eks. 3 dager
+      label: "Timebox"
+      placeholder: "e.g. 3 days"

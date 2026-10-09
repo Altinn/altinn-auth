@@ -1,72 +1,75 @@
-name: Ønske om ny funksjonalitet
-description: Et behov eller en idé til noe nytt eller bedre i Altinn Autorisasjon.
-type: Feature
+name: "Feature request"
+description: "A need or an idea for something new or better in Altinn Authorization."
+type: "Feature"
 labels: ["status/triage"]
 body:
   - type: markdown
     attributes:
       value: |
-        Beskriv gjerne **behovet** før løsningen. Da er det lettere for teamet å finne den beste måten å løse det på.
+        You can write in **English or Norwegian**. Du kan skrive på **engelsk eller norsk**.
+
+        Describe the **need** before the solution. That makes it easier for the team to find the best way to meet it.
 
   - type: textarea
     id: tldr
     attributes:
-      label: TL;DR
-      description: Inntil fem punkter. Hva ønskes, og hvorfor?
+      label: "TL;DR"
+      description: "Up to five bullets. What is wanted, and why?"
       value: |
         -
 
   - type: dropdown
     id: component
     attributes:
-      label: Komponent
-      description: Hvor hører ønsket hjemme? Velg alle som gjelder, eller «Vet ikke» hvis du er usikker.
+      label: "Component"
+      description: "Where does the request belong? Select all that apply, or \"Don't know\"."
       multiple: true
       options:
-        - Access Management – backend og API (access-management)
-        - Access Management – brukerflate og BFF (access-management-frontend)
-        - Authorization – PDP og autoriserte parter (authorization)
-        - Authentication – innlogging, tokens og systembruker (authentication)
-        - Register – parter og roller (register)
-        - Resource Registry – ressurser og tilgangslister (resource-registry)
-        - Auditlog – lagring av autorisasjons- og autentiseringshendelser (auditlog)
-        - NuGet-pakker – PEP og ABAC (packages)
-        - Felles biblioteker (libs)
-        - Verktøy – CLI og FFB (tools)
-        - Felles plattform – CI/CD, felles Terraform og Flux (infra)
-        - Lokalt utviklingsmiljø og repo-verktøy (devex)
-        - Dokumentasjon (docs)
-        - Vet ikke
+        - "Access Management – backend and API (access-management)"
+        - "Access Management – UI and BFF (access-management-frontend)"
+        - "Authorization – PDP and authorized parties (authorization)"
+        - "Authentication – login, tokens and system user (authentication)"
+        - "Register – parties and roles (register)"
+        - "Resource Registry – resources and access lists (resource-registry)"
+        - "Auditlog – storage of authorization and authentication events (auditlog)"
+        - "NuGet packages – PEP and ABAC (packages)"
+        - "Shared libraries (libs)"
+        - "Tools – CLI and FFB (tools)"
+        - "Shared platform – CI/CD, shared Terraform and Flux (infra)"
+        - "Local development and repo tooling (devex)"
+        - "Documentation (docs)"
+        - "Don't know"
     validations:
       required: true
 
   - type: dropdown
     id: audience
     attributes:
-      label: Hvem er det for?
+      label: "Who is it for?"
       multiple: true
       options:
-        - Sluttbruker (innbygger eller virksomhet)
-        - Tjenesteeier
-        - Sluttbrukersystemleverandør
-        - Annet Altinn-produkt
-        - Internt i teamet
+        - "End user (citizen or organisation)"
+        - "Service owner"
+        - "End-user system vendor"
+        - "Another Altinn product"
+        - "Internal to the team"
 
   - type: textarea
     id: need
     attributes:
-      label: Behov
-      description: Hvilket problem løser dette? Hva skjer i dag?
-      placeholder: Som tjenesteeier ønsker jeg å ..., slik at ...
+      label: "Need"
+      description: "What problem does this solve? What happens today?"
+      placeholder: |
+        As a service owner I want to ..., so that ...
 
   - type: textarea
     id: solution
     attributes:
-      label: Forslag til løsning
-      description: Valgfritt. Hvordan ser du for deg at det kan løses?
+      label: "Proposed solution"
+      description: "Optional. How do you imagine it could be solved?"
 
   - type: textarea
     id: details
     attributes:
-      label: Tilleggsinformasjon
-      description: Lenker, skisser, avhengigheter eller frister.
+      label: "Additional information"
+      description: "Links, sketches, dependencies or deadlines."

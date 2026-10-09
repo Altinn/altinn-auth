@@ -1,67 +1,69 @@
-name: Epic
-description: En større leveranse som deles opp i features og oppgaver som sub-issues.
-type: Epic
+name: "Epic"
+description: "A larger delivery, split into features and tasks as sub-issues."
+type: "Epic"
 labels: ["status/draft"]
 body:
   - type: markdown
     attributes:
       value: |
-        En epic samler arbeidet. Selve oppgavene legges inn som **sub-issues**, ikke som en liste i teksten.
+        You can write in **English or Norwegian**. Du kan skrive på **engelsk eller norsk**.
+
+        An epic groups the work. Add the actual tasks as **sub-issues**, not as a list in the text.
 
   - type: textarea
     id: tldr
     attributes:
-      label: TL;DR
-      description: Inntil fem punkter. Mål, grep og når den er ferdig.
+      label: "TL;DR"
+      description: "Up to five bullets. Goal, approach, and when it is done."
       value: |
-        - **Mål:**
-        - **Grep:**
-        - **Ferdig når:**
+        - **Goal:**
+        - **Approach:**
+        - **Done when:**
 
   - type: dropdown
     id: component
     attributes:
-      label: Komponent
-      description: Velg komponentene epicen berører. Sub-issuene får hver sine.
+      label: "Component"
+      description: "Select the components the epic touches. Each sub-issue gets its own."
       multiple: true
       options:
-        - Access Management – backend og API (access-management)
-        - Access Management – brukerflate og BFF (access-management-frontend)
-        - Authorization – PDP og autoriserte parter (authorization)
-        - Authentication – innlogging, tokens og systembruker (authentication)
-        - Register – parter og roller (register)
-        - Resource Registry – ressurser og tilgangslister (resource-registry)
-        - Auditlog – lagring av autorisasjons- og autentiseringshendelser (auditlog)
-        - NuGet-pakker – PEP og ABAC (packages)
-        - Felles biblioteker (libs)
-        - Verktøy – CLI og FFB (tools)
-        - Felles plattform – CI/CD, felles Terraform og Flux (infra)
-        - Lokalt utviklingsmiljø og repo-verktøy (devex)
-        - Dokumentasjon (docs)
-        - Vet ikke
+        - "Access Management – backend and API (access-management)"
+        - "Access Management – UI and BFF (access-management-frontend)"
+        - "Authorization – PDP and authorized parties (authorization)"
+        - "Authentication – login, tokens and system user (authentication)"
+        - "Register – parties and roles (register)"
+        - "Resource Registry – resources and access lists (resource-registry)"
+        - "Auditlog – storage of authorization and authentication events (auditlog)"
+        - "NuGet packages – PEP and ABAC (packages)"
+        - "Shared libraries (libs)"
+        - "Tools – CLI and FFB (tools)"
+        - "Shared platform – CI/CD, shared Terraform and Flux (infra)"
+        - "Local development and repo tooling (devex)"
+        - "Documentation (docs)"
+        - "Don't know"
     validations:
       required: true
 
   - type: textarea
     id: background
     attributes:
-      label: Bakgrunn
-      description: Hvorfor nå? Hva er situasjonen i dag?
+      label: "Background"
+      description: "Why now? What is the situation today?"
 
   - type: textarea
     id: scope
     attributes:
-      label: Omfang
+      label: "Scope"
       value: |
-        **Med:**
+        **In scope:**
         -
 
-        **Ikke med:**
+        **Out of scope:**
         -
 
   - type: textarea
     id: done
     attributes:
-      label: Ferdig når
+      label: "Done when"
       value: |
         - [ ]

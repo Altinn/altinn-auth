@@ -1,49 +1,54 @@
-name: Oppgave
-description: En avgrenset arbeidsoppgave, ofte et sub-issue under en feature eller epic.
-type: Task
+name: "Task"
+description: "A well-defined piece of work, often a sub-issue of a feature or epic."
+type: "Task"
 labels: ["status/triage"]
 body:
+  - type: markdown
+    attributes:
+      value: |
+        You can write in **English or Norwegian**. Du kan skrive på **engelsk eller norsk**.
+
   - type: textarea
     id: tldr
     attributes:
-      label: TL;DR
-      description: Inntil fem punkter. Hva skal gjøres, og hvorfor? Lenk til feature eller epic hvis oppgaven er en del av en større leveranse.
+      label: "TL;DR"
+      description: "Up to five bullets. What needs to be done, and why? Link the feature or epic if the task is part of a larger delivery."
       value: |
         -
 
   - type: dropdown
     id: component
     attributes:
-      label: Komponent
-      description: Velg alle komponentene oppgaven berører.
+      label: "Component"
+      description: "Select all the components the task touches."
       multiple: true
       options:
-        - Access Management – backend og API (access-management)
-        - Access Management – brukerflate og BFF (access-management-frontend)
-        - Authorization – PDP og autoriserte parter (authorization)
-        - Authentication – innlogging, tokens og systembruker (authentication)
-        - Register – parter og roller (register)
-        - Resource Registry – ressurser og tilgangslister (resource-registry)
-        - Auditlog – lagring av autorisasjons- og autentiseringshendelser (auditlog)
-        - NuGet-pakker – PEP og ABAC (packages)
-        - Felles biblioteker (libs)
-        - Verktøy – CLI og FFB (tools)
-        - Felles plattform – CI/CD, felles Terraform og Flux (infra)
-        - Lokalt utviklingsmiljø og repo-verktøy (devex)
-        - Dokumentasjon (docs)
-        - Vet ikke
+        - "Access Management – backend and API (access-management)"
+        - "Access Management – UI and BFF (access-management-frontend)"
+        - "Authorization – PDP and authorized parties (authorization)"
+        - "Authentication – login, tokens and system user (authentication)"
+        - "Register – parties and roles (register)"
+        - "Resource Registry – resources and access lists (resource-registry)"
+        - "Auditlog – storage of authorization and authentication events (auditlog)"
+        - "NuGet packages – PEP and ABAC (packages)"
+        - "Shared libraries (libs)"
+        - "Tools – CLI and FFB (tools)"
+        - "Shared platform – CI/CD, shared Terraform and Flux (infra)"
+        - "Local development and repo tooling (devex)"
+        - "Documentation (docs)"
+        - "Don't know"
     validations:
       required: true
 
   - type: textarea
     id: description
     attributes:
-      label: Detaljer
-      description: Valgfritt. Bakgrunn, tekniske notater eller lenker.
+      label: "Details"
+      description: "Optional. Background, technical notes or links."
 
   - type: textarea
     id: done
     attributes:
-      label: Ferdig når
+      label: "Done when"
       value: |
         - [ ]
