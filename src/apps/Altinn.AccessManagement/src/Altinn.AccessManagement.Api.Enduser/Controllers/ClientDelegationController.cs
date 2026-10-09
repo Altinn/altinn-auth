@@ -233,6 +233,7 @@ public class ClientDelegationController(
             {
                 options.AllowedToEntityTypes = [EntityTypeConstants.Person, EntityTypeConstants.SystemUser];
                 options.EntitiesToValidateForAnyConnections = [EntityTypeConstants.Person];
+                options.PerformToEntityTypeValidation = false;
             },
             cancellationToken);
 
