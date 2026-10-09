@@ -2,7 +2,7 @@ name: "Test plan"
 description: "A plan for testing a delivery: scenarios, test data and environment."
 title: "Test plan: "
 type: "Task"
-labels: ["Testplan", "status/draft"]
+labels: ["Testplan", "status/triage"]
 body:
   - type: markdown
     attributes:
@@ -18,8 +18,8 @@ body:
     attributes:
       label: "TL;DR"
       description: "Up to five bullets. What is tested, where, and when must it be done?"
-      value: |
-        -
+      placeholder: |
+        - ...
 
   - type: dropdown
     id: component
@@ -75,9 +75,9 @@ body:
     attributes:
       label: "Test scenarios"
       description: "One scenario per line. Tick it when it passes. When something fails, create a bug and link it on the line."
-      value: |
-        - [ ]
-        - [ ] Negative:
+      placeholder: |
+        - [ ] ...
+        - [ ] Negative: ...
 
   - type: textarea
     id: testdata

@@ -13,8 +13,8 @@ body:
     attributes:
       label: "TL;DR"
       description: "Up to five bullets. What needs to be done, and why? Link the feature or epic if the task is part of a larger delivery."
-      value: |
-        -
+      placeholder: |
+        - ...
 
   - type: dropdown
     id: component
@@ -50,5 +50,5 @@ body:
     id: done
     attributes:
       label: "Done when"
-      value: |
-        - [ ]
+      placeholder: |
+        - [ ] ...

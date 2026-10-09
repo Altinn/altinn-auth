@@ -1,7 +1,7 @@
 name: "Analysis"
 description: "A question that needs investigating before the team can plan or decide."
 type: "Task"
-labels: ["kind/analysis", "status/draft"]
+labels: ["kind/analysis", "status/triage"]
 body:
   - type: markdown
     attributes:
@@ -13,8 +13,8 @@ body:
     attributes:
       label: "TL;DR"
       description: "Up to five bullets. What is investigated, why now, and what should come out of it?"
-      value: |
-        -
+      placeholder: |
+        - ...
 
   - type: dropdown
     id: component

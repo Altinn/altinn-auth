@@ -1,7 +1,7 @@
 name: "Epic"
 description: "A larger delivery, split into features and tasks as sub-issues."
 type: "Epic"
-labels: ["status/draft"]
+labels: ["status/triage"]
 body:
   - type: markdown
     attributes:
@@ -15,10 +15,10 @@ body:
     attributes:
       label: "TL;DR"
       description: "Up to five bullets. Goal, approach, and when it is done."
-      value: |
-        - **Goal:**
-        - **Approach:**
-        - **Done when:**
+      placeholder: |
+        - Goal: ...
+        - Approach: ...
+        - Done when: ...
 
   - type: dropdown
     id: component
@@ -65,5 +65,5 @@ body:
     id: done
     attributes:
       label: "Done when"
-      value: |
-        - [ ]
+      placeholder: |
+        - [ ] ...

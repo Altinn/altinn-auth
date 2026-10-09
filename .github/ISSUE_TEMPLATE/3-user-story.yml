@@ -13,8 +13,8 @@ body:
     attributes:
       label: "TL;DR"
       description: "Up to five bullets. Who needs what, and why?"
-      value: |
-        -
+      placeholder: |
+        - ...
 
   - type: dropdown
     id: component
@@ -53,8 +53,8 @@ body:
     id: acceptance
     attributes:
       label: "Acceptance criteria"
-      value: |
-        - [ ]
+      placeholder: |
+        - [ ] ...
 
   - type: textarea
     id: details

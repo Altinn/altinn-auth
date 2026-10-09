@@ -15,8 +15,8 @@ body:
     attributes:
       label: "TL;DR"
       description: "Up to five bullets. What is wanted, and why?"
-      value: |
-        -
+      placeholder: |
+        - ...
 
   - type: dropdown
     id: component

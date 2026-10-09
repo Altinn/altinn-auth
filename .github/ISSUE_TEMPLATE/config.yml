@@ -7,5 +7,5 @@ contact_links:
     url: https://github.com/Altinn/altinn-auth/security/policy
     about: Report vulnerabilities privately under the security policy, not as a public issue.
   - name: Altinn Authorization documentation
-    url: https://docs.altinn.studio/nb/authorization/
+    url: https://docs.altinn.studio/en/authorization/
     about: Guides and API documentation for service owners and end-user system vendors.

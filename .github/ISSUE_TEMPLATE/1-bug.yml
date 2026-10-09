@@ -19,8 +19,8 @@ body:
     attributes:
       label: "TL;DR"
       description: "Up to five bullets. What happened, who is affected, and how serious is it?"
-      value: |
-        -
+      placeholder: |
+        - ...
 
   - type: dropdown
     id: component
