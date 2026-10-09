@@ -30,7 +30,7 @@ pwsh eng/testing/run-coverage.ps1                      # coverage, installs dotn
 - **Issues, comments, docs and PR descriptions start with a TL;DR** of at most five bullets (bugs: what happened). Text drafted with a tool says so near the top, and says the reader is unspecified until a person confirms they have read it.
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) is the working agreement, including the rules for AI assistance, and [`docs/ai/data-policy.md`](docs/ai/data-policy.md) says what may go into a tool at all. Read both before using an assistant here.
 
-**Write a PR description by these rules, with or without a GitHub template.** This repository keeps no local issue templates, so the organisation's shared ones stay in the picker.
+**Write a PR description by these rules, with or without a GitHub template.** Issues use this repository's own forms in `.github/ISSUE_TEMPLATE/`, not the organisation's.
 
 - The TL;DR gives the problem, the change, and why it matters. Reference the issue, and use `Closes #<issue>` only when the PR completes it.
 - State what you verified: the commands or checks, their results, and what you did not run or could not test locally, with the reason. Distinguish skipped tests from passed ones. Never claim a check you did not run.
