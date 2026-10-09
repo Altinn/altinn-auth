@@ -16,7 +16,7 @@ This guide applies to everyone who changes this repository, whether you type eve
 - One approving review from a person and green required checks are needed to merge. Open a draft PR early if you want feedback.
 - Update affected documentation and agent guidance in the same PR as the behaviour they describe. An ADR is required only for a significant architectural decision or a lasting trade-off; touching an API contract, data model or authorization code does not by itself require one. See [When an ADR is required](#when-an-adr-is-required).
 - Tests are production code: reviewed with the same care, and never deleted or weakened without a reason a reviewer has agreed to. See the [testing guide](docs/testing/README.md). Say in the PR what you could not test locally.
-- Write for the reader. Anything a person is meant to read, whether an issue, a PR description, a comment or a doc, starts with a **TL;DR of at most five bullets**. A bug report starts with what happened instead; one sentence is enough. An issue keeps under 200 words above the fold and puts the rest in a collapsed `<details>` block. A PR description is the TL;DR plus what you verified. A text drafted with a tool says so at the top, and leaves the reader unspecified until a person confirms they have read it. An unnamed reader is an honest signal, not a failure.
+- Write for the reader. Anything a person is meant to read, whether an issue, a PR description, a comment or a doc, starts with a **TL;DR of at most five bullets**. A short bug report starts with what happened instead; one sentence is enough. A long one, for example drafted with a tool, still starts with a TL;DR. An issue keeps under 200 words above the fold and puts the rest in a collapsed `<details>` block. A PR description is the TL;DR plus what you verified. A text drafted with a tool says so at the top, and leaves the reader unspecified until a person confirms they have read it. An unnamed reader is an honest signal, not a failure.
 
 ## Issues and labels
 
@@ -34,7 +34,7 @@ Why the model looks like this is in [ADR-0004](docs/adr/0004-issue-and-label-mod
 | Kind of work | Issue type: Bug, Feature, Task, Epic, Enhancement. The form sets it. A user story is a Feature. | yes, at triage at the latest |
 | Component | One or more `area/*`, one per component the issue touches, for example `area/register`. The form asks for them; triage sets the labels until the workflow does. | yes, at triage at the latest |
 | Capability | `feature/*`, for example `feature/consent` | no |
-| Layer | `layer/backend`, `layer/frontend`, `layer/ux`, `layer/infra`, `layer/test` | no |
+| Layer | `layer/backend`, `layer/frontend`, `layer/ux`, `layer/infra`, `layer/test`. The bug, feature and task forms ask for it. | when known: as soon as the work is identified as frontend, backend and so on |
 | Waiting for something | `status/blocked`, plus a "blocked by" link when the blocking issue is known | when it applies |
 | Release | Milestone | when planned |
 | Priority, horizon, progress | Fields on the project board | set in refinement |
