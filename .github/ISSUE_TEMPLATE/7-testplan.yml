@@ -1,0 +1,102 @@
+name: Testplan
+description: Plan for testing av en leveranse, med scenarioer, testdata og miljø.
+title: "Testplan: "
+type: Task
+labels: ["Testplan", "status/draft"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        En testplan kan være så enkel som en sjekkliste med scenarioer. Fyll ut det som er relevant, resten kan komme senere.
+
+        **Bruk syntetiske testdata** (Tenor). Ikke bruk ekte fødselsnumre eller produksjonsdata.
+
+  - type: textarea
+    id: tldr
+    attributes:
+      label: TL;DR
+      description: Inntil fem punkter. Hva testes, hvor, og når må det være ferdig?
+      value: |
+        -
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Komponent
+      description: Velg alle komponentene testen dekker.
+      multiple: true
+      options:
+        - Access Management – backend og API (access-management)
+        - Access Management – brukerflate og BFF (access-management-frontend)
+        - Authorization – PDP og autoriserte parter (authorization)
+        - Authentication – innlogging, tokens og systembruker (authentication)
+        - Register – parter og roller (register)
+        - Resource Registry – ressurser og tilgangslister (resource-registry)
+        - Auditlog – lagring av autorisasjons- og autentiseringshendelser (auditlog)
+        - NuGet-pakker – PEP og ABAC (packages)
+        - Felles biblioteker (libs)
+        - Verktøy – CLI og FFB (tools)
+        - Felles plattform – CI/CD, felles Terraform og Flux (infra)
+        - Lokalt utviklingsmiljø og repo-verktøy (devex)
+        - Dokumentasjon (docs)
+        - Vet ikke
+    validations:
+      required: true
+
+  - type: input
+    id: delivery
+    attributes:
+      label: Leveranse som testes
+      description: Lenke til epic, feature eller issue.
+      placeholder: "#1234"
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Testmiljø
+      multiple: true
+      options:
+        - Lokalt
+        - AT
+        - YT01
+        - TT02
+        - Produksjon (verifisering etter deploy)
+
+  - type: input
+    id: period
+    attributes:
+      label: Testperiode og frist
+      placeholder: f.eks. uke 44, ferdig før release 12. november
+
+  - type: textarea
+    id: scenarios
+    attributes:
+      label: Testscenarioer
+      description: Ett scenario per linje. Kryss av når det er testet OK. Når noe feiler, lag et feil-issue og lenk det på linjen.
+      value: |
+        - [ ]
+        - [ ] Negativ:
+
+  - type: textarea
+    id: testdata
+    attributes:
+      label: Testdata
+      description: Hvilke testbrukere, virksomheter, roller og ressurser trengs?
+
+  - type: textarea
+    id: nonfunctional
+    attributes:
+      label: Ikke-funksjonelle tester
+      description: Lenker til ytelsestester, sikkerhetstester og UU-sjekk ved behov.
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Avhengigheter og avklaringer
+      description: Andre team, data eller beslutninger testen venter på.
+
+  - type: textarea
+    id: out-of-scope
+    attributes:
+      label: Utenfor omfang
+      description: Det som bevisst ikke testes nå.
