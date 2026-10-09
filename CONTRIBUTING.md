@@ -27,7 +27,7 @@ This guide applies to everyone who changes this repository, whether you type eve
 - Write in English or Norwegian, whichever is quicker. The forms are in English.
 - One issue type and at least one `area/*` per issue. Everything else is optional.
 
-Why the model looks like this is in [ADR-0004](docs/adr/0004-issue-and-label-model.md). Until the labelling workflow ([#4357](https://github.com/Altinn/altinn-auth/issues/4357)) and `.github/labels.yml` ([#4356](https://github.com/Altinn/altinn-auth/issues/4356)) are in place, triage sets the `area/*` labels by hand from the form's component answer. What to set:
+Why the model looks like this is in [ADR-0004](docs/adr/0004-issue-and-label-model.md). Until the labelling workflow ([#4357](https://github.com/Altinn/altinn-auth/issues/4357)) and `.github/labels.yml` ([#4356](https://github.com/Altinn/altinn-auth/issues/4356)) are in place, triage sets the `area/*` and layer labels by hand from the form's answers (`Backend` and `Frontend` until [#4360](https://github.com/Altinn/altinn-auth/issues/4360) renames them). What to set:
 
 | What | How | Required |
 | --- | --- | --- |
