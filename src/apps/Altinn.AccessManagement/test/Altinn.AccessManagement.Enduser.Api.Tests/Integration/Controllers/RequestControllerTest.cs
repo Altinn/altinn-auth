@@ -3,13 +3,18 @@ using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text.Json;
 using Altinn.AccessManagement.Core.Constants;
+using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.TestUtils;
 using Altinn.AccessManagement.TestUtils.Data;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.Core;
+using Altinn.AccessMgmt.Core.Notifications;
+using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers;
 
@@ -134,6 +139,44 @@ public class RequestControllerTest
                 TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task CreateResourceRequest_ToSystemUser_ReturnsSystemUserRequestNotAllowed()
+        {
+            using var scope = Fixture.Server.Services.CreateScope();
+            var requestService = scope.ServiceProvider.GetRequiredService<IRequestService>();
+
+            var result = await requestService.CreateResourceRequest(
+                toId: TestEntities.SystemUserStandard.Id,
+                fromId: TestData.KnutVik.Id,
+                byId: TestData.KnutVik.Id,
+                roleId: RoleConstants.Rightholder.Id,
+                resourceId: TestResourceId,
+                ct: TestContext.Current.CancellationToken);
+
+            Assert.True(result.IsProblem);
+            Assert.Equal(Problems.SystemUserRequestNotAllowed.ErrorCode, result.Problem.ErrorCode);
+            Assert.Equal(HttpStatusCode.Forbidden, result.Problem.StatusCode);
+        }
+
+        [Fact]
+        public async Task CreatePackageRequest_ToSystemUser_ReturnsSystemUserRequestNotAllowed()
+        {
+            using var scope = Fixture.Server.Services.CreateScope();
+            var requestService = scope.ServiceProvider.GetRequiredService<IRequestService>();
+
+            var result = await requestService.CreatePackageRequest(
+                toId: TestEntities.SystemUserStandard.Id,
+                fromId: TestData.KnutVik.Id,
+                byId: TestData.KnutVik.Id,
+                roleId: RoleConstants.Rightholder.Id,
+                package: PackageConstants.Agriculture.Entity.Urn,
+                ct: TestContext.Current.CancellationToken);
+
+            Assert.True(result.IsProblem);
+            Assert.Equal(Problems.SystemUserRequestNotAllowed.ErrorCode, result.Problem.ErrorCode);
+            Assert.Equal(HttpStatusCode.Forbidden, result.Problem.StatusCode);
         }
     }
 
@@ -740,6 +783,81 @@ public class RequestControllerTest
                 TestContext.Current.CancellationToken);
 
             Assert.False(response.IsSuccessStatusCode, "Non-receiver should not be able to approve request");
+        }
+    }
+
+    [IntegrationTest]
+    public class ApproveSystemUserPackageRequestTest : IClassFixture<ApiFixture>
+    {
+        private static readonly Guid PendingPackageRequestId = Guid.Parse("0196b00d-0000-7000-8000-000000000002");
+
+        public ApproveSystemUserPackageRequestTest(ApiFixture fixture)
+        {
+            Fixture = fixture;
+            EnableFeatureFlags(fixture);
+            fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.EnableSystemUserRequests);
+            fixture.EnsureSeedOnce<ApproveSystemUserPackageRequestTest>(db =>
+            {
+                // A system user requests the Agriculture package from Dumbo Adventures (the receiver).
+                // Dumbo's managing director (Malin) can delegate the package, so approval should succeed
+                // and delegate the package to the system user requester.
+                var reqAssignment = new RequestAssignment
+                {
+                    FromId = TestEntities.SystemUserStandard.Id,
+                    ToId = TestData.DumboAdventures.Id,
+                    ById = TestEntities.SystemUserStandard.Id,
+                    RoleId = RoleConstants.Rightholder,
+                };
+                db.RequestAssignments.Add(reqAssignment);
+                db.SaveChanges();
+
+                db.RequestAssignmentPackages.Add(new RequestAssignmentPackage
+                {
+                    Id = PendingPackageRequestId,
+                    AssignmentId = reqAssignment.Id,
+                    PackageId = PackageConstants.Agriculture.Id,
+                    Status = RequestStatus.Pending,
+                });
+                db.SaveChanges();
+            });
+        }
+
+        public ApiFixture Fixture { get; }
+
+        /// <summary>
+        /// Malin (managing director of DumboAdventures, the request's receiver party) approves a
+        /// system user's pending request for the Agriculture package. Approval gets-or-creates the
+        /// Dumbo to system-user rightholder connection and delegates the package on Dumbo's behalf,
+        /// so the request transitions to Approved even though the delegation target is a system user.
+        /// </summary>
+        [Fact]
+        public async Task Receiver_ApprovesPendingSystemUserPackageRequest_ReturnsApproved()
+        {
+            var client = CreateSystemClient(Fixture, TestData.MalinEmilie.Id);
+
+            var response = await client.PutAsync(
+                $"{Route}/received/approve?party={TestData.DumboAdventures.Id}&id={PendingPackageRequestId}",
+                null,
+                TestContext.Current.CancellationToken);
+
+            string content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {content}");
+
+            var result = JsonSerializer.Deserialize<RequestDto>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            Assert.NotNull(result);
+            Assert.Equal(RequestStatus.Approved, result.Status);
+            Assert.Equal(TestEntities.SystemUserStandard.Id, result.From.Id);
+
+            // System users cannot receive notifications, so approval must not queue any for the system user.
+            var systemUserId = TestEntities.SystemUserStandard.Id.ToString();
+            await Fixture.QueryDb(async db =>
+            {
+                var outbox = await db.OutboxMessages
+                    .Where(m => m.Handler == AccessAddedNotification.Handler || m.Handler == RequestReviewedNotification.Handler)
+                    .Where(m => m.RefId.Contains(systemUserId))
+                    .ToListAsync(TestContext.Current.CancellationToken);
+                Assert.Empty(outbox);
+            });
         }
     }
 
