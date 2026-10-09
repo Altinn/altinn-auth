@@ -186,4 +186,44 @@ public class PersonAccessManagerHandlerTest
 
         Assert.True(ctx.HasFailed);
     }
+
+    [Fact]
+    public async Task DirectionParamTo_AccessManagerForPerson_Fails()
+    {
+        // The activity log endpoints carry direction as its own parameter; direction=to is
+        // the from-others direction even without a to parameter.
+        var personEntity = new Entity { Id = PersonPartyId, TypeId = EntityTypeConstants.Person.Id };
+        var (handler, httpCtx) = CreateSut($"?party={PersonPartyId}&direction=to", AccessManagerId, personEntity);
+        var ctx = MakeContext(httpCtx.User);
+
+        await handler.HandleAsync(ctx);
+
+        Assert.True(ctx.HasFailed);
+    }
+
+    [Fact]
+    public async Task DirectionParamFrom_WithToFilterEqualToParty_Succeeds()
+    {
+        // When a direction parameter is present it decides the direction alone — a to filter
+        // equal to the party (self-events) must not trip the from-others rule.
+        var personEntity = new Entity { Id = PersonPartyId, TypeId = EntityTypeConstants.Person.Id };
+        var (handler, httpCtx) = CreateSut($"?party={PersonPartyId}&direction=from&to={PersonPartyId}", AccessManagerId, personEntity);
+        var ctx = MakeContext(httpCtx.User);
+
+        await handler.HandleAsync(ctx);
+
+        Assert.True(ctx.HasSucceeded);
+    }
+
+    [Fact]
+    public async Task DirectionParamTo_AccessManagerForOrganization_Succeeds()
+    {
+        var orgEntity = new Entity { Id = OrgPartyId, TypeId = EntityTypeConstants.Organization.Id };
+        var (handler, httpCtx) = CreateSut($"?party={OrgPartyId}&direction=to", AccessManagerId, orgEntity);
+        var ctx = MakeContext(httpCtx.User);
+
+        await handler.HandleAsync(ctx);
+
+        Assert.True(ctx.HasSucceeded);
+    }
 }

@@ -140,4 +140,21 @@ public static class AccessMgmtFeatureFlags
     /// so the behavior is fully reversible without clearing stored parent references.
     /// </summary>
     public const string AdosSubunitInheritance = "AccessManagement.Subunit.AdosInheritance";
+
+    /// <summary>
+    /// Enables the activity log endpoints under enduser/connections (assignment and
+    /// delegation events).
+    /// </summary>
+    public const string EnableEnduserConnectionsActivityLogApi = "AccessManagement.Enduser.ConnectionsActivityLogApi";
+
+    /// <summary>
+    /// Enables the activity log endpoints under enduser/request (access request events).
+    /// </summary>
+    public const string EnableEnduserRequestActivityLogApi = "AccessManagement.Enduser.RequestActivityLogApi";
+
+    /// <summary>
+    /// Enables the activity log endpoints under enduser/maskinporten (Maskinporten schema
+    /// delegation events — the Supplier-role slice of the log).
+    /// </summary>
+    public const string EnableEnduserMaskinportenActivityLogApi = "AccessManagement.Enduser.MaskinportenActivityLogApi";
 }

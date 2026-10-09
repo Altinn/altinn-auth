@@ -38,11 +38,30 @@ public class CustomMigrationsSqlGenerator : NpgsqlMigrationsSqlGenerator
 
     protected override void Generate(CreateTableOperation operation, IModel? model, MigrationCommandListBuilder builder, bool terminate = true)
     {
-        base.Generate(operation, model, builder, terminate);
-        builder.EndCommand();
-
         var effectiveModel = GetEffectiveModel(model);
         var entityType = FindEntityType(effectiveModel, operation.Name, operation.Schema);
+
+        var partitionColumn = entityType?.FindAnnotation(ActivityLogExtensions.PartitionAnnotationName)?.Value as string
+            ?? operation[ActivityLogExtensions.PartitionAnnotationName] as string;
+
+        if (string.IsNullOrWhiteSpace(partitionColumn))
+        {
+            base.Generate(operation, model, builder, terminate);
+            builder.EndCommand();
+        }
+        else
+        {
+            // EF Core has no API for partitioned tables, so the clause is appended to the
+            // unterminated CREATE TABLE emitted by the base generator.
+            base.Generate(operation, model, builder, terminate: false);
+            builder
+                .Append(" PARTITION BY RANGE (")
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(partitionColumn))
+                .Append(")")
+                .AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator);
+            builder.EndCommand();
+        }
+
         var columns = GetDataColumnNames(operation);
 
         GenerateScripts(entityType, effectiveModel, builder, columns);
@@ -237,6 +256,15 @@ public class CustomMigrationsSqlGenerator : NpgsqlMigrationsSqlGenerator
 
             builder.AppendLine(GenerateAuditDeleteFunctionAndTrigger(schema!, table!, columns));
             builder.EndCommand();
+        }
+
+        if (entityType.FindAnnotation(ActivityLogExtensions.AnnotationName) is not null)
+        {
+            foreach (var script in ActivityLogTriggerScripts.ForTable(schema!, table!))
+            {
+                builder.AppendLine(script);
+                builder.EndCommand();
+            }
         }
 
         builder.AppendLine(GenerateGrants(schema!, table!));

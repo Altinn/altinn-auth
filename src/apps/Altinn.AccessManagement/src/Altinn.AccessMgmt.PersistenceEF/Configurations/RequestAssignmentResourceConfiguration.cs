@@ -13,6 +13,7 @@ public class RequestAssignmentResourceConfiguration : IEntityTypeConfiguration<R
     {
         builder.ToDefaultTable();
         builder.EnableAudit();
+        builder.EnableActivityLog();
 
         builder.HasKey(p => p.Id);
         builder.Property(t => t.Status).IsRequired();

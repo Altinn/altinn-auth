@@ -71,6 +71,12 @@ public sealed class AssignmentGroupCountKeyComparer : IEqualityComparer<Assignme
 // ── DuoRepo ───────────────────────────────────────────────────────────────────
 public sealed class DuoRepo(string accConnString, string? regConnString = null)
 {
+    /// <summary>
+    /// Creates an unopened connection to the AccessMgmt database, for jobs that need session
+    /// state (temp tables) to survive across statements.
+    /// </summary>
+    public NpgsqlConnection CreateAccConnection() => new(accConnString);
+
     // ── Known filter GUIDs (AccessMgmt) ──────────────────────────────────────
 
     /// <summary>Provider IDs whose roles are included in assignment sync (Altinn 3 role providers).</summary>
