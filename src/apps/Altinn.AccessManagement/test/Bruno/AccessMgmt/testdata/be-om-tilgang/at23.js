@@ -60,6 +60,134 @@
       partyuuid: "0eb7144c-1ff1-4657-a1d7-2b127830f52d",
     },
   },
+   
+  Bot_Org_SubUnits: {
+    name: "FINTFØLENDE RASK PIGGSVIN",
+    org_no: "210008802",
+    partyid: 51109366,
+    partyuuid: "332c340f-1e75-4910-aa34-5e5027b750e4",
+    dagligleder: {
+      name: "FANTASTISK PIANOKRAKK",
+      pid: "11896498713",
+      partyid: 50490116,
+      userid: 20697382,
+      partyuuid: "9907ba1d-f300-408f-8a71-df73427f24be",
+    },
+    underenhet01: {
+      name: "BLØT INITIATIVRIK FJELLREV",
+      org_no: "211942932",
+      partyid: 51134519,
+      partyuuid: "99cc47af-23ca-4518-ad63-f2b71a756c4e"
+    },
+    underenhet02: {
+      name: "NORMAL FAST FJELLREV",
+      org_no: "211943092",
+      partyid: 51134520,
+      partyuuid: "53aa6efe-3989-4dde-b704-0dd106cf14a9"
+    },
+    underenhet03: {
+      name: "URETTFERDIG SPETTETE FJELLREV",
+      org_no: "311942921",
+      partyid: 51384555,
+      partyuuid: "5e688e18-b9dc-41a4-834b-34b83fa2e52f"
+    },
+    underenhet04: {
+      name: "VOKAL PRESIS FJELLREV",
+      org_no: "311942948",
+      partyid: 51384556,
+      partyuuid: "b8469c15-9c76-4f5b-9879-018ce8dace94"
+    },
+    underenhet05: {
+      name: "FORETAKSOM KURSIV FJELLREV",
+      org_no: "311942956",
+      partyid: 51384557,
+      partyuuid: "8d34fcf4-a65d-439e-b661-e4a5f58f31c8"
+    },
+    underenhet06: {
+      name: "ANONYM ALVORLIG FJELLREV",
+      org_no: "311942964",
+      partyid: 51384558,
+      partyuuid: "5e52aeee-cad9-41d8-b9fb-fd043d64420f"
+    },
+    underenhet07: {
+      name: "GLEMSOM EGOISTISK FJELLREV",
+      org_no: "311942972",
+      partyid: 51384559,
+      partyuuid: "1f006e75-24b6-446b-9539-a5ba04d02518"
+    },
+    underenhet08: {
+      name: "RASTLØS STILLE FJELLREV",
+      org_no: "311942980",
+      partyid: 51384560,
+      partyuuid: "84994e20-e7a4-468c-98f7-c90c2eca4bf3"
+    },
+    underenhet09: {
+      name: "BERIKENDE URIMELIG FJELLREV",
+      org_no: "311942999",
+      partyid: 51384561,
+      partyuuid: "77d6d20f-a099-4e80-a7a9-142610abccc0"
+    },
+    underenhet10: {
+      name: "SLITEN STRIDLYNT FJELLREV",
+      org_no: "311943006",
+      partyid: 51384563,
+      partyuuid: "d775cd8f-2ce4-4bc7-aa34-86d739afd359"
+    },
+    underenhet11: {
+      name: "UMAKE SKRAVLETE FJELLREV",
+      org_no: "311943014",
+      partyid: 51384564,
+      partyuuid: "af0fc814-0441-4476-be4e-388635cc7eba"
+    },
+    underenhet12: {
+      name: "NETT SMIGRENDE FJELLREV",
+      org_no: "311943022",
+      partyid: 51384562,
+      partyuuid: "f9884d00-cc83-45c1-8d56-1fe4a324fb01"
+    },
+    underenhet13: {
+      name: "BERØMT INNESLUTTET FJELLREV",
+      org_no: "311943030",
+      partyid: 51384567,
+      partyuuid: "e4b12443-4e35-4513-b178-05f7dc12f8d3"
+    },
+    underenhet14: {
+      name: "PLEIENDE UFORNUFTIG FJELLREV",
+      org_no: "311943049",
+      partyid: 51384566,
+      partyuuid: "a61d015b-e4d8-4130-ad9b-2fd5cd0480ba"
+    },
+    underenhet15: {
+      name: "GILD NYTTIG FJELLREV",
+      org_no: "311943057",
+      partyid: 51384569,
+      partyuuid: "2e84b76c-8995-4611-98c3-dfe66b01ce7c"
+    },
+    underenhet16: {
+      name: "BESKJEDEN UKJENT FJELLREV",
+      org_no: "311943065",
+      partyid: 51384565,
+      partyuuid: "287d70b0-c68a-43c0-876f-f313586e0cab"
+    },
+    underenhet17: {
+      name: "STADIG UKJENT FJELLREV",
+      org_no: "311943073",
+      partyid: 51384568,
+      partyuuid: "52cc9690-49c9-4524-8628-452ae8d4eb32"
+    },
+    underenhet18: {
+      name: "RUSTEN UAVHENGIG FJELLREV",
+      org_no: "311943081",
+      partyid: 51384572,
+      partyuuid: "a8a8530b-2872-4696-83b4-6849d057e26f"
+    },
+    underenhet19: {
+      name: "OPPBLÅST TYKKHUDET FJELLREV",
+      org_no: "311943103",
+      partyid: 51384571,
+      partyuuid: "8745b97c-0833-4622-b09a-3c1f7ac5419d"
+    },
+  },
 
   Bot_Org_2: {
     name: "RIMELIG FAST HEST BORETTSLAG",

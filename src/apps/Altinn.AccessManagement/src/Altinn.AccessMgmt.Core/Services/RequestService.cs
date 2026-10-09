@@ -109,6 +109,40 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
     }
 
     /// <inheritdoc/>
+    public async Task<Result<IEnumerable<ReceivedRequestCountSubunitDto>>> GetReceivedRequestsCountForSubunits(Guid partyId, Guid? fromId, IEnumerable<RequestStatus> status, string? type, CancellationToken ct = default)
+    {
+        var subunits = await db.Entities.AsNoTracking()
+            .Where(e => e.ParentId == partyId)
+            .OrderBy(e => e.Name)
+            .ToListAsync(ct);
+
+        if (subunits.Count == 0)
+        {
+            return new List<ReceivedRequestCountSubunitDto>();
+        }
+
+        var filter = new RequestFilter(fromId, null, subunits.Select(s => s.Id).ToList());
+        var resourceCounts = string.IsNullOrEmpty(type) || type.Equals("resource", StringComparison.OrdinalIgnoreCase)
+            ? await BuildRequestAssignmentResourceQuery(filter, status)
+                .GroupBy(r => r.Assignment.ToId)
+                .Select(g => new { ToId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(g => g.ToId, g => g.Count, ct)
+            : [];
+        var packageCounts = string.IsNullOrEmpty(type) || type.Equals("package", StringComparison.OrdinalIgnoreCase)
+            ? await BuildRequestAssignmentPackageQuery(filter, status)
+                .GroupBy(r => r.Assignment.ToId)
+                .Select(g => new { ToId = g.Key, Count = g.Count() })
+                .ToDictionaryAsync(g => g.ToId, g => g.Count, ct)
+            : [];
+
+        return subunits.Select(s => new ReceivedRequestCountSubunitDto
+        {
+            Party = DtoMapper.ConvertToIdentifiedParty(s),
+            Count = resourceCounts.GetValueOrDefault(s.Id) + packageCounts.GetValueOrDefault(s.Id),
+        }).ToList();
+    }
+
+    /// <inheritdoc/>
     public async Task<Result<RequestDto>> UpdateRequest(Guid partyUuid, Guid requestId, RequestStatus status, CancellationToken ct = default)
     {
         ValidationErrorBuilder errorBuilder = default;
@@ -582,6 +616,7 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
         return db.RequestAssignmentResources
             .WhereIf(filter.FromId.HasValue, r => r.Assignment.FromId == filter.FromId.Value)
             .WhereIf(filter.ToId.HasValue, r => r.Assignment.ToId == filter.ToId.Value)
+            .WhereIf(filter.ToIds is { Count: > 0 }, r => filter.ToIds.Contains(r.Assignment.ToId))
             .WhereIf(status?.Any() == true, r => status.Contains(r.Status));
     }
 
@@ -590,14 +625,15 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
         return db.RequestAssignmentPackages
             .WhereIf(filter.FromId.HasValue, r => r.Assignment.FromId == filter.FromId.Value)
             .WhereIf(filter.ToId.HasValue, r => r.Assignment.ToId == filter.ToId.Value)
+            .WhereIf(filter.ToIds is { Count: > 0 }, r => filter.ToIds.Contains(r.Assignment.ToId))
             .WhereIf(status?.Any() == true, r => status.Contains(r.Status));
     }
 
     private static void ValidateFilter(RequestFilter filter)
     {
-        if (!filter.FromId.HasValue && !filter.ToId.HasValue)
+        if (!filter.FromId.HasValue && !filter.ToId.HasValue && filter.ToIds is not { Count: > 0 })
         {
-            throw new ArgumentException("At least one of fromId or toId must be provided");
+            throw new ArgumentException("At least one of fromId, toId or toIds must be provided");
         }
     }
 
@@ -641,7 +677,7 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
         return new RequestFilter(fromId, party);
     }
 
-    internal record RequestFilter(Guid? FromId, Guid? ToId);
+    internal record RequestFilter(Guid? FromId, Guid? ToId, IReadOnlyCollection<Guid>? ToIds = null);
 
     #endregion
 }

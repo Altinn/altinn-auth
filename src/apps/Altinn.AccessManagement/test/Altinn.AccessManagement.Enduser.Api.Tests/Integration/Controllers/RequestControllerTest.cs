@@ -872,4 +872,184 @@ public class RequestControllerTest
     }
 
     #endregion
+
+    #region GET /received/count/subunits — GetReceivedRequestsCountForSubunits
+
+    /// <summary>
+    /// Seeds a main unit with two subunits. Subunit A has received four requests, subunit B none:
+    /// <list type="bullet">
+    /// <item>From GeirPedersen: package Agriculture (Pending), package Fishing (Approved), resource (Pending)</item>
+    /// <item>From AstridJohansen: package Forestry (Pending)</item>
+    /// </list>
+    /// A request to the main unit itself is also seeded, and must not be counted for any subunit.
+    /// </summary>
+    [IntegrationTest]
+    public class GetReceivedRequestsCountForSubunitsTest : IClassFixture<ApiFixture>
+    {
+        private static readonly Guid MainUnitId = Guid.Parse("01964321-0000-7000-8000-000000000001");
+        private static readonly Guid SubunitAId = Guid.Parse("01964321-0000-7000-8000-000000000002");
+        private static readonly Guid SubunitBId = Guid.Parse("01964321-0000-7000-8000-000000000003");
+        private static readonly Guid UnitWithoutSubunitsId = Guid.Parse("01964321-0000-7000-8000-000000000004");
+        private static readonly Guid TestResourceId = Guid.Parse("01964321-0000-7000-8000-000000000005");
+
+        private static readonly ResourceType TestResourceType = new()
+        {
+            Id = Guid.Parse("01964321-0000-7000-8000-000000000006"),
+            Name = "SubunitCountTestType",
+        };
+
+        public GetReceivedRequestsCountForSubunitsTest(ApiFixture fixture)
+        {
+            Fixture = fixture;
+            EnableFeatureFlags(fixture);
+            fixture.EnsureSeedOnce<GetReceivedRequestsCountForSubunitsTest>(db =>
+            {
+                db.Entities.AddRange(
+                    CreateOrganization(MainUnitId, "Subunit Count Main Unit", "399432101", 50432101, EntityVariantConstants.AS, parentId: null),
+                    CreateOrganization(SubunitAId, "Subunit Count Avd A", "399432102", 50432102, EntityVariantConstants.BEDR, parentId: MainUnitId),
+                    CreateOrganization(SubunitBId, "Subunit Count Avd B", "399432103", 50432103, EntityVariantConstants.BEDR, parentId: MainUnitId),
+                    CreateOrganization(UnitWithoutSubunitsId, "Subunit Count No Subunits", "399432104", 50432104, EntityVariantConstants.AS, parentId: null));
+                db.ResourceTypes.Add(TestResourceType);
+                db.SaveChanges();
+
+                db.Resources.Add(new Resource
+                {
+                    Id = TestResourceId,
+                    Name = "SubunitCountTestResource",
+                    Description = "Test resource for received request count per subunit",
+                    RefId = "subunit-count-test-1",
+                    ProviderId = ProviderConstants.ResourceRegistry,
+                    TypeId = TestResourceType.Id,
+                });
+
+                var fromGeirToA = CreateRequestAssignment(TestData.GeirPedersen.Id, SubunitAId);
+                var fromAstridToA = CreateRequestAssignment(TestData.AstridJohansen.Id, SubunitAId);
+                var fromGeirToMain = CreateRequestAssignment(TestData.GeirPedersen.Id, MainUnitId);
+                db.RequestAssignments.AddRange(fromGeirToA, fromAstridToA, fromGeirToMain);
+                db.SaveChanges();
+
+                db.RequestAssignmentPackages.AddRange(
+                    new RequestAssignmentPackage { AssignmentId = fromGeirToA.Id, PackageId = PackageConstants.Agriculture.Id, Status = RequestStatus.Pending },
+                    new RequestAssignmentPackage { AssignmentId = fromGeirToA.Id, PackageId = PackageConstants.Fishing.Id, Status = RequestStatus.Approved },
+                    new RequestAssignmentPackage { AssignmentId = fromAstridToA.Id, PackageId = PackageConstants.Forestry.Id, Status = RequestStatus.Pending },
+                    new RequestAssignmentPackage { AssignmentId = fromGeirToMain.Id, PackageId = PackageConstants.Agriculture.Id, Status = RequestStatus.Pending });
+                db.RequestAssignmentResources.Add(
+                    new RequestAssignmentResource { AssignmentId = fromGeirToA.Id, ResourceId = TestResourceId, Status = RequestStatus.Pending });
+                db.SaveChanges();
+            });
+        }
+
+        public ApiFixture Fixture { get; }
+
+        private static Entity CreateOrganization(Guid id, string name, string orgNo, int partyId, Guid variantId, Guid? parentId) => new()
+        {
+            Id = id,
+            Name = name,
+            TypeId = EntityTypeConstants.Organization,
+            VariantId = variantId,
+            OrganizationIdentifier = orgNo,
+            RefId = orgNo,
+            PartyId = partyId,
+            ParentId = parentId,
+        };
+
+        private static RequestAssignment CreateRequestAssignment(Guid fromId, Guid toId) => new()
+        {
+            FromId = fromId,
+            ToId = toId,
+            ById = fromId,
+            RoleId = RoleConstants.Rightholder,
+        };
+
+        private async Task<List<ReceivedRequestCountSubunitDto>> GetCounts(string query)
+        {
+            var client = CreateSystemClient(Fixture, TestData.GeirPedersen.Id);
+            var response = await client.GetAsync($"{Route}/received/count/subunits?{query}", TestContext.Current.CancellationToken);
+
+            var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {body}");
+
+            var result = await response.Content.ReadFromJsonAsync<List<ReceivedRequestCountSubunitDto>>(TestContext.Current.CancellationToken);
+            Assert.NotNull(result);
+            return result;
+        }
+
+        private static int CountFor(List<ReceivedRequestCountSubunitDto> result, Guid subunitId)
+            => Assert.Single(result, r => r.Party.Id == subunitId).Count;
+
+        [Fact]
+        public async Task NoFilters_ReturnsCountPerSubunit_IncludingSubunitsWithZero()
+        {
+            var result = await GetCounts($"party={MainUnitId}");
+
+            Assert.Equal([SubunitAId, SubunitBId], result.Select(r => r.Party.Id));
+            Assert.Equal(4, CountFor(result, SubunitAId));
+            Assert.Equal(0, CountFor(result, SubunitBId));
+
+            var subunitA = result.Single(r => r.Party.Id == SubunitAId).Party;
+            Assert.Equal("Subunit Count Avd A", subunitA.Name);
+            Assert.Equal("399432102", subunitA.OrganizationIdentifier);
+            Assert.Equal("BEDR", subunitA.Variant);
+        }
+
+        [Fact]
+        public async Task FromFilter_OnlyCountsRequestsFromGivenParty()
+        {
+            var result = await GetCounts($"party={MainUnitId}&from={TestData.GeirPedersen.Id}");
+
+            Assert.Equal(3, CountFor(result, SubunitAId));
+            Assert.Equal(0, CountFor(result, SubunitBId));
+        }
+
+        [Fact]
+        public async Task TypePackage_OnlyCountsPackageRequests()
+        {
+            var result = await GetCounts($"party={MainUnitId}&type=package");
+
+            Assert.Equal(3, CountFor(result, SubunitAId));
+        }
+
+        [Fact]
+        public async Task TypeResource_OnlyCountsResourceRequests()
+        {
+            var result = await GetCounts($"party={MainUnitId}&type=resource");
+
+            Assert.Equal(1, CountFor(result, SubunitAId));
+        }
+
+        [Fact]
+        public async Task StatusFilter_OnlyCountsRequestsWithGivenStatus()
+        {
+            var result = await GetCounts($"party={MainUnitId}&status={RequestStatus.Approved}");
+
+            Assert.Equal(1, CountFor(result, SubunitAId));
+            Assert.Equal(0, CountFor(result, SubunitBId));
+        }
+
+        [Fact]
+        public async Task PartyWithoutSubunits_ReturnsEmptyList()
+        {
+            var result = await GetCounts($"party={UnitWithoutSubunitsId}");
+
+            Assert.Empty(result);
+        }
+
+        [Fact]
+        public async Task MissingRequestsScope_Returns403()
+        {
+            var client = Fixture.Server.CreateClient();
+            var token = TestTokenGenerator.CreateToken(new ClaimsIdentity("mock"), claims =>
+            {
+                claims.Add(new Claim(AltinnCoreClaimTypes.PartyUuid, TestData.GeirPedersen.Id.ToString()));
+                claims.Add(new Claim("scope", AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE));
+            });
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+
+            var response = await client.GetAsync($"{Route}/received/count/subunits?party={MainUnitId}", TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        }
+    }
+
+    #endregion
 }
