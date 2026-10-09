@@ -3,6 +3,9 @@ contact_links:
   - name: Sikkerhetssårbarhet
     url: https://github.com/Altinn/altinn-auth/security/policy
     about: Meld sårbarheter privat etter sikkerhetspolicyen, ikke som et åpent issue.
+  - name: Spørsmål og support
+    url: https://digdir-samarbeid.slack.com/archives/C068V9FJQTD
+    about: Still spørsmål til teamene bak Altinn Autorisasjon i Slack-arbeidsområdet Digdir samarbeid.
   - name: Dokumentasjon for Altinn Autorisasjon
     url: https://docs.altinn.studio/nb/authorization/
     about: Veiledninger og API-dokumentasjon for tjenesteeiere og sluttbrukersystemleverandører.
