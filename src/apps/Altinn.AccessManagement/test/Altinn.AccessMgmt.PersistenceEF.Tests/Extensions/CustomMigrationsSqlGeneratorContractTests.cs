@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Migrations;

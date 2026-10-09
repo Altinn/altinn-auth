@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Reflection;
 using Altinn.AccessMgmt.FFB.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Constants;

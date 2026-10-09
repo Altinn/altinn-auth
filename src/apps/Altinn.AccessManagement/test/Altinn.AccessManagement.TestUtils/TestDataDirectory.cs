@@ -1,4 +1,4 @@
-namespace Altinn.AccessManagement.TestUtils;
+﻿namespace Altinn.AccessManagement.TestUtils;
 
 /// <summary>
 /// Resolves the directory holding the AccessManagement integration-test data

@@ -1,4 +1,4 @@
-namespace Altinn.AccessMgmt.FFB.Services;
+﻿namespace Altinn.AccessMgmt.FFB.Services;
 
 /// <summary>
 /// Registers the page-facing service layer by convention.

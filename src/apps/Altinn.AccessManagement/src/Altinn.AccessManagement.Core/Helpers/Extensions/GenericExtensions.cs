@@ -1,4 +1,4 @@
-namespace Altinn.AccessManagement.Core.Helpers.Extensions
+﻿namespace Altinn.AccessManagement.Core.Helpers.Extensions
 {
     /// <summary>
     /// Generic Extensions

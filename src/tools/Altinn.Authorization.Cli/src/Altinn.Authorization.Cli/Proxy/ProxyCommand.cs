@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using Altinn.Authorization.Cli.Utils;
 using Altinn.Authorization.ServiceDefaults.HttpClient.MaskinPorten;

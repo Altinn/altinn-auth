@@ -710,8 +710,8 @@ namespace Altinn.Common.PEP.Helpers
                 XacmlJsonAttributeAssignment attributeMinLvAuthSystemUser = GetObligation(PolicyObligationMinAuthnLevelSystemUser, obligationList);
                 if (attributeMinLvAuthSystemUser != null)
                 {
-                    if (SystemUserAuthenticationLevel >= Convert.ToInt32(attributeMinLvAuthSystemUser.Value)
-                        || SystemUserAuthenticationLevel >= Convert.ToInt32(attributeMinLvAuth.Value))
+                    if (Convert.ToInt32(attributeMinLvAuthSystemUser.Value) <= SystemUserAuthenticationLevel
+                        || Convert.ToInt32(attributeMinLvAuth.Value) <= SystemUserAuthenticationLevel)
                     {
                         return true;
                     }

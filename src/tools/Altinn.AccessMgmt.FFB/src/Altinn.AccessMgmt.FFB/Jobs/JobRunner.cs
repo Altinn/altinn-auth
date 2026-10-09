@@ -1,4 +1,4 @@
-using Altinn.AccessMgmt.FFB.Config;
+﻿using Altinn.AccessMgmt.FFB.Config;
 using Altinn.AccessMgmt.FFB.Jobs.Models;
 using Altinn.AccessMgmt.FFB.Services.Contracts;
 using Microsoft.Extensions.Options;

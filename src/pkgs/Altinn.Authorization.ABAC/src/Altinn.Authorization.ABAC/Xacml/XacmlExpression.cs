@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.ABAC.Xacml
+﻿namespace Altinn.Authorization.ABAC.Xacml
 {
     /// <summary>
     /// The <Expression/> element is not used directly in a policy.

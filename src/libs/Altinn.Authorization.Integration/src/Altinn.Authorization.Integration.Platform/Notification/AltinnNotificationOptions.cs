@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.Integration.Platform.Notification;
+﻿namespace Altinn.Authorization.Integration.Platform.Notification;
 
 /// <summary>
 /// Options for configuring the Altinn Notification integration.

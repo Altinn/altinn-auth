@@ -399,5 +399,4 @@ public static class PackageDelegationCheckQuery
         WHERE
             (array_length(@packageIds, 1) IS NULL OR p.packageid = ANY(@packageIds))
         """;
-
 }

@@ -480,7 +480,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
         Assert.DoesNotContain(dbResult, r =>
             r.ToId == orgId &&
             r.ViaRoleId == RoleConstants.ParticipantSharedResponsibility.Id &&
-            r.Reason == ConnectionReason.KeyRole);  
+            r.Reason == ConnectionReason.KeyRole);
     }
 
     [Fact]
@@ -546,7 +546,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
             r.ToId == personId &&
             r.RoleId == RoleConstants.ParticipantSharedResponsibility.Id &&
             r.Reason == ConnectionReason.KeyRole);
-    }    
+    }
 
     [Fact]
     public async Task KeyRole_ToOthers_IksWithDifferentRole_IsIncluded()
@@ -1049,7 +1049,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
     }
 
     [Fact]
-    public async Task GetConnectionsToOthers_SupplierRoleAlwaysExcluded()   
+    public async Task GetConnectionsToOthers_SupplierRoleAlwaysExcluded()
     {
         var consumerId = TestDataSet.GetEntity("Consumer Corp").Id;
         var supplierId = TestDataSet.GetEntity("Supplier Corp").Id;

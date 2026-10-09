@@ -1,4 +1,4 @@
-namespace Altinn.AccessMgmt.Core.Utils.Models;
+﻿namespace Altinn.AccessMgmt.Core.Utils.Models;
 
 /// <summary>
 /// Bundles the per-request language preference and the partial-translation fallback flag

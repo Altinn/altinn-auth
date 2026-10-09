@@ -221,8 +221,6 @@ public class PartySyncService : BaseSyncService, IPartySyncService
         }
     }
 
-
-
     private Entity MapPerson(Person person)
     {
         var entity = CreateEntity(person, e =>

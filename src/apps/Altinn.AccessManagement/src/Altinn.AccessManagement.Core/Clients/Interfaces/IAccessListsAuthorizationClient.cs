@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.Core.Models.AccessList;
+﻿using Altinn.AccessManagement.Core.Models.AccessList;
 
 namespace Altinn.AccessManagement.Core.Clients.Interfaces;
 

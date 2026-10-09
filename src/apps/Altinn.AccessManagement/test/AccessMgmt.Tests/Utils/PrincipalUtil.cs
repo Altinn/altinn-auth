@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Altinn.Common.AccessTokenClient.Constants;
 using AltinnCore.Authentication.Constants;
 

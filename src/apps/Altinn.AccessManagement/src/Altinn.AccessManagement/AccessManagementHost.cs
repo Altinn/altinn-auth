@@ -533,7 +533,7 @@ public class NpgsqlProcessor(TimeSpan minimumTotalDuration, IHttpContextAccessor
             long totalDbDuration = 0;
             int dbActivityCount = 0;
             List<string> baggageKeys = [];
-            activity.Baggage.Where(b => b.Key.StartsWith("hash", StringComparison.OrdinalIgnoreCase)).OrderBy(b => b.Key).ToList().ForEach(b => 
+            activity.Baggage.Where(b => b.Key.StartsWith("hash", StringComparison.OrdinalIgnoreCase)).OrderBy(b => b.Key).ToList().ForEach(b =>
             {
                 baggageKeys.Add(b.Key);
                 sb.Append($";{b.Value}");
@@ -553,7 +553,7 @@ public class NpgsqlProcessor(TimeSpan minimumTotalDuration, IHttpContextAccessor
 
             if (dbActivityCount > 0)
             {
-                activity.SetTag("db.stats", $"Count: {dbActivityCount}, tot dur: {totalDbDuration:N0}ms, avg dur: {totalDbDuration / dbActivityCount:N0}ms, hashes:duration: {sb.Remove(0,1)}");
+                activity.SetTag("db.stats", $"Count: {dbActivityCount}, tot dur: {totalDbDuration:N0}ms, avg dur: {totalDbDuration / dbActivityCount:N0}ms, hashes:duration: {sb.Remove(0, 1)}");
             }
 
             LogClaims(httpContextAccessor, activity);

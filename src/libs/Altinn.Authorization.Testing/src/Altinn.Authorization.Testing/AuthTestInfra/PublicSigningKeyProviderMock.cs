@@ -1,4 +1,4 @@
-using Altinn.Common.AccessToken.Services;
+﻿using Altinn.Common.AccessToken.Services;
 
 using Microsoft.IdentityModel.Tokens;
 

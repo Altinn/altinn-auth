@@ -85,8 +85,8 @@ public class PasswordHashTest
     [Fact]
     public void Create_BlankArgument_Throws()
     {
-        ((Action)(() => PasswordHash.Create("", "p"))).Should().Throw<ArgumentException>();
-        ((Action)(() => PasswordHash.Create("u", ""))).Should().Throw<ArgumentException>();
+        ((Action)(() => PasswordHash.Create(string.Empty, "p"))).Should().Throw<ArgumentException>();
+        ((Action)(() => PasswordHash.Create("u", string.Empty))).Should().Throw<ArgumentException>();
     }
 
     // Characterization test, not an endorsement. The derived key is computed over

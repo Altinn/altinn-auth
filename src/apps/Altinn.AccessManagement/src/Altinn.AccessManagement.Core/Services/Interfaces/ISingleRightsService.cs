@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.Core.Models;
+﻿using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 
 namespace Altinn.AccessManagement.Core.Services.Interfaces

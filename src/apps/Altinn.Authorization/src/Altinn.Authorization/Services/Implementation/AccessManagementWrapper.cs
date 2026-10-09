@@ -148,7 +148,7 @@ public class AccessManagementWrapper : IAccessManagementWrapper
 
     /// <inheritdoc/>
     public async Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, CancellationToken cancellationToken = default)
-    {   
+    {
         var cacheKey = $"RolesAndAccPkgs|f:{from}|t:{to}";
 
         if (!_memoryCache.TryGetValue(cacheKey, out PipResponseDto result))
