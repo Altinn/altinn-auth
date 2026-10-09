@@ -11,6 +11,9 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers;
 
+/// <summary>
+/// Tests concurrent access package assignments through the connections controller.
+/// </summary>
 public partial class ConnectionsControllerTest
 {
     /// <summary>

@@ -13,6 +13,9 @@ using Altinn.Authorization.Api.Contracts.AccessManagement;
 
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers;
 
+/// <summary>
+/// Tests retrieving connections through the connections controller.
+/// </summary>
 public partial class ConnectionsControllerTest
 {
     /// <summary>
