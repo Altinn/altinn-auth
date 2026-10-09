@@ -1,4 +1,4 @@
-﻿using Altinn.AccessManagement.Core.Models;
+using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Enums;
 using Altinn.Authorization.Api.Contracts.Authorization;
 
@@ -53,8 +53,18 @@ namespace Altinn.AccessManagement.Api.Internal.Extensions
                 Subject = ToCore(dto.Subject),
                 Party = ToCore(dto.Party),
                 Resource = dto.Resource?.Select(ToCore).ToList(),
+                AccessRestriction = ToCore(dto.AccessRestriction),
+                ViaPartyOrganizationNumber = dto.ViaPartyOrganizationNumber,
             };
         }
+
+        private static AccessRestriction ToCore(AccessRestrictionDto dto) => dto switch
+        {
+            AccessRestrictionDto.None => AccessRestriction.None,
+            AccessRestrictionDto.ClientDelegation => AccessRestriction.ClientDelegation,
+            AccessRestrictionDto.DirectAndHierarchy => AccessRestriction.DirectAndHierarchy,
+            _ => throw new ArgumentOutOfRangeException(nameof(dto), dto, null),
+        };
 
         private static AttributeMatch ToCore(AttributeMatchDto dto) =>
             dto is null ? null : new AttributeMatch { Id = dto.Id, Value = dto.Value };
