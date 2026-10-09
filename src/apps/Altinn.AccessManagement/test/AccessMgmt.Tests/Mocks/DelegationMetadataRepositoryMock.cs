@@ -199,9 +199,6 @@ public class DelegationMetadataRepositoryMock : IDelegationMetadataRepository
                 break;
             case "error/postgregetcurrentfail":
                 throw new Exception("Some exception happened");
-            case "error/delegationeventfail":
-                result = TestDataUtil.GetAltinnAppDelegationChange(resourceId, offeredByPartyId, coveredByUserId, coveredByPartyId, changeType: DelegationChangeType.Grant);
-                break;
             case "resource1":
                 result = TestDataUtil.GetResourceRegistryDelegationChange(resourceId, ResourceType.MaskinportenSchema, offeredByPartyId, created, coveredByUserId, coveredByPartyId);
                 break;

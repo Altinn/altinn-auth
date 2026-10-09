@@ -9,14 +9,11 @@ labels: 'kind/deploy_patch, team/tilgangsstyring'
   - [ ] Deploy products with changes [to APIM production](https://dev.azure.com/brreg/altinn-studio-ops/_build?definitionId=128).
 - [ ] Deploy[^1] all platform components to production[^2].
   - [ ] Deploy [Authorization] to production.
-  - [ ] Deploy [Delegation Events] to production.
   - [ ] Deploy [Access Management] to production.
   - [ ] Verify [cluster 01 new pods](https://portal.azure.com/#@ai-dev.no/resource/subscriptions/1ab2d164-1861-4ff8-be8c-069c3ee3b70a/resourceGroups/altinnplatform-prod-rg/providers/Microsoft.ContainerService/managedClusters/platform-prod-01-aks/workloads) or [cluster 02 new pods](https://portal.azure.com/#@ai-dev.no/resource/subscriptions/1ab2d164-1861-4ff8-be8c-069c3ee3b70a/resourceGroups/altinnplatform-prod-rg/providers/Microsoft.ContainerService/managedClusters/platform-prod-02-aks/workloads) startup without errors.
-  - [ ] Verify [function app deployment](https://portal.azure.com/#@ai-dev.no/resource/subscriptions/1ab2d164-1861-4ff8-be8c-069c3ee3b70a/resourceGroups/altinnplatform-prod-rg/providers/Microsoft.Web/sites/altinn-prod-delegation-func/appServices).
   - [ ] Grab a coffee.
   - [ ] Verify no errors reported for the components in Slack channels [#alerts-prod](https://altinndevops.slack.com/archives/C014H7WPSUB) or [#alerts-prod-critical](https://altinndevops.slack.com/archives/C012108PYBV).
   - [ ] Post-deploy [Authorization] and [Access Management] if everything looks good.
-  - [ ] Post-deploy [Delegation Events] if everything looks good.
 - [ ] Deploy frontend to production (if a new release was made and deployed to TT02 last week)
   - [ ] Check [Access Management Frontend Releases](https://github.com/Altinn/altinn-access-management-frontend/releases) if a new release was made last week and [deployed to TT02](https://github.com/Altinn/altinn-access-management-frontend/deployments/TT02)
   - [ ] Deploy new release of [Access Management Frontend] to production.
@@ -30,10 +27,8 @@ labels: 'kind/deploy_patch, team/tilgangsstyring'
   - [ ] Deploy products with changes [to TT02 APIM](https://dev.azure.com/brreg/altinn-studio-ops/_build?definitionId=125).
 - [ ] Deploy[^1] all platform components to TT02[^3].
   - [ ] Deploy [Authorization] to TT02.
-  - [ ] Deploy [Delegation Events] to TT02.
   - [ ] Deploy [Access Management] to TT02.
   - [ ] Verify [cluster 01 new pods](https://portal.azure.com/#@ai-dev.no/resource/subscriptions/dd6d3e08-a70f-4f71-8847-781ddc5d8468/resourceGroups/altinnplatform-tt02-rg/providers/Microsoft.ContainerService/managedClusters/platform-tt02-01-aks/workloads) or [cluster 02 new pods](https://portal.azure.com/#@ai-dev.no/resource/subscriptions/dd6d3e08-a70f-4f71-8847-781ddc5d8468/resourceGroups/altinnplatform-tt02-rg/providers/Microsoft.ContainerService/managedClusters/platform-tt02-02-aks/workloads) startup without errors.
-  - [ ] Verify [function app deployment](https://portal.azure.com/#@ai-dev.no/resource/subscriptions/dd6d3e08-a70f-4f71-8847-781ddc5d8468/resourceGroups/altinnplatform-tt02-rg/providers/Microsoft.Web/sites/altinn-tt02-delegation-func/appServices).
   - [ ] Grab a coffee.
   - [ ] Verify [Authorization K6 automated test](https://dev.azure.com/brreg/altinn-studio/_build?definitionId=414) results.
   - [ ] Verify [Authorization Bruno automated test](https://dev.azure.com/brreg/altinn-studio/_build?definitionId=480) results.
@@ -41,7 +36,6 @@ labels: 'kind/deploy_patch, team/tilgangsstyring'
   - [ ] Verify [Access Management Bruno automated test](https://dev.azure.com/brreg/altinn-studio/_build?definitionId=475) results.
   - [ ] Verify no errors reported for the components in Slack channels [#alerts-prod](https://altinndevops.slack.com/archives/C014H7WPSUB) or [#alerts-prod-critical](https://altinndevops.slack.com/archives/C012108PYBV) (Yes, TT02 alerts also goes here).
   - [ ] Post-deploy [Authorization] and [Access Management] if everything looks good.
-  - [ ] Post-deploy [Delegation Events] if everything looks good.
 - [ ] Deploy frontend to TT02 (if a draft release with changes is waiting for deploy)
   - [ ] Check [Access Management Frontend Releases](https://github.com/Altinn/altinn-access-management-frontend/releases) if a release draft is waiting.
   - [ ] Publish the draft as the next release as `v{year}.{releaseNumber}`
@@ -95,9 +89,6 @@ Gå til https://portal.azure.com/  og velg Kubernetes services.
 
 Klikk på platform-prod-02-aks (eller tt02 hvis deployet til TT02) -> Workloads -> Pods. Her kan du sortere på *Age* så alle de nyeste pod'ene kommer først. I dette skjermbildet ble Access Management deployet, man ser at alle fire Access Management pod'ene har en grønn hake under Ready og *Running* som status. Hvis noen av pod'ene ikke er Ready, kan det hende du må vente noen minutter og sjekke igjen.
 
-#### Unntak for Delegation Events: sjekk functions i stedet for pods
-TODO
-
 ### Post-deploy Approval
 Hvis alt ser bra ut kan du gå tilbake til https://dev.azure.com/brreg/altinn-studio og finne Releasen som som ble deployet og approve post-deployment.
 
@@ -106,7 +97,6 @@ Hvis alt ser bra ut kan du gå tilbake til https://dev.azure.com/brreg/altinn-st
 ![approved](https://raw.githubusercontent.com/Altinn/altinn-authorization/main/.github/images/approved.png)
 
 [Authorization]: https://dev.azure.com/brreg/altinn-studio/_release?_a=releases&view=mine&definitionId=23
-[Delegation Events]: https://dev.azure.com/brreg/altinn-studio/_release?_a=releases&view=mine&definitionId=33
 [Access Management]: https://dev.azure.com/brreg/altinn-studio/_release?_a=releases&view=mine&definitionId=37
 [Access Management Frontend]: https://github.com/Altinn/altinn-access-management-frontend/actions/workflows/deploy-to-environment.yml
 
