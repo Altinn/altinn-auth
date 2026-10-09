@@ -1,0 +1,74 @@
+meta {
+  name: 03_AND_ServiceOwnerDelegatesReadRight
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/connections/resources
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "from": "urn:altinn:person:identifier-no:{{grantorPid}}",
+    "to": "urn:altinn:person:identifier-no:{{recipientPid}}",
+    "resource": "{{resource}}",
+    "rightKeys": {
+      "directRightKeys": ["{{so_readRightKey}}"]
+    }
+  }
+}
+
+docs {
+  AND the service owner delegates the read right from the grantor to the recipient.
+
+  POST /accessmanagement/api/v1/serviceowner/connections/resources
+
+  Body: `from`, `to` and `resource` as for revoke, plus `rightKeys.directRightKeys`,
+  the keys from the rights lookup. Scope `altinn:serviceowner/delegations:resource.write`.
+  Returns 200 with the assignment resource: `id`, `assignmentId` (the rettighetshaver
+  assignment between the two parties) and `resourceId`. Errors: 400 AM-00027 unknown
+  resource, AM-00033 no right key, AM-00036 a key not in the policy; 403 AM-00048 when the
+  service owner does not own the resource.
+}
+
+script:pre-request {
+  const { td, loginAsServiceOwner, scopes, serviceOwners } = require("./test/ServiceOwnerAPI/Scenarios/helpers.js");
+  const data = td();
+
+  bru.setVar("grantorPid", data.resourceDelegation.grantor.pid);
+  bru.setVar("recipientPid", data.resourceDelegation.recipient.pid);
+  bru.setVar("resource", data.resourceDelegation.resource);
+
+  await loginAsServiceOwner(serviceOwners.digdir, scopes.resourceDelegationWrite);
+}
+
+script:post-response {
+  const body = res.getBody();
+  if (res.status === 200 && body) {
+    bru.setVar("so_assignmentResourceId", body.id);
+    bru.setVar("so_assignmentId", body.assignmentId);
+  }
+}
+
+tests {
+  const guid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  test("AND the read right is delegated, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the response carries the assignment resource ids", function() {
+    const body = res.getBody();
+    expect(body.id).to.match(guid);
+    expect(body.assignmentId).to.match(guid);
+    expect(body.resourceId).to.match(guid);
+  });
+}
