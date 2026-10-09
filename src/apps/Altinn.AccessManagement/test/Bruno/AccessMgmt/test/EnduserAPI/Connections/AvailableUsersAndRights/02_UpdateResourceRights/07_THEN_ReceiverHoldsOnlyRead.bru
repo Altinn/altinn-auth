@@ -1,0 +1,46 @@
+meta {
+  name: 07_THEN_ReceiverHoldsOnlyRead
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources/rights?party={{party}}&from={{party}}&to={{to}}&resource={{resource}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{to}}
+  resource: {{resource}}
+}
+
+docs {
+  THEN the receiver holds only read on the resource.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/Connections/AvailableUsersAndRights/helpers.js");
+  const td = testdata();
+
+  bru.setVar("party", td.delegator.partyUuid);
+  bru.setVar("to", td.receiver.partyUuid);
+  bru.setVar("resource", td.resource.refId);
+
+  await loginAs(td.delegator);
+}
+
+tests {
+  test("THEN the rights request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN read is the only direct right left", function() {
+    const direct = res.getBody().directRights;
+    expect(direct).to.have.lengthOf(1);
+    expect(direct[0].right.action.value).to.equal("read");
+    expect(direct[0].right.key).to.equal(bru.getVar("aur_readKey"));
+  });
+}
