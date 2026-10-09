@@ -8,6 +8,18 @@ body:
       value: |
         En epic samler arbeidet. Selve oppgavene legges inn som **sub-issues**, ikke som en liste i teksten.
 
+  - type: textarea
+    id: tldr
+    attributes:
+      label: TL;DR
+      description: Inntil fem punkter. Mål, grep og når den er ferdig.
+      value: |
+        - **Mål:**
+        - **Grep:**
+        - **Ferdig når:**
+    validations:
+      required: true
+
   - type: dropdown
     id: component
     attributes:
@@ -27,18 +39,6 @@ body:
         - Lokalt utviklingsmiljø og repo-verktøy (devex)
         - Dokumentasjon (docs)
         - Vet ikke
-    validations:
-      required: true
-
-  - type: textarea
-    id: tldr
-    attributes:
-      label: TL;DR
-      description: Inntil fem punkter. Mål, grep og når den er ferdig.
-      value: |
-        - **Mål:**
-        - **Grep:**
-        - **Ferdig når:**
     validations:
       required: true
 

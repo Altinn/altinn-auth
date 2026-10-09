@@ -8,6 +8,16 @@ body:
       value: |
         Beskriv gjerne **behovet** før løsningen. Da er det lettere for teamet å finne den beste måten å løse det på.
 
+  - type: textarea
+    id: tldr
+    attributes:
+      label: TL;DR
+      description: Inntil fem punkter. Hva ønskes, og hvorfor?
+      value: |
+        -
+    validations:
+      required: true
+
   - type: dropdown
     id: component
     attributes:
@@ -41,16 +51,6 @@ body:
         - Sluttbrukersystemleverandør
         - Annet Altinn-produkt
         - Internt i teamet
-    validations:
-      required: true
-
-  - type: textarea
-    id: tldr
-    attributes:
-      label: TL;DR
-      description: Inntil fem punkter. Hva ønskes, og hvorfor?
-      value: |
-        -
     validations:
       required: true
 

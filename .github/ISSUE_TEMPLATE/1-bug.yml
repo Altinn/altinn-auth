@@ -12,6 +12,16 @@ body:
 
         **Ikke lim inn** fødselsnummer, tokens, API-nøkler, produksjonslogger eller annen taushetsbelagt informasjon. Bruk testdata og korrelasjons-ID.
 
+  - type: textarea
+    id: tldr
+    attributes:
+      label: TL;DR
+      description: Inntil fem punkter. Hva skjedde, hvem rammes, og hvor alvorlig er det?
+      value: |
+        -
+    validations:
+      required: true
+
   - type: dropdown
     id: component
     attributes:
@@ -46,14 +56,6 @@ body:
         - YT01
         - Lokalt
         - Vet ikke
-    validations:
-      required: true
-
-  - type: textarea
-    id: summary
-    attributes:
-      label: Hva skjedde?
-      description: Kort beskrivelse av feilen og hvem den rammer.
     validations:
       required: true
 

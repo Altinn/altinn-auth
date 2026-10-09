@@ -3,6 +3,16 @@ description: Et spørsmål som må utredes før teamet kan planlegge eller beste
 type: Task
 labels: ["kind/analysis", "status/draft"]
 body:
+  - type: textarea
+    id: tldr
+    attributes:
+      label: TL;DR
+      description: Inntil fem punkter. Hva skal utredes, hvorfor nå, og hva skal komme ut av det?
+      value: |
+        -
+    validations:
+      required: true
+
   - type: dropdown
     id: component
     attributes:

@@ -1,7 +1,18 @@
 name: Oppgave
 description: En avgrenset arbeidsoppgave, ofte et sub-issue under en feature eller epic.
 type: Task
+labels: ["status/triage"]
 body:
+  - type: textarea
+    id: tldr
+    attributes:
+      label: TL;DR
+      description: Inntil fem punkter. Hva skal gjøres, og hvorfor? Lenk til feature eller epic hvis oppgaven er en del av en større leveranse.
+      value: |
+        -
+    validations:
+      required: true
+
   - type: dropdown
     id: component
     attributes:
@@ -26,10 +37,8 @@ body:
   - type: textarea
     id: description
     attributes:
-      label: Hva skal gjøres?
-      description: Kort beskrivelse, og lenke til feature eller epic hvis oppgaven er en del av en større leveranse.
-    validations:
-      required: true
+      label: Detaljer
+      description: Valgfritt. Bakgrunn, tekniske notater eller lenker.
 
   - type: textarea
     id: done

@@ -3,6 +3,16 @@ description: Funksjonalitet beskrevet fra brukerens ståsted, med akseptansekrit
 type: User story
 labels: ["status/triage"]
 body:
+  - type: textarea
+    id: tldr
+    attributes:
+      label: TL;DR
+      description: Inntil fem punkter. Hvem trenger hva, og hvorfor?
+      value: |
+        -
+    validations:
+      required: true
+
   - type: dropdown
     id: component
     attributes:
