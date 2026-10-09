@@ -28,7 +28,7 @@ body:
         - NuGet-pakker – PEP og ABAC (packages)
         - Felles biblioteker (libs)
         - Verktøy – CLI og FFB (tools)
-        - Infrastruktur og CI/CD (infra)
+        - Felles plattform – CI/CD, felles Terraform og Flux (infra)
         - Lokalt utviklingsmiljø og repo-verktøy (devex)
         - Dokumentasjon (docs)
         - Vet ikke
