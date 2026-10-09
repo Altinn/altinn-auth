@@ -16,7 +16,7 @@ Drafted with AI assistance (Claude Code, model Claude Opus 5.5) from figures pul
 
 ## Context
 
-This repository is becoming the single home for every authorization component: Access Management, Authorization, Resource Registry and Register are here, while Authentication, the Access Management frontend and Auditlog are on their way ([#4048](https://github.com/Altinn/altinn-auth/issues/4048)). Their issues come with them. On 2026-10-09 there were 646 open issues here and 384 more in the repositories still to move in, two of which are archived.
+This repository is becoming the single home for every authorization component: Access Management, Authorization, Resource Registry and Register are here, while Authentication, the Access Management frontend and Auditlog are on their way ([#4048](https://github.com/Altinn/altinn-auth/issues/4048)). Their issues come with them. On 2026-10-09 there were 646 open issues here and 411 more in the repositories still to move in, two of which are archived.
 
 The labels do not support that. They say *when* an issue was planned and *which layer* it touches, but not *which part of the domain* it belongs to:
 
@@ -33,7 +33,7 @@ The labels do not support that. They say *when* an issue was planned and *which 
 We will use one model, with one mechanism per question.
 
 1. **Issue type** answers *what kind of work*: Epic, Feature, Task, Bug, Enhancement or User story. `kind/bug`, `kind/feature-request` and `kind/user-story` are retired.
-2. **`area/*`** answers *which component*, one per issue: `access-management`, `access-management-frontend`, `authorization`, `authentication`, `register`, `resource-registry`, `auditlog`, `packages`, `libs`, `tools`, `infra`, `devex` and `docs`. `area/infra` is the shared platform only (CI/CD, shared Terraform, Flux); infrastructure work for one component gets that component's area and `layer/infra`. A pull request gets area labels automatically from the paths it changes, and may have more than one.
+2. **`area/*`** answers *which component*, one per issue: `access-management`, `access-management-frontend`, `authorization`, `authentication`, `register`, `resource-registry`, `auditlog`, `packages`, `libs`, `tools`, `infra`, `devex` and `docs`. `area/infra` is the shared platform only (CI/CD, shared Terraform, Flux); infrastructure work for one component gets that component's area and `layer/infra`. `area/auditlog` is the service that stores audit events; producing an event belongs to the component that emits it. A pull request gets area labels automatically from the paths it changes, and may have more than one.
 3. **`feature/*`** answers *which capability*, zero or more: `access-packages`, `roles`, `single-rights`, `instance-delegation`, `client-delegation`, `system-user`, `consent`, `access-requests`, `maskinporten`, `authorized-parties`, `activity-log`, `notifications` and `a2-decommission`. A new capability gets a label when it has more than a handful of issues.
 4. **The remaining groups** each have a prefix and a rule:
 
