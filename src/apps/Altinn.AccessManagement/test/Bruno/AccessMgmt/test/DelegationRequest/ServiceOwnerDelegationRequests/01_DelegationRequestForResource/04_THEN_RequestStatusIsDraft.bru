@@ -1,0 +1,38 @@
+meta {
+  name: 04_THEN_RequestStatusIsDraft
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/delegationrequests/{{so_resourceRequestId}}/status
+  body: none
+  auth: inherit
+}
+
+docs {
+  THEN the request status is Draft.
+
+  GET /accessmanagement/api/v1/serviceowner/delegationrequests/{id}/status, scope
+  `altinn:serviceowner/delegationrequests.read`. Returns 200 with the status as a JSON
+  string: Draft, Pending, Accepted, Rejected or Withdrawn.
+}
+
+script:pre-request {
+  const { td, loginAsServiceOwner, scopes } = require("./test/DelegationRequest/ServiceOwnerDelegationRequests/helpers.js");
+  const data = td();
+
+  bru.setVar("grantorPid", data.delegationRequest.grantor.pid);
+  bru.setVar("requesterPid", data.delegationRequest.requester.pid);
+  bru.setVar("requestResource", data.delegationRequest.resource);
+  bru.setVar("requestPackage", data.delegationRequest.package);
+
+  await loginAsServiceOwner(data.serviceOwners.ttd, scopes.delegationRequestsRead);
+}
+
+tests {
+  test("THEN the status request returns 200 with Draft", function() {
+    expect(res.status).to.equal(200);
+    expect(res.getBody()).to.equal("Draft");
+  });
+}
