@@ -14,6 +14,8 @@ const argv = yargs()
   })
   .option("slnx", {
     type: "boolean",
+    // The repository holds .slnx files since #4378; `--no-slnx` writes the old .sln format.
+    default: true,
   })
   .parse();
 
