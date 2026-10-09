@@ -15,12 +15,10 @@ body:
         **Do not paste** national identity numbers, tokens, API keys, production logs or other confidential information. Use test data and a correlation ID.
 
   - type: textarea
-    id: tldr
+    id: summary
     attributes:
-      label: "TL;DR"
-      description: "Up to five bullets. What happened, who is affected, and how serious is it?"
-      placeholder: |
-        - ...
+      label: "What happened?"
+      description: "One sentence is enough. Who is affected, and how serious is it?"
 
   - type: dropdown
     id: component
