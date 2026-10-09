@@ -106,6 +106,17 @@ public interface IAuthorizedPartyRepoServiceEf
     Task<List<ConnectionQueryExtendedRecord>> GetPipConnectionsFromOthers(Guid toId, AuthorizedPartiesFilters filters = null, CancellationToken ct = default);
 
     /// <summary>
+    /// Gets the ids of the given client delegations that were received through the given via-party.
+    /// The via-party is resolved from the original delegation, so it is preserved for connections
+    /// projected through main-unit hierarchy where the connection via-party is replaced by the main unit.
+    /// </summary>
+    /// <param name="delegationIds">The delegation ids to check</param>
+    /// <param name="viaPartyId">The via-party the delegations must have been received through</param>
+    /// <param name="ct">The <see cref="CancellationToken"/></param>
+    /// <returns>The subset of the delegation ids received through the via-party</returns>
+    Task<HashSet<Guid>> GetDelegationIdsViaParty(IEnumerable<Guid> delegationIds, Guid viaPartyId, CancellationToken ct = default);
+
+    /// <summary>
     /// Get resources by provider code and/or resource ids
     /// </summary>
     /// <param name="providerCode">Provider code</param>

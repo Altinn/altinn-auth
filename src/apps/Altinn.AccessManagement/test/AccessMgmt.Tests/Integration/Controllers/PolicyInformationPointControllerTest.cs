@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using Altinn.AccessManagement.Api.Internal.Controllers.PolicyInformation;
@@ -83,6 +83,30 @@ public class PolicyInformationPointControllerTest : IClassFixture<AccessMgmtApiF
 
         List<DelegationChangeDto> actualDelegationChanges = JsonSerializer.Deserialize<List<DelegationChangeDto>>(await actualResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), options);
         AssertionUtil.AssertEqual(GetExpected(scenario), actualDelegationChanges);
+    }
+
+    /// <summary>
+    /// Test case: Undefined integer value for AccessRestriction
+    /// Expected: Model validation rejects the request with 400 BadRequest instead of a server error
+    /// </summary>
+    [Fact]
+    public async Task GetDelegationChanges_UndefinedAccessRestriction_Returns400BadRequest()
+    {
+        string body = """
+            {
+              "subject": { "id": "urn:altinn:userid", "value": "20000490" },
+              "party": { "id": "urn:altinn:partyid", "value": "50004221" },
+              "resource": [ { "id": "urn:altinn:resource", "value": "jks_audi_etron_gt" } ],
+              "AccessRestriction": 99
+            }
+            """;
+        StringContent content = new StringContent(body, System.Text.Encoding.UTF8, "application/json");
+
+        // Act
+        HttpResponseMessage actualResponse = await _client.PostAsync($"accessmanagement/api/v1/policyinformation/getdelegationchanges", content, TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, actualResponse.StatusCode);
     }
 
     /* ToDo: Add Integration tests on database container

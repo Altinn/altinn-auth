@@ -24,5 +24,17 @@ namespace Altinn.AccessManagement.Core.Models
         /// </summary>
         [Required]
         public List<AttributeMatch> Resource { get; set; }
+
+        /// <summary>
+        /// Controls how client-delegated access is considered when looking up delegation changes.
+        /// Defaults to <see cref="AccessRestriction.None"/>.
+        /// </summary>
+        public AccessRestriction AccessRestriction { get; set; } = AccessRestriction.None;
+
+        /// <summary>
+        /// When <see cref="AccessRestriction"/> is <see cref="AccessRestriction.ClientDelegation"/>, the Norwegian organization number
+        /// of the via-party organization through which client-delegated access must have been received.
+        /// </summary>
+        public string ViaPartyOrganizationNumber { get; set; }
     }
 }

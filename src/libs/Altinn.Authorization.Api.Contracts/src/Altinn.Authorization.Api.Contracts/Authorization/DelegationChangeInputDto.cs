@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 namespace Altinn.Authorization.Api.Contracts.Authorization;
 
@@ -24,4 +24,17 @@ public class DelegationChangeInputDto
     /// </summary>
     [Required]
     public List<AttributeMatchDto> Resource { get; set; }
+
+    /// <summary>
+    /// Controls how client-delegated access is considered when looking up delegation changes.
+    /// Defaults to <see cref="AccessRestrictionDto.None"/>.
+    /// </summary>
+    [EnumDataType(typeof(AccessRestrictionDto))]
+    public AccessRestrictionDto AccessRestriction { get; set; } = AccessRestrictionDto.None;
+
+    /// <summary>
+    /// When <see cref="AccessRestriction"/> is <see cref="AccessRestrictionDto.ClientDelegation"/>, the Norwegian organization number
+    /// of the via-party organization through which client-delegated access must have been received.
+    /// </summary>
+    public string ViaPartyOrganizationNumber { get; set; }
 }
