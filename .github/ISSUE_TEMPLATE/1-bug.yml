@@ -28,11 +28,11 @@ body:
       options:
         - Access Management – backend og API (access-management)
         - Access Management – brukerflate og BFF (access-management-frontend)
-        - Authorization – PDP, autoriserte parter og auditlogg (authorization)
+        - Authorization – PDP og autoriserte parter (authorization)
         - Authentication – innlogging, tokens og systembruker (authentication)
         - Register – parter og roller (register)
         - Resource Registry – ressurser og tilgangslister (resource-registry)
-        - Auditlog – logg over autorisasjonsbeslutninger (auditlog)
+        - Auditlog – lagring av autorisasjons- og autentiseringshendelser (auditlog)
         - NuGet-pakker – PEP og ABAC (packages)
         - Felles biblioteker (libs)
         - Verktøy – CLI og FFB (tools)
