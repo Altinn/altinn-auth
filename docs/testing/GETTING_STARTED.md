@@ -22,9 +22,25 @@ If neither is available, integration tests will **skip gracefully** with
 
 Testcontainers requires a Docker-compatible socket. If you use Podman, make sure
 `podman machine` is running and the `DOCKER_HOST` environment variable points at
-Podman's socket.
+Podman's socket. On Windows, Testcontainers falls back to the
+`\\.\pipe\docker_engine` pipe when `DOCKER_HOST` is unset, and Podman serves
+that pipe only if nothing else holds it. `just check-full` checks for one or the
+other before it builds.
 
 ## Running the tests
+
+### The gate before a pull request
+
+```
+just check src/apps/Altinn.Authorization
+```
+
+Builds the vertical and runs its unit lane, which is the fast part of what CI
+does. `just check-full <vertical>` adds the integration lane, which is what CI
+actually runs, and needs a container runtime. The lane recipes take a vertical
+rather than the whole repository, because `Altinn.ResourceRegistry` runs
+xUnit v2 and ignores the lane filters; run that one with
+`just test src/apps/Altinn.ResourceRegistry`. Recipes need PowerShell 7.
 
 ### All tests
 
