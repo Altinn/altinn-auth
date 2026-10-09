@@ -208,11 +208,16 @@ BEGIN
 END;
 $$;
 
--- Creates any missing monthly partitions of dbo.activitylog covering [p_from, p_until].
+-- Creates any missing monthly partitions of dbo.activitylog covering [p_from, p_until] and
+-- returns how many were created and how many months still lack a partition (skipped). The
+-- return type changed from int, which CREATE OR REPLACE cannot do, hence the drops.
+DROP FUNCTION IF EXISTS dbo.activitylog_ensure_month_partitions(int);
+DROP FUNCTION IF EXISTS dbo.activitylog_ensure_partitions(date, date);
+
 -- SECURITY DEFINER: partition creation needs CREATE on schema dbo, which only the admin role
 -- has; the function is owned by the migration role so jobs can call it with app credentials.
 CREATE OR REPLACE FUNCTION dbo.activitylog_ensure_partitions(p_from date, p_until date)
-RETURNS int
+RETURNS TABLE (created int, skipped int)
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = pg_catalog, dbo
@@ -221,8 +226,10 @@ DECLARE
     v_month date := date_trunc('month', p_from)::date;
     v_next date;
     v_name text;
-    v_created int := 0;
 BEGIN
+    created := 0;
+    skipped := 0;
+
     WHILE v_month <= p_until LOOP
         v_next := (v_month + interval '1 month')::date;
         v_name := 'activitylog_p' || to_char(v_month, 'YYYYMM');
@@ -240,15 +247,25 @@ BEGIN
                     v_name,
                     v_month::text || ' 00:00:00+00',
                     v_next::text || ' 00:00:00+00');
-                v_created := v_created + 1;
-            EXCEPTION WHEN OTHERS THEN
-                -- Overlap with the default partition (or a concurrent creator) must not abort the rest.
-                RAISE WARNING 'activitylog_ensure_partitions: skipped % (%)', v_name, SQLERRM;
+                created := created + 1;
+            EXCEPTION
+                WHEN duplicate_table OR invalid_object_definition THEN
+                    -- A concurrent creator won the race: only a problem if the partition is
+                    -- still missing (an overlap with some other partition).
+                    IF to_regclass('dbo.' || v_name) IS NULL THEN
+                        skipped := skipped + 1;
+                        RAISE WARNING 'activitylog_ensure_partitions: skipped % (%)', v_name, SQLERRM;
+                    END IF;
+                WHEN check_violation THEN
+                    -- The default partition already holds rows in this range, so the new
+                    -- partition cannot be attached until those rows are moved out.
+                    skipped := skipped + 1;
+                    RAISE WARNING 'activitylog_ensure_partitions: skipped % (%)', v_name, SQLERRM;
             END;
         END IF;
         v_month := v_next;
     END LOOP;
-    RETURN v_created;
+    RETURN NEXT;
 END;
 $$;
 
@@ -256,12 +273,12 @@ REVOKE ALL ON FUNCTION dbo.activitylog_ensure_partitions(date, date) FROM PUBLIC
 GRANT EXECUTE ON FUNCTION dbo.activitylog_ensure_partitions(date, date) TO platform_authorization, platform_authorization_admin;
 
 CREATE OR REPLACE FUNCTION dbo.activitylog_ensure_month_partitions(p_months_ahead int DEFAULT 24)
-RETURNS int
+RETURNS TABLE (created int, skipped int)
 LANGUAGE sql
 SECURITY DEFINER
 SET search_path = pg_catalog, dbo
 AS $$
-    SELECT dbo.activitylog_ensure_partitions(now()::date, (now() + make_interval(months => p_months_ahead))::date);
+    SELECT * FROM dbo.activitylog_ensure_partitions(now()::date, (now() + make_interval(months => p_months_ahead))::date);
 $$;
 
 REVOKE ALL ON FUNCTION dbo.activitylog_ensure_month_partitions(int) FROM PUBLIC;

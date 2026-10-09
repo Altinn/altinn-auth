@@ -26,12 +26,20 @@ public static class ActivityLogPartitionJob
         await using var conn = repo.CreateAccConnection();
         await conn.OpenAsync(ct);
 
-        var created = await conn.ExecuteScalarAsync<int>(new CommandDefinition(
-            "SELECT dbo.activitylog_ensure_month_partitions(@monthsAhead);",
+        var result = await conn.QuerySingleAsync<PartitionResult>(new CommandDefinition(
+            "SELECT created, skipped FROM dbo.activitylog_ensure_month_partitions(@monthsAhead);",
             new { monthsAhead },
             commandTimeout: 0,
             cancellationToken: ct));
 
-        run.AddLog($"Done — {created} new partition(s) created.");
+        run.AddLog($"Done — {result.Created} new partition(s) created.");
+
+        if (result.Skipped > 0)
+        {
+            throw new InvalidOperationException(
+                $"{result.Skipped} month(s) still have no partition (see the database warnings): the default partition probably holds rows in that range and they must be moved out first.");
+        }
     }
+
+    private sealed record PartitionResult(int Created, int Skipped);
 }
