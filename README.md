@@ -23,7 +23,7 @@ resources, and API schemes.
 | --- | --- |
 | `src/apps/Altinn.Authorization` | Authorization app: access control (PDP) and policy enforcement (PEP). |
 | `src/apps/Altinn.AccessManagement` | Access Management app: rights and delegation administration. |
-| `src/apps/Altinn.Register` | Vendored copy of Register, maintained in [altinn-register](https://github.com/Altinn/altinn-register). |
+| `src/apps/Altinn.Register` | Placeholder until Register moves in with [#4056](https://github.com/Altinn/altinn-auth/issues/4056); the service is maintained in [altinn-register](https://github.com/Altinn/altinn-register) until then. |
 | `src/libs` | Shared libraries (`Api.Contracts`, `Host`, `Integration`). |
 | `src/pkgs` | Published NuGet packages (`Altinn.Authorization.ABAC`, `Altinn.Common.PEP`). |
 | `src/tools` | The `Altinn.Authorization.Cli` command-line tool. |

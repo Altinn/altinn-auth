@@ -1,32 +1,20 @@
 ﻿namespace Altinn.Register;
 
 /// <summary>
-/// Boilerplate Program 
+/// Placeholder for the Register service. The real Register still lives in the altinn-register
+/// repository and moves into this one with https://github.com/Altinn/altinn-auth/issues/4056,
+/// which replaces this project entirely. Until then the project exists only so that the vertical
+/// builds and its infrastructure under the vertical's infra folder can be deployed. Do not build
+/// on it or wire anything to it.
 /// </summary>
 public static class Program
 {
     /// <summary>
-    /// Boilerplate Main
+    /// Starts an empty web host.
     /// </summary>
-    /// <param name="args">Boilerplate</param>
+    /// <param name="args">Command line arguments, passed on to the host builder.</param>
     public static void Main(string[] args)
     {
-        var builder = WebApplication.CreateBuilder(args);
-
-        // Add services to the container.
-        // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-        builder.Services.AddOpenApi();
-
-        var app = builder.Build();
-
-        // Configure the HTTP request pipeline.
-        if (app.Environment.IsDevelopment())
-        {
-            app.MapOpenApi();
-        }
-
-        app.UseHttpsRedirection();
-
-        app.Run();
+        WebApplication.CreateBuilder(args).Build().Run();
     }
 }
