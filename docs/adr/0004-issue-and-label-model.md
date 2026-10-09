@@ -4,7 +4,7 @@
 - **Date:** 2026-10-09
 - **Deciders:** `@altinn/team-access-management` and `@altinn/team-access-info`, through review of the PR that adds this ADR
 
-Drafted with AI assistance (Claude Code, model Claude Opus 5.5) from figures pulled from GitHub on 2026-10-09.
+Drafted with AI assistance (Claude Code, model Claude Opus 5.5) from figures pulled from GitHub on 2026-10-09. Reader unspecified until a person confirms they have read it.
 
 **TL;DR**
 

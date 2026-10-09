@@ -27,12 +27,12 @@ This guide applies to everyone who changes this repository, whether you type eve
 - Write in English or Norwegian, whichever is quicker. The forms are in English.
 - One issue type and at least one `area/*` per issue. Everything else is optional.
 
-Why the model looks like this is in [ADR-0004](docs/adr/0004-issue-and-label-model.md). What to set:
+Why the model looks like this is in [ADR-0004](docs/adr/0004-issue-and-label-model.md). Until the labelling workflow ([#4357](https://github.com/Altinn/altinn-auth/issues/4357)) and `.github/labels.yml` ([#4356](https://github.com/Altinn/altinn-auth/issues/4356)) are in place, triage sets the `area/*` labels by hand from the form's component answer. What to set:
 
 | What | How | Required |
 | --- | --- | --- |
 | Kind of work | Issue type: Bug, Feature, Task, User story, Epic, Enhancement. The form sets it. | yes, at triage at the latest |
-| Component | One or more `area/*`, one per component the issue touches, for example `area/register`. The form's component field sets them. | yes, at triage at the latest |
+| Component | One or more `area/*`, one per component the issue touches, for example `area/register`. The form asks for them; triage sets the labels until the workflow does. | yes, at triage at the latest |
 | Capability | `feature/*`, for example `feature/consent` | no |
 | Layer | `layer/backend`, `layer/frontend`, `layer/ux`, `layer/infra`, `layer/test` | no |
 | Waiting for something | `status/blocked`, plus a "blocked by" link when the blocking issue is known | when it applies |
@@ -41,7 +41,7 @@ Why the model looks like this is in [ADR-0004](docs/adr/0004-issue-and-label-mod
 
 - Do not add a team label. The owning team follows from the component, through `.github/CODEOWNERS`.
 - Close a duplicate as *duplicate* and something you will not do as *not planned*, with the reason in a comment. There are no labels for these.
-- A new label is added in `.github/labels.yml` by pull request, not in the GitHub UI.
+- A new label is added in `.github/labels.yml` by pull request, not in the GitHub UI. Until that file exists, ask in triage before creating one.
 
 ## When an ADR is required
 
