@@ -1,0 +1,135 @@
+meta {
+  name: 01_WHEN_PoliciesAreRequestedForOneApp
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/authorization/api/v1/policies/GetPolicies
+  body: json
+  auth: none
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+  Ocp-Apim-Subscription-Key: {{apimSubscriptionKey}}
+}
+
+body:json {
+  [
+    [
+      { "id": "urn:altinn:org", "value": "{{org}}" },
+      { "id": "urn:altinn:app", "value": "{{app}}" }
+    ]
+  ]
+}
+
+docs {
+  POST /authorization/api/v1/policies/GetPolicies
+
+  Returns a structured view of the policy of each requested app: which
+  actions the policy covers, which roles are granted each action, and the
+  minimum authentication level for users.
+
+  Auth: anonymous in the application. Only the APIM subscription key header
+  (Ocp-Apim-Subscription-Key) is required.
+
+  Query parameter:
+  - language (optional): accepted but not used yet. Titles are the same
+    with or without it.
+
+  Body: a JSON array with one entry per app. Each entry is an array of
+  attribute matches, where urn:altinn:org and urn:altinn:app identify the
+  app:
+
+    [
+      [
+        { "id": "urn:altinn:org", "value": "ttd" },
+        { "id": "urn:altinn:app", "value": "authz-bruno-testapp1" }
+      ]
+    ]
+
+  Response 200, one entry per request entry in the same order:
+
+    [
+      {
+        "appId": [ the attribute matches from the request ],
+        "resourcePolicies": [
+          {
+            "title": "ttd/authz-bruno-testapp1",
+            "description": null,
+            "resource": [
+              { "id": "urn:altinn:org", "value": "ttd" },
+              { "id": "urn:altinn:app", "value": "authz-bruno-testapp1" }
+            ],
+            "actions": [
+              {
+                "match": { "id": "urn:oasis:names:tc:xacml:1.0:action:action-id", "value": "read" },
+                "title": "read",
+                "description": null,
+                "roleGrants": [
+                  { "roleTypeCode": "priv", "isDelegable": true },
+                  { "roleTypeCode": "dagl", "isDelegable": true }
+                ]
+              }
+            ]
+          }
+        ],
+        "minimumAuthenticationLevel": 2
+      }
+    ]
+
+  Only rules whose resource is the app itself (org and app) are included;
+  rules for other resources in the same policy file, such as the app
+  delegation rules on urn:altinn:resource, are left out. The errorResponse
+  field is omitted on entries that succeed.
+}
+
+script:pre-request {
+  const td = require("./testdata/policies/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  bru.setVar("org", td.app.org);
+  bru.setVar("app", td.app.app);
+}
+
+tests {
+  const td = require("./testdata/policies/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  test("WHEN the policies are requested for one app, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN one entry is returned that echoes the requested app", function() {
+    const body = res.getBody();
+    expect(body).to.be.an("array").with.lengthOf(1);
+    expect(body[0].appId).to.deep.equal([
+      { id: "urn:altinn:org", value: td.app.org },
+      { id: "urn:altinn:app", value: td.app.app }
+    ]);
+    expect(body[0]).to.not.have.property("errorResponse");
+  });
+
+  test("AND the minimum authentication level comes from the policy obligation", function() {
+    expect(res.getBody()[0]).to.have.property("minimumAuthenticationLevel", td.app.minimumAuthenticationLevel);
+  });
+
+  test("AND the resource policy is scoped to the app", function() {
+    const policies = res.getBody()[0].resourcePolicies;
+    expect(policies).to.be.an("array").with.lengthOf(1);
+    expect(policies[0]).to.have.property("title", td.app.org + "/" + td.app.app);
+    expect(policies[0].resource).to.deep.include({ id: "urn:altinn:org", value: td.app.org });
+    expect(policies[0].resource).to.deep.include({ id: "urn:altinn:app", value: td.app.app });
+  });
+
+  test("AND every action in the policy is listed with its role grants", function() {
+    const actions = res.getBody()[0].resourcePolicies[0].actions;
+    expect(actions.map(a => a.match.value)).to.have.members(td.app.actions);
+    actions.forEach(a => {
+      expect(a.match).to.have.property("id", "urn:oasis:names:tc:xacml:1.0:action:action-id");
+      expect(a).to.have.property("title", a.match.value);
+      expect(a.roleGrants.map(g => g.roleTypeCode)).to.have.members(td.app.roles);
+      a.roleGrants.forEach(g => expect(g).to.have.property("isDelegable", true));
+    });
+  });
+}

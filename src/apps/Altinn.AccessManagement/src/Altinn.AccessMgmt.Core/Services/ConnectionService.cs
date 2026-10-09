@@ -690,6 +690,14 @@ public partial class ConnectionService(
         };
 
         await dbContext.AssignmentPackages.AddAsync(newAssignmentPackage, cancellationToken);
+
+        // System users cannot receive notifications.
+        if (to.TypeId == EntityTypeConstants.SystemUser)
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return DtoMapper.Convert(newAssignmentPackage);
+        }
+
         await AccessAddedNotification.Upsert(
             dbContext,
             fromId,

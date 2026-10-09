@@ -1,0 +1,99 @@
+meta {
+  name: 02_AND_EachEntryIsAnsweredOnItsOwn
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/authorization/api/v1/policies/GetPolicies?language=nb
+  body: json
+  auth: none
+}
+
+params:query {
+  language: nb
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+  Ocp-Apim-Subscription-Key: {{apimSubscriptionKey}}
+}
+
+body:json {
+  [
+    [
+      { "id": "urn:altinn:org", "value": "{{org}}" },
+      { "id": "urn:altinn:app", "value": "{{app}}" }
+    ],
+    [
+      { "id": "urn:altinn:org", "value": "{{unknownOrg}}" },
+      { "id": "urn:altinn:app", "value": "{{unknownApp}}" }
+    ],
+    [
+      { "id": "urn:altinn:org", "value": "{{org}}" }
+    ]
+  ]
+}
+
+docs {
+  AND a list that mixes a known app, an app with no policy and an entry
+  without urn:altinn:app is sent. THEN the response is still 200, with one
+  entry per request entry in the same order. The failed entries carry
+  errorResponse, resourcePolicies null and minimumAuthenticationLevel 0:
+
+    { "errorResponse": "No valid policy found for org 'ttd' and app 'authz-bruno-no-such-app'" }
+    { "errorResponse": "App must be defined in the path" }
+
+  An entry without urn:altinn:org gets "Organisation must be defined in the
+  path". The messages say "path" although the values come from the body.
+  Callers must check errorResponse on every entry; the status code does not
+  tell whether any lookup failed. The language query parameter is accepted
+  and has no effect yet.
+}
+
+script:pre-request {
+  const td = require("./testdata/policies/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  bru.setVar("org", td.app.org);
+  bru.setVar("app", td.app.app);
+  bru.setVar("unknownOrg", td.unknownApp.org);
+  bru.setVar("unknownApp", td.unknownApp.app);
+}
+
+tests {
+  const td = require("./testdata/policies/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  test("AND a mixed list is sent, the request still returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN one entry is returned per request entry, in order", function() {
+    const body = res.getBody();
+    expect(body).to.be.an("array").with.lengthOf(3);
+    expect(body[0].appId).to.deep.include({ id: "urn:altinn:app", value: td.app.app });
+    expect(body[1].appId).to.deep.include({ id: "urn:altinn:app", value: td.unknownApp.app });
+    expect(body[2].appId).to.deep.equal([{ id: "urn:altinn:org", value: td.app.org }]);
+  });
+
+  test("AND the known app is answered with its policy", function() {
+    const entry = res.getBody()[0];
+    expect(entry).to.not.have.property("errorResponse");
+    expect(entry.resourcePolicies).to.be.an("array").with.lengthOf(1);
+    expect(entry).to.have.property("minimumAuthenticationLevel", td.app.minimumAuthenticationLevel);
+  });
+
+  test("AND the app with no policy carries a not found errorResponse", function() {
+    const entry = res.getBody()[1];
+    expect(entry).to.have.property("errorResponse", "No valid policy found for org '" + td.unknownApp.org + "' and app '" + td.unknownApp.app + "'");
+    expect(entry.resourcePolicies).to.equal(null);
+    expect(entry).to.have.property("minimumAuthenticationLevel", 0);
+  });
+
+  test("AND the entry without an app carries a validation errorResponse", function() {
+    const entry = res.getBody()[2];
+    expect(entry).to.have.property("errorResponse", "App must be defined in the path");
+    expect(entry.resourcePolicies).to.equal(null);
+    expect(entry).to.have.property("minimumAuthenticationLevel", 0);
+  });
+}

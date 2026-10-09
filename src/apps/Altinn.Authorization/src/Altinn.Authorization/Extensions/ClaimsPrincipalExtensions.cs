@@ -80,6 +80,32 @@ namespace Altinn.Platform.Authenticaiton.Extensions
         }
 
         /// <summary>
+        /// Returns true if the user has the given scope. Scopes are read from the
+        /// <c>urn:altinn:scope</c> claim (federation identity) or the <c>scope</c> claim, and are space separated.
+        /// </summary>
+        public static bool HasScope(this ClaimsPrincipal user, string scope)
+        {
+            if (user == null || string.IsNullOrWhiteSpace(scope))
+            {
+                return false;
+            }
+
+            string contextScope = user.Identities
+                ?.FirstOrDefault(i => i.AuthenticationType != null && i.AuthenticationType.Equals("AuthenticationTypes.Federation"))?.Claims
+                .Where(c => c.Type.Equals("urn:altinn:scope"))?
+                .Select(c => c.Value).FirstOrDefault();
+
+            contextScope ??= user.Claims.Where(c => c.Type.Equals("scope")).Select(c => c.Value).FirstOrDefault();
+
+            if (string.IsNullOrWhiteSpace(contextScope))
+            {
+                return false;
+            }
+
+            return contextScope.Split(' ').Contains(scope);
+        }
+
+        /// <summary>
         /// Returns the authentication level of the user.
         /// </summary>
         public static int GetAuthenticationLevel(this ClaimsPrincipal user)
