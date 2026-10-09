@@ -31,7 +31,7 @@ Why the model looks like this is in [ADR-0004](docs/adr/0004-issue-and-label-mod
 
 | What | How | Required |
 | --- | --- | --- |
-| Kind of work | Issue type: Bug, Feature, Task, User story, Epic, Enhancement. The form sets it. | yes, at triage at the latest |
+| Kind of work | Issue type: Bug, Feature, Task, Epic, Enhancement. The form sets it. A user story is a Feature. | yes, at triage at the latest |
 | Component | One or more `area/*`, one per component the issue touches, for example `area/register`. The form asks for them; triage sets the labels until the workflow does. | yes, at triage at the latest |
 | Capability | `feature/*`, for example `feature/consent` | no |
 | Layer | `layer/backend`, `layer/frontend`, `layer/ux`, `layer/infra`, `layer/test` | no |
