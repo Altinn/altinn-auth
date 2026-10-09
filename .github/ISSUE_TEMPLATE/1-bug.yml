@@ -24,7 +24,8 @@ body:
     id: component
     attributes:
       label: Komponent
-      description: Hvor ser du feilen? Velg «Vet ikke» hvis du er usikker. Da hjelper teamet deg i triage.
+      description: Hvor ser du feilen? Velg alle som gjelder, eller «Vet ikke» hvis du er usikker. Da hjelper teamet deg i triage.
+      multiple: true
       options:
         - Access Management – backend og API (access-management)
         - Access Management – brukerflate og BFF (access-management-frontend)

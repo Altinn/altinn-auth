@@ -20,7 +20,8 @@ body:
     id: component
     attributes:
       label: Komponent
-      description: Hvor hører ønsket hjemme? Velg «Vet ikke» hvis du er usikker.
+      description: Hvor hører ønsket hjemme? Velg alle som gjelder, eller «Vet ikke» hvis du er usikker.
+      multiple: true
       options:
         - Access Management – backend og API (access-management)
         - Access Management – brukerflate og BFF (access-management-frontend)

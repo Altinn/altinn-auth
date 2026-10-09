@@ -22,7 +22,8 @@ body:
     id: component
     attributes:
       label: Komponent
-      description: Velg hovedkomponenten. Sub-issuene får hver sin komponent.
+      description: Velg komponentene epicen berører. Sub-issuene får hver sine.
+      multiple: true
       options:
         - Access Management – backend og API (access-management)
         - Access Management – brukerflate og BFF (access-management-frontend)

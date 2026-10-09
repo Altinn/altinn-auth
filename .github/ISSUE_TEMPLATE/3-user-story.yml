@@ -15,7 +15,8 @@ body:
     id: component
     attributes:
       label: Komponent
-      description: Hvor hører historien hjemme? Velg hovedkomponenten hvis den berører flere.
+      description: Velg alle komponentene historien berører.
+      multiple: true
       options:
         - Access Management – backend og API (access-management)
         - Access Management – brukerflate og BFF (access-management-frontend)
