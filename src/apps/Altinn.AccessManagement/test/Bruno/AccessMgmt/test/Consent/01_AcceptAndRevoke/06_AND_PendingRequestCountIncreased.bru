@@ -1,0 +1,49 @@
+meta {
+  name: 06_AND_PendingRequestCountIncreased
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/bff/consentrequests/count/:partyUuid?status=created
+  body: none
+  auth: inherit
+}
+
+params:query {
+  status: created
+}
+
+params:path {
+  partyUuid: {{partyUuid}}
+}
+
+docs {
+  AND the pending count for the person has increased.
+
+  GET /accessmanagement/api/v1/bff/consentrequests/count/:partyUuid?status=created
+
+  Same endpoint as the GIVEN step. The new request was created with portalViewMode
+  "show", so it is counted. The assertion is relative to the baseline, since other
+  pending requests may come and go.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  bru.setVar("partyUuid", td.consentingPerson.partyUuid);
+
+  await loginAs(td.consentingPerson);
+}
+
+tests {
+  test("WHEN the count is requested again, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the count is at least one above the baseline", function() {
+    const baseline = Number(bru.getVar("pendingCountBaseline"));
+    expect(res.getBody()).to.be.at.least(baseline + 1);
+  });
+}

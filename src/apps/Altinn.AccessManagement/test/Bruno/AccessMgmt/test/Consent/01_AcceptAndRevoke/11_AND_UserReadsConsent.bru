@@ -1,0 +1,72 @@
+meta {
+  name: 11_AND_UserReadsConsent
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/bff/consents/:consentId/
+  body: none
+  auth: inherit
+}
+
+params:path {
+  consentId: {{consentRequestId}}
+}
+
+docs {
+  AND the person reads the consent.
+
+  GET /accessmanagement/api/v1/bff/consents/:consentId/
+
+  Returns a consent for display in the portal, for example on the page where the user
+  reviews or revokes consents given earlier. The consent id is the consent request id.
+  Note the trailing slash in the route.
+
+  - consentId (path): the consent (request) id.
+  - Token: personal token with scope altinn:portal/enduser. The user must have read
+    access to access management for the from party; otherwise 403.
+
+  Typical response: 200 with parties as urn:altinn:party:uuid, the consent rights,
+  templateId, context (the language the user accepted in, and a contextId) and the event
+  history. 403 also for an unknown id.
+
+  Known quirk: consented is 0001-01-01 and requestMessage is null in this response even
+  for an accepted consent, so the step does not assert them.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  await loginAs(td.consentingPerson);
+}
+
+tests {
+  const { testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  test("WHEN the person reads the consent, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the consent names the parties and the consented rights", function() {
+    const body = res.getBody();
+    expect(body.id).to.equal(bru.getVar("consentRequestId"));
+    expect(body.from).to.equal(`urn:altinn:party:uuid:${td.consentingPerson.partyUuid}`);
+    expect(body.to).to.equal(`urn:altinn:party:uuid:${td.enterprise.partyUuid}`);
+    expect(body.templateId).to.equal(td.consentResource.templateId);
+    expect(body.consentRights[0].resource[0].value).to.equal(td.consentResource.id);
+  });
+
+  test("THEN the context holds the language the person accepted in", function() {
+    const body = res.getBody();
+    expect(body.context.language).to.equal("nb");
+    expect(body.context.contextId).to.be.a("string");
+  });
+
+  test("THEN the event history ends with the Accepted event", function() {
+    const events = res.getBody().consentRequestEvents;
+    expect(events.map(e => e.eventType)).to.deep.equal(["Created", "Accepted"]);
+  });
+}

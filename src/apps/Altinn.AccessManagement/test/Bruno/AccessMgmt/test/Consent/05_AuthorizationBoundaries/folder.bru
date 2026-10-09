@@ -1,0 +1,24 @@
+meta {
+  name: 05_AuthorizationBoundaries
+  seq: 5
+}
+
+docs {
+  Scenario: Only the parties of a consent request can read and answer it
+
+    Given the enterprise has created a consent request for the person
+    When another enterprise reads the request, the request is forbidden
+    When the enterprise reads an unknown request id, the request is not found
+    When another person reads the request in the portal, the request is forbidden
+    When another person counts the person's requests, the request is unauthorized
+    When another person lists the person's requests, the request is unauthorized
+    When another person accepts the request, the request is forbidden
+    When another person rejects the request, the request is forbidden
+    When another person reads the consent, the request is forbidden
+    When the person accepts without a language, the request fails validation
+    When the person counts with an unknown status, the request fails validation
+    When the person revokes a request that was never accepted, the request fails
+    And the request is rejected by the person to close it
+
+  The last step answers the request so it does not stay pending in the person's portal.
+}

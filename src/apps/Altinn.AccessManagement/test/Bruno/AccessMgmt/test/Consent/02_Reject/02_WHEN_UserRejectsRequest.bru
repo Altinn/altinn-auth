@@ -1,0 +1,64 @@
+meta {
+  name: 02_WHEN_UserRejectsRequest
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/bff/consentrequests/:requestId/reject
+  body: none
+  auth: inherit
+}
+
+params:path {
+  requestId: {{rejectRequestId}}
+}
+
+docs {
+  WHEN the person rejects the request.
+
+  POST /accessmanagement/api/v1/bff/consentrequests/:requestId/reject
+
+  Rejects a consent request in status Created. No body.
+
+  - requestId (path): the consent request id.
+  - Token: personal token with scope altinn:portal/enduser. The user must have write
+    access to access management for the from party and be allowed to answer the request.
+
+  Typical response: 200 with the request in BFF shape (parties as urn:altinn:party:uuid),
+  consented null and a Rejected event performed by the user. 400 (AM-00015) when the
+  request is not in status Created, 403 (AM-00000) when the user may not answer.
+
+  Known issue: rejecting a request that is already rejected returns 500 instead of the
+  request, so this scenario rejects exactly once.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  await loginAs(td.consentingPerson);
+}
+
+tests {
+  const { testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  test("WHEN the person rejects the request, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the request is not consented", function() {
+    const body = res.getBody();
+    expect(body.id).to.equal(bru.getVar("rejectRequestId"));
+    expect(body.consented).to.be.null;
+    expect(body.from).to.equal(`urn:altinn:party:uuid:${td.consentingPerson.partyUuid}`);
+    expect(body.to).to.equal(`urn:altinn:party:uuid:${td.enterprise.partyUuid}`);
+  });
+
+  test("THEN a Rejected event is recorded, performed by the person", function() {
+    const events = res.getBody().consentRequestEvents;
+    expect(events.map(e => e.eventType)).to.deep.equal(["Created", "Rejected"]);
+    expect(events[1].performedBy).to.equal(`urn:altinn:party:uuid:${td.consentingPerson.partyUuid}`);
+  });
+}

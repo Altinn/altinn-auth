@@ -1,0 +1,54 @@
+meta {
+  name: 09_THEN_EnterpriseReadsRequestAsAccepted
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enterprise/consentrequests/:consentRequestId
+  body: none
+  auth: inherit
+}
+
+params:path {
+  consentRequestId: {{consentRequestId}}
+}
+
+docs {
+  THEN the enterprise reads the request with status Accepted.
+
+  GET /accessmanagement/api/v1/enterprise/consentrequests/:consentRequestId
+
+  Same endpoint as step 04; see there for parameters and token. After acceptance the
+  enterprise sees status Accepted, the consented timestamp and an Accepted event
+  performed by the person, given as a national identity number.
+}
+
+script:pre-request {
+  const { loginAsEnterprise, scopes, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  await loginAsEnterprise(td.enterprise, scopes.consentRequestsRead);
+}
+
+tests {
+  const { testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  test("WHEN the enterprise reads the accepted request, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the request has status Accepted and a consented timestamp", function() {
+    const body = res.getBody();
+    expect(body.id).to.equal(bru.getVar("consentRequestId"));
+    expect(body.status).to.equal("Accepted");
+    expect(body.consented).to.be.a("string");
+  });
+
+  test("THEN the Accepted event names the person by national identity number", function() {
+    const events = res.getBody().consentRequestEvents;
+    expect(events.map(e => e.eventType)).to.deep.equal(["Created", "Accepted"]);
+    expect(events[1].performedBy).to.equal(`urn:altinn:person:identifier-no:${td.consentingPerson.pid}`);
+  });
+}

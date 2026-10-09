@@ -1,0 +1,71 @@
+meta {
+  name: 05_AND_UserReadsRequestInPortal
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/bff/consentrequests/:requestId
+  body: none
+  auth: inherit
+}
+
+params:path {
+  requestId: {{consentRequestId}}
+}
+
+docs {
+  AND the person reads the request in the portal.
+
+  GET /accessmanagement/api/v1/bff/consentrequests/:requestId
+
+  Returns one consent request for display in the Altinn portal, before the user answers
+  it. BFF endpoint for the portal, not for external consumers.
+
+  - requestId (path): the consent request id.
+  - Token: personal token with scope altinn:portal/enduser. The user must be allowed to
+    answer the request (hold the requested rights for the from party, and be the
+    requiredDelegator if one is set) and have read access to access management for the
+    from party.
+
+  Typical response: 200 with parties as urn:altinn:party:uuid, the consent rights, the
+  request message (field name requestmessage), templateId and templateVersion of the
+  consent text template, and the event history. 403 (AM-00000) when the user may not
+  answer, 404 (AM-00001) for an unknown id.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  await loginAs(td.consentingPerson);
+}
+
+tests {
+  const { testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  test("WHEN the person reads the request, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the parties are given as internal party uuids", function() {
+    const body = res.getBody();
+    expect(body.id).to.equal(bru.getVar("consentRequestId"));
+    expect(body.from).to.equal(`urn:altinn:party:uuid:${td.consentingPerson.partyUuid}`);
+    expect(body.to).to.equal(`urn:altinn:party:uuid:${td.enterprise.partyUuid}`);
+    expect(body.consented).to.be.null;
+  });
+
+  test("THEN the request carries what the portal needs to render it", function() {
+    const body = res.getBody();
+    expect(body.templateId).to.equal(td.consentResource.templateId);
+    expect(body.templateVersion).to.be.a("number");
+    expect(body.requestmessage).to.have.property("en");
+    expect(body.redirectUrl).to.equal("https://altinn.no");
+    expect(body.portalViewMode).to.equal("Show");
+    expect(body.consentRights[0].resource[0].value).to.equal(td.consentResource.id);
+    expect(body.consentRights[0].metadata).to.deep.equal({ [td.consentResource.metadataKey]: td.consentResource.metadataValue });
+    expect(body.consentRequestEvents.map(e => e.eventType)).to.deep.equal(["Created"]);
+  });
+}
