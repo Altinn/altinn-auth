@@ -1,0 +1,45 @@
+name: Roll Sprint Items
+
+on:
+  schedule:
+    # Every morning. The script is a no-op on days where no sprint has ended,
+    # which keeps the roll from depending on one exact run landing.
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: "List what would move without changing the board"
+        type: boolean
+        default: false
+
+jobs:
+  roll:
+    name: Roll unfinished work into the current sprint
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 20
+
+      - uses: pnpm/action-setup@6e7bdbda5fe05107efc88b23b7ed00aa05f84ca0
+        with:
+          version: 9
+          run_install: |
+            - cwd: .github/scripts
+              args: [--frozen-lockfile]
+            - args: [--global, tsx]
+
+      - name: Roll sprint items
+        env:
+          GITHUB_TOKEN: ${{ secrets.ASSIGN_PROJECT_TOKEN }}
+          GITHUB_PROJECT_OWNER: Altinn
+          GITHUB_PROJECT_NUMBER: 50
+          GITHUB_STATUSES_TO_ROLL: "Sprint backlog,In Progress,Support & Drift,Review,Test"
+          DRY_RUN: ${{ inputs.dry-run }}
+        run: tsx ./.github/scripts/roll-sprint-items.mts
