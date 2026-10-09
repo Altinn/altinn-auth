@@ -1,6 +1,6 @@
 # ADR-0004: One issue and label model for the monorepo
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-10-09
 - **Deciders:** `@altinn/team-access-management` and `@altinn/team-access-info`, through review of the PR that adds this ADR
 
