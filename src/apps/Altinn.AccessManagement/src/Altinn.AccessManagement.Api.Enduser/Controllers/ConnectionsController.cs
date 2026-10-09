@@ -165,6 +165,7 @@ public class ConnectionsController(
             {
                 options.AllowedToEntityTypes = [EntityTypeConstants.Person, EntityTypeConstants.Organization];
                 options.EntitiesToValidateForAnyConnections = [EntityTypeConstants.Person];
+                options.PerformToEntityTypeValidation = false;
             },
             cancellationToken);
 
@@ -267,6 +268,7 @@ public class ConnectionsController(
             {
                 options.AllowedToEntityTypes = [EntityTypeConstants.Person, EntityTypeConstants.Organization];
                 options.EntitiesToValidateForAnyConnections = [EntityTypeConstants.Person];
+                options.PerformToEntityTypeValidation = false;
             },
             cancellationToken);
 
@@ -949,6 +951,7 @@ public class ConnectionsController(
                 {
                     options.AllowedToEntityTypes = [EntityTypeConstants.Person, EntityTypeConstants.Organization];
                     options.EntitiesToValidateForAnyConnections = [EntityTypeConstants.Person];
+                    options.PerformToEntityTypeValidation = false;
                 },
                 cancellationToken);
 
