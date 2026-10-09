@@ -37,6 +37,7 @@ in
     pkgs.just
     pkgs.powershell
     pkgs.nodejs
+    pkgs.oha
   ];
 
   languages.dotnet.enable = true;

@@ -1,0 +1,22 @@
+﻿apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: product-authorization
+labels:
+  - pairs:
+      app.kubernetes.io/name: authorization
+      app.kubernetes.io/part-of: altinn-auth
+      app.kubernetes.io/version: latest
+      app.kubernetes.io/managed-by: Kustomize
+    includeSelectors: true
+    includeTemplates: true
+resources:
+- ../base
+
+configMapGenerator:
+- name: environment
+  namespace: product-authorization
+  envs:
+  - ./config/environment.env
+
+generatorOptions:
+  disableNameSuffixHash: true
