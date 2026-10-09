@@ -78,6 +78,14 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
             migrationBuilder.DropTable(
                 name: "auditactivitytype",
                 schema: "dbo_history");
+
+            // Dropping the tables removed their triggers but not the audit trigger functions
+            // the custom SQL generator created for them.
+            migrationBuilder.Sql(@"
+                DROP FUNCTION IF EXISTS dbo.audit_activitytype_insert_fn();
+                DROP FUNCTION IF EXISTS dbo.audit_activitytype_update_fn();
+                DROP FUNCTION IF EXISTS dbo.audit_activitytype_delete_fn();
+            ");
         }
     }
 }
