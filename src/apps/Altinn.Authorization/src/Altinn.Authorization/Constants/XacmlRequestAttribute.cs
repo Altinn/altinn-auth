@@ -1,4 +1,4 @@
-namespace Altinn.Platform.Authorization.Constants
+﻿namespace Altinn.Platform.Authorization.Constants
 {
     /// <summary>
     /// Attribute representations in XACML
