@@ -9,11 +9,11 @@ Authorization and access management for Altinn 3: the Policy Decision Point and 
 ## Commands
 
 ```bash
-dotnet build Altinn.Authorization.sln                 # the whole repository
-dotnet build src/apps/Altinn.Authorization/Altinn.Authorization.sln   # one vertical
+dotnet build Altinn.Authorization.slnx                # the whole repository
+dotnet build src/apps/Altinn.Authorization/Altinn.Authorization.slnx  # one vertical
 dotnet test                                            # every test project
-dotnet test src/apps/Altinn.Authorization/Altinn.Authorization.sln -- --filter-trait "Category=Unit"
-dotnet test src/apps/Altinn.ResourceRegistry/Altinn.ResourceRegistry.sln   # xUnit v2, see Test gotchas
+dotnet test src/apps/Altinn.Authorization/Altinn.Authorization.slnx -- --filter-trait "Category=Unit"
+dotnet test src/apps/Altinn.ResourceRegistry/Altinn.ResourceRegistry.slnx  # xUnit v2, see Test gotchas
 dotnet test src/apps/Altinn.AccessManagement/test/Altinn.AccessManagement.Api.Tests
 pwsh eng/testing/run-coverage.ps1                      # coverage, installs dotnet-coverage if missing
 ```
@@ -39,7 +39,7 @@ pwsh eng/testing/run-coverage.ps1                      # coverage, installs dotn
 
 ## Where things live
 
-Code sits in verticals. A vertical always has its own `.sln`, `src/` and `conf.json`; `test/`, `Version.props`, `Dockerfile` and `infra/` appear where they are needed, and the contents of `conf.json` differ per vertical (dependencies, Sonar key, database, infrastructure). CI discovers verticals by globbing the four folders below and reading each `conf.json`, so adding one needs no workflow change.
+Code sits in verticals. A vertical always has its own `.slnx`, `src/` and `conf.json`; `test/`, `Version.props`, `Dockerfile` and `infra/` appear where they are needed, and the contents of `conf.json` differ per vertical (dependencies, Sonar key, database, infrastructure). CI discovers verticals by globbing the four folders below and reading each `conf.json`, so adding one needs no workflow change.
 
 | Path | Contents |
 | --- | --- |

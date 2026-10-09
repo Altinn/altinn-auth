@@ -43,7 +43,7 @@ resources, and API schemes.
 ### Build and test
 
 ```bash
-dotnet build Altinn.Authorization.sln
+dotnet build Altinn.Authorization.slnx
 dotnet test                                          # unit + integration
 dotnet test -- --filter-trait "Category=Unit"        # unit tests only
 ```
