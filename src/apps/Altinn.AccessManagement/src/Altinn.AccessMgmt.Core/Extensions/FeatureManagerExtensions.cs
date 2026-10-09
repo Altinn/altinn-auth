@@ -1,4 +1,4 @@
-using Microsoft.FeatureManagement;
+﻿using Microsoft.FeatureManagement;
 
 namespace Altinn.AccessMgmt.Core.Extensions;
 

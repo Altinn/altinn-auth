@@ -1,4 +1,4 @@
-using Altinn.AccessMgmt.Core.Notifications;
+﻿using Altinn.AccessMgmt.Core.Notifications;
 
 namespace Altinn.AccessMgmt.Core.Appsettings;
 

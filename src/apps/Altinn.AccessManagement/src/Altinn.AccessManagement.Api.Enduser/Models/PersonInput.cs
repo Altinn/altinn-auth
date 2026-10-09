@@ -1,4 +1,4 @@
-using Swashbuckle.AspNetCore.Annotations;
+﻿using Swashbuckle.AspNetCore.Annotations;
 
 namespace Altinn.AccessManagement.Api.Enduser.Models;
 

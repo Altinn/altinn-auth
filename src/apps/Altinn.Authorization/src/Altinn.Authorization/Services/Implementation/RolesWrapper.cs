@@ -1,4 +1,4 @@
-using Altinn.Platform.Authorization.Clients;
+﻿using Altinn.Platform.Authorization.Clients;
 using Altinn.Platform.Authorization.Services.Interface;
 using Authorization.Platform.Authorization.Models;
 using Newtonsoft.Json;

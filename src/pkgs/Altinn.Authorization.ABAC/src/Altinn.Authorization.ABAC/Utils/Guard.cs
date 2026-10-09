@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.ABAC.Utils
+﻿namespace Altinn.Authorization.ABAC.Utils
 {
     /// <summary>
     /// Utils class for different types of guarding.

@@ -1,4 +1,4 @@
-using System.Data;
+﻿using System.Data;
 using Npgsql;
 
 namespace Altinn.Authorization.Host.Database.Extensions;

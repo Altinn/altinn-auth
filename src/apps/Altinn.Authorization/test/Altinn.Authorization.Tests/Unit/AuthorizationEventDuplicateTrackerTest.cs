@@ -1,4 +1,4 @@
-using System.Diagnostics.Metrics;
+﻿using System.Diagnostics.Metrics;
 using System.Text.Json;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.Tests.Util;

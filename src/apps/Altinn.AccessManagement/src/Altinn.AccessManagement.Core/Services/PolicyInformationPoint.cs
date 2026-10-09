@@ -264,7 +264,7 @@ namespace Altinn.AccessManagement.Core.Services
             HashSet<Guid> toAppControlledRightholders = null;
 
             var from = await _dbContext.Entities
-                    .AsNoTracking() 
+                    .AsNoTracking()
                     .Where(e => e.PartyId == reporteePartyId)
                     .FirstOrDefaultAsync(cancellationToken);
 

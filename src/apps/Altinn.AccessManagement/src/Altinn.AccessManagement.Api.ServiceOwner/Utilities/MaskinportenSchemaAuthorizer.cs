@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Altinn.AccessManagement.Core.Constants;
 
 namespace Altinn.AccessManagement.Api.ServiceOwner.Utilities

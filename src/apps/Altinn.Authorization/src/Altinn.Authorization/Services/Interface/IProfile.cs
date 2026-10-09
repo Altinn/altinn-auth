@@ -1,4 +1,4 @@
-using Altinn.Platform.Profile.Models;
+﻿using Altinn.Platform.Profile.Models;
 
 namespace Altinn.Platform.Authorization.Services.Interface
 {

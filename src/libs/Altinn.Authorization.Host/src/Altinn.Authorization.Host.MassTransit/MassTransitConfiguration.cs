@@ -1,4 +1,4 @@
-using Altinn.Authorization.Host.Identity;
+﻿using Altinn.Authorization.Host.Identity;
 using Azure.Messaging.ServiceBus;
 using MassTransit;
 using Microsoft.Extensions.Hosting;

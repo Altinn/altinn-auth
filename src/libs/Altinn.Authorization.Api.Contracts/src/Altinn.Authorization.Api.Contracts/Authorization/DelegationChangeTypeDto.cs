@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.Api.Contracts.Authorization;
+﻿namespace Altinn.Authorization.Api.Contracts.Authorization;
 
 /// <summary>
 /// The type of delegation change

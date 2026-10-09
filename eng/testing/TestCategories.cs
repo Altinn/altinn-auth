@@ -1,4 +1,4 @@
-using Xunit.v3;
+﻿using Xunit.v3;
 
 namespace Altinn.Authorization.Testing;
 

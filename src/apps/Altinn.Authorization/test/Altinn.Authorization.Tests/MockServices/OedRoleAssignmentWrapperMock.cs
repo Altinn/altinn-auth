@@ -1,4 +1,4 @@
-using Altinn.Platform.Authorization.Models.Oed;
+﻿using Altinn.Platform.Authorization.Models.Oed;
 using Altinn.Platform.Authorization.Services.Interface;
 
 namespace Altinn.Authorization.Tests.MockServices

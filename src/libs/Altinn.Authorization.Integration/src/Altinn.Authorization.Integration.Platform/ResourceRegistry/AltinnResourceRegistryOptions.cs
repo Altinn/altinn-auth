@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.Integration.Platform.ResourceRegistry;
+﻿namespace Altinn.Authorization.Integration.Platform.ResourceRegistry;
 
 /// <summary>
 /// Configuration options for Altinn Resource Register integration.

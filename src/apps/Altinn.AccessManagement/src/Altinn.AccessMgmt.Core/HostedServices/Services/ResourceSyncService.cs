@@ -241,7 +241,7 @@ public partial class ResourceSyncService : IResourceSyncService
             .AsNoTracking()
             .Where(r => EF.Functions.ILike(r.LegacyUrn, updatedResource.SubjectUrn) || EF.Functions.ILike(r.Urn, updatedResource.SubjectUrn))
             .FirstOrDefaultAsync(cancellationToken);
-        
+
         if (role is { })
         {
             var roleResource = await dbContext.RoleResources.FirstOrDefaultAsync(t => t.RoleId == role.Id && t.ResourceId == resource.Id, cancellationToken);
@@ -256,7 +256,7 @@ public partial class ResourceSyncService : IResourceSyncService
                 dbContext.RoleResources.Add(roleResource);
                 await dbContext.SaveChangesAsync(cancellationToken);
             }
-            
+
             return;
         }
         else

@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.Persistence.Configuration;
+﻿using Altinn.AccessManagement.Persistence.Configuration;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;

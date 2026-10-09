@@ -1,4 +1,4 @@
-using Altinn.AccessMgmt.PersistenceEF.Models.Base;
+﻿using Altinn.AccessMgmt.PersistenceEF.Models.Base;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Models;
 

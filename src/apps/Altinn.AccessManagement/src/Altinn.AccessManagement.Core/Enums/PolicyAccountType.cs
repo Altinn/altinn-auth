@@ -1,4 +1,4 @@
-namespace Altinn.AccessManagement.Core.Enums
+﻿namespace Altinn.AccessManagement.Core.Enums
 {
     /// <summary>
     /// Storage Account

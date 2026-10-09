@@ -312,7 +312,7 @@ public class RequestController(
 
         var authUserUuid = AuthenticationHelper.GetAuthenticatedPartyUuid(HttpContext);
 
-        if (request.From.Id == authUserUuid) //User is authorizing his own request, check if he is mainadmin
+        if (request.From.Id == authUserUuid) // User is authorizing his own request, check if he is mainadmin
         {
             // Check pdp is mainadmin
             bool isMainAdmin = await AuthorizeResourceAccess("altinn_access_management_hovedadmin", request.To.Id, User, "write");
@@ -423,6 +423,7 @@ public class RequestController(
         ==
         Per (by) ber om tilgang for Kari (for) til App (resource) hos Org (at).
         */
+
         // Guaranteed non-null here: TryBuild above returned false, so the GetResource lookup succeeded.
         var result = await requestService.CreateResourceRequest(
             toId: to,

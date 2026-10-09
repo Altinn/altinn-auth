@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Models.IdPortenAuthorization;
@@ -45,7 +45,7 @@ namespace Altinn.AccessManagement.Core.Services
         {
             // look up ssn from partyUuid
             string ssn = await GetSsnFromPartyUuid(partyUuid, cancellationToken);
-            
+
             if (string.IsNullOrEmpty(ssn))
             {
                 return Problems.SsnNotFound;

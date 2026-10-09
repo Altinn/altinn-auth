@@ -1,4 +1,4 @@
-namespace Altinn.Common.PEP.Constants
+﻿namespace Altinn.Common.PEP.Constants
 {
     /// <summary>
     /// Represents a set of Obligation values

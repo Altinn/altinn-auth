@@ -1,4 +1,5 @@
-﻿using Altinn.AccessManagement.Core.Models;
+﻿using System.Data;
+using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.Consent;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Persistence.Configuration;
@@ -7,7 +8,6 @@ using Altinn.Authorization.ProblemDetails;
 using Microsoft.Extensions.Options;
 using Npgsql;
 using NpgsqlTypes;
-using System.Data;
 
 namespace Altinn.AccessManagement.Persistence.Consent
 {
@@ -32,7 +32,7 @@ namespace Altinn.AccessManagement.Persistence.Consent
         private const string PARAM_REVOKED = "revokedTime";
         private const string PARAM_CONSENT_RIGHT_ID = "consentRightId";
         private const string PARAM_CONSENT_CONTEXT_ID = "contextId";
-        private const string PARAM_LANGAUGE = "language";        
+        private const string PARAM_LANGAUGE = "language";
 
         private const string EventQuery = /*strpsql*/@"
                 INSERT INTO consent.consentevent (consentEventId, consentRequestId, eventtype, created, performedByParty, topartyuuid, handledbypartyuuid)
@@ -647,7 +647,7 @@ namespace Altinn.AccessManagement.Persistence.Consent
             pgcom.Parameters.AddWithValue("@continueFrom", NpgsqlTypes.NpgsqlDbType.Uuid, consentEventsQuery.ContinueFrom.HasValue ? (object)consentEventsQuery.ContinueFrom.Value : DBNull.Value);
             pgcom.Parameters.AddWithValue("@eventTypes", NpgsqlDbType.Array | NpgsqlDbType.Text, consentEventsQuery.EventTypes is not null ? (object)consentEventsQuery.EventTypes : DBNull.Value);
             pgcom.Parameters.AddWithValue("@createdAfter", NpgsqlDbType.TimestampTz, consentEventsQuery.CreatedAfter.HasValue ? (object)consentEventsQuery.CreatedAfter.Value : DBNull.Value);
-            pgcom.Parameters.AddWithValue("@createdBefore", NpgsqlDbType.TimestampTz,consentEventsQuery.CreatedBefore.HasValue ? (object)consentEventsQuery.CreatedBefore.Value : DBNull.Value);
+            pgcom.Parameters.AddWithValue("@createdBefore", NpgsqlDbType.TimestampTz, consentEventsQuery.CreatedBefore.HasValue ? (object)consentEventsQuery.CreatedBefore.Value : DBNull.Value);
             pgcom.Parameters.AddWithValue("@uuid7SafetyBound", NpgsqlTypes.NpgsqlDbType.Uuid, uuid7SafetyBound);
             pgcom.Parameters.AddWithValue("@consentRequestId", NpgsqlTypes.NpgsqlDbType.Uuid, consentEventsQuery.ConsentRequestId == null ? DBNull.Value : consentEventsQuery.ConsentRequestId);
             pgcom.Parameters.AddWithValue("@pageSize", NpgsqlTypes.NpgsqlDbType.Integer, pageSize);

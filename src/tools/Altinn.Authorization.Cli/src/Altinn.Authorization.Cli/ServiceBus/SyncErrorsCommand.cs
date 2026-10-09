@@ -81,7 +81,6 @@ public partial class SyncErrorsCommand(CancellationToken cancellationToken)
                     Task? dlqErrorActive = null;
                     Task? extractErrorDlq = null;
                     Task? deleteMissing = null;
-
                     {
                         if (queue.Normal is { DeadLetterMessageCount: > 0 } normalQueue)
                         {

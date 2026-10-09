@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Reflection;
 using Altinn.Authorization.Host.Lease;
 using Altinn.Authorization.Host.Pipeline.Builders;

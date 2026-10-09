@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.Tests.Fixtures;
+﻿using Altinn.AccessManagement.Tests.Fixtures;
 
 namespace Altinn.AccessManagement.Tests.Integration.Controllers;
 

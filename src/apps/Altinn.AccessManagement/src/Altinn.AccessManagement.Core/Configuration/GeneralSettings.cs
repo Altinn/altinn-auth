@@ -1,4 +1,4 @@
-namespace Altinn.AccessManagement.Core.Configuration
+﻿namespace Altinn.AccessManagement.Core.Configuration
 {
     /// <summary>
     /// General configuration settings

@@ -1,4 +1,4 @@
-namespace Altinn.Platform.Authorization.Exceptions;
+﻿namespace Altinn.Platform.Authorization.Exceptions;
 
 /// <summary>
 /// Exception class to hold exceptions when talking to the platform REST services

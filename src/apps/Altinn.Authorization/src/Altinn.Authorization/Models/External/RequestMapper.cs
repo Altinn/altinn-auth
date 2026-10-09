@@ -1,4 +1,4 @@
-using Altinn.Authorization.ABAC.Xacml.JsonProfile;
+﻿using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Riok.Mapperly.Abstractions;
 
 namespace Altinn.Platform.Authorization.Models.External

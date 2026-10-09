@@ -1,4 +1,4 @@
-using Azure;
+﻿using Azure;
 using Azure.Storage.Blobs.Models;
 
 namespace Altinn.Platform.Authorization.Repositories.Interface

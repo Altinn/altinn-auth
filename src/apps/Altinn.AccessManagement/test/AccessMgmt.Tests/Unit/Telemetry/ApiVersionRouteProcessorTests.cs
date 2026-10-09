@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Altinn.AccessManagement.Telemetry;
 using Microsoft.AspNetCore.Http;
 

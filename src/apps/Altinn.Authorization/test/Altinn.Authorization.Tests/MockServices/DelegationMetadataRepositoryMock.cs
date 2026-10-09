@@ -1,4 +1,4 @@
-using Altinn.Authorization.Tests.Data;
+﻿using Altinn.Authorization.Tests.Data;
 using Altinn.Platform.Authorization.Models;
 using Altinn.Platform.Authorization.Repositories.Interface;
 

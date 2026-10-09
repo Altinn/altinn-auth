@@ -1,4 +1,4 @@
-namespace Altinn.AccessMgmt.FFB.Config;
+﻿namespace Altinn.AccessMgmt.FFB.Config;
 
 public class NotificationsConfig
 {

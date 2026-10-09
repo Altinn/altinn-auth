@@ -1,4 +1,4 @@
-using Altinn.Authorization.Integration.Platform;
+﻿using Altinn.Authorization.Integration.Platform;
 using Altinn.Authorization.Integration.Platform.Register;
 using Altinn.Register.Contracts;
 

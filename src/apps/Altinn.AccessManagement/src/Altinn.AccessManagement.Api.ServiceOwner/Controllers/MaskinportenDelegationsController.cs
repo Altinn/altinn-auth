@@ -1,4 +1,4 @@
-#nullable enable
+﻿#nullable enable
 using Altinn.AccessManagement.Api.ServiceOwner.Models;
 using Altinn.AccessManagement.Api.ServiceOwner.Utilities;
 using Altinn.AccessManagement.Core.Constants;

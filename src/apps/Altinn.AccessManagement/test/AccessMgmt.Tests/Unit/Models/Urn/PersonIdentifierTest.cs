@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Altinn.Authorization.Api.Contracts.Register;
 
 // See: overhaul part-2 step 20

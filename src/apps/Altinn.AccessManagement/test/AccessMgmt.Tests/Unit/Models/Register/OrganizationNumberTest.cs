@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Altinn.AccessManagement.Core.Models.Register;
 
 namespace Altinn.AccessManagement.Tests.Unit.Models.Register;

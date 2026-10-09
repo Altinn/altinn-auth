@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.Core.Helpers.Extensions;
+﻿using Altinn.AccessManagement.Core.Helpers.Extensions;
 
 namespace Altinn.AccessManagement.Tests.Unit.Helpers.Extensions;
 

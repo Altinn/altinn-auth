@@ -1,6 +1,5 @@
 ﻿using System.Collections.Concurrent;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
-using Microsoft.EntityFrameworkCore;
 using Altinn.AccessManagement.TestUtils.Factories;
 using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
@@ -13,6 +12,7 @@ using Altinn.Common.PEP.Interfaces;
 using AltinnCore.Authentication.JwtCookie;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;

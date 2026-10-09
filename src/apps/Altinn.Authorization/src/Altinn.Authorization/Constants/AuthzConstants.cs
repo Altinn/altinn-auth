@@ -1,4 +1,4 @@
-namespace Altinn.Platform.Authorization.Constants
+﻿namespace Altinn.Platform.Authorization.Constants
 {
     /// <summary>
     /// Constants related to authorization.

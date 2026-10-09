@@ -1,4 +1,4 @@
-using Altinn.Authorization.Integration.Platform;
+﻿using Altinn.Authorization.Integration.Platform;
 using Altinn.Authorization.Integration.Platform.ResourceRegistry;
 
 namespace Altinn.Authorization.Integration.Tests.Integration.ResourceRegistry;

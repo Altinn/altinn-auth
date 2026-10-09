@@ -1,4 +1,4 @@
-using Altinn.Authorization.Host.Lease.StorageAccount;
+﻿using Altinn.Authorization.Host.Lease.StorageAccount;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Altinn.Authorization.Host.Lease.Tests

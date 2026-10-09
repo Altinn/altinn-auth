@@ -79,7 +79,7 @@ public partial class ConnectionsControllerTest
 
             string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.True(response.StatusCode == HttpStatusCode.BadRequest, $"Expected BadRequest but got {response.StatusCode}. Response body: {responseContent}");
-                        
+
             AltinnValidationProblemDetails problemDetails = JsonSerializer.Deserialize<AltinnValidationProblemDetails>(responseContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             AltinnValidationError error = problemDetails.Errors.First();
             Assert.Equal("AM.VLD-00028", error.ErrorCode.ToString());

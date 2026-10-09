@@ -1,4 +1,4 @@
-using System.Security.Cryptography.X509Certificates;
+﻿using System.Security.Cryptography.X509Certificates;
 using Altinn.Common.AccessTokenClient.Services;
 using Azure.Security.KeyVault.Certificates;
 using Azure.Security.KeyVault.Secrets;

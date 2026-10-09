@@ -1402,7 +1402,7 @@ public partial class ConnectionService(
                 appsettings?.Value?.Notifications?.InstanceAddedNotifyInSeconds ?? InstanceAddedNotification.DefaultNotifyInSeconds,
                 cancellationToken
             );
-            
+
             await dbContext.SaveChangesAsync(cancellationToken);
         }
 
@@ -1751,7 +1751,7 @@ public partial class ConnectionService(
     private static ValidationErrorBuilder CheckFromAndToIsValidConnectingOldSIToEmailSI(Entity from, Entity to)
     {
         ValidationErrorBuilder errorBuilder = default;
-        
+
         // Guaranteed non-null here: TryBuild above returned false, so both from/to passed their null guards. Check that the variants are correct for a self-registration connection: from should be SI and to should be SI_EMAIL
         if (from!.VariantId != EntityVariantConstants.SI)
         {
@@ -1769,7 +1769,7 @@ public partial class ConnectionService(
     private static ValidationErrorBuilder CheckFromAndToIsValidRegisterSelfIdentifiedRoleToUser(Entity from, Entity to)
     {
         ValidationErrorBuilder errorBuilder = default;
-        
+
         // If from and to are the same this is only for the sub variants EMAIL and EDU
         if (from!.VariantId != EntityVariantConstants.SI_EDU && from.VariantId != EntityVariantConstants.SI_EMAIL)
         {
@@ -2434,6 +2434,7 @@ public partial class ConnectionService
                PolicyVersion = t.PolicyVersion,
                Reason = AccessReasonFlag.KeyRole
            });
+
         // Separate queries for the same reason as in GetResourceRights: the direct branch's null
         // Via/ViaRole constants cannot be part of a set operation with the key role branch's
         // entity references.

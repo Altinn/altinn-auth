@@ -1,4 +1,4 @@
-namespace Altinn.AccessMgmt.FFB.Services.PageData;
+﻿namespace Altinn.AccessMgmt.FFB.Services.PageData;
 
 /// <summary>
 /// Static metadata for the known outbox handlers. This is the single place to register

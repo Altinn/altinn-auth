@@ -76,7 +76,6 @@ public sealed class ExportErrorsCommand(CancellationToken cancellationToken)
                     Task? extractNormalDql = null;
                     Task? dlqErrorActive = null;
                     Task? extractErrorDlq = null;
-
                     {
                         if (queue.Normal is { DeadLetterMessageCount: > 0 } normalQueue)
                         {

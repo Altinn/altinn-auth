@@ -1,4 +1,4 @@
-namespace Altinn.Platform.Authorization.Extensions
+﻿namespace Altinn.Platform.Authorization.Extensions
 {
     /// <summary>
     /// This extension is created to make it easy to add a bearer token to a HttpRequests. 

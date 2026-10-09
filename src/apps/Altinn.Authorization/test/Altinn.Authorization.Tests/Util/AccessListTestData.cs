@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.Tests.Util
+﻿namespace Altinn.Authorization.Tests.Util
 {
     /// <summary>
     /// Named identities and resource identifiers for the access list authorization scenarios decided

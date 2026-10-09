@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.TestUtils.Factories;
+﻿using Altinn.AccessManagement.TestUtils.Factories;
 
 namespace Altinn.AccessManagement.TestUtils.Fixtures;
 

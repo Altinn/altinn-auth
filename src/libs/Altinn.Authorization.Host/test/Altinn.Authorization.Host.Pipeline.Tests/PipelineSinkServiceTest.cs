@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using Altinn.Authorization.Host.Pipeline.Builders;
 using Altinn.Authorization.Host.Pipeline.Services;
 using Microsoft.Extensions.DependencyInjection;

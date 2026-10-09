@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 
 using Altinn.Platform.Authorization.Repositories.Interface;
 using Azure;

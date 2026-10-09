@@ -1,4 +1,4 @@
-namespace Altinn.AccessManagement.Tests.Seeds;
+﻿namespace Altinn.AccessManagement.Tests.Seeds;
 
 public class EnterpriseUserSeeds
 {
