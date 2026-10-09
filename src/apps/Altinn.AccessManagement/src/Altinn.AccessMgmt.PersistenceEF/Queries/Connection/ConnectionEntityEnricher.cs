@@ -103,7 +103,8 @@ internal class ConnectionEntityEnricher(AppDbContext db)
             .Entities
             .AsNoTracking()
             .Where(e => e.ParentId != null && entityDict.Keys.Contains((Guid)e.ParentId)
-                && (filter.IncludeAdosSubunitInheritance || e.VariantId != EntityVariantConstants.ADOS.Id))
+                && (filter.IncludeAdosSubunitInheritance || e.VariantId != EntityVariantConstants.ADOS.Id)
+                && (!filter.ExcludeDeleted || !e.IsDeleted))
             .Select(e => new Entity()
             {
                 Id = e.Id,
