@@ -1,0 +1,17 @@
+meta {
+  name: Policies
+  seq: 5
+}
+
+docs {
+  Read endpoints of PolicyController: which roles an app policy grants
+  access to, and a structured view of the rules in one or more app policies.
+
+  Both endpoints are [AllowAnonymous] in the application, so no bearer token
+  is needed. APIM still requires the Ocp-Apim-Subscription-Key header;
+  without it APIM answers 401 before the request reaches the application.
+
+  The fixture is the stored policy for ttd/authz-bruno-testapp1, which exists
+  in AT22 and TT02 (testdata/policies/<env>.js). The suite is read only and
+  needs no cleanup.
+}
