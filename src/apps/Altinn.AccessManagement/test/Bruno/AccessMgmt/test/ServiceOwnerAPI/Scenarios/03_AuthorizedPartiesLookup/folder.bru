@@ -1,0 +1,15 @@
+meta {
+  name: 03_AuthorizedPartiesLookup
+  seq: 3
+}
+
+docs {
+  Scenario: A service owner looks up the parties a person can act on behalf of
+
+    When the service owner looks up a person's authorized parties filtered to the person
+    Then the person's own party is returned with its roles
+    When the service owner filters on an org code it does not own the request fails
+    When the token lacks the authorized parties scope the request is forbidden
+
+  Read only; the scenario needs no reset or cleanup.
+}

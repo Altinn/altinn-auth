@@ -1,0 +1,46 @@
+meta {
+  name: 08_CLEANUP_RevokingAgainIsNoOp
+  type: http
+  seq: 8
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/connections/resources/revoke
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "from": "urn:altinn:person:identifier-no:{{grantorPid}}",
+    "to": "urn:altinn:person:identifier-no:{{recipientPid}}",
+    "resource": "{{resource}}"
+  }
+}
+
+docs {
+  CLEANUP revoking again is a no-op and returns 204, which also makes sure nothing is
+  left behind if an earlier step failed.
+}
+
+script:pre-request {
+  const { td, loginAsServiceOwner, scopes, serviceOwners } = require("./test/ServiceOwnerAPI/Scenarios/helpers.js");
+  const data = td();
+
+  bru.setVar("grantorPid", data.resourceDelegation.grantor.pid);
+  bru.setVar("recipientPid", data.resourceDelegation.recipient.pid);
+  bru.setVar("resource", data.resourceDelegation.resource);
+
+  await loginAsServiceOwner(serviceOwners.digdir, scopes.resourceDelegationWrite);
+}
+
+tests {
+  test("CLEANUP the repeated revoke returns 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

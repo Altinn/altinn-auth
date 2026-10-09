@@ -1,0 +1,37 @@
+meta {
+  name: 05_WHEN_TokenLacksScopeThenRequestIsForbidden
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/connections/resources/rights?resource={{resource}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  resource: {{resource}}
+}
+
+docs {
+  WHEN the token carries the access package delegation scope but not
+  `altinn:serviceowner/delegations:resource.write` the request is forbidden with 403.
+}
+
+script:pre-request {
+  const { td, loginAsServiceOwner, scopes, serviceOwners } = require("./test/ServiceOwnerAPI/Scenarios/helpers.js");
+  const data = td();
+
+  bru.setVar("grantorPid", data.resourceDelegation.grantor.pid);
+  bru.setVar("recipientPid", data.resourceDelegation.recipient.pid);
+  bru.setVar("resource", data.resourceDelegation.resource);
+
+  await loginAsServiceOwner(serviceOwners.digdir, scopes.packageDelegationWrite);
+}
+
+tests {
+  test("WHEN the token lacks the resource delegation scope, the request returns 403", function() {
+    expect(res.status).to.equal(403);
+  });
+}
