@@ -1,15 +1,13 @@
-name: CI
+﻿name: CI
 
 on:
   push:
     branches: [main]
   pull_request:
-    branches: [main]
     types: [opened, synchronize, reopened]
 
 permissions:
   contents: read
-  actions: read # the per-vertical CI reads the jobs API to deep-link the failed-test summary
 
 # Cancel a superseded run when a PR is pushed again; let main-push runs finish.
 concurrency:
@@ -17,28 +15,266 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
-  find-verticals:
-    uses: ./.github/workflows/tpl-find-verticals.yml
-    with:
-      type: all
-      changed: full
-      checkSlns: true
+  check:
+    name: Check repository  
+    runs-on: ubuntu-latest
 
-  ci:
+    steps:
+      - name: Init
+        uses: $/.github/actions/init
+      
+      - name: Restore
+        run: dotnet restore
+      
+      - name: Check repository
+        run: repoctl check
+
+  # Find what verticals to build and test
+  find-verticals:
+    name: Find all
+    runs-on: ubuntu-latest
+
+    outputs:
+      matrix: ${{ steps.find-verticals.outputs.matrix }}
+      any: ${{ steps.find-verticals.outputs.any }}
+      apps-matrix: ${{ steps.find-apps.outputs.matrix }}
+      apps-any: ${{ steps.find-apps.outputs.any }}
+
+    steps:
+      - name: Init
+        uses: $/.github/actions/init
+      
+      - name: Find verticals to build and test
+        id: find-verticals
+        run: repoctl ci find-verticals --filter full
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Find apps to build and test
+        id: find-apps
+        run: repoctl ci find-verticals --filter full --kind app
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Print find-verticals output
+        run: printf '%s\n' "$MATRIX" | jq -C .
+        env:
+          MATRIX: ${{ steps.find-verticals.outputs.matrix }}
+
+      - name: Print find-apps output
+        run: printf '%s\n' "$MATRIX" | jq -C .
+        env:
+          MATRIX: ${{ steps.find-apps.outputs.matrix }}
+      
+      - name: Print any-vars
+        run: |
+          printf '%s\n' "any: $ANY"
+          printf '%s\n' "apps-any: $APPS_ANY"
+        env:
+          ANY: ${{ steps.find-verticals.outputs.any }}
+          APPS_ANY: ${{ steps.find-apps.outputs.any }}
+
+  vertical:
+    name: "${{ matrix.displayName }}: Build and Test"
+    runs-on: ubuntu-latest
+
     needs: find-verticals
-    if: needs.find-verticals.outputs.any == 'true'
+    # RepoCtl emits these flags as JSON strings, including the surrounding quotes.
+    if: fromJSON(needs.find-verticals.outputs.any) == 'true'
     strategy:
-      matrix: ${{ fromJson(needs.find-verticals.outputs.matrix) }}
       fail-fast: false
-    uses: ./.github/workflows/tpl-vertical-ci.yml
-    secrets: inherit
-    with:
-      id: ${{ matrix.id }}
-      slug: ${{ matrix.slug }}
-      type: ${{ matrix.type }}
-      displayName: ${{ matrix.displayName }}
-      path: ${{ matrix.path }}
-      shortName: ${{ matrix.shortName }}
-      name: ${{ matrix.name }}
-      sonarProjectKey: ${{ matrix.sonarcloud }}
-      sonarProjectName: ${{ matrix.sonarcloudName }}
+      matrix: ${{ fromJson(needs.find-verticals.outputs.matrix) }}
+    
+    permissions: 
+      contents: read
+      packages: write
+    
+    steps:
+      - name: Init
+        uses: $/.github/actions/init
+      
+      - name: Restore
+        run: dotnet restore "$VERTICAL_DIR" -p:Configuration=Release -bl:binlog/restore.binlog
+        env:
+          VERTICAL_DIR: ${{ matrix.path }}
+
+      - name: Build
+        run: dotnet build "$VERTICAL_DIR" -c Release --no-restore -bl:binlog/build.binlog # -warnaserror  # TODO
+        env:
+          VERTICAL_DIR: ${{ matrix.path }}
+      
+      - name: Test
+        run: repoctl vertical test "$VERTICAL_ID" -c Release --no-build -bl:binlog/test.binlog
+        env:
+          VERTICAL_ID: ${{ matrix.id }}
+      
+      - name: Pack
+        if: matrix.type == 'pkg' || matrix.type == 'tool'
+        run: dotnet pack "$VERTICAL_DIR" -c Release --no-build -bl:binlog/pack.binlog
+        env:
+          VERTICAL_DIR: ${{ matrix.path }}
+      
+      - name: Setup buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Setup Flux CLI
+        uses: fluxcd/flux2/action@b9c17924adb533d3617ec7de97a7b0f4acc07b39 # v2.9.6
+
+      - name: Login to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push containers
+        if: matrix.type == 'app'
+        run: repoctl vertical containers build "$VERTICAL_ID" --tag "${{ github.sha }}" --push
+        env:
+          VERTICAL_ID: ${{ matrix.id }}
+
+      - name: Build and push flux manifests
+        if: matrix.type == 'app'
+        run: |
+          if [[ ! -d "$VERTICAL_DIR/manifests" ]]; then
+            echo "No manifests directory found, skipping flux build."
+            exit 0
+          fi
+
+          find "${VERTICAL_DIR}/manifests" -type f \
+            -exec sed -i "s/{{GIT_SHA}}/${GITHUB_SHA}/g" {} +
+          
+          flux push artifact "oci://ghcr.io/altinn/altinn-auth/$VERTICAL_SHORT_SLUG-manifests:${{ github.sha }}" \
+            --path="$VERTICAL_DIR/manifests" \
+            --source="https://github.com/altinn/altinn-auth" \
+            --revision="${GITHUB_SHA}"
+
+        env:
+          VERTICAL_DIR: ${{ matrix.path }}
+          VERTICAL_SHORT_SLUG: ${{ matrix.shortSlug }}
+          GITHUB_SHA: ${{ github.sha }}
+
+      - name: Create binlog artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ matrix.slug }}-binlog
+          path: binlog/*.binlog
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Create packages artifact
+        if: matrix.type == 'pkg' || matrix.type == 'tool'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ matrix.slug }}-packages
+          path: artifacts/**/*.nupkg
+          # TODO: both tools in the repo are not actually tools, and fail this step
+          if-no-files-found: ${{ matrix.type == 'pkg' && 'error' || 'ignore' }}
+          retention-days: 1
+
+  app:
+    name: "Deploy built apps to test"
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && fromJSON(needs.find-verticals.outputs.apps-any) == 'true'
+
+    needs: 
+      - find-verticals
+      - vertical
+    
+    permissions: 
+      contents: read
+      packages: write
+      deployments: write
+    
+    steps:
+      - name: Init
+        uses: $/.github/actions/init
+
+      - name: Setup buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Login to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Retag manifest images
+        run: |
+          # for each app vertical (parsed from VERTICALS using jq)
+          echo "$VERTICALS" | jq -c '.include[]' | while IFS= read -r vertical; do
+
+            displayName=$(jq -r '.displayName' <<< "$vertical")
+            shortSlug=$(jq -r '.shortSlug' <<< "$vertical")
+            dir=$(jq -r '.path' <<< "$vertical")
+
+            echo "Processing vertical: $displayName"
+            if [[ ! -d "$dir/manifests" ]]; then
+              echo "No manifests directory found, skipping retagging."
+              continue
+            fi
+
+            docker buildx imagetools create \
+              -t "ghcr.io/altinn/altinn-auth/$shortSlug-manifests:at22" \
+              -t "ghcr.io/altinn/altinn-auth/$shortSlug-manifests:at23" \
+              -t "ghcr.io/altinn/altinn-auth/$shortSlug-manifests:yt01" \
+              "ghcr.io/altinn/altinn-auth/$shortSlug-manifests:${GITHUB_SHA}"
+          done
+        env:
+          VERTICALS: ${{ needs.find-verticals.outputs.apps-matrix }}
+          GITHUB_SHA: ${{ github.sha }}
+      
+      - name: Mark promoted in github
+        run: |
+          echo "GITHUB_SHA=$GITHUB_SHA"
+
+          gh api "repos/{owner}/{repo}" \
+            --jq '{full_name, permissions}'
+
+          gh api "repos/{owner}/{repo}/deployments" \
+            --jq 'length'
+
+          # for each app vertical (parsed from VERTICALS using jq)
+          echo "$VERTICALS" | jq -c '.include[]' | while IFS= read -r vertical; do
+
+            displayName=$(jq -r '.displayName' <<< "$vertical")
+            shortSlug=$(jq -r '.shortSlug' <<< "$vertical")
+            dir=$(jq -r '.path' <<< "$vertical")
+
+            echo "Processing vertical: $displayName"
+            if [[ ! -d "$dir/manifests" ]]; then
+              echo "No manifests directory found, skipping retagging."
+              continue
+            fi
+
+            for environment in at22 at23 yt01; do
+              deployment_env="${shortSlug}/${environment}"
+
+              deployment_id=$(
+                jq -n \
+                  --arg ref "$GITHUB_SHA" \
+                  --arg environment "$deployment_env" \
+                  '{
+                    ref: $ref,
+                    environment: $environment,
+                    auto_merge: false,
+                    required_contexts: [],
+                    production_environment: false,
+                    description: "OCI artifact promoted; awaiting Flux reconciliation"
+                  }' |
+                gh api \
+                  --method POST \
+                  "repos/{owner}/{repo}/deployments" \
+                  --input - \
+                  --jq '.id'
+              )
+
+              echo "Created pending deployment $deployment_id for $deployment_env"
+            done
+          done
+        env:
+          VERTICALS: ${{ needs.find-verticals.outputs.apps-matrix }}
+          GITHUB_SHA: ${{ github.sha }}
+          GH_TOKEN: ${{ github.token }}

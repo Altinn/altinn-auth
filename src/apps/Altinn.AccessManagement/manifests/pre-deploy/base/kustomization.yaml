@@ -1,10 +1,13 @@
 ﻿apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: product-accessmanagement
+namespace: product-access-management
 resources:
   - 01-identity.yaml
   - 02-db-migration.yaml
 
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: access-management
 configMapGenerator:
   - name: environment
     envs:

@@ -1,0 +1,63 @@
+﻿name: Init
+
+description: Initialize a GitHub Actions job by checking out the repository and installing required tools.
+
+# Note: Boolean inputs are passed as strings in composite actions.
+inputs:
+  checkout:
+    description: Whether to check out the repository.
+    default: "true"
+    type: boolean
+
+  fetch_depth:
+    description: Git fetch depth. Use 1 to fetch only the latest commit, or 0 to fetch the entire history.
+    default: 1
+
+  dotnet_version:
+    description: Version of .NET to install.
+    default: |
+      10.0.x
+      9.0.x
+      8.0.x
+    type: string
+  
+  repoctl_version:
+    description: Version of the RepoCtl tool to install.
+    # renovate: datasource=nuget depName=Altinn.Authorization.RepoCtl.Cli
+    default: "2.0.2"
+    type: string
+
+  install_dotnet:
+    description: Whether to install the specified version of .NET.
+    default: "true"
+    type: boolean
+
+  install_repoctl:
+    description: Whether to install the RepoCtl tool for managing the monorepo.
+    default: "true"
+    type: boolean
+
+runs:
+  using: composite
+
+  steps:
+    - name: Checkout
+      if: ${{ inputs.checkout == 'true' || inputs.checkout == true }}
+      uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      with:
+        fetch-depth: ${{ inputs.fetch_depth }}
+
+    - name: Setup .NET
+      if: ${{ inputs.install_dotnet == 'true' || inputs.install_dotnet == true }}
+      uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
+      with:
+        dotnet-version: ${{ inputs.dotnet_version }}
+
+    - name: Install RepoCtl
+      if: ${{ inputs.install_repoctl == 'true' || inputs.install_repoctl == true }}
+      shell: bash
+      run: |
+        dotnet tool install --global Altinn.Authorization.RepoCtl.Cli --version "$REPOCTL_VERSION"
+        repoctl --version
+      env:
+        REPOCTL_VERSION: ${{ inputs.repoctl_version }}

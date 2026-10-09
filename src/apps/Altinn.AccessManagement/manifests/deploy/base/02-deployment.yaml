@@ -4,7 +4,6 @@ metadata:
   name: access-management
   labels:
     app.kubernetes.io/name: access-management
-    app.kubernetes.io/part-of: accessmanagement
 spec:
   selector:
     matchLabels:
@@ -13,24 +12,22 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: access-management
-        app.kubernetes.io/part-of: accessmanagement
+        app.kubernetes.io/part-of: access-management
         azure.workload.identity/use: "true"
       annotations:
         cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
         linkerd.io/inject: enabled
     spec:
-      serviceAccountName: app
-
+      serviceAccountName: access-management
       securityContext:
         runAsUser: 1000
         runAsGroup: 3000
         allowPrivilegeEscalation: false
 
       containers:
-        - name: accessmanagement
-          image: ghcr.io/altinn/altinn-auth/accessmanagement:{{GIT_SHA}}
+        - name: access-management
+          image: ghcr.io/altinn/altinn-auth/access-management:{{GIT_SHA}}
           imagePullPolicy: Always
-
           resources:
             requests:
               cpu: 750m
@@ -42,7 +39,7 @@ spec:
 
           env:
             - name: K8S_CONTAINER_NAME
-              value: accessmanagement
+              value: access-management
             - name: K8S_POD_NAME
               valueFrom:
                 fieldRef:

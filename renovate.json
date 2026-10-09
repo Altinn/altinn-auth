@@ -1,31 +1,47 @@
-{
+﻿{
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["local>Altinn/renovate-config"],
-  "labels": ["dependencies"],
+  "extends": [
+    "local>Altinn/renovate-config"
+  ],
+  "labels": [
+    "dependencies"
+  ],
   "packageRules": [
     {
-      "matchManagers": ["nuget"],
+      "matchManagers": [
+        "nuget"
+      ],
       "groupName": "Microsoft.CodeAnalysis",
       "groupSlug": "microsoft-codeanalysis",
       "prBodyNotes": [
         ":warning: Updating Microsoft.CodeAnalysis packages requires new compiler version. This typically requires people to update VS. :warning:"
       ],
-      "addLabels": ["dependencies/breaking"],
+      "addLabels": [
+        "dependencies/breaking"
+      ],
       "minimumReleaseAge": "60 days",
-      "matchPackageNames": ["Microsoft.CodeAnalysis{/,}**"]
+      "matchPackageNames": [
+        "Microsoft.CodeAnalysis{/,}**"
+      ]
     },
     {
-      "matchManagers": ["nuget"],
+      "matchManagers": [
+        "nuget"
+      ],
       "matchPackageNames": [
         "System.IdentityModel.Tokens.Jwt",
         "Microsoft.IdentityModel.Tokens"
       ],
       "groupName": "IdentityModel Extensions for .NET",
       "groupSlug": "azure-activedirectory-identitymodel-extensions-for-dotnet",
-      "matchUpdateTypes": ["major"]
+      "matchUpdateTypes": [
+        "major"
+      ]
     },
     {
-      "matchManagers": ["nuget"],
+      "matchManagers": [
+        "nuget"
+      ],
       "matchPackageNames": [
         "Swashbuckle.AspNetCore",
         "Swashbuckle.AspNetCore.Swagger",
@@ -35,17 +51,28 @@
       ],
       "groupName": "Swashbuckle",
       "groupSlug": "swashbuckle",
-      "matchUpdateTypes": ["major"]
+      "matchUpdateTypes": [
+        "major"
+      ]
     },
     {
-      "matchManagers": ["nuget"],
-      "matchPackageNames": ["Testcontainers", "Testcontainers.PostgreSql"],
+      "matchManagers": [
+        "nuget"
+      ],
+      "matchPackageNames": [
+        "Testcontainers",
+        "Testcontainers.PostgreSql"
+      ],
       "groupName": "Testcontainers for .NET",
       "groupSlug": "testcontainers-for-dotnet",
-      "matchUpdateTypes": ["major"]
+      "matchUpdateTypes": [
+        "major"
+      ]
     },
     {
-      "matchManagers": ["nuget"],
+      "matchManagers": [
+        "nuget"
+      ],
       "matchPackageNames": [
         "Npgsql",
         "Npgsql.DependencyInjection",
@@ -54,10 +81,14 @@
       ],
       "groupName": "Npgsql",
       "groupSlug": "npgsql",
-      "matchUpdateTypes": ["major"]
+      "matchUpdateTypes": [
+        "major"
+      ]
     },
     {
-      "matchManagers": ["nuget"],
+      "matchManagers": [
+        "nuget"
+      ],
       "matchPackageNames": [
         "xunit.v3.extensibility.core",
         "xunit.v3",
@@ -65,10 +96,14 @@
       ],
       "groupName": "XUnit v3",
       "groupSlug": "xunit-v3",
-      "matchUpdateTypes": ["major"]
+      "matchUpdateTypes": [
+        "major"
+      ]
     },
     {
-      "matchManagers": ["npm"],
+      "matchManagers": [
+        "npm"
+      ],
       "matchPackageNames": [
         "@digdir/designsystemet-css",
         "@digdir/designsystemet-react",
@@ -76,30 +111,42 @@
       ],
       "groupName": "Digdir Designsystemet",
       "groupSlug": "digdir-designsystemet",
-      "matchUpdateTypes": ["major"]
+      "matchUpdateTypes": [
+        "major"
+      ]
     },
     {
-      "matchManagers": ["nuget"],
+      "matchManagers": [
+        "nuget"
+      ],
       "matchPackageNames": [
         "Altinn.Urn",
         "Altinn.Urn.*"
       ],
       "groupName": "Altinn.Urn",
       "groupSlug": "altinn-urn",
-      "matchUpdateTypes": ["major"]
+      "matchUpdateTypes": [
+        "major"
+      ]
     },
     {
-      "matchManagers": ["nuget"],
+      "matchManagers": [
+        "nuget"
+      ],
       "matchPackageNames": [
         "Altinn.Authorization.ServiceDefaults",
         "Altinn.Authorization.ServiceDefaults.*"
       ],
       "groupName": "Altinn.Authorization.ServiceDefaults",
       "groupSlug": "altinn-authorization-servicedefaults",
-      "matchUpdateTypes": ["major"]
+      "matchUpdateTypes": [
+        "major"
+      ]
     },
     {
-      "matchManagers": ["docker"],
+      "matchManagers": [
+        "docker"
+      ],
       "matchPackageNames": [
         "mcr.microsoft.com/dotnet/*"
       ],
@@ -107,10 +154,26 @@
       "groupSlug": "dotnet-images"
     },
     {
-      "matchManagers": ["github-actions"],
-      "matchPackageNames": ["github/codeql-action"],
+      "matchManagers": [
+        "github-actions"
+      ],
+      "matchPackageNames": [
+        "github/codeql-action"
+      ],
       "groupName": "CodeQL Action",
       "groupSlug": "codeql-action"
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "Update annotated NuGet tool versions in GitHub workflows",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/.*\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+[a-z][A-Za-z0-9]*Version:\\s*[\\\"']?(?<currentValue>[^\\s\\\"']+)"
+      ]
     }
   ]
 }
