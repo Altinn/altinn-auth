@@ -1,0 +1,43 @@
+meta {
+  name: 02_WHEN_OtherEnterpriseReadsRequestThenForbidden
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enterprise/consentrequests/:consentRequestId
+  body: none
+  auth: inherit
+}
+
+params:path {
+  consentRequestId: {{boundaryRequestId}}
+}
+
+docs {
+  WHEN another enterprise reads the request, the request is forbidden.
+
+  GET /accessmanagement/api/v1/enterprise/consentrequests/:consentRequestId
+
+  Only the enterprise in to or handledBy may read a request. Any other enterprise gets
+  403 with problem code AM-00000, even with a valid read scope.
+}
+
+script:pre-request {
+  const { loginAsEnterprise, scopes, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  await loginAsEnterprise(td.otherEnterprise, scopes.consentRequestsRead);
+}
+
+tests {
+  test("WHEN another enterprise reads the request, the request returns 403", function() {
+    expect(res.status).to.equal(403);
+  });
+
+  test("THEN the problem is AM-00000, not authorized for consent", function() {
+    const body = res.getBody();
+    expect(body.status).to.equal(403);
+    expect(body.code).to.equal("AM-00000");
+  });
+}

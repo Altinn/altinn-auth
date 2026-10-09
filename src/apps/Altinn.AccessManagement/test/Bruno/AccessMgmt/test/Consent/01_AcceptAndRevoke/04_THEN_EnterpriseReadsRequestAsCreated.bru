@@ -1,0 +1,67 @@
+meta {
+  name: 04_THEN_EnterpriseReadsRequestAsCreated
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enterprise/consentrequests/:consentRequestId
+  body: none
+  auth: inherit
+}
+
+params:path {
+  consentRequestId: {{consentRequestId}}
+}
+
+docs {
+  THEN the enterprise reads the request with status Created.
+
+  GET /accessmanagement/api/v1/enterprise/consentrequests/:consentRequestId
+
+  Returns one consent request with its current status and full event history. Only the
+  enterprise the request is addressed to (to) or handled by (handledBy) may read it.
+
+  - consentRequestId (path): the id the enterprise chose at create.
+  - Token: Maskinporten token with scope altinn:consentrequests.read (or .write).
+
+  Typical response: 200 with the same shape as the create response. status is one of
+  Created, Rejected, Accepted, Revoked, Deleted or Expired; consented is set once the
+  request is accepted. 403 (AM-00000) for another enterprise, 404 (AM-00001) for an
+  unknown id.
+
+  This step uses a token with the read scope only, to show it is enough for reading.
+}
+
+script:pre-request {
+  const { loginAsEnterprise, scopes, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  await loginAsEnterprise(td.enterprise, scopes.consentRequestsRead);
+}
+
+tests {
+  const { testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+  const id = bru.getVar("consentRequestId");
+
+  test("WHEN the enterprise reads the request, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the request has status Created and is not consented", function() {
+    const body = res.getBody();
+    expect(body.id).to.equal(id);
+    expect(body.status).to.equal("Created");
+    expect(body.consented).to.be.null;
+    expect(body.from).to.equal(`urn:altinn:person:identifier-no:${td.consentingPerson.pid}`);
+    expect(body.to).to.equal(`urn:altinn:organization:identifier-no:${td.enterprise.orgno}`);
+    expect(body.consentRights[0].resource[0].value).to.equal(td.consentResource.id);
+    expect(body.viewUri).to.include(`/accessmanagement/ui/consent/request?id=${id}`);
+  });
+
+  test("THEN the event history holds only the Created event", function() {
+    const events = res.getBody().consentRequestEvents;
+    expect(events.map(e => e.eventType)).to.deep.equal(["Created"]);
+  });
+}
