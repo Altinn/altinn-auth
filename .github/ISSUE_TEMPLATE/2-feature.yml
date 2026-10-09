@@ -43,6 +43,20 @@ body:
       required: true
 
   - type: dropdown
+    id: layer
+    attributes:
+      label: "Layer"
+      description: "Optional. Select all that apply, so the work can be filtered by layer."
+      multiple: true
+      options:
+        - "Backend (backend)"
+        - "Frontend (frontend)"
+        - "UX (ux)"
+        - "Infrastructure (infra)"
+        - "Test (test)"
+        - "Not sure yet"
+
+  - type: dropdown
     id: audience
     attributes:
       label: "Who is it for?"
