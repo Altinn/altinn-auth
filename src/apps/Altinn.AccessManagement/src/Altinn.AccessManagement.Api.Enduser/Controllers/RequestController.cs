@@ -312,7 +312,8 @@ public class RequestController(
 
         var authUserUuid = AuthenticationHelper.GetAuthenticatedPartyUuid(HttpContext);
 
-        if (request.From.Id == authUserUuid) // User is authorizing his own request, check if he is mainadmin
+        // User is authorizing his own request, check if he is mainadmin
+        if (request.From.Id == authUserUuid)
         {
             // Check pdp is mainadmin
             bool isMainAdmin = await AuthorizeResourceAccess("altinn_access_management_hovedadmin", request.To.Id, User, "write");

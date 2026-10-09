@@ -216,7 +216,15 @@ public class DelegationMetadataRepositoryMock : IDelegationMetadataRepository
         return Task.FromResult(result);
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Returns an empty list of app delegation changes.
+    /// </summary>
+    /// <param name="altinnAppId">The app identifier.</param>
+    /// <param name="offeredByPartyId">The party offering the delegation.</param>
+    /// <param name="coveredByPartyId">The party covered by the delegation.</param>
+    /// <param name="coveredByUserId">The user covered by the delegation.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>An empty list of delegation changes.</returns>
     public Task<List<DelegationChange>> GetAllAppDelegationChanges(string altinnAppId, int offeredByPartyId, int? coveredByPartyId, int? coveredByUserId, CancellationToken cancellationToken = default)
     {
         return Task.FromResult(new List<DelegationChange>());
