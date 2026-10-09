@@ -55,6 +55,27 @@ public interface IRequestService
     Task<Result<RequestDto>> CreatePackageRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, string package, RequestStatus status = RequestStatus.Pending, CancellationToken ct = default);
 
     /// <summary>
+    /// Creates a new package request where the requester (from-party) is a system user.
+    /// The <paramref name="systemUserId"/> must resolve to a system user entity, the
+    /// <see cref="AccessMgmtFeatureFlags.EnableSystemUserRequests"/> feature must be enabled, the
+    /// consumer organization (<paramref name="consumerOrgNo"/>) must be a public sector organization
+    /// (KOMM, FYLK or STAT) and the recipient is the organization identified by <paramref name="organizationNo"/>.
+    /// </summary>
+    Task<Result<RequestDto>> CreateSystemUserPackageRequest(string organizationNo, Guid systemUserId, string consumerOrgNo, Guid roleId, string package, RequestStatus status = RequestStatus.Pending, CancellationToken ct = default);
+
+    /// <summary>
+    /// Gets the requests sent by a system user, optionally filtered by the recipient organization number.
+    /// Applies the same sender rules as <see cref="CreateSystemUserPackageRequest"/>.
+    /// </summary>
+    Task<Result<IEnumerable<RequestDto>>> GetSystemUserSentRequests(Guid systemUserId, string consumerOrgNo, string? toOrganizationNo, IEnumerable<RequestStatus> status, string? type, CancellationToken ct = default);
+
+    /// <summary>
+    /// Withdraws a request sent by a system user.
+    /// Applies the same sender rules as <see cref="CreateSystemUserPackageRequest"/>.
+    /// </summary>
+    Task<Result<RequestDto>> WithdrawSystemUserRequest(Guid systemUserId, string consumerOrgNo, Guid requestId, CancellationToken ct = default);
+
+    /// <summary>
     /// Updates the status of a request.
     /// </summary>
     Task<Result<RequestDto>> UpdateRequest(Guid partyUuid, Guid requestId, RequestStatus status, CancellationToken ct = default);

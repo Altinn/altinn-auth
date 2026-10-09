@@ -110,6 +110,12 @@ public static class AccessMgmtFeatureFlags
     public const string EnableRequestAssignmentPackage = "AccessMgmt.Controller.RequestAssignment.Package";
 
     /// <summary>
+    /// Enables system users (from-party) to send access requests to organizations. Trial feature;
+    /// access to the endpoint is granted by the <c>altinn:accessmanagement/systemuser:requests.write</c> Maskinporten scope.
+    /// </summary>
+    public const string EnableSystemUserRequests = "AccessMgmt.Controller.RequestAssignment.SystemUserRequests";
+
+    /// <summary>
     /// Enables the resource delegation endpoints in the serviceowner connections API.
     /// </summary>
     public const string EnableServiceOwnerResourceDelegation = "AccessMgmt.Controller.ServiceOwner.ResourceDelegation";

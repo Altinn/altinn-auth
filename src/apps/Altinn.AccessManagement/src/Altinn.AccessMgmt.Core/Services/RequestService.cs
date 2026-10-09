@@ -14,11 +14,15 @@ using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Microsoft.FeatureManagement;
 
 namespace Altinn.AccessMgmt.Core.Services;
 
 /// <inheritdoc/>
-public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettings) : IRequestService
+public class RequestService(
+    AppDbContext db,
+    IOptions<CoreAppsettings> appsettings,
+    IFeatureManager featureManager) : IRequestService
 {
     /// <inheritdoc/>
     public async Task<Result<RequestDto>> GetRequest(Guid requestId, CancellationToken ct = default)
@@ -141,6 +145,12 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
     /// <inheritdoc/>
     public async Task<Result<RequestDto>> CreateResourceRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, Guid resourceId, RequestStatus status = RequestStatus.Pending, CancellationToken ct = default)
     {
+        var systemUserProblem = await ValidateRecipientNotSystemUser(toId, ct);
+        if (systemUserProblem is { } resourceGuard)
+        {
+            return resourceGuard;
+        }
+
         var resource = await db.Resources.Include(r => r.Type).FirstOrDefaultAsync(r => r.Id == resourceId, ct);
 
         var problem = ValidationComposer.Validate(
@@ -167,6 +177,87 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
 
     /// <inheritdoc/>
     public async Task<Result<RequestDto>> CreatePackageRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, string package, RequestStatus status = RequestStatus.Pending, CancellationToken ct = default)
+    {
+        var systemUserProblem = await ValidateRecipientNotSystemUser(toId, ct);
+        if (systemUserProblem is { } packageGuard)
+        {
+            return packageGuard;
+        }
+
+        return await CreatePackageRequestInternal(toId, fromId, byId, roleId, package, status, ct);
+    }
+
+    /// <inheritdoc/>
+    public async Task<Result<RequestDto>> CreateSystemUserPackageRequest(string organizationNo, Guid systemUserId, string consumerOrgNo, Guid roleId, string package, RequestStatus status = RequestStatus.Pending, CancellationToken ct = default)
+    {
+        var systemUserProblem = await ValidateSystemUserSender(systemUserId, consumerOrgNo, ct);
+        if (systemUserProblem is { } senderGuard)
+        {
+            return senderGuard;
+        }
+
+        var toId = await GetOrganizationIdByOrgNo(organizationNo, ct);
+
+        if (toId is null)
+        {
+            return OrganizationNotFoundProblem();
+        }
+
+        return await CreatePackageRequestInternal(toId.Value, systemUserId, systemUserId, roleId, package, status, ct);
+    }
+
+    /// <inheritdoc/>
+    public async Task<Result<IEnumerable<RequestDto>>> GetSystemUserSentRequests(Guid systemUserId, string consumerOrgNo, string? toOrganizationNo, IEnumerable<RequestStatus> status, string? type, CancellationToken ct = default)
+    {
+        var senderProblem = await ValidateSystemUserSender(systemUserId, consumerOrgNo, ct);
+        if (senderProblem is { } senderGuard)
+        {
+            return senderGuard;
+        }
+
+        Guid? toId = null;
+        if (!string.IsNullOrEmpty(toOrganizationNo))
+        {
+            toId = await GetOrganizationIdByOrgNo(toOrganizationNo, ct);
+            if (toId is null)
+            {
+                return OrganizationNotFoundProblem();
+            }
+        }
+
+        return await GetSentRequests(systemUserId, toId, status, type, ct);
+    }
+
+    /// <inheritdoc/>
+    public async Task<Result<RequestDto>> WithdrawSystemUserRequest(Guid systemUserId, string consumerOrgNo, Guid requestId, CancellationToken ct = default)
+    {
+        var senderProblem = await ValidateSystemUserSender(systemUserId, consumerOrgNo, ct);
+        if (senderProblem is { } senderGuard)
+        {
+            return senderGuard;
+        }
+
+        return await UpdateRequest(systemUserId, requestId, RequestStatus.Withdrawn, ct);
+    }
+
+    private async Task<Guid?> GetOrganizationIdByOrgNo(string organizationNo, CancellationToken ct)
+    {
+        var organizationTypeId = EntityTypeConstants.Organization.Id;
+        return await db.Entities.AsNoTracking()
+            .Where(e => e.OrganizationIdentifier == organizationNo && e.TypeId == organizationTypeId)
+            .Select(e => (Guid?)e.Id)
+            .FirstOrDefaultAsync(ct);
+    }
+
+    private static ValidationProblemInstance OrganizationNotFoundProblem()
+    {
+        ValidationErrorBuilder errors = default;
+        errors.Add(ValidationErrors.EntityNotExists, "QUERY/organization");
+        errors.TryBuild(out var notFound);
+        return notFound;
+    }
+
+    private async Task<Result<RequestDto>> CreatePackageRequestInternal(Guid toId, Guid fromId, Guid byId, Guid roleId, string package, RequestStatus status, CancellationToken ct)
     {
         var to = await db.Entities.Include(t => t.Type).FirstOrDefaultAsync(e => e.Id == toId, ct);
         var from = await db.Entities.Include(t => t.Type).FirstOrDefaultAsync(e => e.Id == fromId, ct);
@@ -205,6 +296,64 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
     }
 
     #region privates
+
+    /// <summary>
+    /// Enforces the recipient hard-block that applies to every request type:
+    /// a system user can never be the recipient (<paramref name="toId"/>) of a request.
+    /// </summary>
+    /// <returns>A <see cref="Problems.SystemUserRequestNotAllowed"/> descriptor when the request is not allowed; otherwise <c>null</c>.</returns>
+    private async Task<ProblemDescriptor?> ValidateRecipientNotSystemUser(Guid toId, CancellationToken ct)
+    {
+        var systemUserTypeId = EntityTypeConstants.SystemUser.Id;
+
+        var toIsSystemUser = await db.Entities.AsNoTracking()
+            .AnyAsync(e => e.Id == toId && e.TypeId == systemUserTypeId, ct);
+        if (toIsSystemUser)
+        {
+            return Problems.SystemUserRequestNotAllowed;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Enforces the system-user sender rules for the dedicated system-user request path:
+    /// the <see cref="AccessMgmtFeatureFlags.EnableSystemUserRequests"/> feature must be enabled, the
+    /// requester (<paramref name="fromId"/>) must resolve to a system user entity and the consumer
+    /// organization (<paramref name="consumerOrgNo"/>) must be a KOMM, FYLK or STAT organization.
+    /// </summary>
+    /// <returns>A <see cref="Problems.SystemUserRequestNotAllowed"/> descriptor when the request is not allowed; otherwise <c>null</c>.</returns>
+    private async Task<ProblemDescriptor?> ValidateSystemUserSender(Guid fromId, string consumerOrgNo, CancellationToken ct)
+    {
+        var systemUserTypeId = EntityTypeConstants.SystemUser.Id;
+        var organizationTypeId = EntityTypeConstants.Organization.Id;
+        Guid[] allowedConsumerVariants = [EntityVariantConstants.KOMM.Id, EntityVariantConstants.FYLK.Id, EntityVariantConstants.STAT.Id];
+
+        var featureEnabled = await featureManager.IsEnabledAsync(AccessMgmtFeatureFlags.EnableSystemUserRequests);
+        if (!featureEnabled)
+        {
+            return Problems.SystemUserRequestNotAllowed;
+        }
+
+        // The requester must actually be a system user entity.
+        var fromIsSystemUser = fromId != Guid.Empty && await db.Entities.AsNoTracking()
+            .AnyAsync(e => e.Id == fromId && e.TypeId == systemUserTypeId, ct);
+        if (!fromIsSystemUser)
+        {
+            return Problems.SystemUserRequestNotAllowed;
+        }
+
+        // Only system users owned by public sector consumers (KOMM, FYLK, STAT) may send requests.
+        var consumerIsAllowed = !string.IsNullOrEmpty(consumerOrgNo) && await db.Entities.AsNoTracking()
+            .AnyAsync(e => e.OrganizationIdentifier == consumerOrgNo && e.TypeId == organizationTypeId && allowedConsumerVariants.Contains(e.VariantId), ct);
+        if (!consumerIsAllowed)
+        {
+            return Problems.SystemUserRequestNotAllowed;
+        }
+
+        return null;
+    }
+
     private async Task<Result<RequestDto>> CreateResourceRequest(RequestAssignment assignment, Guid resourceId, RequestStatus initialStatus = RequestStatus.Pending, CancellationToken ct = default)
     {
         var request = await db.RequestAssignmentResources
@@ -377,6 +526,15 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
         );
     }
 
+    /// <summary>
+    /// System users cannot receive notifications, so notifications addressed to them are suppressed.
+    /// </summary>
+    private Task<bool> IsSystemUser(Guid entityId, CancellationToken ct)
+    {
+        var systemUserTypeId = EntityTypeConstants.SystemUser.Id;
+        return db.Entities.AsNoTracking().AnyAsync(e => e.Id == entityId && e.TypeId == systemUserTypeId, ct);
+    }
+
     private async Task<Result<RequestDto>> UpdatePackageRequestStatus(Guid id, RequestStatus status, CancellationToken ct = default)
     {
         ValidationErrorBuilder errorBuilder = default;
@@ -405,12 +563,16 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
             );
         }
 
-        if (status == RequestStatus.Approved || status == RequestStatus.Rejected)
+        var notifyRequester = !await IsSystemUser(request.Assignment.FromId, ct);
+        if (notifyRequester && (status == RequestStatus.Approved || status == RequestStatus.Rejected))
         {
             await UpsertOutboxMessage(status, request, ct);
         }
 
-        if (await db.SaveChangesWithOutboxRetry(() => UpsertOutboxMessage(status, request, ct), ct) == 0)
+        var saved = notifyRequester
+            ? await db.SaveChangesWithOutboxRetry(() => UpsertOutboxMessage(status, request, ct), ct)
+            : await db.SaveChangesAsync(ct);
+        if (saved == 0)
         {
             errorBuilder.Add(ValidationErrors.DbNoRowsAffected, nameof(db.RequestAssignmentPackages));
         }
@@ -465,12 +627,16 @@ public class RequestService(AppDbContext db, IOptions<CoreAppsettings> appsettin
             );
         }
 
-        if (status == RequestStatus.Approved || status == RequestStatus.Rejected)
+        var notifyRequester = !await IsSystemUser(request.Assignment.FromId, ct);
+        if (notifyRequester && (status == RequestStatus.Approved || status == RequestStatus.Rejected))
         {
             await UpsertOutboxMessage(status, request, ct);
         }
 
-        if (await db.SaveChangesWithOutboxRetry(() => UpsertOutboxMessage(status, request, ct), ct) == 0)
+        var saved = notifyRequester
+            ? await db.SaveChangesWithOutboxRetry(() => UpsertOutboxMessage(status, request, ct), ct)
+            : await db.SaveChangesAsync(ct);
+        if (saved == 0)
         {
             errorBuilder.Add(ValidationErrors.DbNoRowsAffected, nameof(db.RequestAssignmentResources));
         }
