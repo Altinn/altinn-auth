@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.Core.Models;
+﻿using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Enums;
 using Altinn.Authorization.Api.Contracts.Authorization;
 
