@@ -11,6 +11,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers;
 
+/// <summary>
+/// Tests removing assignments when only Altinn 2 roles exist.
+/// </summary>
 public partial class ConnectionsControllerTest
 {
     /// <summary>
