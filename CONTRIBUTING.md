@@ -23,7 +23,8 @@ This guide applies to everyone who changes this repository, whether you type eve
 **TL;DR**
 
 - Write the issue. An incomplete issue is better than one never written; `status/triage` makes sure someone completes it.
-- Pick the form that fits, and the component it concerns. «Vet ikke» is a fine answer.
+- Pick the form that fits, and the component it concerns. "Don't know" is a fine answer.
+- Write in English or Norwegian, whichever is quicker. The forms are in English.
 - One issue type and at least one `area/*` per issue. Everything else is optional.
 
 Why the model looks like this is in [ADR-0004](docs/adr/0004-issue-and-label-model.md). What to set:
