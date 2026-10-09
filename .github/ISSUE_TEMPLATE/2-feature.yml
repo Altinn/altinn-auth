@@ -15,8 +15,6 @@ body:
       description: Inntil fem punkter. Hva ønskes, og hvorfor?
       value: |
         -
-    validations:
-      required: true
 
   - type: dropdown
     id: component
@@ -30,6 +28,7 @@ body:
         - Authentication – innlogging, tokens og systembruker (authentication)
         - Register – parter og roller (register)
         - Resource Registry – ressurser og tilgangslister (resource-registry)
+        - Auditlog – logg over autorisasjonsbeslutninger (auditlog)
         - NuGet-pakker – PEP og ABAC (packages)
         - Felles biblioteker (libs)
         - Verktøy – CLI og FFB (tools)
@@ -51,8 +50,6 @@ body:
         - Sluttbrukersystemleverandør
         - Annet Altinn-produkt
         - Internt i teamet
-    validations:
-      required: true
 
   - type: textarea
     id: need
@@ -60,8 +57,6 @@ body:
       label: Behov
       description: Hvilket problem løser dette? Hva skjer i dag?
       placeholder: Som tjenesteeier ønsker jeg å ..., slik at ...
-    validations:
-      required: true
 
   - type: textarea
     id: solution

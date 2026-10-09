@@ -10,8 +10,6 @@ body:
       description: Inntil fem punkter. Hva skal gjøres, og hvorfor? Lenk til feature eller epic hvis oppgaven er en del av en større leveranse.
       value: |
         -
-    validations:
-      required: true
 
   - type: dropdown
     id: component
@@ -24,6 +22,7 @@ body:
         - Authentication – innlogging, tokens og systembruker (authentication)
         - Register – parter og roller (register)
         - Resource Registry – ressurser og tilgangslister (resource-registry)
+        - Auditlog – logg over autorisasjonsbeslutninger (auditlog)
         - NuGet-pakker – PEP og ABAC (packages)
         - Felles biblioteker (libs)
         - Verktøy – CLI og FFB (tools)

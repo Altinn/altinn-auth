@@ -10,8 +10,6 @@ body:
       description: Inntil fem punkter. Hvem trenger hva, og hvorfor?
       value: |
         -
-    validations:
-      required: true
 
   - type: dropdown
     id: component
@@ -25,6 +23,7 @@ body:
         - Authentication – innlogging, tokens og systembruker (authentication)
         - Register – parter og roller (register)
         - Resource Registry – ressurser og tilgangslister (resource-registry)
+        - Auditlog – logg over autorisasjonsbeslutninger (auditlog)
         - NuGet-pakker – PEP og ABAC (packages)
         - Felles biblioteker (libs)
         - Verktøy – CLI og FFB (tools)
@@ -43,8 +42,6 @@ body:
         Som **...**
         ønsker jeg **...**
         slik at **...**
-    validations:
-      required: true
 
   - type: textarea
     id: acceptance
@@ -52,8 +49,6 @@ body:
       label: Akseptansekriterier
       value: |
         - [ ]
-    validations:
-      required: true
 
   - type: textarea
     id: details

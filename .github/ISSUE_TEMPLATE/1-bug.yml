@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Takk for at du melder fra. Søk gjerne i [åpne og lukkede issues](https://github.com/Altinn/altinn-auth/issues?q=is%3Aissue) først, i tilfelle feilen allerede er meldt.
+        Takk for at du melder fra! Bare Komponent må fylles ut. En setning holder, så fyller teamet ut resten i triage. Søk gjerne i [åpne og lukkede issues](https://github.com/Altinn/altinn-auth/issues?q=is%3Aissue) først, i tilfelle feilen allerede er meldt.
 
         **Sikkerhetssårbarheter skal ikke meldes her.** Følg [sikkerhetspolicyen](https://github.com/Altinn/altinn-auth/security/policy) i stedet.
 
@@ -19,8 +19,6 @@ body:
       description: Inntil fem punkter. Hva skjedde, hvem rammes, og hvor alvorlig er det?
       value: |
         -
-    validations:
-      required: true
 
   - type: dropdown
     id: component
@@ -34,6 +32,7 @@ body:
         - Authentication – innlogging, tokens og systembruker (authentication)
         - Register – parter og roller (register)
         - Resource Registry – ressurser og tilgangslister (resource-registry)
+        - Auditlog – logg over autorisasjonsbeslutninger (auditlog)
         - NuGet-pakker – PEP og ABAC (packages)
         - Felles biblioteker (libs)
         - Verktøy – CLI og FFB (tools)
@@ -56,8 +55,6 @@ body:
         - YT01
         - Lokalt
         - Vet ikke
-    validations:
-      required: true
 
   - type: textarea
     id: steps
@@ -67,15 +64,11 @@ body:
         1. Logg inn som ...
         2. Kall `GET /accessmanagement/api/v1/...`
         3. Se at ...
-    validations:
-      required: true
 
   - type: textarea
     id: expected
     attributes:
       label: Forventet oppførsel
-    validations:
-      required: true
 
   - type: textarea
     id: details

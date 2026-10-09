@@ -10,8 +10,6 @@ body:
       description: Inntil fem punkter. Hva skal utredes, hvorfor nå, og hva skal komme ut av det?
       value: |
         -
-    validations:
-      required: true
 
   - type: dropdown
     id: component
@@ -24,6 +22,7 @@ body:
         - Authentication – innlogging, tokens og systembruker (authentication)
         - Register – parter og roller (register)
         - Resource Registry – ressurser og tilgangslister (resource-registry)
+        - Auditlog – logg over autorisasjonsbeslutninger (auditlog)
         - NuGet-pakker – PEP og ABAC (packages)
         - Felles biblioteker (libs)
         - Verktøy – CLI og FFB (tools)
@@ -39,8 +38,6 @@ body:
     attributes:
       label: Hva skal besvares?
       description: Ett eller noen få konkrete spørsmål.
-    validations:
-      required: true
 
   - type: textarea
     id: background
@@ -59,8 +56,6 @@ body:
         - Nye issues eller en epic
         - Prototype
         - Dokumentasjon
-    validations:
-      required: true
 
   - type: input
     id: timebox
