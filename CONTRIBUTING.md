@@ -18,6 +18,30 @@ This guide applies to everyone who changes this repository, whether you type eve
 - Tests are production code: reviewed with the same care, and never deleted or weakened without a reason a reviewer has agreed to. See the [testing guide](docs/testing/README.md). Say in the PR what you could not test locally.
 - Write for the reader. Anything a person is meant to read, whether an issue, a PR description, a comment or a doc, starts with a **TL;DR of at most five bullets**. An issue keeps under 200 words above the fold and puts the rest in a collapsed `<details>` block. A PR description is the TL;DR plus what you verified. A text drafted with a tool says so at the top, and leaves the reader unspecified until a person confirms they have read it. An unnamed reader is an honest signal, not a failure.
 
+## Issues and labels
+
+**TL;DR**
+
+- Write the issue. An incomplete issue is better than one never written; `status/triage` makes sure someone completes it.
+- Pick the form that fits, and the component it concerns. «Vet ikke» is a fine answer.
+- One issue type and one `area/*` per issue. Everything else is optional.
+
+Why the model looks like this is in [ADR-0004](docs/adr/0004-issue-and-label-model.md). What to set:
+
+| What | How | Required |
+| --- | --- | --- |
+| Kind of work | Issue type: Bug, Feature, Task, User story, Epic, Enhancement. The form sets it. | yes, at triage at the latest |
+| Component | One `area/*`, for example `area/register`. The form's component field sets it. | yes, at triage at the latest |
+| Capability | `feature/*`, for example `feature/consent` | no |
+| Layer | `layer/backend`, `layer/frontend`, `layer/ux`, `layer/infra`, `layer/test` | no |
+| Waiting for something | `status/blocked`, plus a "blocked by" link when the blocking issue is known | when it applies |
+| Release | Milestone | when planned |
+| Priority, horizon, progress | Fields on the project board | set in refinement |
+
+- Do not add a team label. The owning team follows from the component, through `.github/CODEOWNERS`.
+- Close a duplicate as *duplicate* and something you will not do as *not planned*, with the reason in a comment. There are no labels for these.
+- A new label is added in `.github/labels.yml` by pull request, not in the GitHub UI.
+
 ## When an ADR is required
 
 Write an ADR when a change introduces or revises a significant architectural decision whose rationale needs to outlive the PR. Typical cases are a change to trust boundaries or authorization semantics, service responsibilities or dependencies between verticals, data ownership or storage strategy, a breaking API contract with migration consequences, or a substantial build or release strategy. Record meaningful alternatives, the chosen trade-off and its lasting consequences.
