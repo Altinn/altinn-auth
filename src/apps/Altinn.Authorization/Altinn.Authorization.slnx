@@ -1,0 +1,28 @@
+<Solution>
+  <Folder Name="/deps/" />
+  <Folder Name="/deps/ABAC/">
+    <Project Path="../../pkgs/Altinn.Authorization.ABAC/src/Altinn.Authorization.ABAC/Altinn.Authorization.ABAC.csproj" />
+  </Folder>
+  <Folder Name="/deps/PEP/">
+    <Project Path="../../pkgs/Altinn.Authorization.PEP/src/Altinn.Authorization.PEP/Altinn.Authorization.PEP.csproj" />
+  </Folder>
+  <Folder Name="/deps/Host/">
+    <Project Path="../../libs/Altinn.Authorization.Host/src/Altinn.Authorization.Host/Altinn.Authorization.Host.csproj" />
+    <Project Path="../../libs/Altinn.Authorization.Host/src/Altinn.Authorization.Host.Database/Altinn.Authorization.Host.Database.csproj" />
+    <Project Path="../../libs/Altinn.Authorization.Host/src/Altinn.Authorization.Host.Lease/Altinn.Authorization.Host.Lease.csproj" />
+    <Project Path="../../libs/Altinn.Authorization.Host/src/Altinn.Authorization.Host.MassTransit/Altinn.Authorization.Host.MassTransit.csproj" />
+    <Project Path="../../libs/Altinn.Authorization.Host/src/Altinn.Authorization.Host.Pipeline/Altinn.Authorization.Host.Pipeline.csproj" />
+  </Folder>
+  <Folder Name="/deps/Integration/">
+    <Project Path="../../libs/Altinn.Authorization.Integration/src/Altinn.Authorization.Integration.Platform/Altinn.Authorization.Integration.Platform.csproj" />
+  </Folder>
+  <Folder Name="/deps/Testing/">
+    <Project Path="../../libs/Altinn.Authorization.Testing/src/Altinn.Authorization.Testing/Altinn.Authorization.Testing.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Altinn.Authorization/Altinn.Authorization.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/Altinn.Authorization.Tests/Altinn.Authorization.Tests.csproj" />
+  </Folder>
+</Solution>

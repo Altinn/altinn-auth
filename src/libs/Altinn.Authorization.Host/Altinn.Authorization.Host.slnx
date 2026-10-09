@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Altinn.Authorization.Host/Altinn.Authorization.Host.csproj" />
+    <Project Path="src/Altinn.Authorization.Host.Database/Altinn.Authorization.Host.Database.csproj" />
+    <Project Path="src/Altinn.Authorization.Host.Lease/Altinn.Authorization.Host.Lease.csproj" />
+    <Project Path="src/Altinn.Authorization.Host.MassTransit/Altinn.Authorization.Host.MassTransit.csproj" />
+    <Project Path="src/Altinn.Authorization.Host.Pipeline/Altinn.Authorization.Host.Pipeline.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/Altinn.Authorization.Host.Lease.Tests/Altinn.Authorization.Host.Lease.Tests.csproj" />
+    <Project Path="test/Altinn.Authorization.Host.Pipeline.Tests/Altinn.Authorization.Host.Pipeline.Tests.csproj" />
+  </Folder>
+</Solution>

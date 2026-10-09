@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Altinn.Authorization.Testing/Altinn.Authorization.Testing.csproj" />
+  </Folder>
+</Solution>
