@@ -1,0 +1,69 @@
+name: Epic
+description: En større leveranse som deles opp i features og oppgaver som sub-issues.
+type: Epic
+labels: ["status/draft"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        En epic samler arbeidet. Selve oppgavene legges inn som **sub-issues**, ikke som en liste i teksten.
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Komponent
+      description: Velg hovedkomponenten. Sub-issuene får hver sin komponent.
+      options:
+        - Access Management – backend og API (access-management)
+        - Access Management – brukerflate og BFF (access-management-frontend)
+        - Authorization – PDP, autoriserte parter og auditlogg (authorization)
+        - Authentication – innlogging, tokens og systembruker (authentication)
+        - Register – parter og roller (register)
+        - Resource Registry – ressurser og tilgangslister (resource-registry)
+        - NuGet-pakker – PEP og ABAC (packages)
+        - Felles biblioteker (libs)
+        - Verktøy – CLI og FFB (tools)
+        - Infrastruktur og CI/CD (infra)
+        - Lokalt utviklingsmiljø og repo-verktøy (devex)
+        - Dokumentasjon (docs)
+        - Vet ikke
+    validations:
+      required: true
+
+  - type: textarea
+    id: tldr
+    attributes:
+      label: TL;DR
+      description: Inntil fem punkter. Mål, grep og når den er ferdig.
+      value: |
+        - **Mål:**
+        - **Grep:**
+        - **Ferdig når:**
+    validations:
+      required: true
+
+  - type: textarea
+    id: background
+    attributes:
+      label: Bakgrunn
+      description: Hvorfor nå? Hva er situasjonen i dag?
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Omfang
+      value: |
+        **Med:**
+        -
+
+        **Ikke med:**
+        -
+
+  - type: textarea
+    id: done
+    attributes:
+      label: Ferdig når
+      value: |
+        - [ ]
+    validations:
+      required: true

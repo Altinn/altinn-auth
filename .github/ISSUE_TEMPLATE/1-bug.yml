@@ -1,0 +1,82 @@
+name: Feil
+description: Noe virker ikke som det skal i en av autorisasjonskomponentene.
+type: Bug
+labels: ["status/triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Takk for at du melder fra. Søk gjerne i [åpne og lukkede issues](https://github.com/Altinn/altinn-auth/issues?q=is%3Aissue) først, i tilfelle feilen allerede er meldt.
+
+        **Sikkerhetssårbarheter skal ikke meldes her.** Følg [sikkerhetspolicyen](https://github.com/Altinn/altinn-auth/security/policy) i stedet.
+
+        **Ikke lim inn** fødselsnummer, tokens, API-nøkler, produksjonslogger eller annen taushetsbelagt informasjon. Bruk testdata og korrelasjons-ID.
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Komponent
+      description: Hvor ser du feilen? Velg «Vet ikke» hvis du er usikker. Da hjelper teamet deg i triage.
+      options:
+        - Access Management – backend og API (access-management)
+        - Access Management – brukerflate og BFF (access-management-frontend)
+        - Authorization – PDP, autoriserte parter og auditlogg (authorization)
+        - Authentication – innlogging, tokens og systembruker (authentication)
+        - Register – parter og roller (register)
+        - Resource Registry – ressurser og tilgangslister (resource-registry)
+        - NuGet-pakker – PEP og ABAC (packages)
+        - Felles biblioteker (libs)
+        - Verktøy – CLI og FFB (tools)
+        - Infrastruktur og CI/CD (infra)
+        - Lokalt utviklingsmiljø og repo-verktøy (devex)
+        - Dokumentasjon (docs)
+        - Vet ikke
+    validations:
+      required: true
+
+  - type: dropdown
+    id: environment
+    attributes:
+      label: Miljø
+      multiple: true
+      options:
+        - Produksjon
+        - TT02
+        - AT
+        - YT01
+        - Lokalt
+        - Vet ikke
+    validations:
+      required: true
+
+  - type: textarea
+    id: summary
+    attributes:
+      label: Hva skjedde?
+      description: Kort beskrivelse av feilen og hvem den rammer.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steg for å gjenskape
+      placeholder: |
+        1. Logg inn som ...
+        2. Kall `GET /accessmanagement/api/v1/...`
+        3. Se at ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Forventet oppførsel
+    validations:
+      required: true
+
+  - type: textarea
+    id: details
+    attributes:
+      label: Tilleggsinformasjon
+      description: Korrelasjons-ID, tidspunkt, ressurs-ID, skjermbilder, eller lenke til Slack-tråd.

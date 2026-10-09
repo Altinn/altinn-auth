@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Sikkerhetssårbarhet
+    url: https://github.com/Altinn/altinn-auth/security/policy
+    about: Meld sårbarheter privat etter sikkerhetspolicyen, ikke som et åpent issue.
+  - name: Dokumentasjon for Altinn Autorisasjon
+    url: https://docs.altinn.studio/nb/authorization/
+    about: Veiledninger og API-dokumentasjon for tjenesteeiere og sluttbrukersystemleverandører.

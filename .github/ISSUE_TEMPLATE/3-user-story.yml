@@ -1,0 +1,52 @@
+name: Brukerhistorie
+description: Funksjonalitet beskrevet fra brukerens ståsted, med akseptansekriterier.
+type: User story
+labels: ["status/triage"]
+body:
+  - type: dropdown
+    id: component
+    attributes:
+      label: Komponent
+      description: Hvor hører historien hjemme? Velg hovedkomponenten hvis den berører flere.
+      options:
+        - Access Management – backend og API (access-management)
+        - Access Management – brukerflate og BFF (access-management-frontend)
+        - Authorization – PDP, autoriserte parter og auditlogg (authorization)
+        - Authentication – innlogging, tokens og systembruker (authentication)
+        - Register – parter og roller (register)
+        - Resource Registry – ressurser og tilgangslister (resource-registry)
+        - NuGet-pakker – PEP og ABAC (packages)
+        - Felles biblioteker (libs)
+        - Verktøy – CLI og FFB (tools)
+        - Infrastruktur og CI/CD (infra)
+        - Lokalt utviklingsmiljø og repo-verktøy (devex)
+        - Dokumentasjon (docs)
+        - Vet ikke
+    validations:
+      required: true
+
+  - type: textarea
+    id: story
+    attributes:
+      label: Brukerhistorie
+      value: |
+        Som **...**
+        ønsker jeg **...**
+        slik at **...**
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Akseptansekriterier
+      value: |
+        - [ ]
+    validations:
+      required: true
+
+  - type: textarea
+    id: details
+    attributes:
+      label: Skisser, lenker og avhengigheter
+      description: Figma, relaterte issues, juridiske avklaringer eller annet teamet bør vite.

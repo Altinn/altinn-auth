@@ -1,0 +1,59 @@
+name: Analyse
+description: Et spørsmål som må utredes før teamet kan planlegge eller bestemme noe.
+type: Task
+labels: ["kind/analysis", "status/draft"]
+body:
+  - type: dropdown
+    id: component
+    attributes:
+      label: Komponent
+      options:
+        - Access Management – backend og API (access-management)
+        - Access Management – brukerflate og BFF (access-management-frontend)
+        - Authorization – PDP, autoriserte parter og auditlogg (authorization)
+        - Authentication – innlogging, tokens og systembruker (authentication)
+        - Register – parter og roller (register)
+        - Resource Registry – ressurser og tilgangslister (resource-registry)
+        - NuGet-pakker – PEP og ABAC (packages)
+        - Felles biblioteker (libs)
+        - Verktøy – CLI og FFB (tools)
+        - Infrastruktur og CI/CD (infra)
+        - Lokalt utviklingsmiljø og repo-verktøy (devex)
+        - Dokumentasjon (docs)
+        - Vet ikke
+    validations:
+      required: true
+
+  - type: textarea
+    id: question
+    attributes:
+      label: Hva skal besvares?
+      description: Ett eller noen få konkrete spørsmål.
+    validations:
+      required: true
+
+  - type: textarea
+    id: background
+    attributes:
+      label: Bakgrunn
+      description: Hva vet vi allerede, og hvorfor trenger vi svaret nå?
+
+  - type: dropdown
+    id: deliverable
+    attributes:
+      label: Hva skal analysen levere?
+      multiple: true
+      options:
+        - Anbefaling i issuet
+        - ADR
+        - Nye issues eller en epic
+        - Prototype
+        - Dokumentasjon
+    validations:
+      required: true
+
+  - type: input
+    id: timebox
+    attributes:
+      label: Tidsramme
+      placeholder: f.eks. 3 dager

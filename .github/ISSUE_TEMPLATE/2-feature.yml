@@ -1,0 +1,76 @@
+name: Ønske om ny funksjonalitet
+description: Et behov eller en idé til noe nytt eller bedre i Altinn Autorisasjon.
+type: Feature
+labels: ["status/triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Beskriv gjerne **behovet** før løsningen. Da er det lettere for teamet å finne den beste måten å løse det på.
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: Komponent
+      description: Hvor hører ønsket hjemme? Velg «Vet ikke» hvis du er usikker.
+      options:
+        - Access Management – backend og API (access-management)
+        - Access Management – brukerflate og BFF (access-management-frontend)
+        - Authorization – PDP, autoriserte parter og auditlogg (authorization)
+        - Authentication – innlogging, tokens og systembruker (authentication)
+        - Register – parter og roller (register)
+        - Resource Registry – ressurser og tilgangslister (resource-registry)
+        - NuGet-pakker – PEP og ABAC (packages)
+        - Felles biblioteker (libs)
+        - Verktøy – CLI og FFB (tools)
+        - Infrastruktur og CI/CD (infra)
+        - Lokalt utviklingsmiljø og repo-verktøy (devex)
+        - Dokumentasjon (docs)
+        - Vet ikke
+    validations:
+      required: true
+
+  - type: dropdown
+    id: audience
+    attributes:
+      label: Hvem er det for?
+      multiple: true
+      options:
+        - Sluttbruker (innbygger eller virksomhet)
+        - Tjenesteeier
+        - Sluttbrukersystemleverandør
+        - Annet Altinn-produkt
+        - Internt i teamet
+    validations:
+      required: true
+
+  - type: textarea
+    id: tldr
+    attributes:
+      label: TL;DR
+      description: Inntil fem punkter. Hva ønskes, og hvorfor?
+      value: |
+        -
+    validations:
+      required: true
+
+  - type: textarea
+    id: need
+    attributes:
+      label: Behov
+      description: Hvilket problem løser dette? Hva skjer i dag?
+      placeholder: Som tjenesteeier ønsker jeg å ..., slik at ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Forslag til løsning
+      description: Valgfritt. Hvordan ser du for deg at det kan løses?
+
+  - type: textarea
+    id: details
+    attributes:
+      label: Tilleggsinformasjon
+      description: Lenker, skisser, avhengigheter eller frister.
