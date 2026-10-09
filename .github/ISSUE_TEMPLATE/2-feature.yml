@@ -1,5 +1,5 @@
-name: "Feature request"
-description: "A need or an idea for something new or better in Altinn Authorization."
+name: "Feature"
+description: "New or better functionality: a need, an idea or a user story."
 type: "Feature"
 labels: ["status/triage"]
 body:
@@ -14,7 +14,7 @@ body:
     id: tldr
     attributes:
       label: "TL;DR"
-      description: "Up to five bullets. What is wanted, and why?"
+      description: "Up to five bullets. Who needs what, and why?"
       placeholder: |
         - ...
 
@@ -22,7 +22,7 @@ body:
     id: component
     attributes:
       label: "Component"
-      description: "Where does the request belong? Select all that apply, or \"Don't know\"."
+      description: "Where does the feature belong? Select all that apply, or \"Don't know\"."
       multiple: true
       options:
         - "Access Management – backend and API (access-management)"
@@ -58,9 +58,18 @@ body:
     id: need
     attributes:
       label: "Need"
-      description: "What problem does this solve? What happens today?"
+      description: "What problem does this solve, and what happens today? A user story works well here."
       placeholder: |
-        As a service owner I want to ..., so that ...
+        As a service owner
+        I want to ...
+        so that ...
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: "Acceptance criteria"
+      placeholder: |
+        - [ ] ...
 
   - type: textarea
     id: solution
@@ -71,5 +80,5 @@ body:
   - type: textarea
     id: details
     attributes:
-      label: "Additional information"
-      description: "Links, sketches, dependencies or deadlines."
+      label: "Sketches, links and dependencies"
+      description: "Figma, related issues, legal clarifications, deadlines or anything else the team should know."
