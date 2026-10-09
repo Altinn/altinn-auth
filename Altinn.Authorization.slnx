@@ -1,0 +1,111 @@
+<Solution>
+  <Folder Name="/apps/" />
+  <Folder Name="/apps/Altinn.AccessManagement/" />
+  <Folder Name="/apps/Altinn.AccessManagement/src/">
+    <Project Path="src/apps/Altinn.AccessManagement/src/Altinn.AccessManagement/Altinn.AccessManagement.csproj" />
+    <Project Path="src/apps/Altinn.AccessManagement/src/Altinn.AccessManagement.Api.Enduser/Altinn.AccessManagement.Api.Enduser.csproj" />
+    <Project Path="src/apps/Altinn.AccessManagement/src/Altinn.AccessManagement.Api.Enterprise/Altinn.AccessManagement.Api.Enterprise.csproj" />
+    <Project Path="src/apps/Altinn.AccessManagement/src/Altinn.AccessManagement.Api.Internal/Altinn.AccessManagement.Api.Internal.csproj" />
+    <Project Path="src/apps/Altinn.AccessManagement/src/Altinn.AccessManagement.Api.Maskinporten/Altinn.AccessManagement.Api.Maskinporten.csproj" />
+    <Project Path="src/apps/Altinn.AccessManagement/src/Altinn.AccessManagement.Api.Metadata/Altinn.AccessManagement.Api.Metadata.csproj" />
+    <Project Path="src/apps/Altinn.AccessManagement/src/Altinn.AccessManagement.Api.ServiceOwner/Altinn.AccessManagement.Api.ServiceOwner.csproj" />
+    <Project Path="src/apps/Altinn.AccessManagement/src/Altinn.AccessManagement.AppHost/Altinn.AccessManagement.AppHost.csproj" />
+    <Project Path="src/apps/Altinn.AccessManagement/src/Altinn.AccessManagement.Core/Altinn.AccessManagement.Core.csproj" />
+    <Project Path="src/apps/Altinn.AccessManagement/src/Altinn.AccessManagement.Integration/Altinn.AccessManagement.Integration.csproj" />
+    <Project Path="src/apps/Altinn.AccessManagement/src/Altinn.AccessManagement.Persistence/Altinn.AccessManagement.Persistence.csproj" />
+    <Project Path="src/apps/Altinn.AccessManagement/src/Altinn.AccessMgmt.Core/Altinn.AccessMgmt.Core.csproj" />
+    <Project Path="src/apps/Altinn.AccessManagement/src/Altinn.AccessMgmt.PersistenceEF/Altinn.AccessMgmt.PersistenceEF.csproj" />
+  </Folder>
+  <Folder Name="/apps/Altinn.AccessManagement/test/">
+    <Project Path="src/apps/Altinn.AccessManagement/test/Altinn.AccessManagement.Api.Internal.Tests/Altinn.AccessManagement.Api.Internal.Tests.csproj" />
+    <Project Path="src/apps/Altinn.AccessManagement/test/Altinn.AccessManagement.Api.Tests/Altinn.AccessManagement.Api.Tests.csproj" />
+    <Project Path="src/apps/Altinn.AccessManagement/test/Altinn.AccessManagement.Enduser.Api.Tests/Altinn.AccessManagement.Enduser.Api.Tests.csproj" />
+    <Project Path="src/apps/Altinn.AccessManagement/test/Altinn.AccessManagement.ServiceOwner.Api.Tests/Altinn.AccessManagement.ServiceOwner.Api.Tests.csproj" />
+    <Project Path="src/apps/Altinn.AccessManagement/test/AccessMgmt.Tests/Altinn.AccessManagement.Tests.csproj" />
+    <Project Path="src/apps/Altinn.AccessManagement/test/Altinn.AccessMgmt.Core.Tests/Altinn.AccessMgmt.Core.Tests.csproj" />
+    <Project Path="src/apps/Altinn.AccessManagement/test/Altinn.AccessMgmt.PersistenceEF.Tests/Altinn.AccessMgmt.PersistenceEF.Tests.csproj" />
+  </Folder>
+  <Folder Name="/apps/Altinn.AccessManagement/test/lib/">
+    <Project Path="src/apps/Altinn.AccessManagement/test/Altinn.AccessManagement.TestUtils/Altinn.AccessManagement.TestUtils.csproj" />
+  </Folder>
+  <Folder Name="/apps/Altinn.Authorization/" />
+  <Folder Name="/apps/Altinn.Authorization/src/">
+    <Project Path="src/apps/Altinn.Authorization/src/Altinn.Authorization/Altinn.Authorization.csproj" />
+  </Folder>
+  <Folder Name="/apps/Altinn.Authorization/test/">
+    <Project Path="src/apps/Altinn.Authorization/test/Altinn.Authorization.Tests/Altinn.Authorization.Tests.csproj" />
+  </Folder>
+  <Folder Name="/apps/Altinn.Register/" />
+  <Folder Name="/apps/Altinn.Register/src/">
+    <Project Path="src/apps/Altinn.Register/src/Altinn.Register/Altinn.Register.csproj" />
+  </Folder>
+  <Folder Name="/apps/Altinn.ResourceRegistry/" />
+  <Folder Name="/apps/Altinn.ResourceRegistry/src/">
+    <Project Path="src/apps/Altinn.ResourceRegistry/src/Altinn.ResourceRegistry/Altinn.ResourceRegistry.csproj" />
+    <Project Path="src/apps/Altinn.ResourceRegistry/src/Altinn.ResourceRegistry.Core/Altinn.ResourceRegistry.Core.csproj" />
+    <Project Path="src/apps/Altinn.ResourceRegistry/src/Altinn.ResourceRegistry.Integration/Altinn.ResourceRegistry.Integration.csproj" />
+    <Project Path="src/apps/Altinn.ResourceRegistry/src/Altinn.ResourceRegistry.Persistence/Altinn.ResourceRegistry.Persistence.csproj" />
+  </Folder>
+  <Folder Name="/apps/Altinn.ResourceRegistry/test/">
+    <Project Path="src/apps/Altinn.ResourceRegistry/test/Altinn.ResourceRegistry.Persistence.Tests/Altinn.ResourceRegistry.Persistence.Tests.csproj" />
+    <Project Path="src/apps/Altinn.ResourceRegistry/test/Altinn.ResourceRegistry.Tests/Altinn.ResourceRegistry.Tests.csproj" />
+  </Folder>
+  <Folder Name="/apps/Altinn.ResourceRegistry/test/lib/">
+    <Project Path="src/apps/Altinn.ResourceRegistry/test/Altinn.ResourceRegistry.TestUtils/Altinn.ResourceRegistry.TestUtils.csproj" />
+  </Folder>
+  <Folder Name="/pkgs/" />
+  <Folder Name="/pkgs/Altinn.Authorization.ABAC/" />
+  <Folder Name="/pkgs/Altinn.Authorization.ABAC/src/">
+    <Project Path="src/pkgs/Altinn.Authorization.ABAC/src/Altinn.Authorization.ABAC/Altinn.Authorization.ABAC.csproj" />
+  </Folder>
+  <Folder Name="/pkgs/Altinn.Authorization.ABAC/test/">
+    <Project Path="src/pkgs/Altinn.Authorization.ABAC/test/Altinn.Authorization.ABAC.Tests/Altinn.Authorization.ABAC.Tests.csproj" />
+  </Folder>
+  <Folder Name="/pkgs/Altinn.Authorization.PEP/" />
+  <Folder Name="/pkgs/Altinn.Authorization.PEP/src/">
+    <Project Path="src/pkgs/Altinn.Authorization.PEP/src/Altinn.Authorization.PEP/Altinn.Authorization.PEP.csproj" />
+  </Folder>
+  <Folder Name="/pkgs/Altinn.Authorization.PEP/test/">
+    <Project Path="src/pkgs/Altinn.Authorization.PEP/test/Altinn.Authorization.PEP.Tests/Altinn.Authorization.PEP.Tests.csproj" />
+  </Folder>
+  <Folder Name="/tools/" />
+  <Folder Name="/tools/Altinn.AccessMgmt.FFB/" />
+  <Folder Name="/tools/Altinn.AccessMgmt.FFB/src/">
+    <Project Path="src/tools/Altinn.AccessMgmt.FFB/src/Altinn.AccessMgmt.FFB/Altinn.AccessMgmt.FFB.csproj" />
+  </Folder>
+  <Folder Name="/tools/Altinn.Authorization.Cli/" />
+  <Folder Name="/tools/Altinn.Authorization.Cli/src/">
+    <Project Path="src/tools/Altinn.Authorization.Cli/src/Altinn.Authorization.Cli/Altinn.Authorization.Cli.csproj" />
+  </Folder>
+  <Folder Name="/tools/Altinn.Authorization.Cli/test/">
+    <Project Path="src/tools/Altinn.Authorization.Cli/test/Altinn.Authorization.Cli.Tests/Altinn.Authorization.Cli.Tests.csproj" />
+  </Folder>
+  <Folder Name="/libs/" />
+  <Folder Name="/libs/Altinn.Authorization.Api.Contracts/" />
+  <Folder Name="/libs/Altinn.Authorization.Api.Contracts/src/">
+    <Project Path="src/libs/Altinn.Authorization.Api.Contracts/src/Altinn.Authorization.Api.Contracts/Altinn.Authorization.Api.Contracts.csproj" />
+  </Folder>
+  <Folder Name="/libs/Altinn.Authorization.Host/" />
+  <Folder Name="/libs/Altinn.Authorization.Host/src/">
+    <Project Path="src/libs/Altinn.Authorization.Host/src/Altinn.Authorization.Host/Altinn.Authorization.Host.csproj" />
+    <Project Path="src/libs/Altinn.Authorization.Host/src/Altinn.Authorization.Host.Database/Altinn.Authorization.Host.Database.csproj" />
+    <Project Path="src/libs/Altinn.Authorization.Host/src/Altinn.Authorization.Host.Lease/Altinn.Authorization.Host.Lease.csproj" />
+    <Project Path="src/libs/Altinn.Authorization.Host/src/Altinn.Authorization.Host.MassTransit/Altinn.Authorization.Host.MassTransit.csproj" />
+    <Project Path="src/libs/Altinn.Authorization.Host/src/Altinn.Authorization.Host.Pipeline/Altinn.Authorization.Host.Pipeline.csproj" />
+  </Folder>
+  <Folder Name="/libs/Altinn.Authorization.Host/test/">
+    <Project Path="src/libs/Altinn.Authorization.Host/test/Altinn.Authorization.Host.Lease.Tests/Altinn.Authorization.Host.Lease.Tests.csproj" />
+    <Project Path="src/libs/Altinn.Authorization.Host/test/Altinn.Authorization.Host.Pipeline.Tests/Altinn.Authorization.Host.Pipeline.Tests.csproj" />
+  </Folder>
+  <Folder Name="/libs/Altinn.Authorization.Integration/" />
+  <Folder Name="/libs/Altinn.Authorization.Integration/src/">
+    <Project Path="src/libs/Altinn.Authorization.Integration/src/Altinn.Authorization.Integration.Platform/Altinn.Authorization.Integration.Platform.csproj" />
+  </Folder>
+  <Folder Name="/libs/Altinn.Authorization.Integration/test/">
+    <Project Path="src/libs/Altinn.Authorization.Integration/test/Altinn.Authorization.Integration.Tests/Altinn.Authorization.Integration.Tests.csproj" />
+  </Folder>
+  <Folder Name="/libs/Altinn.Authorization.Testing/" />
+  <Folder Name="/libs/Altinn.Authorization.Testing/src/">
+    <Project Path="src/libs/Altinn.Authorization.Testing/src/Altinn.Authorization.Testing/Altinn.Authorization.Testing.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,103 @@
+meta {
+  name: 02_WHEN_ServiceOwnerCreatesResourceRequest
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/delegationrequests
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "from": "urn:altinn:person:identifier-no:{{grantorPid}}",
+    "to": "urn:altinn:person:identifier-no:{{requesterPid}}",
+    "resource": {
+      "referenceId": "{{requestResource}}"
+    }
+  }
+}
+
+docs {
+  WHEN the service owner creates a delegation request for a resource.
+
+  POST /accessmanagement/api/v1/serviceowner/delegationrequests
+
+  Scope `altinn:serviceowner/delegationrequests.write`. Body: `from` and `to` describe
+  the connection the service owner wants: `from` is the party asked to grant access,
+  `to` the party that would receive it, both as
+  `urn:altinn:person:identifier-no:<pid>` or
+  `urn:altinn:organization:identifier-no:<orgno>` (the valid prefixes come from
+  `_meta/urns/party`). Exactly one of `resource` or `package` is set, as
+  `{ "referenceId": "<resource id or package urn>" }` or `{ "id": "<uuid>" }`. A
+  resource must be delegable and owned by the service owner; a package must be assignable.
+
+  Returns 202 with the request in status Draft. In the response the direction is the
+  request's own: `from` is the party that would receive access and `to` the party that
+  is asked. `by` is the service owner, and `links` carries the portal page the party
+  confirms the request on and the status endpoint. Creating the same request again while
+  it is still a draft returns the same request.
+}
+
+script:pre-request {
+  const { td, loginAsServiceOwner, scopes } = require("./test/DelegationRequest/ServiceOwnerDelegationRequests/helpers.js");
+  const data = td();
+
+  bru.setVar("grantorPid", data.delegationRequest.grantor.pid);
+  bru.setVar("requesterPid", data.delegationRequest.requester.pid);
+  bru.setVar("requestResource", data.delegationRequest.resource);
+  bru.setVar("requestPackage", data.delegationRequest.package);
+
+  await loginAsServiceOwner(data.serviceOwners.ttd, scopes.delegationRequestsWrite);
+}
+
+script:post-response {
+  const body = res.getBody();
+  if (res.status === 202 && body) {
+    bru.setVar("so_resourceRequestId", body.id);
+  }
+}
+
+tests {
+  const { td } = require("./test/DelegationRequest/ServiceOwnerDelegationRequests/helpers.js");
+  const data = td().delegationRequest;
+  const guid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  test("WHEN the resource request is created, the request returns 202", function() {
+    expect(res.status).to.equal(202);
+  });
+
+  test("THEN the request is a draft for the resource", function() {
+    const body = res.getBody();
+    expect(body.id).to.match(guid);
+    expect(body.status).to.equal("Draft");
+    expect(body.type).to.equal("resource");
+    expect(body.resource.referenceId).to.equal(data.resource);
+    expect(body.resource.id).to.match(guid);
+    expect(body.package).to.equal(null);
+  });
+
+  test("THEN from is the requester, to is the party asked and by is the service owner", function() {
+    const body = res.getBody();
+    expect(body.from.id).to.equal(data.requester.partyuuid);
+    expect(body.from.personIdentifier).to.equal(data.requester.pid);
+    expect(body.from.type).to.equal("Person");
+    expect(body.to.id).to.equal(data.grantor.partyuuid);
+    expect(body.to.personIdentifier).to.equal(data.grantor.pid);
+    expect(body.by.organizationIdentifier).to.equal(td().serviceOwners.ttd.orgno);
+    expect(body.lastUpdatedBy.id).to.equal(body.by.id);
+  });
+
+  test("THEN the links point at the portal and at the status endpoint", function() {
+    const body = res.getBody();
+    expect(body.links.detailsLink).to.contain("requestId=" + body.id);
+    expect(body.links.statusLink).to.match(new RegExp("/accessmanagement/api/v1/serviceowner/delegationrequests/" + body.id + "/status$"));
+  });
+}

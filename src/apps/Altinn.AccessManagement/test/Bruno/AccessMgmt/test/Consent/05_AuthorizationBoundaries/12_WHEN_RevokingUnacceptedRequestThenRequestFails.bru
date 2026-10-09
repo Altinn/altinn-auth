@@ -1,0 +1,43 @@
+meta {
+  name: 12_WHEN_RevokingUnacceptedRequestThenRequestFails
+  type: http
+  seq: 12
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/bff/consents/:consentId/revoke
+  body: none
+  auth: inherit
+}
+
+params:path {
+  consentId: {{boundaryRequestId}}
+}
+
+docs {
+  WHEN the person revokes a request that was never accepted, the request fails.
+
+  POST /accessmanagement/api/v1/bff/consents/:consentId/revoke
+
+  Only an accepted consent can be revoked. A request still in status Created gives 400
+  with problem code AM-00010; to turn it down, reject it instead.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  await loginAs(td.consentingPerson);
+}
+
+tests {
+  test("WHEN a pending request is revoked, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN the problem is AM-00010, wrong status to be revoked", function() {
+    const body = res.getBody();
+    expect(body.status).to.equal(400);
+    expect(body.code).to.equal("AM-00010");
+  });
+}

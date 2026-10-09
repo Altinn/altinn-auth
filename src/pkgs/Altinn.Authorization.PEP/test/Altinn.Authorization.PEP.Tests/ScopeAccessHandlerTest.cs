@@ -1,4 +1,4 @@
-using System.Reflection.Metadata;
+﻿using System.Reflection.Metadata;
 using System.Security.Claims;
 
 using Altinn.Common.PEP.Authorization;

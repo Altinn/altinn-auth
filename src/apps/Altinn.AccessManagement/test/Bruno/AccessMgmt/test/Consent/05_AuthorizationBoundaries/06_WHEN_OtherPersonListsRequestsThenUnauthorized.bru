@@ -1,0 +1,39 @@
+meta {
+  name: 06_WHEN_OtherPersonListsRequestsThenUnauthorized
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/bff/consentrequests/list/:partyUuid
+  body: none
+  auth: inherit
+}
+
+params:path {
+  partyUuid: {{partyUuid}}
+}
+
+docs {
+  WHEN another person lists the person's requests, the request is unauthorized.
+
+  GET /accessmanagement/api/v1/bff/consentrequests/list/:partyUuid
+
+  The caller needs read access to access management for the party. Without it the
+  endpoint answers 401 (not 403), even though the caller is authenticated.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  bru.setVar("partyUuid", td.consentingPerson.partyUuid);
+
+  await loginAs(td.otherPerson);
+}
+
+tests {
+  test("WHEN another person lists the requests, the request returns 401", function() {
+    expect(res.status).to.equal(401);
+  });
+}

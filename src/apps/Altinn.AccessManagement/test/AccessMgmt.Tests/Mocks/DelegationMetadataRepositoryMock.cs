@@ -126,25 +126,25 @@ public class DelegationMetadataRepositoryMock : IDelegationMetadataRepository
         {
             "00000000-0000-0000-0000-000000000002" => null,
             _ => new InstanceDelegationChange
-                {
-                    // PolicyAdministrationPoint treats a change id <= 0 as a failed insert,
-                    // so a mocked successful insert must always return a positive id.
-                    InstanceDelegationChangeId = 1337,
-                    DelegationChangeType = instanceDelegationChange.DelegationChangeType,
-                    InstanceDelegationMode = instanceDelegationChange.InstanceDelegationMode,
-                    InstanceDelegationSource = instanceDelegationChange.InstanceDelegationSource,
-                    ResourceId = instanceDelegationChange.ResourceId,
-                    InstanceId = instanceDelegationChange.InstanceId,
-                    FromUuid = instanceDelegationChange.FromUuid,
-                    FromUuidType = instanceDelegationChange.FromUuidType,
-                    ToUuid = instanceDelegationChange.ToUuid,
-                    ToUuidType = instanceDelegationChange.ToUuidType,
-                    PerformedBy = instanceDelegationChange.PerformedBy,
-                    PerformedByType = instanceDelegationChange.PerformedByType,
-                    BlobStoragePolicyPath = path,
-                    BlobStorageVersionId = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
-                    Created = DateTime.Now
-                },
+            {
+                // PolicyAdministrationPoint treats a change id <= 0 as a failed insert,
+                // so a mocked successful insert must always return a positive id.
+                InstanceDelegationChangeId = 1337,
+                DelegationChangeType = instanceDelegationChange.DelegationChangeType,
+                InstanceDelegationMode = instanceDelegationChange.InstanceDelegationMode,
+                InstanceDelegationSource = instanceDelegationChange.InstanceDelegationSource,
+                ResourceId = instanceDelegationChange.ResourceId,
+                InstanceId = instanceDelegationChange.InstanceId,
+                FromUuid = instanceDelegationChange.FromUuid,
+                FromUuidType = instanceDelegationChange.FromUuidType,
+                ToUuid = instanceDelegationChange.ToUuid,
+                ToUuidType = instanceDelegationChange.ToUuidType,
+                PerformedBy = instanceDelegationChange.PerformedBy,
+                PerformedByType = instanceDelegationChange.PerformedByType,
+                BlobStoragePolicyPath = path,
+                BlobStorageVersionId = DateTime.Now.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"),
+                Created = DateTime.Now
+            },
         };
 
         return Task.FromResult(result);
@@ -199,9 +199,6 @@ public class DelegationMetadataRepositoryMock : IDelegationMetadataRepository
                 break;
             case "error/postgregetcurrentfail":
                 throw new Exception("Some exception happened");
-            case "error/delegationeventfail":
-                result = TestDataUtil.GetAltinnAppDelegationChange(resourceId, offeredByPartyId, coveredByUserId, coveredByPartyId, changeType: DelegationChangeType.Grant);
-                break;
             case "resource1":
                 result = TestDataUtil.GetResourceRegistryDelegationChange(resourceId, ResourceType.MaskinportenSchema, offeredByPartyId, created, coveredByUserId, coveredByPartyId);
                 break;
@@ -219,7 +216,15 @@ public class DelegationMetadataRepositoryMock : IDelegationMetadataRepository
         return Task.FromResult(result);
     }
 
-    /// <inheritdoc/>
+    /// <summary>
+    /// Returns an empty list of app delegation changes.
+    /// </summary>
+    /// <param name="altinnAppId">The app identifier.</param>
+    /// <param name="offeredByPartyId">The party offering the delegation.</param>
+    /// <param name="coveredByPartyId">The party covered by the delegation.</param>
+    /// <param name="coveredByUserId">The user covered by the delegation.</param>
+    /// <param name="cancellationToken">The cancellation token.</param>
+    /// <returns>An empty list of delegation changes.</returns>
     public Task<List<DelegationChange>> GetAllAppDelegationChanges(string altinnAppId, int offeredByPartyId, int? coveredByPartyId, int? coveredByUserId, CancellationToken cancellationToken = default)
     {
         return Task.FromResult(new List<DelegationChange>());

@@ -1,0 +1,76 @@
+meta {
+  name: 02_WHEN_RequesterOpensTheDraft
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/request/draft?id={{dac_requestId}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  id: {{dac_requestId}}
+}
+
+docs {
+  WHEN the requester opens the draft.
+
+  `GET /accessmanagement/api/v1/enduser/request/draft?id={requestId}`
+
+  Returns a request that is still in status Draft, typically one a service owner created
+  through the service owner API and sent the user a link to. The portal shows it so the
+  user can confirm (`PUT request/draft/confirm`) or drop it.
+
+  - Query: `id` (required), the request id. There is no `party` parameter: the caller
+    must have write access to access management (`altinn_access_management`) for the
+    request's from party, which for a person asking on their own behalf is the person
+    themself.
+  - Token: personal token with `altinn:portal/enduser`. The enduser request scopes are
+    not accepted here.
+  - Response: 200 with the request: id, status (Draft), type (`package` or `resource`),
+    package or resource `{ id, referenceId }`, from, to and by as parties
+    (id, name, type, variant, organizationIdentifier, personIdentifier), lastUpdated,
+    lastUpdatedBy. `links` is null in the enduser API.
+  - 403 with no body when the request does not exist, is no longer a draft, or the user
+    cannot act for the from party. The endpoint does not reveal which.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/DelegationRequest/DraftAndCounts/helpers.js");
+  const td = testdata();
+
+  await loginAs(td.requester);
+}
+
+tests {
+  const sharedtestdata = require("./testdata/sharedtestdata.js");
+  const { testdata } = require("./test/DelegationRequest/DraftAndCounts/helpers.js");
+  const td = testdata();
+
+  test("WHEN the requester opens the draft, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the draft is the package request the service owner created", function() {
+    const body = res.getBody();
+    expect(body.id).to.equal(bru.getVar("dac_requestId"));
+    expect(body.status).to.equal("Draft");
+    expect(body.type).to.equal("package");
+    expect(body.package.referenceId).to.equal(td.package);
+    expect(body.resource).to.equal(null);
+    expect(body.links).to.equal(null);
+  });
+
+  test("THEN the draft names the requester, the organization and the service owner", function() {
+    const body = res.getBody();
+    expect(body.from.id.toLowerCase()).to.equal(td.requester.partyUuid.toLowerCase());
+    expect(body.from.type).to.equal("Person");
+    expect(body.from.personIdentifier).to.equal(td.requester.pid);
+    expect(body.to.id.toLowerCase()).to.equal(td.organization.partyUuid.toLowerCase());
+    expect(body.to.organizationIdentifier).to.equal(td.organization.orgNo);
+    expect(body.to.name).to.equal(td.organization.name);
+    expect(body.by.organizationIdentifier).to.equal(sharedtestdata.serviceOwners.ttd.orgno);
+  });
+}

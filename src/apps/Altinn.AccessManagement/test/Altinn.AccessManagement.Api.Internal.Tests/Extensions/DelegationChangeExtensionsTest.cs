@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.Api.Internal.Extensions;
+﻿using Altinn.AccessManagement.Api.Internal.Extensions;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Enums;
 using Altinn.Authorization.Api.Contracts.Authorization;
@@ -11,6 +11,8 @@ public class DelegationChangeExtensionsTest
     public static TheoryData<DelegationChangeType> DelegationChangeTypes => new(Enum.GetValues<DelegationChangeType>());
 
     public static TheoryData<UuidType> UuidTypes => new(Enum.GetValues<UuidType>());
+
+    public static TheoryData<AccessRestrictionDto> AccessRestrictions => new(Enum.GetValues<AccessRestrictionDto>());
 
     [Fact]
     public void ToDelegationChangeDto_WithFullyPopulatedSource_CopiesAllProperties()
@@ -94,10 +96,21 @@ public class DelegationChangeExtensionsTest
             Subject = new AttributeMatchDto("urn:altinn:userid", "20001337"),
             Party = new AttributeMatchDto("urn:altinn:partyid", "50001337"),
             Resource = [new AttributeMatchDto("urn:altinn:org", "ttd"), new AttributeMatchDto("urn:altinn:app", "app1")],
+            AccessRestriction = AccessRestrictionDto.ClientDelegation,
+            ViaPartyOrganizationNumber = "910000000",
         };
 
         var result = source.ToDelegationChangeInput();
 
         result.Should().BeEquivalentTo(source, options => options.WithStrictOrdering());
+    }
+
+    [Theory]
+    [MemberData(nameof(AccessRestrictions))]
+    public void ToDelegationChangeInput_ForEachAccessRestriction_MapsToSameNameAndValue(AccessRestrictionDto accessRestriction)
+    {
+        var result = new DelegationChangeInputDto { AccessRestriction = accessRestriction }.ToDelegationChangeInput();
+
+        result.AccessRestriction.Should().HaveSameNameAs(accessRestriction).And.HaveSameValueAs(accessRestriction);
     }
 }

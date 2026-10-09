@@ -1,0 +1,46 @@
+meta {
+  name: 05_WHEN_EventTypeIsUnknownThenRequestFails
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enterprise/consentrequests/events?eventType=approved
+  body: none
+  auth: inherit
+}
+
+params:query {
+  eventType: approved
+}
+
+docs {
+  WHEN the event type is unknown, the request fails with a validation error.
+
+  GET /accessmanagement/api/v1/enterprise/consentrequests/events?eventType=approved
+
+  Expects 400 with error code STD-00000 and validation error AM.VLD-00052 whose path
+  points at the eventType query parameter.
+}
+
+script:pre-request {
+  const { loginAsEnterprise, scopes, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  await loginAsEnterprise(td.enterprise, scopes.consentRequestsRead);
+}
+
+tests {
+  test("WHEN the event type is unknown, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN validation error AM.VLD-00052 points at eventType", function() {
+    const body = res.getBody();
+    expect(body.status).to.equal(400);
+    expect(body.code).to.equal("STD-00000");
+    expect(body.validationErrors).to.have.lengthOf(1);
+    expect(body.validationErrors[0].code).to.equal("AM.VLD-00052");
+    expect(body.validationErrors[0].paths).to.deep.equal(["$QUERY/eventType"]);
+  });
+}

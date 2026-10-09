@@ -1,0 +1,15 @@
+meta {
+  name: 01_DraftRequest
+  seq: 1
+}
+
+docs {
+  Scenario: The requester opens the draft a service owner prepared
+
+    Given the service owner has created a draft package request for the requester
+    When the requester opens the draft
+    Then the draft shows the package, the parties and the service owner
+    And an outsider cannot open the draft
+    When the service owner withdraws the draft
+    Then the withdrawn request can no longer be opened as a draft
+}

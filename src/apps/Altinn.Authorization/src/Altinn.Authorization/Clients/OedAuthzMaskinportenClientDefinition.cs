@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using Altinn.ApiClients.Maskinporten.Interfaces;
 using Altinn.ApiClients.Maskinporten.Models;
 using Altinn.Platform.Authorization.Configuration;

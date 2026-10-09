@@ -4,6 +4,10 @@
 - **Date:** YYYY-MM-DD
 - **Deciders:** <who>
 
+**TL;DR**
+
+- At most five bullets: what was decided, and the one reason that carried it.
+
 ## Context
 
 What is the situation/problem? What forces are at play (technical, organisational, security)? What constraints?

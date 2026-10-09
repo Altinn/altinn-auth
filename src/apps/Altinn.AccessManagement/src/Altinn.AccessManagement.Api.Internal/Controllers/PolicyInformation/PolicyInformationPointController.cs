@@ -1,8 +1,10 @@
-﻿using Altinn.AccessManagement.Api.Internal.Extensions;
+﻿using System.ComponentModel.DataAnnotations;
+using Altinn.AccessManagement.Api.Internal.Extensions;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
+using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 using Altinn.Authorization.Api.Contracts.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -16,7 +18,8 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers.PolicyInformation;
 [ApiController]
 public class PolicyInformationPointController(
     IPolicyInformationPoint pip,
-    IAuthorizedPartyRepoServiceEf authorizedPartyRepoService
+    IAuthorizedPartyRepoServiceEf authorizedPartyRepoService,
+    IEntityService entityService
     ) : ControllerBase
 {
     /// <summary>
@@ -50,17 +53,18 @@ public class PolicyInformationPointController(
     /// </summary>
     /// <param name="from">The uuid of the party to lookup if the to-party has access packages for</param>
     /// <param name="to">The uuid of the party to lookup access packages on behalf of the from-party</param>
+    /// <param name="accessRestriction">The access restriction limiting which kinds of access are considered</param>
+    /// <param name="viaParty">The organization number of the via-party (required for <see cref="AccessRestriction.ClientDelegation"/>)</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns>A list of all access package urns to-party has access to on behalf of the from-party</returns>
     [ApiExplorerSettings(IgnoreApi = true)]
     [HttpGet]
     [Route("accesspackages")]
-    public async Task<ActionResult> GetAccessPackages([FromQuery] Guid from, [FromQuery] Guid to, CancellationToken cancellationToken)
+    public async Task<ActionResult> GetAccessPackages([FromQuery] Guid from, [FromQuery] Guid to, [FromQuery][EnumDataType(typeof(AccessRestriction))] AccessRestriction accessRestriction = AccessRestriction.None, [FromQuery] string viaParty = null, CancellationToken cancellationToken = default)
     {
         List<AccessPackageUrn> packages = new();
 
-        var filter = new AuthorizedPartiesFilters { IncludeAccessPackages = true, IncludePartiesViaKeyRoles = AuthorizedPartiesIncludeFilter.True, PartyFilter = new SortedDictionary<Guid, Guid> { { from, from } } };
-        var connectionPackages = await authorizedPartyRepoService.GetPipConnectionsFromOthers(to, filters: filter, ct: cancellationToken);
+        var connectionPackages = await GetConnections(from, to, accessRestriction, viaParty, cancellationToken);
         if (connectionPackages != null)
         {
             packages.AddRange(connectionPackages.SelectMany(conPackage => conPackage.Packages.Select(pkg => AccessPackageUrn.Parse(pkg.Urn))));
@@ -74,17 +78,18 @@ public class PolicyInformationPointController(
     /// </summary>
     /// <param name="from">The uuid of the party to lookup if the to-party has access packages for</param>
     /// <param name="to">The uuid of the party to lookup access packages on behalf of the from-party</param>
+    /// <param name="accessRestriction">The access restriction limiting which kinds of access are considered</param>
+    /// <param name="viaParty">The organization number of the via-party (required for <see cref="AccessRestriction.ClientDelegation"/>)</param>
     /// <param name="cancellationToken">CancellationToken</param>
     /// <returns>Lists of all roles and access package urns to-party has access to on behalf of the from-party</returns>
     [ApiExplorerSettings(IgnoreApi = true)]
     [HttpGet]
     [Route("roles-and-accesspackages")]
-    public async Task<ActionResult> GetRolesAndAccessPackages([FromQuery] Guid from, [FromQuery] Guid to, CancellationToken cancellationToken)
+    public async Task<ActionResult> GetRolesAndAccessPackages([FromQuery] Guid from, [FromQuery] Guid to, [FromQuery][EnumDataType(typeof(AccessRestriction))] AccessRestriction accessRestriction = AccessRestriction.None, [FromQuery] string viaParty = null, CancellationToken cancellationToken = default)
     {
         PipResponseDto pipResponse = new();
 
-        var filter = new AuthorizedPartiesFilters { IncludeAccessPackages = true, IncludePartiesViaKeyRoles = AuthorizedPartiesIncludeFilter.True, PartyFilter = new SortedDictionary<Guid, Guid> { { from, from } } };
-        var connections = await authorizedPartyRepoService.GetPipConnectionsFromOthers(to, filters: filter, ct: cancellationToken);
+        var connections = await GetConnections(from, to, accessRestriction, viaParty, cancellationToken);
         if (connections != null)
         {
             pipResponse.AccessPackages = connections.SelectMany(conPackage => conPackage.Packages.Select(pkg => AccessPackageUrn.Parse(pkg.Urn))).Distinct().ToList();
@@ -106,5 +111,57 @@ public class PolicyInformationPointController(
         }
 
         return Ok(pipResponse);
+    }
+
+    /// <summary>
+    /// Gets the connections from the from-party to the to-party, limited by the access restriction:
+    /// - None: every connection
+    /// - DirectAndHierarchy: excludes keyrole (org-to-org) inheritance and client delegations.
+    /// - ClientDelegation: only client delegations received through the given via-party organization.
+    /// </summary>
+    private async Task<List<ConnectionQueryExtendedRecord>> GetConnections(Guid from, Guid to, AccessRestriction accessRestriction, string viaParty, CancellationToken cancellationToken)
+    {
+        Guid? viaPartyId = null;
+        if (accessRestriction == AccessRestriction.ClientDelegation)
+        {
+            if (string.IsNullOrWhiteSpace(viaParty))
+            {
+                return [];
+            }
+
+            var viaPartyEntity = await entityService.GetByOrgNo(viaParty, cancellationToken);
+            if (viaPartyEntity == null)
+            {
+                return [];
+            }
+
+            viaPartyId = viaPartyEntity.Id;
+        }
+
+        var filter = new AuthorizedPartiesFilters
+        {
+            IncludeAccessPackages = true,
+            IncludePartiesViaKeyRoles = accessRestriction == AccessRestriction.None ? AuthorizedPartiesIncludeFilter.True : AuthorizedPartiesIncludeFilter.False,
+            IncludeClientDelegations = accessRestriction != AccessRestriction.DirectAndHierarchy,
+            PartyFilter = new SortedDictionary<Guid, Guid> { { from, from } }
+        };
+
+        var connections = await authorizedPartyRepoService.GetPipConnectionsFromOthers(to, filters: filter, ct: cancellationToken);
+        if (connections == null || accessRestriction != AccessRestriction.ClientDelegation)
+        {
+            return connections;
+        }
+
+        // Client delegations inherited from a main unit are projected as Reason.Hierarchy with the via-party replaced
+        // by the main unit, so the original via-party is resolved from the delegation itself.
+        var clientDelegations = connections
+            .Where(c => c.DelegationId.HasValue && (c.Reason == ConnectionReason.Delegation || c.Reason == ConnectionReason.Hierarchy))
+            .ToList();
+
+        var delegationIdsViaParty = await authorizedPartyRepoService.GetDelegationIdsViaParty(clientDelegations.Select(c => c.DelegationId.Value), viaPartyId.Value, cancellationToken);
+
+        return clientDelegations
+            .Where(c => delegationIdsViaParty.Contains(c.DelegationId.Value))
+            .ToList();
     }
 }

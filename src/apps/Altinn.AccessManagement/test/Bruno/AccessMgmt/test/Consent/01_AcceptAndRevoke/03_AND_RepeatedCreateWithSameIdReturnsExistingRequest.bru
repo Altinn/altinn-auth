@@ -1,0 +1,79 @@
+meta {
+  name: 03_AND_RepeatedCreateWithSameIdReturnsExistingRequest
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enterprise/consentrequests
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "id": "{{consentRequestId}}",
+    "from": "{{consentFrom}}",
+    "to": "{{consentTo}}",
+    "validTo": "{{consentValidTo}}",
+    "consentRights": [
+      {
+        "action": ["{{consentAction}}"],
+        "resource": [
+          {
+            "type": "urn:altinn:resource",
+            "value": "{{consentResource}}"
+          }
+        ],
+        "metadata": {
+          "inntektsaar": "{{consentMetadataValue}}"
+        }
+      }
+    ],
+    "requestMessage": {
+      "en": "Consent request from the Bruno consent scenarios",
+      "nb": "Samtykkeforespørsel fra Bruno-scenarioene for samtykke"
+    },
+    "redirectUrl": "https://altinn.no",
+    "portalViewMode": "show"
+  }
+}
+
+docs {
+  AND the enterprise repeats the create call with the same id.
+
+  POST /accessmanagement/api/v1/enterprise/consentrequests
+
+  Retrying a create with an id that already exists for the same from and to parties is
+  safe: nothing new is created and the existing request is returned with 200 OK instead
+  of 201 Created. The same id with other parties is rejected with 400 (AM-00016).
+
+  Token: Maskinporten token with scope altinn:consentrequests.write, as for the create.
+
+  Known quirk: the 200 body is not the same shape as the 201 body (for example the status
+  field is named consentRequestStatus, and events carry internal party uuids), so this
+  step asserts only the id and the parties.
+}
+
+script:pre-request {
+  const { loginAsEnterprise, scopes, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  await loginAsEnterprise(td.enterprise, scopes.consentRequestsWrite);
+}
+
+tests {
+  const { testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  test("WHEN the create is repeated with the same id, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the existing request is returned", function() {
+    const body = res.getBody();
+    expect(body.id).to.equal(bru.getVar("consentRequestId"));
+    expect(body.from).to.equal(`urn:altinn:person:identifier-no:${td.consentingPerson.pid}`);
+    expect(body.to).to.equal(`urn:altinn:organization:identifier-no:${td.enterprise.orgno}`);
+  });
+}

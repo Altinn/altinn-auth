@@ -1,0 +1,44 @@
+meta {
+  name: 04_AND_EventsCanBeFilteredToAnEmptyTimeWindow
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enterprise/consentrequests/events?createdAfter=2020-01-01T00:00:00Z&createdBefore=2020-01-02T00:00:00Z
+  body: none
+  auth: inherit
+}
+
+params:query {
+  createdAfter: 2020-01-01T00:00:00Z
+  createdBefore: 2020-01-02T00:00:00Z
+}
+
+docs {
+  AND the enterprise filters the events to a time window with no events.
+
+  GET /accessmanagement/api/v1/enterprise/consentrequests/events?createdAfter=:from&createdBefore=:to
+
+  createdAfter is inclusive and createdBefore exclusive. A window before the consent API
+  existed returns an empty last page: data is empty and links.next is null.
+}
+
+script:pre-request {
+  const { loginAsEnterprise, scopes, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  await loginAsEnterprise(td.enterprise, scopes.consentRequestsRead);
+}
+
+tests {
+  test("WHEN the events are filtered to an empty window, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the page is empty and there is no next link", function() {
+    const body = res.getBody();
+    expect(body.data).to.be.an("array").that.is.empty;
+    expect(body.links.next).to.be.null;
+  });
+}

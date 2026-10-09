@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.Core.Enums;
+﻿using Altinn.AccessManagement.Core.Enums;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Azure.Storage.Blobs;
 using Microsoft.Extensions.Azure;

@@ -311,7 +311,7 @@ public class ApproveSelfDelegationRequestTest
                 .ToList();
 
             Assert.Contains("AM.VLD-00045", codes);
-        }        
+        }
     }
 
     #endregion

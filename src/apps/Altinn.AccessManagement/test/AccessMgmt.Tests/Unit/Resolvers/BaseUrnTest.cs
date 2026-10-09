@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.Core.Resolvers;
+﻿using Altinn.AccessManagement.Core.Resolvers;
 
 // See: overhaul part-2 step 23
 namespace Altinn.AccessManagement.Tests.Unit.Resolvers;

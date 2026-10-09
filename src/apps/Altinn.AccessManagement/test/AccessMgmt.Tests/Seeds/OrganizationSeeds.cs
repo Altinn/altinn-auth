@@ -1,4 +1,4 @@
-using Altinn.Platform.Register.Enums;
+﻿using Altinn.Platform.Register.Enums;
 using Altinn.Platform.Register.Models;
 
 namespace Altinn.AccessManagement.Tests.Seeds;

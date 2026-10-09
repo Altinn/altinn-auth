@@ -1,4 +1,6 @@
-﻿using Altinn.AccessManagement.Api.Enterprise.Extensions;
+﻿using System.Net.Mime;
+using System.Security.Claims;
+using Altinn.AccessManagement.Api.Enterprise.Extensions;
 using Altinn.AccessManagement.Api.Enterprise.Utils;
 using Altinn.AccessManagement.Core.Configuration;
 using Altinn.AccessManagement.Core.Constants;
@@ -14,8 +16,6 @@ using Altinn.Common.PEP.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using System.Net.Mime;
-using System.Security.Claims;
 
 namespace Altinn.AccessManagement.Api.Enterprise.Controllers
 {
@@ -159,7 +159,7 @@ namespace Altinn.AccessManagement.Api.Enterprise.Controllers
             [FromQuery(Name = "createdAfter")] DateTimeOffset? createdAfter = null,
             [FromQuery(Name = "createdBefore")] DateTimeOffset? createdBefore = null,
             [FromQuery(Name = "eventType")] string[]? eventTypes = null,
-            [FromQuery(Name = "consentRequestId")] Guid? consentRequestId = null, 
+            [FromQuery(Name = "consentRequestId")] Guid? consentRequestId = null,
             CancellationToken cancellationToken = default)
         {
             int pageSize = _consentSettings.CurrentValue.EventsPageSize;
@@ -200,7 +200,7 @@ namespace Altinn.AccessManagement.Api.Enterprise.Controllers
             {
                 try
                 {
-                    byte[] bytes = Convert.FromBase64String(continuationToken);                    
+                    byte[] bytes = Convert.FromBase64String(continuationToken);
                     if (bytes.Length != 16)
                     {
                         errors.Add(ValidationErrors.InvalidContinuationToken, "$QUERY/continuationToken");
@@ -208,7 +208,7 @@ namespace Altinn.AccessManagement.Api.Enterprise.Controllers
                     else
                     {
                         continueFrom = new Guid(bytes);
-                    }                    
+                    }
                 }
                 catch (FormatException)
                 {

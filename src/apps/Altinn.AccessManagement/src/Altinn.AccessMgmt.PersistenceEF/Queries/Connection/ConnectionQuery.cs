@@ -108,12 +108,12 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
         {
             var keyRoles =
             from a in db.Assignments.AsNoTracking()
-            join k in db.Assignments.AsNoTracking() on a.ToId equals k.FromId            
+            join k in db.Assignments.AsNoTracking() on a.ToId equals k.FromId
             join kr in db.Roles.AsNoTracking() on k.RoleId equals kr.Id
             where
-                a.FromId == fromId && 
-                kr.IsKeyRole == true && 
-                k.ToId == toId && 
+                a.FromId == fromId &&
+                kr.IsKeyRole == true &&
+                k.ToId == toId &&
                 (a.RoleId != RoleConstants.ParticipantSharedResponsibility.Id || a.From.VariantId != EntityVariantConstants.IKS.Id) &&
                 (k.RoleId != RoleConstants.ParticipantSharedResponsibility.Id || a.To.VariantId != EntityVariantConstants.IKS.Id)
             select 1;

@@ -1,61 +1,20 @@
-namespace Altinn.Register;
+﻿namespace Altinn.Register;
 
 /// <summary>
-/// Boilerplate Program 
+/// Placeholder for the Register service. The real Register still lives in the altinn-register
+/// repository and moves into this one with https://github.com/Altinn/altinn-auth/issues/4056,
+/// which replaces this project entirely. Until then the project exists only so that the vertical
+/// builds and its infrastructure under the vertical's infra folder can be deployed. Do not build
+/// on it or wire anything to it.
 /// </summary>
 public static class Program
 {
     /// <summary>
-    /// Boilerplate Main
+    /// Starts an empty web host.
     /// </summary>
-    /// <param name="args">Boilerplate</param>
+    /// <param name="args">Command line arguments, passed on to the host builder.</param>
     public static void Main(string[] args)
     {
-        var builder = WebApplication.CreateBuilder(args);
-
-        // Add services to the container.
-        // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-        builder.Services.AddOpenApi();
-
-        var app = builder.Build();
-
-        // Configure the HTTP request pipeline.
-        if (app.Environment.IsDevelopment())
-        {
-            app.MapOpenApi();
-        }
-
-        app.UseHttpsRedirection();
-
-        var summaries = new[]
-        {
-            "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-        };
-
-        app.MapGet("/weatherforecast", () =>
-        {
-            var forecast = Enumerable.Range(1, 5).Select(index =>
-                new WeatherForecast(
-                    DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-                    Random.Shared.Next(-20, 55),
-                    summaries[Random.Shared.Next(summaries.Length)]
-                ))
-                .ToArray();
-            return forecast;
-        })
-        .WithName("GetWeatherForecast");
-
-        app.Run();
+        WebApplication.CreateBuilder(args).Build().Run();
     }
-}
-
-/// <summary>
-///  Boilerplate
-/// </summary>
-public record WeatherForecast(DateOnly Date, int TemperatureC, string Summary)
-{
-    /// <summary>
-    /// Boilerplate
-    /// </summary>
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
 }

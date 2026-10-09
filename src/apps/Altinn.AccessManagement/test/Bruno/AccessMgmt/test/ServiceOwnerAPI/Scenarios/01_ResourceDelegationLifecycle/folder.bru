@@ -1,0 +1,21 @@
+meta {
+  name: 01_ResourceDelegationLifecycle
+  seq: 1
+}
+
+docs {
+  Scenario: A service owner delegates a right on its own resource and revokes it again
+
+    Given the service owner has no delegation of the resource between the two persons
+    When the service owner looks up the rights it can delegate on the resource
+    And the service owner delegates the read right from the grantor to the recipient
+    Then the recipient's authorized parties show the grantor with the resource
+    And delegating the same right again returns the same delegation
+    When the service owner revokes the delegation
+    Then the recipient's authorized parties no longer show the grantor with the resource
+    And revoking again is a no-op
+
+  The service owner acts as digdir, which owns the resource. It never needs a relation
+  between the two persons in advance: the delegation creates the rettighetshaver
+  assignment, and the revoke removes it again because the service owner created it.
+}

@@ -1,0 +1,60 @@
+meta {
+  name: 01_WHEN_ResourceAndPackageAreBothGivenThenRequestFails
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/delegationrequests
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "from": "urn:altinn:person:identifier-no:{{grantorPid}}",
+    "to": "urn:altinn:person:identifier-no:{{requesterPid}}",
+    "resource": {
+      "referenceId": "{{requestResource}}"
+    },
+    "package": {
+      "referenceId": "{{requestPackage}}"
+    }
+  }
+}
+
+docs {
+  WHEN both `resource` and `package` are given the request fails with 400 and
+  validation error AM.VLD-00046 on both parameters.
+}
+
+script:pre-request {
+  const { td, loginAsServiceOwner, scopes } = require("./test/DelegationRequest/ServiceOwnerDelegationRequests/helpers.js");
+  const data = td();
+
+  bru.setVar("grantorPid", data.delegationRequest.grantor.pid);
+  bru.setVar("requesterPid", data.delegationRequest.requester.pid);
+  bru.setVar("requestResource", data.delegationRequest.resource);
+  bru.setVar("requestPackage", data.delegationRequest.package);
+
+  await loginAsServiceOwner(data.serviceOwners.ttd, scopes.delegationRequestsWrite);
+}
+
+tests {
+  test("WHEN both a resource and a package are given, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN AM.VLD-00046 points at resource and at package", function() {
+    const body = res.getBody();
+    expect(body.code).to.equal("STD-00000");
+    expect(body.validationErrors).to.have.lengthOf(2);
+    expect(body.validationErrors.every(e => e.code === "AM.VLD-00046")).to.be.true;
+    expect(body.validationErrors.map(e => e.paths[0])).to.have.members(["resource", "package"]);
+  });
+}

@@ -8,7 +8,11 @@ namespace Altinn.AccessManagement.Tests.Mocks
     /// </summary>
     public class AuthenticationNullRefreshMock : IAuthenticationClient
     {
-        /// <inheritdoc/>
+        /// <summary>
+        /// Returns an empty refresh token.
+        /// </summary>
+        /// <param name="cancellationToken">The cancellation token.</param>
+        /// <returns>An empty token.</returns>
         public async Task<string> RefreshToken(CancellationToken cancellationToken = default) => await Task.FromResult(string.Empty);
 
         /// <inheritdoc/>

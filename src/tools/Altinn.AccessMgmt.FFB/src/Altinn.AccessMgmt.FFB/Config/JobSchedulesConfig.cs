@@ -1,4 +1,4 @@
-namespace Altinn.AccessMgmt.FFB.Config;
+﻿namespace Altinn.AccessMgmt.FFB.Config;
 
 /// <summary>
 /// Valid job type identifiers for use in <see cref="JobScheduleEntry.JobType"/>.

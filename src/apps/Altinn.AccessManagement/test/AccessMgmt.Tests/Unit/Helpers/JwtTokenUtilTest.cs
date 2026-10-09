@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.Core.Helpers;
+﻿using Altinn.AccessManagement.Core.Helpers;
 using Microsoft.AspNetCore.Http;
 
 // See: overhaul part-2 step 17

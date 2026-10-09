@@ -1,4 +1,4 @@
-using Altinn.Authorization.ProblemDetails;
+﻿using Altinn.Authorization.ProblemDetails;
 
 namespace Altinn.AccessMgmt.Core.Validation;
 

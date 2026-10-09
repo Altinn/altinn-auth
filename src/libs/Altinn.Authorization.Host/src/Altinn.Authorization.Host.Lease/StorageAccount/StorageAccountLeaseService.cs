@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using Altinn.Authorization.Host.Lease.Telemetry;
 using Azure;
 using Azure.Storage.Blobs;

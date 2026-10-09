@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.Api.Contracts.AccessManagement
+﻿namespace Altinn.Authorization.Api.Contracts.AccessManagement
 {
     /// <summary>
     /// Defines a resource delegation between two parties, performed by the service owner of the resource

@@ -206,6 +206,11 @@
         public const string SCOPE_ENDUSER_REQUESTS_WRITE = "altinn:accessmanagement/enduser:requests.write";
 
         /// <summary>
+        /// Maskinporten scope giving a system user access to write operations on requests
+        /// </summary>
+        public const string SCOPE_ENDUSER_SYSTEMUSER_REQUESTS_WRITE = "altinn:accessmanagement/systemuser:requests.write";
+
+        /// <summary>
         /// Enduser scope giving access to read operations on maskinporten supplier assignments and delegated scopes
         /// </summary>
         public const string SCOPE_ENDUSER_MASKINPORTENSUPPLIERS_READ = "altinn:accessmanagement/enduser:maskinportensuppliers.read";

@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.ABAC.Xacml.JsonProfile
+﻿namespace Altinn.Authorization.ABAC.Xacml.JsonProfile
 {
     /// <summary>
     /// Defines a list of json request
