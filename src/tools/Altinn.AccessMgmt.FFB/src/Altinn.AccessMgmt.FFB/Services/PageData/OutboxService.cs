@@ -1,4 +1,4 @@
-using Altinn.AccessMgmt.FFB.Services.Contracts;
+﻿using Altinn.AccessMgmt.FFB.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Models.Base;

@@ -3,9 +3,9 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using Altinn.Authorization.Api.Contracts.Authorization;
+using Altinn.Authorization.Enums;
 using Altinn.Platform.Authorization.Clients;
 using Altinn.Platform.Authorization.Configuration;
-using Altinn.Platform.Authorization.Models;
 using Altinn.Platform.Authorization.Models.AccessManagement;
 using Altinn.Platform.Authorization.Services.Interface;
 using AltinnCore.Authentication.Utils;
@@ -38,7 +38,7 @@ public class AccessManagementWrapper : IAccessManagementWrapper
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<DelegationChangeExternal>> GetAllDelegationChanges(DelegationChangeInput input, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<DelegationChangeDto>> GetAllDelegationChanges(DelegationChangeInputDto input, CancellationToken cancellationToken = default)
     {
         var response = await _client.Client.SendAsync(
             new(HttpMethod.Post, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), "policyinformation/getdelegationchanges"))
@@ -49,7 +49,7 @@ public class AccessManagementWrapper : IAccessManagementWrapper
 
         if (response.IsSuccessStatusCode)
         {
-            return await response.Content.ReadFromJsonAsync<IEnumerable<DelegationChangeExternal>>(_serializerOptions, cancellationToken);
+            return await response.Content.ReadFromJsonAsync<IEnumerable<DelegationChangeDto>>(_serializerOptions, cancellationToken);
         }
 
         var content = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -57,15 +57,15 @@ public class AccessManagementWrapper : IAccessManagementWrapper
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<DelegationChangeExternal>> GetAllDelegationChanges(CancellationToken cancellationToken = default, params Action<DelegationChangeInput>[] actions)
+    public async Task<IEnumerable<DelegationChangeDto>> GetAllDelegationChanges(CancellationToken cancellationToken = default, params Action<DelegationChangeInputDto>[] actions)
     {
-        var input = new DelegationChangeInput()
+        var input = new DelegationChangeInputDto()
         {
-            Resource = new List<AttributeMatch>(),
+            Resource = new List<AttributeMatchDto>(),
         };
 
         actions.ToList().ForEach(action => action(input));
-        return await GetAllDelegationChanges(input);
+        return await GetAllDelegationChanges(input, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -117,14 +117,14 @@ public class AccessManagementWrapper : IAccessManagementWrapper
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<AccessPackageUrn>> GetAccessPackages(Guid to, Guid from, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<AccessPackageUrn>> GetAccessPackages(Guid to, Guid from, AccessRestriction accessRestriction = AccessRestriction.None, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default)
     {
-        var cacheKey = $"AccPkgs|f:{from}|t:{to}";
+        var cacheKey = $"AccPkgs|f:{from}|t:{to}|ac:{accessRestriction}|vp:{viaPartyOrganizationNumber}";
 
         if (!_memoryCache.TryGetValue(cacheKey, out IEnumerable<AccessPackageUrn> result))
         {
             var response = await _client.Client.SendAsync(
-                new(HttpMethod.Get, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), $"policyinformation/accesspackages?to={to}&from={from}")),
+                new(HttpMethod.Get, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), $"policyinformation/accesspackages?to={to}&from={from}&accessRestriction={accessRestriction}{ViaPartyQuery(viaPartyOrganizationNumber)}")),
                 cancellationToken);
 
             if (response.IsSuccessStatusCode)
@@ -148,14 +148,14 @@ public class AccessManagementWrapper : IAccessManagementWrapper
     }
 
     /// <inheritdoc/>
-    public async Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, CancellationToken cancellationToken = default)
-    {   
-        var cacheKey = $"RolesAndAccPkgs|f:{from}|t:{to}";
+    public async Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, AccessRestriction accessRestriction = AccessRestriction.None, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default)
+    {
+        var cacheKey = $"RolesAndAccPkgs|f:{from}|t:{to}|ac:{accessRestriction}|vp:{viaPartyOrganizationNumber}";
 
         if (!_memoryCache.TryGetValue(cacheKey, out PipResponseDto result))
         {
             var response = await _client.Client.SendAsync(
-                new(HttpMethod.Get, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), $"policyinformation/roles-and-accesspackages?to={to}&from={from}")),
+                new(HttpMethod.Get, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), $"policyinformation/roles-and-accesspackages?to={to}&from={from}&accessRestriction={accessRestriction}{ViaPartyQuery(viaPartyOrganizationNumber)}")),
                 cancellationToken);
 
             if (response.IsSuccessStatusCode)
@@ -179,4 +179,7 @@ public class AccessManagementWrapper : IAccessManagementWrapper
 
         return result;
     }
+
+    private static string ViaPartyQuery(string viaPartyOrganizationNumber) =>
+        string.IsNullOrWhiteSpace(viaPartyOrganizationNumber) ? string.Empty : $"&viaParty={Uri.EscapeDataString(viaPartyOrganizationNumber)}";
 }

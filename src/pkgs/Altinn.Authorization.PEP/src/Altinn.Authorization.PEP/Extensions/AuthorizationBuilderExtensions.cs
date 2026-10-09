@@ -1,4 +1,4 @@
-using Altinn.Common.PEP.Authorization;
+﻿using Altinn.Common.PEP.Authorization;
 using Microsoft.AspNetCore.Authorization;
 
 namespace Altinn.Authorization.PEP.Extensions;

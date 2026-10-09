@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.ABAC.Xacml.JsonProfile
+﻿namespace Altinn.Authorization.ABAC.Xacml.JsonProfile
 {
     /// <summary>
     /// The JSON object root needed to be able to parse the request.

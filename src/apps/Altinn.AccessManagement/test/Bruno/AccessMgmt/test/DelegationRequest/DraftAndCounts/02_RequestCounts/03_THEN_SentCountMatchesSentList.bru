@@ -1,0 +1,54 @@
+meta {
+  name: 03_THEN_SentCountMatchesSentList
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/request/sent?party={{party}}&status=Draft
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  status: Draft
+}
+
+docs {
+  THEN the sent count matches the number of drafts in the sent list with the same
+  filters, and the list holds the new draft.
+}
+
+script:pre-request {
+  const { loginAs, testdata, scopes } = require("./test/DelegationRequest/DraftAndCounts/helpers.js");
+  const td = testdata();
+
+  bru.setVar("party", td.requester.partyUuid);
+
+  await loginAs(td.requester, scopes.sluttbrukerdelegationrequestread);
+}
+
+tests {
+  const { testdata } = require("./test/DelegationRequest/DraftAndCounts/helpers.js");
+  const td = testdata();
+
+  test("THEN the sent list request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the sent count equals the number of drafts in the sent list", function() {
+    const data = res.getBody().data;
+    expect(data).to.be.an("array");
+    expect(data.length).to.equal(Number(bru.getVar("dac_sentDraftCount")));
+  });
+
+  test("THEN every listed request is a draft sent by the requester, the new one included", function() {
+    const data = res.getBody().data;
+    for (const r of data) {
+      expect(r.status).to.equal("Draft");
+      expect(r.from.id.toLowerCase()).to.equal(td.requester.partyUuid.toLowerCase());
+    }
+    expect(data.map(r => r.id)).to.include(bru.getVar("dac_requestId"));
+  });
+}

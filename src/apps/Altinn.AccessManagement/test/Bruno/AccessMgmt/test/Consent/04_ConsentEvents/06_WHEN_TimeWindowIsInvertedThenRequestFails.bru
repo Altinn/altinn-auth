@@ -1,0 +1,47 @@
+meta {
+  name: 06_WHEN_TimeWindowIsInvertedThenRequestFails
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enterprise/consentrequests/events?createdAfter=2026-01-02T00:00:00Z&createdBefore=2026-01-01T00:00:00Z
+  body: none
+  auth: inherit
+}
+
+params:query {
+  createdAfter: 2026-01-02T00:00:00Z
+  createdBefore: 2026-01-01T00:00:00Z
+}
+
+docs {
+  WHEN the time window is inverted, the request fails with a validation error.
+
+  GET /accessmanagement/api/v1/enterprise/consentrequests/events?createdAfter=:later&createdBefore=:earlier
+
+  createdAfter must be earlier than createdBefore. Expects 400 with error code STD-00000
+  and validation error AM.VLD-00051 whose path points at createdAfter.
+}
+
+script:pre-request {
+  const { loginAsEnterprise, scopes, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  await loginAsEnterprise(td.enterprise, scopes.consentRequestsRead);
+}
+
+tests {
+  test("WHEN the time window is inverted, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN validation error AM.VLD-00051 points at createdAfter", function() {
+    const body = res.getBody();
+    expect(body.status).to.equal(400);
+    expect(body.code).to.equal("STD-00000");
+    expect(body.validationErrors).to.have.lengthOf(1);
+    expect(body.validationErrors[0].code).to.equal("AM.VLD-00051");
+    expect(body.validationErrors[0].paths).to.deep.equal(["$QUERY/createdAfter"]);
+  });
+}

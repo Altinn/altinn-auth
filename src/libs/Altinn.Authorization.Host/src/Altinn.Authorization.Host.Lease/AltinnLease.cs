@@ -1,4 +1,4 @@
-using Altinn.Authorization.Host.Identity;
+﻿using Altinn.Authorization.Host.Identity;
 using Altinn.Authorization.Host.Lease.Noop;
 using Altinn.Authorization.Host.Lease.StorageAccount;
 using Altinn.Authorization.Host.Lease.Telemetry;

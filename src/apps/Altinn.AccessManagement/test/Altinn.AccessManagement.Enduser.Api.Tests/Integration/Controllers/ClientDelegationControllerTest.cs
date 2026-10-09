@@ -455,7 +455,7 @@ public class ClientDelegationControllerTest
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             var data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-            var result = JsonSerializer.Deserialize<PaginatedResult<ClientDto>>(data);
+            var result = JsonSerializer.Deserialize<PaginatedResult<Authorization.Api.Contracts.AccessManagement.ClientDto>>(data);
 
             var connection = result.Items.SelectMany(p => p.Access).FirstOrDefault(a => a.Role.Id == RoleConstants.Accountant);
             Assert.NotNull(connection);
@@ -475,7 +475,7 @@ public class ClientDelegationControllerTest
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             var data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-            var result = JsonSerializer.Deserialize<PaginatedResult<ClientDto>>(data);
+            var result = JsonSerializer.Deserialize<PaginatedResult<Authorization.Api.Contracts.AccessManagement.ClientDto>>(data);
             Assert.NotEmpty(result.Items);
             foreach (var item in result.Items)
             {
@@ -496,7 +496,7 @@ public class ClientDelegationControllerTest
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             var data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-            var result = JsonSerializer.Deserialize<PaginatedResult<ClientDto>>(data);
+            var result = JsonSerializer.Deserialize<PaginatedResult<Authorization.Api.Contracts.AccessManagement.ClientDto>>(data);
 
             var connection = result.Items.FirstOrDefault(p => p.Client.Id == TestEntities.OrganizationNordisAS.Id);
             Assert.NotNull(connection);
@@ -522,7 +522,7 @@ public class ClientDelegationControllerTest
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             var data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-            var result = JsonSerializer.Deserialize<PaginatedResult<ClientDto>>(data);
+            var result = JsonSerializer.Deserialize<PaginatedResult<Authorization.Api.Contracts.AccessManagement.ClientDto>>(data);
 
             Assert.NotEmpty(result.Items);
 
@@ -611,7 +611,7 @@ public class ClientDelegationControllerTest
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             var data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-            var result = JsonSerializer.Deserialize<PaginatedResult<ClientDto>>(data);
+            var result = JsonSerializer.Deserialize<PaginatedResult<Authorization.Api.Contracts.AccessManagement.ClientDto>>(data);
 
             // The BEDR and NUF clients relate to the package only through role packages scoped
             // to the ESEK and BRL variants, so the filter must not select them.
@@ -979,7 +979,7 @@ public class ClientDelegationControllerTest
             // Verify Delegation exists
             var getDelegationsToAgent = await client.GetAsync($"{Route}/agents/accesspackages?party={TestEntities.OrganizationVerdiqAS}&to={TestEntities.PersonPaula}", TestContext.Current.CancellationToken);
             var delegationsToAgentPayload = await getDelegationsToAgent.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-            var delegationToAgentResult = JsonSerializer.Deserialize<PaginatedResult<ClientDto>>(delegationsToAgentPayload);
+            var delegationToAgentResult = JsonSerializer.Deserialize<PaginatedResult<Authorization.Api.Contracts.AccessManagement.ClientDto>>(delegationsToAgentPayload);
 
             Assert.NotEmpty(delegationToAgentResult.Items);
 
@@ -1006,7 +1006,7 @@ public class ClientDelegationControllerTest
             // Ensure Agent is deleted
             var getAgents = await client.GetAsync($"{Route}/agents?party={TestEntities.OrganizationVerdiqAS}", TestContext.Current.CancellationToken);
             var getAgentsPayload = await getAgents.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-            var agentResult = JsonSerializer.Deserialize<PaginatedResult<ClientDto>>(getAgentsPayload);
+            var agentResult = JsonSerializer.Deserialize<PaginatedResult<Authorization.Api.Contracts.AccessManagement.ClientDto>>(getAgentsPayload);
 
             Assert.Equal(HttpStatusCode.OK, getAgents.StatusCode);
             Assert.Empty(agentResult.Items);
@@ -1285,6 +1285,130 @@ public class ClientDelegationControllerTest
             });
         }
     }
+
+    /// <summary>
+    /// <see cref="ClientDelegationController.RemoveAgentsClient(Guid, Guid, Guid, bool, CancellationToken)"/>
+    /// The client holds two assignments towards the facilitator (an ER role and a rightholder assignment), so the agent has one delegation per role.
+    /// </summary>
+    [IntegrationTest]
+    public class RemoveAnAgentsClientWithClientAssignmentsAcrossRoles : IClassFixture<ApiFixture>
+    {
+        public RemoveAnAgentsClientWithClientAssignmentsAcrossRoles(ApiFixture fixture)
+        {
+            Fixture = fixture;
+            Fixture.EnsureSeedOnce<RemoveAnAgentsClientWithClientAssignmentsAcrossRoles>(db =>
+            {
+                var rightholderFromNordisToVerdiq = new Assignment()
+                {
+                    FromId = TestEntities.OrganizationNordisAS.Id,
+                    ToId = TestEntities.OrganizationVerdiqAS.Id,
+                    RoleId = RoleConstants.Rightholder,
+                };
+
+                var accountantFromNordisToVerdiq = new Assignment()
+                {
+                    FromId = TestEntities.OrganizationNordisAS.Id,
+                    ToId = TestEntities.OrganizationVerdiqAS.Id,
+                    RoleId = RoleConstants.Accountant,
+                };
+
+                var agentFromVerdiqToOrjan = new Assignment()
+                {
+                    FromId = TestEntities.OrganizationVerdiqAS.Id,
+                    ToId = TestEntities.PersonOrjan,
+                    RoleId = RoleConstants.Agent,
+                };
+
+                var assignmentPackageCustoms = new AssignmentPackage()
+                {
+                    AssignmentId = rightholderFromNordisToVerdiq.Id,
+                    PackageId = PackageConstants.Customs.Id,
+                };
+
+                var rolePackage = db.RolePackages.FirstOrDefault(r => r.RoleId == RoleConstants.Accountant && r.PackageId == PackageConstants.AccountantWithSigningRights);
+
+                var rightholderDelegationToOrjan = new AccessMgmt.PersistenceEF.Models.Delegation()
+                {
+                    FromId = rightholderFromNordisToVerdiq.Id,
+                    ToId = agentFromVerdiqToOrjan.Id,
+                    FacilitatorId = TestEntities.OrganizationVerdiqAS.Id,
+                };
+
+                var accountantDelegationToOrjan = new AccessMgmt.PersistenceEF.Models.Delegation()
+                {
+                    FromId = accountantFromNordisToVerdiq.Id,
+                    ToId = agentFromVerdiqToOrjan.Id,
+                    FacilitatorId = TestEntities.OrganizationVerdiqAS.Id,
+                };
+
+                db.Assignments.Add(rightholderFromNordisToVerdiq);
+                db.Assignments.Add(accountantFromNordisToVerdiq);
+                db.Assignments.Add(agentFromVerdiqToOrjan);
+                db.AssignmentPackages.Add(assignmentPackageCustoms);
+                db.Delegations.Add(rightholderDelegationToOrjan);
+                db.Delegations.Add(accountantDelegationToOrjan);
+                db.DelegationPackages.Add(new()
+                {
+                    DelegationId = rightholderDelegationToOrjan.Id,
+                    AssignmentPackageId = assignmentPackageCustoms.Id,
+                    PackageId = PackageConstants.Customs.Id,
+                });
+                db.DelegationPackages.Add(new()
+                {
+                    DelegationId = accountantDelegationToOrjan.Id,
+                    RolePackageId = rolePackage.Id,
+                    PackageId = PackageConstants.AccountantWithSigningRights.Id,
+                });
+
+                db.SaveChanges();
+            });
+        }
+
+        public ApiFixture Fixture { get; }
+
+        private HttpClient CreateClient()
+        {
+            var client = Fixture.Server.CreateClient();
+            var token = TestTokenGenerator.CreateToken(new ClaimsIdentity("mock"), claims =>
+            {
+                claims.Add(new Claim(AltinnCoreClaimTypes.PartyUuid, TestEntities.PersonPaula.Id.ToString()));
+                claims.Add(new Claim("scope", $"{AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_WRITE} {AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_READ}"));
+            });
+
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            return client;
+        }
+
+        [Fact]
+        public async Task RemoveAgentsClientWithDelegationsAcrossRoles_WithCascadeTrue_Returns204AndRemovesAllDelegations()
+        {
+            var client = CreateClient();
+
+            // Ensure one delegation per client role exists
+            await Fixture.QueryDb(static async db =>
+            {
+                var delegations = await db.Delegations
+                    .Where(d => d.From.FromId == TestEntities.OrganizationNordisAS.Id && d.To.ToId == TestEntities.PersonOrjan.Id && d.FacilitatorId == TestEntities.OrganizationVerdiqAS.Id)
+                    .ToListAsync(TestContext.Current.CancellationToken);
+
+                Assert.Equal(2, delegations.Count);
+            });
+
+            var response = await client.DeleteAsync($"{Route}/agents/clients?party={TestEntities.OrganizationVerdiqAS}&from={TestEntities.OrganizationNordisAS}&to={TestEntities.PersonOrjan}&cascade=true", TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+
+            // Ensure both delegations have been deleted.
+            await Fixture.QueryDb(static async db =>
+            {
+                var delegations = await db.Delegations
+                    .Where(d => d.From.FromId == TestEntities.OrganizationNordisAS.Id && d.To.ToId == TestEntities.PersonOrjan.Id && d.FacilitatorId == TestEntities.OrganizationVerdiqAS.Id)
+                    .ToListAsync(TestContext.Current.CancellationToken);
+
+                Assert.Empty(delegations);
+            });
+        }
+    }
     #endregion
 
     #region GET accessmanagement/api/v1/enduser/clientdelegations/clients/accesspackages
@@ -1473,7 +1597,7 @@ public class ClientDelegationControllerTest
 
             var getDelegationsToAgent = await client.GetAsync($"{Route}/agents/accesspackages?party={TestEntities.OrganizationVerdiqAS}&to={TestEntities.PersonPaula}", TestContext.Current.CancellationToken);
             var delegationsToAgentPayload = await getDelegationsToAgent.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-            var delegationToAgentResult = JsonSerializer.Deserialize<PaginatedResult<ClientDto>>(delegationsToAgentPayload);
+            var delegationToAgentResult = JsonSerializer.Deserialize<PaginatedResult<Authorization.Api.Contracts.AccessManagement.ClientDto>>(delegationsToAgentPayload);
 
             Assert.NotEmpty(delegationToAgentResult.Items);
 
@@ -1712,7 +1836,7 @@ public class ClientDelegationControllerTest
 
             var getDelegationsToAgent = await client.GetAsync($"{Route}/agents/accesspackages?party={TestEntities.OrganizationVerdiqAS}&to={TestEntities.PersonOrjan}", TestContext.Current.CancellationToken);
             var delegationsToAgentPayload = await getDelegationsToAgent.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-            var delegationToAgentResult = JsonSerializer.Deserialize<PaginatedResult<ClientDto>>(delegationsToAgentPayload);
+            var delegationToAgentResult = JsonSerializer.Deserialize<PaginatedResult<Authorization.Api.Contracts.AccessManagement.ClientDto>>(delegationsToAgentPayload);
 
             Assert.NotEmpty(delegationToAgentResult.Items);
 
@@ -2440,7 +2564,7 @@ public class ClientDelegationControllerTest
             // Verify Delegation exists
             var getDelegationsToAgent = await client.GetAsync($"{Route}/agents/accesspackages?party={TestEntities.OrganizationVerdiqAS}&to={TestEntities.PersonPaula}", TestContext.Current.CancellationToken);
             var delegationsToAgentPayload = await getDelegationsToAgent.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-            var delegationToAgentResult = JsonSerializer.Deserialize<PaginatedResult<ClientDto>>(delegationsToAgentPayload);
+            var delegationToAgentResult = JsonSerializer.Deserialize<PaginatedResult<Authorization.Api.Contracts.AccessManagement.ClientDto>>(delegationsToAgentPayload);
 
             Assert.NotEmpty(delegationToAgentResult.Items.FirstOrDefault()?.Access.FirstOrDefault()?.Packages);
 
@@ -2464,7 +2588,7 @@ public class ClientDelegationControllerTest
             // Verify Delegation deleted
             getDelegationsToAgent = await client.GetAsync($"{Route}/agents/accesspackages?party={TestEntities.OrganizationVerdiqAS}&to={TestEntities.PersonPaula}", TestContext.Current.CancellationToken);
             delegationsToAgentPayload = await getDelegationsToAgent.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-            delegationToAgentResult = JsonSerializer.Deserialize<PaginatedResult<ClientDto>>(delegationsToAgentPayload);
+            delegationToAgentResult = JsonSerializer.Deserialize<PaginatedResult<Authorization.Api.Contracts.AccessManagement.ClientDto>>(delegationsToAgentPayload);
 
             Assert.Empty(delegationToAgentResult.Items);
 

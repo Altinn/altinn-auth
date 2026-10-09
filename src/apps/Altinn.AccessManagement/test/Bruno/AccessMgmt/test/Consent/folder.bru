@@ -1,0 +1,62 @@
+meta {
+  name: Consent
+  seq: 13
+}
+
+docs {
+  # Consent scenarios
+
+  BDD scenarios for the consent lifecycle. An enterprise asks a person for consent, the
+  person answers in the Altinn portal, and the enterprise (or Maskinporten on its behalf)
+  reads the result.
+
+  | Step | Endpoint | Caller | Token |
+  |---|---|---|---|
+  | Create request | POST /accessmanagement/api/v1/enterprise/consentrequests | enterprise | Maskinporten, altinn:consentrequests.write |
+  | Read request | GET /accessmanagement/api/v1/enterprise/consentrequests/:id | enterprise | Maskinporten, altinn:consentrequests.read or .write |
+  | Status events | GET /accessmanagement/api/v1/enterprise/consentrequests/events | enterprise | Maskinporten, altinn:consentrequests.read or .write |
+  | Read request | GET /accessmanagement/api/v1/bff/consentrequests/:requestId | portal user | personal, altinn:portal/enduser |
+  | Count pending | GET /accessmanagement/api/v1/bff/consentrequests/count/:partyUuid | portal user | personal, altinn:portal/enduser |
+  | List requests | GET /accessmanagement/api/v1/bff/consentrequests/list/:partyUuid | portal user | personal, altinn:portal/enduser |
+  | Accept | POST /accessmanagement/api/v1/bff/consentrequests/:requestId/accept | portal user | personal, altinn:portal/enduser |
+  | Reject | POST /accessmanagement/api/v1/bff/consentrequests/:requestId/reject | portal user | personal, altinn:portal/enduser |
+  | Read consent | GET /accessmanagement/api/v1/bff/consents/:consentId/ | portal user | personal, altinn:portal/enduser |
+  | Revoke | POST /accessmanagement/api/v1/bff/consents/:consentId/revoke | portal user | personal, altinn:portal/enduser |
+  | Lookup | POST /accessmanagement/api/v1/maskinporten/consent/lookup | Maskinporten | altinn:maskinporten/consent.read |
+
+  A consent request and the consent it becomes share one id. The enterprise API speaks
+  external identifiers (urn:altinn:person:identifier-no, urn:altinn:organization:identifier-no);
+  the BFF answers with internal party uuids (urn:altinn:party:uuid).
+
+  Each subfolder is one scenario. The files inside are the scenario steps, named
+  `NN_GIVEN|WHEN|THEN|AND|CLEANUP_...` and ordered by `seq`.
+
+  ## State and cleanup
+
+  Consent requests cannot be deleted. Every scenario creates fresh requests with a new id
+  and never relies on the absence of earlier ones; counts and lists are asserted relative
+  to a baseline or by id. Each request a scenario creates ends in a final state (revoked or
+  rejected), so no run leaves a pending request in the person's portal inbox.
+
+  ## Personas and fixtures
+
+  Seed data comes from `testdata/consent/<env>.js`, tokens from `helpers.js`:
+
+  - Enterprise: the organization asking for consent (Maskinporten token, consumer claim).
+  - Other enterprise: an unrelated organization, for the read negatives.
+  - Consenting person: the person asked for consent, who acts in the portal.
+  - Other person: a person with no rights for the consenting person.
+  - Consent resource: `samtykke-performance-test`, which requires the metadata key
+    `inntektsaar`.
+
+  ## Environments
+
+  Runs against AT22. Testdata exists for AT22 only; the persons and the consent resource
+  have not been confirmed in other environments.
+
+  ## Timing
+
+  The events endpoint only returns events older than five minutes (the
+  ConsentEventsSafetyLag setting), so events for requests created in the same run are not
+  visible yet. The events steps assert shape and filtering on whatever older events exist.
+}

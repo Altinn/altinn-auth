@@ -1,0 +1,53 @@
+meta {
+  name: 01_GIVEN_NoResourceDelegationExists
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/connections/resources/revoke
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "from": "urn:altinn:person:identifier-no:{{grantorPid}}",
+    "to": "urn:altinn:person:identifier-no:{{recipientPid}}",
+    "resource": "{{resource}}"
+  }
+}
+
+docs {
+  GIVEN the service owner has no delegation of the resource between the two persons.
+
+  Reset step, and the reference for the revoke endpoint:
+  POST /accessmanagement/api/v1/serviceowner/connections/resources/revoke
+
+  Body: `from` and `to` are party URNs (`urn:altinn:person:identifier-no:<pid>` or
+  `urn:altinn:organization:identifier-no:<orgno>`), `resource` is the resource id from
+  the resource registry. The service owner must own the resource, and it can only revoke
+  a delegation it made itself. Returns 204 whether or not a delegation existed.
+}
+
+script:pre-request {
+  const { td, loginAsServiceOwner, scopes, serviceOwners } = require("./test/ServiceOwnerAPI/Scenarios/helpers.js");
+  const data = td();
+
+  bru.setVar("grantorPid", data.resourceDelegation.grantor.pid);
+  bru.setVar("recipientPid", data.resourceDelegation.recipient.pid);
+  bru.setVar("resource", data.resourceDelegation.resource);
+
+  await loginAsServiceOwner(serviceOwners.digdir, scopes.resourceDelegationWrite);
+}
+
+tests {
+  test("GIVEN no delegation exists, the reset revoke returns 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

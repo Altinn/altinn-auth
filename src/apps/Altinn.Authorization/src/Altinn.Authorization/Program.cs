@@ -229,6 +229,8 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddTransient<ISigningCredentialsResolver, SigningCredentialsResolver>();
     services.AddSingleton<IEventsQueueClient, EventsQueueClient>();
     services.AddSingleton<IEventLog, EventLogService>();
+    services.Configure<AuditLogDeduplicationSettings>(config.GetSection("AuditLogDeduplication"));
+    services.AddSingleton<AuthorizationEventDuplicateTracker>();
     services.TryAddSingleton(TimeProvider.System);
     GeneralSettings generalSettings = config.GetSection("GeneralSettings").Get<GeneralSettings>();
     services.AddAuthentication(JwtCookieDefaults.AuthenticationScheme)
@@ -257,7 +259,6 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
         options.AddPolicy(AuthzConstants.POLICY_STUDIO_DESIGNER, policy => policy.Requirements.Add(new ClaimAccessRequirement("urn:altinn:app", "studio.designer")));
         options.AddPolicy(AuthzConstants.ALTINNII_AUTHORIZATION, policy => policy.Requirements.Add(new ClaimAccessRequirement("urn:altinn:app", "sbl.authorization")));
         options.AddPolicy(AuthzConstants.POLICY_PLATFORMISSUER_ACCESSTOKEN, policy => policy.Requirements.Add(new AccessTokenRequirement(AuthzConstants.PLATFORM_ACCESSTOKEN_ISSUER)));
-        options.AddPolicy(AuthzConstants.DELEGATIONEVENT_FUNCTION_AUTHORIZATION, policy => policy.Requirements.Add(new ClaimAccessRequirement("urn:altinn:app", "platform.authorization")));
         options.AddPolicy(AuthzConstants.AUTHORIZESCOPEACCESS, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.AUTHORIZE_SCOPE, AuthzConstants.AUTHORIZE_ADMIN_SCOPE])));
     });
 

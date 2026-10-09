@@ -1,0 +1,84 @@
+# Contributing to Altinn Authorization
+
+This guide applies to everyone who changes this repository, whether you type every line yourself or work with an AI coding assistant. The bar for a contribution is the same either way, and so is the review.
+
+## Before you start
+
+- Every change starts from an issue. Reference it in the branch name and the PR title.
+- Read the [README](README.md) and the docs of the vertical you are changing. Agent guidance will live in `AGENTS.md` at the root (#4077) and in each vertical (#4078); until those land, the README is the guidance.
+- Integration tests need a running container runtime. A green local build is not proof; CI is the gate.
+
+## Branches, commits and pull requests
+
+- Branch from `main` as `type/<issue>_<short-slug>`, for example `fix/4044_remove_all_client_delegations`.
+- The PR title is a [Conventional Commit](https://www.conventionalcommits.org/) with the issue number: `fix(#4044): remove every delegation when a client is removed`. `main` is squash-only, and the release automation reads the squash commit's title. Today that title is the PR title for a PR with several commits but the commit title for a PR with one, so check it in the merge dialog before you merge (#4095 makes it always the PR title). `feat` and `fix` on a package under `src/pkgs` bump its version.
+- Keep PRs small: aim for under **400 changed lines**, not counting mechanically generated files (generated clients, lock files) and test data. Code an assistant wrote counts in full. Split larger work, and agree the split with a reviewer before you start.
+- One approving review from a person and green required checks are needed to merge. Open a draft PR early if you want feedback.
+- Update affected documentation and agent guidance in the same PR as the behaviour they describe. An ADR is required only for a significant architectural decision or a lasting trade-off; touching an API contract, data model or authorization code does not by itself require one. See [When an ADR is required](#when-an-adr-is-required).
+- Tests are production code: reviewed with the same care, and never deleted or weakened without a reason a reviewer has agreed to. See the [testing guide](docs/testing/README.md). Say in the PR what you could not test locally.
+- Write for the reader. Anything a person is meant to read, whether an issue, a PR description, a comment or a doc, starts with a **TL;DR of at most five bullets**. A short bug report starts with what happened instead; one sentence is enough. A long one, for example drafted with a tool, still starts with a TL;DR. An issue keeps under 200 words above the fold and puts the rest in a collapsed `<details>` block. A PR description is the TL;DR plus what you verified. A text drafted with a tool says so at the top, and leaves the reader unspecified until a person confirms they have read it. An unnamed reader is an honest signal, not a failure.
+
+## Issues and labels
+
+**TL;DR**
+
+- Write the issue. An incomplete issue is better than one never written; `status/triage` makes sure someone completes it.
+- Pick the form that fits, and the component it concerns. "Don't know" is a fine answer.
+- Write in English or Norwegian, whichever is quicker. The forms are in English.
+- One issue type and at least one `area/*` per issue. Everything else is optional.
+
+Why the model looks like this is in [ADR-0004](docs/adr/0004-issue-and-label-model.md). Until the labelling workflow ([#4357](https://github.com/Altinn/altinn-auth/issues/4357)) and `.github/labels.yml` ([#4356](https://github.com/Altinn/altinn-auth/issues/4356)) are in place, triage sets the `area/*` and layer labels by hand from the form's answers (`Backend` and `Frontend` until [#4360](https://github.com/Altinn/altinn-auth/issues/4360) renames them). What to set:
+
+| What | How | Required |
+| --- | --- | --- |
+| Kind of work | Issue type: Bug, Feature, Task, Epic, Enhancement. The form sets it. A user story is a Feature. | yes, at triage at the latest |
+| Component | One or more `area/*`, one per component the issue touches, for example `area/register`. The form asks for them; triage sets the labels until the workflow does. | yes, at triage at the latest |
+| Capability | `feature/*`, for example `feature/consent` | no |
+| Layer | `layer/backend`, `layer/frontend`, `layer/ux`, `layer/infra`, `layer/test`. The bug, feature and task forms ask for it. | when known: as soon as the work is identified as frontend, backend and so on |
+| Waiting for something | `status/blocked`, plus a "blocked by" link when the blocking issue is known | when it applies |
+| Release | Milestone | when planned |
+| Priority, horizon, progress | Fields on the project board | set in refinement |
+
+- Do not add a team label. The owning team follows from the component, through `.github/CODEOWNERS`.
+- Close a duplicate as *duplicate* and something you will not do as *not planned*, with the reason in a comment. There are no labels for these.
+- A new label is added in `.github/labels.yml` by pull request, not in the GitHub UI. Until that file exists, ask in triage before creating one.
+
+## When an ADR is required
+
+Write an ADR when a change introduces or revises a significant architectural decision whose rationale needs to outlive the PR. Typical cases are a change to trust boundaries or authorization semantics, service responsibilities or dependencies between verticals, data ownership or storage strategy, a breaking API contract with migration consequences, or a substantial build or release strategy. Record meaningful alternatives, the chosen trade-off and its lasting consequences.
+
+An ADR is **not required** for a small, backward-compatible API or model extension that follows the existing design, exposing already-stored metadata, a bug fix restoring intended behaviour, a refactoring that preserves behaviour, or a routine configuration, tooling or documentation adjustment. Document the contract and relevant choices in the README, OpenAPI or other existing documentation, and verify behaviour with appropriate tests. For example, exposing existing resource creation and update timestamps does not require a separate ADR.
+
+Judge the significance of the decision, not the number of changed lines or the kind of file touched. A small code change can still alter a trust boundary. If the change introduces no significant architectural choice or lasting trade-off, ordinary documentation and the PR explanation are sufficient; no separate approval or ADR is needed just to confirm that exception.
+
+When required, add the ADR in [`docs/adr/`](docs/adr/README.md) for cross-cutting decisions or in the vertical's `docs/adr/`, in the same PR as the change. If it changes an accepted architectural decision, supersede that ADR rather than editing its history.
+
+This clarification of ADR scope was drafted with Codex (GPT-6). Human reader of the revised wording: not confirmed.
+
+## Working with AI assistance
+
+Using an AI assistant is a personal choice. Nobody is required to use one, and nobody is criticised for using or not using one. The rules below are not optional; they are what makes the choice safe for everyone. The reasoning behind them, with sources, is in [docs/ai/working-agreement-rationale.md](docs/ai/working-agreement-rationale.md).
+
+1. **You own what you submit.** Whatever produced the code, you understand it and can explain every line in review, in your own words. "The tool wrote it" is not an answer.
+2. **Disclose substantial assistance.** If an assistant generated or substantially rewrote code, tests or documentation, say so in the PR description: what it did and how you verified it. Autocomplete, grammar fixes and answering your questions need no disclosure. If your tool adds a `Co-authored-by` or `Assisted-by` trailer, leave it in. An ADR, security assessment or other decision record written with substantial assistance says so in the document and names the model.
+3. **The narrative is yours.** You may draft a PR description or a reply with a tool, but every claim in it is one you have checked, the verification it describes is verification you did, and the judgement in a review discussion is your own. Never paste output you have not read. If you quote an assistant, put it in a quote block and add your own comment.
+4. **Review-ready means self-reviewed and green.** Before you ask for review, read the whole diff and run the checks that fit the change: build and the relevant tests for code, negative tests and permission boundaries for authorization logic, a link check for docs. Fix what the tool got wrong. The reviewer's time is the scarcest resource in the team; never spend it on output you have not read.
+5. **Keep generated changes small.** A large change produced with an assistant is agreed with a reviewer before it is started, and split so each PR can be understood in one sitting.
+6. **AI review is advisory.** Comments from a review bot are addressed or dismissed with a reason, by a person. A bot never counts as the required approval.
+7. **Protect data.** Never put secrets, API keys, tokens, environment files, personal data, production logs or telemetry, incident details, or material that is taushetsbelagt or unntatt offentlighet into a prompt, and keep such files where an assistant cannot read them. Use only tools the team has approved. An agent gets the least access the task needs and never production credentials. A PR opened under an agent's own identity runs CI only after a person has approved it, and is merged by a person. The classification table for what may go where, the approved tools and the rules for agent access are in [docs/ai/data-policy.md](docs/ai/data-policy.md).
+8. **Verify before you report.** A bug an assistant found is reproduced and understood by you before it becomes an issue, and the issue says it was found with assistance. A security suspicion you cannot reproduce safely goes privately through [SECURITY.md](SECURITY.md), with the code evidence and your uncertainty stated, rather than waiting.
+9. **Know the rules before you use a tool.** Read this section and the [data policy](docs/ai/data-policy.md), and complete the team's short onboarding (#4091). The team keeps a record of who has done it.
+10. **Leave the map better than you found it.** When you discover something an assistant or a new colleague would get wrong, add it to the relevant `AGENTS.md` in the same PR; until #4077 lands, to the vertical's README.
+
+**Transition.** Rules 1 to 8 and 10 apply from the day this document is merged. Rule 9 applies once the onboarding (#4091) exists, and the data policy is in force once security in Digdir has accepted it; its own first paragraph says where it stands. Until then, having read this section counts as onboarding, the list in rule 7 is the data rule, and a tool not already in use on the team is cleared with the team lead first.
+
+## Reviewing
+
+- If the PR has no TL;DR, ask for one before you read further.
+- Review the change, not the tool. Ask the author to explain anything you cannot follow; a good answer is part of the contribution.
+- A small, focused PR gets a faster and better review. Ask for a split when a PR is too big to hold in your head.
+- Approve only what you would be comfortable maintaining yourself.
+
+## Security and licence
+
+Report vulnerabilities as described in [SECURITY.md](SECURITY.md), never in a public issue. Contributions are licensed under the [MIT License](LICENSE); make sure any tool you use lets you license its output that way.

@@ -1,8 +1,8 @@
-﻿using Altinn.AccessMgmt.Core.Constants.Translation;
+﻿using System.Globalization;
+using Altinn.AccessMgmt.Core.Constants.Translation;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Primitives;
-using System.Globalization;
 
 namespace Altinn.AccessMgmt.Core.Utils;
 

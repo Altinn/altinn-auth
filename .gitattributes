@@ -17,3 +17,4 @@
 *.pfx binary
 
 *.sln linguist-generated
+*.md text eol=lf

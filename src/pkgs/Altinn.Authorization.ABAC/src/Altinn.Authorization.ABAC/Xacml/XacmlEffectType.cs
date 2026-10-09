@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.ABAC.Xacml
+﻿namespace Altinn.Authorization.ABAC.Xacml
 {
     /// <summary>
     /// The EffectType simple type defines the values allowed for the Effect attribute of the <Rule/> element and for the

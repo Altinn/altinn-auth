@@ -1,0 +1,20 @@
+meta {
+  name: 02_RequestCounts
+  seq: 2
+}
+
+docs {
+  Scenario: The requester and the organization count their requests
+
+    Given the service owner has created a draft package request for the requester
+    When the requester counts its sent drafts
+    Then the count matches the number of drafts in the sent list, including the new one
+    When the organization counts its received drafts
+    Then the count matches the number of drafts in the received list, including the new one
+    And the requester cannot count the organization's received requests
+    When the service owner withdraws the draft
+
+  The counts are compared with the matching list endpoints instead of fixed numbers,
+  since every run leaves a withdrawn request behind and other suites may have open
+  requests at the organization.
+}

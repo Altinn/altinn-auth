@@ -1,4 +1,4 @@
-namespace Altinn.AccessMgmt.PersistenceEF.Models.Contracts;
+﻿namespace Altinn.AccessMgmt.PersistenceEF.Models.Contracts;
 
 public interface IEntityUrn
 {

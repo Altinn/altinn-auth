@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -111,13 +111,13 @@ public class IdPortenAuthorizationClient : IIdPortenAuthorizationClient
         var request = new HttpRequestMessage(method, uri)
         {
             Content = requestBody,
-            Headers = 
-            { 
+            Headers =
+            {
                 Accept = { new MediaTypeWithQualityHeaderValue("application/json") },
                 Authorization = new AuthenticationHeaderValue("Bearer", tokenResponse.AccessToken)
             }
         };
-        
+
         return request;
     }
 }

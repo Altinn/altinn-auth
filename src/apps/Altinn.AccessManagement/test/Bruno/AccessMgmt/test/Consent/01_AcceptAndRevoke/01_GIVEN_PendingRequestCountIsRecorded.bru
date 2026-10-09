@@ -1,0 +1,64 @@
+meta {
+  name: 01_GIVEN_PendingRequestCountIsRecorded
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/bff/consentrequests/count/:partyUuid?status=created
+  body: none
+  auth: inherit
+}
+
+params:query {
+  status: created
+}
+
+params:path {
+  partyUuid: {{partyUuid}}
+}
+
+docs {
+  GIVEN the number of pending consent requests for the person is recorded.
+
+  GET /accessmanagement/api/v1/bff/consentrequests/count/:partyUuid?status=:status
+
+  Returns the number of consent requests offered by a party (the from party) with the
+  given status, as a bare integer. Used by the portal to show an inbox badge.
+
+  - partyUuid (path): the party the consent is asked from.
+  - status (query): created, rejected, accepted, revoked, deleted or expired. Defaults to
+    created when left out.
+  - Token: personal token with scope altinn:portal/enduser. The user must have read
+    access to access management for the party.
+
+  Only requests created with portalViewMode "show" and a validTo in the future are counted.
+
+  Typical response: 200 with a number, for example 3.
+
+  The count is stored as a baseline; the scenario later asserts that it has grown by at
+  least one, since earlier runs and other callers may also have pending requests.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  bru.setVar("partyUuid", td.consentingPerson.partyUuid);
+
+  await loginAs(td.consentingPerson);
+}
+
+tests {
+  test("GIVEN the count is requested, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the body is a non negative integer, stored as the baseline", function() {
+    const count = res.getBody();
+    expect(count).to.be.a("number");
+    expect(Number.isInteger(count)).to.be.true;
+    expect(count).to.be.at.least(0);
+    bru.setVar("pendingCountBaseline", count);
+  });
+}

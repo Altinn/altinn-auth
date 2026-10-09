@@ -1,5 +1,5 @@
 ﻿using Altinn.Authorization.Api.Contracts.Authorization;
-using Altinn.Platform.Authorization.Models;
+using Altinn.Authorization.Enums;
 using Altinn.Platform.Authorization.Models.AccessManagement;
 
 namespace Altinn.Platform.Authorization.Services.Interface;
@@ -13,13 +13,13 @@ public interface IAccessManagementWrapper
     /// Endpoint to find all delegation changes for a given user, reportee and app/resource context
     /// </summary>
     /// <returns>Input parameter to the request</returns>
-    public Task<IEnumerable<DelegationChangeExternal>> GetAllDelegationChanges(DelegationChangeInput input, CancellationToken cancellationToken = default);
+    public Task<IEnumerable<DelegationChangeDto>> GetAllDelegationChanges(DelegationChangeInputDto input, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Endpoint to find all delegation changes for a given user, reportee and app/resource context
     /// </summary>
     /// <returns>optional funvation pattern for modifying the request sent to Access Management API</returns>
-    public Task<IEnumerable<DelegationChangeExternal>> GetAllDelegationChanges(CancellationToken cancellationToken = default, params Action<DelegationChangeInput>[] actions);
+    public Task<IEnumerable<DelegationChangeDto>> GetAllDelegationChanges(CancellationToken cancellationToken = default, params Action<DelegationChangeInputDto>[] actions);
 
     /// <summary>
     /// Endpoint to get the list of all authorized parties for the authenticated user
@@ -37,11 +37,11 @@ public interface IAccessManagementWrapper
     /// Endpoint to find all access packages a given to-party has for a given from-party
     /// </summary>
     /// <returns>List of all access package urns if any</returns>
-    public Task<IEnumerable<AccessPackageUrn>> GetAccessPackages(Guid to, Guid from, CancellationToken cancellationToken = default);
+    public Task<IEnumerable<AccessPackageUrn>> GetAccessPackages(Guid to, Guid from, AccessRestriction accessRestriction = AccessRestriction.None, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Endpoint to find all roles and access packages a given to-party has for a given from-party
     /// </summary>
     /// <returns>Dto response of all role and access package urns</returns>
-    public Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, CancellationToken cancellationToken = default);
+    public Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, AccessRestriction accessRestriction = AccessRestriction.None, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default);
 }

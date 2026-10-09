@@ -1,4 +1,4 @@
-namespace Altinn.Platform.Authorization.Models
+﻿namespace Altinn.Platform.Authorization.Models
 {
     /// <summary>
     /// This model describes a role which a particular action is given to.

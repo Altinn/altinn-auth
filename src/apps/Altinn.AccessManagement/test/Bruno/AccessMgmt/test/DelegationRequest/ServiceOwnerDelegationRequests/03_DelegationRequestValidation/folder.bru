@@ -1,0 +1,15 @@
+meta {
+  name: 03_DelegationRequestValidation
+  seq: 3
+}
+
+docs {
+  Scenario: The delegation request endpoint rejects invalid requests
+
+    When both a resource and a package are given the request fails
+    When neither a resource nor a package is given the request fails
+    When a party is given with an unsupported URN the request fails
+    When the token lacks the write scope the request is forbidden
+
+  No step creates a request, so the scenario needs no cleanup.
+}

@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Altinn.AccessManagement.Api.Enduser.Authorization.AuthorizationHandler;
 using Altinn.AccessManagement.Api.Enduser.Authorization.AuthorizationRequirement;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
