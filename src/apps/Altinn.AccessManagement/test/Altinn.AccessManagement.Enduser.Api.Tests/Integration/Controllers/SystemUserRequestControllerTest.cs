@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text.Json;
@@ -50,10 +50,11 @@ public class SystemUserRequestControllerTest
     /// dedicated system user requests write scope and an <c>authorization_details</c> claim
     /// identifying the system user.
     /// </summary>
-    private static HttpClient CreateSystemUserClient(ApiFixture fixture, Guid systemUserId, string scope = AuthzConstants.SCOPE_ENDUSER_SYSTEMUSER_REQUESTS_WRITE, string consumerOrgNo = KommOrgNo)
+    private static HttpClient CreateSystemUserClient(ApiFixture fixture, Guid systemUserId, string scope = AuthzConstants.SCOPE_ENDUSER_SYSTEMUSER_REQUESTS_WRITE, string consumerOrgNo = KommOrgNo, string systemUserOrgNo = null)
     {
         var client = fixture.Server.CreateClient();
-        var authorizationDetails = $$"""{"type":"urn:altinn:systemuser","systemuser_id":["{{systemUserId}}"]}""";
+        var ownerOrgNo = systemUserOrgNo ?? consumerOrgNo ?? KommOrgNo;
+        var authorizationDetails = $$$"""{"type":"urn:altinn:systemuser","systemuser_id":["{{{systemUserId}}}"],"systemuser_org":{"authority":"iso6523-actorid-upis","ID":"0192:{{{ownerOrgNo}}}"}}""";
         var token = TestTokenGenerator.CreateToken(new ClaimsIdentity("mock"), claims =>
         {
             claims.Add(new Claim("scope", scope));
@@ -116,6 +117,22 @@ public class SystemUserRequestControllerTest
         public async Task ConsumerNotPublicSector_IsRejected_ReturnsForbidden()
         {
             var client = CreateSystemUserClient(Fixture, TestEntities.SystemUserStandard.Id, consumerOrgNo: TestData.DumboAdventures.Entity.OrganizationIdentifier);
+            var packageUrn = PackageConstants.Agriculture.Entity.Urn;
+
+            var response = await client.PostAsync(
+                $"{Route}/package?organization={TestData.BakerJohnsen.Entity.OrganizationIdentifier}&package={packageUrn}",
+                null,
+                TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        }
+
+        [Theory]
+        [InlineData(FylkOrgNo)]
+        [InlineData("910000000")]
+        public async Task ConsumerDiffersFromSystemUserOrg_IsRejected_ReturnsForbidden(string systemUserOrgNo)
+        {
+            var client = CreateSystemUserClient(Fixture, TestEntities.SystemUserStandard.Id, consumerOrgNo: KommOrgNo, systemUserOrgNo: systemUserOrgNo);
             var packageUrn = PackageConstants.Agriculture.Entity.Urn;
 
             var response = await client.PostAsync(

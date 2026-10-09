@@ -159,11 +159,16 @@ public class SystemUserRequestController(
         return invalidOrganization.ToActionResult();
     }
 
+    /// <summary>
+    /// Returns the consumer organization number only when it is the same organization that owns
+    /// the system user (<c>systemuser_org</c>); otherwise <c>null</c>.
+    /// </summary>
     private string GetConsumerOrgNo()
     {
+        string consumerOrgNo;
         try
         {
-            return OrgUtil.GetAuthenticatedParty(User) is ConsentPartyUrn.OrganizationId consumer
+            consumerOrgNo = OrgUtil.GetAuthenticatedParty(User) is ConsentPartyUrn.OrganizationId consumer
                 ? consumer.Value.ToString()
                 : null;
         }
@@ -171,5 +176,8 @@ public class SystemUserRequestController(
         {
             return null;
         }
+
+        var systemUserOrgNo = AuthenticationHelper.GetSystemUserOrgNo(HttpContext);
+        return !string.IsNullOrEmpty(consumerOrgNo) && consumerOrgNo == systemUserOrgNo ? consumerOrgNo : null;
     }
 }
