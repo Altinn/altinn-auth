@@ -167,7 +167,7 @@ public class IngestServiceTest : IClassFixture<ApiFixture>
         await Fixture.QueryDb(async db =>
         {
             var rows = await db.Database
-                .SqlQuery<bool>($"SELECT (to_regclass('{ingestTableName}') IS NOT NULL) AS \"Value\"")
+                .SqlQuery<bool>($"SELECT (to_regclass({ingestTableName}) IS NOT NULL) AS \"Value\"")
                 .ToListAsync(TestContext.Current.CancellationToken);
             exists = rows.FirstOrDefault();
         });
