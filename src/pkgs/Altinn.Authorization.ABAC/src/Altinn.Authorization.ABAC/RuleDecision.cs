@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.ABAC
+﻿namespace Altinn.Authorization.ABAC
 {
     /// <summary>
     /// The decision a single rule contributes to a rule-combining algorithm, and the decision

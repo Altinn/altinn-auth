@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.Core.Models.IdPortenAuthorization;
+﻿using Altinn.AccessManagement.Core.Models.IdPortenAuthorization;
 using Altinn.Authorization.ProblemDetails;
 
 namespace Altinn.AccessManagement.Core.Services.Interfaces

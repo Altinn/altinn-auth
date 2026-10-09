@@ -237,19 +237,19 @@ internal class ConnectionBaseQueryBuilder
             (c, e) => new { c, e })
         .Where(x => filter.IncludeAdosSubunitInheritance || x.e.VariantId != EntityVariantConstants.ADOS.Id)
         .Select(x => new ConnectionQueryBaseRecord
-            {
-                AssignmentId = x.c.AssignmentId,
-                DelegationId = x.c.DelegationId,
-                FromId = x.e.Id,
-                ToId = x.c.ToId,
-                RoleId = x.c.RoleId,
-                ViaId = x.c.FromId,
-                ViaRoleId = x.c.ViaRoleId,
-                Reason = ConnectionReason.Hierarchy,
-                IsKeyRoleAccess = x.c.IsKeyRoleAccess,
-                IsMainUnitAccess = true,
-                IsRoleMap = x.c.IsRoleMap,
-            });
+        {
+            AssignmentId = x.c.AssignmentId,
+            DelegationId = x.c.DelegationId,
+            FromId = x.e.Id,
+            ToId = x.c.ToId,
+            RoleId = x.c.RoleId,
+            ViaId = x.c.FromId,
+            ViaRoleId = x.c.ViaRoleId,
+            Reason = ConnectionReason.Hierarchy,
+            IsKeyRoleAccess = x.c.IsKeyRoleAccess,
+            IsMainUnitAccess = true,
+            IsRoleMap = x.c.IsRoleMap,
+        });
 
         var innehaverConnections =
             from reviRegnConnection in a2

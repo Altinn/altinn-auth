@@ -1,7 +1,7 @@
 ﻿#nullable enable
 
-using Altinn.Authorization.ProblemDetails;
 using System.Diagnostics.CodeAnalysis;
+using Altinn.Authorization.ProblemDetails;
 
 namespace Altinn.AccessManagement.Core.Errors;
 

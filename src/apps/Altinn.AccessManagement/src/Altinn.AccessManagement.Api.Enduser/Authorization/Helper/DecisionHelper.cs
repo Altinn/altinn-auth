@@ -201,8 +201,8 @@ namespace Altinn.AccessManagement.Api.Enduser.Authorization.Helper
                         // the token does not necessarily carry an authlevel claim.
                         XacmlJsonAttributeAssignment attributeMinLvAuthSystemUser = IsSystemUser(user) ? GetObligation(PolicyObligationMinAuthnLevelSystemUser, obligationList) : null;
                         if (attributeMinLvAuthSystemUser == null
-                            || (SystemUserAuthenticationLevel < Convert.ToInt32(attributeMinLvAuthSystemUser.Value)
-                                && SystemUserAuthenticationLevel < Convert.ToInt32(minAuthenticationLevel)))
+                            || (Convert.ToInt32(attributeMinLvAuthSystemUser.Value) > SystemUserAuthenticationLevel
+                                && Convert.ToInt32(minAuthenticationLevel) > SystemUserAuthenticationLevel))
                         {
                             return false;
                         }

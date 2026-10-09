@@ -1,4 +1,4 @@
-using Altinn.AccessMgmt.Core.Authorization;
+﻿using Altinn.AccessMgmt.Core.Authorization;
 using Microsoft.AspNetCore.Authorization;
 
 namespace Altinn.AccessMgmt.Core.Extensions;

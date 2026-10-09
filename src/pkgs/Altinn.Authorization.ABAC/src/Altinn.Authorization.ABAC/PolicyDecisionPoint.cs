@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.ABAC
+﻿namespace Altinn.Authorization.ABAC
 {
     using System;
     using System.Collections.Generic;

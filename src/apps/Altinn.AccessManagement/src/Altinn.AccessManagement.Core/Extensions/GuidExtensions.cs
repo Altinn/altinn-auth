@@ -1,4 +1,4 @@
-namespace Altinn.AccessManagement.Core.Extensions;
+﻿namespace Altinn.AccessManagement.Core.Extensions;
 
 /// <summary>
 /// Provides extension methods for Guid.

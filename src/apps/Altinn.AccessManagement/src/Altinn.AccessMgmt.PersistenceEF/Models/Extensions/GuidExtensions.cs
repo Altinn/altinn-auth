@@ -1,4 +1,4 @@
-namespace Altinn.AccessMgmt.PersistenceEF.Models.Extensions;
+﻿namespace Altinn.AccessMgmt.PersistenceEF.Models.Extensions;
 
 /// <summary>
 /// Provides extension methods for Guid.

@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.Tests.Util
+﻿namespace Altinn.Authorization.Tests.Util
 {
     /// <summary>
     /// Named identities and resource identifiers for the system-resource role-decision matrix

@@ -45,7 +45,7 @@ public class MaskinportenRouteIsolationTest : IClassFixture<ApiFixture>
         paths.Should().NotBeEmpty();
         paths.Should().OnlyContain(p => p == expectedRoute || p.StartsWith($"{expectedRoute}/", StringComparison.Ordinal));
     }
-        
+
     private List<string> GetPaths(Type controllerType) =>
         GetActions(controllerType).Select(a => a.RelativePath).ToList();
 

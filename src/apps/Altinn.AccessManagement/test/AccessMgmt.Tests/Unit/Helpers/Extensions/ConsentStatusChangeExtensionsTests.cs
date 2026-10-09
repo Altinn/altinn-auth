@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.Api.Enterprise.Extensions;
+﻿using Altinn.AccessManagement.Api.Enterprise.Extensions;
 using Altinn.AccessManagement.Core.Models.Consent;
 using Altinn.Authorization.Api.Contracts.Consent;
 

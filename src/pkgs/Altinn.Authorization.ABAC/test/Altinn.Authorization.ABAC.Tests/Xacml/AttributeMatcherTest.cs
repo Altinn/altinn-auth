@@ -1,4 +1,4 @@
-using Altinn.Authorization.ABAC.Constants;
+﻿using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
 
 namespace Altinn.Authorization.ABAC.Tests.Xacml;

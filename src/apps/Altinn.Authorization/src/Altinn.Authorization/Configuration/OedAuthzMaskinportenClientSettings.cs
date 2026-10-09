@@ -1,4 +1,4 @@
-using Altinn.ApiClients.Maskinporten.Interfaces;
+﻿using Altinn.ApiClients.Maskinporten.Interfaces;
 
 namespace Altinn.Platform.Authorization.Configuration
 {

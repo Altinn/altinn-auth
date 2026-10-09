@@ -1,4 +1,4 @@
-using Altinn.AccessMgmt.FFB.Services;
+﻿using Altinn.AccessMgmt.FFB.Services;
 using Microsoft.AspNetCore.Components;
 
 namespace Altinn.AccessMgmt.FFB.Components.Shared;

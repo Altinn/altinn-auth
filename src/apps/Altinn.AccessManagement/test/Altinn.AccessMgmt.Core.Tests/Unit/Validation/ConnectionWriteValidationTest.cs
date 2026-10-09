@@ -1,4 +1,4 @@
-using Altinn.AccessMgmt.Core.Services;
+﻿using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.Core.Validation;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;

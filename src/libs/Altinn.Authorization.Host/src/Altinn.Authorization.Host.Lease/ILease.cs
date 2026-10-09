@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.Host.Lease;
+﻿namespace Altinn.Authorization.Host.Lease;
 
 /// <summary>
 /// Represents the result of a lease operation.

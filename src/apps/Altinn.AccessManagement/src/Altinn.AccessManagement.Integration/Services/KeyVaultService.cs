@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using Altinn.AccessManagement.Integration.Services.Interfaces;
 using Azure;
 using Azure.Identity;

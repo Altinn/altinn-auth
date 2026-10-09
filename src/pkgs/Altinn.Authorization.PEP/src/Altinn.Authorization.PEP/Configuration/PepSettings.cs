@@ -1,4 +1,4 @@
-namespace Altinn.Common.PEP.Configuration
+﻿namespace Altinn.Common.PEP.Configuration
 {
     /// <summary>
     /// General configuration settings

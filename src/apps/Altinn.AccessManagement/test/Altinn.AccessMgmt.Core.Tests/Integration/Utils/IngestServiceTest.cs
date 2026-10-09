@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.TestUtils.Fixtures;
+﻿using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
@@ -167,7 +167,7 @@ public class IngestServiceTest : IClassFixture<ApiFixture>
         await Fixture.QueryDb(async db =>
         {
             var rows = await db.Database
-                .SqlQueryRaw<bool>($"SELECT (to_regclass('{ingestTableName}') IS NOT NULL) AS \"Value\"")
+                .SqlQuery<bool>($"SELECT (to_regclass('{ingestTableName}') IS NOT NULL) AS \"Value\"")
                 .ToListAsync(TestContext.Current.CancellationToken);
             exists = rows.FirstOrDefault();
         });
