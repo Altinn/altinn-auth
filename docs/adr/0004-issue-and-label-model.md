@@ -8,7 +8,7 @@ Drafted with AI assistance (Claude Code, model Claude Opus 5.5) from figures pul
 
 **TL;DR**
 
-- Every issue has one issue type, which says what kind of work it is, and one `area/<component>` label, which says which part of the domain it belongs to.
+- Every issue has one issue type, which says what kind of work it is. It also has at least one `area/<component>` label, one for each part of the domain it touches.
 - Capabilities that cut across components (consent, access packages, system user …) are `feature/*` labels. Other labels have a fixed prefix and a rule.
 - Issues carry no team label. Ownership follows the component: CODEOWNERS says which team owns each component, so a reorganisation changes one file, not hundreds of issues.
 - Creating an issue must stay quick. The only required field in the issue forms is the component, and «Vet ikke» is a valid answer. Triage and refinement fill in the rest.
@@ -33,7 +33,7 @@ The labels do not support that. They say *when* an issue was planned and *which 
 We will use one model, with one mechanism per question.
 
 1. **Issue type** answers *what kind of work*: Epic, Feature, Task, Bug, Enhancement or User story. `kind/bug`, `kind/feature-request` and `kind/user-story` are retired.
-2. **`area/*`** answers *which component*, one per issue: `access-management`, `access-management-frontend`, `authorization`, `authentication`, `register`, `resource-registry`, `auditlog`, `packages`, `libs`, `tools`, `infra`, `devex` and `docs`. `area/infra` is the shared platform only (CI/CD, shared Terraform, Flux); infrastructure work for one component gets that component's area and `layer/infra`. `area/auditlog` is the service that stores audit events; producing an event belongs to the component that emits it. A pull request gets area labels automatically from the paths it changes, and may have more than one.
+2. **`area/*`** answers *which component*. An issue has at least one: every component it touches. Large work across components is still better split into sub-issues per component. The values are `access-management`, `access-management-frontend`, `authorization`, `authentication`, `register`, `resource-registry`, `auditlog`, `packages`, `libs`, `tools`, `infra`, `devex` and `docs`. `area/infra` is the shared platform only (CI/CD, shared Terraform, Flux); infrastructure work for one component gets that component's area and `layer/infra`. `area/auditlog` is the service that stores audit events; producing an event belongs to the component that emits it. A pull request gets area labels automatically from the paths it changes, and may have more than one.
 3. **`feature/*`** answers *which capability*, zero or more: `access-packages`, `roles`, `single-rights`, `instance-delegation`, `client-delegation`, `system-user`, `consent`, `access-requests`, `maskinporten`, `authorized-parties`, `activity-log`, `notifications` and `a2-decommission`. A new capability gets a label when it has more than a handful of issues.
 4. **The remaining groups** each have a prefix and a rule:
 
@@ -52,7 +52,7 @@ We will use one model, with one mechanism per question.
    - Priority, horizon (now, next, later) and progress are fields on the shared project board ([#4088](https://github.com/Altinn/altinn-auth/issues/4088)).
 6. **Naming.** Label names are English, lowercase kebab-case with a group prefix, so they match the code and need no quoting in `gh`. Descriptions are Norwegian and mandatory. Two exceptions keep their established names: `good first issue`, which GitHub recognises, and the bot labels `dependencies`, `autorelease: pending` and `autorelease: tagged`.
 7. **One source for labels.** The labels, with colour and description, live in `.github/labels.yml`, and a workflow synchronises them. A label is added, renamed or removed only by changing that file in a pull request.
-8. **Ownership follows the component.** Issues carry no `team/*` label. Which team owns a component is stated once, in `.github/CODEOWNERS`, by the component's path. Review requests come from it, and the board's Team field is derived from it by the same workflow that sets `area/*`. When the teams change, CODEOWNERS changes, and no issue needs relabelling. The starting point, taken from who deploys what in the weekly deploy checklists, is for the reviewers to confirm:
+8. **Ownership follows the component.** Issues carry no `team/*` label. Which team owns a component is stated once, in `.github/CODEOWNERS`, by the component's path. Review requests come from it, and the board's Team field is derived from it by the same workflow that sets `area/*`. When an issue's areas belong to one team, the field is set automatically. When they span teams, triage sets it. When the teams change, CODEOWNERS changes, and no issue needs relabelling. The starting point, taken from who deploys what in the weekly deploy checklists, is for the reviewers to confirm:
 
    | `area/` | Owning team today |
    | --- | --- |
@@ -65,6 +65,7 @@ We will use one model, with one mechanism per question.
 ### Alternatives considered
 
 - **Add `area/*` labels and leave the rest.** Cheapest, but keeps release labels without dates, two ways of saying "bug", and four naming styles. Rejected.
+- **Exactly one `area/*` per issue.** Makes ownership unambiguous, but forces an arbitrary choice on issues that touch, for example, both the Access Management backend and its frontend. Most such issues stay within one team, so the ambiguity it prevents is rare. Rejected.
 - **A `team/*` label on every issue.** Makes the owning team visible at a glance, but has to be migrated on every reorganisation, and the next one is already planned. Rejected in favour of deriving the team from the component.
 - **Board fields instead of `area/*` labels.** Fields are invisible in repository search and on pull requests, cannot be set by a path-based labeler, and need a `project`-scoped token for every automation. Rejected for area; chosen for priority, horizon and team, which are planning data.
 - **Only a "blocked by" relationship, no `status/blocked`.** Precise, but needs the blocking issue to be found first and does not cover a blocker that is not an issue. Rejected as the only way; used alongside the label.
@@ -75,6 +76,7 @@ We will use one model, with one mechanism per question.
 ## Consequences
 
 - Every open issue needs a type and an `area/*` once. The backfill is a best-effort script, confirmed by each team for its own components, so expect gaps and some manual correction during the transition ([#4360](https://github.com/Altinn/altinn-auth/issues/4360), [#4361](https://github.com/Altinn/altinn-auth/issues/4361)).
+- An issue with several areas shows up under each of them, so a count per area can add up to more than the number of issues.
 - Renaming `Backend` and `Frontend` to `layer/*`, and removing `team/*`, breaks saved searches and board views that filter on the old names. They must be updated in the same change.
 - Deleting a release label also removes it from closed issues. Whether that history is kept is decided in [#4362](https://github.com/Altinn/altinn-auth/issues/4362).
 - A vertical that is added or moved in brings its `area/*` label, its CODEOWNERS line and its labeler rule in the same pull request. Issues transferred from its old repository are relabelled to this model on transfer ([#4363](https://github.com/Altinn/altinn-auth/issues/4363)).

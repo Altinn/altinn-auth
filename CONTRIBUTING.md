@@ -24,14 +24,14 @@ This guide applies to everyone who changes this repository, whether you type eve
 
 - Write the issue. An incomplete issue is better than one never written; `status/triage` makes sure someone completes it.
 - Pick the form that fits, and the component it concerns. «Vet ikke» is a fine answer.
-- One issue type and one `area/*` per issue. Everything else is optional.
+- One issue type and at least one `area/*` per issue. Everything else is optional.
 
 Why the model looks like this is in [ADR-0004](docs/adr/0004-issue-and-label-model.md). What to set:
 
 | What | How | Required |
 | --- | --- | --- |
 | Kind of work | Issue type: Bug, Feature, Task, User story, Epic, Enhancement. The form sets it. | yes, at triage at the latest |
-| Component | One `area/*`, for example `area/register`. The form's component field sets it. | yes, at triage at the latest |
+| Component | One or more `area/*`, one per component the issue touches, for example `area/register`. The form's component field sets them. | yes, at triage at the latest |
 | Capability | `feature/*`, for example `feature/consent` | no |
 | Layer | `layer/backend`, `layer/frontend`, `layer/ux`, `layer/infra`, `layer/test` | no |
 | Waiting for something | `status/blocked`, plus a "blocked by" link when the blocking issue is known | when it applies |
