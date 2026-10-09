@@ -24,7 +24,7 @@ pwsh eng/testing/run-coverage.ps1                      # coverage, installs dotn
 
 - **Branch per change, never commit to `main`.** Name it `type/<issue>_<slug>`.
 - **The PR title is a Conventional Commit with the issue number**, for example `fix(#4044): ...`. `main` is squash-only with linear history, and the release automation reads the squash title. A single-commit PR currently squashes under the *commit* title, so check the title in the merge dialog ([#4095](https://github.com/Altinn/altinn-auth/issues/4095)).
-- **A green local `dotnet test` is not proof.** Integration tests skip when no container runtime is running, so the suite can pass having run almost nothing. CI is the gate.
+- **A green local `dotnet test` is not proof, and a red one is not always a defect.** Without a container runtime some integration tests skip and others fail in fixture setup, so which you get is per vertical. CI is the gate.
 - **Update affected documentation and agent guidance in the same PR.** Require ADRs only for significant architectural decisions or lasting trade-offs; see [the threshold](CONTRIBUTING.md#when-an-adr-is-required). Validate the [guidance contract](docs/adr/0002-tool-neutral-agent-contract.md) with `node .github/scripts/agents-docs-validate.mjs`.
 - **Issues: a type and one or more `area/*`** ([guide](CONTRIBUTING.md#issues-and-labels)).
 - **Issues, comments, docs and PR descriptions start with a TL;DR** of at most five bullets (bugs: what happened). Text drafted with a tool says so near the top, and says the reader is unspecified until a person confirms they have read it.
@@ -39,11 +39,11 @@ pwsh eng/testing/run-coverage.ps1                      # coverage, installs dotn
 
 ## Where things live
 
-Code sits in verticals. A vertical always has its own `.sln`, `src/` and `conf.json`; `test/`, `Version.props`, `Dockerfile` and `infra/` appear where they are needed, and the contents of `conf.json` differ per vertical (dependencies, Sonar key, database, infrastructure). CI discovers verticals by globbing the four folders below and reading each `conf.json`, so adding one needs no workflow change.
+Code sits in verticals. A vertical always has its own `.sln`, `src/` and `conf.json`; `test/`, `Version.props`, `Dockerfile` and `infra/` appear where needed, and `conf.json` differs per vertical. CI discovers verticals by globbing the four folders below and reading each `conf.json`, so adding one needs no workflow change.
 
 | Path | Contents |
 | --- | --- |
-| `src/apps` | Deployable services: `Altinn.Authorization` (PDP/PEP), `Altinn.AccessManagement`, `Altinn.ResourceRegistry`, `Altinn.Register` |
+| `src/apps` | Deployable services: [`Altinn.Authorization`](src/apps/Altinn.Authorization/AGENTS.md) (PDP), [`Altinn.AccessManagement`](src/apps/Altinn.AccessManagement/AGENTS.md), [`Altinn.ResourceRegistry`](src/apps/Altinn.ResourceRegistry/AGENTS.md), `Altinn.Register` |
 | `src/libs` | Shared libraries: `Api.Contracts`, `Host`, `Integration`, `Testing` |
 | `src/pkgs` | Published NuGet packages: `Altinn.Authorization.ABAC`, and `Altinn.Authorization.PEP`, which ships as `Altinn.Common.PEP` |
 | `src/tools` | `Altinn.Authorization.Cli` and the [`Altinn.AccessMgmt.FFB`](src/tools/Altinn.AccessMgmt.FFB/AGENTS.md) admin tool, which has its own guidance |
@@ -53,7 +53,7 @@ Code sits in verticals. A vertical always has its own `.sln`, `src/` and `conf.j
 | `eng/testing` | Coverage scripts, thresholds, the test-category guard |
 | `infra` | Infrastructure as code |
 
-Per-vertical `AGENTS.md` files arrive with [#4078](https://github.com/Altinn/altinn-auth/issues/4078); until then a vertical's `README.md` is the best starting point where one exists.
+Before changing a vertical, read its `AGENTS.md`. Where there is none yet, as in Register today, start from its `README.md` if it has one.
 
 ## Landmines
 
@@ -66,8 +66,8 @@ Do not "fix" these without understanding them.
 ## Test gotchas
 
 - **In an xUnit v3 vertical, every test needs a category.** Mark the class or method `[UnitTest]` or `[IntegrationTest]` from `Altinn.Authorization.Testing`. CI selects its lanes by that trait, so an uncategorised test would run in neither; `TestCategoryGuard` is linked into those test assemblies and fails the run instead of letting it disappear. The markers and the guard are compiled only when `XUnitVersion` is `v3` (see `src/Directory.Build.targets`).
-- **Resource Registry is the exception, and it is not a small one.** It is an xUnit v2 island: it does not link the category markers or the guard, its tests carry no category, and the trait filter does not exclude them. A repository-wide `dotnet test -- --filter-trait "Category=Unit"` therefore also runs its integration tests, which start a real PostgreSQL rather than skipping. Run the unit lane per vertical instead, and run that vertical through its own solution.
-- Outside that vertical, integration tests skip rather than fail when Docker or Podman is unavailable. Start a container runtime before trusting a green run.
+- **Resource Registry is the exception.** It is an xUnit v2 island whose tests carry no category, so a repository-wide `dotnet test -- --filter-trait "Category=Unit"` also runs its integration tests, which start a real PostgreSQL. Run the unit lane per vertical, and that vertical through its own solution; [its `AGENTS.md`](src/apps/Altinn.ResourceRegistry/AGENTS.md) explains why.
+- **Without Docker or Podman, each vertical behaves differently.** Authorization's database tests skip when they check `SkipReason`, Access Management's fail in fixture setup, and Resource Registry's try to start a container. Start a runtime before trusting a run, green or red.
 - Start from [`docs/testing/README.md`](docs/testing/README.md) for fixtures, mocks and the naming convention.
 
 ## Known tech debt
