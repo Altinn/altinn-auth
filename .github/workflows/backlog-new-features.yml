@@ -1,0 +1,47 @@
+name: Backlog New Features
+
+on:
+  schedule:
+    # Every morning, before the working day. The script is a no-op on days where no
+    # Feature was left in the default column.
+    - cron: "30 4 * * *"
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: "List what would move without changing the board"
+        type: boolean
+        default: false
+
+jobs:
+  backlog:
+    name: Move new Features into the refinement backlog
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 20
+
+      - uses: pnpm/action-setup@6e7bdbda5fe05107efc88b23b7ed00aa05f84ca0
+        with:
+          version: 9
+          run_install: |
+            - cwd: .github/scripts
+              args: [--frozen-lockfile]
+            - args: [--global, tsx]
+
+      - name: Backlog new Features
+        env:
+          GITHUB_TOKEN: ${{ secrets.ASSIGN_PROJECT_TOKEN }}
+          GITHUB_PROJECT_OWNER: Altinn
+          GITHUB_PROJECT_NUMBER: 50
+          GITHUB_FEATURE_ISSUE_TYPES: Feature
+          GITHUB_FROM_STATUS: New
+          GITHUB_BACKLOG_STATUS: Backlog
+          DRY_RUN: ${{ inputs.dry-run }}
+        run: tsx ./.github/scripts/backlog-new-features.mts
