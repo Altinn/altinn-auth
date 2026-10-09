@@ -81,7 +81,6 @@ public class AuthorizationApiFixture : WebApplicationFactory<Program>
 
             // External service mocks
             services.AddSingleton<IProfile, ProfileMock>();
-            services.AddSingleton<IRoles, RolesMock>();
             services.AddSingleton<IOedRoleAssignmentWrapper, OedRoleAssignmentWrapperMock>();
             services.AddSingleton<IRegisterService, RegisterServiceMock>();
             services.AddSingleton<IResourceRegistry, ResourceRegistryMock>();

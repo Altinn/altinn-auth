@@ -117,37 +117,6 @@ public class AccessManagementWrapper : IAccessManagementWrapper
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<AccessPackageUrn>> GetAccessPackages(Guid to, Guid from, AccessRestriction accessRestriction = AccessRestriction.None, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default)
-    {
-        var cacheKey = $"AccPkgs|f:{from}|t:{to}|ac:{accessRestriction}|vp:{viaPartyOrganizationNumber}";
-
-        if (!_memoryCache.TryGetValue(cacheKey, out IEnumerable<AccessPackageUrn> result))
-        {
-            var response = await _client.Client.SendAsync(
-                new(HttpMethod.Get, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), $"policyinformation/accesspackages?to={to}&from={from}&accessRestriction={accessRestriction}{ViaPartyQuery(viaPartyOrganizationNumber)}")),
-                cancellationToken);
-
-            if (response.IsSuccessStatusCode)
-            {
-                result = await response.Content.ReadFromJsonAsync<IEnumerable<AccessPackageUrn>>(_serializerOptions, cancellationToken);
-
-                var cacheEntryOptions = new MemoryCacheEntryOptions()
-                .SetPriority(CacheItemPriority.High)
-                .SetAbsoluteExpiration(new TimeSpan(0, 0, _generalSettings.RoleCacheTimeout, 0));
-
-                _memoryCache.Set(cacheKey, result, cacheEntryOptions);
-
-                return result;
-            }
-
-            var content = await response.Content.ReadAsStringAsync(cancellationToken);
-            throw new HttpRequestException(content == string.Empty ? $"received status code {response.StatusCode}" : content);
-        }
-
-        return result;
-    }
-
-    /// <inheritdoc/>
     public async Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, AccessRestriction accessRestriction = AccessRestriction.None, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default)
     {
         var cacheKey = $"RolesAndAccPkgs|f:{from}|t:{to}|ac:{accessRestriction}|vp:{viaPartyOrganizationNumber}";

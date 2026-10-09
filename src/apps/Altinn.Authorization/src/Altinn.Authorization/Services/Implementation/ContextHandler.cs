@@ -39,7 +39,6 @@ namespace Altinn.Platform.Authorization.Services.Implementation
 #pragma warning disable SA1401 // Fields should be private
 #pragma warning disable SA1600 // Elements should be documented
         protected readonly IInstanceMetadataRepository _policyInformationRepository;
-        protected readonly IRoles _rolesWrapper;
         protected readonly IOedRoleAssignmentWrapper _oedRolesWrapper;
         protected readonly IProfile _profileWrapper;
         protected readonly IMemoryCache _memoryCache;
@@ -56,7 +55,6 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         /// Initializes a new instance of the <see cref="ContextHandler"/> class
         /// </summary>
         /// <param name="policyInformationRepository">the policy information repository handler</param>
-        /// <param name="rolesWrapper">the roles handler</param>
         /// <param name="oedRolesWrapper">service handling oed role retireval</param>
         /// <param name="profileWrapper">the user profile information handler</param>
         /// <param name="memoryCache">The cache handler </param>
@@ -67,10 +65,9 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         /// <param name="featureManager">Feature manager</param>
         /// <param name="resourceRegistry">Resource registry client</param>
         public ContextHandler(
-            IInstanceMetadataRepository policyInformationRepository, IRoles rolesWrapper, IOedRoleAssignmentWrapper oedRolesWrapper, IProfile profileWrapper, IMemoryCache memoryCache, IOptions<GeneralSettings> settings, IRegisterService registerService, IPolicyRetrievalPoint prp, IAccessManagementWrapper accessManagementWrapper, IFeatureManager featureManager, IResourceRegistry resourceRegistry)
+            IInstanceMetadataRepository policyInformationRepository, IOedRoleAssignmentWrapper oedRolesWrapper, IProfile profileWrapper, IMemoryCache memoryCache, IOptions<GeneralSettings> settings, IRegisterService registerService, IPolicyRetrievalPoint prp, IAccessManagementWrapper accessManagementWrapper, IFeatureManager featureManager, IResourceRegistry resourceRegistry)
         {
             _policyInformationRepository = policyInformationRepository;
-            _rolesWrapper = rolesWrapper;
             _oedRolesWrapper = oedRolesWrapper;
             _profileWrapper = profileWrapper;
             _memoryCache = memoryCache;
@@ -629,7 +626,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
             }
 
             // In ClientDelegation mode only access received through client delegations via the via-party is considered.
-            // OED and legacy (non AccessManagement PIP) role sources can't be scoped by via-party and are therefore skipped.
+            // OED roles can't be scoped by via-party and are therefore skipped.
             bool isClientDelegation = resourceAttr.AccessRestriction == Altinn.Authorization.Enums.AccessRestriction.ClientDelegation;
 
             if (!isClientDelegation && policySubjectAttributes.ContainsKey(AltinnXacmlConstants.MatchAttributeIdentifiers.OedRoleAttribute))
@@ -653,20 +650,9 @@ namespace Altinn.Platform.Authorization.Services.Implementation
 
             if (policySubjectAttributes.ContainsKey(AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute))
             {
-                if (await _featureManager.IsEnabledAsync(FeatureFlags.AccessManagementAsPipForRoles))
+                if (subjectPartyUuid != Guid.Empty && resourceAttr.PartyUuid != Guid.Empty)
                 {
-                    if (subjectPartyUuid != Guid.Empty && resourceAttr.PartyUuid != Guid.Empty)
-                    {
-                        await AddRoleAttributes(subjectContextAttributes, subjectPartyUuid, resourceAttr.PartyUuid, resourceAttr.AccessRestriction, resourceAttr.ViaPartyOrganizationNumber, cancellationToken);
-                    }
-                }
-                else if (!isClientDelegation)
-                {
-                    List<Role> roleList = await GetRoles(subjectUserId, resourcePartyId);
-                    if (roleList.Count != 0)
-                    {
-                        subjectContextAttributes.Attributes.Add(GetRoleAttribute(roleList));
-                    }
+                    await AddRoleAttributes(subjectContextAttributes, subjectPartyUuid, resourceAttr.PartyUuid, resourceAttr.AccessRestriction, resourceAttr.ViaPartyOrganizationNumber, cancellationToken);
                 }
             }
         }
@@ -682,18 +668,9 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         /// <param name="cancellationToken">The cancellation token</param>
         protected async Task AddAccessPackageAttributes(XacmlContextAttributes subjectContextAttributes, Guid toSubjectPartyUuid, Guid resourceParty, Altinn.Authorization.Enums.AccessRestriction accessRestriction = Altinn.Authorization.Enums.AccessRestriction.None, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default)
         {
-            IEnumerable<AccessPackageUrn> accessPackages;
-            if (await _featureManager.IsEnabledAsync(FeatureFlags.AccessManagementAsPipForRoles))
-            {
-                var result = await _accessManagementWrapper.GetRolesAndAccessPackages(toSubjectPartyUuid, resourceParty, accessRestriction, viaPartyOrganizationNumber, cancellationToken);
-                accessPackages = result.AccessPackages;
-            }
-            else
-            {
-                accessPackages = await _accessManagementWrapper.GetAccessPackages(toSubjectPartyUuid, resourceParty, accessRestriction, viaPartyOrganizationNumber, cancellationToken);
-            }
+            var result = await _accessManagementWrapper.GetRolesAndAccessPackages(toSubjectPartyUuid, resourceParty, accessRestriction, viaPartyOrganizationNumber, cancellationToken);
 
-            foreach (AccessPackageUrn accessPackage in accessPackages)
+            foreach (AccessPackageUrn accessPackage in result.AccessPackages)
             {
                 subjectContextAttributes.Attributes.Add(GetStringAttribute(accessPackage.PrefixSpan.ToString(), accessPackage.ValueSpan.ToString()));
             }
@@ -746,22 +723,6 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         {
             XacmlAttribute attribute = new XacmlAttribute(new Uri(attributeId), false);
             attribute.AttributeValues.Add(new XacmlAttributeValue(new Uri(dataType), value));
-            return attribute;
-        }
-
-        /// <summary>
-        /// Gets a XacmlAttribute model for the list of roletype codes
-        /// </summary>
-        /// <param name="roles">The list of roletype codes</param>
-        /// <returns>XacmlAttribute</returns>
-        protected XacmlAttribute GetRoleAttribute(List<Role> roles)
-        {
-            XacmlAttribute attribute = new XacmlAttribute(new Uri(XacmlRequestAttribute.RoleAttribute), false);
-            foreach (Role role in roles)
-            {
-                attribute.AttributeValues.Add(new XacmlAttributeValue(new Uri(XacmlConstants.DataTypes.XMLString), role.Value));
-            }
-
             return attribute;
         }
 
@@ -859,31 +820,6 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         }
 
         /// <summary>
-        /// Gets the list of roletype codes the subject user has for the resource reportee
-        /// </summary>
-        /// <param name="subjectUserId">The user id of the subject</param>
-        /// <param name="resourcePartyId">The party id of the reportee</param>
-        /// <returns>List of roles</returns>
-        protected async Task<List<Role>> GetRoles(int subjectUserId, int resourcePartyId)
-        {
-            string cacheKey = GetCacheKey(subjectUserId, resourcePartyId);
-
-            if (!_memoryCache.TryGetValue(cacheKey, out List<Role> roles))
-            {
-                // Key not in cache, so get data.
-                roles = await _rolesWrapper.GetDecisionPointRolesForUser(subjectUserId, resourcePartyId) ?? new List<Role>();
-
-                var cacheEntryOptions = new MemoryCacheEntryOptions()
-               .SetPriority(CacheItemPriority.High)
-               .SetAbsoluteExpiration(new TimeSpan(0, _generalSettings.RoleCacheTimeout, 0));
-
-                _memoryCache.Set(cacheKey, roles, cacheEntryOptions);
-            }
-
-            return roles;
-        }
-
-        /// <summary>
         /// Gets a list of role assignments between to persons (if exists) from the OED Authz PIP API
         /// </summary>
         /// <param name="from">the party which the role assignment provides access on behalf of</param>
@@ -963,11 +899,6 @@ namespace Altinn.Platform.Authorization.Services.Implementation
             }
 
             return userProfile;
-        }
-
-        private string GetCacheKey(int userId, int partyId)
-        {
-            return "rolelist_" + userId + "_" + partyId;
         }
 
         private string GetOedRoleassignmentCacheKey(string from, string to)
