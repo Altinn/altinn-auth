@@ -1,7 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
-    <ItemGroup>
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
-    </ItemGroup>
+  <!-- Placeholder until the Register moves in with https://github.com/Altinn/altinn-auth/issues/4056. -->
 
 </Project>
