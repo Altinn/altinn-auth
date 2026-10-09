@@ -82,6 +82,18 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
         };
 
         var result = new List<DelegationChangeDto>();
+
+        // ClientDelegation only considers client delegations received through the requested via-party.
+        if (input.AccessRestriction == AccessRestrictionDto.ClientDelegation)
+        {
+            ConditionalAdd(
+                DelegationChangesTestData.Default(DelegationChangesTestData.WithResourceID("ttd-externalpdp-resource1"), DelegationChangesTestData.WithOfferedByPartyID(50005545), DelegationChangesTestData.WithToUuid(UuidTypeDto.SystemUser, Guid.Parse("47caea5b-a80b-4343-b1d3-31eb523a4e28"))),
+                delegation => delegation.ViaPartyOrganizationNumber == ClientAccessViaPartyOrgNo &&
+                    WithDefaultCondition("ttd-externalpdp-resource1", new AttributeMatch { Id = XacmlRequestAttribute.PartyAttribute, Value = "50005545" }, new AttributeMatch { Id = XacmlRequestAttribute.SystemUserIdAttribute, Value = "47caea5b-a80b-4343-b1d3-31eb523a4e28" })(delegation))(input, result);
+
+            return Task.FromResult(result as IEnumerable<DelegationChangeDto>);
+        }
+
         foreach (var item in data)
         {
             item(input, result);
@@ -89,6 +101,11 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
 
         return Task.FromResult(result as IEnumerable<DelegationChangeDto>);
     }
+
+    /// <summary>
+    /// Organization number of the via-party the mocked client delegation is received through.
+    /// </summary>
+    public const string ClientAccessViaPartyOrgNo = "910000001";
 
     public static Func<DelegationChangeInputDto, bool> WithDefaultCondition(string resourceId, AttributeMatch from, AttributeMatch to) => delegation =>
         (IfAltinnAppID(resourceId)(delegation) || IfResourceID(resourceId)(delegation)) &&
@@ -180,9 +197,9 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
         return null;
     }
 
-    public Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, CancellationToken cancellationToken = default)
+    public Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, Altinn.Authorization.Enums.AccessRestriction accessRestriction = Altinn.Authorization.Enums.AccessRestriction.None, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default)
     {
-        var cacheKey = $"RolesAndAccPkgs|f:{from}|t:{to}";
+        var cacheKey = $"RolesAndAccPkgs|f:{from}|t:{to}|ac:{accessRestriction}|vp:{viaPartyOrganizationNumber}";
 
         if (!_memoryCache.TryGetValue(cacheKey, out PipResponseDto result))
         {

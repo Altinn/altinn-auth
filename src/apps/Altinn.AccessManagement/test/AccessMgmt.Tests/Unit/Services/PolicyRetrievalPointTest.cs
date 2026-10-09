@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using Altinn.AccessManagement.Core.Configuration;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services;

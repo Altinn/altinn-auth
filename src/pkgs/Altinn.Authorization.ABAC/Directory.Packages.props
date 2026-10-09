@@ -1,13 +1,8 @@
 ﻿<Project>
-    <PropertyGroup>
-        <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
-    </PropertyGroup>
+    <Import Project="$([MSBuild]::GetPathOfFileAbove('Directory.Packages.props', '$(MSBuildThisFileDirectory)../'))" />
     <ItemGroup>
-        <GlobalPackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="all" />
-    </ItemGroup>
-    <ItemGroup>
-        <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.19" />
-        <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.19" />
+        <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.20" />
+        <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.20" />
         <PackageVersion Include="coverlet.collector" Version="6.0.4" />
         <PackageVersion Include="coverlet.msbuild" Version="6.0.4" />
         <PackageVersion Include="AwesomeAssertions" Version="9.6.0" />

@@ -1,4 +1,4 @@
-namespace Altinn.Common.PEP.Constants
+﻿namespace Altinn.Common.PEP.Constants
 {
     /// <summary>
     /// Represents a collection of URN values for different Altinn specific XACML attributes.

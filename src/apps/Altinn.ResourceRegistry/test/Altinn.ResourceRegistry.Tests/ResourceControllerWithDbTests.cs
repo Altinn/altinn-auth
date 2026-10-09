@@ -285,7 +285,7 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
                 Orgcode = "skd"
             }
         };
-        await Repository.CreateResource(resource);
+        var original = await Repository.CreateResource(resource);
 
         // Resource with policy - in the feed
         await Repository.CreateResource(CreateTestResource("changes_baseline_res"));
@@ -315,6 +315,11 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
 
         HttpResponseMessage policyResponse = await client.SendAsync(httpRequestMessage);
         Assert.Equal(HttpStatusCode.Created, policyResponse.StatusCode);
+        var afterPolicy = await Repository.GetResource(resource.Identifier!, null);
+        Assert.NotNull(afterPolicy);
+        Assert.Equal(original.CreatedAt, afterPolicy.CreatedAt);
+        Assert.Equal(original.UpdatedAt, afterPolicy.UpdatedAt);
+        Assert.Equal(original.VersionId, afterPolicy.VersionId);
 
         // The policy update should have bumped the resource into the feed, after the baseline resource
         response = await client.GetAsync("resourceregistry/api/v1/resource/changes");
@@ -887,6 +892,8 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
         ServiceResource resource = new ServiceResource()
         {
             Identifier = "superdupertjenestene",
+            CreatedAt = DateTimeOffset.UnixEpoch,
+            UpdatedAt = DateTimeOffset.UnixEpoch,
             Title = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
             Description = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
             RightDescription = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
@@ -928,10 +935,15 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
         ServiceResource? createdResource = JsonSerializer.Deserialize<ServiceResource>(await responseGet.Content.ReadAsStringAsync(), _jsonOptions) as ServiceResource;
 
         Assert.NotNull(createdResource);
+        Assert.NotNull(createdResource.CreatedAt);
+        Assert.NotEqual(DateTimeOffset.UnixEpoch, createdResource.CreatedAt);
+        Assert.Equal(createdResource.CreatedAt, createdResource.UpdatedAt);
 
         ServiceResource updatedresource = new ServiceResource()
         {
             Identifier = "superdupertjenestene",
+            CreatedAt = DateTimeOffset.UnixEpoch,
+            UpdatedAt = DateTimeOffset.UnixEpoch,
             Title = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
             Description = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
             RightDescription = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
@@ -974,6 +986,8 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
         Assert.NotNull(updatedResource);
 
         Assert.Equal(createdResource.VersionId + 1, updatedResource.VersionId);
+        Assert.Equal(createdResource.CreatedAt, updatedResource.CreatedAt);
+        Assert.True(updatedResource.UpdatedAt > createdResource.UpdatedAt);
     }
 
     [Fact]

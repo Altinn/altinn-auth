@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.Core.Enums;
+﻿using Altinn.AccessManagement.Core.Enums;
 
 namespace Altinn.AccessManagement.Core.Repositories.Interfaces;
 

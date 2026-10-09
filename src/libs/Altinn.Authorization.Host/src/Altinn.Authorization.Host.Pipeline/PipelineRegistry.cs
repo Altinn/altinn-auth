@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.Host.Pipeline;
+﻿namespace Altinn.Authorization.Host.Pipeline;
 
 /// <summary>
 /// Registry for all configured pipeline groups.

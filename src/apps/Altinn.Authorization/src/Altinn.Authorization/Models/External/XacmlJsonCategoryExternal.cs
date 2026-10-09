@@ -1,4 +1,4 @@
-namespace Altinn.Platform.Authorization.Models.External
+﻿namespace Altinn.Platform.Authorization.Models.External
 {
     /// <summary>
     /// The Category object corresponds to the XML <Attributes /> element. Just like the <Attributes /> element is specific to a given XACML

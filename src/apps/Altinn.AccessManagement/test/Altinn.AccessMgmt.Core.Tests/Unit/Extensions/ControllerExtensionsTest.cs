@@ -1,4 +1,4 @@
-using Altinn.AccessMgmt.Core.Constants.Translation;
+﻿using Altinn.AccessMgmt.Core.Constants.Translation;
 using Altinn.AccessMgmt.Core.Extensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;

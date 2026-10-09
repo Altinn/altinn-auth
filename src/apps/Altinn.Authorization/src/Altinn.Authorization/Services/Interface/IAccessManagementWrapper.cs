@@ -1,4 +1,5 @@
 ﻿using Altinn.Authorization.Api.Contracts.Authorization;
+using Altinn.Authorization.Enums;
 using Altinn.Platform.Authorization.Models.AccessManagement;
 
 namespace Altinn.Platform.Authorization.Services.Interface;
@@ -36,5 +37,5 @@ public interface IAccessManagementWrapper
     /// Endpoint to find all roles and access packages a given to-party has for a given from-party
     /// </summary>
     /// <returns>Dto response of all role and access package urns</returns>
-    public Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, CancellationToken cancellationToken = default);
+    public Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, AccessRestriction accessRestriction = AccessRestriction.None, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default);
 }

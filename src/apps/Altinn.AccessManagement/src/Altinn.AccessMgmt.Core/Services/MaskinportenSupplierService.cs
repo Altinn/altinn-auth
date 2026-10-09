@@ -473,7 +473,7 @@ public class MaskinportenSupplierService(
             .Include(a => a.To)
             .Where(a => a.FromId == consumerId)
             .Where(a => a.ToId == supplierId)
-            .Where(a => a.RoleId == RoleConstants.Supplier.Id)  // Supplier, not Rightholder!
+            .Where(a => a.RoleId == RoleConstants.Supplier.Id) // Supplier, not Rightholder!
             .FirstOrDefaultAsync(cancellationToken);
 
         if (assignment is null)

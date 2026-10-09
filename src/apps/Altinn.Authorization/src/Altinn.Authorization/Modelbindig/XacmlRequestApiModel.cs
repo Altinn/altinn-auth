@@ -1,4 +1,4 @@
-namespace Altinn.Platform.Authorization.ModelBinding
+﻿namespace Altinn.Platform.Authorization.ModelBinding
 {
     /// <summary>
     /// This is an model special created to support both JSON and XML in the same endpoint.

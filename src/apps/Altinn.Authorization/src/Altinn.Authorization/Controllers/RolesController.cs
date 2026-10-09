@@ -1,4 +1,4 @@
-using Altinn.Platform.Authenticaiton.Extensions;
+﻿using Altinn.Platform.Authenticaiton.Extensions;
 using Altinn.Platform.Authorization.Services.Interface;
 using Authorization.Platform.Authorization.Models;
 using Microsoft.AspNetCore.Authorization;

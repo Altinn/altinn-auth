@@ -1,4 +1,4 @@
-using System.Security.Cryptography.X509Certificates;
+﻿using System.Security.Cryptography.X509Certificates;
 using Altinn.AccessManagement.Integration.Services.Interfaces;
 using Altinn.Common.AccessToken.Configuration;
 using Altinn.Common.AccessTokenClient.Services;

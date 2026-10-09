@@ -1,4 +1,4 @@
-namespace Altinn.Platform.Authorization.Configuration
+﻿namespace Altinn.Platform.Authorization.Configuration
 {
     /// <summary>
     /// Configuration object used to hold settings for the queue storage.

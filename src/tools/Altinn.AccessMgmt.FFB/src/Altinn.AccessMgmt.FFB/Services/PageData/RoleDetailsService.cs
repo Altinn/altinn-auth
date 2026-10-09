@@ -1,4 +1,4 @@
-using Altinn.AccessMgmt.FFB.Services.Contracts;
+﻿using Altinn.AccessMgmt.FFB.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Microsoft.EntityFrameworkCore;
 

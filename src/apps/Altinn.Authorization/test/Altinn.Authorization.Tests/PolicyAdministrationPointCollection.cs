@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.Tests;
+﻿namespace Altinn.Authorization.Tests;
 
 /// <summary>
 /// Names the collection for the policy administration point unit tests so they run

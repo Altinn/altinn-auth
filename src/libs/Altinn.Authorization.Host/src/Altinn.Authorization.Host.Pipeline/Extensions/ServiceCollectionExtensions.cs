@@ -1,4 +1,4 @@
-using Altinn.Authorization.Host.Pipeline.HostedServices;
+﻿using Altinn.Authorization.Host.Pipeline.HostedServices;
 using Altinn.Authorization.Host.Pipeline.Services;
 using Altinn.Authorization.Host.Pipeline.Telemetry;
 using Microsoft.Extensions.DependencyInjection;

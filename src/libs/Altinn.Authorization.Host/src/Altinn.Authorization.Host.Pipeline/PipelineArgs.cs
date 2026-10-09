@@ -1,4 +1,4 @@
-using Altinn.Authorization.Host.Lease;
+﻿using Altinn.Authorization.Host.Lease;
 
 namespace Altinn.Authorization.Host.Pipeline;
 

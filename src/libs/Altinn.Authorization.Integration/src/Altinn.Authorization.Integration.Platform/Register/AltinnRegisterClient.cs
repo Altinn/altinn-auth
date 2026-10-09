@@ -1,4 +1,4 @@
-using Altinn.Register.Contracts;
+﻿using Altinn.Register.Contracts;
 using Microsoft.Extensions.Options;
 
 namespace Altinn.Authorization.Integration.Platform.Register;

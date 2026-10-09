@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.Core.Clients.Interfaces;
+﻿using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Microsoft.Extensions.DependencyInjection;

@@ -40,7 +40,7 @@ public class OutboxMessageConfiguration : IEntityTypeConfiguration<OutboxMessage
             .IsRequired()
             .HasDefaultValueSql("NOW()")
             .ValueGeneratedOnAdd();
-        
+
         builder.Property(b => b.Status)
             .HasConversion<string>()
             .HasDefaultValue(OutboxStatus.Pending)

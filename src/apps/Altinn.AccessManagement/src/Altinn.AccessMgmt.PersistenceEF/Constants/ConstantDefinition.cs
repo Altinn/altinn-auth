@@ -1,4 +1,4 @@
-using Altinn.AccessMgmt.PersistenceEF.Models.Contracts;
+﻿using Altinn.AccessMgmt.PersistenceEF.Models.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Constants;

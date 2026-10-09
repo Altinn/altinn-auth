@@ -1,4 +1,4 @@
-namespace Altinn.AccessMgmt.FFB.Services;
+﻿namespace Altinn.AccessMgmt.FFB.Services;
 
 /// <summary>
 /// Formats exceptions for display in the UI.

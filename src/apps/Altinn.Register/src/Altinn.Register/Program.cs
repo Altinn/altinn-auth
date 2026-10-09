@@ -1,4 +1,4 @@
-namespace Altinn.Register;
+﻿namespace Altinn.Register;
 
 /// <summary>
 /// Boilerplate Program 

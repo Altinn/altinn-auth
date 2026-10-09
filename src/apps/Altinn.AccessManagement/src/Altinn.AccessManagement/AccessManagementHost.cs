@@ -419,7 +419,8 @@ internal static partial class AccessManagementHost
             })
             .AddPolicy(AuthzConstants.POLICY_ENDUSER_CONNECTIONS_WRITE_TOOTHERS, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE])))
             .AddPolicy(AuthzConstants.POLICY_ENDUSER_REQUESTS_READ, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_REQUESTS_READ])))
-            .AddPolicy(AuthzConstants.POLICY_ENDUSER_REQUESTS_WRITE, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_REQUESTS_WRITE])));
+            .AddPolicy(AuthzConstants.POLICY_ENDUSER_REQUESTS_WRITE, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_REQUESTS_WRITE])))
+            .AddPolicy(AuthzConstants.SCOPE_ENDUSER_SYSTEMUSER_REQUESTS_WRITE, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_ENDUSER_SYSTEMUSER_REQUESTS_WRITE])));
 
         builder.Services.AddScoped<IAuthorizationHandler, AccessTokenHandler>();
         builder.Services.AddScoped<IAuthorizationHandler, ClaimAccessHandler>();
@@ -533,7 +534,7 @@ public class NpgsqlProcessor(TimeSpan minimumTotalDuration, IHttpContextAccessor
             long totalDbDuration = 0;
             int dbActivityCount = 0;
             List<string> baggageKeys = [];
-            activity.Baggage.Where(b => b.Key.StartsWith("hash", StringComparison.OrdinalIgnoreCase)).OrderBy(b => b.Key).ToList().ForEach(b => 
+            activity.Baggage.Where(b => b.Key.StartsWith("hash", StringComparison.OrdinalIgnoreCase)).OrderBy(b => b.Key).ToList().ForEach(b =>
             {
                 baggageKeys.Add(b.Key);
                 sb.Append($";{b.Value}");
@@ -553,7 +554,7 @@ public class NpgsqlProcessor(TimeSpan minimumTotalDuration, IHttpContextAccessor
 
             if (dbActivityCount > 0)
             {
-                activity.SetTag("db.stats", $"Count: {dbActivityCount}, tot dur: {totalDbDuration:N0}ms, avg dur: {totalDbDuration / dbActivityCount:N0}ms, hashes:duration: {sb.Remove(0,1)}");
+                activity.SetTag("db.stats", $"Count: {dbActivityCount}, tot dur: {totalDbDuration:N0}ms, avg dur: {totalDbDuration / dbActivityCount:N0}ms, hashes:duration: {sb.Remove(0, 1)}");
             }
 
             LogClaims(httpContextAccessor, activity);

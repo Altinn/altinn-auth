@@ -10,7 +10,7 @@ terraform {
     }
     time = {
       source  = "hashicorp/time"
-      version = "0.14.1"
+      version = "0.14.2"
     }
   }
 
@@ -469,6 +469,12 @@ module "appsettings" {
     {
       name        = "AccessMgmt.Controller.RequestAssignment.Package"
       description = "Enables request assignment package endpoints in enduser and serviceowner APIs."
+      label       = "${lower(var.environment)}-access-management"
+      value       = false
+    },
+    {
+      name        = "AccessMgmt.Controller.RequestAssignment.SystemUserRequests"
+      description = "Enables system users (from-party) to send access requests to organizations. Trial feature; endpoint access is granted by the altinn:accessmanagement/systemuser:requests.write Maskinporten scope."
       label       = "${lower(var.environment)}-access-management"
       value       = false
     },

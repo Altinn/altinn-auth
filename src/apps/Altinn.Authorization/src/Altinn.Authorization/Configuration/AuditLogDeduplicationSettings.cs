@@ -1,4 +1,4 @@
-namespace Altinn.Platform.Authorization.Configuration
+﻿namespace Altinn.Platform.Authorization.Configuration
 {
     /// <summary>
     /// Settings for detecting repeated authorization events before they are queued for the audit log.

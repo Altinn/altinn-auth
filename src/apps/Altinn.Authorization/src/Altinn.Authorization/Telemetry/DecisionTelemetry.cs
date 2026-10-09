@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using Altinn.Platform.Authorization.Models.EventLog;
 
@@ -139,6 +139,21 @@ namespace Altinn.Platform.Authorization.Telemetry
             TagList tags = new()
             {
                 { AuditLogDuplicateTag, duplicate },
+            };
+
+            _auditLogEvents.Add(1, tags);
+        }
+
+        /// <summary>
+        /// Records an authorization event queued for the audit log that could not be classified, because
+        /// measuring it failed. Counted in the same instrument, so that its total stays the number of
+        /// events queued.
+        /// </summary>
+        public void RecordAuditLogEventMeasurementFailure()
+        {
+            TagList tags = new()
+            {
+                { AuditLogDuplicateTag, "error" },
             };
 
             _auditLogEvents.Add(1, tags);

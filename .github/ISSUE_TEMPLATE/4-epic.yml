@@ -1,0 +1,69 @@
+name: "Epic"
+description: "A larger delivery, split into features and tasks as sub-issues."
+type: "Epic"
+labels: ["status/triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        You can write in **English or Norwegian**. Du kan skrive på **engelsk eller norsk**.
+
+        An epic groups the work. Add the actual tasks as **sub-issues**, not as a list in the text.
+
+  - type: textarea
+    id: tldr
+    attributes:
+      label: "TL;DR"
+      description: "Up to five bullets. Goal, approach, and when it is done."
+      placeholder: |
+        - Goal: ...
+        - Approach: ...
+        - Done when: ...
+
+  - type: dropdown
+    id: component
+    attributes:
+      label: "Component"
+      description: "Select the components the epic touches. Each sub-issue gets its own."
+      multiple: true
+      options:
+        - "Access Management – backend and API (access-management)"
+        - "Access Management – UI and BFF (access-management-frontend)"
+        - "Authorization – PDP and authorized parties (authorization)"
+        - "Authentication – login, tokens and system user (authentication)"
+        - "Register – parties and roles (register)"
+        - "Resource Registry – resources and access lists (resource-registry)"
+        - "Auditlog – storage of authorization and authentication events (auditlog)"
+        - "NuGet packages – PEP and ABAC (packages)"
+        - "Shared libraries (libs)"
+        - "Tools – CLI and FFB (tools)"
+        - "Shared platform – CI/CD, shared Terraform and Flux (infra)"
+        - "Local development and repo tooling (devex)"
+        - "Documentation (docs)"
+        - "Don't know"
+    validations:
+      required: true
+
+  - type: textarea
+    id: background
+    attributes:
+      label: "Background"
+      description: "Why now? What is the situation today?"
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: "Scope"
+      value: |
+        **In scope:**
+        -
+
+        **Out of scope:**
+        -
+
+  - type: textarea
+    id: done
+    attributes:
+      label: "Done when"
+      placeholder: |
+        - [ ] ...

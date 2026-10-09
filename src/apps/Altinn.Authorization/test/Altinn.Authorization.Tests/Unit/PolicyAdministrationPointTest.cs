@@ -1,4 +1,4 @@
-using Altinn.Authorization.Tests.Data;
+﻿using Altinn.Authorization.Tests.Data;
 using Altinn.Authorization.Tests.MockServices;
 using Altinn.Authorization.Tests.Util;
 using Altinn.Platform.Authorization.Configuration;

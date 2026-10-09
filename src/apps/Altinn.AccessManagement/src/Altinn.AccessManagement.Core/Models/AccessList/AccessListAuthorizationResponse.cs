@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.Core.Models.Register;
+﻿using Altinn.AccessManagement.Core.Models.Register;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Core.Models.Rights;
 using Altinn.Urn.Json;

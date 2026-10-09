@@ -1,4 +1,4 @@
-using System.Globalization;
+﻿using System.Globalization;
 using System.Text.Json.Serialization;
 
 namespace Altinn.Authorization.Integration.Platform.ResourceRegistry;

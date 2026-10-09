@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Altinn.AccessMgmt.FFB/Altinn.AccessMgmt.FFB.csproj" />
+  </Folder>
+</Solution>

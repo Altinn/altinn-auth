@@ -24,5 +24,14 @@ public class SwaggerEndpointTest(DbFixture dbFixture, WebApplicationFixture webA
         var jsonDoc = JsonDocument.Parse(responseText);
 
         Assert.NotNull(jsonDoc);
+        var properties = jsonDoc.RootElement.GetProperty("components").GetProperty("schemas")
+            .GetProperty("ServiceResource").GetProperty("properties");
+        foreach (var name in new[] { "createdAt", "updatedAt" })
+        {
+            var timestamp = properties.GetProperty(name);
+            Assert.True(timestamp.GetProperty("readOnly").GetBoolean());
+            Assert.Equal("date-time", timestamp.GetProperty("format").GetString());
+            Assert.Contains("Ignored on POST and PUT", timestamp.GetProperty("description").GetString());
+        }
     }
 }

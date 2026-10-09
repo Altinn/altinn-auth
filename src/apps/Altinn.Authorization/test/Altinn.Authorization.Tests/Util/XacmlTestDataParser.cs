@@ -1,4 +1,4 @@
-using System.Xml;
+﻿using System.Xml;
 
 using Altinn.Authorization.ABAC.Utils;
 using Altinn.Authorization.ABAC.Xacml;

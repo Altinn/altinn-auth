@@ -53,6 +53,23 @@ public class RequestController(
         options.FilterToEntityTypes = [];
     };
 
+    /// <summary>
+    /// Connection configuration used when approving a package request. In addition to the
+    /// standard organization/person parties it permits a system user as the write/read target
+    /// (the requester of a system-user package request), since <c>AddPackage</c> is invoked with
+    /// the requester as the target. The request-recipient hard block (a system user can never be
+    /// the recipient of a request) is still enforced when the request is created.
+    /// </summary>
+    private Action<ConnectionOptions> ConfigurePackageApprovalConnections { get; } = options =>
+    {
+        options.AllowedWriteFromEntityTypes = [EntityTypeConstants.Organization, EntityTypeConstants.Person];
+        options.AllowedWriteToEntityTypes = [EntityTypeConstants.Organization, EntityTypeConstants.Person, EntityTypeConstants.SystemUser];
+        options.AllowedReadFromEntityTypes = [EntityTypeConstants.Organization, EntityTypeConstants.Person];
+        options.AllowedReadToEntityTypes = [EntityTypeConstants.Organization, EntityTypeConstants.Person, EntityTypeConstants.SystemUser];
+        options.FilterFromEntityTypes = [];
+        options.FilterToEntityTypes = [];
+    };
+
     [HttpGet]
     [FeatureGate(RequirementType.Any, AccessMgmtFeatureFlags.EnableRequestAssignmentResource, AccessMgmtFeatureFlags.EnableRequestAssignmentPackage)]
     [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_REQUESTS_READ)]
@@ -295,7 +312,8 @@ public class RequestController(
 
         var authUserUuid = AuthenticationHelper.GetAuthenticatedPartyUuid(HttpContext);
 
-        if (request.From.Id == authUserUuid) //User is authorizing his own request, check if he is mainadmin
+        // User is authorizing his own request, check if he is mainadmin
+        if (request.From.Id == authUserUuid)
         {
             // Check pdp is mainadmin
             bool isMainAdmin = await AuthorizeResourceAccess("altinn_access_management_hovedadmin", request.To.Id, User, "write");
@@ -406,6 +424,7 @@ public class RequestController(
         ==
         Per (by) ber om tilgang for Kari (for) til App (resource) hos Org (at).
         */
+
         // Guaranteed non-null here: TryBuild above returned false, so the GetResource lookup succeeded.
         var result = await requestService.CreateResourceRequest(
             toId: to,
@@ -499,7 +518,7 @@ public class RequestController(
             request.To.Id,
             request.From.Id,
             request.Package.Id.Value,
-            ConfigureConnections,
+            ConfigurePackageApprovalConnections,
             ct);
 
         if (result.IsProblem)

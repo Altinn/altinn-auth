@@ -1,4 +1,4 @@
-using Altinn.Authorization.ABAC.Xacml;
+﻿using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Authorization.Tests.MockServices;
 using Altinn.Authorization.Tests.Util;
