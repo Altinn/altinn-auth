@@ -10,6 +10,7 @@ using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement.ActivityLog;
+using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers;
 
@@ -26,6 +27,8 @@ namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers;
 /// - Verdiq AS -> Paula: Agent assignment (connections slice, Verdiq outgoing)
 /// - Nordis AS -> Verdiq AS: Rightholder assignment (Verdiq incoming, pins the anchor)
 /// - Nordis AS -> Ørsta: Supplier assignment (the Maskinporten schema slice)
+/// - Verdiq AS -> Paula: pending package request (the request area, same pair as the Agent
+///   assignment so area separation is exercised)
 /// </remarks>
 [IntegrationTest]
 public class ActivityLogControllerTest : IClassFixture<ApiFixture>
@@ -33,6 +36,8 @@ public class ActivityLogControllerTest : IClassFixture<ApiFixture>
     private const string ConnectionsRoute = "accessmanagement/api/v2/enduser/connections/activitylog";
 
     private const string MaskinportenRoute = "accessmanagement/api/v2/enduser/maskinporten/activitylog";
+
+    private const string RequestRoute = "accessmanagement/api/v2/enduser/request/activitylog";
 
     private static readonly Guid Verdiq = TestEntities.OrganizationVerdiqAS.Id;
     private static readonly Guid Nordis = TestEntities.OrganizationNordisAS.Id;
@@ -46,12 +51,22 @@ public class ActivityLogControllerTest : IClassFixture<ApiFixture>
         Fixture = fixture;
         Fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.EnableEnduserConnectionsActivityLogApi);
         Fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.EnableEnduserMaskinportenActivityLogApi);
+        Fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.EnableEnduserRequestActivityLogApi);
         Fixture.EnsureSeedOnce<ActivityLogControllerTest>(db =>
         {
             db.Assignments.AddRange(
                 new Assignment { FromId = Verdiq, ToId = Paula, RoleId = RoleConstants.Agent },
                 new Assignment { FromId = Nordis, ToId = Verdiq, RoleId = RoleConstants.Rightholder },
                 new Assignment { FromId = Nordis, ToId = Orsta, RoleId = RoleConstants.Supplier });
+
+            var request = new RequestAssignment { FromId = Verdiq, ToId = Paula, RoleId = RoleConstants.Rightholder, ById = Paula };
+            db.RequestAssignments.Add(request);
+            db.RequestAssignmentPackages.Add(new RequestAssignmentPackage
+            {
+                AssignmentId = request.Id,
+                PackageId = db.Packages.OrderBy(p => p.Id).First().Id,
+                Status = RequestStatus.Pending,
+            });
 
             db.SaveChanges();
         });
@@ -244,6 +259,110 @@ public class ActivityLogControllerTest : IClassFixture<ApiFixture>
         var result = JsonSerializer.Deserialize<PaginatedResult<ActivityLogDto>>(body, JsonOpts);
         Assert.NotNull(result);
         Assert.Contains(result.Items, e => e.FromId == Nordis);
+    }
+
+    /// <summary>
+    /// The request route serves only request events, even though the same pair also has an
+    /// Agent assignment, and is guarded by the requests read scope.
+    /// </summary>
+    [Fact]
+    public async Task Request_DirectionFrom_WithRequestsReadScope_ReturnsOnlyRequestEvents()
+    {
+        var client = CreateClient(Verdiq, AuthzConstants.SCOPE_ENDUSER_REQUESTS_READ);
+
+        var response = await client.GetAsync($"{RequestRoute}?party={Verdiq}&direction=from", TestContext.Current.CancellationToken);
+
+        var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Body: {body}");
+
+        var result = JsonSerializer.Deserialize<PaginatedResult<ActivityLogDto>>(body, JsonOpts);
+        Assert.NotNull(result);
+        Assert.NotEmpty(result.Items);
+        Assert.All(result.Items, e => Assert.Equal(ActivityLogType.Request, e.Type));
+        Assert.Contains(result.Items, e => e.ToId == Paula);
+    }
+
+    [Fact]
+    public async Task Request_DirectionTo_WithRequestsReadScope_ReturnsReceivedRequestEvents()
+    {
+        var client = CreateClient(Paula, AuthzConstants.SCOPE_ENDUSER_REQUESTS_READ);
+
+        var response = await client.GetAsync($"{RequestRoute}?party={Paula}&direction=to", TestContext.Current.CancellationToken);
+
+        var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Body: {body}");
+
+        var result = JsonSerializer.Deserialize<PaginatedResult<ActivityLogDto>>(body, JsonOpts);
+        Assert.NotNull(result);
+        Assert.Contains(result.Items, e => e.Type == ActivityLogType.Request && e.FromId == Verdiq);
+        Assert.All(result.Items, e => Assert.Equal(ActivityLogType.Request, e.Type));
+    }
+
+    /// <summary>
+    /// The connections scopes must not unlock the request area.
+    /// </summary>
+    [Fact]
+    public async Task Request_WithConnectionsScopeOnly_Returns403()
+    {
+        var client = CreateClient(Verdiq, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
+
+        var response = await client.GetAsync($"{RequestRoute}?party={Verdiq}&direction=from", TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Request_MissingDirection_Returns400()
+    {
+        var client = CreateClient(Verdiq, AuthzConstants.SCOPE_ENDUSER_REQUESTS_READ);
+
+        var response = await client.GetAsync($"{RequestRoute}?party={Verdiq}", TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    /// <summary>
+    /// Connections catalog entries are outside the request area, mirroring the reverse check
+    /// on the connections route.
+    /// </summary>
+    [Fact]
+    public async Task Request_TypeIdOutsideArea_Returns400()
+    {
+        var client = CreateClient(Verdiq, AuthzConstants.SCOPE_ENDUSER_REQUESTS_READ);
+
+        var response = await client.GetAsync(
+            $"{RequestRoute}?party={Verdiq}&direction=from&typeId={ActivityTypeConstants.AssignmentCreated.Id}",
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    /// <summary>
+    /// Role is a connections-only filter field and is rejected on the request area.
+    /// </summary>
+    [Fact]
+    public async Task Request_FilterRoleLookup_Returns400()
+    {
+        var client = CreateClient(Verdiq, AuthzConstants.SCOPE_ENDUSER_REQUESTS_READ);
+
+        var response = await client.GetAsync($"{RequestRoute}/filter/role?party={Verdiq}&direction=from", TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Request_FilterToLookup_ReturnsRequestCounterparts()
+    {
+        var client = CreateClient(Verdiq, AuthzConstants.SCOPE_ENDUSER_REQUESTS_READ);
+
+        var response = await client.GetAsync($"{RequestRoute}/filter/to?party={Verdiq}&direction=from", TestContext.Current.CancellationToken);
+
+        var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Body: {body}");
+
+        var result = JsonSerializer.Deserialize<PaginatedResult<ActivityLogFilterValueDto>>(body, JsonOpts);
+        Assert.NotNull(result);
+        Assert.Contains(result.Items, v => v.Id == Paula);
     }
 
     private HttpClient CreateClient(Guid partyUuid, params string[] scopes)
