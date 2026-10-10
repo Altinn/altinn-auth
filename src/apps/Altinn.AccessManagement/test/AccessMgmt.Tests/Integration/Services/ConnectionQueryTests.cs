@@ -7,6 +7,7 @@ using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging.Abstractions;
 using DelegationPackage = Altinn.AccessMgmt.PersistenceEF.Models.DelegationPackage;
 using DelegationResource = Altinn.AccessMgmt.PersistenceEF.Models.DelegationResource;
 
@@ -28,7 +29,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
             .Options;
 
         _db = new AppDbContext(options);
-        _query = new ConnectionQuery(_db);
+        _query = new ConnectionQuery(_db, NullLogger<ConnectionQuery>.Instance);
     }
 
     /// <inheritdoc />
@@ -154,7 +155,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
         var personId = TestDataSet.GetEntity("AdosPer").Id;
 
         // The filter value is always derived from the ADOS subunit inheritance flag, so enable it here.
-        var query = new ConnectionQuery(_db, adosSubunitInheritanceEnabled: true);
+        var query = new ConnectionQuery(_db, NullLogger<ConnectionQuery>.Instance, adosSubunitInheritanceEnabled: true);
 
         var filter = new ConnectionQueryFilter
         {
@@ -186,7 +187,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
         var subUnitId = TestDataSet.GetEntity("ADOS Subunit").Id;
         var personId = TestDataSet.GetEntity("AdosPer").Id;
 
-        var query = new ConnectionQuery(_db, adosSubunitInheritanceEnabled: true);
+        var query = new ConnectionQuery(_db, NullLogger<ConnectionQuery>.Instance, adosSubunitInheritanceEnabled: true);
 
         var filter = new ConnectionQueryFilter
         {
