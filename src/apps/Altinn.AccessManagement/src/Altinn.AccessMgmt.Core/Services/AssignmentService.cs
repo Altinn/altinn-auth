@@ -26,7 +26,7 @@ using Microsoft.EntityFrameworkCore;
 namespace Altinn.AccessMgmt.Core.Services;
 
 /// <inheritdoc/>
-public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery, IPolicyFactory policyFactory, IPolicyRetrievalPoint policyRetrivalPoint, IContextRetrievalService contextRetrievalService) : IAssignmentService
+public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery) : IAssignmentService
 {
     /// <inheritdoc/>
     public async Task<List<AssignmentPackageDto>> ImportAssignmentPackages(Guid fromId, Guid toId, List<string> packageUrns, AuditValues values = null, CancellationToken cancellationToken = default)

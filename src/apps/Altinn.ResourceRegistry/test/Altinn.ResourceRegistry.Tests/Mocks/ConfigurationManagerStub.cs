@@ -35,7 +35,7 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
         {
             List<SecurityKey> signingKeys = new List<SecurityKey>();
 
-            X509Certificate2 cert = new X509Certificate2("selfSignedTestCertificatePublic.cer");
+            X509Certificate2 cert = X509CertificateLoader.LoadCertificateFromFile("selfSignedTestCertificatePublic.cer");
             SecurityKey key = new X509SecurityKey(cert);
 
             signingKeys.Add(key);

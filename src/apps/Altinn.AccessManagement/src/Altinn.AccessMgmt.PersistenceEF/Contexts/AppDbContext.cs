@@ -40,7 +40,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<Entity> Entities => Set<Entity>();
 
+#pragma warning disable CS0612 // EntityLookup is obsolete, but its table is still part of the model
     public DbSet<EntityLookup> EntityLookups => Set<EntityLookup>();
+#pragma warning restore CS0612
 
     public DbSet<EntityType> EntityTypes => Set<EntityType>();
 
@@ -212,7 +214,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.ApplyConfiguration<DelegationPackage>(new DelegationPackageConfiguration());
         modelBuilder.ApplyConfiguration<DelegationResource>(new DelegationResourceConfiguration());
         modelBuilder.ApplyConfiguration<Entity>(new EntityConfiguration());
+#pragma warning disable CS0612 // EntityLookup is obsolete, but its table is still part of the model
         modelBuilder.ApplyConfiguration<EntityLookup>(new EntityLookupConfiguration());
+#pragma warning restore CS0612
         modelBuilder.ApplyConfiguration<EntityType>(new EntityTypeConfiguration());
         modelBuilder.ApplyConfiguration<EntityVariant>(new EntityVariantConfiguration());
         modelBuilder.ApplyConfiguration<EntityVariantRole>(new EntityVariantRoleConfiguration());

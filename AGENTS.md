@@ -24,7 +24,7 @@ pwsh eng/testing/run-coverage.ps1                      # coverage, installs dotn
 
 - **Branch per change, never commit to `main`.** Name it `type/<issue>_<slug>`.
 - **The PR title is a Conventional Commit with the issue number**, for example `fix(#4044): ...`. `main` is squash-only with linear history, and the release automation reads the squash title. A single-commit PR currently squashes under the *commit* title, so check the title in the merge dialog ([#4095](https://github.com/Altinn/altinn-auth/issues/4095)).
-- **A green local `dotnet test` is not proof.** Integration tests skip when no container runtime is running, so the suite can pass having run almost nothing. CI is the gate.
+- **A green local build or `dotnet test` is not proof.** CI builds with `-warnaserror`, and integration tests skip without a container runtime, so a pass may have run almost nothing. CI is the gate.
 - **Update affected documentation and agent guidance in the same PR.** Require ADRs only for significant architectural decisions or lasting trade-offs; see [the threshold](CONTRIBUTING.md#when-an-adr-is-required). Validate the [guidance contract](docs/adr/0002-tool-neutral-agent-contract.md) with `node .github/scripts/agents-docs-validate.mjs`.
 - **Issues: a type and one or more `area/*`** ([guide](CONTRIBUTING.md#issues-and-labels)).
 - **Issues, comments, docs and PR descriptions start with a TL;DR** of at most five bullets (bugs: what happened). Text drafted with a tool says so near the top, and says the reader is unspecified until a person confirms they have read it.

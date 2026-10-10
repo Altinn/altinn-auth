@@ -188,16 +188,17 @@ jobs:
         # and any local rebuild — important when the SonarCloud scanner is
         # wrapping the build, which is sensitive to stale analyzer outputs.
         #
-        # Collapse the ~900 lines of restore + per-project + analyzer-warning
-        # output behind a log group. The full build is captured in build.binlog
-        # (uploaded as an artifact on failure), warnings are tracked by
-        # SonarCloud, and a build error still fails the step (bash `set -e` exits
-        # before `::endgroup::`; GitHub auto-closes the open group).
+        # Collapse the ~900 lines of restore + per-project output behind a log
+        # group. The full build is captured in build.binlog (uploaded as an
+        # artifact on failure). `-warnaserror` turns every compiler, analyzer and
+        # NuGet audit warning into an error, so the build is either clean or red,
+        # and an error still fails the step (bash `set -e` exits before
+        # `::endgroup::`; GitHub auto-closes the open group).
         id: build
         shell: bash
         run: |
           echo "::group::dotnet build (full output is in build.binlog, uploaded as an artifact on failure)"
-          dotnet build -c Release --no-incremental -bl:binlog/build.binlog
+          dotnet build -c Release --no-incremental -warnaserror -bl:binlog/build.binlog
           echo "::endgroup::"
         working-directory: ${{ inputs.path }}
 
