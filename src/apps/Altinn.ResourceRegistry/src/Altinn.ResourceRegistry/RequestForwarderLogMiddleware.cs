@@ -62,7 +62,7 @@ internal partial class RequestForwarderLogMiddleware
         var forwardedHost = context.Request.Headers[options.ForwardedHostHeaderName];
         var forwardedProto = context.Request.Headers[options.ForwardedProtoHeaderName];
         var forwardedPrefix = context.Request.Headers[options.ForwardedPrefixHeaderName];
-        var knownNetworks = options.KnownNetworks.Select(n => $"{n.Prefix}/{n.PrefixLength}");
+        var knownNetworks = options.KnownIPNetworks.Select(n => $"{n.BaseAddress}/{n.PrefixLength}");
         var knownProxies = options.KnownProxies;
 
         Log.RequestReceived(

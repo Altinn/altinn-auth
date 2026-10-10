@@ -20,7 +20,7 @@ steps 1 and 5 are gated on the `analyze` input and only execute on the nightly
 scan; on PR/main CI they are skipped):
 
 1. **SonarCloud begin** *(analyze run only, verticals that opt in via `conf.json`)* — `dotnet-sonarscanner begin` wraps the build/test that follow so the scanner can hook MSBuild's analyzers.
-2. **Restore + build** — `dotnet build -c Release --no-incremental`. On the analyze run the build inside Sonar's begin/end window is what gives the scanner its data. `dotnet workload restore` runs **only** in verticals that contain an Aspire AppHost (detected from the csprojs); the rest skip it.
+2. **Restore + build** — `dotnet build -c Release --no-incremental -warnaserror`. Every compiler, analyzer and NuGet audit warning is an error here, so a new warning fails the vertical's build, and so does a newly published advisory for a package the vertical depends on. Build with `dotnet build -c Release -warnaserror` before pushing, and suppress a warning only next to a comment that says why. On the analyze run the build inside Sonar's begin/end window is what gives the scanner its data. `dotnet workload restore` runs **only** in verticals that contain an Aspire AppHost (detected from the csprojs); the rest skip it.
 3. **Test + coverage (two lanes off one build)** — tests run in two
    sequential lanes selected by the `Category` trait: a fast **unit** lane
    (`--filter-trait "Category=Unit"`) then a slower **integration** lane

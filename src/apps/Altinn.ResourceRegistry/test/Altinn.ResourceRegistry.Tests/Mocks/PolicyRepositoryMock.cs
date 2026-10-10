@@ -72,7 +72,7 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
             throw new NotImplementedException();
         }
 
-        public Task<string> TryAcquireBlobLease(string filepath, CancellationToken cancellationToken)
+        public Task<string?> TryAcquireBlobLease(string filepath, CancellationToken cancellationToken)
         {
             throw new NotImplementedException();
         }

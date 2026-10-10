@@ -1,3 +1,5 @@
+#nullable enable
+
 using Altinn.Authorization.ProblemDetails;
 using Azure;
 using Azure.Storage.Blobs.Models;
@@ -87,7 +89,7 @@ namespace Altinn.ResourceRegistry.Core
         /// <param name="resourceId">The resourceId</param> 
         /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
         /// <returns>The LeaseId if a release was possible, otherwise null</returns>
-        Task<string> TryAcquireBlobLease(string resourceId, CancellationToken cancellationToken = default);
+        Task<string?> TryAcquireBlobLease(string resourceId, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Releases a blob lease on the base blob for the resource policy for the provided resource id using the provided leaseId.

@@ -33,13 +33,11 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
                     }
                     else
                     {
-                        return applicationList != null
-                            ? new()
-                            {
-                                Applications = applicationList.Applications
+                        return new()
+                        {
+                            Applications = applicationList.Applications
                                 .Where(a => !a.Id.Contains("/a2-") && !a.Id.Contains("/a1-")).ToList()
-                            }
-                            : null;
+                        };
                     }
                 }
 

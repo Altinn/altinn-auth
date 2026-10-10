@@ -17,7 +17,7 @@ namespace Altinn.ResourceRegistry.Tests;
 public class AccessListMembershipsControllerTests(DbFixture dbFixture, WebApplicationFixture webApplicationFixture)
     : WebApplicationTests(dbFixture, webApplicationFixture)
 {
-    private const string ORG_CODE = "ttd";
+    private new const string ORG_CODE = "ttd";
 
     protected IAccessListsRepository Repository => Services.GetRequiredService<IAccessListsRepository>();
     protected AdvanceableTimeProvider TimeProvider => Services.GetRequiredService<AdvanceableTimeProvider>();
