@@ -1,48 +1,23 @@
 # Tests in CI
 
-Tests run per-vertical in parallel jobs. Each vertical (app/lib/pkg) has its
-own CI job driven by a shared template: `tpl-vertical-ci.yml`. Build, test,
-and threshold enforcement happen in one job per vertical (`build-test-analyze`)
-so the test suite executes exactly once. Only the verticals affected by a
-change run (dependency-aware change detection), and a `concurrency` group
-cancels a superseded run when a PR is pushed again — `main`-push runs always
-run to completion.
-
-SonarCloud analysis is **not** part of PR/main CI — it runs once a day against
-`main` via [`sonar-nightly.yml`](../../.github/workflows/sonar-nightly.yml),
-which reuses this same template with `analyze: true`. See
-[../SONARCLOUD.md](../SONARCLOUD.md).
+**TL;DR:** [ci.yml](../../.github/workflows/ci.yml) builds and tests affected
+verticals through RepoCtl. Scheduled SonarCloud analysis and coverage collection
+have been removed; coverage remains available [locally](COVERAGE.md).
 
 ## Job structure
 
-For each vertical the pipeline runs (the SonarCloud `begin` / `end` steps in
-steps 1 and 5 are gated on the `analyze` input and only execute on the nightly
-scan; on PR/main CI they are skipped):
+RepoCtl selects affected verticals with `repoctl ci find-verticals --filter full`.
+Each selected vertical runs in a parallel matrix job:
 
-1. **SonarCloud begin** *(analyze run only, verticals that opt in via `conf.json`)* — `dotnet-sonarscanner begin` wraps the build/test that follow so the scanner can hook MSBuild's analyzers.
-2. **Restore + build** — `dotnet build -c Release --no-incremental`. On the analyze run the build inside Sonar's begin/end window is what gives the scanner its data. `dotnet workload restore` runs **only** in verticals that contain an Aspire AppHost (detected from the csprojs); the rest skip it.
-3. **Test + coverage (two lanes off one build)** — tests run in two
-   sequential lanes selected by the `Category` trait: a fast **unit** lane
-   (`--filter-trait "Category=Unit"`) then a slower **integration** lane
-   (`--filter-trait "Category=Integration"`). Both reuse the single build (`--no-build`) and
-   write TRX into a per-lane `TestResults/<lane>/` subdir. On the nightly
-   **analyze** run each lane is wrapped by `dotnet-coverage collect` into its own
-   `.coverage` binary (`coverage.unit.coverage` / `coverage.integration.coverage`);
-   **PR runs execute the tests directly, without coverage instrumentation.** The
-   integration lane runs even if the unit lane failed (but not if the build
-   failed) so coverage spans the whole suite. The integration lane also passes
-   `-p:TestLane=Integration`: assemblies that declare
-   `<HasIntegrationTests>false</HasIntegrationTests>` are skipped outright (see
-   [Integration lane gate](#integration-lane-gate) below) instead of producing a
-   zero-test run. For runs that still end up with nothing executed (tests
-   skipped at runtime), MTP exits 8, which `--ignore-exit-code 8` treats as
-   success.
-4. **Convert coverage** *(analyze run only — PR runs produce no `.coverage`, so these self-skip)* — `dotnet-coverage merge` into cobertura for the coverage report, and a second merge into VSCoverage XML for Sonar. No re-running tests.
-5. **SonarCloud end** *(analyze run only, verticals that opt in)* — uploads the analysis. Runs even if tests failed so issues found by the scanner are still posted. See [../SONARCLOUD.md](../SONARCLOUD.md).
-6. **Coverage report** — parses the cobertura XML and reports any assembly below its target as a warning; it never fails on coverage, so it does not gate the job. See [COVERAGE.md](COVERAGE.md).
-7. **Pack** — `dotnet pack` for `pkg`-type verticals only.
-8. **Report failed tests** — post-test step that parses MTP logs and emits per-failure `::group::` + `::error title::` annotations on GitHub Actions.
-9. **Upload artifacts** on failure — MTP `*.log` / `*.trx` files from `TestResults/`. Retention: 3 days.
+1. Restore with `dotnet restore` in Release configuration.
+2. Build with `dotnet build -c Release --no-restore`.
+3. Test with `repoctl vertical test -c Release --no-build`.
+4. Pack package and tool verticals with `dotnet pack -c Release --no-build`.
+5. Build and push app containers and Flux manifest artifacts where configured.
+
+The repository check job also runs `repoctl check`. A superseded PR run is
+cancelled; push-to-main runs finish. After successful builds on main, the app
+job promotes manifest artifacts to the configured test environments.
 
 ## Microsoft Testing Platform (MTP)
 
@@ -92,56 +67,37 @@ permanently `[Skip]`ped do not count as runnable (an all-skipped run is also
 logged as `Failed!`), which is why `Altinn.Authorization.Host.Lease.Tests`
 declares `false` despite containing (perma-skipped) integration tests.
 
-## Coverage reporting scope
-
-Coverage reporting is scoped to the **owning vertical**: the Authorization
-vertical reports on `Altinn.Authorization*` assemblies; AccessManagement reports
-on its own set. This keeps one vertical's coverage report from being muddied by
-another vertical's code.
-
 ## Container runtime
 
-CI runners have Docker available, so Testcontainers-backed integration tests
-(AccessManagement, and the Authorization delegation-metadata repository tests)
-run as normal. Verticals that don't need a container (ABAC, PEP) are unaffected.
+CI runners have Docker available for Testcontainers-backed integration tests.
+If a container runtime is unavailable locally, fixtures can skip tests rather
+than fail. A successful run with skipped tests does not verify integration behaviour.
 
-If a container runtime is unavailable the fixtures `Assert.Skip(...)` —
-individual tests show as skipped rather than failing the job.
+## Artifacts and debugging
 
-## Artifacts
+Each vertical job uploads MSBuild binary logs from `binlog/*.binlog`, even on
+failure, with one-day retention. Package and tool jobs also upload NuGet
+packages with one-day retention. TRX reports are uploaded as
+`test-results-<vertical slug>` artifacts with seven-day retention, including
+when tests fail. xUnit v3 uses `--report-xunit-trx` through
+`TestingPlatformCommandLineArguments`; xUnit v2 uses the VSTest TRX logger.
 
-On failure, each job uploads:
+The [Test Report workflow](../../.github/workflows/ci__post-test-report.yml) runs after
+CI and publishes a check per result artifact with test counts, failed test
+details, up to 50 source annotations, and an Actions summary. It runs from
+the default branch so fork PRs can receive checks without granting write
+permissions to their test jobs. The reporting workflow must be merged into
+the default branch before it starts running. Missing reports are allowed for
+verticals without tests or jobs that failed before testing.
 
-- `TestResults/*.log` — MTP stdout per test project
-- `TestResults/*.trx` — machine-readable test results
-- `binlog/*.binlog` — MSBuild binary log of the build/test/pack steps (retained 1 day)
-
-All three are **failure-only**: a green run uploads nothing, since these are
-debugging aids nobody fetches when the job passes.
-
-Coverage artifacts (`*.cobertura.xml`) are **not** uploaded — the pipeline
-uses them in-process for threshold checks and the raw data isn't valuable
-post-hoc.
-
-## Blocked items
-
-| Item | Blocker |
-|---|---|
-| `Altinn.Authorization.Host.Lease.Tests` in CI | Requires Azurite (Azure Storage emulator). |
-
-## Debugging a CI test failure
-
-1. Check the `Report failed tests` step in the failing job — it emits a
-   GitHub annotation for each individual test failure.
-2. Download the `TestResults` artifact for that job. The `*.coverage.log`
-   and `*.log` files contain full MTP stdout, including per-test `[FAIL]`
-   output.
-3. For flaky tests, check whether the failure correlates with a specific OS
-   (the pipeline runs Ubuntu for most verticals) — several Linux-specific
-   issues had to be fixed after the suite first went green.
+For a test failure, inspect the test report check or the job's `Test` step,
+which enables `TestingPlatformShowTestsFailure` to print individual errors.
+Download the TRX or binlog artifact when more detail is needed.
+Reproduce with the same vertical and
+Release configuration locally, with a container runtime available for integration tests.
 
 ## Related docs
 
-- [COVERAGE.md](COVERAGE.md) — threshold mechanics and local-dev workflow.
-- [../SONARCLOUD.md](../SONARCLOUD.md) — SonarCloud config, exclusions, per-vertical setup.
+- [COVERAGE.md](COVERAGE.md) — local coverage workflow and targets.
+- [../SONARCLOUD.md](../SONARCLOUD.md) — retained analysis configuration.
 - [GETTING_STARTED.md](GETTING_STARTED.md) — local prerequisites.

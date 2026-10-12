@@ -1,4 +1,9 @@
-{
+﻿{
+  "dis": {
+    "deploy": false,
+    "manifest": "authorization/manifest",
+    "syncroot": "authorization/syncroot"
+  },
   "image": {},
   "infra": {
     "terraform": {

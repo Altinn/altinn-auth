@@ -3,7 +3,7 @@
 Welcome. This folder is the entry point for everything you need to know about
 the test suite in this repository — how it's organised, how to run it locally,
 what fixtures and mocks are available, the conventions we follow, and how
-coverage is measured and reported in CI.
+coverage is measured and reported locally.
 
 If you're new to the codebase, read these in order. Each doc is short and
 self-contained; none of them is a wall of text.
@@ -22,7 +22,7 @@ self-contained; none of them is a wall of text.
 | 8 | [COVERAGE.md](COVERAGE.md) | Running coverage locally, per-assembly targets (reported, not gated) |
 | 9 | [CI.md](CI.md) | How tests run in the pipeline, Microsoft Testing Platform (MTP), artifacts |
 | 10 | [BRUNO_API_TESTS.md](BRUNO_API_TESTS.md) | The Bruno API collections — manual/exploratory API tests that double as a behavioral spec for the C# integration tests |
-| 11 | [../SONARCLOUD.md](../SONARCLOUD.md) | Static analysis: exclusions, per-vertical setup, quality gate, debugging |
+| 11 | [../SONARCLOUD.md](../SONARCLOUD.md) | Retained analysis configuration; scheduled scans removed |
 
 ## TL;DR for newcomers
 

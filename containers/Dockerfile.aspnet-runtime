@@ -1,0 +1,15 @@
+﻿FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine@sha256:f62a272ac1b46e83f56b8ed0416572f31cd1128e2c4a5e63eb34d348e4a36095 AS final
+WORKDIR /app
+
+# Install tzdata for timezone support, which is needed for correct handling of dates and times in the application
+RUN apk add --no-cache tzdata krb5-libs
+
+# setup the user and group
+# the user will have no password, using shell /bin/false and using the group dotnet
+RUN addgroup -g 3000 dotnet && adduser -u 1000 -G dotnet -D -s /bin/false dotnet
+# update permissions of files if neccessary before becoming dotnet user
+USER dotnet
+RUN mkdir /tmp/logtelemetry
+
+EXPOSE 8080
+ENV ASPNETCORE_URLS=http://+:8080

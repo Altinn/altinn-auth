@@ -8,7 +8,7 @@ end_of_line = lf
 tab_width = 2
 charset = utf-8-bom
 
-[*.{tf,tfvars}]
+[*.{nix,tf,tfvars,sh}]
 charset = utf-8
 
 [*.{props,targets,csproj}]

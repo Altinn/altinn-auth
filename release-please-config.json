@@ -1,9 +1,41 @@
 {
   "bootstrap-sha": "1e705b7d3d23204a89de5a38f3411be3198a4170",
-  "separate-pull-requests": true,
-  "pull-request-title-pattern": "release${scope}:${component} ${version}",
   "release-type": "simple",
+  "pull-request-title-pattern": "release${scope}:${component} ${version}",
+  "separate-pull-requests": true,
   "packages": {
+    "src/apps/Altinn.AccessManagement": {
+      "package-name": "Altinn.AccessManagement",
+      "extra-files": [
+        {
+          "type": "yaml",
+          "path": "manifests/deploy/{tt02,prod}/kustomization.yaml",
+          "glob": true,
+          "jsonpath": "$.images[?(@.name==\u0027ghcr.io/altinn/altinn-auth/access-management\u0027)].newTag"
+        },
+        {
+          "type": "yaml",
+          "path": "manifests/deploy/{tt02,prod}/kustomization.yaml",
+          "glob": true,
+          "jsonpath": "$.labels[?(@.pairs)].pairs[\u0027app.kubernetes.io/version\u0027]"
+        }
+      ]
+    },
+    "src/apps/Altinn.Authorization": {
+      "package-name": "Altinn.Authorization",
+      "extra-files": [
+        {
+          "type": "yaml",
+          "path": "manifests/deploy/{tt02,prod}/kustomization.yaml",
+          "jsonpath": "$.images[?(@.name==\u0027ghcr.io/altinn/altinn-auth/authorization\u0027)].newTag"
+        },
+        {
+          "type": "yaml",
+          "path": "manifests/deploy/{tt02,prod}/kustomization.yaml",
+          "jsonpath": "$.labels[?(@.pairs)].pairs[\u0027app.kubernetes.io/version\u0027]"
+        }
+      ]
+    },
     "src/pkgs/Altinn.Authorization.ABAC": {
       "component": "Altinn.Authorization.ABAC",
       "bump-minor-pre-major": true,
@@ -17,6 +49,26 @@
     },
     "src/pkgs/Altinn.Authorization.PEP": {
       "component": "Altinn.Authorization.PEP",
+      "extra-files": [
+        {
+          "type": "xml",
+          "path": "Version.props",
+          "xpath": "//Project/PropertyGroup/Version"
+        }
+      ]
+    },
+    "src/tools/Altinn.AccessMgmt.FFB": {
+      "component": "tool/AccessMgmt.FFB",
+      "extra-files": [
+        {
+          "type": "xml",
+          "path": "Version.props",
+          "xpath": "//Project/PropertyGroup/Version"
+        }
+      ]
+    },
+    "src/tools/Altinn.Authorization.Cli": {
+      "component": "tool/Cli",
       "extra-files": [
         {
           "type": "xml",

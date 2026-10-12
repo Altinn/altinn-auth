@@ -1,4 +1,9 @@
-{
+﻿{
+  "dis": {
+    "deploy": true,
+    "manifest": "access-management/manifests",
+    "syncroot": "access-management/syncroot"
+  },
   "image": {},
   "database": {
     "prefix": "accessmgmt",

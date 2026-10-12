@@ -1,0 +1,6 @@
+﻿FROM aspnet-builder AS build
+RUN dotnet publish /src/apps/Altinn.AccessManagement/src/Altinn.AccessManagement -c Release -o /app
+
+FROM aspnet-runtime AS final
+COPY --from=build /app .
+ENTRYPOINT ["dotnet", "Altinn.AccessManagement.dll"]
