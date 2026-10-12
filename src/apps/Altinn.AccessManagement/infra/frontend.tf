@@ -44,6 +44,12 @@ module "frontend_appsettings" {
       label       = "${lower(var.environment)}-access-management-ui"
       default     = false
     },
+    {
+      name        = "AccessManagementUI.EnableActivityLog"
+      description = "Whether or not to show menuitems and tabs for Activity Log."
+      label       = "${lower(var.environment)}-access-management-ui"
+      default     = false
+    },
   ]
 
   providers = {
