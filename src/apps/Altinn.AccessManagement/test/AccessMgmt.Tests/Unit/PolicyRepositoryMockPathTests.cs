@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using Altinn.AccessManagement.TestUtils.Mocks;
 using Microsoft.Extensions.Logging;
 using Moq;
