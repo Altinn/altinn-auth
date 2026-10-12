@@ -34,6 +34,12 @@ public interface IRequestService
     Task<Result<int>> GetReceivedRequestsCount(Guid partyId, Guid? fromId, IEnumerable<RequestStatus> status, string? type, CancellationToken ct = default);
 
     /// <summary>
+    /// Get count of requests received by each subunit of the party.
+    /// Every direct subunit is included, also those with no requests.
+    /// </summary>
+    Task<Result<IEnumerable<ReceivedRequestCountSubunitDto>>> GetReceivedRequestsCountForSubunits(Guid partyId, Guid? fromId, IEnumerable<RequestStatus> status, string? type, CancellationToken ct = default);
+
+    /// <summary>
     /// Creates a new request
     /// A Request from Kari by NAV to BakerAS for AppResource01.
     /// Will create an Assignment from BakerAS to Kari with an AssignmentResource for AppResource01.

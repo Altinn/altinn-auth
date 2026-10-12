@@ -70,7 +70,135 @@
       partyuuid: "0eb7144c-1ff1-4657-a1d7-2b127830f52d",
     },
   },
-
+   
+  Bot_Org_SubUnits: {
+    name: "FINTFØLENDE RASK PIGGSVIN",
+    org_no: "210008802",
+    partyid: 51235200,
+    partyuuid: "ad52d6a6-b174-49b2-8b9d-8d6345e31909",
+    dagligleder: {
+      name: "FANTASTISK PIANOKRAKK",
+      pid: "11896498713",
+      partyid: 50237764,
+      userid: 20332185,
+      partyuuid: "437ef092-ce90-49f7-9330-f3ecd51198e0",
+    },
+    underenhet01: {
+      name: "BLØT INITIATIVRIK FJELLREV",
+      org_no: "211942932",
+      partyid: 51260232,
+      partyuuid: "760e6057-be41-47ff-a019-db6b8f8c711a"
+    },
+    underenhet02: {
+      name: "NORMAL FAST FJELLREV",
+      org_no: "211943092",
+      partyid: 51260229,
+      partyuuid: "d27475ce-9612-40de-bab1-686ae63a0d53"
+    },
+    underenhet03: {
+      name: "URETTFERDIG SPETTETE FJELLREV",
+      org_no: "311942921",
+      partyid: 51509257,
+      partyuuid: "219e0864-0af3-4872-b73b-d96bde73d5f9"
+    },
+    underenhet04: {
+      name: "VOKAL PRESIS FJELLREV",
+      org_no: "311942948",
+      partyid: 51509258,
+      partyuuid: "2adc85c7-b5c6-4b3a-abca-1e8e7da7aa82"
+    },
+    underenhet05: {
+      name: "FORETAKSOM KURSIV FJELLREV",
+      org_no: "311942956",
+      partyid: 51509259,
+      partyuuid: "f0d82626-5889-4dd2-84c3-8d1531434c16"
+    },
+    underenhet06: {
+      name: "ANONYM ALVORLIG FJELLREV",
+      org_no: "311942964",
+      partyid: 51509260,
+      partyuuid: "2b5d7c4d-35be-41f2-b993-91af54cf0e1c"
+    },
+    underenhet07: {
+      name: "GLEMSOM EGOISTISK FJELLREV",
+      org_no: "311942972",
+      partyid: 51509261,
+      partyuuid: "58b1d57e-c66b-4968-8c11-bd6824cd1d7e"
+    },
+    underenhet08: {
+      name: "RASTLØS STILLE FJELLREV",
+      org_no: "311942980",
+      partyid: 51509262,
+      partyuuid: "4febd634-b69f-4758-83e3-d48f39aeaf50"
+    },
+    underenhet09: {
+      name: "BERIKENDE URIMELIG FJELLREV",
+      org_no: "311942999",
+      partyid: 51509263,
+      partyuuid: "7f1b7725-68e8-4a8e-9e82-edb9ed30a8c5"
+    },
+    underenhet10: {
+      name: "SLITEN STRIDLYNT FJELLREV",
+      org_no: "311943006",
+      partyid: 51509264,
+      partyuuid: "077c3311-6c8e-455b-a620-c50af33120a3"
+    },
+    underenhet11: {
+      name: "UMAKE SKRAVLETE FJELLREV",
+      org_no: "311943014",
+      partyid: 51509265,
+      partyuuid: "4614ca66-45ed-4252-bd1c-e9f974dd9137"
+    },
+    underenhet12: {
+      name: "NETT SMIGRENDE FJELLREV",
+      org_no: "311943022",
+      partyid: 51509266,
+      partyuuid: "a48b17fd-c178-4cbc-8847-f602b81f6469"
+    },
+    underenhet13: {
+      name: "BERØMT INNESLUTTET FJELLREV",
+      org_no: "311943030",
+      partyid: 51509267,
+      partyuuid: "c3398b35-860f-47dc-b379-e75d615ef7b4"
+    },
+    underenhet14: {
+      name: "PLEIENDE UFORNUFTIG FJELLREV",
+      org_no: "311943049",
+      partyid: 51509268,
+      partyuuid: "54495d32-5747-4958-9cfe-96529b5801e9"
+    },
+    underenhet15: {
+      name: "GILD NYTTIG FJELLREV",
+      org_no: "311943057",
+      partyid: 51509269,
+      partyuuid: "3e60392e-5c94-4d1c-9fd5-60a178446106"
+    },
+    underenhet16: {
+      name: "BESKJEDEN UKJENT FJELLREV",
+      org_no: "311943065",
+      partyid: 51509270,
+      partyuuid: "e626f8e4-c70f-4c37-acb2-f8456a929214"
+    },
+    underenhet17: {
+      name: "STADIG UKJENT FJELLREV",
+      org_no: "311943073",
+      partyid: 51509271,
+      partyuuid: "045237b9-f7d2-48c3-b365-cd057c25bb72"
+    },
+    underenhet18: {
+      name: "RUSTEN UAVHENGIG FJELLREV",
+      org_no: "311943081",
+      partyid: 51509273,
+      partyuuid: "6e3de871-5f8b-4827-a4f2-1559f1bbfd28"
+    },
+    underenhet19: {
+      name: "OPPBLÅST TYKKHUDET FJELLREV",
+      org_no: "311943103",
+      partyid: 51509274,
+      partyuuid: "093895ff-20f3-4b72-aa2b-84108de4d2f3"
+    },
+  },
+   
   Bot_Org_2: {
     name: "RIMELIG FAST HEST BORETTSLAG",
     org_no: "310413089",
@@ -83,6 +211,7 @@
       userid: 20281547,
       partyuuid: "38c5f772-3544-4850-9cab-e4c81077c56c",
     },
+    
   },
   user_uten_rettighetshaver: {
     lastname: "SJOKOLADEKAKE",
