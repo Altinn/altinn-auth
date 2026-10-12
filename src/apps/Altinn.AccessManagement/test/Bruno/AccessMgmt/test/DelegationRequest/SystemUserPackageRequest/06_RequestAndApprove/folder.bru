@@ -1,0 +1,17 @@
+meta {
+	name: 06_RequestAndApprove
+	seq: 6
+}
+
+docs {
+	Scenario: A public sector system user requests a package and the organisation approves it
+
+		Given the recipient has no pending request from the system user
+		And the system user does not hold the package from the recipient
+		When the system user requests the package from the recipient by organisation number
+		And the recipient approves the request
+		Then the request is approved
+		And the system user sees the request as approved among its sent requests
+		And the system user holds the package from the recipient
+		Finally the package is removed from the system user to clean up
+}

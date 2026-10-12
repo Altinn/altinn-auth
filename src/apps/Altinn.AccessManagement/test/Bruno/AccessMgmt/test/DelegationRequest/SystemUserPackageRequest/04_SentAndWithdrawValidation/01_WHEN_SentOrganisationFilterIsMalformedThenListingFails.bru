@@ -1,0 +1,33 @@
+meta {
+  name: 01_WHEN_SentOrganisationFilterIsMalformedThenListingFails
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/systemuser/request/sent?organization=12345
+  body: none
+  auth: inherit
+}
+
+params:query {
+  organization: 12345
+}
+
+docs {
+  WHEN the organisation filter is not a valid organisation number, listing sent requests fails
+  with 400.
+}
+
+script:pre-request {
+  const { testdata, loginAsSystemUser } = require("./test/DelegationRequest/SystemUserPackageRequest/helpers.js");
+  const td = testdata();
+
+  await loginAsSystemUser(td.publicSectorConsumer.systemUser, td.publicSectorConsumer.orgno, td.publicSectorConsumer.orgno);
+}
+
+tests {
+  test("WHEN the organisation filter is malformed, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+}

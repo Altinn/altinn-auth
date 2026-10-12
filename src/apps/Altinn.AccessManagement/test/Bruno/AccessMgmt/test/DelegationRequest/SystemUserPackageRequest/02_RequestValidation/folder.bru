@@ -1,0 +1,17 @@
+meta {
+  name: 02_RequestValidation
+  seq: 2
+}
+
+docs {
+  Scenario: The system user package request rejects invalid input and ineligible callers
+
+    When the organisation number is malformed the request fails with 400
+    When the organisation number has an invalid checksum the request fails with 400
+    When no organisation has the organisation number the request fails with 400
+    When the system user belongs to an organisation that is not KOMM, FYLK or STAT the request fails with 403
+    When the token lacks the system user requests scope the request fails with 403
+    When no token is provided the request fails with 401
+
+  No step creates state, so the scenario needs no cleanup.
+}

@@ -1,0 +1,36 @@
+meta {
+	name: 05_CLEANUP_SystemUserWithdrawsTheRequest
+	type: http
+	seq: 5
+}
+
+put {
+	url: {{baseUrl}}/accessmanagement/api/v1/systemuser/request/sent/withdraw?id={{otherWithdrawRequestId}}
+	body: none
+	auth: inherit
+}
+
+params:query {
+	id: {{otherWithdrawRequestId}}
+}
+
+docs {
+	CLEANUP: the system user that sent the request withdraws it.
+}
+
+script:pre-request {
+	const { testdata, loginAsSystemUser } = require("./test/DelegationRequest/SystemUserPackageRequest/helpers.js");
+	const td = testdata();
+
+	await loginAsSystemUser(td.publicSectorConsumer.systemUser, td.publicSectorConsumer.orgno, td.publicSectorConsumer.orgno);
+}
+
+tests {
+	test("CLEANUP the request is withdrawn, the request returns 200", function() {
+		expect(res.status).to.equal(200);
+	});
+
+	test("THEN the request is withdrawn", function() {
+		expect(res.getBody().status).to.equal("Withdrawn");
+	});
+}

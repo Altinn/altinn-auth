@@ -1,0 +1,44 @@
+meta {
+	name: 05_THEN_SystemUserHoldsThePackage
+	type: http
+	seq: 5
+}
+
+get {
+	url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&from={{party}}&to={{systemUser}}
+	body: none
+	auth: inherit
+}
+
+params:query {
+	party: {{party}}
+	from: {{party}}
+	to: {{systemUser}}
+}
+
+docs {
+	THEN the recipient organisation has delegated the package to the system user.
+}
+
+script:pre-request {
+	const { testdata, loginAs } = require("./test/DelegationRequest/SystemUserPackageRequest/helpers.js");
+	const td = testdata();
+
+	bru.setVar("party", td.recipient.partyUuid);
+	bru.setVar("systemUser", td.publicSectorConsumer.systemUser.partyUuid);
+
+	await loginAs(td.recipient.dagligleder);
+}
+
+tests {
+	const { testdata } = require("./test/DelegationRequest/SystemUserPackageRequest/helpers.js");
+	const td = testdata();
+
+	test("THEN the packages can be listed, the request returns 200", function() {
+		expect(res.status).to.equal(200);
+	});
+
+	test("THEN the system user holds the requested package", function() {
+		expect(JSON.stringify(res.getBody())).to.include(td.package);
+	});
+}

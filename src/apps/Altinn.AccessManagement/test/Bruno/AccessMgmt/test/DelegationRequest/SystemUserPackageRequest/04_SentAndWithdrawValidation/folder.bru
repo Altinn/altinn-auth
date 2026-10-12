@@ -1,0 +1,17 @@
+meta {
+  name: 04_SentAndWithdrawValidation
+  seq: 4
+}
+
+docs {
+  Scenario: Listing and withdrawing sent requests rejects invalid input and ineligible callers
+
+    When the organisation filter is malformed, listing sent requests fails with 400
+    When the system user belongs to an organisation that is not KOMM, FYLK or STAT, listing sent requests fails with 403
+    When no token is provided, listing sent requests fails with 401
+    When the request does not exist, withdrawing fails with 400
+    When the system user belongs to an organisation that is not KOMM, FYLK or STAT, withdrawing fails with 403
+    When no token is provided, withdrawing fails with 401
+
+  No step creates state, so the scenario needs no cleanup.
+}

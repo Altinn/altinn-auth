@@ -1,0 +1,18 @@
+meta {
+	name: 07_CannotWithdrawOtherSystemUsersRequest
+	seq: 7
+}
+
+docs {
+	Scenario: A system user cannot withdraw a request sent by another system user
+
+		Given the system user has no pending sent request to the recipient
+		When the system user requests the package from the recipient
+		And another public sector system user tries to withdraw the request
+		Then withdrawing fails with 400 and AM.VLD-00044 (Party cannot perform this status change)
+		And the request is still pending for the system user that sent it
+		Finally the system user that sent the request withdraws it to clean up
+
+	Requires otherPublicSectorConsumer in testdata: a second KOMM, FYLK or STAT organisation that
+	owns a different system user.
+}

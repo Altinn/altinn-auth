@@ -1,0 +1,35 @@
+meta {
+  name: 05_WHEN_ConsumerIsNotPublicSectorThenWithdrawFails
+  type: http
+  seq: 5
+}
+
+put {
+  url: {{baseUrl}}/accessmanagement/api/v1/systemuser/request/sent/withdraw?id={{unknownRequestId}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  id: {{unknownRequestId}}
+}
+
+docs {
+  WHEN the system user belongs to an organisation that is not KOMM, FYLK or STAT, withdrawing
+  fails with 403 before the request is looked up.
+}
+
+script:pre-request {
+  const { testdata, loginAsSystemUser } = require("./test/DelegationRequest/SystemUserPackageRequest/helpers.js");
+  const td = testdata();
+
+  bru.setVar("unknownRequestId", require("crypto").randomUUID());
+
+  await loginAsSystemUser(td.privateConsumer.systemUser, td.privateConsumer.orgno, td.privateConsumer.orgno);
+}
+
+tests {
+  test("WHEN the consumer is not public sector, the request returns 403", function() {
+    expect(res.status).to.equal(403);
+  });
+}

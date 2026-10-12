@@ -1,0 +1,41 @@
+meta {
+  name: 04_WHEN_RecipientRejectsTheRequest
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/request/received/reject?party={{party}}&id={{rejectRequestId}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  id: {{rejectRequestId}}
+}
+
+docs {
+  WHEN the recipient organisation rejects the request from the system user.
+
+  Expects 200 with the request in status Rejected. This also cleans up the scenario.
+}
+
+script:pre-request {
+  const { testdata, loginAs } = require("./test/DelegationRequest/SystemUserPackageRequest/helpers.js");
+  const td = testdata();
+
+  bru.setVar("party", td.recipient.partyUuid);
+
+  await loginAs(td.recipient.dagligleder);
+}
+
+tests {
+  test("WHEN the recipient rejects the request, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the request is rejected", function() {
+    expect(res.getBody().status).to.equal("Rejected");
+  });
+}

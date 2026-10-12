@@ -1,0 +1,41 @@
+meta {
+  name: 04_WHEN_RequestDoesNotExistThenWithdrawFails
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/accessmanagement/api/v1/systemuser/request/sent/withdraw?id={{unknownRequestId}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  id: {{unknownRequestId}}
+}
+
+docs {
+  WHEN the request id does not match any request, withdrawing fails with 400 and validation error AM.VLD-00035 (Request do not exists).
+}
+
+script:pre-request {
+  const { testdata, loginAsSystemUser } = require("./test/DelegationRequest/SystemUserPackageRequest/helpers.js");
+  const td = testdata();
+
+  bru.setVar("unknownRequestId", require("crypto").randomUUID());
+
+  await loginAsSystemUser(td.publicSectorConsumer.systemUser, td.publicSectorConsumer.orgno, td.publicSectorConsumer.orgno);
+}
+
+tests {
+  test("WHEN the request does not exist, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN the validation error says the request does not exist", function() {
+    const errors = res.getBody().validationErrors || [];
+    const error = errors.find(e => e.code === "AM.VLD-00035");
+    expect(error).to.not.be.undefined;
+    expect(error.detail).to.equal("Request do not exists.");
+  });
+}
