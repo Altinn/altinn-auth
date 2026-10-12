@@ -59,7 +59,6 @@ public class AuthorizationApiFixture : WebApplicationFactory<Program>
             // Policy / delegation mocks
             services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
             services.AddSingleton<IPolicyRepository, PolicyRepositoryMock>();
-            services.AddSingleton<IDelegationMetadataRepository, DelegationMetadataRepositoryMock>();
             services.AddSingleton<IInstanceMetadataRepository, InstanceMetadataRepositoryMock>();
 
             // External service mocks

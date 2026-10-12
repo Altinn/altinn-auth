@@ -156,28 +156,6 @@ namespace Altinn.Platform.Authorization.Helpers
         }
 
         /// <summary>
-        /// Creates a Rule representation based on a search and a xacmlRule found in a XacmlPolicyFile based on the search
-        /// </summary>
-        /// <param name="search">The search used to find the correct rule</param>
-        /// <param name="xacmlRule">XacmlRule found by the search param to enrich the result with Action and Resource</param>
-        /// <returns>The created Rule</returns>
-        public static Rule CreateRuleFromPolicyAndRuleMatch(RequestToDelete search, XacmlRule xacmlRule)
-        {
-            Rule rule = new Rule
-            {
-                RuleId = xacmlRule.RuleId,
-                CreatedSuccessfully = true,
-                DelegatedByUserId = search.DeletedByUserId,
-                OfferedByPartyId = search.PolicyMatch.OfferedByPartyId,
-                CoveredBy = search.PolicyMatch.CoveredBy,
-                Resource = GetResourceFromXcamlRule(xacmlRule),
-                Action = GetActionValueFromRule(xacmlRule)
-            };
-
-            return rule;
-        }
-
-        /// <summary>
         /// Builds the delegation policy path based on org and app names, as well as identifiers for the delegating and receiving entities
         /// </summary>
         /// <param name="org">The organization name/identifier</param>
@@ -232,19 +210,6 @@ namespace Altinn.Platform.Authorization.Helpers
             }
 
             return $"{org.AsFileName()}/{app.AsFileName()}/{offeredBy.AsFileName()}/{coveredByPrefix}{coveredBy.AsFileName()}/delegationpolicy.xml";
-        }
-
-        /// <summary>
-        /// Builds the delegation policy path based on input policyMatch
-        /// </summary>
-        /// <param name="policyMatch">param to build policypath from</param>
-        /// <returns>policypath matching input data</returns>
-        public static string GetAltinnAppDelegationPolicyPath(PolicyMatch policyMatch)
-        {
-            DelegationHelper.TryGetResourceFromAttributeMatch(policyMatch.Resource, out string org, out string app);
-            DelegationHelper.GetCoveredByFromMatch(policyMatch.CoveredBy, out int? coveredByUserId, out int? coveredByPartyId);
-
-            return PolicyHelper.GetAltinnAppDelegationPolicyPath(org, app, policyMatch.OfferedByPartyId.ToString(), coveredByUserId, coveredByPartyId);
         }
 
         /// <summary>
