@@ -1,0 +1,52 @@
+meta {
+  name: 09_AND_UnknownResourceIsRejected
+  type: http
+  seq: 9
+}
+
+put {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources/rights?party={{party}}&to={{to}}&resource=bruno-resource-that-does-not-exist
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  to: {{to}}
+  resource: bruno-resource-that-does-not-exist
+}
+
+body:json {
+  {
+    "directRightKeys": ["{{aur_readKey}}"]
+  }
+}
+
+docs {
+  AND an unknown resource is rejected with 400 AM-00027. The problem body echoes the
+  resource the request was made with.
+}
+
+script:pre-request {
+  const { loginAs, testdata, scopes } = require("./test/EnduserAPI/Connections/AvailableUsersAndRights/helpers.js");
+  const td = testdata();
+
+  bru.setVar("party", td.delegator.partyUuid);
+  bru.setVar("to", td.receiver.partyUuid);
+
+  await loginAs(td.delegator, scopes.enduserSystemToOthersWrite);
+}
+
+tests {
+  test("AND the update is rejected with 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("AND the problem body names the unknown resource", function() {
+    const body = res.getBody();
+    expect(body.status).to.equal(400);
+    expect(body.code).to.equal("AM-00027");
+    expect(body.detail).to.equal("The resource is invalid");
+    expect(body.resource).to.equal("bruno-resource-that-does-not-exist");
+  });
+}

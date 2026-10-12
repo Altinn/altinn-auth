@@ -1,0 +1,45 @@
+meta {
+  name: 03_AND_UnknownRoleCodeIsRejected
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/roles?party={{party}}&from={{party}}&to={{to}}&rolecode=bruno-role-that-does-not-exist
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{to}}
+  rolecode: bruno-role-that-does-not-exist
+}
+
+docs {
+  AND an unknown role code is rejected with 400 AM-00039.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/Connections/AvailableUsersAndRights/helpers.js");
+  const td = testdata();
+
+  bru.setVar("party", td.delegator.partyUuid);
+  bru.setVar("to", td.receiver.partyUuid);
+
+  await loginAs(td.delegator);
+}
+
+tests {
+  test("AND the removal is rejected with 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("AND the problem body says the role code was not found", function() {
+    const body = res.getBody();
+    expect(body.status).to.equal(400);
+    expect(body.code).to.equal("AM-00039");
+    expect(body.detail).to.equal("The provided rolecode was not found");
+  });
+}
