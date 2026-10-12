@@ -55,7 +55,7 @@ public class PolicyInformationPointControllerTest : IClassFixture<AccessMgmtApiF
     };
 
     /// <summary>
-    /// Sets up test scenarios for accesspackage delegations to system users, to test <see cref="PolicyInformationPointController.GetAccessPackages(Guid, Guid, CancellationToken)"></see>
+    /// Sets up test scenarios for access package delegations to system users, to test <see cref="PolicyInformationPointController.GetRolesAndAccessPackages"></see>
     /// </summary>
     public static TheoryData<string, string, string, List<AccessPackageUrn>> SystemUserAccessPackageScenarios() => new()
     {
@@ -109,23 +109,23 @@ public class PolicyInformationPointControllerTest : IClassFixture<AccessMgmtApiF
         Assert.Equal(HttpStatusCode.BadRequest, actualResponse.StatusCode);
     }
 
-    /* ToDo: Add Integration tests on database container
+    /* ToDo: Seed the system user client delegation data used by SystemUserAccessPackageScenarios, then enable this test
     /// <summary>
-    /// Test case: Tests getting all access packages av given to-party has for a given from-party
+    /// Test case: Tests getting all access packages a given to-party has for a given from-party
     /// Expected: Returns collection of access packages
     /// </summary>
     [Theory]
     [MemberData(nameof(SystemUserAccessPackageScenarios))]
-    public async Task GetAccessPackages_ValidResponse(string scenario, string from, string to, List<AccessPackageUrn> expected)
+    public async Task GetRolesAndAccessPackages_ValidResponse(string scenario, string from, string to, List<AccessPackageUrn> expected)
     {
         // Act
-        HttpResponseMessage actualResponse = await _client.GetAsync($"accessmanagement/api/v1/policyinformation/accesspackages?from={from}&to={to}");
+        HttpResponseMessage actualResponse = await _client.GetAsync($"accessmanagement/api/v1/policyinformation/roles-and-accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, actualResponse.StatusCode);
 
-        List<AccessPackageUrn> actualAccessPackages = await actualResponse.Content.ReadFromJsonAsync<List<AccessPackageUrn>>(options);
-        AssertionUtil.AssertCollections(expected, actualAccessPackages, AssertionUtil.AssertAccessPackageUrn);
+        PipResponseDto actualPipResponse = await actualResponse.Content.ReadFromJsonAsync<PipResponseDto>(options, TestContext.Current.CancellationToken);
+        AssertionUtil.AssertCollections(expected, actualPipResponse.AccessPackages, AssertionUtil.AssertAccessPackageUrn);
     }
     */
 

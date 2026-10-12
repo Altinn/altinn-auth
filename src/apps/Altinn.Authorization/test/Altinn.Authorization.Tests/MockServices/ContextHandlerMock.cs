@@ -9,8 +9,6 @@ using Altinn.Authorization.Tests.Integration;
 using Altinn.Platform.Authorization.Services.Interface;
 using Altinn.Platform.Storage.Interface.Models;
 
-using Authorization.Platform.Authorization.Models;
-
 using Microsoft.AspNetCore.Http;
 
 using Newtonsoft.Json;
@@ -20,8 +18,6 @@ namespace Altinn.Authorization.Tests.MockServices
     public class ContextHandlerMock : IContextHandler
     {
         private readonly IHttpContextAccessor _httpContextAccessor;
-
-        private readonly IRoles _rolesWrapper;
 
         private readonly string _orgAttributeId = "urn:altinn:org";
 
@@ -33,40 +29,35 @@ namespace Altinn.Authorization.Tests.MockServices
 
         private readonly string _partyAttributeId = "urn:altinn:partyid";
 
-        private readonly string _userAttributeId = "urn:altinn:userid";
-
-        private readonly string _altinnRoleAttributeId = "urn:altinn:rolecode";
-
         private readonly string _appresourceAttributeId = "urn:altinn:appresource";
 
-        public ContextHandlerMock(IHttpContextAccessor httpContextAccessor, IRoles rolesWrapper)
+        public ContextHandlerMock(IHttpContextAccessor httpContextAccessor)
         {
             _httpContextAccessor = httpContextAccessor;
-            _rolesWrapper = rolesWrapper;
         }
 
-        public async Task<XacmlContextRequest> Enrich(XacmlContextRequest request, bool isExternalRequest, SortedDictionary<string, AuthInfo> appInstanceInfo, CancellationToken cancellationToken = default)
+        public Task<XacmlContextRequest> Enrich(XacmlContextRequest request, bool isExternalRequest, SortedDictionary<string, AuthInfo> appInstanceInfo, CancellationToken cancellationToken = default)
         {
             string testID = GetTestId(_httpContextAccessor.HttpContext);
             if (!string.IsNullOrEmpty(testID) && testID.ToLower().Contains("altinnapps"))
             {
-                await EnrichResourceAttributes(request, appInstanceInfo);
+                EnrichResourceAttributes(request, appInstanceInfo);
             }
             else
             {
                 try
                 {
-                    return ParseRequest(testID + "Request_Enriched.xml", GetConformancePath());
+                    return Task.FromResult(ParseRequest(testID + "Request_Enriched.xml", GetConformancePath()));
                 }
                 catch (Exception)
                 {
                 }
             }
 
-            return request;
+            return Task.FromResult(request);
         }
 
-        private async Task EnrichResourceAttributes(XacmlContextRequest request, SortedDictionary<string, AuthInfo> appInstanceInfo)
+        private void EnrichResourceAttributes(XacmlContextRequest request, SortedDictionary<string, AuthInfo> appInstanceInfo)
         {
             string orgAttributeValue = string.Empty;
             string appAttributeValue = string.Empty;
@@ -164,36 +155,7 @@ namespace Altinn.Authorization.Tests.MockServices
                 {
                     resourceContextAttributes.Attributes.Add(GetPartyAttribute(instanceData));
                 }
-
-                resourcePartyAttributeValue = instanceData.InstanceOwner.PartyId;
             }
-
-            await EnrichSubjectAttributes(request, resourcePartyAttributeValue);
-        }
-
-        private async Task EnrichSubjectAttributes(XacmlContextRequest request, string resourceParty)
-        {
-            XacmlContextAttributes subjectContextAttributes = request.GetSubjectAttributes();
-
-            int subjectUserId = 0;
-            int resourcePartyId = Convert.ToInt32(resourceParty);
-
-            foreach (XacmlAttribute xacmlAttribute in subjectContextAttributes.Attributes)
-            {
-                if (xacmlAttribute.AttributeId.OriginalString.Equals(_userAttributeId))
-                {
-                    subjectUserId = Convert.ToInt32(xacmlAttribute.AttributeValues.First().Value);
-                }
-            }
-
-            if (subjectUserId == 0)
-            {
-                return;
-            }
-
-            List<Role> roleList = await _rolesWrapper.GetDecisionPointRolesForUser(subjectUserId, resourcePartyId) ?? new List<Role>();
-
-            subjectContextAttributes.Attributes.Add(GetRoleAttribute(roleList));
         }
 
         private XacmlAttribute GetOrgAttribute(Instance instance)
@@ -224,17 +186,6 @@ namespace Altinn.Authorization.Tests.MockServices
             // When Party attribute is missing from input it is good to return it so PEP can get this information
             attribute.IncludeInResult = true;
             attribute.AttributeValues.Add(new XacmlAttributeValue(new Uri(XacmlConstants.DataTypes.XMLString), instance.InstanceOwner.PartyId));
-            return attribute;
-        }
-
-        private XacmlAttribute GetRoleAttribute(List<Role> roles)
-        {
-            XacmlAttribute attribute = new XacmlAttribute(new Uri(_altinnRoleAttributeId), false);
-            foreach (Role role in roles)
-            {
-                attribute.AttributeValues.Add(new XacmlAttributeValue(new Uri(XacmlConstants.DataTypes.XMLString), role.Value));
-            }
-
             return attribute;
         }
 

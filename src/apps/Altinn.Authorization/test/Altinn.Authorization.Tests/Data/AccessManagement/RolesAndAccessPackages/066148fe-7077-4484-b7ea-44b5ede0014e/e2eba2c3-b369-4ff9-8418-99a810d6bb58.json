@@ -1,0 +1,11 @@
+{
+  "roles": [
+    "urn:altinn:external-role:ccr:daglig-leder",
+    "urn:altinn:rolecode:dagl"
+  ],
+  "accessPackages": [
+    "urn:altinn:accesspackage:skatt-naering",
+    "urn:altinn:accesspackage:ansettelsesforhold",
+    "urn:altinn:accesspackage:maskinporten-scopes"
+  ]
+}

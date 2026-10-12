@@ -34,7 +34,6 @@ namespace Altinn.Authorization.Tests.Unit
             httpContextAccessorMock.Setup(h => h.HttpContext).Returns(_httpContext);
             _contextHandler = new ContextHandler(
                 new InstanceMetadataRepositoryMock(),
-                new RolesMock(),
                 new OedRoleAssignmentWrapperMock(),
                 new ProfileMock(),
                 memoryCache,
