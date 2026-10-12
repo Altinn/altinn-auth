@@ -89,6 +89,24 @@ jobs:
       - name: Validate manifests
         run: ./.github/scripts/validate-manifests.sh
 
+  diff-manifests:
+    name: Diff manifests
+    if: github.event_name == 'pull_request'
+
+    needs:
+      # TODO: add find-verticals output to only run this when manifests has changed??
+      - find-verticals
+
+    uses: dis-way/actions/.github/workflows/kustomize-diff.yml@8a0034943836baaa34c7e220854f950ce3a5f370 # main
+    with:
+      # base/ overlays are skipped by the reusable workflow, so the trailing * only
+      # ever resolves to environment overlays.
+      build-paths: "src/apps/*/manifests/pre-deploy/*,src/apps/*/manifests/deploy/*,src/apps/*/syncroot/*"
+    permissions:
+      contents: read
+      pull-requests: write
+
+
   vertical:
     name: "${{ matrix.displayName }}: Build and Test"
     runs-on: ubuntu-latest

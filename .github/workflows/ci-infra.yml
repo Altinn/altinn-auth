@@ -1,0 +1,58 @@
+name: "CI: Infra"
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  hub:
+    name: Hub
+    secrets: inherit
+    uses: ./.github/workflows/_ci-infra-template.yml
+    with:
+      environment: prod
+      tf_state: hub.tfstate
+      working_dir: infra/deploy/hub
+
+  test-spoke:
+    name: Test
+    secrets: inherit
+    uses: ./.github/workflows/_ci-infra-template.yml
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [at22, at23, at24, yt01]
+    with:
+      environment: ${{ matrix.environment }}
+      tf_state: spokes.tfstate
+      working_dir: infra/deploy/spoke
+
+  staging-spoke:
+    name: Staging
+    secrets: inherit
+    uses: ./.github/workflows/_ci-infra-template.yml
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [tt02]
+    with:
+      environment: ${{ matrix.environment }}
+      tf_state: spokes.tfstate
+      working_dir: infra/deploy/spoke
+
+  staging-prod:
+    name: Prod
+    secrets: inherit
+    uses: ./.github/workflows/_ci-infra-template.yml
+    strategy:
+      fail-fast: false
+      matrix:
+        environment: [prod]
+    with:
+      environment: ${{ matrix.environment }}
+      tf_state: spokes.tfstate
+      working_dir: infra/deploy/spoke
