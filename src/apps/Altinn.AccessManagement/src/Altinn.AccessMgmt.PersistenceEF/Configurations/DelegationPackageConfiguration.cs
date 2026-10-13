@@ -13,6 +13,7 @@ public class DelegationPackageConfiguration : IEntityTypeConfiguration<Delegatio
     {
         builder.ToDefaultTable();
         builder.EnableAudit();
+        builder.EnableActivityLog();
 
         builder.HasKey(p => p.Id);
 

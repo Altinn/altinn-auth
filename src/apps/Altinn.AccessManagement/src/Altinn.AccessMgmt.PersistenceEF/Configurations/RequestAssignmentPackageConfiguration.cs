@@ -13,6 +13,7 @@ public class RequestAssignmentPackageConfiguration : IEntityTypeConfiguration<Re
     {
         builder.ToDefaultTable();
         builder.EnableAudit();
+        builder.EnableActivityLog();
 
         builder.HasKey(p => p.Id);
         builder.Property(t => t.Status).IsRequired();
