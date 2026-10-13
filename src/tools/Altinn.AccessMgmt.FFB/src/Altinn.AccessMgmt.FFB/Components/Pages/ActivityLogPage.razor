@@ -48,7 +48,7 @@
             </MudText>
         </div>
         <MudToggleGroup T="CatalogView" Value="_catalogView" ValueChanged="v => _catalogView = v"
-                        Size="Size.Small" Color="Color.Primary" Outlined="true" Delimiters="true" Dense="true">
+                        Size="Size.Small" Color="Color.Primary" Outlined="true" Delimiters="true">
             <MudToggleItem Value="CatalogView.Tabs" Text="Faner" />
             <MudToggleItem Value="CatalogView.Tree" Text="Tre" />
         </MudToggleGroup>
@@ -56,7 +56,7 @@
 
     @if (_catalogView == CatalogView.Tabs)
     {
-        <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" PanelClass="pt-2">
+        <MudTabs Elevation="0" Rounded="true" ApplyEffectsToContainer="true" TabPanelsClass="pt-2">
             @foreach (var typeGroup in CatalogByType)
             {
                 var mainType = typeGroup.Key;
@@ -611,7 +611,7 @@
         ActivityLogSubtype.Package => "Tilgangspakke",
         ActivityLogSubtype.Resource => "Enkelttjeneste",
         ActivityLogSubtype.Instance => "Instans",
-        _ => subtype.ToString(),
+        _ => subtype.Value.ToString(),
     };
 
     private bool IsTypeExpanded(ActivityLogType type) => _expandedTypes.Contains(type);

@@ -5,6 +5,10 @@
     <PropertyGroup>
         <OutputType>Exe</OutputType>
         <IsAspireHost>true</IsAspireHost>
+        <!-- The AppHost keeps the NuGet-restored dashboard and DCP instead of the Aspire CLI
+             bundle, so it runs without the Aspire CLI installed. Aspire 13.5+ warns about that
+             choice (ASPIRE010); see https://aspire.dev/diagnostics/aspire010/. -->
+        <NoWarn>$(NoWarn);ASPIRE010</NoWarn>
     </PropertyGroup>
 
     <ItemGroup>

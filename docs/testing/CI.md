@@ -9,8 +9,13 @@ have been removed; coverage remains available [locally](COVERAGE.md).
 RepoCtl selects affected verticals with `repoctl ci find-verticals --filter full`.
 Each selected vertical runs in a parallel matrix job:
 
-1. Restore with `dotnet restore` in Release configuration.
-2. Build with `dotnet build -c Release --no-restore`.
+1. Restore with `dotnet restore -warnaserror` in Release configuration, so a
+   NuGet audit warning for a vulnerable package fails the job, including an
+   advisory published after the package was referenced.
+2. Build with `dotnet build -c Release --no-restore -warnaserror`. Every
+   compiler and analyzer warning is an error here, so a new warning fails the
+   vertical's build. Build with `-warnaserror` before pushing, and suppress a
+   warning only next to a comment that says why.
 3. Test with `repoctl vertical test -c Release --no-build`.
 4. Pack package and tool verticals with `dotnet pack -c Release --no-build`.
 5. Build and push app containers and Flux manifest artifacts where configured.

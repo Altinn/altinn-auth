@@ -5,4 +5,17 @@
         <IsAppProject>true</IsAppProject>
     </PropertyGroup>
 
+    <ItemGroup>
+        <!-- AutoMapper 14 (referenced by Altinn.AccessManagement) is flagged by
+             GHSA-rvv3-g6hj-g44x: a self-referencing object graph some 25 000 levels deep
+             overflows the stack while mapping. Nothing here can feed it one: the only mapped
+             request body, AppsInstanceDelegationRequestDto, is not self-referencing, and
+             System.Text.Json stops reading request bodies at a depth of 64. The patched 15.x
+             line changed licence from MIT, and #3681 replaces AutoMapper with Mapperly, so the
+             advisory is acknowledged instead of upgrading. NuGet repeats the audit for every
+             project whose graph contains the package, so this sits in the vertical's props
+             (here and in test/). Remove both with the last AutoMapper reference. -->
+        <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-rvv3-g6hj-g44x" />
+    </ItemGroup>
+
 </Project>

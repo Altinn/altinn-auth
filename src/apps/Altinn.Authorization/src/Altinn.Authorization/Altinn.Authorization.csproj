@@ -26,6 +26,11 @@
         <PackageReference Include="JWTCookieAuthentication" />
         <PackageReference Include="Microsoft.Azure.Services.AppAuthentication" />
         <PackageReference Include="Microsoft.Extensions.Configuration.AzureKeyVault" />
+        <!-- Microsoft.Extensions.Configuration.AzureKeyVault is deprecated and brings in
+             Microsoft.Rest.ClientRuntime 2.3.8 (GHSA-whph-446h-6m9v). The patched version is
+             referenced directly until the Key Vault configuration moves to
+             Azure.Extensions.AspNetCore.Configuration.Secrets. -->
+        <PackageReference Include="Microsoft.Rest.ClientRuntime" />
         <PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" />
         <PackageReference Include="Microsoft.FeatureManagement.AspNetCore" />
         <PackageReference Include="Microsoft.IO.RecyclableMemoryStream" />

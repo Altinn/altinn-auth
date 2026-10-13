@@ -126,13 +126,16 @@ jobs:
       - name: Init
         uses: $/.github/actions/init
       
+      # -warnaserror on both steps: NuGet audit warnings (NU19xx) are raised by
+      # restore, compiler and analyzer warnings by build. Either one turns the
+      # vertical red, so the build is clean or it fails.
       - name: Restore
-        run: dotnet restore "$VERTICAL_DIR" -p:Configuration=Release -bl:binlog/restore.binlog
+        run: dotnet restore "$VERTICAL_DIR" -p:Configuration=Release -warnaserror -bl:binlog/restore.binlog
         env:
           VERTICAL_DIR: ${{ matrix.path }}
 
       - name: Build
-        run: dotnet build "$VERTICAL_DIR" -c Release --no-restore -bl:binlog/build.binlog # -warnaserror  # TODO
+        run: dotnet build "$VERTICAL_DIR" -c Release --no-restore -warnaserror -bl:binlog/build.binlog
         env:
           VERTICAL_DIR: ${{ matrix.path }}
       

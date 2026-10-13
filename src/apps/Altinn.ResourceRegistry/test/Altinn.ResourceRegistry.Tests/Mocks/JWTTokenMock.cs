@@ -42,11 +42,11 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
             {
                 certPath = $"{issuer}-org.pfx";
 
-                X509Certificate2 certIssuer = new X509Certificate2(certPath);
+                X509Certificate2 certIssuer = X509CertificateLoader.LoadPkcs12FromFile(certPath, null);
                 return new X509SigningCredentials(certIssuer, SecurityAlgorithms.RsaSha256);
             }
 
-            X509Certificate2 cert = new X509Certificate2("selfSignedTestCertificate.pfx", "qwer1234");
+            X509Certificate2 cert = X509CertificateLoader.LoadPkcs12FromFile("selfSignedTestCertificate.pfx", "qwer1234");
             return new X509SigningCredentials(cert, SecurityAlgorithms.RsaSha256);
         }
     }

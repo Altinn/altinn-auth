@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Configurations;
 
+#pragma warning disable CS0612 // EntityLookup is obsolete, but its table is still part of the model
 public class EntityLookupConfiguration : IEntityTypeConfiguration<EntityLookup>
 {
     public void Configure(EntityTypeBuilder<EntityLookup> builder)
@@ -26,3 +27,4 @@ public class EntityLookupConfiguration : IEntityTypeConfiguration<EntityLookup>
 }
 
 public class AuditEntityLookupConfiguration : AuditConfiguration<AuditEntityLookup> { }
+#pragma warning restore CS0612
