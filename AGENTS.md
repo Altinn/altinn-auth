@@ -50,7 +50,7 @@ Code sits in verticals. A vertical always has its own `.slnx`, `src/` and `conf.
 | `src/pkgs` | Published NuGet packages: `Altinn.Authorization.ABAC`, and `Altinn.Authorization.PEP`, which ships as `Altinn.Common.PEP` |
 | `src/tools` | `Altinn.Authorization.Cli` and the [`Altinn.AccessMgmt.FFB`](src/tools/Altinn.AccessMgmt.FFB/AGENTS.md) admin tool, which has its own guidance |
 | `docs/testing` | How the test suite is organised, fixtures, mocks, naming |
-| `docs/adr` | Architecture decision records, cross-cutting |
+| `docs/adr` | Architecture decision records, cross-cutting; each vertical keeps its own in its `docs/adr/` |
 | `docs/ai` | The [data policy](docs/ai/data-policy.md) for AI tools, and the background for the working agreement |
 | `eng/testing` | Coverage scripts, thresholds, the test-category guard |
 | `infra` | Infrastructure as code |

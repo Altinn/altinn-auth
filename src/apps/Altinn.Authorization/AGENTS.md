@@ -28,6 +28,8 @@ The XACML roles map onto files, and knowing that mapping is most of what it take
 
 Outbound calls to other services go through wrappers in `Services/Implementation` (`AccessManagementWrapper`, `ProfileWrapper`, `OedRoleAssignmentWrapper`), not directly from controllers.
 
+Decisions for this vertical are in [`docs/adr/`](docs/adr/README.md). Read [ADR-0001](docs/adr/0001-access-management-as-pip.md) before changing what the PDP fetches from Access Management, its cache, or what it trusts in the answer, and [ADR-0002](docs/adr/0002-audit-events-through-a-queue.md) before changing which decisions are audit-logged or how.
+
 ## Landmines
 
 _Nothing recorded yet._ This section is the reason the file exists, and it can only be written by people who know why the code is the way it is. If you have ever said "don't change that, it looks wrong but it isn't" about this vertical, write it here. See [#4078](https://github.com/Altinn/altinn-auth/issues/4078).

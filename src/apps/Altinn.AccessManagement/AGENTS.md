@@ -28,9 +28,11 @@ Six API surfaces, each a project of its own, so the first question for a change 
 
 Behind them: `Core` and `AccessMgmt.Core` for domain logic, `Persistence` and `AccessMgmt.PersistenceEF` for storage, `Integration` for outbound calls, and `AppHost` in the solution.
 
+Decisions for this vertical are in [`docs/adr/`](docs/adr/README.md). Read [ADR-0001](docs/adr/0001-ef-core-persistence.md) before adding persistence, a migration or Core-layer code, and [ADR-0002](docs/adr/0002-init-run-under-lease.md) before changing what runs at startup or in the init run, migrations and seed data included.
+
 ## Landmines
 
-- **There are two naming families, both live, and `Altinn.AccessMgmt.*` is the new one.** `Altinn.AccessManagement.Core` sits beside `Altinn.AccessMgmt.Core`, and `Altinn.AccessManagement.Persistence` beside `Altinn.AccessMgmt.PersistenceEF`; the host references both persistence projects (`Altinn.AccessManagement.csproj`, lines 45 and 46). New persistence goes in `Altinn.AccessMgmt.PersistenceEF`, and new Core-layer code in `Altinn.AccessMgmt.Core`. Code still in the `Altinn.AccessManagement.*` projects is maintained there until it is migrated in large chunks. Recorded in this vertical's ADR-0001 ([#4332](https://github.com/Altinn/altinn-auth/pull/4332)).
+- **There are two naming families, both live, and `Altinn.AccessMgmt.*` is the new one.** `Altinn.AccessManagement.Core` sits beside `Altinn.AccessMgmt.Core`, and `Altinn.AccessManagement.Persistence` beside `Altinn.AccessMgmt.PersistenceEF`; the host references both persistence projects (`Altinn.AccessManagement.csproj`, lines 45 and 46). New persistence goes in `Altinn.AccessMgmt.PersistenceEF`, and new Core-layer code in `Altinn.AccessMgmt.Core`. Code still in the `Altinn.AccessManagement.*` projects is maintained there until it is migrated in large chunks. Recorded as decision 6 in [ADR-0001](docs/adr/0001-ef-core-persistence.md).
 - **One test project's folder and project names differ.** The folder is `test/AccessMgmt.Tests` and the project inside it is `Altinn.AccessManagement.Tests.csproj`. The seven other test projects match. So `dotnet test .../test/Altinn.AccessManagement.Tests` fails and `dotnet test .../test/AccessMgmt.Tests` works.
 
 _More belongs here._ This is the section that pays for itself, and it can only come from people who know why the code is the way it is.

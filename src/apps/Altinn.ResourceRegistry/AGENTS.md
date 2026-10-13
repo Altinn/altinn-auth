@@ -18,6 +18,8 @@ Routes are under `resourceregistry/api/v1/`, except `ResourceV2Controller` at `r
 
 Four source projects: `Altinn.ResourceRegistry` (the host and its controllers for resources, resource owners, access lists and access-list memberships, plus a v2 resource controller), `.Core`, `.Persistence` and `.Integration`. Tests are `Altinn.ResourceRegistry.Tests` and `Altinn.ResourceRegistry.Persistence.Tests`, with shared helpers in `Altinn.ResourceRegistry.TestUtils` and API tests under `test/Bruno`.
 
+Decisions for this vertical are in [`docs/adr/`](docs/adr/README.md). Read [ADR-0001](docs/adr/0001-resource-timestamps.md), still *Proposed*, before changing how `createdAt` and `updatedAt` are stored or returned.
+
 ## Landmines
 
 - **This is an intentional build island.** It carries its own `.editorconfig`, `Directory.Build.props`, `Directory.Build.targets`, `Directory.Packages.props` and `stylecop.json`, rather than inheriting the repository's. That islanding is what made it possible to import the repository with its history intact. Do not merge these into the shared build files without a deliberate decision.
