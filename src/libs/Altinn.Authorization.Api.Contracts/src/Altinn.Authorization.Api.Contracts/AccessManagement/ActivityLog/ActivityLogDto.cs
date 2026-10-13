@@ -177,4 +177,12 @@ public class ActivityLogDto
     /// from the types endpoint.
     /// </summary>
     public Guid? ActivityTypeId { get; set; }
+
+    /// <summary>
+    /// The event as one sentence in the requested language, built from the catalog entry's
+    /// template and the name snapshots. It names every party in the third person, so it reads
+    /// the same whichever side of the relation the reader is on. Null when the event has no
+    /// catalog entry.
+    /// </summary>
+    public string Text { get; set; }
 }
