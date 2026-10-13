@@ -331,6 +331,50 @@ public class ActivityLogControllerTest : IClassFixture<ApiFixture>
     }
 
     /// <summary>
+    /// The entry text names every party in the third person, so the same event reads the
+    /// same whichever side of the relation asks for it.
+    /// </summary>
+    [Fact]
+    public async Task Request_Text_IsTheSameFromEitherDirection()
+    {
+        var sender = CreateClient(Verdiq, AuthzConstants.SCOPE_ENDUSER_REQUESTS_READ);
+        var recipient = CreateClient(Paula, AuthzConstants.SCOPE_ENDUSER_REQUESTS_READ);
+
+        var fromBody = await sender.GetStringAsync($"{RequestRoute}?party={Verdiq}&direction=from", TestContext.Current.CancellationToken);
+        var toBody = await recipient.GetStringAsync($"{RequestRoute}?party={Paula}&direction=to", TestContext.Current.CancellationToken);
+
+        var fromSide = JsonSerializer.Deserialize<PaginatedResult<ActivityLogDto>>(fromBody, JsonOpts);
+        var toSide = JsonSerializer.Deserialize<PaginatedResult<ActivityLogDto>>(toBody, JsonOpts);
+        Assert.NotNull(fromSide);
+        Assert.NotNull(toSide);
+
+        var shared = fromSide.Items.Join(toSide.Items, e => e.Id, e => e.Id, (from, to) => (from, to)).ToList();
+        Assert.NotEmpty(shared);
+        Assert.All(shared, pair =>
+        {
+            Assert.False(string.IsNullOrWhiteSpace(pair.from.Text));
+            Assert.Equal(pair.from.Text, pair.to.Text);
+        });
+    }
+
+    [Fact]
+    public async Task Request_Text_FollowsAcceptLanguage()
+    {
+        var client = CreateClient(Verdiq, AuthzConstants.SCOPE_ENDUSER_REQUESTS_READ);
+        client.DefaultRequestHeaders.Add("Accept-Language", "en");
+
+        var response = await client.GetAsync($"{RequestRoute}?party={Verdiq}&direction=from", TestContext.Current.CancellationToken);
+
+        var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Body: {body}");
+
+        var result = JsonSerializer.Deserialize<PaginatedResult<ActivityLogDto>>(body, JsonOpts);
+        Assert.NotNull(result);
+        Assert.NotEmpty(result.Items);
+        Assert.All(result.Items, e => Assert.Contains("request", e.Text));
+    }
+
+    /// <summary>
     /// The connections scopes must not unlock the request area.
     /// </summary>
     [Fact]
