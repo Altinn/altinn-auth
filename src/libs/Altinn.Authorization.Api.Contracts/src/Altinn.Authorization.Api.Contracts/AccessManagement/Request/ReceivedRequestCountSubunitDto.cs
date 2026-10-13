@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.Api.Contracts.AccessManagement.Request;
+﻿namespace Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 
 /// <summary>
 /// Number of received requests for a subunit of a party
