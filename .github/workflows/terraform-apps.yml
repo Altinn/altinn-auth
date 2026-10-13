@@ -1,0 +1,37 @@
+﻿name: "Terraform: Apps"
+
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        type: choice
+        required: true
+        options:
+          - Altinn.AccessManagement
+          - Altinn.Register
+
+      environment:
+        type: choice
+        description: Environment
+        required: true
+        options:
+          - at22
+          - at23
+          - at24
+          - yt01
+          - tt02
+          - prod
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  terraform:
+    name: ${{ inputs.app }} ${{inputs.environment }}
+    secrets: inherit
+    uses: ./.github/workflows/_cd-infra-template.yml
+    with:
+      environment: ${{inputs.environment }}
+      tf_state: ${{ inputs.app }}.tfstate
+      working_dir: src/${{inputs.app }}/infra

@@ -59,4 +59,11 @@ variable "vpn_routes" {
   type = map(list(string))
 }
 
-
+variable "feature_flags" {
+  type = map(list(object(
+    {
+      name        = string
+      description = string
+    }
+  )))
+}
