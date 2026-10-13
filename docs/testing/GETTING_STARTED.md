@@ -6,7 +6,8 @@
 |---|---|---|
 | .NET SDK | 10.0.x (plus 9.0.x for a full build) | Test projects target `net10.0`; the `pkg` projects also multi-target `net9.0`, so building the whole solution needs the 9.0 SDK too |
 | Docker **or** Podman | Any recent version | Integration tests spin up real PostgreSQL via [Testcontainers](https://dotnet.testcontainers.org/) |
-| PowerShell | 7+ (`pwsh`) | Coverage scripts under `eng/testing/` |
+| PowerShell | 7+ (`pwsh`) | Coverage scripts under `eng/testing/`, and the `just` recipes |
+| RepoCtl | The version in `.github/actions/init/action.yml` | CI tests and checks the repository with it. Install with `dotnet tool install --global Altinn.Authorization.RepoCtl.Cli` |
 
 ### Verifying the container runtime
 
@@ -14,17 +15,47 @@
 docker ps              # or: podman ps
 ```
 
-If neither is available, integration tests will **skip gracefully** with
-`Assert.Skip("Docker/Podman not available")` rather than failing. Unit tests
-(the vast majority of the suite) don't need a container runtime.
+If neither is available, integration tests that need a database fail: Access
+Management's in fixture setup, Resource Registry's when PostgreSQL does not
+start. Unit tests (the vast majority of the suite) don't need a container
+runtime.
 
 ### Podman on Windows / macOS
 
 Testcontainers requires a Docker-compatible socket. If you use Podman, make sure
 `podman machine` is running and the `DOCKER_HOST` environment variable points at
-Podman's socket.
+Podman's socket. On Windows, Testcontainers falls back to the
+`\\.\pipe\docker_engine` pipe when `DOCKER_HOST` is unset, and Podman serves
+that pipe only if nothing else holds it. `just check-full` checks for one or the
+other before it builds.
 
 ## Running the tests
+
+### The gate before a pull request
+
+```
+just check src/apps/Altinn.Authorization
+```
+
+Builds the vertical with `-warnaserror`, as CI does, and runs its unit tests,
+with no container runtime needed.
+It is a fast early signal, not what CI runs. `just check-full <vertical>` is:
+it builds, then runs every test in the vertical in one go through
+`repoctl vertical test`, so it needs a container runtime. `just repo-check`
+runs `repoctl check`, the repository-wide check CI also runs: `dotnet format`,
+generated `.slnx` files and the release configuration.
+
+A working tree checked out before #4103 (2026-10-09) can still hold CRLF
+files, because Git applies the new `.gitattributes` only to files it writes
+again; `git ls-files --eol` shows them as `w/crlf`, and `dotnet format` in
+`repo-check` flags every line in them. A fresh clone or `git worktree add` is
+LF already. In an existing clone with no uncommitted changes,
+`git rm -r -q --cached .` followed by `git reset -q --hard` rewrites them. A few whitespace findings in
+`Altinn.ResourceRegistry` remain on Windows, because its own `.editorconfig`
+sets no `end_of_line`; CI on Linux does not report them.
+
+`Altinn.ResourceRegistry` runs xUnit v2 without categories, so its unit tests
+are all of its tests and start PostgreSQL. Recipes need PowerShell 7.
 
 ### All tests
 
