@@ -6,7 +6,7 @@ Backend functionality for Access Management:
 
 ## Getting started
 
-Open `Altinn.AccessManagement.sln` and run the `Altinn.AccessManagement` project
+Open `Altinn.AccessManagement.slnx` and run the `Altinn.AccessManagement` project
 (the browser opens the Swagger UI automatically).
 
 Or from the command line:

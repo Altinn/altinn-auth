@@ -4,3 +4,9 @@
 /.github/copilot-instructions.md             @altinn/team-access-management @altinn/team-access-info
 /src/tools/Altinn.AccessMgmt.FFB/AGENTS.md  @altinn/team-access-management
 /src/tools/Altinn.AccessMgmt.FFB/CLAUDE.md  @altinn/team-access-management
+/src/apps/Altinn.Authorization/AGENTS.md    @altinn/team-access-management @altinn/team-access-info
+/src/apps/Altinn.Authorization/CLAUDE.md    @altinn/team-access-management @altinn/team-access-info
+/src/apps/Altinn.AccessManagement/AGENTS.md @altinn/team-access-management @altinn/team-access-info
+/src/apps/Altinn.AccessManagement/CLAUDE.md @altinn/team-access-management @altinn/team-access-info
+/src/apps/Altinn.ResourceRegistry/AGENTS.md @altinn/team-access-management @altinn/team-access-info
+/src/apps/Altinn.ResourceRegistry/CLAUDE.md @altinn/team-access-management @altinn/team-access-info
