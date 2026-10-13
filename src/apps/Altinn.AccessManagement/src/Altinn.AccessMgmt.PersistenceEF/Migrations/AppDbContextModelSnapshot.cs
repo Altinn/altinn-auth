@@ -19,7 +19,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("Altinn:AuditVersion", 3)
-                .HasAnnotation("ProductVersion", "10.0.12")
+                .HasAnnotation("ProductVersion", "10.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -288,6 +288,11 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.Property<int?>("Subtype")
                         .HasColumnType("integer")
                         .HasColumnName("subtype");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("text");
 
                     b.Property<int>("Trigger")
                         .HasColumnType("integer")
@@ -738,6 +743,10 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.Property<int?>("Subtype")
                         .HasColumnType("integer")
                         .HasColumnName("subtype");
+
+                    b.Property<string>("Text")
+                        .HasColumnType("text")
+                        .HasColumnName("text");
 
                     b.Property<int>("Trigger")
                         .HasColumnType("integer")
