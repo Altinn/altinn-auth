@@ -39,7 +39,7 @@ changes on each update. Timestamp fields must remain excluded from persisted met
 JSON; map them from the database columns after deserialization.
 
 Run this vertical through its own solution with a working Docker/Podman runtime:
-`dotnet test src/apps/Altinn.ResourceRegistry/Altinn.ResourceRegistry.sln`.
+`dotnet test src/apps/Altinn.ResourceRegistry/Altinn.ResourceRegistry.slnx`.
 Its tests use xUnit v2 and require real PostgreSQL; do not apply the repository's xUnit v3 category filter.
 
 ## Architecture decisions
