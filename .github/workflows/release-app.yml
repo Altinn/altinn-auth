@@ -1,0 +1,129 @@
+﻿name: Release App
+
+on:
+  workflow_dispatch:
+    inputs:
+      app:
+        description: What app to release
+        required: true
+        type: choice
+        options:
+          - Altinn.AccessManagement
+
+      version:
+        description: Version override (defaults to today's UTC date) - should be a valid calendar version
+        type: string
+        required: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: cut-release-${{ inputs.app }}
+  cancel-in-progress: false
+
+jobs:
+  create-release-draft:
+    name: Create Release Draft
+    runs-on: ubuntu-latest
+
+    env:
+      GH_TOKEN: ${{ github.token }}
+      APP: ${{ inputs.app }}
+      COMMIT: ${{ github.sha }}
+      VERSION_OVERRIDE: ${{ inputs.version }}
+
+    steps:
+      - name: Init
+        uses: $/.github/actions/init
+        with:
+          fetch_depth: 0 # we need full history for generating the changelog with git-cliff
+
+      - name: Install git-cliff
+        uses: taiki-e/install-action@1168f6810a3cb30a3514bf5756a3b7f0422c6df8 # v2.87.28
+        with:
+          # renovate: datasource=crate depName=git-cliff
+          tool: git-cliff@2.14.2
+
+      - name: Get vertical info
+        id: vertical
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          repoctl ci export-vertical "app:${APP}"
+
+      - name: Resolve release version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          sha=$(gh api \
+            "repos/{owner}/{repo}/commits/$COMMIT" \
+            --jq '.sha')
+
+          version="${VERSION_OVERRIDE:-$(date -u +'%Y.%m.%d')}"
+          tag="${VERTICAL_TAG_PREFIX}-v${version}"
+
+          # Note: we don't validate that the date is valid, just that the shape is proper for sorting reasons
+          if [[ ! "$version" =~ ^[0-9]{4}\.[0-9]{1,2}\.[0-9]{1,2}(\.[0-9]+)?$ ]]; then
+            echo "::error::Invalid calendar version: $version"
+            exit 1
+          fi
+
+          if gh api "repos/{owner}/{repo}/git/ref/tags/$tag" >/dev/null 2>&1; then
+            echo "::error::Tag already exists: $tag"
+            exit 1
+          fi
+
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+      
+      - name: Check for existing draft release
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          drafts=$(
+            gh api "repos/$GITHUB_REPOSITORY/releases?per_page=100" \
+              --paginate |
+              jq -r --arg prefix "${VERTICAL_TAG_PREFIX}-v" '.[] | select(.draft and (.tag_name | startswith($prefix))) | .tag_name'
+          )
+
+          if [[ -n "$drafts" ]]; then
+            echo "::error::Existing draft release(s) for $APP: $drafts"
+            exit 1
+          fi
+
+      - name: Generate changelog
+        shell: bash
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          set -euo pipefail
+
+          tag_pattern="^${VERTICAL_TAG_PREFIX//./\\.}-v.*$"
+          changelog_globs="${VERTICAL_CHANGELOG_PATHS// /\/** }/**"
+
+          git cliff \
+            --config cliff.toml \
+            --tag-pattern "$tag_pattern" \
+            --include-path "$changelog_globs" \
+            --unreleased \
+            --tag "$TAG" \
+            --output changelog.md
+
+      - name: Create draft release
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+          SHA: ${{ steps.version.outputs.sha }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh release create "$TAG" \
+            --draft \
+            --target "$SHA" \
+            --title "app/$APP: $VERSION" \
+            --notes-file changelog.md \
+            --latest=false

@@ -167,6 +167,16 @@
   "customManagers": [
     {
       "customType": "regex",
+      "description": "Update annotated git-cliff versions in GitHub workflows",
+      "managerFilePatterns": [
+        "/^\\.github/workflows/.*\\.ya?ml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)\\s+tool:\\s*git-cliff@(?<currentValue>[^\\s\\\"']+)"
+      ]
+    },
+    {
+      "customType": "regex",
       "description": "Update annotated NuGet tool versions in GitHub workflows",
       "managerFilePatterns": [
         "/^\\.github/workflows/.*\\.ya?ml$/"
