@@ -124,6 +124,6 @@ jobs:
           gh release create "$TAG" \
             --draft \
             --target "$SHA" \
-            --title "app/$APP: $VERSION" \
+            --title "$VERTICAL_TAG_PREFIX: $VERSION" \
             --notes-file changelog.md \
             --latest=false

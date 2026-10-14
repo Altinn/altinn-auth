@@ -13,8 +13,9 @@ body = """
 {% macro print_commit(commit) -%}
     - {% if commit.scope %}*({{ commit.scope }})* {% endif %}\
         {% if commit.breaking %}[**breaking**] {% endif %}\
-        {{ commit.message | upper_first }} - \
-        ([{{ commit.id | truncate(length=7, end="") }}]({{ self::remote_url() }}/commit/{{ commit.id }}))\
+        {{ commit.message | upper_first }}\
+        {% if commit.message is not matching("[(]#[0-9]+[)]$") %} - \
+        ([{{ commit.id | truncate(length=7, end="") }}]({{ self::remote_url() }}/commit/{{ commit.id }})){% endif %}\
 {% endmacro -%}
 {% for group, commits in commits | group_by(attribute="group") %}
     ## {{ group | striptags | trim | upper_first }}
