@@ -15,6 +15,8 @@ on:
         type: string
         required: false
 
+run-name: "Create release-draft for ${{ inputs.app }} by @${{ github.actor }}"
+
 permissions:
   contents: write
 
