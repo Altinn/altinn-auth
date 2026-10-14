@@ -3,7 +3,7 @@
 The full guidance for this repository is in [`AGENTS.md`](../AGENTS.md). Read it first. This page is a summary, not a second source.
 
 - Branch per change, never commit to `main`. Branch name `type/<issue>_<slug>`.
-- The PR title is a Conventional Commit with the issue number, for example `fix(#4044): ...`. It becomes the squash commit that the release automation reads.
+- Commit messages and PR titles use optional, encouraged scopes naming components or areas within a vertical, e.g. `fix(authorized-parties): correct delegation lookup`. Omit the scope only for changes without a particular component, e.g. `docs: document commit conventions`. Put issues in the body or trailers (`Refs: #4044`), never in the title. Prefer `Resolves: #4044` in the PR description to close completed issues. Follow [the full convention](../CONTRIBUTING.md#branches-commits-and-pull-requests) and preserve all commit trailers in the squash commit, including `Release-As: 2.5.0`.
 - Build with `dotnet build Altinn.Authorization.slnx` and test with `dotnet test`. The unit lane is `--filter-trait "Category=Unit"` after `--`, run per vertical solution.
 - CI runs `repoctl check`: `dotnet format --verify-no-changes`, and generated `.slnx` files that must be current.
 - A green local test run is not proof: without a container runtime, integration tests that need a database fail. CI is the gate.

@@ -24,7 +24,7 @@ pwsh eng/testing/run-coverage.ps1                      # coverage, installs dotn
 ## Critical workflow rules
 
 - **Branch per change, never commit to `main`.** Name it `type/<issue>_<slug>`.
-- **The PR title is a Conventional Commit with the issue number**, for example `fix(#4044): ...`. `main` is squash-only with linear history, and the release automation reads the squash title. A single-commit PR currently squashes under the *commit* title, so check the title in the merge dialog ([#4095](https://github.com/Altinn/altinn-auth/issues/4095)).
+- **Commits and PR titles use Conventional Commits; scopes are encouraged**, e.g. `fix(authorized-parties): correct delegation lookup`. Scopes name components within a vertical, not verticals or issues. Omit scopes only without a particular component, e.g. `docs: document commit conventions`. Put issues in the body or trailers (`Refs: #4044`). Prefer `Resolves: #4044` in the PR description to close completed issues. See [conventions](CONTRIBUTING.md#branches-commits-and-pull-requests). `main` is squash-only: preserve all commit trailers ([#4095](https://github.com/Altinn/altinn-auth/issues/4095)).
 - **CI runs `repoctl check`:** `dotnet format --verify-no-changes`, and the generated `.slnx` files and release configuration must be current (`just update-sln-files`).
 - **A green local build or `dotnet test` is not proof, and a red one is not always a defect.** CI builds with `-warnaserror`, and without a container runtime, integration tests that need a database fail in setup. CI is the gate.
 - **Update affected documentation and agent guidance in the same PR.** Require ADRs only for significant architectural decisions or lasting trade-offs; see [the threshold](CONTRIBUTING.md#when-an-adr-is-required). Validate the [guidance contract](docs/adr/0002-tool-neutral-agent-contract.md) with `node .github/scripts/agents-docs-validate.mjs`.
@@ -34,7 +34,7 @@ pwsh eng/testing/run-coverage.ps1                      # coverage, installs dotn
 
 **Write a PR description by these rules, with or without a GitHub template.** Issues use this repository's own forms in `.github/ISSUE_TEMPLATE/`, not the organisation's.
 
-- The TL;DR gives the problem, the change, and why it matters. Reference the issue, and use `Closes #<issue>` only when the PR completes it.
+- The TL;DR states the problem, change and purpose. Close issues primarily through the PR description: `Resolves: #<issue>`, only when the PR completes it.
 - State what you verified: the commands or checks, their results, and what you did not run or could not test locally, with the reason. Distinguish skipped tests from passed ones. Never claim a check you did not run.
 - Say what an assistant did and how you verified its output.
 - Keep it proportional, with longer background in a `<details>` block. Check the description against the final diff before publishing, and correct it if the scope moved.
