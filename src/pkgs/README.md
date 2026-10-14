@@ -18,7 +18,7 @@ Releases are automatically generated based on commit messages that follow the [C
 4. Create a GitHub Release if necessary.
 
 ## Commit Message Conventions
-Each commit message and PR title must follow the [repository convention](../../CONTRIBUTING.md#branches-commits-and-pull-requests). Scopes are optional but encouraged, naming a component or area within the vertical rather than the vertical itself. Omit the scope only for changes without a particular component, such as `docs: document commit conventions`. This overrides historical issue-number scopes such as `fix(#4044): ...`.
+Each commit message and PR title must follow the [repository convention](../../CONTRIBUTING.md#branches-commits-and-pull-requests). Scopes are optional but encouraged, naming a component or area within the vertical rather than the vertical itself. Use lowercase kebab-case consistently for each area, for example `authorized-parties`, not `AuthorizedParties`. Omit the scope only for changes without a particular component, such as `docs: document commit conventions`. This overrides historical issue-number scopes such as `fix(#4044): ...`.
 
 | Change Type | Prefix       |
 | ----------- | ------------ |
@@ -62,7 +62,7 @@ This guide follows the key terms defined in [RFC 2119](https://datatracker.ietf.
 1. A commit **MUST** be prefixed with a type (`feat`, `fix`, etc.), followed by an optional scope in parentheses, an optional `!` for breaking changes, and a required colon and space.
 2. `feat` **MUST** be used for new features.
 3. `fix` **MUST** be used for bug fixes.
-4. A scope is encouraged and, when present, **MUST** identify a component or area within the vertical, e.g., `fix(authorized-parties):`, rather than the vertical itself or an issue number. It **MAY** be omitted only for changes without a particular component.
+4. A scope is encouraged and, when present, **MUST** use lowercase kebab-case and identify a component or area within the vertical, e.g., `fix(authorized-parties):`, rather than the vertical itself or an issue number. It **MAY** be omitted only for changes without a particular component.
 5. The description **MUST** immediately follow the colon and space.
 6. A longer commit body **MAY** be included, starting one blank line after the description.
 7. A commit body **MAY** include multiple paragraphs.
@@ -71,7 +71,7 @@ This guide follows the key terms defined in [RFC 2119](https://datatracker.ietf.
 10. Breaking changes **MUST** be indicated in either the type prefix (`!`) or the footer.
 11. `BREAKING CHANGE` in the footer **MAY** be omitted if `!` is used in the prefix.
 12. Other commit types **MAY** be used, such as `docs: document commit conventions`.
-13. Commit messages **MUST NOT** be case-sensitive, except `BREAKING CHANGE` which **MUST** be uppercase.
+13. Although Conventional Commits permits different casing, this repository requires lowercase kebab-case scopes. `BREAKING CHANGE` **MUST** be uppercase.
 
 ## Automation
 - **GitHub Actions** runs Release Please when PRs are merged into `main`.
