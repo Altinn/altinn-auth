@@ -1,4 +1,4 @@
-using Altinn.ResourceRegistry.TestUtils;
+﻿using Altinn.ResourceRegistry.TestUtils;
 
 namespace Altinn.ResourceRegistry.Tests
 {

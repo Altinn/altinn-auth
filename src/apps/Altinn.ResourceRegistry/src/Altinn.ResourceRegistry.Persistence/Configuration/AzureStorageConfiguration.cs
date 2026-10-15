@@ -1,4 +1,4 @@
-namespace Altinn.ResourceRegistry.Persistence.Configuration;
+﻿namespace Altinn.ResourceRegistry.Persistence.Configuration;
 
 /// <summary>
 /// Settings for Azure storage

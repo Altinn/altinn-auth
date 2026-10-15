@@ -1,4 +1,4 @@
-﻿name: Init
+name: Init
 
 description: Initialize a GitHub Actions job by checking out the repository and installing required tools.
 

@@ -1,4 +1,4 @@
-﻿name: "Terraform: Shared"
+name: "Terraform: Shared"
 
 on:
   workflow_dispatch:

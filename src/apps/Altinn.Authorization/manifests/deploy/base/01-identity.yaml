@@ -1,4 +1,4 @@
-﻿apiVersion: application.dis.altinn.cloud/v1alpha1
+apiVersion: application.dis.altinn.cloud/v1alpha1
 kind: ApplicationIdentity
 metadata:
   name: authorization-runtime

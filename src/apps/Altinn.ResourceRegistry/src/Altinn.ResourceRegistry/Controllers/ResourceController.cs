@@ -1,4 +1,4 @@
-using Altinn.Authorization.ProblemDetails;
+﻿using Altinn.Authorization.ProblemDetails;
 using Altinn.Authorization.ServiceDefaults;
 using Altinn.Platform.Events.Formatters;
 using Altinn.ResourceRegistry.Core.Constants;

@@ -1,4 +1,4 @@
-﻿# Release notes formatting adapted from https://github.com/orhun/git-cliff/blob/main/cliff.toml.
+# Release notes formatting adapted from https://github.com/orhun/git-cliff/blob/main/cliff.toml.
 # The workflow selects one app's unreleased commits and supplies the release title.
 [remote.github]
 owner = "Altinn"

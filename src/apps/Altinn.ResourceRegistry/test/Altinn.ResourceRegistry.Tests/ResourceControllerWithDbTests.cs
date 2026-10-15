@@ -1,4 +1,4 @@
-using Altinn.Platform.Storage.Interface.Models;
+﻿using Altinn.Platform.Storage.Interface.Models;
 using Altinn.ResourceRegistry.Controllers;
 using Altinn.ResourceRegistry.Core;
 using Altinn.ResourceRegistry.Core.Constants;

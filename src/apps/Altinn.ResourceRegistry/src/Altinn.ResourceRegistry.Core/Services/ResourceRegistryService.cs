@@ -1,4 +1,4 @@
-using System.Buffers;
+﻿using System.Buffers;
 using System.Net;
 using Altinn.AccessMgmt.Core.Utils.Helper;
 using Altinn.Authorization.ABAC.Constants;

@@ -1,4 +1,4 @@
-﻿name: "Publish Syncroot"
+name: "Publish Syncroot"
 run-name: ${{ inputs.app }} ${{ inputs.environment }}
 
 on:

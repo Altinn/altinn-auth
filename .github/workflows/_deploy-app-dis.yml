@@ -1,4 +1,4 @@
-﻿name: "Template: Release App"
+name: "Template: Release App"
 
 on:
   workflow_dispatch:

@@ -1,4 +1,4 @@
-﻿module.exports = 
+module.exports = 
 {
     "scopes": {
         "read": "altinn:instances:read",

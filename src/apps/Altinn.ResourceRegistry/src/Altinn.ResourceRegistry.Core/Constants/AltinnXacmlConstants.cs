@@ -1,4 +1,4 @@
-namespace Altinn.ResourceRegistry.Core.Constants
+﻿namespace Altinn.ResourceRegistry.Core.Constants
 {
     /// <summary>
     /// Altinn specific XACML constants used for urn identifiers and attributes

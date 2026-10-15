@@ -1,4 +1,4 @@
-﻿name: "Terraform: Apps"
+name: "Terraform: Apps"
 
 on:
   workflow_dispatch:

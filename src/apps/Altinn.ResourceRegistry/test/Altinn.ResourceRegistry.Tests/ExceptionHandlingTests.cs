@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Net;
 using Altinn.ResourceRegistry.Core.Services.Interfaces;
 using Microsoft.AspNetCore.Hosting;
