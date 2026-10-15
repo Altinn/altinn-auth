@@ -1,4 +1,4 @@
-#nullable enable
+﻿#nullable enable
 namespace Altinn.Platform.Authentication.Services.Interfaces
 {
     /// <summary>

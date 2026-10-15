@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using Altinn.Platform.Authentication.Enum;
 
 #nullable enable

@@ -1,4 +1,4 @@
-using Altinn.Platform.Authentication.Core.Models.Profile;
+﻿using Altinn.Platform.Authentication.Core.Models.Profile;
 
 namespace Altinn.Platform.Authentication.Core.RepositoryInterfaces
 {

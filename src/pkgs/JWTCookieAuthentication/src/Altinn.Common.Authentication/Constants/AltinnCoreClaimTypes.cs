@@ -1,4 +1,4 @@
-namespace AltinnCore.Authentication.Constants
+﻿namespace AltinnCore.Authentication.Constants
 {
     /// <summary>
     /// Constants that defines the claim types used in Altinn core authentication

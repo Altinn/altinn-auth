@@ -1,4 +1,4 @@
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 
 var id = Guid.CreateVersion7();
 var clientSecret = RandomBase64Url(32);

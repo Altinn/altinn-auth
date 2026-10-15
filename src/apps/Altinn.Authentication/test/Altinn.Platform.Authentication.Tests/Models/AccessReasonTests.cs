@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Altinn.Platform.Authentication.Core.Models.Rights;
 using Xunit;
 

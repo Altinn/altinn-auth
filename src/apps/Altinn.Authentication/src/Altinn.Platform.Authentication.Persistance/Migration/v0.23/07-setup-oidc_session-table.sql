@@ -1,4 +1,4 @@
-﻿CREATE TABLE IF NOT EXISTS oidcserver.oidc_session (
+CREATE TABLE IF NOT EXISTS oidcserver.oidc_session (
   sid                  TEXT PRIMARY KEY,
   -- Upstream identity
   upstream_issuer      TEXT NOT NULL,

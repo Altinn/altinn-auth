@@ -1,4 +1,4 @@
-using Altinn.Authorization.ServiceDefaults;
+﻿using Altinn.Authorization.ServiceDefaults;
 using Azure.Extensions.AspNetCore.Configuration.Secrets;
 using Azure.Identity;
 using Mockporten.Configuration;

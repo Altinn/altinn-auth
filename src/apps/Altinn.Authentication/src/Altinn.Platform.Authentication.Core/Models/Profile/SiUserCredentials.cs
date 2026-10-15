@@ -1,4 +1,4 @@
-namespace Altinn.Platform.Authentication.Core.Models.Profile
+﻿namespace Altinn.Platform.Authentication.Core.Models.Profile
 {
     /// <summary>
     /// Username and password for a self-identified user, used when validating credentials via basic authentication.

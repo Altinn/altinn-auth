@@ -1,4 +1,4 @@
-namespace Altinn.Platform.Authentication.Model
+﻿namespace Altinn.Platform.Authentication.Model
 {
     /// <summary>
     /// Which kind of upstream token is being validated.

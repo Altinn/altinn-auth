@@ -1,4 +1,4 @@
-namespace Altinn.Platform.Authentication.Core.Services.Interfaces
+﻿namespace Altinn.Platform.Authentication.Core.Services.Interfaces
 {
     /// <summary>
     /// Catalogue of the <c>acr</c> values Altinn exposes to its own clients, built from the

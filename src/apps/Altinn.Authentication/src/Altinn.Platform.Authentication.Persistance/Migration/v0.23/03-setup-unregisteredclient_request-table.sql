@@ -1,4 +1,4 @@
-﻿-- Ensure schema
+-- Ensure schema
 CREATE SCHEMA IF NOT EXISTS oidcserver;
 
 -- Minimal record for unregistered_client (legacy) OIDC starts

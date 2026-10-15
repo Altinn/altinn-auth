@@ -1,4 +1,4 @@
-<Project>
+﻿<Project>
 
   <!--
     Repo-wide MSBuild defaults, imported by every project under the repository root.

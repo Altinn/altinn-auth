@@ -1,4 +1,4 @@
-namespace Altinn.Platform.Authentication.Integration.AccessManagement;
+﻿namespace Altinn.Platform.Authentication.Integration.AccessManagement;
 
 /// <summary>
 /// Feature flags controlling how the <see cref="AccessManagementClient"/> talks to Access Management.

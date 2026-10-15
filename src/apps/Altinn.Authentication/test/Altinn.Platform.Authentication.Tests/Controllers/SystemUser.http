@@ -1,4 +1,4 @@
-﻿//Change to the correct rootUrl for testing locally or towards servers
+//Change to the correct rootUrl for testing locally or towards servers
 //Within VS debugger
 @rootHttpUrl = http://localhost:5006
 @authApiRootUrl = https://localhost:44377

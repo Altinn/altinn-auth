@@ -1,4 +1,4 @@
-﻿-- Ensure schema
+-- Ensure schema
 CREATE SCHEMA IF NOT EXISTS oidcserver;
 
 -- Downstream login transaction (Altinn ← client)

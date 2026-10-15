@@ -1,4 +1,4 @@
-using System.Data;
+﻿using System.Data;
 using Altinn.Authorization.ServiceDefaults.Npgsql;
 using Altinn.Platform.Authentication.Core.Models.Profile;
 using Altinn.Platform.Authentication.Core.RepositoryInterfaces;

@@ -1,4 +1,4 @@
-namespace Mockporten.Services.Interfaces
+﻿namespace Mockporten.Services.Interfaces
 {
     /// <summary>
     /// Outcome of a shared-access-password check.

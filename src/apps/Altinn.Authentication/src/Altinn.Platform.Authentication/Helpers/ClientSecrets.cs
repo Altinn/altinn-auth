@@ -1,4 +1,4 @@
-#nullable enable
+﻿#nullable enable
 using Altinn.Platform.Authentication.Core.Helpers;
 
 namespace Altinn.Platform.Authentication.Helpers

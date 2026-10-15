@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Altinn.Authorization.ProblemDetails;
 
 namespace Altinn.Platform.Authentication.Helpers;

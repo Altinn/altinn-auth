@@ -1,4 +1,4 @@
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Altinn.Platform.Authentication.Model;
 
 namespace Altinn.Platform.Authentication.Clients.Interfaces

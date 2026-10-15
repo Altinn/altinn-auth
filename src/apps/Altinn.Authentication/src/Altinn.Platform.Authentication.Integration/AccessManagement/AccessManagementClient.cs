@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.Core.Helpers;
+﻿using Altinn.AccessManagement.Core.Helpers;
 using Altinn.Authentication.Core.Problems;
 using Altinn.Authentication.Integration.Configuration;
 using Altinn.Authorization.ProblemDetails;

@@ -1,4 +1,4 @@
-using Altinn.Platform.Authentication.Enum;
+﻿using Altinn.Platform.Authentication.Enum;
 
 #nullable enable
 

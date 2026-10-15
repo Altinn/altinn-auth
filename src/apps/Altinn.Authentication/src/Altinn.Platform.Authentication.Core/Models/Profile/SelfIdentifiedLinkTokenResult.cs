@@ -1,4 +1,4 @@
-#nullable enable
+﻿#nullable enable
 using System;
 
 namespace Altinn.Platform.Authentication.Core.Models.Profile

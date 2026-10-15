@@ -1,4 +1,4 @@
-namespace AltinnCore.Authentication.JwtCookie
+﻿namespace AltinnCore.Authentication.JwtCookie
 {
     /// <summary>
     ///  Default values used by jwt cookie authentication.

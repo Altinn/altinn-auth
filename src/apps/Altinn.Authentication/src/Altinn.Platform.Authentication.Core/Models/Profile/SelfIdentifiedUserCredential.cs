@@ -1,4 +1,4 @@
-namespace Altinn.Platform.Authentication.Core.Models.Profile
+﻿namespace Altinn.Platform.Authentication.Core.Models.Profile
 {
     /// <summary>
     /// A self-identified (SI) user credential migrated from Altinn 2, stored in

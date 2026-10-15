@@ -1,4 +1,4 @@
-#nullable enable
+﻿#nullable enable
 using System.Threading;
 using System.Threading.Tasks;
 using Altinn.Platform.Authentication.Core.Models.Profile;

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using Altinn.Authorization.ServiceDefaults;
 using Altinn.Platform.Authentication;

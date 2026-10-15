@@ -1,4 +1,4 @@
-using Altinn.Platform.Authentication.Model;
+﻿using Altinn.Platform.Authentication.Model;
 
 using Xunit;
 

@@ -1,4 +1,4 @@
-using Mockporten.Helpers;
+﻿using Mockporten.Helpers;
 using Xunit;
 
 namespace Mockporten.Tests
