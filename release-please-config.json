@@ -57,6 +57,16 @@
         }
       ]
     },
+    "src/pkgs/JWTCookieAuthentication": {
+      "component": "pkg/JWTCookieAuthentication",
+      "extra-files": [
+        {
+          "type": "xml",
+          "path": "Version.props",
+          "xpath": "//Project/PropertyGroup/Version"
+        }
+      ]
+    },
     "src/tools/Altinn.AccessMgmt.FFB": {
       "component": "tool/AccessMgmt.FFB",
       "extra-files": [

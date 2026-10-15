@@ -1,0 +1,20 @@
+﻿{
+  "systemId": "business_next",
+  "systemVendorOrgNumber": "914286018",
+  "systemName": "Business Next",
+  "rights": [
+    {
+      "resources": [
+        {
+          "id": "urn:altinn:resource",
+          "value": "kravogbetaling"
+        }
+      ]
+    }
+  ],
+  "softDeleted": false,
+  "clientId": [
+    "96ea3185-23cc-4df5-88f3-d43fbd995f34"
+  ],
+  "isVisible": true
+}
