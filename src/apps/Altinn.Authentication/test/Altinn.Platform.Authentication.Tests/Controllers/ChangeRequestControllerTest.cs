@@ -2597,11 +2597,11 @@ public class ChangeRequestControllerTest(
 
     private async Task CreateSeveralChangeRequest(int paginationSize, string systemId)
     {
-        var tasks = Enumerable.Range(0, paginationSize + 1)
-                              .Select(i => CreateChangeRequest(i, systemId))
-                              .ToList();
-
-        await Task.WhenAll(tasks);
+        // One at a time: CreateChangeRequest reconfigures the shared _pdpMock, so parallel calls see each other's decisions
+        for (int i = 0; i <= paginationSize; i++)
+        {
+            await CreateChangeRequest(i, systemId);
+        }
     }
 
     private async Task<ChangeRequestResponse> CreateChangeRequest(int externalRef, string systemId)
