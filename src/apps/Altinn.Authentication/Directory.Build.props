@@ -23,4 +23,13 @@
     <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
   </PropertyGroup>
 
+  <!--
+    Imported with existing compiler warnings, which altinn-auth's -warnaserror build would turn
+    into errors. They stay visible as warnings until #4597 removes them; take a code off this
+    list once it is fixed, so new warnings of that kind fail the build again.
+  -->
+  <PropertyGroup>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);CS0219;CS0618;CS1570;CS1573;CS4014;CS8600;CS8601;CS8602;CS8603;CS8604;CS8618;CS8619;CS8625;CS8767;CS9113;ASPDEPR005;SYSLIB0057</WarningsNotAsErrors>
+  </PropertyGroup>
+
 </Project>

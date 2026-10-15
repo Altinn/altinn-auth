@@ -4,7 +4,7 @@ Guidance for AI agents, and a useful first page for anyone new to this repositor
 
 ## What this is
 
-Authorization and access management for Altinn 3: the Policy Decision Point and Policy Enforcement Point, the Access Management services that administer rights and delegations, and the Resource Registry. This is becoming the monorepo for the whole domain; register, authentication and the Access Management frontend are still being moved in ([#4049](https://github.com/Altinn/altinn-auth/issues/4049)).
+Authorization and access management for Altinn 3: the Policy Decision Point and Policy Enforcement Point, the Access Management services that administer rights and delegations, and the Resource Registry. This is becoming the monorepo for the whole domain; register and the Access Management frontend are still being moved in ([#4049](https://github.com/Altinn/altinn-auth/issues/4049)).
 
 ## Commands
 
@@ -45,9 +45,9 @@ Code sits in verticals. A vertical always has its own `.slnx`, `src/` and `conf.
 
 | Path | Contents |
 | --- | --- |
-| `src/apps` | Deployable services: [`Altinn.Authorization`](src/apps/Altinn.Authorization/AGENTS.md) (PDP), [`Altinn.AccessManagement`](src/apps/Altinn.AccessManagement/AGENTS.md), [`Altinn.ResourceRegistry`](src/apps/Altinn.ResourceRegistry/AGENTS.md), `Altinn.Register` |
+| `src/apps` | Deployable services: [`Altinn.Authorization`](src/apps/Altinn.Authorization/AGENTS.md) (PDP), [`Altinn.AccessManagement`](src/apps/Altinn.AccessManagement/AGENTS.md), [`Altinn.ResourceRegistry`](src/apps/Altinn.ResourceRegistry/AGENTS.md), [`Altinn.Authentication`](src/apps/Altinn.Authentication/AGENTS.md), [`Altinn.Mockporten`](src/apps/Altinn.Mockporten/AGENTS.md), `Altinn.Register` |
 | `src/libs` | Shared libraries: `Api.Contracts`, `Host`, `Integration`, `Testing` |
-| `src/pkgs` | Published NuGet packages: `Altinn.Authorization.ABAC`, and `Altinn.Authorization.PEP`, which ships as `Altinn.Common.PEP` |
+| `src/pkgs` | Published NuGet packages: `Altinn.Authorization.ABAC`, `Altinn.Authorization.PEP` (ships as `Altinn.Common.PEP`) and `JWTCookieAuthentication` |
 | `src/tools` | `Altinn.Authorization.Cli` and the [`Altinn.AccessMgmt.FFB`](src/tools/Altinn.AccessMgmt.FFB/AGENTS.md) admin tool, which has its own guidance |
 | `docs/testing` | How the test suite is organised, fixtures, mocks, naming |
 | `docs/adr` | Architecture decision records, cross-cutting; each vertical keeps its own in its `docs/adr/` |
@@ -62,7 +62,7 @@ Before changing a vertical, read its `AGENTS.md`. Where there is none yet, as in
 Do not "fix" these without understanding them.
 
 - **`src/apps/Altinn.Register` is a placeholder**, a single `Program.cs`. The real Register arrives with [#4056](https://github.com/Altinn/altinn-auth/issues/4056). Do not build on it or wire anything to it.
-- **`src/apps/Altinn.ResourceRegistry` is deliberately an island** with its own `.editorconfig`, `Directory.Build.props`, `Directory.Packages.props` and `stylecop.json`. That is what let it be imported with its history intact. Do not merge it into the shared build files.
+- **Imported verticals are deliberately islands** with their own `.editorconfig`, `Directory.Build.props`, `Directory.Packages.props` and `stylecop.json`. That let them be imported with their history intact. Do not merge them into the shared build files.
 - **Markdown is LF**, enforced by `.gitattributes`. Do not reformat line endings.
 
 ## Test gotchas

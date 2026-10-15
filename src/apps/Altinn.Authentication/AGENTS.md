@@ -1,6 +1,6 @@
-# AGENTS.md — guide for AI coding agents
+# AGENTS.md — Altinn.Authentication
 
-Operational guide for AI agents (Claude Code, Cursor, Copilot, …) working in this repo. Humans: see [`README.md`](README.md) and [`docs/`](docs/README.md). Keep this file **short and high-signal** — it is loaded into limited context.
+Operational guide for AI agents working in this vertical, imported from altinn-authentication with its full history (#4058). Repo-wide rules are in the root [AGENTS.md](../../../AGENTS.md). Humans: see [`README.md`](README.md) and [`docs/`](docs/README.md). Keep this file **short and high-signal** — it is loaded into limited context.
 
 ## What this is
 
@@ -10,7 +10,7 @@ Altinn Platform Authentication — an ASP.NET Core (.NET 10) service that authen
 
 ```bash
 # Build
-dotnet build Altinn.Authentication.slnx
+dotnet build src/apps/Altinn.Authentication/Altinn.Authentication.slnx
 
 # Test (a container runtime MUST be running — Testcontainers PostgreSQL).
 # Podman works as a drop-in for Docker; if it fails to connect, try `podman machine start`.
@@ -34,14 +34,17 @@ dotnet build src/apps/Altinn.Authentication/src/Altinn.Platform.Authentication/A
 
 ## Landmines — do NOT "fix" these without understanding
 
-- **`AuthenticateUser` no longer branches on `EnableOidc`/`ForceOidc`/`AuthorizationServerEnabled`** — those legacy browser-sign-in branches were collapsed in #2071 ([ADR-0002](docs/adr/0002-authorization-server-is-the-live-auth-path.md)); the authorization-server flow is the only live browser path. Don't reintroduce branching on these in `AuthenticateUser`. The settings still exist (checked-in value `false` — **not** prod), with differing real usage:
+- **`AuthenticateUser` no longer branches on `EnableOidc`/`ForceOidc`/`AuthorizationServerEnabled`** — those legacy browser-sign-in branches were collapsed in Altinn/altinn-authentication#2071 ([ADR-0002](docs/adr/0002-authorization-server-is-the-live-auth-path.md)); the authorization-server flow is the only live browser path. Don't reintroduce branching on these in `AuthenticateUser`. The settings still exist (checked-in value `false` — **not** prod), with differing real usage:
   - `ForceOidc` — still read in `OidcServerService` (session logic).
-  - `AuthorizationServerEnabled` — still read in `LogoutController`, which still has a legacy branch (dead only if prod sets it `true`; a collapse candidate like #2071).
+  - `AuthorizationServerEnabled` — still read in `LogoutController`, which still has a legacy branch (dead only if prod sets it `true`; a collapse candidate like Altinn/altinn-authentication#2071).
   - `EnableOidc` — now read **nowhere**; a dead property / safe-removal candidate.
 - **`IsSafeSameOrSubdomainHttps`** (`AuthenticationController`) is an intentional open-redirect guard. The CodeQL "URL redirection" alerts on the `goTo`/upstream redirects are **dismissed false positives** — don't rewrite the redirects to appease a scanner.
 - **`IsValidIssuer`** is *misnamed* (returns `true` for an invalid issuer) but its control flow is **correct**. Fix the name/substring-match if asked, but do not "invert" the logic — that would break it.
 - **`SblAuthCookie*` names + the legacy-cookie delete logic are intentionally kept** to drain stale Altinn 2 cookies, even though the rest of the SBL integration is gone ([ADR-0004](docs/adr/0004-sbl-bridge-altinn2-decommission.md)).
 - Token-validation in the exchange path disables issuer/audience checks — flagged for review in [#2074](https://github.com/Altinn/altinn-authentication/issues/2074); **verify intent against tests before changing.**
+
+- **This vertical is a build island**, like `src/pkgs/JWTCookieAuthentication` that it depends on: its own `Directory.Build.props`/`.targets`, `Directory.Packages.props` with central package management off (versions are inline in the csproj files), `Altinn3.ruleset`, `stylecop.json`, and an `.editorconfig` with `root = true` that stops the repository's `.editorconfig` from applying. Do not merge it into the shared build files.
+- **Existing compiler warnings are a baseline, not errors** (`WarningsNotAsErrors` in `Directory.Build.props`), because CI builds with `-warnaserror`. Do not add new warnings and do not extend the list; [#4597](https://github.com/Altinn/altinn-auth/issues/4597) removes it.
 
 ## Test gotchas
 
