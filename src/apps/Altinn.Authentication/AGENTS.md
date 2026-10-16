@@ -43,7 +43,7 @@ dotnet build src/apps/Altinn.Authentication/src/Altinn.Platform.Authentication/A
 - **`SblAuthCookie*` names + the legacy-cookie delete logic are intentionally kept** to drain stale Altinn 2 cookies, even though the rest of the SBL integration is gone ([ADR-0004](docs/adr/0004-sbl-bridge-altinn2-decommission.md)).
 - Token-validation in the exchange path disables issuer/audience checks — flagged for review in [#2074](https://github.com/Altinn/altinn-authentication/issues/2074); **verify intent against tests before changing.**
 
-- **This vertical is a build island**, like `src/pkgs/JWTCookieAuthentication` that it depends on: its own `Directory.Build.props`/`.targets`, `Directory.Packages.props` with central package management off (versions are inline in the csproj files), `Altinn3.ruleset`, `stylecop.json`, and an `.editorconfig` with `root = true` that stops the repository's `.editorconfig` from applying. Do not merge it into the shared build files.
+- **This vertical is a build island**, like `src/pkgs/JWTCookieAuthentication` that it depends on: its own `Directory.Build.props`/`.targets`, `Directory.Packages.props` with central package management off (versions are inline in the csproj files), `Altinn3.ruleset`, and `stylecop.json`. It inherits the repository's `.editorconfig` settings. Do not merge it into the shared build files.
 - **Existing compiler warnings are a baseline, not errors** (`WarningsNotAsErrors` in `Directory.Build.props`), because CI builds with `-warnaserror`. Do not add new warnings and do not extend the list; [#4597](https://github.com/Altinn/altinn-auth/issues/4597) removes it.
 
 ## Test gotchas
