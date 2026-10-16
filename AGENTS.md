@@ -64,6 +64,7 @@ Do not "fix" these without understanding them.
 - **`src/apps/Altinn.Register` is a placeholder**, a single `Program.cs`. The real Register arrives with [#4056](https://github.com/Altinn/altinn-auth/issues/4056). Do not build on it or wire anything to it.
 - **Imported verticals are deliberately islands** with their own `.editorconfig`, `Directory.Build.props`, `Directory.Packages.props` and `stylecop.json`. That let them be imported with their history intact. Do not merge them into the shared build files.
 - **Markdown is LF**, enforced by `.gitattributes`. Do not reformat line endings.
+- **Manifest `.env` files are read by Kustomize's `envs` generator.** Use `KEY=value` without spaces around `=` or quotes around values: Kustomize preserves those spaces and quotes literally. Feature flags use `true` or `false` without quotes; spaces and additional `=` characters inside values such as connection strings must be preserved.
 
 ## Test gotchas
 
