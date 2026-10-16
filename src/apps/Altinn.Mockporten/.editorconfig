@@ -1,9 +1,0 @@
-# Imported from altinn-authentication, which had no .editorconfig. Stops altinn-auth's
-# .editorconfig from applying until this vertical converges on the shared settings.
-root = true
-
-[*]
-charset = utf-8
-
-[*.{cs,props,targets,csproj}]
-charset = utf-8-bom
