@@ -58,12 +58,3 @@ variable "hub_principal_ids" {
 variable "vpn_routes" {
   type = map(list(string))
 }
-
-variable "feature_flags" {
-  type = map(list(object(
-    {
-      name        = string
-      description = string
-    }
-  )))
-}

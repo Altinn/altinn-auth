@@ -1,4 +1,5 @@
-name: "Terraform: Apps"
+﻿name: "Terraform: App"
+run-name: "${{ inputs.app }} ${{ inputs.environment }}"
 
 on:
   workflow_dispatch:
@@ -25,6 +26,7 @@ on:
 permissions:
   id-token: write
   contents: read
+  pull-requests: write
 
 jobs:
   terraform:
@@ -34,4 +36,4 @@ jobs:
     with:
       environment: ${{inputs.environment }}
       tf_state: ${{ inputs.app }}.tfstate
-      working_dir: src/${{inputs.app }}/infra
+      working_dir: src/apps/${{inputs.app }}/infra
