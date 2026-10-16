@@ -22,6 +22,17 @@ app with manifests, and uses the tagged commit's existing manifest artifact.
 The artifact must already have been built and pushed by CI. The release workflow
 does not rebuild it.
 
+While release deployment is being stabilised, the workflow also accepts manual
+dispatch with a required `tag` input. Select `main` to use the latest workflow
+and shared action fixes; the app metadata and artifact SHA still come from the
+specified release tag. For example:
+
+```bash
+gh workflow run deploy-release-app.yml --ref main -f tag=app/AccessManagement-v2026.10.16
+```
+
+Remove this temporary trigger once release deployment is stable.
+
 The `tag-images` job gets `VERTICAL_DIR` from `repoctl ci export-vertical` and runs
 `docker buildx bake --file "$VERTICAL_DIR/docker-bake.hcl" --var "TAG=<sha>" --print`
 from the repository root, matching CI's build inputs. It follows the default

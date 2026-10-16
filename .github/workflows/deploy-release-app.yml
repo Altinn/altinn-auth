@@ -1,7 +1,14 @@
 name: Deploy app release
-run-name: Deploy ${{ github.event.release.tag_name }}
+run-name: Deploy ${{ inputs.tag || github.event.release.tag_name }}
 
 on:
+  # TODO: Remove manual dispatch once the release deployment workflow is stable.
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing app release tag to deploy (for example app/AccessManagement-v2026.10.16)
+        required: true
+        type: string
   release:
     types: [published]
 
@@ -10,23 +17,34 @@ permissions:
 
 # Serialize app releases, including the production approval wait.
 concurrency:
-  group: deploy-app-release-${{ startsWith(github.event.release.tag_name, 'app/') }}
+  group: deploy-app-release-${{ startsWith(inputs.tag || github.event.release.tag_name, 'app/') }}
   cancel-in-progress: false
 
 jobs:
   resolve:
     name: Resolve released app
-    if: startsWith(github.event.release.tag_name, 'app/')
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.release.tag_name, 'app/')
     runs-on: ubuntu-latest
     outputs:
       vertical: ${{ steps.resolve.outputs.vertical }}
       sha: ${{ steps.resolve.outputs.sha }}
       version: ${{ steps.resolve.outputs.version }}
     steps:
+      - name: Validate manual release tag
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        env:
+          TAG: ${{ inputs.tag }}
+        run: |
+          if [[ "$TAG" != app/* ]]; then
+            echo "::error::Manual release tag must start with app/."
+            exit 1
+          fi
+
       - name: Init
         uses: $/.github/actions/init
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ inputs.tag && format('refs/tags/{0}', inputs.tag) || github.sha }}
 
       - name: Find apps
         id: apps
@@ -36,7 +54,7 @@ jobs:
         id: resolve
         shell: bash
         env:
-          TAG: ${{ github.event.release.tag_name }}
+          TAG: ${{ inputs.tag || github.event.release.tag_name }}
           VERTICALS: ${{ steps.apps.outputs.matrix }}
         # TODO: This logic needs to be adopted into repoctl
         run: |

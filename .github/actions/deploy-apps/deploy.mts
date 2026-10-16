@@ -43,7 +43,10 @@ function main(): void {
   }
   const apps: Vertical[] = JSON.parse(run("repoctl", [
     "verticals", "list", "--kind", "app", "--format", "json",
-  ], { stdio: ["ignore", "pipe", "inherit"] }));
+  ], {
+    stdio: ["ignore", "pipe", "inherit"],
+    env: { ...process.env, NO_COLOR: "1" },
+  }));
   const verticals = ids.map((id) => {
     const app = apps.find((app) => app.id === id);
     if (!app) throw new Error(`Unknown app vertical: ${id}`);
