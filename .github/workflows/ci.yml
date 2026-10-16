@@ -37,7 +37,7 @@ jobs:
     outputs:
       matrix: ${{ steps.find-verticals.outputs.matrix }}
       any: ${{ steps.find-verticals.outputs.any }}
-      apps-matrix: ${{ steps.find-apps.outputs.matrix }}
+      apps: ${{ steps.app-ids.outputs.ids }}
       apps-any: ${{ steps.find-apps.outputs.any }}
 
     steps:
@@ -55,6 +55,15 @@ jobs:
         run: repoctl ci find-verticals --filter full --kind app
         env:
           GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Get app vertical IDs
+        id: app-ids
+        shell: bash
+        env:
+          MATRIX: ${{ steps.find-apps.outputs.matrix }}
+        run: |
+          ids=$(jq -r '[.include[].id] | join(" ")' <<< "$MATRIX")
+          echo "ids=$ids" >> "$GITHUB_OUTPUT"
 
       - name: Print find-verticals output
         run: printf '%s\n' "$MATRIX" | jq -C .
@@ -237,90 +246,9 @@ jobs:
       - name: Init
         uses: $/.github/actions/init
 
-      - name: Setup buildx
-        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
-
-      - name: Login to GHCR
-        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+      - name: Deploy built apps
+        uses: $/.github/actions/deploy-apps
         with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Retag manifest images
-        run: |
-          # for each app vertical (parsed from VERTICALS using jq)
-          echo "$VERTICALS" | jq -c '.include[]' | while IFS= read -r vertical; do
-
-            displayName=$(jq -r '.displayName' <<< "$vertical")
-            shortSlug=$(jq -r '.shortSlug' <<< "$vertical")
-            dir=$(jq -r '.path' <<< "$vertical")
-
-            echo "Processing vertical: $displayName"
-            if [[ ! -d "$dir/manifests" ]]; then
-              echo "No manifests directory found, skipping retagging."
-              continue
-            fi
-
-            docker buildx imagetools create \
-              -t "ghcr.io/altinn/altinn-auth/$shortSlug-manifests:at22" \
-              -t "ghcr.io/altinn/altinn-auth/$shortSlug-manifests:at23" \
-              -t "ghcr.io/altinn/altinn-auth/$shortSlug-manifests:yt01" \
-              "ghcr.io/altinn/altinn-auth/$shortSlug-manifests:${GITHUB_SHA}"
-          done
-        env:
-          VERTICALS: ${{ needs.find-verticals.outputs.apps-matrix }}
-          GITHUB_SHA: ${{ github.sha }}
-      
-      - name: Mark promoted in github
-        run: |
-          echo "GITHUB_SHA=$GITHUB_SHA"
-
-          gh api "repos/{owner}/{repo}" \
-            --jq '{full_name, permissions}'
-
-          gh api "repos/{owner}/{repo}/deployments" \
-            --jq 'length'
-
-          # for each app vertical (parsed from VERTICALS using jq)
-          echo "$VERTICALS" | jq -c '.include[]' | while IFS= read -r vertical; do
-
-            displayName=$(jq -r '.displayName' <<< "$vertical")
-            shortSlug=$(jq -r '.shortSlug' <<< "$vertical")
-            dir=$(jq -r '.path' <<< "$vertical")
-
-            echo "Processing vertical: $displayName"
-            if [[ ! -d "$dir/manifests" ]]; then
-              echo "No manifests directory found, skipping retagging."
-              continue
-            fi
-
-            for environment in at22 at23 yt01; do
-              deployment_env="${shortSlug}/${environment}"
-
-              deployment_id=$(
-                jq -n \
-                  --arg ref "$GITHUB_SHA" \
-                  --arg environment "$deployment_env" \
-                  '{
-                    ref: $ref,
-                    environment: $environment,
-                    auto_merge: false,
-                    required_contexts: [],
-                    production_environment: false,
-                    description: "OCI artifact promoted; awaiting Flux reconciliation"
-                  }' |
-                gh api \
-                  --method POST \
-                  "repos/{owner}/{repo}/deployments" \
-                  --input - \
-                  --jq '.id'
-              )
-
-              echo "Created pending deployment $deployment_id for $deployment_env"
-            done
-          done
-        env:
-          VERTICALS: ${{ needs.find-verticals.outputs.apps-matrix }}
-          GITHUB_SHA: ${{ github.sha }}
-          GH_TOKEN: ${{ github.token }}
+          verticals: ${{ needs.find-verticals.outputs.apps }}
+          environments: at22 at23 yt01
+          token: ${{ github.token }}

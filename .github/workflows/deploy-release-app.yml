@@ -1,0 +1,191 @@
+name: Deploy app release
+run-name: Deploy ${{ github.event.release.tag_name }}
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+# Serialize app releases, including the production approval wait.
+concurrency:
+  group: deploy-app-release-${{ startsWith(github.event.release.tag_name, 'app/') }}
+  cancel-in-progress: false
+
+jobs:
+  resolve:
+    name: Resolve released app
+    if: startsWith(github.event.release.tag_name, 'app/')
+    runs-on: ubuntu-latest
+    outputs:
+      vertical: ${{ steps.resolve.outputs.vertical }}
+      sha: ${{ steps.resolve.outputs.sha }}
+      version: ${{ steps.resolve.outputs.version }}
+    steps:
+      - name: Init
+        uses: $/.github/actions/init
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Find apps
+        id: apps
+        run: repoctl ci find-verticals --filter none --kind app
+
+      - name: Match release tag to app
+        id: resolve
+        shell: bash
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+          VERTICALS: ${{ steps.apps.outputs.matrix }}
+        # TODO: This logic needs to be adopted into repoctl
+        run: |
+          set -euo pipefail
+
+          matches='[]'
+          mapfile -t verticals < <(jq -c '.include[]' <<< "$VERTICALS")
+          for vertical in "${verticals[@]}"; do
+            id=$(jq -r '.id' <<< "$vertical")
+            export_file=$(mktemp)
+            GITHUB_ENV="$export_file" repoctl ci export-vertical "$id"
+            prefix=$(awk '/^VERTICAL_TAG_PREFIX<</ { getline; print; exit }' "$export_file")
+            if [[ -z "$prefix" ]]; then
+              echo "::error::RepoCtl did not export a tag prefix for $id"
+              exit 1
+            fi
+            if [[ "$TAG" == "$prefix"-v* ]]; then
+              version="${TAG#"$prefix"-v}"
+              matches=$(jq -c --argjson vertical "$vertical" '. + [$vertical]' <<< "$matches")
+            fi
+          done
+
+          jq -e 'length == 1' <<< "$matches" >/dev/null || {
+            echo "::error::Release tag must identify exactly one app: $TAG"
+            exit 1
+          }
+          dir=$(jq -r '.[0].path' <<< "$matches")
+          if [[ ! -d "$dir/manifests" ]]; then
+            echo "::error::Released app has no manifests directory: $dir"
+            exit 1
+          fi
+          echo "vertical=$(jq -r '.[0].id' <<< "$matches")" >> "$GITHUB_OUTPUT"
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  tag-images:
+    name: Tag release images
+    needs: resolve
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Init
+        uses: $/.github/actions/init
+        with:
+          ref: ${{ needs.resolve.outputs.sha }}
+
+      - name: Get vertical info
+        shell: bash
+        env:
+          VERTICAL: ${{ needs.resolve.outputs.vertical }}
+        run: |
+          set -euo pipefail
+          repoctl ci export-vertical "$VERTICAL"
+
+      - name: Setup buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Login to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ github.token }}
+
+      - name: Retag app images and manifests
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ needs.resolve.outputs.sha }}
+          VERSION: ${{ needs.resolve.outputs.version }}
+        # TODO: This logic needs to be adopted into repoctl
+        run: |
+          set -euo pipefail
+
+          if [[ ! "$VERSION" =~ ^[0-9]{4}\.[0-9]{1,2}\.[0-9]{1,2}(\.[0-9]+)?$ ]]; then
+            echo "::error::Invalid release version: $VERSION"
+            exit 1
+          fi
+
+          # Match RepoCtl's build inputs; --print resolves the default group
+          # and its matrix targets without building or pushing anything.
+          docker buildx bake --file "$VERTICAL_DIR/docker-bake.hcl" \
+            --var "TAG=$SOURCE_SHA" --print > "$RUNNER_TEMP/release-bake.json"
+
+          # Dependency targets may also appear in .target. Only discover tags
+          # for targets selected by the default group that CI actually builds.
+          jq -e --arg sha "$SOURCE_SHA" '
+            def targets($bake; $name):
+              if $bake.group[$name] != null then
+                $bake.group[$name].targets[] | targets($bake; .)
+              else $name end;
+            . as $bake |
+            [targets($bake; "default") | $bake.target[.].tags // []] |
+            if all(.[]; any(.[]; endswith(":" + $sha))) then
+              [.[][] | select(endswith(":" + $sha))] | unique
+            else error("A published bake target has no SHA-tagged image") end
+          ' "$RUNNER_TEMP/release-bake.json" > "$RUNNER_TEMP/release-images.json"
+          jq -r '.[]' "$RUNNER_TEMP/release-images.json" > "$RUNNER_TEMP/release-images.txt"
+          mapfile -t images < "$RUNNER_TEMP/release-images.txt"
+          images+=("ghcr.io/altinn/altinn-auth/$VERTICAL_SHORT_SLUG-manifests:$SOURCE_SHA")
+
+          for image in "${images[@]}"; do
+            release_image="${image%:*}:v$VERSION"
+            echo "Tagging $image as $release_image"
+            docker buildx imagetools create -t "$release_image" "$image"
+          done
+
+  tt02:
+    name: Deploy release to tt02
+    needs: [resolve, tag-images]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+    steps:
+      - name: Init
+        uses: $/.github/actions/init
+        with:
+          ref: ${{ needs.resolve.outputs.sha }}
+
+      - name: Deploy release
+        uses: $/.github/actions/deploy-apps
+        with:
+          verticals: ${{ needs.resolve.outputs.vertical }}
+          environments: tt02
+          sha: ${{ needs.resolve.outputs.sha }}
+          token: ${{ github.token }}
+
+  prod:
+    name: Deploy release to prod
+    needs: [resolve, tt02]
+    runs-on: ubuntu-latest
+    environment: PROD
+    permissions:
+      contents: read
+      packages: write
+      deployments: write
+    steps:
+      - name: Init
+        uses: $/.github/actions/init
+        with:
+          ref: ${{ needs.resolve.outputs.sha }}
+
+      - name: Deploy release
+        uses: $/.github/actions/deploy-apps
+        with:
+          verticals: ${{ needs.resolve.outputs.vertical }}
+          environments: prod
+          sha: ${{ needs.resolve.outputs.sha }}
+          token: ${{ github.token }}
