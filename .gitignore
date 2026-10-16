@@ -51,8 +51,9 @@ src/apps/Altinn.AccessMgmt.Worker.ER/allunits
 .sonarqube/
 /src/apps/Altinn.AccessManagement/test/AccessMgmt.Tests/coverage-report
 
-# Claude Code
-.claude/
+# Claude Code: local settings stay out, shared skills are checked in
+.claude/*
+!.claude/skills/
 
 # FFB secrets — real connection strings live here; copy from appsettings.example.json on VM
 src/tools/Altinn.AccessMgmt.FFB/src/Altinn.AccessMgmt.FFB/appsettings.json

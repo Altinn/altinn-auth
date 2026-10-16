@@ -54,6 +54,7 @@ Code sits in verticals. A vertical always has its own `.slnx`, `src/` and `conf.
 | `docs/ai` | The [data policy](docs/ai/data-policy.md) for AI tools, and the background for the working agreement |
 | `eng/testing` | Coverage scripts, thresholds, the test-category guard |
 | `infra` | Infrastructure as code |
+| `.agents/skills` | Task skills, e.g. [`ukesrapport`](.agents/skills/ukesrapport/SKILL.md); `.claude/skills` points here |
 
 Before changing a vertical, read its `AGENTS.md`. Where there is none yet, as in Register today, start from its `README.md` if it has one.
 
