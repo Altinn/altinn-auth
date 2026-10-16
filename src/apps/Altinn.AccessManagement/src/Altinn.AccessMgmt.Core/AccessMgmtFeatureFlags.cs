@@ -21,6 +21,15 @@ public static class AccessMgmtFeatureFlags
     public const string HostedServicesResourceRegistrySync = $"AccessMgmt.Core.HostedServices.ResourceRegistrySync";
 
     /// <summary>
+    /// Specifies if the resource registry sync should read resource metadata from the resource change feed
+    /// (<c>resource/changes</c>) before syncing subject relations from <c>resource/updated</c>. Subject relations
+    /// are then only linked to resources the change feed has synced, instead of fetching each resource again.
+    /// Requires <see cref="HostedServicesResourceRegistrySync"/>, and a resource registry where every page of the
+    /// change feed with items has a next link.
+    /// </summary>
+    public const string HostedServicesResourceRegistrySyncChangeFeed = $"AccessMgmt.Core.HostedServices.ResourceRegistrySync.ChangeFeed";
+
+    /// <summary>
     /// Represents the handler for proessing pending outbox messages.
     /// </summary>
     public const string HostedServicesOutboxHandler = $"AccessMgmt.Core.HostedServices.Outbox.Handler";

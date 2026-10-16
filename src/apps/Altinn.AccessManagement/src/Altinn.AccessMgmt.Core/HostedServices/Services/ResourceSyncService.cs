@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Net;
 using Altinn.AccessMgmt.Core.HostedServices.Contracts;
 using Altinn.AccessMgmt.Core.HostedServices.Leases;
 using Altinn.AccessMgmt.Core.Telemetry;
@@ -12,6 +13,7 @@ using Altinn.Authorization.Integration.Platform.ResourceRegistry;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.FeatureManagement;
 
 namespace Altinn.AccessMgmt.Core.HostedServices.Services;
 
@@ -100,6 +102,18 @@ public partial class ResourceSyncService : IResourceSyncService
         var leaseData = await lease.Get<ResourceRegistryLease>(cancellationToken);
 
         using var activity = CoreTelemetry.ActivitySource.StartActivity(nameof(ResourceSyncService), ActivityKind.Internal);
+
+        // Phase 1: resource metadata from the change feed. Runs first so that resources referenced by
+        // subject relations in phase 2 already exist, and phase 2 is skipped when it does not complete.
+        var featureManager = scope.ServiceProvider.GetRequiredService<IFeatureManager>();
+        var useChangeFeed = await featureManager.IsEnabledAsync(AccessMgmtFeatureFlags.HostedServicesResourceRegistrySyncChangeFeed, cancellationToken);
+        if (useChangeFeed && !await SyncResourceChanges(dbContext, lease, leaseData, activity, cancellationToken))
+        {
+            return;
+        }
+
+        // Phase 2: subject relations (role and access package) from the updated feed. With the change feed,
+        // resources are already synced by phase 1 and are only looked up here; without it, they are upserted.
         await foreach (var page in await _resourceRegistry.StreamResources(leaseData.Since, leaseData.ResourceNextPageLink, cancellationToken))
         {
             try
@@ -114,7 +128,9 @@ public partial class ResourceSyncService : IResourceSyncService
                 {
                     try
                     {
-                        var resource = await UpsertResource(dbContext, updatedResource, cancellationToken);
+                        var resource = useChangeFeed
+                            ? await FindSyncedResource(dbContext, updatedResource, cancellationToken)
+                            : await UpsertResource(dbContext, updatedResource, cancellationToken);
                         if (resource is null)
                         {
                             continue;
@@ -153,6 +169,78 @@ public partial class ResourceSyncService : IResourceSyncService
 
         CoreTelemetry.HostedServicesSuccess.Add(1, OtelTags);
         CoreTelemetry.HostedServicesOk.Record(1, OtelTags);
+    }
+
+    /// <summary>
+    /// Drains the resource change feed and upserts each changed resource. The position is stored in the lease
+    /// after each page. A page without a next link means the feed has no more changes yet, so the stored
+    /// link is kept and the next run resumes from it.
+    /// </summary>
+    /// <remarks>
+    /// Deleted resources are not handled. The change feed leaves them out, and deleting a resource in the
+    /// resource registry does not mark its subjects deleted in the updated feed either, so a deleted resource
+    /// and its role and access package links stay in the database. Exposing deletes in the change feed is an
+    /// open question in https://github.com/Altinn/altinn-auth/issues/4256, and handling them here is tracked in
+    /// https://github.com/Altinn/altinn-auth/issues/4621.
+    /// </remarks>
+    /// <returns>true when the feed was drained; false when it stopped on an error and phase 2 should not run.</returns>
+    private async Task<bool> SyncResourceChanges(AppDbContext dbContext, ILease lease, ResourceRegistryLease leaseData, Activity? activity, CancellationToken cancellationToken)
+    {
+        await foreach (var page in await _resourceRegistry.StreamResourceChanges(leaseData.ResourceChangesNextPageLink, cancellationToken))
+        {
+            try
+            {
+                if (page.IsProblem)
+                {
+                    Log.FailedToReadFromChangeStream(_logger);
+                    return false;
+                }
+
+                foreach (var change in page.Content.Data)
+                {
+                    try
+                    {
+                        var response = await _resourceRegistry.GetResource(change.ResourceId, cancellationToken: cancellationToken);
+                        if (response.StatusCode == HttpStatusCode.NotFound)
+                        {
+                            // Deleted after the change was listed; the feed does not surface deletes.
+                            Log.ChangedResourceNotFound(_logger, change.ResourceId);
+                            continue;
+                        }
+
+                        if (response.IsProblem)
+                        {
+                            // Stop without moving the cursor, so the page is retried on the next run.
+                            Log.FailedToGetResource(_logger, change.ResourceId);
+                            return false;
+                        }
+
+                        await UpsertResource(dbContext, response.Content, cancellationToken);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log.FailedToUpsertChangedResource(_logger, ex, change.ResourceId);
+                        throw;
+                    }
+                }
+
+                if (!string.IsNullOrEmpty(page.Content.Links.Next))
+                {
+                    leaseData.ResourceChangesNextPageLink = page.Content.Links.Next;
+                    await lease.Update(leaseData, cancellationToken);
+                }
+            }
+            catch (Exception ex)
+            {
+                activity?.AddException(ex);
+                activity?.SetStatus(ActivityStatusCode.Error);
+                CoreTelemetry.HostedServicesFailures.Add(1, OtelTags);
+                CoreTelemetry.HostedServicesOk.Record(0, OtelTags);
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private Task UpsertUpdatedSubject(AppDbContext dbContext, ResourceUpdatedModel updatedResource, Resource resource, CancellationToken cancellationToken) => updatedResource.SubjectUrn switch
@@ -275,7 +363,33 @@ public partial class ResourceSyncService : IResourceSyncService
             return null;
         }
 
-        var convertedResource = await ConvertToResource(dbContext, response.Content, cancellationToken);
+        return await UpsertResource(dbContext, response.Content, cancellationToken);
+    }
+
+    /// <summary>
+    /// Looks up a resource that phase 1 has synced from the change feed. A resource that is missing was skipped
+    /// by phase 1, for example because its service owner is unknown, so its subject relation is skipped too.
+    /// </summary>
+    private async Task<Resource?> FindSyncedResource(AppDbContext dbContext, ResourceUpdatedModel resourceUpdated, CancellationToken cancellationToken)
+    {
+        var identifier = ParseResourceIdentifier(resourceUpdated.ResourceUrn);
+        if (string.IsNullOrEmpty(identifier))
+        {
+            return null;
+        }
+
+        var resource = await dbContext.Resources.FirstOrDefaultAsync(t => t.RefId == identifier, cancellationToken);
+        if (resource is null)
+        {
+            Log.SubjectResourceNotSynced(_logger, resourceUpdated.ResourceUrn, resourceUpdated.SubjectUrn);
+        }
+
+        return resource;
+    }
+
+    private async Task<Resource?> UpsertResource(AppDbContext dbContext, ResourceModel model, CancellationToken cancellationToken)
+    {
+        var convertedResource = await ConvertToResource(dbContext, model, cancellationToken);
         if (convertedResource is null)
         {
             return null;
@@ -378,5 +492,17 @@ public partial class ResourceSyncService : IResourceSyncService
 
         [LoggerMessage(EventId = 4, Level = LogLevel.Error, Message = "failed to write update subject {SubjectUrn} for resource {ResourceId} .")]
         internal static partial void FailedToWriteUpdateSubjectForResource(ILogger logger, Exception ex, string subjectUrn, string resourceId);
+
+        [LoggerMessage(EventId = 5, Level = LogLevel.Error, Message = "Failed to read stream of changed resources from the resource registry.")]
+        internal static partial void FailedToReadFromChangeStream(ILogger logger);
+
+        [LoggerMessage(EventId = 6, Level = LogLevel.Warning, Message = "Changed resource '{ResourceId}' no longer exists in the resource registry and was skipped.")]
+        internal static partial void ChangedResourceNotFound(ILogger logger, string resourceId);
+
+        [LoggerMessage(EventId = 7, Level = LogLevel.Error, Message = "Failed to upsert changed resource '{ResourceId}'.")]
+        internal static partial void FailedToUpsertChangedResource(ILogger logger, Exception ex, string resourceId);
+
+        [LoggerMessage(EventId = 8, Level = LogLevel.Warning, Message = "Resource '{ResourceUrn}' has not been synced, so subject {SubjectUrn} was skipped.")]
+        internal static partial void SubjectResourceNotSynced(ILogger logger, string resourceUrn, string subjectUrn);
     }
 }
