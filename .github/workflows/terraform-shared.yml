@@ -26,7 +26,7 @@ jobs:
   hub:
     name: ${{ inputs.environment }}
     secrets: inherit
-    uses: ./.github/workflows/_cd-infra-template.yml
+    uses: ./.github/workflows/terraform-template.yml
     with:
       environment: ${{ inputs.environment == 'hub' && 'prod' || inputs.environment }}
       tf_state: ${{ inputs.environment == 'hub' && 'hub' || 'spoke' }}.tfstate

@@ -32,7 +32,7 @@ jobs:
   terraform:
     name: ${{ inputs.app }} ${{inputs.environment }}
     secrets: inherit
-    uses: ./.github/workflows/_cd-infra-template.yml
+    uses: ./.github/workflows/terraform-template.yml
     with:
       environment: ${{inputs.environment }}
       tf_state: ${{ inputs.app }}.tfstate
