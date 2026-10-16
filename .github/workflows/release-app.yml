@@ -102,6 +102,7 @@ jobs:
       - name: Generate changelog
         shell: bash
         env:
+          GITHUB_TOKEN: ${{ github.token }}
           TAG: ${{ steps.version.outputs.tag }}
         run: |
           set -euo pipefail
