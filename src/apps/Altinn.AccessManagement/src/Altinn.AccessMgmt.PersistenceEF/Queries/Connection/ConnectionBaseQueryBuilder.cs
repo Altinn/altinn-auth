@@ -276,9 +276,11 @@ internal class ConnectionBaseQueryBuilder
                 Reason = ConnectionReason.Hierarchy,
             };
 
-        var query = doChildNesting
-            ? filter.IncludeSubConnections ? a2.Concat(fromChildren).Concat(innehaverConnections) : a2.Concat(fromChildren)
-            : filter.IncludeSubConnections ? a2.Concat(innehaverConnections) : a2;
+        var query = doChildNesting ? a2.Concat(fromChildren) : a2;
+        if (filter.IncludeInnehaverConnections)
+        {
+            query = query.Concat(innehaverConnections);
+        }
 
         return
             query
