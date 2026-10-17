@@ -35,9 +35,9 @@ public class InternalAuthorizedPartiesController(
     /// <param name="includeAccessPackages">Optional (Default: False): Whether authorized access packages should be included in the result set.</param>
     /// <param name="includeResources">Optional (Default: True): Whether authorized resources should be included in the result set.</param>
     /// <param name="includeInstances">Optional (Default: True): Whether authorized instances should be included in the result set.</param>
-    /// <param name="includePartiesViaKeyRoles">Optional (Default: True): Whether authorized parties via organizations the user has a key role for, should be included in the result set.</param>
-    /// <param name="includeSubParties">Optional (Default: True): Whether sub-parties of authorized parties should be included in the result set.</param>
-    /// <param name="includeInactiveParties">Optional (Default: True): Whether inactive authorized parties should be included in the result set.</param>
+    /// <param name="includePartiesViaKeyRoles">Optional (Default: Auto): Whether authorized parties via organizations the user has a key role for, should be included in the result set.</param>
+    /// <param name="includeSubParties">Optional (Default: Auto): Whether sub-parties of authorized parties should be included in the result set.</param>
+    /// <param name="includeInactiveParties">Optional (Default: Auto): Whether inactive authorized parties should be included in the result set.</param>
     /// <param name="partyFilter">Optional: A list of party uuids to filter the results.</param>
     /// <param name="anyOfResourceIds">Optional: Filter for only returning authorized parties where the subject has access to any of the provided resource ids. Invalid resource ids are ignored.</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
@@ -118,9 +118,9 @@ public class InternalAuthorizedPartiesController(
     /// <param name="includeAccessPackages">Optional (Default: False): Whether authorized access packages should be included in the result set.</param>
     /// <param name="includeResources">Optional (Default: True): Whether authorized resources should be included in the result set.</param>
     /// <param name="includeInstances">Optional (Default: True): Whether authorized instances should be included in the result set.</param>
-    /// <param name="includePartiesViaKeyRoles">Optional (Default: True): Whether authorized parties via organizations the user has a key role for, should be included in the result set.</param>
-    /// <param name="includeSubParties">Optional (Default: True): Whether sub-parties of authorized parties should be included in the result set.</param>
-    /// <param name="includeInactiveParties">Optional (Default: True): Whether inactive authorized parties should be included in the result set.</param>
+    /// <param name="includePartiesViaKeyRoles">Optional (Default: Auto): Whether authorized parties via organizations the user has a key role for, should be included in the result set.</param>
+    /// <param name="includeSubParties">Optional (Default: Auto): Whether sub-parties of authorized parties should be included in the result set.</param>
+    /// <param name="includeInactiveParties">Optional (Default: Auto): Whether inactive authorized parties should be included in the result set.</param>
     /// <param name="anyOfResourceIds">Optional: Filter for only returning authorized parties where the subject has access to any of the provided resource ids. Invalid resource ids are ignored.</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <response code="200" cref="List{AuthorizedParty}">Ok</response>

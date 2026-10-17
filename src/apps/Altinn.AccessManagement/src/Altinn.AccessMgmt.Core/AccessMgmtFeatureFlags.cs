@@ -163,4 +163,12 @@ public static class AccessMgmtFeatureFlags
     /// delegation events — the Supplier-role slice of the log).
     /// </summary>
     public const string EnableEnduserMaskinportenActivityLogApi = "AccessManagement.Enduser.MaskinportenActivityLogApi";
+
+    /// <summary>
+    /// Applies the <c>includeSubParties</c> and <c>includeInactiveParties</c> filters in AuthorizedParties.
+    /// When disabled, both filters are treated as <c>true</c> and every subunit and deleted party is returned,
+    /// which is the behaviour from before the filters were implemented. Gates the Enduser default (<c>auto</c>),
+    /// where the user's profile settings start to decide the result.
+    /// </summary>
+    public const string AuthorizedPartiesSubAndInactivePartiesFilters = "AccessManagement.AuthorizedParties.SubAndInactivePartiesFilters";
 }

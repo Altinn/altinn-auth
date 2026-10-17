@@ -113,12 +113,25 @@ public class AuthorizedPartyRepoServiceEf(AppDbContext db, ConnectionQuery conne
         var includeDelegationResources = includeResources && await featureManager.IsEnabledAsync(AccessMgmtFeatureFlags.IncludeClientDelegationResourcesInConnectionQuery);
 
         return await connectionQuery.GetConnectionsAsync(
-        new ConnectionQueryFilter()
+            BuildFromOthersFilter(toId, filters, enrichEntities, includeDelegationResources),
+            ConnectionQueryDirection.FromOthers,
+            ct);
+    }
+
+    /// <summary>
+    /// Maps the AuthorizedParties filters to a ConnectionQuery filter. The include filters are expected to be resolved
+    /// from <c>auto</c> already; anything other than <c>false</c> includes, so the default is to return everything.
+    /// </summary>
+    internal static ConnectionQueryFilter BuildFromOthersFilter(Guid toId, AuthorizedPartiesFilters? filters, bool enrichEntities, bool includeDelegationResources)
+    {
+        var includeResources = filters?.IncludeResources == true || filters?.ResourceFilter?.Keys?.Count > 0;
+
+        return new ConnectionQueryFilter()
         {
             ToIds = [toId],
             FromIds = filters?.PartyFilter?.Keys.ToList(),
             EnrichEntities = enrichEntities,
-            IncludeSubConnections = true,
+            IncludeSubConnections = filters?.IncludeSubParties != AuthorizedPartiesIncludeFilter.False,
             IncludeKeyRole = filters?.IncludePartiesViaKeyRoles == AuthorizedPartiesIncludeFilter.True ? true : false,
             IncludeMainUnitConnections = true,
             IncludeDelegation = true,
@@ -127,10 +140,8 @@ public class AuthorizedPartyRepoServiceEf(AppDbContext db, ConnectionQuery conne
             IncludeDelegationResources = includeDelegationResources,
             IncludeInstances = filters?.IncludeInstances == true || filters?.ResourceFilter?.Keys?.Count > 0,
             EnrichPackageResources = false,
-            ExcludeDeleted = false
-        },
-        ConnectionQueryDirection.FromOthers,
-        ct);
+            ExcludeDeleted = filters?.IncludeInactiveParties == AuthorizedPartiesIncludeFilter.False
+        };
     }
 
     /// <inheritdoc />
@@ -139,6 +150,7 @@ public class AuthorizedPartyRepoServiceEf(AppDbContext db, ConnectionQuery conne
         AuthorizedPartiesFilters filters = null,
         CancellationToken ct = default)
     {
+        // The PDP decides on any party the subject can act for, so includeSubParties and includeInactiveParties are not applied here.
         return await connectionQuery.GetConnectionsAsync(
             new ConnectionQueryFilter()
             {

@@ -13,7 +13,8 @@ docs {
     party that delegated directly to the person stay
 
   This folder covers only includePartiesViaKeyRoles, which the service applies deterministically.
-  includeSubParties and includeInactiveParties are left for a later slice: the subunit filter
-  is a known defect (#3522, the filter is resolved but never applied) and the inactive window
-  is already covered by 09_DeletedParties.
+  includeSubParties and includeInactiveParties are applied since #3522, but only when the
+  AccessManagement.AuthorizedParties.SubAndInactivePartiesFilters feature flag is enabled, so
+  they get their own folders once the flag is on in the test environments. Until then
+  09_DeletedParties covers the inactive window with includeInactiveParties=true.
 }
