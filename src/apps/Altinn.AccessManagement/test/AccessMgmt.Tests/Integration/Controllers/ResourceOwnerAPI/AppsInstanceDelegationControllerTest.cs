@@ -3,12 +3,13 @@ using System.Net.Http.Headers;
 using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
-using Altinn.AccessManagement.Models;
 using Altinn.AccessManagement.Tests.Data;
 using Altinn.AccessManagement.Tests.Fixtures;
 using Altinn.AccessManagement.Tests.Utils;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.Authorization.Api.Contracts.AccessManagement;
+using Altinn.Authorization.Api.Contracts.AccessManagement.Apps;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.Extensions.Configuration;
 

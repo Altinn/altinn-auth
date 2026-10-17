@@ -2,7 +2,9 @@
 using System.Xml;
 using Altinn.Authorization.ABAC.Utils;
 using Altinn.Authorization.ABAC.Xacml;
-using Altinn.Authorization.Models.Register;
+using Altinn.Authorization.Api.Contracts.Authorization.Register;
+using Altinn.Authorization.Api.Contracts.Authorization.ResourceRegistry;
+using Altinn.Authorization.Api.Contracts.Register;
 using Altinn.Authorization.Models.ResourceRegistry;
 using Altinn.Authorization.Tests.Integration;
 using Altinn.Platform.Authorization.Services.Interface;

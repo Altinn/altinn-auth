@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Altinn.AccessManagement.Core.Enums;
-using Altinn.AccessManagement.Core.Models.Register;
-using Altinn.AccessManagement.Core.Models.ResourceRegistry;
+using Altinn.Authorization.Api.Contracts.Authorization.Register;
+using Altinn.Authorization.Api.Contracts.Authorization.ResourceRegistry;
 
 namespace Altinn.AccessManagement.Core.Models;
 

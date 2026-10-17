@@ -1,7 +1,7 @@
-﻿using Altinn.Authorization.Enums;
-using Altinn.Authorization.Models;
-using Altinn.Authorization.Models.Register;
-using Altinn.Authorization.Models.ResourceRegistry;
+﻿using Altinn.Authorization.Api.Contracts.Authorization;
+using Altinn.Authorization.Api.Contracts.Authorization.Register;
+using Altinn.Authorization.Api.Contracts.Authorization.ResourceRegistry;
+using Altinn.Authorization.Enums;
 using Altinn.Urn.Json;
 
 namespace Altinn.Platform.Authorization.Models;
