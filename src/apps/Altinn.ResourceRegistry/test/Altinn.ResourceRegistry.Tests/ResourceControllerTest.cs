@@ -72,6 +72,15 @@ namespace Altinn.ResourceRegistry.Tests
             Assert.NotNull(changes);
             Assert.Single(changes.Items);
             Assert.Equal("third", changes.Items.First().ResourceId);
+
+            // The last page with items still links on, so the consumer keeps its position
+            Assert.True(Uri.TryCreate(changes.Links.Next, UriKind.Absolute, out nextUri));
+            Assert.NotNull(nextUri);
+            response = await client.GetAsync(nextUri.PathAndQuery);
+            changes = await response.Content.ReadFromJsonAsync<Paginated<ResourceChange>>();
+
+            Assert.NotNull(changes);
+            Assert.Empty(changes.Items);
             Assert.Null(changes.Links.Next);
         }
 
