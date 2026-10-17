@@ -5,6 +5,7 @@ using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.ProblemDetails;
 using Altinn.Platform.Storage.Interface.Models;
+using Altinn.ResourceRegistry.Core.AccessLists;
 using Altinn.ResourceRegistry.Core.Constants;
 using Altinn.ResourceRegistry.Core.Exceptions;
 using Altinn.ResourceRegistry.Core.Extensions;
@@ -27,6 +28,7 @@ namespace Altinn.ResourceRegistry.Core.Services
         private readonly IPolicyRepository _policyRepository;
         private readonly IApplications _applicationsClient;
         private readonly IServiceOwnerService _serviceOwnerService;
+        private readonly IAccessListsRepository _accessListsRepository;
 
         /// <summary>
         /// Creates a new instance of the <see cref="ResourceRegistryService"/> service.
@@ -36,17 +38,28 @@ namespace Altinn.ResourceRegistry.Core.Services
             IResourceRegistryRepository repository,
             IPolicyRepository policyRepository,
             IApplications applicationsClient,
-            IServiceOwnerService serviceOwnerService)
+            IServiceOwnerService serviceOwnerService,
+            IAccessListsRepository accessListsRepository)
         {
             _repository = repository;
             _policyRepository = policyRepository;
             _applicationsClient = applicationsClient;
             _serviceOwnerService = serviceOwnerService;
+            _accessListsRepository = accessListsRepository;
         }
 
         /// <inheritdoc/>
         public async Task CreateResource(ServiceResource serviceResource, CancellationToken cancellationToken = default)
         {
+            // Resources deleted before Delete removed their access list connections still have them.
+            // Remove those so a recreated resource does not inherit access, but keep connections
+            // made after the deletion, which were set up for the new resource.
+            DateTimeOffset? deletedAt = await _repository.GetResourceDeletedAt(serviceResource.Identifier, cancellationToken);
+            if (deletedAt.HasValue)
+            {
+                await RemoveAccessListConnections(serviceResource.Identifier, deletedAt.Value, cancellationToken);
+            }
+
             await _repository.CreateResource(serviceResource, cancellationToken);
         }
 
@@ -66,6 +79,36 @@ namespace Altinn.ResourceRegistry.Core.Services
             }
 
             await _repository.DeleteResource(id, cancellationToken);
+
+            // Only remove connections made up to the deletion. The identifier can be created again
+            // before this runs; that removes the older connections itself, and connections made
+            // for the new resource must be kept.
+            DateTimeOffset? deletedAt = await _repository.GetResourceDeletedAt(id, cancellationToken);
+            if (deletedAt.HasValue)
+            {
+                await RemoveAccessListConnections(id, deletedAt.Value, cancellationToken);
+            }
+        }
+
+        private async Task RemoveAccessListConnections(string resourceIdentifier, DateTimeOffset connectedBefore, CancellationToken cancellationToken)
+        {
+            // Go through each access list aggregate, so the removal is recorded as an event and
+            // bumps the access list version like any other connection change.
+            IReadOnlyList<AccessListInfo> accessLists = await _accessListsRepository.GetAccessListsByResource(resourceIdentifier, connectedBefore, cancellationToken);
+            foreach (AccessListInfo accessList in accessLists)
+            {
+                // Check again on the loaded list: the connection may have been replaced since the lookup.
+                IAccessListAggregate? aggregate = await _accessListsRepository.LoadAccessList(accessList.Id, cancellationToken);
+                if (aggregate is null
+                    || !aggregate.TryGetResourceConnections(resourceIdentifier, out AccessListResourceConnection? connection)
+                    || connection.Created > connectedBefore)
+                {
+                    continue;
+                }
+
+                aggregate.RemoveResourceConnection(resourceIdentifier);
+                await aggregate.SaveChanges(cancellationToken);
+            }
         }
 
         /// <inheritdoc/>
