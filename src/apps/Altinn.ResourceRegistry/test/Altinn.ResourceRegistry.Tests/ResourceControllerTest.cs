@@ -2143,6 +2143,9 @@ namespace Altinn.ResourceRegistry.Tests
             Assert.True(response.IsSuccessStatusCode);
             string responseContent = await response.Content.ReadAsStringAsync();
             Assert.NotNull(responseContent);
+
+            // Exports every resource in Data/Resources. Error text would also come back with status 200, so parse it
+            RdfTestHelper.ParseTurtle(responseContent);
         }
 
         [Fact]

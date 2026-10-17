@@ -1198,6 +1198,41 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
         Assert.Contains("Skattegrunnlag latest version", responseContent);
     }
 
+    [Fact]
+    public async Task Export_ContactPoints_AreExportedAsCvContactPoint()
+    {
+        await LoadTestDataWithUpdates();
+        var client = CreateClient();
+        string requestUri = "resourceregistry/api/v1/Resource/export";
+
+        HttpResponseMessage response = await client.GetAsync(requestUri);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        IGraph graph = RdfTestHelper.ParseTurtle(await response.Content.ReadAsStringAsync());
+
+        // A single contact point with a category and an email, other fields stored as ""
+        INode dsbContactPoint = Assert.Single(RdfTestHelper.GetContactPoints(graph, "korrespondanse-fra-sivilforsvaret"));
+        RdfTestHelper.AssertCategory(graph, dsbContactPoint, "Brukerstøtte");
+        RdfTestHelper.AssertLiteral(graph, dsbContactPoint, RdfTestHelper.Email, "postmottak@dsb.no");
+        RdfTestHelper.AssertAbsent(graph, dsbContactPoint, RdfTestHelper.Telephone);
+        RdfTestHelper.AssertAbsent(graph, dsbContactPoint, RdfTestHelper.ContactPage);
+
+        // Three contact points, one of them stored with a leading space in the email
+        List<INode> digdirContactPoints = RdfTestHelper.GetContactPoints(graph, "eformidling-dpo-meldingsutveksling");
+        Assert.Equal(3, digdirContactPoints.Count);
+        List<ILiteralNode> digdirEmails = digdirContactPoints
+            .SelectMany(cp => RdfTestHelper.GetObjects(graph, cp, RdfTestHelper.Email))
+            .Cast<ILiteralNode>()
+            .ToList();
+        Assert.Equal(3, digdirEmails.Count);
+        Assert.All(digdirEmails, l => Assert.Equal(l.Value.Trim(), l.Value));
+
+        // Contact page stored without a scheme is not a valid IRI, so only the category remains
+        INode skdContactPoint = Assert.Single(RdfTestHelper.GetContactPoints(graph, "ske-innrapportering-boligsameie"));
+        RdfTestHelper.AssertCategory(graph, skdContactPoint, "Innrapportering");
+        RdfTestHelper.AssertAbsent(graph, skdContactPoint, RdfTestHelper.ContactPage);
+    }
+
     /// <summary>
     /// Scenario: Create an app resource and store a policy with org/app XACML attributes.
     /// This tests the fix for issue #730 where app policies using urn:altinn:org and urn:altinn:app
