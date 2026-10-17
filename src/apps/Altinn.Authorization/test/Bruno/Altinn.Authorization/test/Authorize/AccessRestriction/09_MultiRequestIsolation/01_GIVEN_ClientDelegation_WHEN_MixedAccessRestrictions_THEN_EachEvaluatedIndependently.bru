@@ -1,0 +1,166 @@
+meta {
+	name: 01_GIVEN_ClientDelegation_WHEN_MixedAccessRestrictions_THEN_EachEvaluatedIndependently
+	type: http
+	seq: 1
+}
+
+post {
+	url: {{baseUrl}}/authorization/api/v1/authorize
+	body: json
+	auth: inherit
+}
+
+headers {
+	Content-Type: application/json
+	Ocp-Apim-Subscription-Key: {{apimSubscriptionKey}}
+}
+
+body:json {
+	{
+		"Request": {
+			"ReturnPolicyIdList": false,
+			"AccessSubject": [
+				{
+					"Id": "s1",
+					"Attribute": [
+						{
+							"AttributeId": "urn:altinn:systemuser:uuid",
+							"Value": "{{subjectSystemUser}}"
+						}
+					]
+				}
+			],
+			"Action": [
+				{
+					"Id": "a1",
+					"Attribute": [
+						{
+							"AttributeId": "urn:oasis:names:tc:xacml:1.0:action:action-id",
+							"Value": "read",
+							"DataType": "http://www.w3.org/2001/XMLSchema#string"
+						}
+					]
+				}
+			],
+			"Resource": [
+				{
+					"Id": "r1",
+					"Attribute": [
+						{
+							"AttributeId": "urn:altinn:resource",
+							"Value": "{{resourceId}}"
+						},
+						{
+							"AttributeId": "urn:altinn:party:uuid",
+							"Value": "{{resourcePartyUuid}}",
+							"DataType": "http://www.w3.org/2001/XMLSchema#string"
+						},
+						{
+							"AttributeId": "urn:altinn:authorization:access-restriction",
+							"Value": "None"
+						}
+					]
+				},
+				{
+					"Id": "r2",
+					"Attribute": [
+						{
+							"AttributeId": "urn:altinn:resource",
+							"Value": "{{resourceId}}"
+						},
+						{
+							"AttributeId": "urn:altinn:party:uuid",
+							"Value": "{{resourcePartyUuid}}",
+							"DataType": "http://www.w3.org/2001/XMLSchema#string"
+						},
+						{
+							"AttributeId": "urn:altinn:authorization:access-restriction",
+							"Value": "DirectAndHierarchy"
+						}
+					]
+				},
+				{
+					"Id": "r3",
+					"Attribute": [
+						{
+							"AttributeId": "urn:altinn:resource",
+							"Value": "{{resourceId}}"
+						},
+						{
+							"AttributeId": "urn:altinn:party:uuid",
+							"Value": "{{resourcePartyUuid}}",
+							"DataType": "http://www.w3.org/2001/XMLSchema#string"
+						},
+						{
+							"AttributeId": "urn:altinn:authorization:access-restriction",
+							"Value": "ClientDelegation"
+						},
+						{
+							"AttributeId": "urn:altinn:via-party:organization:identifier-no",
+							"Value": "{{viaPartyOrganizationId}}"
+						}
+					]
+				}
+			],
+			"MultiRequests": {
+				"RequestReference": [
+					{ "ReferenceId": [ "s1", "a1", "r1" ] },
+					{ "ReferenceId": [ "s1", "a1", "r2" ] },
+					{ "ReferenceId": [ "s1", "a1", "r3" ] }
+				]
+			}
+		}
+	}
+}
+
+script:pre-request {
+	const sharedtestdata = require(`./testdata/shared.js`);
+	const testdata = require(`./testdata/Authorization/${bru.getEnvVar("tokenEnv")}.js`);
+
+	bru.setVar("requestName", "AccessRestriction_09_MultiRequest_MixedRestrictions");
+	bru.setVar("resourceId", testdata.resources.clientDelgResourceId);
+	bru.setVar("subjectSystemUser", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.systemuser.partyUuid);
+	bru.setVar("resourcePartyUuid", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_USENSUELL_UVIRKSOM_TIGER.partyUuid);
+	bru.setVar("viaPartyOrganizationId", testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.orgno);
+
+	var getTokenParameters = {
+		auth_tokenType: sharedtestdata.authTokenType.enterprise,
+		auth_scopes: `${sharedtestdata.auth_scopes.authorize} ${sharedtestdata.auth_scopes.authorizeAdmin}`,
+		auth_org: sharedtestdata.serviceOwners.ttd.org,
+		auth_orgNo: sharedtestdata.serviceOwners.ttd.orgno,
+	}
+
+	const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+	const token = await testTokenGenerator.getToken(getTokenParameters);
+	bru.setVar("bearerToken", token);
+}
+
+tests {
+	test("Decision_" + bru.getVar("requestName"), function() {
+		const data = res.getBody();
+		expect(res.status).to.equal(200);
+		expect(data.response).to.have.lengthOf(3);
+	});
+
+	test("r1_None_Permit", function() {
+		const data = res.getBody();
+		expect(data.response[0]).to.have.property('decision', "Permit");
+	});
+
+	test("r2_DirectAndHierarchy_NotPermit", function() {
+		const data = res.getBody();
+		expect(data.response[1].decision).to.not.equal("Permit");
+		expect(data.response[1].decision).to.not.equal("Indeterminate");
+	});
+
+	test("r3_ClientDelegationWithCorrectViaParty_Permit", function() {
+		const data = res.getBody();
+		expect(data.response[2]).to.have.property('decision', "Permit");
+	});
+}
+
+docs {
+	Same subject, action and resource with three different access-restriction values in one multi-request.
+	Expected results match the single-request scenarios: None permits, DirectAndHierarchy removes the client delegation,
+	ClientDelegation with the correct via-party permits. Results are asserted in request reference order.
+}

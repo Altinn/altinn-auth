@@ -1,0 +1,17 @@
+meta {
+	name: AccessRestriction
+	seq: 10
+}
+
+auth {
+	mode: inherit
+}
+
+docs {
+	BDD scenarios for the per-request access-restriction resource attribute (urn:altinn:authorization:access-restriction).
+
+	Each scenario has a baseline request (All / no access-restriction) proving the access exists,
+	followed by the restricted request proving the access-restriction removes (or keeps) it.
+
+	Non-no access-restriction values require the altinn:authorization/authorize.admin scope.
+}
