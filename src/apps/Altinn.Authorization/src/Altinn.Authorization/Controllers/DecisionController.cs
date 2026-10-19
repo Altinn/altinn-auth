@@ -6,9 +6,9 @@ using Altinn.Authorization.ABAC.Utils;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Authorization.Api.Contracts.Authorization;
+using Altinn.Authorization.Api.Contracts.Register;
+using Altinn.Authorization.Api.Contracts.ResourceRegistry;
 using Altinn.Authorization.Enums;
-using Altinn.Authorization.Models;
-using Altinn.Authorization.Models.Register;
 using Altinn.Authorization.Models.ResourceRegistry;
 using Altinn.Authorization.ProblemDetails;
 using Altinn.Platform.Authenticaiton.Extensions;
@@ -537,10 +537,15 @@ namespace Altinn.Platform.Authorization.Controllers
                 }
 
                 resourceAttributes.OrganizationNumber = party.OrgNumber;
+                if (!OrganizationNumber.TryParse(resourceAttributes.OrganizationNumber, null, out OrganizationNumber organizationNumber))
+                {
+                    return false;
+                }
+
                 AccessListAuthorizationRequest accessListAuthorizationRequest = new AccessListAuthorizationRequest
                 {
-                    Subject = PartyUrn.OrganizationIdentifier.Create(OrganizationNumber.CreateUnchecked(resourceAttributes.OrganizationNumber)),
-                    Resource = ResourceIdUrn.ResourceId.Create(Altinn.Authorization.Models.ResourceRegistry.ResourceIdentifier.CreateUnchecked(resourceId)),
+                    Subject = PartyUrn.OrganizationIdentifier.Create(organizationNumber),
+                    Resource = ResourceIdUrn.ResourceId.Create(Altinn.Authorization.Api.Contracts.ResourceRegistry.ResourceIdentifier.CreateUnchecked(resourceId)),
                     Action = ActionUrn.ActionId.Create(ActionIdentifier.CreateUnchecked(_delegationContextHandler.GetActionString(decisionRequest)))
                 };
                 Result<AccessListAuthorizationResponse> result = await _accessListAuthorization.Authorize(accessListAuthorizationRequest, cancellationToken);
