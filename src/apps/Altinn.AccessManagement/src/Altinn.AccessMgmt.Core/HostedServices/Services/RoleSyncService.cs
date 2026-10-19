@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using Altinn.AccessMgmt.Core.HostedServices.Contracts;
 using Altinn.AccessMgmt.Core.HostedServices.Leases;
+using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.Core.Telemetry;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
@@ -46,6 +47,8 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
         var removeParent = new Dictionary<Guid, Guid>();
         var addAssignments = new List<Assignment>();
         var removeAssignments = new List<Assignment>();
+        var addEstateAdministrators = new List<(Guid EstateId, Guid EstateAdministratorPartyId)>();
+        var removeEstateAdministrators = new List<(Guid EstateId, Guid EstateAdministratorPartyId)>();
         var options = new AuditValues(SystemEntityConstants.RegisterImportSystem);
 
         using var scope = _serviceProvider.CreateEFScope(options);
@@ -111,6 +114,11 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
                         {
                             addParent[assignment.FromId] = assignment.ToId;
                         }
+
+                        if (IsEstateAdministrator(item))
+                        {
+                            addEstateAdministrators.Add((assignment.FromId, assignment.ToId));
+                        }
                     }
                     else if (item.Type == ExternalRoleAssignmentEvent.EventType.Removed)
                     {
@@ -118,6 +126,11 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
                         if (ShouldSetParent(item, adosSubunitInheritanceEnabled))
                         {
                             removeParent[assignment.FromId] = assignment.ToId;
+                        }
+
+                        if (IsEstateAdministrator(item))
+                        {
+                            removeEstateAdministrators.Add((assignment.FromId, assignment.ToId));
                         }
 
                         flushed += await Flush();
@@ -154,15 +167,19 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
             var result = 0;
             result += await SetParents(appDbContextFactory, addParent, cancellationToken);
             result += await IngestAssigments(ingestService, addAssignments, options, cancellationToken);
+            result += await GrantEstateAccessToAdministrators(addEstateAdministrators, options, cancellationToken);
 
             result += await RemoveParents(appDbContextFactory, removeParent, cancellationToken);
             result += await RemoveAssignments(appDbContextFactory, removeAssignments, cancellationToken);
+            result += await RevokeEstateAccessFromAdministrators(removeEstateAdministrators, options, cancellationToken);
 
             seen.Clear();
             addParent.Clear();
             removeParent.Clear();
             addAssignments.Clear();
             removeAssignments.Clear();
+            addEstateAdministrators.Clear();
+            removeEstateAdministrators.Clear();
 
             return result;
         }
@@ -285,6 +302,43 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
 
         return await dbContext.SaveChangesAsync(cancellationToken);
     }
+
+    /// <summary>
+    /// Gives the bankruptcy estate administrators of each estate administrator party (bostyrer) the Rightholder
+    /// role and estate administrator packages on the estate (konkursbo). The relations of one flush, which is at
+    /// most one register page, are handled as one batch with a single save.
+    /// </summary>
+    private async Task<int> GrantEstateAccessToAdministrators(List<(Guid EstateId, Guid EstateAdministratorPartyId)> relations, AuditValues options, CancellationToken cancellationToken)
+    {
+        if (relations.Count == 0)
+        {
+            return 0;
+        }
+
+        // A short-lived scope per batch keeps the change tracker from growing over the whole stream.
+        using var scope = _serviceProvider.CreateEFScope(options);
+        var bankruptcyEstateService = scope.ServiceProvider.GetRequiredService<IBankruptcyEstateDelegationService>();
+        return await bankruptcyEstateService.GrantEstateAccessToAdministrators(relations, cancellationToken);
+    }
+
+    /// <summary>
+    /// Revokes the Rightholder role on the estate (konkursbo) from the bankruptcy estate administrators of each
+    /// estate administrator party (bostyrer), as one batch with a single save.
+    /// </summary>
+    private async Task<int> RevokeEstateAccessFromAdministrators(List<(Guid EstateId, Guid EstateAdministratorPartyId)> relations, AuditValues options, CancellationToken cancellationToken)
+    {
+        if (relations.Count == 0)
+        {
+            return 0;
+        }
+
+        using var scope = _serviceProvider.CreateEFScope(options);
+        var bankruptcyEstateService = scope.ServiceProvider.GetRequiredService<IBankruptcyEstateDelegationService>();
+        return await bankruptcyEstateService.RevokeEstateAccessFromAdministrators(relations, cancellationToken);
+    }
+
+    internal static bool IsEstateAdministrator(ExternalRoleAssignmentEvent item) =>
+        item.RoleIdentifier == RoleConstants.EstateAdministrator.Entity.Code;
 
     internal static bool ShouldSetParent(ExternalRoleAssignmentEvent item, bool adosSubunitInheritanceEnabled) =>
         item.RoleIdentifier == RoleConstants.HasAsRegistrationUnitBEDR.Entity.Code
