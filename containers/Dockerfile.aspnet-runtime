@@ -1,15 +1,20 @@
-﻿FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine@sha256:f62a272ac1b46e83f56b8ed0416572f31cd1128e2c4a5e63eb34d348e4a36095 AS final
+# Prepare files outside the runtime: chiseled has no shell or package manager.
+FROM mcr.microsoft.com/dotnet/sdk:10.0-noble@sha256:0d99ebf1ccad15037b5c98c9fe8979d6b8dbac23812feae2277a0b277b5c5ffa AS setup
+RUN mkdir -p /rootfs/usr/lib /rootfs/etc /rootfs/tmp/logtelemetry \
+    && cp -L /usr/lib/*/libgssapi_krb5.so.2 /usr/lib/*/libkrb5.so.3 \
+        /usr/lib/*/libk5crypto.so.3 /usr/lib/*/libcom_err.so.2 \
+        /usr/lib/*/libkrb5support.so.0 /usr/lib/*/libkeyutils.so.1 \
+        /usr/lib/*/libresolv.so.2 /rootfs/usr/lib/ \
+    && printf 'root:x:0:0:root:/root:/bin/false\ndotnet:x:1000:3000::/app:/bin/false\n' > /rootfs/etc/passwd \
+    && printf 'root:x:0:\ndotnet:x:3000:\n' > /rootfs/etc/group \
+    && chown 1000:3000 /rootfs/tmp/logtelemetry
+
+# The extra variant includes timezone data and ICU. Keep Kerberos support from
+# the matching Ubuntu SDK and preserve the existing dotnet UID/GID.
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble-chiseled-extra@sha256:3ed6558056b54d5c9dfefb7ff473728e022ff2bf1d976cbf8ee07b05ec594374 AS final
+COPY --from=setup /rootfs/ /
 WORKDIR /app
-
-# Install tzdata for timezone support, which is needed for correct handling of dates and times in the application
-RUN apk add --no-cache tzdata krb5-libs
-
-# setup the user and group
-# the user will have no password, using shell /bin/false and using the group dotnet
-RUN addgroup -g 3000 dotnet && adduser -u 1000 -G dotnet -D -s /bin/false dotnet
-# update permissions of files if neccessary before becoming dotnet user
 USER dotnet
-RUN mkdir /tmp/logtelemetry
 
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
