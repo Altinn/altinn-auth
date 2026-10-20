@@ -10,8 +10,8 @@ deploy_app_principal_id = "6eaed23e-df7f-4708-9c8e-a7f34deeadb4"
 platform_workflow_principal_ids = [
   "8fcf3019-ee5f-44d4-8c57-b2248f6f282e", # altinn-access-management-app-at22-aks01
   "2b74d490-2e91-48ad-aee1-478276b7e4e4", # altinn-access-management-app-at22-aks02
-  "5af9e789-bd92-4fbb-9445-a5920837d035", # DIS AKS Pre-deployment
-  "6b52ae2c-d73f-4179-9b46-49d180dc1fa8"  # DIS AKS Deployment
+  "6671ab6b-38a6-4d5e-9b48-5749e4136688", # DIS AKS Pre-deployment
+  "69004001-eabd-4196-aa77-1c96d486e5c6"  # DIS AKS Deployment
 ]
 db_max_pool_size = 4
 db_compute_sku   = "D2"
