@@ -587,6 +587,8 @@ namespace Altinn.ResourceRegistry.Controllers
         /// had a policy uploaded at least once (the policy may be empty) are included, and each resource
         /// appears at most once, at the position of its latest change. A change is any create or update of
         /// the resource metadata or an update of the resource policy.
+        /// Every page with items has a next-link, also the last one; an empty page without a next-link means
+        /// the consumer has caught up and should poll again later with the next-link it already has.
         /// </summary>
         /// <param name="token">Opaque continuation token from the previous page's next-link. Omit to start from the beginning</param>
         /// <param name="limit">Maximum number of resources returned (1-1000, default: 1000)</param>
@@ -612,15 +614,16 @@ namespace Altinn.ResourceRegistry.Controllers
 
             long skipPastChangeId = token?.Value ?? 0;
 
-            // Use limit + 1 in order to determine if there are more items to fetch
-            List<ResourceChange> changedResources = await _resourceRegistry.FindChangedResources(skipPastChangeId, limit + 1, cancellationToken);
+            List<ResourceChange> changedResources = await _resourceRegistry.FindChangedResources(skipPastChangeId, limit, cancellationToken);
 
-            if (changedResources.Count < limit + 1)
+            // The feed is followed over time, so every non-empty page links to the position after its
+            // last item, also when no more changes exist yet. Only an empty page has no next link: the
+            // consumer has caught up and keeps the token it already has.
+            if (changedResources.Count == 0)
             {
                 return Paginated.Create(changedResources, null);
             }
 
-            changedResources.RemoveRange(limit, changedResources.Count - limit);
             ResourceChange last = changedResources[^1];
 
             string nextUrl = Url.Link("changes", new
