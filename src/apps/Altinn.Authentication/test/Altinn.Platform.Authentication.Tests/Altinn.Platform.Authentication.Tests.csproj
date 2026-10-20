@@ -196,15 +196,6 @@
     <None Update="Data\Customers\systemusercustomerlist.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Data\Delegation\DelegationAccessResponseApp.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Data\Delegation\DelegationAccessResponse_NotDelegable.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Update="Data\Delegation\DelegationAccessResponse.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Update="Data\Packages\packages.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

@@ -44,7 +44,7 @@ dotnet build src/apps/Altinn.Authentication/src/Altinn.Platform.Authentication/A
 - Token-validation in the exchange path disables issuer/audience checks — flagged for review in [#2074](https://github.com/Altinn/altinn-authentication/issues/2074); **verify intent against tests before changing.**
 
 - **This vertical is a build island**, like `src/pkgs/JWTCookieAuthentication` that it depends on: its own `Directory.Build.props`/`.targets`, `Directory.Packages.props` with central package management off (versions are inline in the csproj files), `Altinn3.ruleset`, and `stylecop.json`. It inherits the repository's `.editorconfig` settings. Do not merge it into the shared build files.
-- **Existing compiler warnings are a baseline, not errors** (`WarningsNotAsErrors` in `Directory.Build.props`), because CI builds with `-warnaserror`. Do not add new warnings and do not extend the list; [#4597](https://github.com/Altinn/altinn-auth/issues/4597) removes it.
+- **Existing compiler warnings are a baseline, not errors** (`WarningsNotAsErrors` in `Directory.Build.props`), because CI builds with `-warnaserror`. Do not add new warnings and do not extend the list; [#4597](https://github.com/Altinn/altinn-auth/issues/4597) removes it. The list applies to every project in the vertical and exempts its codes from `-warnaserror`, so a project that reaches zero warnings opts out by resetting `WarningsNotAsErrors` to the NuGet audit codes in its csproj (as `Altinn.Platform.Authentication.Core` does). CI's `-warnaserror` then fails it on any new warning; it needs no `TreatWarningsAsErrors`.
 
 ## Test gotchas
 

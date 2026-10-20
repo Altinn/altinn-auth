@@ -546,43 +546,6 @@ public class DelegationHelper(
         }
     }
 
-    private static (bool CanDelegate, List<DetailExternal> Errors) ResolveIfHasAccess(List<DelegationResponseData> rightResponse)
-    {
-        List<DetailExternal> errors = [];
-        var canDelegate = true;
-
-        foreach (var data in rightResponse)
-        {
-            if (data.Status != "Delegable")
-            {
-                if (data.Details is not null && data.Details.Count > 0)
-                {
-                    errors.AddRange(data.Details);
-                }
-                else
-                {
-                    Dictionary<string, List<AttributePair>> parameters = [];
-
-                    foreach (var attributePair in data.Resource)
-                    {
-                        parameters.Add(attributePair.Id, [attributePair]);
-                    }
-
-                    errors.Add(new DetailExternal()
-                    {
-                        Code = DetailCodeExternal.Unknown,
-                        Description = "Unknown Error During DelegationCheck",
-                        Parameters = parameters
-                    });
-                }
-
-                canDelegate = false;
-            }
-        }
-
-        return (canDelegate, errors);
-    }
-
     private static (bool CanDelegate, List<DetailExternal> Errors, List<string> RightKeys) ResolveIfHasAccessNew(ResourceCheckDto resourceCheckDto)
     {
         List<DetailExternal> errors = [];

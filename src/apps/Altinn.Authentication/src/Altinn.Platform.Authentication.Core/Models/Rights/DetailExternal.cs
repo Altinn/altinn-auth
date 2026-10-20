@@ -14,7 +14,7 @@ public class DetailExternal
     /// <summary>
     /// Gets or sets a human readable (english) description of the detail
     /// </summary>
-    public string Description { get; set; }
+    public string? Description { get; set; }
 
     /// <summary>
     /// Gets or sets a dictionary of parameters which is related to the detail code and description
