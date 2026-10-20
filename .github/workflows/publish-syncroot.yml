@@ -41,7 +41,7 @@ jobs:
       - name: Init
         uses: $/.github/actions/init
       - name: Extract app config
-        env:VERTICAL_NAME
+        env:
           VERTICAL: ${{ inputs.vertical }}
         run: |
           repoctl github export-vertical "app:$VERTICAL"
