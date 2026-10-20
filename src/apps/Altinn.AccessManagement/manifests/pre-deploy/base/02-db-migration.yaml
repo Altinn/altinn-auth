@@ -22,7 +22,7 @@ spec:
 
       containers:
         - name: access-management
-          image: ghcr.io/altinn/altinn-auth/accessmanagement:{{GIT_SHA}}
+          image: ghcr.io/altinn/altinn-auth/access-management:{{GIT_SHA}}
           imagePullPolicy: Always
 
           resources:
