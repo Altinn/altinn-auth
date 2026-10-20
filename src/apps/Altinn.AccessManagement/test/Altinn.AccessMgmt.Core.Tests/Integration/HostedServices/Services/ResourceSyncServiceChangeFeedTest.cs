@@ -185,31 +185,131 @@ public class ResourceSyncServiceChangeFeedTest : IClassFixture<ApiFixture>
     }
 
     [Fact]
-    public async Task SyncResources_SkipsSubject_WhenResourceIsNotSynced()
+    public async Task SyncResources_FetchesAndLinksResource_PublishedAfterChangeFeedDrained()
     {
-        var refId = "rsst-change-unsynced-" + Guid.NewGuid().ToString("N");
+        // The resource and its policy were published after phase 1 drained, so only the updated feed has it,
+        // and a resource that phase 1 did sync follows it on the same page.
+        var lateRefId = "rsst-change-late-" + Guid.NewGuid().ToString("N");
+        var syncedRefId = "rsst-change-synced-" + Guid.NewGuid().ToString("N");
+        var syncedAt = DateTime.UtcNow;
+        Registry.ResourceFactory = id => id == lateRefId || id == syncedRefId ? Success(NewResourceModel(id)) : Problem<ResourceModel>();
+        Registry.ChangePagesFactory = _ => [ChangesPage(NextLink1, syncedRefId)];
+        Registry.StreamPagesFactory = (_, _) => [UpdatedPage(RoleSubject(lateRefId, syncedAt.AddSeconds(-1)), RoleSubject(syncedRefId, syncedAt))];
+        Registry.GetResourceCalls.Clear();
+
+        var lease = new FakeLease();
+        await ResolveService().SyncResources(lease, TestContext.Current.CancellationToken);
+
+        // Phase 1 fetches the synced resource; phase 2 fetches only the one it was missing.
+        Assert.Equal([syncedRefId, lateRefId], Registry.GetResourceCalls);
+        await AssertRoleLinked(lateRefId, true);
+        await AssertRoleLinked(syncedRefId, true);
+        Assert.Equal(syncedAt, lease.Data.Since);
+    }
+
+    [Fact]
+    public async Task SyncResources_DoesNotCheckpointPage_WhenFetchingMissingResourceFails()
+    {
+        var lateRefId = "rsst-change-latefail-" + Guid.NewGuid().ToString("N");
+        var syncedRefId = "rsst-change-syncedfail-" + Guid.NewGuid().ToString("N");
+        var storedSince = DateTime.UtcNow.AddDays(-1);
+        Registry.ResourceFactory = id => id == syncedRefId ? Success(NewResourceModel(id)) : Problem<ResourceModel>();
+        Registry.ChangePagesFactory = _ => [ChangesPage(NextLink1, syncedRefId)];
+        Registry.StreamPagesFactory = (_, _) => [UpdatedPage(RoleSubject(lateRefId, DateTime.UtcNow), RoleSubject(syncedRefId, DateTime.UtcNow))];
+
+        var lease = new FakeLease { Data = new ResourceRegistryLease { Since = storedSince } };
+        await ResolveService().SyncResources(lease, TestContext.Current.CancellationToken);
+
+        // The failed fetch stops the page before the cursor moves past the relation.
+        Assert.Equal(storedSince, lease.Data.Since);
+        Assert.Null(lease.Data.ResourceNextPageLink);
+        await AssertRoleLinked(lateRefId, false);
+        await AssertRoleLinked(syncedRefId, false);
+
+        // The next run replays the page once the resource registry answers.
+        Registry.ResourceFactory = id => id == lateRefId || id == syncedRefId ? Success(NewResourceModel(id)) : Problem<ResourceModel>();
+        await ResolveService().SyncResources(lease, TestContext.Current.CancellationToken);
+
+        await AssertRoleLinked(lateRefId, true);
+        await AssertRoleLinked(syncedRefId, true);
+        Assert.NotEqual(storedSince, lease.Data.Since);
+    }
+
+    [Fact]
+    public async Task SyncResources_SkipsSubject_WhenMissingResourceNoLongerExists()
+    {
+        var goneRefId = "rsst-change-subjectgone-" + Guid.NewGuid().ToString("N");
+        var syncedRefId = "rsst-change-subjectkept-" + Guid.NewGuid().ToString("N");
+        var syncedAt = DateTime.UtcNow;
+        Registry.ResourceFactory = id => id == syncedRefId
+            ? Success(NewResourceModel(id))
+            : new PlatformResponse<ResourceModel> { IsSuccessful = false, StatusCode = HttpStatusCode.NotFound };
+        Registry.ChangePagesFactory = _ => [ChangesPage(NextLink1, syncedRefId)];
+        Registry.StreamPagesFactory = (_, _) => [UpdatedPage(RoleSubject(goneRefId, syncedAt.AddSeconds(-1)), RoleSubject(syncedRefId, syncedAt))];
+
+        var lease = new FakeLease();
+        await ResolveService().SyncResources(lease, TestContext.Current.CancellationToken);
+
+        await AssertRoleLinked(goneRefId, false);
+        await AssertRoleLinked(syncedRefId, true);
+        Assert.Equal(syncedAt, lease.Data.Since);
+    }
+
+    [Fact]
+    public async Task SyncResources_SkipsSubject_WhenMissingResourceHasUnknownServiceOwner()
+    {
+        var unknownRefId = "rsst-change-unknownorg-" + Guid.NewGuid().ToString("N");
+        var syncedRefId = "rsst-change-knownorg-" + Guid.NewGuid().ToString("N");
+        var syncedAt = DateTime.UtcNow;
+        Registry.ResourceFactory = id =>
+        {
+            var model = NewResourceModel(id);
+            if (id == unknownRefId)
+            {
+                model.HasCompetentAuthority.Orgcode = "rsst-unknown-org";
+            }
+
+            return Success(model);
+        };
+        Registry.ChangePagesFactory = _ => [ChangesPage(NextLink1, syncedRefId)];
+        Registry.StreamPagesFactory = (_, _) => [UpdatedPage(RoleSubject(unknownRefId, syncedAt.AddSeconds(-1)), RoleSubject(syncedRefId, syncedAt))];
+
+        var lease = new FakeLease();
+        await ResolveService().SyncResources(lease, TestContext.Current.CancellationToken);
+
+        await Fixture.QueryDb(async db =>
+        {
+            Assert.False(await db.Resources.AnyAsync(r => r.RefId == unknownRefId, TestContext.Current.CancellationToken));
+        });
+        await AssertRoleLinked(syncedRefId, true);
+        Assert.Equal(syncedAt, lease.Data.Since);
+    }
+
+    [Fact]
+    public async Task SyncResources_DoesNotFetchMissingResource_ForDeletedSubject()
+    {
+        var refId = "rsst-change-deletemissing-" + Guid.NewGuid().ToString("N");
+        var deletedAt = DateTime.UtcNow;
         Registry.GetResourceCalls.Clear();
         Registry.ChangePagesFactory = _ => [];
-
-        // The registry would return the resource, but phase 2 must not fetch it.
-        Registry.ResourceFactory = _ => Success(NewResourceModel(refId));
+        Registry.ResourceFactory = id => Success(NewResourceModel(id));
         Registry.StreamPagesFactory = (_, _) => [UpdatedPage(new ResourceUpdatedModel
         {
             SubjectUrn = "urn:altinn:rolecode:priv",
             ResourceUrn = "urn:altinn:resource:" + refId,
-            UpdatedAt = DateTime.UtcNow,
+            UpdatedAt = deletedAt,
+            Deleted = true,
         })];
 
         var lease = new FakeLease();
         await ResolveService().SyncResources(lease, TestContext.Current.CancellationToken);
 
+        // No link can exist for a resource that was never synced, so there is nothing to fetch or delete.
         Assert.Empty(Registry.GetResourceCalls);
         await Fixture.QueryDb(async db =>
         {
             Assert.False(await db.Resources.AnyAsync(r => r.RefId == refId, TestContext.Current.CancellationToken));
-            Assert.False(await db.RoleResources.AnyAsync(r => r.Resource.RefId == refId, TestContext.Current.CancellationToken));
         });
-        Assert.Equal(default, lease.Data.Since);
     }
 
     [Fact]
@@ -260,6 +360,24 @@ public class ResourceSyncServiceChangeFeedTest : IClassFixture<ApiFixture>
             Assert.Equal(expectedName, resource.Name);
         });
     }
+
+    private async Task AssertRoleLinked(string refId, bool expected)
+    {
+        await Fixture.QueryDb(async db =>
+        {
+            var linked = await db.RoleResources
+                .AsNoTracking()
+                .AnyAsync(r => r.Resource.RefId == refId && r.Role.LegacyUrn == "urn:altinn:rolecode:priv", TestContext.Current.CancellationToken);
+            Assert.Equal(expected, linked);
+        });
+    }
+
+    private static ResourceUpdatedModel RoleSubject(string refId, DateTime updatedAt) => new()
+    {
+        SubjectUrn = "urn:altinn:rolecode:priv",
+        ResourceUrn = "urn:altinn:resource:" + refId,
+        UpdatedAt = updatedAt,
+    };
 
     private IResourceSyncService ResolveService()
     {
