@@ -1,0 +1,14 @@
+meta {
+	name: 05_AdminScopeRequired
+	seq: 5
+}
+
+auth {
+	mode: inherit
+}
+
+docs {
+	GIVEN a caller with only the altinn:authorization/authorize scope
+	WHEN the request sets a non-default access-restriction (ClientDelegation or DirectAndHierarchy)
+	THEN the decision is Indeterminate with status processing-error
+}
