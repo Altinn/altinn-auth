@@ -1,17 +1,17 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: access-management
+  name: am-api
   labels:
-    app.kubernetes.io/name: access-management
+    app.kubernetes.io/name: am-api
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: access-management
+      app.kubernetes.io/name: am-api
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: access-management
+        app.kubernetes.io/name: am-api
         app.kubernetes.io/part-of: access-management
         azure.workload.identity/use: "true"
       annotations:
@@ -26,17 +26,15 @@ spec:
 
       containers:
         - name: access-management
-          image: ghcr.io/altinn/altinn-auth/access-management:{{GIT_SHA}}
+          image: ghcr.io/altinn/altinn-auth/access-management-api:{{GIT_SHA}}
           imagePullPolicy: Always
           resources:
             requests:
               cpu: 750m
               memory: 1500Mi
-
           envFrom:
             - configMapRef:
                 name: environment
-
           env:
             - name: K8S_CONTAINER_NAME
               value: access-management
@@ -57,12 +55,10 @@ spec:
                 configMapKeyRef:
                   name: clusterinfo
                   key: trusted_proxies
-
           ports:
             - name: http
               containerPort: 8080
               protocol: TCP
-
           readinessProbe:
             # an http probe
             httpGet:
@@ -87,7 +83,6 @@ spec:
               failureThreshold: 30
               periodSeconds: 10
               timeoutSeconds: 10
-
           volumeMounts:
             - name: altinn-appsettings
               mountPath: "/altinn-appsettings"

@@ -9,12 +9,12 @@ patches:
       apiVersion: apps/v1
       kind: Deployment
       metadata:
-        name: access-management
+        name: am-api
       spec:
         template:
           spec:
             containers:
-              - name: accessmanagement
+              - name: am-api
                 resources:
                   requests:
                     cpu: 50m

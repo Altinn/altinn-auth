@@ -22,7 +22,7 @@ spec:
 
       containers:
         - name: access-management
-          image: ghcr.io/altinn/altinn-auth/access-management:{{GIT_SHA}}
+          image: ghcr.io/altinn/altinn-auth/access-management-api:{{GIT_SHA}}
           imagePullPolicy: Always
 
           resources:
@@ -37,7 +37,7 @@ spec:
             - name: RunInitOnly
               value: 'true'
             - name: K8S_CONTAINER_NAME
-              value: accessmanagement
+              value: access-management
             - name: K8S_POD_NAME
               valueFrom:
                 fieldRef:
