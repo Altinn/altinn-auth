@@ -14,7 +14,7 @@ patches:
         template:
           spec:
             containers:
-              - name: am-api
+              - name: access-management
                 resources:
                   requests:
                     cpu: 50m
