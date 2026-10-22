@@ -57,12 +57,17 @@ spec:
                   key: trusted_proxies
 
           volumeMounts:
+            - name: tmp
+              mountPath: /tmp
             - name: altinn-appsettings
               mountPath: "/altinn-appsettings"
             - name: accesstoken
               mountPath: "/accesstoken"
 
       volumes:
+        - name: tmp
+          emptyDir:
+            medium: Memory
         - name: altinn-appsettings
           secret:
             secretName: altinn-appsettings-secret
