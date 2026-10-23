@@ -186,13 +186,16 @@ public partial class ResourceSyncService : IResourceSyncService
     /// <returns>true when the feed was drained; false when it stopped on an error and phase 2 should not run.</returns>
     private async Task<bool> SyncResourceChanges(AppDbContext dbContext, ILease lease, ResourceRegistryLease leaseData, Activity? activity, CancellationToken cancellationToken)
     {
-        await foreach (var page in await _resourceRegistry.StreamResourceChanges(leaseData.ResourceChangesNextPageLink, cancellationToken))
+        try
         {
-            try
+            // The try covers the whole enumeration, since opening the feed and fetching later pages can throw too.
+            var pages = await _resourceRegistry.StreamResourceChanges(leaseData.ResourceChangesNextPageLink, cancellationToken);
+            await foreach (var page in pages.WithCancellation(cancellationToken))
             {
                 if (page.IsProblem)
                 {
                     Log.FailedToReadFromChangeStream(_logger);
+                    RecordFailure(activity);
                     return false;
                 }
 
@@ -212,10 +215,16 @@ public partial class ResourceSyncService : IResourceSyncService
                         {
                             // Stop without moving the cursor, so the page is retried on the next run.
                             Log.FailedToGetResource(_logger, change.ResourceId);
+                            RecordFailure(activity);
                             return false;
                         }
 
-                        await UpsertResource(dbContext, response.Content, cancellationToken);
+                        // An unknown service owner is skipped rather than retried, as in the updated feed: blocking
+                        // here would stop the feed until the owner exists, which may never happen.
+                        if (await UpsertResource(dbContext, response.Content, cancellationToken) is null)
+                        {
+                            Log.ChangedResourceNotSynced(_logger, change.ResourceId);
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -230,17 +239,22 @@ public partial class ResourceSyncService : IResourceSyncService
                     await lease.Update(leaseData, cancellationToken);
                 }
             }
-            catch (Exception ex)
-            {
-                activity?.AddException(ex);
-                activity?.SetStatus(ActivityStatusCode.Error);
-                CoreTelemetry.HostedServicesFailures.Add(1, OtelTags);
-                CoreTelemetry.HostedServicesOk.Record(0, OtelTags);
-                return false;
-            }
+        }
+        catch (Exception ex)
+        {
+            activity?.AddException(ex);
+            RecordFailure(activity);
+            return false;
         }
 
         return true;
+    }
+
+    private void RecordFailure(Activity? activity)
+    {
+        activity?.SetStatus(ActivityStatusCode.Error);
+        CoreTelemetry.HostedServicesFailures.Add(1, OtelTags);
+        CoreTelemetry.HostedServicesOk.Record(0, OtelTags);
     }
 
     private Task UpsertUpdatedSubject(AppDbContext dbContext, ResourceUpdatedModel updatedResource, Resource resource, CancellationToken cancellationToken) => updatedResource.SubjectUrn switch
@@ -539,5 +553,8 @@ public partial class ResourceSyncService : IResourceSyncService
 
         [LoggerMessage(EventId = 10, Level = LogLevel.Warning, Message = "Resource '{ResourceUrn}' no longer exists in the resource registry, so subject {SubjectUrn} was skipped.")]
         internal static partial void SubjectResourceNotFound(ILogger logger, string resourceUrn, string subjectUrn);
+
+        [LoggerMessage(EventId = 11, Level = LogLevel.Warning, Message = "Changed resource '{ResourceId}' could not be synced, for example because its service owner is unknown, and was skipped.")]
+        internal static partial void ChangedResourceNotSynced(ILogger logger, string resourceId);
     }
 }

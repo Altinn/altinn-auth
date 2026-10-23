@@ -482,6 +482,10 @@ public class ResourceSyncServiceTest : IClassFixture<ApiFixture>
         }
     }
 
+    /// <summary>
+    /// A lease that, like the real one, hands out a copy of its data, so <see cref="Data"/> is the persisted
+    /// state and only changes when the service calls <c>Update</c>.
+    /// </summary>
     internal sealed class FakeLease : ILease
     {
         public ResourceRegistryLease Data { get; set; } = new();
@@ -491,7 +495,7 @@ public class ResourceSyncServiceTest : IClassFixture<ApiFixture>
         public Task<T> Get<T>(CancellationToken cancellationToken = default)
             where T : class, new()
         {
-            if (Data is T typed)
+            if (Copy(Data) is T typed)
             {
                 return Task.FromResult(typed);
             }
@@ -504,11 +508,18 @@ public class ResourceSyncServiceTest : IClassFixture<ApiFixture>
         {
             if (data is ResourceRegistryLease lease)
             {
-                Data = lease;
+                Data = Copy(lease);
             }
 
             return Task.CompletedTask;
         }
+
+        private static ResourceRegistryLease Copy(ResourceRegistryLease lease) => new()
+        {
+            Since = lease.Since,
+            ResourceNextPageLink = lease.ResourceNextPageLink,
+            ResourceChangesNextPageLink = lease.ResourceChangesNextPageLink,
+        };
 
         public Task Update<T>(Action<T> configureData, CancellationToken cancellationToken = default)
             where T : class, new()

@@ -144,6 +144,39 @@ public class ResourceSyncServiceChangeFeedTest : IClassFixture<ApiFixture>
     }
 
     [Fact]
+    public async Task SyncResources_PersistsCursorOfLastSuccessfulPage_WhenLaterPageIsProblem()
+    {
+        var refId = "rsst-change-partial-" + Guid.NewGuid().ToString("N");
+        Registry.StreamCalls.Clear();
+        Registry.StreamPagesFactory = (_, _) => [];
+        Registry.ResourceFactory = id => id == refId ? Success(NewResourceModel(refId)) : Problem<ResourceModel>();
+        Registry.ChangePagesFactory = _ => [ChangesPage(NextLink2, refId), Problem<PageStream<ResourceChangeModel>>()];
+
+        var lease = new FakeLease { Data = new ResourceRegistryLease { ResourceChangesNextPageLink = NextLink1 } };
+        await ResolveService().SyncResources(lease, TestContext.Current.CancellationToken);
+
+        // The first page is checkpointed, and the failing page stops the sync before phase 2.
+        Assert.Equal(["changes"], Registry.StreamCalls);
+        Assert.Equal(NextLink2, lease.Data.ResourceChangesNextPageLink);
+        Assert.Equal(default, lease.Data.Since);
+        await AssertResourceName(refId, "Resource " + refId);
+    }
+
+    [Fact]
+    public async Task SyncResources_SkipsUpdatedFeed_WhenOpeningChangeFeedThrows()
+    {
+        Registry.StreamCalls.Clear();
+        Registry.StreamPagesFactory = (_, _) => [];
+        Registry.ChangePagesFactory = _ => throw new HttpRequestException("transport failure");
+
+        var lease = new FakeLease { Data = new ResourceRegistryLease { ResourceChangesNextPageLink = NextLink1 } };
+        await ResolveService().SyncResources(lease, TestContext.Current.CancellationToken);
+
+        Assert.Equal(["changes"], Registry.StreamCalls);
+        Assert.Equal(NextLink1, lease.Data.ResourceChangesNextPageLink);
+    }
+
+    [Fact]
     public async Task SyncResources_StopsWithoutMovingCursor_WhenGetResourceFails()
     {
         var refId = "rsst-change-fail-" + Guid.NewGuid().ToString("N");
