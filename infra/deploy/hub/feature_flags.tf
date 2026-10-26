@@ -62,6 +62,7 @@ locals {
     "AccessManagementUI.ShowIdPortenAuthorizations"                   = { description = "Whether or not to include ID-porten authorizations in active consents list." },
     "AccessManagementUI.EnableSkyra"                                  = { description = "Whether or not to load the Skyra survey SDK and ask for cookie consent." },
     "AccessManagementUI.EnableSingleRightsTabInPoaOverview"           = { description = "Whether or not to show single rights tab in powers of attorney overview." },
+    "AccessManagementUI.ShowSettingsPageServiceAnnouncement"          = { description = "Whether or not to show a service announcement on the Settings page." },
   }
 }
 
