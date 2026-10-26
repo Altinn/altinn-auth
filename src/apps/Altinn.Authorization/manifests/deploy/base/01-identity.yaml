@@ -1,8 +1,8 @@
 apiVersion: application.dis.altinn.cloud/v1alpha1
 kind: ApplicationIdentity
 metadata:
-  name: authorization-runtime
+  name: authz-api
   labels:
-    app.kubernetes.io/name: authorization
+    app.kubernetes.io/name: authz-api
     app.kubernetes.io/part-of: authorization
 spec: {}
