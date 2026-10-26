@@ -31,7 +31,7 @@ jobs:
 
       - id: create
         name: Create issue
-        uses: JasonEtco/create-an-issue@56fdd2d6f960e970fa9d5ca3cf3884b6ba5af477
+        uses: JasonEtco/create-an-issue@1b14a70e4d8dc185e5cc76d3bec9eab20257b2c5 # v2.9.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -41,11 +41,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.ASSIGN_PROJECT_TOKEN }}
           GITHUB_ISSUE_NUMBER: ${{ steps.create.outputs.number }}
-          GITHUB_PROJECT_NUMBER: 75
+          GITHUB_PROJECT_NUMBER: 196
           # set status = "In progress"
           GITHUB_PROJECT_FIELDS: |
             {
-              "PVTSSF_lADOAFrH7M4ALF9LzgHEmZw": { "singleSelectOptionId": "e4413b57" }
+              "PVTSSF_lADOAFrH7M4Bm1KTzhlch6Y": { "singleSelectOptionId": "47fc9ee4" }
             }
         run: tsx ./.github/scripts/add-to-project.mts
 
@@ -74,7 +74,7 @@ jobs:
 
       - id: create
         name: Create issue
-        uses: JasonEtco/create-an-issue@56fdd2d6f960e970fa9d5ca3cf3884b6ba5af477
+        uses: JasonEtco/create-an-issue@1b14a70e4d8dc185e5cc76d3bec9eab20257b2c5 # v2.9.2
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
@@ -84,10 +84,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.ASSIGN_PROJECT_TOKEN }}
           GITHUB_ISSUE_NUMBER: ${{ steps.create.outputs.number }}
-          GITHUB_PROJECT_NUMBER: 50
+          GITHUB_PROJECT_NUMBER: 196
           # set status = "In progress"
           GITHUB_PROJECT_FIELDS: |
             {
-              "PVTSSF_lADOAFrH7M4AI9-nzgFibRI": { "singleSelectOptionId": "47fc9ee4" }
+              "PVTSSF_lADOAFrH7M4Bm1KTzhlch6Y": { "singleSelectOptionId": "47fc9ee4" }
             }
         run: tsx ./.github/scripts/add-to-project.mts
