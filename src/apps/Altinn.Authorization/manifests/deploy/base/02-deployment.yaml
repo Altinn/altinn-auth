@@ -2,17 +2,19 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: authorization
+  labels:
+    app.kubernetes.io/name: authz-api
 spec:
   selector:
     matchLabels:
-      app.kubernetes.io/name: fake
+      app.kubernetes.io/name: authz-api
   template:
     metadata:
       annotations:
         cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
         linkerd.io/inject: enabled
     spec:
-      serviceAccountName: app
+      serviceAccountName: authz-api
       securityContext:
         runAsUser: 1000
         runAsGroup: 3000
@@ -29,11 +31,9 @@ spec:
             requests:
               cpu: 750m
               memory: 1500Mi
-
           envFrom:
             - configMapRef:
                 name: environment
-
           env:
             - name: K8S_CONTAINER_NAME
               value: authorization
