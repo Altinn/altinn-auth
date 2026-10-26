@@ -2,6 +2,8 @@
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.Core.HostedServices.Contracts;
 using Altinn.AccessMgmt.Core.HostedServices.Leases;
+using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.AccessMgmt.PersistenceEF.Models.Enums;
 using Altinn.Authorization.Integration.Platform;
 using Altinn.Authorization.Integration.Platform.ResourceRegistry;
 using Microsoft.EntityFrameworkCore;
@@ -381,6 +383,110 @@ public class ResourceSyncServiceChangeFeedTest : IClassFixture<ApiFixture>
         {
             Assert.True(await db.Resources.AnyAsync(r => r.RefId == refId, TestContext.Current.CancellationToken));
             Assert.False(await db.RoleResources.AnyAsync(r => r.Resource.RefId == refId, TestContext.Current.CancellationToken));
+        });
+    }
+
+    [Fact]
+    public async Task SyncResources_ImportsDelegableAccessListModeAndScopes_ForMaskinportenSchema()
+    {
+        var refId = "rsst-change-scopes-" + Guid.NewGuid().ToString("N");
+        Registry.StreamPagesFactory = (_, _) => [];
+        Registry.ChangePagesFactory = _ => [ChangesPage(NextLink1, refId)];
+        Registry.ResourceFactory = id => Success(MaskinportenResourceModel(id, delegable: false, "Enabled", "test:scope.a", "test:scope.b"));
+
+        await ResolveService().SyncResources(new FakeLease(), TestContext.Current.CancellationToken);
+
+        await AssertResourceFields(refId, delegable: false, ResourceAccessListMode.Enabled, "test:scope.a", "test:scope.b");
+    }
+
+    [Fact]
+    public async Task SyncResources_UpdatesDelegableAccessListModeAndScopes_OnLaterChange()
+    {
+        var refId = "rsst-change-scopesupdate-" + Guid.NewGuid().ToString("N");
+        Registry.StreamPagesFactory = (_, _) => [];
+        Registry.ChangePagesFactory = _ => [ChangesPage(NextLink1, refId)];
+        Registry.ResourceFactory = id => Success(MaskinportenResourceModel(id, delegable: true, "Disabled", "test:scope.a", "test:scope.b"));
+
+        var lease = new FakeLease();
+        await ResolveService().SyncResources(lease, TestContext.Current.CancellationToken);
+        await AssertResourceFields(refId, delegable: true, ResourceAccessListMode.Disabled, "test:scope.a", "test:scope.b");
+
+        // One scope is removed and one added, and the other fields change.
+        Registry.ChangePagesFactory = _ => [ChangesPage(NextLink2, refId)];
+        Registry.ResourceFactory = id => Success(MaskinportenResourceModel(id, delegable: false, "Enabled", "test:scope.b", "test:scope.c"));
+        await ResolveService().SyncResources(lease, TestContext.Current.CancellationToken);
+
+        await AssertResourceFields(refId, delegable: false, ResourceAccessListMode.Enabled, "test:scope.b", "test:scope.c");
+    }
+
+    [Fact]
+    public async Task SyncResources_ImportsNoScopes_ForOtherResourceTypes_AndRemovesThemWhenTypeChanges()
+    {
+        var otherRefId = "rsst-change-noscopes-" + Guid.NewGuid().ToString("N");
+        var changedRefId = "rsst-change-typechange-" + Guid.NewGuid().ToString("N");
+        Registry.StreamPagesFactory = (_, _) => [];
+        Registry.ChangePagesFactory = _ => [ChangesPage(NextLink1, otherRefId, changedRefId)];
+        Registry.ResourceFactory = id =>
+        {
+            var model = MaskinportenResourceModel(id, delegable: true, null, "test:scope.a");
+            if (id == otherRefId)
+            {
+                model.ResourceType = "GenericAccessResource";
+            }
+
+            return Success(model);
+        };
+
+        var lease = new FakeLease();
+        await ResolveService().SyncResources(lease, TestContext.Current.CancellationToken);
+
+        await AssertResourceFields(otherRefId, delegable: true, ResourceAccessListMode.Disabled);
+        await AssertResourceFields(changedRefId, delegable: true, ResourceAccessListMode.Disabled, "test:scope.a");
+
+        // A resource that is no longer a Maskinporten schema keeps no scopes, even with scope references.
+        Registry.ChangePagesFactory = _ => [ChangesPage(NextLink2, changedRefId)];
+        Registry.ResourceFactory = id =>
+        {
+            var model = MaskinportenResourceModel(id, delegable: true, null, "test:scope.a");
+            model.ResourceType = "GenericAccessResource";
+            return Success(model);
+        };
+        await ResolveService().SyncResources(lease, TestContext.Current.CancellationToken);
+
+        await AssertResourceFields(changedRefId, delegable: true, ResourceAccessListMode.Disabled);
+    }
+
+    [Theory]
+    [InlineData("Enabled", ResourceAccessListMode.Enabled)]
+    [InlineData("enabled", ResourceAccessListMode.Enabled)]
+    [InlineData("Disabled", ResourceAccessListMode.Disabled)]
+    [InlineData(null, ResourceAccessListMode.Disabled)]
+    [InlineData("SomethingNew", ResourceAccessListMode.Disabled)]
+    [InlineData("7", ResourceAccessListMode.Disabled)]
+    public async Task SyncResources_MapsAccessListMode(string? registryValue, ResourceAccessListMode expected)
+    {
+        var refId = "rsst-change-accesslistmode-" + Guid.NewGuid().ToString("N");
+        Registry.StreamPagesFactory = (_, _) => [];
+        Registry.ChangePagesFactory = _ => [ChangesPage(NextLink1, refId)];
+        Registry.ResourceFactory = id => Success(MaskinportenResourceModel(id, delegable: true, registryValue));
+
+        await ResolveService().SyncResources(new FakeLease(), TestContext.Current.CancellationToken);
+
+        await AssertResourceFields(refId, delegable: true, expected);
+    }
+
+    private async Task AssertResourceFields(string refId, bool delegable, ResourceAccessListMode accessListMode, params string[] scopes)
+    {
+        await Fixture.QueryDb(async db =>
+        {
+            var resource = await db.Resources
+                .AsNoTracking()
+                .Include(r => r.Scopes)
+                .SingleOrDefaultAsync(r => r.RefId == refId, TestContext.Current.CancellationToken);
+            Assert.NotNull(resource);
+            Assert.Equal(delegable, resource.Delegable);
+            Assert.Equal(accessListMode, resource.AccessListMode);
+            Assert.Equal(scopes.Order(), resource.Scopes.Select(s => s.Scope).Order());
         });
     }
 

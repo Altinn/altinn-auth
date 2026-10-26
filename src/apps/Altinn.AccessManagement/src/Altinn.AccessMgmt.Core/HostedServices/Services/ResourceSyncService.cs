@@ -8,6 +8,7 @@ using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.AccessMgmt.PersistenceEF.Models.Enums;
 using Altinn.Authorization.Host.Lease;
 using Altinn.Authorization.Integration.Platform.ResourceRegistry;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +22,8 @@ namespace Altinn.AccessMgmt.Core.HostedServices.Services;
 public partial class ResourceSyncService : IResourceSyncService
 {
     private const string ResourceUrnPrefix = "urn:altinn:resource:";
+    private const string MaskinportenSchemaResourceType = "MaskinportenSchema";
+    private const string MaskinportenScopeReferenceType = "MaskinportenScope";
     private readonly ILogger<ResourceSyncService> _logger;
     private readonly IAltinnResourceRegistry _resourceRegistry;
     private readonly IServiceProvider _serviceProvider;
@@ -438,7 +441,9 @@ public partial class ResourceSyncService : IResourceSyncService
             return null;
         }
 
-        var resource = await dbContext.Resources.FirstOrDefaultAsync(t => t.RefId == convertedResource.RefId, cancellationToken);
+        var resource = await dbContext.Resources
+            .Include(t => t.Scopes)
+            .FirstOrDefaultAsync(t => t.RefId == convertedResource.RefId, cancellationToken);
         if (resource is null)
         {
             dbContext.Resources.Add(convertedResource);
@@ -450,6 +455,20 @@ public partial class ResourceSyncService : IResourceSyncService
         resource.Description = convertedResource.Description;
         resource.TypeId = convertedResource.TypeId;
         resource.ProviderId = convertedResource.ProviderId;
+        resource.Delegable = convertedResource.Delegable;
+        resource.AccessListMode = convertedResource.AccessListMode;
+
+        var incomingScopes = convertedResource.Scopes.Select(s => s.Scope).ToHashSet(StringComparer.Ordinal);
+        var existingScopes = resource.Scopes.Select(s => s.Scope).ToHashSet(StringComparer.Ordinal);
+        foreach (var removed in resource.Scopes.Where(s => !incomingScopes.Contains(s.Scope)).ToList())
+        {
+            dbContext.ResourceScopes.Remove(removed);
+        }
+
+        foreach (var added in incomingScopes.Where(s => !existingScopes.Contains(s)))
+        {
+            dbContext.ResourceScopes.Add(new ResourceScope { ResourceId = resource.Id, Scope = added });
+        }
 
         await dbContext.SaveChangesAsync(cancellationToken);
 
@@ -481,14 +500,59 @@ public partial class ResourceSyncService : IResourceSyncService
         }
 
         var resourceType = await GetOrCreateResourceType(dbContext, model, cancellationToken) ?? throw new InvalidOperationException("Unable to get or create resourcetype");
-        return new Resource()
+        var resource = new Resource()
         {
             Name = model.Title?.Nb ?? model.Identifier,
             Description = model.Description?.Nb ?? "-",
             RefId = model.Identifier,
             ProviderId = provider.Id,
-            TypeId = resourceType.Id
+            TypeId = resourceType.Id,
+            Delegable = model.Delegable,
+            AccessListMode = ParseAccessListMode(model),
         };
+
+        foreach (var scope in GetMaskinportenScopes(model))
+        {
+            resource.Scopes.Add(new ResourceScope { ResourceId = resource.Id, Scope = scope });
+        }
+
+        return resource;
+    }
+
+    /// <summary>
+    /// The resource registry defaults to <see cref="ResourceAccessListMode.Disabled"/>, so a missing value is disabled too.
+    /// An unknown value is also stored as disabled, rather than stopping the sync, and is logged.
+    /// </summary>
+    private ResourceAccessListMode ParseAccessListMode(ResourceModel model)
+    {
+        if (string.IsNullOrEmpty(model.AccessListMode))
+        {
+            return ResourceAccessListMode.Disabled;
+        }
+
+        if (Enum.TryParse<ResourceAccessListMode>(model.AccessListMode, ignoreCase: true, out var mode) && Enum.IsDefined(mode))
+        {
+            return mode;
+        }
+
+        Log.UnknownAccessListMode(_logger, model.AccessListMode, model.Identifier);
+        return ResourceAccessListMode.Disabled;
+    }
+
+    /// <summary>
+    /// Maskinporten scopes only apply to Maskinporten schemas, so other resource types get none even when they have scope references.
+    /// </summary>
+    private static IEnumerable<string> GetMaskinportenScopes(ResourceModel model)
+    {
+        if (!string.Equals(model.ResourceType, MaskinportenSchemaResourceType, StringComparison.OrdinalIgnoreCase) || model.ResourceReferences is null)
+        {
+            return [];
+        }
+
+        return model.ResourceReferences
+            .Where(r => string.Equals(r.ReferenceType, MaskinportenScopeReferenceType, StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(r.Reference))
+            .Select(r => r.Reference)
+            .Distinct(StringComparer.Ordinal);
     }
 
     private async Task LoadResourceTypes(AppDbContext dbContext, CancellationToken cancellationToken)
@@ -556,5 +620,8 @@ public partial class ResourceSyncService : IResourceSyncService
 
         [LoggerMessage(EventId = 11, Level = LogLevel.Warning, Message = "Changed resource '{ResourceId}' could not be synced, for example because its service owner is unknown, and was skipped.")]
         internal static partial void ChangedResourceNotSynced(ILogger logger, string resourceId);
+
+        [LoggerMessage(EventId = 12, Level = LogLevel.Warning, Message = "Unknown access list mode '{AccessListMode}' on resource '{ResourceId}' was stored as Disabled.")]
+        internal static partial void UnknownAccessListMode(ILogger logger, string accessListMode, string resourceId);
     }
 }
