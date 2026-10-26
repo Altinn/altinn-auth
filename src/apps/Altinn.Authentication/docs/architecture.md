@@ -124,7 +124,7 @@ Both faces ultimately call the **token issuer** (`TokenIssuerService` / the `Gen
 
 ## Cross-cutting concerns
 
-- **Token signing**: certificates from Azure Key Vault, selected with a rollover delay so a freshly-published cert propagates to verifiers before it signs. Public keys served at JWKS.
+- **Token signing**: certificates from Azure Key Vault, selected by `SigningCertificateSelector`: only certificates with a private key that are inside their validity window, preferring one that has existed longer than the rollover delay so a freshly-published cert propagates to verifiers before it signs. Public keys served at JWKS.
 - **Sessions**: session handles are random 256-bit values, stored only as an HMAC-SHA256 with a server-side pepper; refresh tokens rotate with reuse-detection.
 - **Audit**: authentication events are enqueued to Azure Storage Queue, gated by the `AuditLog` feature flag.
 - **Observability**: OpenTelemetry tracing + metrics across all assemblies, exported to Application Insights. Structured logging via `Logging:LogLevel`.
