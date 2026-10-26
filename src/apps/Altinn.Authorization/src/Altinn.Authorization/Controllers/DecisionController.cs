@@ -381,9 +381,12 @@ namespace Altinn.Platform.Authorization.Controllers
                 });
             }
 
-            // The non-default client-delegation authorization modes are only available to admin scope callers.
+            // Unless opened for all callers of the authorize and decision endpoints by feature flag, the non-default
+            // access restriction modes are only available to admin scope callers.
             // Enforced per request so that one privileged sub-request does not fail sibling requests in a multi-request.
-            if (accessRestriction != AccessRestriction.None && !HttpContext.User.HasScope(AuthzConstants.AUTHORIZE_ADMIN_SCOPE))
+            if (accessRestriction != AccessRestriction.None
+                && !await _featureManager.IsEnabledAsync(FeatureFlags.AccessRestrictionOpenForAllScopes, cancellationToken)
+                && !HttpContext.User.HasScope(AuthzConstants.AUTHORIZE_ADMIN_SCOPE))
             {
                 return new XacmlContextResponse(new XacmlContextResult(XacmlContextDecision.Indeterminate)
                 {

@@ -38,5 +38,11 @@
         /// Feature flag for whether decision multi requests should be logged on error
         /// </summary>
         public const string DecisionRequestLogRequestOnErrorMultiRequest = nameof(DecisionRequestLogRequestOnErrorMultiRequest);
+
+        /// <summary>
+        /// Feature flag for whether access-restriction values other than None are available to all callers of the
+        /// authorize and decision endpoints. When disabled, they require the altinn:authorization/authorize.admin scope.
+        /// </summary>
+        public const string AccessRestrictionOpenForAllScopes = nameof(AccessRestrictionOpenForAllScopes);
     }
 }
