@@ -51,6 +51,7 @@ locals {
     "AccessManagement.Pip.IncludeClientDelegatedResources"                   = { description = "Specifies if v2 client-delegated resources should be included in PIP GetAllDelegationChanges response." },
     "AccessManagement.ConnectionQuery.IncludeClientDelegationResources"      = { description = "Specifies if client-delegated resources should be included in ConnectionQuery and AuthorizedParties response." },
     "AccessManagement.Subunit.AdosInheritance"                               = { description = "Specifies if ADOS administrative units should be treated as subunits that inherit mainunit access (equal to BEDR/AAFY) in ConnectionQuery and AuthorizedParties. Reversible; defaults to false." },
+    "AccessManagement.Roles.DisableAltinn2"                                  = { description = "Specifies if Altinn 2 roles should be excluded from ConnectionQuery, AuthorizedParties, PIP and resource delegation checks. Read-side only and reversible; defaults to false." },
   }
 
   access_management_feature_flags_ui = {
