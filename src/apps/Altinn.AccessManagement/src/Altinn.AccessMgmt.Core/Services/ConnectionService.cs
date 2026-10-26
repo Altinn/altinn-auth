@@ -1695,6 +1695,7 @@ public partial class ConnectionService(
             Id = resourceObj.Id,
             Name = resourceObj.Name,
             Description = resourceObj.Description,
+            RightDescription = resourceObj.RightDescription,
             Provider = providerDto,
             ProviderId = provider.Id,
             RefId = resourceObj.RefId,

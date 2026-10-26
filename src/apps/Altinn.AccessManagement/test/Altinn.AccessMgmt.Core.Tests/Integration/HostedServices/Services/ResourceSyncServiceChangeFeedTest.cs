@@ -475,6 +475,91 @@ public class ResourceSyncServiceChangeFeedTest : IClassFixture<ApiFixture>
         await AssertResourceFields(refId, delegable: true, expected);
     }
 
+    [Fact]
+    public async Task SyncResources_ImportsRightDescriptionAndTranslations()
+    {
+        var refId = "rsst-change-translations-" + Guid.NewGuid().ToString("N");
+        Registry.StreamPagesFactory = (_, _) => [];
+        Registry.ChangePagesFactory = _ => [ChangesPage(NextLink1, refId)];
+        Registry.ResourceFactory = id => Success(TranslatedResourceModel(id));
+
+        await ResolveService().SyncResources(new FakeLease(), TestContext.Current.CancellationToken);
+
+        await AssertTranslations(
+            refId,
+            "Rettigheter " + refId,
+            ("eng", nameof(Resource.Name), "Resource EN " + refId),
+            ("eng", nameof(Resource.Description), "Description EN " + refId),
+            ("eng", nameof(Resource.RightDescription), "Rights EN " + refId),
+            ("nno", nameof(Resource.Name), "Ressurs NN " + refId),
+            ("nno", nameof(Resource.Description), "Skildring NN " + refId));
+    }
+
+    [Fact]
+    public async Task SyncResources_UpdatesAndRemovesTranslations_OnLaterChange()
+    {
+        var refId = "rsst-change-translationsupdate-" + Guid.NewGuid().ToString("N");
+        Registry.StreamPagesFactory = (_, _) => [];
+        Registry.ChangePagesFactory = _ => [ChangesPage(NextLink1, refId)];
+        Registry.ResourceFactory = id => Success(TranslatedResourceModel(id));
+
+        var lease = new FakeLease();
+        await ResolveService().SyncResources(lease, TestContext.Current.CancellationToken);
+
+        // English changes, Nynorsk and the right description are removed in the registry.
+        Registry.ChangePagesFactory = _ => [ChangesPage(NextLink2, refId)];
+        Registry.ResourceFactory = id =>
+        {
+            var model = TranslatedResourceModel(id);
+            model.Title.En = "Renamed EN " + id;
+            model.Title.Nn = null;
+            model.Description.Nn = null;
+            model.RightDescription = null;
+            return Success(model);
+        };
+        await ResolveService().SyncResources(lease, TestContext.Current.CancellationToken);
+
+        await AssertTranslations(
+            refId,
+            null,
+            ("eng", nameof(Resource.Name), "Renamed EN " + refId),
+            ("eng", nameof(Resource.Description), "Description EN " + refId));
+    }
+
+    private static ResourceModel TranslatedResourceModel(string identifier)
+    {
+        var model = NewResourceModel(identifier);
+        model.Title.En = "Resource EN " + identifier;
+        model.Title.Nn = "Ressurs NN " + identifier;
+        model.Description.En = "Description EN " + identifier;
+        model.Description.Nn = "Skildring NN " + identifier;
+        model.RightDescription = new ResourceRightDescription
+        {
+            Nb = "Rettigheter " + identifier,
+            En = "Rights EN " + identifier,
+            Nn = " ",
+        };
+        return model;
+    }
+
+    private async Task AssertTranslations(string refId, string? rightDescription, params (string LanguageCode, string FieldName, string Value)[] expected)
+    {
+        await Fixture.QueryDb(async db =>
+        {
+            var resource = await db.Resources.AsNoTracking().SingleOrDefaultAsync(r => r.RefId == refId, TestContext.Current.CancellationToken);
+            Assert.NotNull(resource);
+            Assert.Equal(rightDescription, resource.RightDescription);
+
+            var translations = await db.TranslationEntries
+                .AsNoTracking()
+                .Where(t => t.Type == nameof(Resource) && t.Id == resource.Id)
+                .ToListAsync(TestContext.Current.CancellationToken);
+            Assert.Equal(
+                expected.Order(),
+                translations.Select(t => (t.LanguageCode, t.FieldName, t.Value!)).Order());
+        });
+    }
+
     private async Task AssertResourceFields(string refId, bool delegable, ResourceAccessListMode accessListMode, params string[] scopes)
     {
         await Fixture.QueryDb(async db =>

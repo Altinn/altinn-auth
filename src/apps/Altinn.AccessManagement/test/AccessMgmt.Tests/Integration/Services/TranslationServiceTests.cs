@@ -529,5 +529,38 @@ public class TranslationServiceTests : IClassFixture<EfDatabaseFixture>
         Assert.Equal("Cached Translation", result2.Name);
     }
 
+    [Fact]
+    public async Task TranslateAsync_ResourceDto_UsesTranslationsStoredForResource()
+    {
+        // Arrange - The resource import stores translations under the entity type name
+        var resourceId = Guid.CreateVersion7();
+        await _translationService.UpsertTranslationAsync(
+            new TranslationEntry { Id = resourceId, Type = "Resource", LanguageCode = "eng", FieldName = "Name", Value = "English name" },
+            SystemEntityConstants.StaticDataIngest,
+            SystemEntityConstants.StaticDataIngest,
+            TestContext.Current.CancellationToken);
+        await _translationService.UpsertTranslationAsync(
+            new TranslationEntry { Id = resourceId, Type = "Resource", LanguageCode = "eng", FieldName = "RightDescription", Value = "English rights" },
+            SystemEntityConstants.StaticDataIngest,
+            SystemEntityConstants.StaticDataIngest,
+            TestContext.Current.CancellationToken);
+
+        var resource = new ResourceDto
+        {
+            Id = resourceId,
+            Name = "Norsk navn",
+            Description = "Norsk beskrivelse",
+            RightDescription = "Norske rettigheter"
+        };
+
+        // Act
+        var result = await _translationService.TranslateAsync(resource, "eng");
+
+        // Assert
+        Assert.Equal("English name", result.Name);
+        Assert.Equal("Norsk beskrivelse", result.Description);
+        Assert.Equal("English rights", result.RightDescription);
+    }
+
     #endregion
 }

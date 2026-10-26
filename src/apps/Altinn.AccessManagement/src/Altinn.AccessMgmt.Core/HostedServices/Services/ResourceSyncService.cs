@@ -9,6 +9,7 @@ using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Models.Enums;
+using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.Host.Lease;
 using Altinn.Authorization.Integration.Platform.ResourceRegistry;
 using Microsoft.EntityFrameworkCore;
@@ -447,12 +448,14 @@ public partial class ResourceSyncService : IResourceSyncService
         if (resource is null)
         {
             dbContext.Resources.Add(convertedResource);
+            await SyncTranslations(dbContext, convertedResource.Id, model, cancellationToken);
             await dbContext.SaveChangesAsync(cancellationToken);
             return convertedResource;
         }
 
         resource.Name = convertedResource.Name;
         resource.Description = convertedResource.Description;
+        resource.RightDescription = convertedResource.RightDescription;
         resource.TypeId = convertedResource.TypeId;
         resource.ProviderId = convertedResource.ProviderId;
         resource.Delegable = convertedResource.Delegable;
@@ -470,9 +473,64 @@ public partial class ResourceSyncService : IResourceSyncService
             dbContext.ResourceScopes.Add(new ResourceScope { ResourceId = resource.Id, Scope = added });
         }
 
+        await SyncTranslations(dbContext, resource.Id, model, cancellationToken);
         await dbContext.SaveChangesAsync(cancellationToken);
 
         return resource;
+    }
+
+    /// <summary>
+    /// Brings the English and Nynorsk translations of the resource in line with the resource registry.
+    /// Bokmål is stored on the resource itself. A blank value has no translation, so the API falls back to Bokmål,
+    /// and a translation that is no longer in the registry is removed. Changes are saved with the resource.
+    /// </summary>
+    private static async Task SyncTranslations(AppDbContext dbContext, Guid resourceId, ResourceModel model, CancellationToken cancellationToken)
+    {
+        var incoming = GetTranslations(model, resourceId).ToDictionary(t => (t.LanguageCode, t.FieldName));
+        var existing = await dbContext.TranslationEntries
+            .AsTracking()
+            .Where(t => t.Type == nameof(Resource) && t.Id == resourceId)
+            .ToListAsync(cancellationToken);
+
+        foreach (var entry in existing)
+        {
+            if (!incoming.Remove((entry.LanguageCode, entry.FieldName), out var match))
+            {
+                dbContext.TranslationEntries.Remove(entry);
+            }
+            else if (entry.Value != match.Value)
+            {
+                entry.Value = match.Value;
+            }
+        }
+
+        dbContext.TranslationEntries.AddRange(incoming.Values);
+    }
+
+    private static IEnumerable<TranslationEntry> GetTranslations(ResourceModel model, Guid resourceId)
+    {
+        (string LanguageCode, string? Name, string? Description, string? RightDescription)[] languages =
+        [
+            ("eng", model.Title?.En, model.Description?.En, model.RightDescription?.En),
+            ("nno", model.Title?.Nn, model.Description?.Nn, model.RightDescription?.Nn),
+        ];
+
+        return languages
+            .SelectMany(l => new[]
+            {
+                (l.LanguageCode, FieldName: nameof(Resource.Name), Value: l.Name),
+                (l.LanguageCode, FieldName: nameof(Resource.Description), Value: l.Description),
+                (l.LanguageCode, FieldName: nameof(Resource.RightDescription), Value: l.RightDescription),
+            })
+            .Where(t => !string.IsNullOrWhiteSpace(t.Value))
+            .Select(t => new TranslationEntry
+            {
+                Id = resourceId,
+                Type = nameof(Resource),
+                LanguageCode = t.LanguageCode,
+                FieldName = t.FieldName,
+                Value = t.Value,
+            });
     }
 
     private static string ParseResourceIdentifier(string resourceUrn)
@@ -504,6 +562,7 @@ public partial class ResourceSyncService : IResourceSyncService
         {
             Name = model.Title?.Nb ?? model.Identifier,
             Description = model.Description?.Nb ?? "-",
+            RightDescription = string.IsNullOrWhiteSpace(model.RightDescription?.Nb) ? null : model.RightDescription.Nb,
             RefId = model.Identifier,
             ProviderId = provider.Id,
             TypeId = resourceType.Id,

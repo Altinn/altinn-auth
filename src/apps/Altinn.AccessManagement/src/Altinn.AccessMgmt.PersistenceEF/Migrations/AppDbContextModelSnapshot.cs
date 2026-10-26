@@ -2107,6 +2107,10 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasColumnType("text")
                         .HasColumnName("refid");
 
+                    b.Property<string>("RightDescription")
+                        .HasColumnType("text")
+                        .HasColumnName("rightdescription");
+
                     b.Property<Guid>("TypeId")
                         .HasColumnType("uuid")
                         .HasColumnName("typeid");
@@ -3758,6 +3762,10 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("refid");
+
+                    b.Property<string>("RightDescription")
+                        .HasColumnType("text")
+                        .HasColumnName("rightdescription");
 
                     b.Property<Guid>("TypeId")
                         .HasColumnType("uuid")
