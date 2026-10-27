@@ -18,6 +18,7 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
     private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IMemoryCache _memoryCache;
+    private int _delegationChangeLookups;
 
     /// <summary>
     /// Constructor setting up dependencies
@@ -29,8 +30,15 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
         _memoryCache = memoryCache;
     }
 
+    /// <summary>
+    /// Number of <see cref="GetAllDelegationChanges(DelegationChangeInputDto, CancellationToken)"/> calls that reached this mock, i.e. cache misses in the PDP.
+    /// </summary>
+    public int DelegationChangeLookups => Volatile.Read(ref _delegationChangeLookups);
+
     public Task<IEnumerable<DelegationChangeDto>> GetAllDelegationChanges(DelegationChangeInputDto input, CancellationToken cancellationToken = default)
     {
+        Interlocked.Increment(ref _delegationChangeLookups);
+
         var data = new List<Action<DelegationChangeInputDto, List<DelegationChangeDto>>>()
         {
             ConditionalAdd(

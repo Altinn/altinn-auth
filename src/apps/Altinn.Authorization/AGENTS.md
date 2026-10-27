@@ -34,7 +34,9 @@ Decisions for this vertical are in [`docs/adr/`](docs/adr/README.md). Read [ADR-
 
 ## Landmines
 
-_Nothing recorded yet._ This section is the reason the file exists, and it can only be written by people who know why the code is the way it is. If you have ever said "don't change that, it looks wrong but it isn't" about this vertical, write it here. See [#4078](https://github.com/Altinn/altinn-auth/issues/4078).
+- **The delegation cache key in `DecisionController.GetAllCachedDelegationChanges` leaves the instance id out on purpose.** The list from Access Management is the same for every instance of a resource; the instance filter runs on it afterwards. Adding the instance to the key stores one identical list per instance ([#4010](https://github.com/Altinn/altinn-auth/pull/4010), closed). Lookups that carry an instance id instead expire after ten seconds ([#4742](https://github.com/Altinn/altinn-auth/issues/4742)); `DelegationCacheExpiryTests` locks that in.
+
+This section can only be written by people who know why the code is the way it is. If you have ever said "don't change that, it looks wrong but it isn't" about this vertical, write it here. See [#4078](https://github.com/Altinn/altinn-auth/issues/4078).
 
 ## Test gotchas
 
