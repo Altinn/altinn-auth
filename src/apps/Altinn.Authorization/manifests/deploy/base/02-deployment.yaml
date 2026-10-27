@@ -24,7 +24,7 @@ spec:
 
       containers:
         - name: authorization
-          image: ghcr.io/altinn/altinn-auth/authorization:{{GIT_SHA}}
+          image: ghcr.io/altinn/altinn-auth/authorization-api:{{GIT_SHA}}
           imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false
