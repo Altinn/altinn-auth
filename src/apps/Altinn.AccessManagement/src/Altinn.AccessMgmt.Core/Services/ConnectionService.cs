@@ -945,6 +945,7 @@ public partial class ConnectionService(
             toId: toId.Value,
             toIsMainAdminForFrom,
             includeAdosSubunitInheritance: lifecycleFeatures.AdosSubunitInheritance,
+            excludeAltinn2Roles: lifecycleFeatures.DisableAltinn2Roles,
             ct: cancellationToken
         );
 

@@ -4,7 +4,6 @@ metadata:
   name: access-management
   labels:
     app.kubernetes.io/name: access-management
-    app.kubernetes.io/part-of: access-management
 spec:
   parentRefs:
     - group: gateway.networking.k8s.io
@@ -15,13 +14,13 @@ spec:
     - matches:
         - path:
             type: PathPrefix
-            value: /
+            value: /accessmanagement/api
       filters:
-        - type: RequestHeaderModifier
-          requestHeaderModifier:
-            set:
-              - name: l5d-dst-override
-                value: access-management.product-access-management.svc.cluster.local:80
+      - type: RequestHeaderModifier
+        requestHeaderModifier:
+          set:
+          - name: l5d-dst-override
+            value: am-api.product-access-management.svc.cluster.local:80
       backendRefs:
-        - name: access-management
+        - name: am-api
           port: 80
