@@ -151,7 +151,7 @@ public class PolicyHelperTest
                         new XacmlMatch(
                             new Uri(XacmlConstants.AttributeMatchFunction.StringEqual),
                             new XacmlAttributeValue(new Uri(XacmlConstants.DataTypes.XMLString), "REGNA"),
-                            new XacmlAttributeDesignator(new Uri(XacmlConstants.MatchAttributeCategory.Subject), new Uri(AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute), new Uri(XacmlConstants.DataTypes.XMLString), false))
+                            new XacmlAttributeDesignator(new Uri(XacmlConstants.MatchAttributeCategory.Subject), new Uri(AltinnXacmlConstants.MatchAttributeIdentifiers.LegacyRoleAttribute), new Uri(XacmlConstants.DataTypes.XMLString), false))
                     })
                 })
             })

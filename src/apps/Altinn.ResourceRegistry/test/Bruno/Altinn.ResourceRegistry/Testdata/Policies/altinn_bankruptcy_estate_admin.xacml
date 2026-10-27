@@ -16,6 +16,12 @@
                         <xacml:AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">privatperson</xacml:AttributeValue>
                         <xacml:AttributeDesignator AttributeId="urn:altinn:role" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="false"/>
                     </xacml:Match>
+                </xacml:AllOf>
+                <xacml:AllOf>
+                    <xacml:Match MatchId="urn:oasis:names:tc:xacml:3.0:function:string-equal-ignore-case">
+                        <xacml:AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">priv</xacml:AttributeValue>
+                        <xacml:AttributeDesignator AttributeId="urn:altinn:rolecode" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="false"/>
+                    </xacml:Match>
                 </xacml:AllOf>                
             </xacml:AnyOf>
             <xacml:AnyOf>

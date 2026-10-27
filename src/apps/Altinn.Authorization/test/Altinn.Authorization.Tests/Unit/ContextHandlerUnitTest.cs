@@ -875,7 +875,7 @@ public class ContextHandlerUnitTest : IDisposable
 
         if (policyHasRoles)
         {
-            matches.Add(CreateSubjectMatch(AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute, "DAGL"));
+            matches.Add(CreateSubjectMatch(AltinnXacmlConstants.MatchAttributeIdentifiers.LegacyRoleAttribute, "DAGL"));
         }
 
         if (policyHasAccessPackages)

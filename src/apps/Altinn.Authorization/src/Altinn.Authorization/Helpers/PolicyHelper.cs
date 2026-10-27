@@ -33,7 +33,7 @@ namespace Altinn.Platform.Authorization.Helpers
                         {
                             foreach (XacmlMatch xacmlMatch in allOf.Matches)
                             {
-                                if (xacmlMatch.AttributeDesignator.AttributeId.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute))
+                                if (xacmlMatch.AttributeDesignator.AttributeId.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.LegacyRoleAttribute))
                                 {
                                     roleCodes.Add(xacmlMatch.AttributeValue.Value);
                                 }

@@ -647,7 +647,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 }
             }
 
-            if (policySubjectAttributes.ContainsKey(AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute))
+            if (policySubjectAttributes.ContainsKey(AltinnXacmlConstants.MatchAttributeIdentifiers.LegacyRoleAttribute) || policySubjectAttributes.ContainsKey(AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute))
             {
                 if (subjectPartyUuid != Guid.Empty && resourceAttr.PartyUuid != Guid.Empty)
                 {
