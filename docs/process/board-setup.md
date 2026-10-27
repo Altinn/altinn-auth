@@ -6,7 +6,7 @@
 
 - Labels first, since the forms and the views depend on the names.
 - Two fields to create, Iteration and Test phase; one to trim, Status.
-- Seven views, each a filter and a column field, nothing else.
+- Eight views, each a filter and a column field, nothing else.
 - Done when one feature has been walked through the board by hand and every card ended in Done.
 
 ## Labels
@@ -32,7 +32,12 @@ In `.github/ISSUE_TEMPLATE/`. A form applies a label only if the label exists, s
 - Status: remove the Test column. Keep Backlog, Ready, In progress, In review, Done. Set each column's description from the ADR, Decision 4.
 - New iteration field `Iteration`: two weeks, first iteration starting Monday 2026-11-09. Create at least six ahead.
 - New single select `Test phase`: Preparing, Executing, Retest. Only test tasks use it.
+- Priority: single select with `urgent`, `high`, `normal`, `low`, the values ADR-0005 uses. Replace any other option set.
 - Hide Estimate from all views. No area field, no horizon field.
+
+## Roles
+
+Not a board setting, but a precondition the ADR names: before the first planning, the area owners with their deputies, and the holders of the other roles in the handbook, are named in #4088. The documents name roles only.
 
 ## Views
 
@@ -41,10 +46,11 @@ Filter and column field, nothing else. Iteration is the project default. Remove 
 1. Iteration, board by Status: `iteration:@current`
 2. Developers, board by Status: `type:Task,Bug,Enhancement -label:kind/testplan -label:kind/design iteration:@current`
 3. Test board, board by Test phase: `label:kind/testplan is:open`
-4. Design, board by Status: `label:kind/design is:open -status:Backlog`
+4. Design, board by Status: `label:kind/design -status:Backlog`
 5. Features, table with Sub-issues progress: `type:Epic,Feature is:open`
-6. Area, one per area, board by Status grouped by Parent issue: `label:area/<name> is:open`
+6. Area, one per area, board by Status grouped by Parent issue: `label:area/<name>`
 7. Vakt, board by Status: `label:kind/question,kind/incident is:open`
+8. Bugs, board by Status: `type:Bug is:open`
 
 Two things to confirm on the real project rather than assume: that `type:` is offered in the filter box, and that group-by offers Parent issue. If not, the Developers view excludes by label only, and the Area view sorts by Parent issue instead. The views are drawn with example issues in [Board views](board-views.md).
 

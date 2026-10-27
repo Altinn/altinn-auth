@@ -1,6 +1,6 @@
 # ADR-0004: One issue and label model for the monorepo
 
-- **Status:** Accepted. Amended by [ADR-0005](0005-planning-and-flow.md): `kind/design` is added to the `kind/*` group, and the horizon field in decision 5 is not used on the board.
+- **Status:** Accepted
 - **Date:** 2026-10-09
 - **Deciders:** `@altinn/team-access-management` and `@altinn/team-access-info`, through review of the PR that adds this ADR
 

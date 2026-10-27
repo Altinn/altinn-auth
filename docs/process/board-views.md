@@ -50,7 +50,7 @@ Testers. Board, columns are the **Test phase** field, not Status. Filter: `label
 
 ## Design
 
-Designers. Board, columns are Status, sorted by Iteration. Filter: `label:kind/design is:open -status:Backlog`
+Designers. Board, columns are Status, sorted by Iteration. Filter: `label:kind/design -status:Backlog`
 
 | Ready | In progress | In review | Done |
 | --- | --- | --- | --- |
@@ -81,7 +81,7 @@ Product owners, design lead, tech leads, area owners. Table, sorted by Milestone
 
 ## Area, one per area
 
-The area owner. Board, columns are Status, grouped by Parent issue. Filter: `label:area/<name> is:open`
+The area owner. Board, columns are Status, grouped by Parent issue. Filter: `label:area/<name>`
 
 **F1 Approval limited to RightKeys · 2026-12 · sub-issues 4 of 5 closed, test task open**
 
@@ -115,6 +115,18 @@ The person on vakt this week. Board, columns are Status. Filter: `label:kind/que
 - Backlog is a column here, because received-but-not-started is a real state for a vakt case.
 - The incident is also on the iteration board, since it got the current iteration. The question cases are not.
 
+## Bugs
+
+Everyone. Board, columns are Status, sorted by Priority. Filter: `type:Bug is:open`
+
+| Backlog | Ready | In progress | In review | Done |
+| --- | --- | --- | --- | --- |
+| X4 Delegation list shows wrong org name · `area/access-management-frontend` · no iteration | X3 Consent dialog loses selection on back · ↑ F2 · found in test | X1 RDF export omits contact points · ↑ F3 | X2 Enduser-api: delegated clients 500 · PR open | X5 Activity log pagination off by one · merged |
+
+- Every open bug on one board, whatever feature it belongs to, so nothing found in test or reported from outside is lost between the role views.
+- Bugs under a feature also show on the Developers board; this view is for the overview, not for pulling work.
+- Backlog shows here, since a bug is often reported before anyone has decided when to fix it.
+
 ## Where Backlog shows
 
-Backlog belongs in three views only: Features, Area and Vakt. Those are the three roles that do something with an issue that is not in an iteration. Everyone else never needs to see it.
+Backlog belongs in four views: Features, Area, Vakt and Bugs. Those are the views where someone decides what to do with an issue that is not yet started. The role boards for developers, designers and testers never show it.

@@ -57,8 +57,8 @@ flowchart LR
     P["Feature prioritised"] --> R["Refinement"]
     R --> D["Design task"]
     R --> B["Backend tasks"]
-    D -->|closed| FE["Frontend tasks"]
-    B -->|a task that can be tested alone, merged| T1["Test task for that task"]
+    D -->|closed, releases the frontend tasks<br/>marked blocked by it| FE["Frontend tasks"]
+    B -->|a task that can be tested alone, merged| T1["Test task for that task,<br/>one per such task"]
     FE -->|a task that can be tested alone, merged| T1
     B --> A{"All developer tasks merged"}
     FE --> A
@@ -71,7 +71,7 @@ flowchart LR
 | Refinement | The feature | Prioritised; stays in Backlog until it is enough to start | Its test task is approved and the change is in production |
 | Design | Design task under the feature | Refinement is done | The design is good enough to start building, and tech has said it can be built |
 | Build, backend | Backend task | Refinement is done | The pull request is merged |
-| Build, frontend | Frontend task | The design task it waits for is closed | The pull request is merged |
+| Build, frontend | Frontend task | Refinement is done, or, if it is marked "blocked by" the design task, when that closes | The pull request is merged |
 | Test of one task | Test task under a developer task that can be tested alone | Preparation when refinement is done; execution when that task is merged | The tester has written the result and approved |
 | Test of the feature | Test task under the feature | Preparation when refinement is done; execution when all developer tasks are merged | The tester has written the result and approved |
 
@@ -91,11 +91,11 @@ sequenceDiagram
     AO->>T: Refinement: the feature's test task created and assigned
     Dev->>Dev: During the iteration: splits the rest into tasks
     Dev->>T: A task that can be tested alone: test task added under it
-    De->>Dev: Design task closed, frontend tasks moved to Ready
+    De->>Dev: Design task closed, the frontend tasks marked blocked by it moved to Ready
     Dev->>T: A task that is tested alone merges, tester mentioned in its test task
     Dev->>T: Last task under the feature merges, tester mentioned in the feature's test task
-    T->>DL: Test task moved to Executing, design lead added for review
-    T->>Dev: Failure filed as a bug under the feature
+    T->>DL: Test task moved to Executing, design lead added for review where the feature has a design task
+    T->>Dev: Failure filed as a bug under the feature, or under the test task when there is no feature
     Dev->>T: Bug merges, tester mentioned, test task set to Retest
     T->>PO: Feature closed after the production check, epic count moves
 ```
@@ -105,10 +105,10 @@ Three things make the handoffs findable: every task is a sub-issue of its featur
 ## 4. How work comes in
 
 1. **Idea.** Anyone creates an issue with the repository's form. It lands in Backlog with `status/triage`. Triage means: it is a real issue, not a duplicate, and it has a type and an `area/*` label. That is done within the week, by whoever is closest to it: the area owner for their area, at the latest in the next refinement; the developer who found it, for a bug they hit, a follow-up from a review or a small fix in their own area, who sets type and area, links it to its feature or epic, and mentions the area owner if it needs a priority or a milestone; the vakt, for what comes from Slack or the CRM; and the nearest area owner after a week if nobody claimed it. `status/triage` is removed when the issue has a type and an area. An issue nobody has touched for ninety days gets a comment from the `lukkekandidater` report and is closed at the next refinement unless someone claims it. The product owners adjust this when they report.
-2. **Small fixes** in a developer's own area, under half a day and with no change users or vendors would notice, go straight to In progress with the current milestone and priority `normal`. If the change needs manual testing, the developer creates a test task under it, like any other.
+2. **Small fixes** in a developer's own area, under half a day and with no change users or vendors would notice, go straight to In progress with the current iteration, the current milestone and priority `normal`. If the change needs manual testing, the developer creates a test task under it, like any other.
 3. **Vakt cases** are on the board. A question from Slack or a CRM case that needs more than a reply becomes a `kind/question` issue; an outage a `kind/incident` issue; both get an area label. Questions get no iteration and never show on the iteration board; the vakt works them in the Vakt view. Incidents are the exception: straight to In progress in the current iteration, bypassing Ready, and mentioned in the result meeting even if closed. A case that needs code or a release gets a task or bug under its feature or epic, linked from the case, and enters intake like any other issue.
 4. **Prioritisation.** On Thursday of week 2, product owners, tech leads and design lead pick the candidates for the iteration after next, and confirm the list for the next iteration from what is refined. A prioritised feature stays in Backlog until it is refined.
-5. **Refinement, the iteration before.** Short, and it produces enough to start, not a full breakdown. Area owner, resource person, the developer who will do the work, designer and tester agree the goal and the main acceptance criteria, name the developer and the tester, and create the first task as a sub-issue, plus the design task where users will see the change and the feature's test task, assigned to the tester. Tasks that wait for another are marked "blocked by" it. The feature moves to Ready; the area owner moves the tasks that can start to Ready. The design task gets the current iteration, so design runs an iteration ahead; the other tasks get their iteration at planning. During the iteration the developer splits the rest into tasks, pulling in whoever they need, and the tester adds a test task under any task that can be tested alone.
+5. **Refinement, the iteration before.** Short, and it produces enough to start, not a full breakdown. Area owner, resource person, the developer who will do the work, designer and tester agree the goal and the main acceptance criteria, name the developer and the tester, and create the first task as a sub-issue, plus the design task where users will see the change and the feature's test task, assigned to the tester. Tasks that wait for another are marked "blocked by" it. The feature moves to Ready; the area owner moves the tasks that can start to Ready. The design task gets the current iteration, so design runs an iteration ahead; the other tasks get their iteration at planning. During the iteration the developer splits the rest into tasks, pulling in whoever they need, and the tester adds a test task under any task that can be tested alone; everything created during the iteration gets the current iteration, so it shows on the boards.
 6. **Planning** takes only features that are enough to start. A feature that is not, by planning, waits one iteration.
 
 | | Iteration N−1 | Iteration N |
@@ -132,7 +132,7 @@ Each role: the view, how you know it is your turn, what each status means for yo
 
 ### Area owner
 
-- **View:** Area, `label:area/<name> is:open`, board grouped by parent issue, so each feature shows with its tasks under it. Backlog shows here as the unrefined features.
+- **View:** Area, `label:area/<name>`, board grouped by parent issue, so each feature shows with its tasks under it. Backlog shows here as the unrefined features.
 - **Your turn:** when a feature in your area gets a milestone; when a task in your area is blocked and raised in the status meeting; when something urgent lands in your area.
 - **Status on a feature:** Backlog means refine it in the iteration before it is built; Ready means enough to start, first task exists, waiting for planning; In progress means at least one task is open; Done is in production.
 - **You do:** run refinement as section 4 describes; make sure every feature has a tester. Blocked work keeps its column with `status/blocked` and a "blocked by" link, and is raised in the status meeting; if urgent, directly with the person blocking, then you.
@@ -140,11 +140,11 @@ Each role: the view, how you know it is your turn, what each status means for yo
 
 ### Designer
 
-- **View:** Design, `label:kind/design is:open -status:Backlog`, board by Status like the developers' board, with the parent feature on every card. What waits on a design task is in the task's own "blocking" list, or in the Area view.
+- **View:** Design, `label:kind/design -status:Backlog`, board by Status like the developers' board, with the parent feature on every card. What waits on a design task is in the task's own "blocking" list, or in the Area view.
 - **Your turn:** prioritisation, where the design lead sees which features are coming one iteration ahead; refinement, where the design task is created and assigned to you; the Design view, where a task in Ready in the current iteration is work to start now. A design task for a feature whose refinement you were not in starts with a conversation with the area owner, not with designing.
 - **Status on a design task:** Backlog is not in an iteration; Ready is agreed in refinement, start now; In progress is designing or testing with users; Done is closed at "good enough to build".
 - **You do:** test with users and design in parallel with backend, check with tech that it can be built, put the design in the feature. Design and frontend overlapping is normal: the design task closes at "good enough to build", later iterations become new, small design tasks under the feature, and the frontend task is blocked by one only when it genuinely cannot continue without it; otherwise the change is a comment on the frontend task. A deviation accepted for now is a design task in Backlog, linked to the feature: that is the design debt, visible on the feature and in the Area view.
-- **You close:** the design task, when the design is good enough to start building. Then you move the frontend tasks that waited for it to Ready.
+- **You close:** the design task, when the design is good enough to start building. Then you move the frontend tasks that were marked "blocked by" it to Ready; frontend tasks that did not wait for the design were never held.
 - **Design lead:** when a feature's test task moves to Executing and the feature has a design task, the tester adds you as second assignee. You check the built result in AT against the latest design and write "Design review: approved" in the test task, or file bugs under the feature. The functional test runs in parallel, and the test task closes only when both approve. Your overview of what ships when is the Features view filtered on the current iteration and milestone.
 
 ### Developer
@@ -152,15 +152,15 @@ Each role: the view, how you know it is your turn, what each status means for yo
 - **View:** Developers, `type:Task,Bug,Enhancement -label:kind/testplan -label:kind/design iteration:@current`, board by Status sorted by priority, so the top card in Ready is the one to take.
 - **Your turn:** when a task in Ready has you as assignee or is unassigned at the top; when a task you wait for closes and the person who closed it moves yours to Ready; when a bug under your feature appears in the view.
 - **Status on a task:** Ready is take it; In progress is yours; In review is pull request open, take the next one; Done is merged. Keep In review short: review others' pull requests before taking a new task.
-- **You do:** move to In progress, build, write the unit and integration tests before review, open a pull request with `Resolves: #task`, move to In review, take the next. Handle review comments in the same task; new findings become new tasks or bugs. A feature arrives with enough to start, not fully specified: you split the rest into tasks as sub-issues as you go, write the finer acceptance criteria, and pull in the designer, tester, area owner or product owner when you need them. If a task lacks information, fill the gap yourself where your own knowledge or a quick check covers it; otherwise ask the author on the task. If blocked, write it on the task, add `status/blocked`, raise it in the status meeting. A bug you find: create it, set type and area, link it to its feature, take it if it is small. A standalone task or bug that needs manual testing: create a test task under it, assigned to a tester, when you open the pull request.
+- **You do:** move to In progress, build, write the unit and integration tests before review, open a pull request with `Resolves: #task`, move to In review, take the next. Handle review comments in the same task; new findings become new tasks or bugs. A feature arrives with enough to start, not fully specified: you split the rest into tasks as sub-issues as you go, each with the current iteration so it shows on the boards, write the finer acceptance criteria, and pull in the designer, tester, area owner or product owner when you need them. If a task lacks information, fill the gap yourself where your own knowledge or a quick check covers it; otherwise ask the author on the task. If blocked, write it on the task, add `status/blocked`, raise it in the status meeting. A bug you find: create it, set type and area, link it to its feature, take it if it is small. A standalone task or bug that needs manual testing: create a test task under it, assigned to a tester, when you open the pull request.
 - **You close:** nothing by hand. The merge closes the task and the board moves it to Done. Then one mention: if the task has its own test task, mention the tester there; if yours was the last open task under the feature, mention the tester in the feature's test task. If another task waited for yours, move it to Ready.
 
 ### Tester
 
 - **View:** Test board, `label:kind/testplan is:open`, board whose columns are the Test phase field: no phase, Preparing, Executing, Retest. How close a feature is to execution is in the Features view.
-- **Your turn:** refinement, where the feature's test task is created and assigned to you; during the iteration, as the developer splits the feature, where you add a test task under any task that can be tested alone; when refinement is done, to prepare; the developer's mention in the test task when the last task is merged, which starts execution.
+- **Your turn:** refinement, where the feature's test task is created and assigned to you; during the iteration, as the developer splits the feature, where you add a test task under any task that can be tested alone, with the current iteration; when refinement is done, to prepare; the developer's mention in the test task when the last task is merged, which starts execution.
 - **Status on a test task:** Backlog is not in an iteration; Ready is in the iteration, nothing done; In progress is preparing or executing; Done is result written and approved. The Test phase field says which, and you set it by moving the card on the test board. A test task in In progress does not mean testing has started.
-- **You do:** two phases. Preparation, test data, tools, test cases, environment, starts when refinement is done: pull the test task into In progress and set Preparing. Execution starts when the developer's mention arrives: move to Executing, test in AT against the acceptance criteria, write what was tested and the result in the test task, and add the design lead where the change is user-facing. A failure becomes a bug as a sub-issue of the feature; set Retest when it is fixed. If a failure blocks a release, say so and the team decides. Check the feature in production after the weekly deploy.
+- **You do:** two phases. Preparation, test data, tools, test cases, environment, starts when refinement is done: pull the test task into In progress and set Preparing. Execution starts when the developer's mention arrives: move to Executing, test in AT against the acceptance criteria, write what was tested and the result in the test task, and add the design lead where the change is user-facing. A failure becomes a bug as a sub-issue of the feature, or, for a standalone task or bug, as a sub-issue of the test task itself, so the test task shows it and stays open until it is fixed; set Retest when it is fixed. If a failure blocks a release, say so and the team decides. Check the feature in production after the weekly deploy.
 - **You close:** the test task, once you have approved and, where the change is user-facing, the design lead has too. Then the feature, after the production check.
 
 ### Tech lead

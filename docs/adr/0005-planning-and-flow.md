@@ -53,19 +53,19 @@ The result meeting gives every unfinished issue a decision: continue, split or d
 
 ### 4. The board
 
-- **One board**, Team Autorisasjon, for both teams. No boards per role; one saved view per role instead. Bugs show on the Developers view.
+- **One board**, Team Autorisasjon, for both teams. No boards per role; one saved view per role instead, plus one for bugs.
 - **Five Status columns.** Backlog: not in an iteration, whether new, triaged or refined. Ready: refined and in the iteration, the top card is the one to take. In progress: being worked, few per person, no hard limit. In review: pull request open; kept short, since reviewing others' pull requests comes before taking a new task. Done: closed.
 - **Hierarchy.** Epic, feature, task, from ADR-0004's issue types. A task is a sub-issue of its feature where it has one; a bug or a small task may stand alone. Test tasks carry `kind/testplan`, design tasks `kind/design`. A task that waits for another is marked "blocked by" it, as ADR-0004 requires when the blocker is known.
-- **Fields.** Iteration is the two-week period, set at planning; a design task made in refinement for the next iteration gets the current iteration, so design runs an iteration ahead. Milestone is a dated roadmap target, set by the product owner; features carry it, epics need none. Deadlines from outside live on the milestone and are the product owner's to hold; developers work to the iteration. Priority orders work within the current and next iteration; `urgent` requires a date in the issue. Test phase, Preparing, Executing, Retest, is set by the tester on test tasks and gives the test board its columns. There is no horizon field: the current iteration is now, a milestone without an iteration is next, no milestone is later.
-- **Views.** Seven, each a filter and a column field: Iteration (default), Developers, Test board by Test phase, Design, Features (table), one per area, Vakt. Role views start at Ready; Backlog is seen in Features, Area and Vakt. Drawn in [Board views](../process/board-views.md).
+- **Fields.** Iteration is the two-week period, set at planning for the tasks a feature has then; an issue created during an iteration, a task from the developer's split, a test task added later or a small fix, gets the current iteration when it is created, so it shows on the boards that filter on it; a design task made in refinement for the next iteration gets the current iteration, so design runs an iteration ahead. Milestone is a dated roadmap target, set by the product owner; features carry it, epics need none. Deadlines from outside live on the milestone and are the product owner's to hold; developers work to the iteration. Priority orders work within the current and next iteration; `urgent` requires a date in the issue. Test phase, Preparing, Executing, Retest, is set by the tester on test tasks and gives the test board its columns. There is no horizon field. Now, next and later are read from the two fields, the iteration taking precedence: an item in the current iteration is now, whatever its milestone; an item in a future iteration is next; an item with no iteration and a milestone is next; an item with neither is later. Every item matches exactly one.
+- **Views.** Eight, each a filter and a column field: Iteration (default), Developers, Test board by Test phase, Design, Features (table), one per area, Vakt, Bugs. Role views start at Ready; Backlog is seen in Features, Area, Vakt and Bugs. Drawn in [Board views](../process/board-views.md).
 - **Automation.** Built in only: auto-add from the repository, item closed to Done, item reopened to In progress. Archiving is by hand after the result meeting. The handoff Action is a later iteration.
 
 ### 5. Amendments to ADR-0004
 
 - `kind/design` is a new value in the `kind/*` group, for design tasks under a feature.
-- The horizon field that ADR-0004 decision 5 put on the board is not used. Now, next and later are read from iteration and milestone as in Decision 4. If the product owners want a Now, Next, Later roadmap view, it is a field on epics only.
+- The horizon field that ADR-0004 decision 5 put on the board is not used. Now, next and later are read from iteration and milestone by the precedence in Decision 4, which covers every combination. If the product owners want a Now, Next, Later roadmap view, it is a field on epics only.
 
-ADR-0004 carries an "Amended by ADR-0005" note on its status line; it is otherwise unchanged.
+ADR-0004 is not edited while this ADR is Proposed. When this ADR is accepted, the same pull request adds an "Amended by ADR-0005" note to ADR-0004's status line, naming these two points; ADR-0004 is otherwise unchanged and stays in force.
 
 ### Alternatives considered
 
@@ -80,7 +80,7 @@ ADR-0004 carries an "Amended by ADR-0005" note on its status line; it is otherwi
 
 ## Consequences
 
-- **Preconditions before the first iteration**, listed line by line in [Board set-up](../process/board-setup.md) and tracked in [#4088](https://github.com/Altinn/altinn-auth/issues/4088), which today covers only Status, Iteration, Team, Priority and the built-in workflows: the labels brought in line with ADR-0004 and `kind/design` created, since the repository has `Testplan` and no `kind/testplan`, `kind/incident`, `kind/security` or `status/blocked` today; the test plan form changed and a design form added; the Iteration and Test phase fields; the seven views. Until the labels exist, the views match nothing.
+- **Preconditions before the first iteration**, listed line by line in [Board set-up](../process/board-setup.md) and tracked in [#4088](https://github.com/Altinn/altinn-auth/issues/4088), which today covers only Status, Iteration, Team, Priority and the built-in workflows: the labels brought in line with ADR-0004 and `kind/design` created, since the repository has `Testplan` and no `kind/testplan`, `kind/incident`, `kind/security` or `status/blocked` today, where `Testplan` and `Blocked` are renamed rather than replaced, so every existing issue keeps its label under the new name and no relabelling of open issues is needed; the test plan form changed and a design form added; the Iteration and Test phase fields; the Priority values as named in Decision 4; the eight views; and the area owners with deputies, and the holders of the other roles, named in #4088 before the first planning. Until the labels exist, the views match nothing.
 - The meetings in the handbook replace each team's grooming, team meeting and Friday meeting from 2026-11-09.
 - The `ukesrapport` skill ([#4615](https://github.com/Altinn/altinn-auth/pull/4615)) should distinguish closed tasks, merged work, from closed features, delivered work.
 - A decision log is started at `docs/decisions.md`.
