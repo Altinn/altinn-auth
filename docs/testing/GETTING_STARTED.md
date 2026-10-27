@@ -50,9 +50,7 @@ files, because Git applies the new `.gitattributes` only to files it writes
 again; `git ls-files --eol` shows them as `w/crlf`, and `dotnet format` in
 `repo-check` flags every line in them. A fresh clone or `git worktree add` is
 LF already. In an existing clone with no uncommitted changes,
-`git rm -r -q --cached .` followed by `git reset -q --hard` rewrites them. A few whitespace findings in
-`Altinn.ResourceRegistry` remain on Windows, because its own `.editorconfig`
-sets no `end_of_line`; CI on Linux does not report them.
+`git rm -r -q --cached .` followed by `git reset -q --hard` rewrites them.
 
 `Altinn.ResourceRegistry` runs xUnit v2 without categories, so its unit tests
 are all of its tests and start PostgreSQL. Recipes need PowerShell 7.

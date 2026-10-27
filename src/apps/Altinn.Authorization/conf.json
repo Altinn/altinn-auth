@@ -1,4 +1,4 @@
-﻿{
+{
   "dis": {
     "deploy": false,
     "manifest": "authorization/manifest",
@@ -13,6 +13,7 @@
   "deps": [
     "lib:Altinn.Authorization.Host",
     "lib:Altinn.Authorization.Integration",
+    "lib:Altinn.Authorization.Api.Contracts",
     "lib:Altinn.Authorization.Testing",
     "pkg:Altinn.Authorization.ABAC",
     "pkg:Altinn.Authorization.PEP"

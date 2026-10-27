@@ -1,4 +1,4 @@
-﻿name: 'Post CI: Test Report'
+name: 'Post CI: Test Report'
 
 on:
   workflow_run:

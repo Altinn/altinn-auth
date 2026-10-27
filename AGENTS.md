@@ -4,7 +4,7 @@ Guidance for AI agents, and a useful first page for anyone new to this repositor
 
 ## What this is
 
-Authorization and access management for Altinn 3: the Policy Decision Point and Policy Enforcement Point, the Access Management services that administer rights and delegations, and the Resource Registry. This is becoming the monorepo for the whole domain; register, authentication and the Access Management frontend are still being moved in ([#4049](https://github.com/Altinn/altinn-auth/issues/4049)).
+Authorization and access management for Altinn 3: the Policy Decision Point and Policy Enforcement Point, the Access Management services that administer rights and delegations, and the Resource Registry. This is becoming the monorepo for the whole domain; register and the Access Management frontend are still being moved in ([#4049](https://github.com/Altinn/altinn-auth/issues/4049)).
 
 ## Commands
 
@@ -24,8 +24,8 @@ pwsh eng/testing/run-coverage.ps1                      # coverage, installs dotn
 ## Critical workflow rules
 
 - **Branch per change, never commit to `main`.** Name it `type/<issue>_<slug>`.
-- **The PR title is a Conventional Commit with the issue number**, for example `fix(#4044): ...`. `main` is squash-only with linear history, and the release automation reads the squash title. A single-commit PR currently squashes under the *commit* title, so check the title in the merge dialog ([#4095](https://github.com/Altinn/altinn-auth/issues/4095)).
-- **CI runs `repoctl check`:** `dotnet format --verify-no-changes`, and the generated `.slnx` files and release configuration must be current (`just update-sln-files`).
+- **Commits and PR titles use Conventional Commits; scopes are encouraged**, e.g. `fix(authorized-parties): correct delegation lookup`. Scopes use lowercase kebab-case for components within a vertical, not verticals or issues. Omit scopes only without a particular component, e.g. `docs: document commit conventions`. Put issues in the body or trailers (`Refs: #4044`). Prefer `Resolves: #4044` in the PR description to close completed issues. See [conventions](CONTRIBUTING.md#branches-commits-and-pull-requests). `main` is squash-only: preserve all commit trailers ([#4095](https://github.com/Altinn/altinn-auth/issues/4095)).
+- **CI runs `repoctl check`:** formatting, generated `.slnx` files and release configuration must be current (`just update-sln-files`). [Promotion](.github/actions/deploy-apps/README.md) serves CI and releases.
 - **A green local build or `dotnet test` is not proof, and a red one is not always a defect.** CI builds with `-warnaserror`, and without a container runtime, integration tests that need a database fail in setup. CI is the gate.
 - **Update affected documentation and agent guidance in the same PR.** Require ADRs only for significant architectural decisions or lasting trade-offs; see [the threshold](CONTRIBUTING.md#when-an-adr-is-required). Validate the [guidance contract](docs/adr/0002-tool-neutral-agent-contract.md) with `node .github/scripts/agents-docs-validate.mjs`.
 - **Issues: a type and one or more `area/*`** ([guide](CONTRIBUTING.md#issues-and-labels)).
@@ -34,7 +34,7 @@ pwsh eng/testing/run-coverage.ps1                      # coverage, installs dotn
 
 **Write a PR description by these rules, with or without a GitHub template.** Issues use this repository's own forms in `.github/ISSUE_TEMPLATE/`, not the organisation's.
 
-- The TL;DR gives the problem, the change, and why it matters. Reference the issue, and use `Closes #<issue>` only when the PR completes it.
+- The TL;DR states the problem, change and purpose. Close issues primarily through the PR description: `Resolves: #<issue>`, only when the PR completes it.
 - State what you verified: the commands or checks, their results, and what you did not run or could not test locally, with the reason. Distinguish skipped tests from passed ones. Never claim a check you did not run.
 - Say what an assistant did and how you verified its output.
 - Keep it proportional, with longer background in a `<details>` block. Check the description against the final diff before publishing, and correct it if the scope moved.
@@ -45,15 +45,16 @@ Code sits in verticals. A vertical always has its own `.slnx`, `src/` and `conf.
 
 | Path | Contents |
 | --- | --- |
-| `src/apps` | Deployable services: [`Altinn.Authorization`](src/apps/Altinn.Authorization/AGENTS.md) (PDP), [`Altinn.AccessManagement`](src/apps/Altinn.AccessManagement/AGENTS.md), [`Altinn.ResourceRegistry`](src/apps/Altinn.ResourceRegistry/AGENTS.md), `Altinn.Register` |
+| `src/apps` | Deployable services: [`Altinn.Authorization`](src/apps/Altinn.Authorization/AGENTS.md) (PDP), [`Altinn.AccessManagement`](src/apps/Altinn.AccessManagement/AGENTS.md), [`Altinn.ResourceRegistry`](src/apps/Altinn.ResourceRegistry/AGENTS.md), [`Altinn.Authentication`](src/apps/Altinn.Authentication/AGENTS.md), [`Altinn.Mockporten`](src/apps/Altinn.Mockporten/AGENTS.md), `Altinn.Register` |
 | `src/libs` | Shared libraries: `Api.Contracts`, `Host`, `Integration`, `Testing` |
-| `src/pkgs` | Published NuGet packages: `Altinn.Authorization.ABAC`, and `Altinn.Authorization.PEP`, which ships as `Altinn.Common.PEP` |
+| `src/pkgs` | Published NuGet packages: `Altinn.Authorization.ABAC`, `Altinn.Authorization.PEP` (ships as `Altinn.Common.PEP`) and `JWTCookieAuthentication` |
 | `src/tools` | `Altinn.Authorization.Cli` and the [`Altinn.AccessMgmt.FFB`](src/tools/Altinn.AccessMgmt.FFB/AGENTS.md) admin tool, which has its own guidance |
 | `docs/testing` | How the test suite is organised, fixtures, mocks, naming |
 | `docs/adr` | Architecture decision records, cross-cutting; each vertical keeps its own in its `docs/adr/` |
 | `docs/ai` | The [data policy](docs/ai/data-policy.md) for AI tools, and the background for the working agreement |
 | `eng/testing` | Coverage scripts, thresholds, the test-category guard |
 | `infra` | Infrastructure as code |
+| `.agents/skills` | [Task skills](.agents/skills/README.md); `.claude/skills` points here |
 
 Before changing a vertical, read its `AGENTS.md`. Where there is none yet, as in Register today, start from its `README.md` if it has one.
 
@@ -62,8 +63,9 @@ Before changing a vertical, read its `AGENTS.md`. Where there is none yet, as in
 Do not "fix" these without understanding them.
 
 - **`src/apps/Altinn.Register` is a placeholder**, a single `Program.cs`. The real Register arrives with [#4056](https://github.com/Altinn/altinn-auth/issues/4056). Do not build on it or wire anything to it.
-- **`src/apps/Altinn.ResourceRegistry` is deliberately an island** with its own `.editorconfig`, `Directory.Build.props`, `Directory.Packages.props` and `stylecop.json`. That is what let it be imported with its history intact. Do not merge it into the shared build files.
+- **Imported verticals are deliberately islands** with their own `.editorconfig`, `Directory.Build.props`, `Directory.Packages.props` and `stylecop.json`. That let them be imported with their history intact. Do not merge them into the shared build files.
 - **Markdown is LF**, enforced by `.gitattributes`. Do not reformat line endings.
+- **Manifest `.env` files are read by Kustomize's `envs` generator.** Use `KEY=value` without spaces around `=` or quotes around values: Kustomize preserves those spaces and quotes literally. Feature flags use `true` or `false` without quotes; spaces and additional `=` characters inside values such as connection strings must be preserved.
 
 ## Test gotchas
 

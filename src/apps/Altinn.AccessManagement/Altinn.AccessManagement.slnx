@@ -24,6 +24,7 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/Altinn.AccessManagement/Altinn.AccessManagement.csproj" />
+    <Project Path="src/Altinn.AccessManagement.Api.Apps/Altinn.AccessManagement.Api.Apps.csproj" />
     <Project Path="src/Altinn.AccessManagement.Api.Enduser/Altinn.AccessManagement.Api.Enduser.csproj" />
     <Project Path="src/Altinn.AccessManagement.Api.Enterprise/Altinn.AccessManagement.Api.Enterprise.csproj" />
     <Project Path="src/Altinn.AccessManagement.Api.Internal/Altinn.AccessManagement.Api.Internal.csproj" />

@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using Altinn.AccessMgmt.Core.Utils.Helper;
 using Altinn.Authorization.ServiceDefaults;
 using Altinn.ResourceRegistry.Core.Configuration;

@@ -1,4 +1,4 @@
-
+﻿
 using Altinn.ResourceRegistry.Core.AccessLists;
 using Altinn.ResourceRegistry.TestUtils;
 using Microsoft.Extensions.DependencyInjection;

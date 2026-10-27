@@ -76,6 +76,17 @@ public static class RoleConstants
     public static IReadOnlyCollection<TranslationEntry> AllTranslations()
         => ConstantLookup.AllTranslations<Role>(typeof(RoleConstants));
 
+    /// <summary>
+    /// Ids of all roles provided by <see cref="ProviderConstants.Altinn2"/>.
+    /// </summary>
+    public static IReadOnlySet<Guid> Altinn2RoleIds => _altinn2RoleIds.Value;
+
+    private static readonly Lazy<HashSet<Guid>> _altinn2RoleIds = new(() =>
+        AllEntities()
+            .Where(r => r.Entity.ProviderId == ProviderConstants.Altinn2.Id)
+            .Select(r => r.Id)
+            .ToHashSet());
+
     #region Altinn 3 Roles
 
     /// <summary>
@@ -178,6 +189,40 @@ public static class RoleConstants
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Agent"),
             KeyValuePair.Create("Description", "Gjev høve til å motta delegerte fullmakter for verksemda")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Konkursbo administrator' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> e8f2e3bc-41e8-4ea6-87d3-3308934d471d
+    /// - <c>URN:</c> urn:altinn:role:innbygger-konkursbo-administrator
+    /// - <c>Provider:</c> Altinn3
+    /// - <c>Code:</c> innbygger-konkursbo-administrator
+    /// - <c>Description:</c> Gir mulighet til å administrere alle konkursbo for en gitt bostyrer
+    /// </remarks>
+    public static ConstantDefinition<Role> BankruptcyEstateAdministrator { get; } = new ConstantDefinition<Role>("e8f2e3bc-41e8-4ea6-87d3-3308934d471d")
+    {
+        Entity = new()
+        {
+            Name = "Konkursbo administrator",
+            Code = "innbygger-konkursbo-administrator",
+            Description = "Gir mulighet til å administrere alle nåværende og fremtidige konkursbo for bostyrer. Mottaker får automatisk Hovedadministrator, Konkursbo lese- og skrivetilgang.",
+            Urn = "urn:altinn:role:innbygger-konkursbo-administrator",
+            IsKeyRole = false,
+            IsAssignable = true,
+            IsAvailableForServiceOwners = false,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.Altinn3,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Bankruptcy estate administrator"),
+            KeyValuePair.Create("Description", "Allows the trustee in bankruptcy to manage all current and future bankruptcy estates. The recipient is automatically granted Main Administrator and Bankruptcy Estate read and write access.")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Konkursbo administrator"),
+            KeyValuePair.Create("Description", "Gir moglegheit til å administrere alle noverande og framtidige konkursbu for bustyrar. Mottakaren får automatisk Hovudadministrator, Konkursbu lese- og skrivetilgang.")
         ),
     };
 

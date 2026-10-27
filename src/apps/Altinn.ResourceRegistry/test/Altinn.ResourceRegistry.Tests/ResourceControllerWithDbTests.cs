@@ -1,4 +1,4 @@
-using Altinn.Platform.Storage.Interface.Models;
+﻿using Altinn.Platform.Storage.Interface.Models;
 using Altinn.ResourceRegistry.Controllers;
 using Altinn.ResourceRegistry.Core;
 using Altinn.ResourceRegistry.Core.Constants;
@@ -227,7 +227,57 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
         Assert.NotNull(changes);
         Assert.Single(changes.Items);
         Assert.Equal("changes_res3", changes.Items.First().ResourceId);
+
+        // The last page with items still links on, so the consumer keeps its position
+        Assert.True(Uri.TryCreate(changes.Links.Next, UriKind.Absolute, out nextUri));
+        Assert.NotNull(nextUri);
+        response = await client.GetAsync(nextUri.PathAndQuery);
+        changes = await response.Content.ReadFromJsonAsync<Paginated<ResourceChange>>();
+
+        Assert.NotNull(changes);
+        Assert.Empty(changes.Items);
         Assert.Null(changes.Links.Next);
+    }
+
+    [Fact]
+    public async Task GetResourceChanges_ResumesFromLastPageAfterNewChange()
+    {
+        ServiceResource resource1 = CreateTestResource("changes_resume_res1");
+        await Repository.CreateResource(resource1);
+        await Repository.CreateResource(CreateTestResource("changes_resume_res2"));
+        await Repository.SetResourceSubjects(CreateResourceSubjects("urn:altinn:resource:changes_resume_res1", ["urn:altinn:rolecode:r001"], "ttd"), logPolicyChange: true);
+        await Repository.SetResourceSubjects(CreateResourceSubjects("urn:altinn:resource:changes_resume_res2", ["urn:altinn:rolecode:r001"], "ttd"), logPolicyChange: true);
+
+        using var client = CreateClient();
+
+        // Drain the feed in one page, which is also the last page
+        HttpResponseMessage response = await client.GetAsync("resourceregistry/api/v1/resource/changes");
+        Paginated<ResourceChange>? changes = await response.Content.ReadFromJsonAsync<Paginated<ResourceChange>>();
+        Assert.NotNull(changes);
+        Assert.Equal(2, changes.Items.Count());
+        Assert.True(Uri.TryCreate(changes.Links.Next, UriKind.Absolute, out Uri? savedNextUri));
+        Assert.NotNull(savedNextUri);
+
+        // Check that the next page before update returns no next link, and empty content
+        response = await client.GetAsync(savedNextUri.PathAndQuery);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        changes = await response.Content.ReadFromJsonAsync<Paginated<ResourceChange>>();
+
+        Assert.NotNull(changes);
+        Assert.Empty(changes.Items);
+        Assert.Null(changes.Links.Next);
+
+        // A change made after the consumer caught up is the only item when resuming from the saved link
+        await Repository.UpdateResource(resource1);
+
+        response = await client.GetAsync(savedNextUri.PathAndQuery);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        changes = await response.Content.ReadFromJsonAsync<Paginated<ResourceChange>>();
+
+        Assert.NotNull(changes);
+        Assert.Single(changes.Items);
+        Assert.Equal("changes_resume_res1", changes.Items.First().ResourceId);
+        Assert.NotNull(changes.Links.Next);
     }
 
     [Fact]
@@ -1196,6 +1246,41 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
         string responseContent = await response.Content.ReadAsStringAsync();
         Assert.NotNull(responseContent);
         Assert.Contains("Skattegrunnlag latest version", responseContent);
+    }
+
+    [Fact]
+    public async Task Export_ContactPoints_AreExportedAsCvContactPoint()
+    {
+        await LoadTestDataWithUpdates();
+        var client = CreateClient();
+        string requestUri = "resourceregistry/api/v1/Resource/export";
+
+        HttpResponseMessage response = await client.GetAsync(requestUri);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        IGraph graph = RdfTestHelper.ParseTurtle(await response.Content.ReadAsStringAsync());
+
+        // A single contact point with a category and an email, other fields stored as ""
+        INode dsbContactPoint = Assert.Single(RdfTestHelper.GetContactPoints(graph, "korrespondanse-fra-sivilforsvaret"));
+        RdfTestHelper.AssertCategory(graph, dsbContactPoint, "Brukerstøtte");
+        RdfTestHelper.AssertLiteral(graph, dsbContactPoint, RdfTestHelper.Email, "postmottak@dsb.no");
+        RdfTestHelper.AssertAbsent(graph, dsbContactPoint, RdfTestHelper.Telephone);
+        RdfTestHelper.AssertAbsent(graph, dsbContactPoint, RdfTestHelper.ContactPage);
+
+        // Three contact points, one of them stored with a leading space in the email
+        List<INode> digdirContactPoints = RdfTestHelper.GetContactPoints(graph, "eformidling-dpo-meldingsutveksling");
+        Assert.Equal(3, digdirContactPoints.Count);
+        List<ILiteralNode> digdirEmails = digdirContactPoints
+            .SelectMany(cp => RdfTestHelper.GetObjects(graph, cp, RdfTestHelper.Email))
+            .Cast<ILiteralNode>()
+            .ToList();
+        Assert.Equal(3, digdirEmails.Count);
+        Assert.All(digdirEmails, l => Assert.Equal(l.Value.Trim(), l.Value));
+
+        // Contact page stored without a scheme is not a valid IRI, so only the category remains
+        INode skdContactPoint = Assert.Single(RdfTestHelper.GetContactPoints(graph, "ske-innrapportering-boligsameie"));
+        RdfTestHelper.AssertCategory(graph, skdContactPoint, "Innrapportering");
+        RdfTestHelper.AssertAbsent(graph, skdContactPoint, RdfTestHelper.ContactPage);
     }
 
     /// <summary>

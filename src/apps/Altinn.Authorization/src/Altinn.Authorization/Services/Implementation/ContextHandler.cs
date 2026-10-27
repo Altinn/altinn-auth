@@ -1,7 +1,7 @@
 ﻿using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.Api.Contracts.Authorization;
-using Altinn.Authorization.Models.Register;
+using Altinn.Authorization.Api.Contracts.Register;
 using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Constants;
 using Altinn.Platform.Authorization.Models;

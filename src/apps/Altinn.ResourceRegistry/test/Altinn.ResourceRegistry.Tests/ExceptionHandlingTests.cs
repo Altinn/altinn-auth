@@ -1,6 +1,7 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Net;
 using Altinn.ResourceRegistry.Core.Services.Interfaces;
+using Altinn.ResourceRegistry.Tests.Mocks;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -44,33 +45,4 @@ public class ExceptionHandlingTests(WebApplicationFixture webApplicationFixture)
         // failures must still be logged with the exception, or they are invisible in production.
         Assert.Contains(logs.Entries, e => e.Level >= LogLevel.Error && ReferenceEquals(e.Exception, exception));
     }
-
-    private sealed class CapturingLoggerProvider
-        : ILoggerProvider
-    {
-        private readonly ConcurrentQueue<LogEntry> _entries = new();
-
-        public IReadOnlyCollection<LogEntry> Entries => _entries;
-
-        public ILogger CreateLogger(string categoryName) => new CapturingLogger(categoryName, _entries);
-
-        public void Dispose()
-        {
-        }
-
-        private sealed class CapturingLogger(string category, ConcurrentQueue<LogEntry> entries)
-            : ILogger
-        {
-            public IDisposable? BeginScope<TState>(TState state)
-                where TState : notnull
-                => null;
-
-            public bool IsEnabled(LogLevel logLevel) => true;
-
-            public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
-                => entries.Enqueue(new(category, logLevel, exception));
-        }
-    }
-
-    private sealed record LogEntry(string Category, LogLevel Level, Exception? Exception);
 }

@@ -42,7 +42,7 @@ _More belongs here._ This is the section that pays for itself, and it can only c
 - **A missing container runtime fails this vertical's integration tests, it does not skip them.** `PostgresTestEngine` records a `SkipReason`, but `ApiFixture` and `EFPostgresFactory` surface it during fixture initialisation, where xUnit v3 reports a skip as a fixture-init *failure*. So a red integration lane here may mean nothing worse than Docker being off. Converting these to the per-test-skip pattern is tracked separately; see [`docs/testing/FIXTURES.md`](../../../docs/testing/FIXTURES.md).
 - Shared helpers and test data live in `test/Altinn.AccessManagement.TestUtils`, which sets `IsTestProject=false` and is a library rather than a runnable test project.
 - `test/AccessMgmt.Tests` is by far the largest test project; the API-specific projects cover their own surface.
-- `test/Bruno` holds API tests and `test/K6` load tests; neither runs as part of `dotnet test`.
+- `test/Bruno` holds API tests and `test/K6` load tests; neither runs as part of `dotnet test`. Save `.bru` files without a BOM: the Bruno CLI cannot parse one that has a BOM, and a single such file stops the whole post-deployment run in Azure DevOps.
 - Every test needs `[UnitTest]` or `[IntegrationTest]` or the run fails. See the root file.
 
 ## Known tech debt

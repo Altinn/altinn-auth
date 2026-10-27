@@ -60,8 +60,10 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IIngestService, IngestService>();
         services.AddScoped(sp => new ConnectionQuery(
             sp.GetRequiredService<AppDbContext>(),
-            sp.GetRequiredService<AppLifecycleFeatures>().AdosSubunitInheritance));
+            sp.GetRequiredService<AppLifecycleFeatures>().AdosSubunitInheritance,
+            sp.GetRequiredService<AppLifecycleFeatures>().DisableAltinn2Roles));
         services.AddScoped<IConnectionService, ConnectionService>();
+        services.AddScoped<IBankruptcyEstateDelegationService, BankruptcyEstateDelegationService>();
         services.AddScoped<IMaskinportenSupplierService, MaskinportenSupplierService>();
         services.AddScoped<IPartyService, PartyService>();
         services.AddScoped<IPackageService, PackageService>();

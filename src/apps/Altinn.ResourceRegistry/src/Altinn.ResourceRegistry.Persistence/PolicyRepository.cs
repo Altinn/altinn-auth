@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using Altinn.ResourceRegistry.Core;
 using Altinn.ResourceRegistry.Core.Extensions;

@@ -1,4 +1,4 @@
-#nullable enable
+﻿#nullable enable
 
 using Altinn.Authorization.ProblemDetails;
 using Azure;

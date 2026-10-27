@@ -1,4 +1,4 @@
-﻿apiVersion: batch/v1
+apiVersion: batch/v1
 kind: Job
 metadata:
   name: migrate-database
@@ -13,17 +13,18 @@ spec:
         app.kubernetes.io/name: access-management-migrate-database
         azure.workload.identity/use: "true"
     spec:
-      serviceAccountName: access-management-pre-deploy
+      serviceAccountName: am-init
       restartPolicy: Never
       securityContext:
         runAsUser: 1000
         runAsGroup: 3000
-        allowPrivilegeEscalation: false
 
       containers:
         - name: access-management
-          image: ghcr.io/altinn/altinn-auth/accessmanagement:{{GIT_SHA}}
+          image: ghcr.io/altinn/altinn-auth/access-management-api:{{GIT_SHA}}
           imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
 
           resources:
             requests:
@@ -37,7 +38,7 @@ spec:
             - name: RunInitOnly
               value: 'true'
             - name: K8S_CONTAINER_NAME
-              value: accessmanagement
+              value: access-management
             - name: K8S_POD_NAME
               valueFrom:
                 fieldRef:
@@ -57,12 +58,17 @@ spec:
                   key: trusted_proxies
 
           volumeMounts:
+            - name: tmp
+              mountPath: /tmp
             - name: altinn-appsettings
               mountPath: "/altinn-appsettings"
             - name: accesstoken
               mountPath: "/accesstoken"
 
       volumes:
+        - name: tmp
+          emptyDir:
+            medium: Memory
         - name: altinn-appsettings
           secret:
             secretName: altinn-appsettings-secret

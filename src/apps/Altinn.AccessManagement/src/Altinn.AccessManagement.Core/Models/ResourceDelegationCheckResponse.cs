@@ -1,4 +1,4 @@
-﻿using Altinn.AccessManagement.Core.Models.Register;
+﻿using Altinn.Authorization.Api.Contracts.Register;
 
 namespace Altinn.AccessManagement.Core.Models;
 

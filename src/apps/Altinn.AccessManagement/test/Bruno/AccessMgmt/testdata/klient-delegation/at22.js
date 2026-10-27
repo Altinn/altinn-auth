@@ -1,4 +1,4 @@
-﻿module.exports = {
+module.exports = {
   env: "at22",
   resources: {
     clientDelgResourceId: "devtest_gar_bruno_client_resource",

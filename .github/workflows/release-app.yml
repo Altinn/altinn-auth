@@ -1,4 +1,4 @@
-﻿name: Release App
+name: Release App
 
 on:
   workflow_dispatch:
@@ -14,6 +14,8 @@ on:
         description: Version override (defaults to today's UTC date) - should be a valid calendar version
         type: string
         required: false
+
+run-name: "Create release-draft for ${{ inputs.app }} by @${{ github.actor }}"
 
 permissions:
   contents: write
@@ -100,6 +102,7 @@ jobs:
       - name: Generate changelog
         shell: bash
         env:
+          GITHUB_TOKEN: ${{ github.token }}
           TAG: ${{ steps.version.outputs.tag }}
         run: |
           set -euo pipefail
@@ -124,6 +127,6 @@ jobs:
           gh release create "$TAG" \
             --draft \
             --target "$SHA" \
-            --title "app/$APP: $VERSION" \
+            --title "$VERTICAL_TAG_PREFIX: $VERSION" \
             --notes-file changelog.md \
             --latest=false

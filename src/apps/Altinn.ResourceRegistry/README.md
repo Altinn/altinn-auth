@@ -5,6 +5,7 @@
 - Resource responses expose server-controlled `createdAt` and `updatedAt` timestamps in UTC.
 - `createdAt` is the first registration in this registry; `updatedAt` describes the returned metadata version.
 - Unknown timestamps are returned as JSON `null`, including both timestamps for virtual Storage apps.
+- The `resource/changes` feed links every page with items to the next position, so a consumer can store the link and resume.
 
 Timestamp documentation drafted with Codex (GPT-6). Human reader: [@howieandersen, review of PR #4300](https://github.com/Altinn/altinn-auth/pull/4300#pullrequestreview-5376363483).
 
@@ -30,6 +31,17 @@ changes together. Neither timestamp means first creation in an external source s
 Virtual app resources fetched from Storage have both fields set to null because they
 have no registration or metadata version in this registry. Apps published into Resource
 Registry use their registry timestamps.
+
+## Resource change feed
+
+`GET /resourceregistry/api/v1/resource/changes?token=...&limit=...` lists resources whose
+metadata or policy changed, ordered by change, each resource once at its latest change.
+Resources without an uploaded policy and deleted resources are not listed.
+
+The feed is meant to be followed over time. Every page with items has a `links.next`,
+also the last one; only an empty page has none, which means the consumer has caught up.
+Store the latest `links.next` you received and request it again on the next poll; do not
+stop following the feed when a page has fewer items than `limit`. The token is opaque.
 
 ## Implementation guidance
 

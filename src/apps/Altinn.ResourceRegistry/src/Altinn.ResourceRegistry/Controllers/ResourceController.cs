@@ -1,4 +1,4 @@
-using Altinn.Authorization.ProblemDetails;
+﻿using Altinn.Authorization.ProblemDetails;
 using Altinn.Authorization.ServiceDefaults;
 using Altinn.Platform.Events.Formatters;
 using Altinn.ResourceRegistry.Core.Constants;
@@ -6,6 +6,7 @@ using Altinn.ResourceRegistry.Core.Errors;
 using Altinn.ResourceRegistry.Core.Extensions;
 using Altinn.ResourceRegistry.Core.Helpers;
 using Altinn.ResourceRegistry.Core.Models;
+using Altinn.ResourceRegistry.Core.ScopePrefixes;
 using Altinn.ResourceRegistry.Core.ServiceOwners;
 using Altinn.ResourceRegistry.Core.Services.Interfaces;
 using Altinn.ResourceRegistry.Extensions;
@@ -17,6 +18,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using Microsoft.FeatureManagement;
 
 namespace Altinn.ResourceRegistry.Controllers
 {
@@ -31,6 +33,8 @@ namespace Altinn.ResourceRegistry.Controllers
         private readonly ILogger<ResourceController> _logger;
         private readonly AltinnServiceDescriptor _serviceDescriptor;
         private readonly IServiceOwnerService _serviceOwnerService;
+        private readonly IFeatureManager _featureManager;
+        private readonly IScopePrefixValidator _scopePrefixValidator;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ResourceController"/> controller.
@@ -39,12 +43,16 @@ namespace Altinn.ResourceRegistry.Controllers
             IResourceRegistry resourceRegistry,
             ILogger<ResourceController> logger,
             AltinnServiceDescriptor serviceDescriptor,
-            IServiceOwnerService serviceOwnerService)
+            IServiceOwnerService serviceOwnerService,
+            IFeatureManager featureManager,
+            IScopePrefixValidator scopePrefixValidator)
         {
             _resourceRegistry = resourceRegistry;
             _logger = logger;
             _serviceDescriptor = serviceDescriptor;
             _serviceOwnerService = serviceOwnerService;
+            _featureManager = featureManager;
+            _scopePrefixValidator = scopePrefixValidator;
         }
 
         /// <summary>
@@ -127,6 +135,12 @@ namespace Altinn.ResourceRegistry.Controllers
         [Authorize(Policy = AuthzConstants.POLICY_SCOPE_RESOURCEREGISTRY_WRITE)]
         [Produces("application/json")]
         [Consumes("application/json")]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
+        [ProducesResponseType<ProblemDetails>(StatusCodes.Status503ServiceUnavailable)]
         public async Task<ActionResult> Post([ValidateNever] ServiceResource serviceResource, CancellationToken cancellationToken)
         {
             if (!ModelState.IsValid)
@@ -163,11 +177,9 @@ namespace Altinn.ResourceRegistry.Controllers
                 return Forbid();
             }
 
-            List<string> scopes = MaskinportenSchemaAuthorizer.GetMaskinportenScopesFromServiceResource(serviceResource);
-
-            if (scopes is { Count: > 0 } && !MaskinportenSchemaAuthorizer.IsAuthorizedForChangeResourceWithScopes(scopes, HttpContext.User, out List<string> forbiddenScopes))
+            if (await CheckScopePrefixes(serviceResource, cancellationToken) is { } prefixError)
             {
-                return Unauthorized(MaskinportenSchemaAuthorizer.CreateErrorResponseMissingPrefix(forbiddenScopes));
+                return prefixError;
             }
 
             try
@@ -195,6 +207,12 @@ namespace Altinn.ResourceRegistry.Controllers
         [Authorize(Policy = AuthzConstants.POLICY_SCOPE_RESOURCEREGISTRY_WRITE)]
         [Produces("application/json")]
         [Consumes("application/json")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType<ProblemDetails>(StatusCodes.Status503ServiceUnavailable)]
         public async Task<ActionResult> Put(string id, ServiceResource serviceResource, CancellationToken cancellationToken)
         {
             ServiceResource currentResource = await _resourceRegistry.GetResource(id, null, cancellationToken);
@@ -233,11 +251,9 @@ namespace Altinn.ResourceRegistry.Controllers
                 return Forbid();
             }
 
-            List<string> scopes = MaskinportenSchemaAuthorizer.GetMaskinportenScopesFromServiceResource(serviceResource);
-
-            if (scopes is { Count: > 0 } && !MaskinportenSchemaAuthorizer.IsAuthorizedForChangeResourceWithScopes(scopes, HttpContext.User, out List<string> forbiddenScopes))
+            if (await CheckScopePrefixes(serviceResource, cancellationToken) is { } prefixError)
             {
-                return Unauthorized(MaskinportenSchemaAuthorizer.CreateErrorResponseMissingPrefix(forbiddenScopes));
+                return prefixError;
             }
 
             try
@@ -587,6 +603,8 @@ namespace Altinn.ResourceRegistry.Controllers
         /// had a policy uploaded at least once (the policy may be empty) are included, and each resource
         /// appears at most once, at the position of its latest change. A change is any create or update of
         /// the resource metadata or an update of the resource policy.
+        /// Every page with items has a next-link, also the last one; an empty page without a next-link means
+        /// the consumer has caught up and should poll again later with the next-link it already has.
         /// </summary>
         /// <param name="token">Opaque continuation token from the previous page's next-link. Omit to start from the beginning</param>
         /// <param name="limit">Maximum number of resources returned (1-1000, default: 1000)</param>
@@ -612,15 +630,16 @@ namespace Altinn.ResourceRegistry.Controllers
 
             long skipPastChangeId = token?.Value ?? 0;
 
-            // Use limit + 1 in order to determine if there are more items to fetch
-            List<ResourceChange> changedResources = await _resourceRegistry.FindChangedResources(skipPastChangeId, limit + 1, cancellationToken);
+            List<ResourceChange> changedResources = await _resourceRegistry.FindChangedResources(skipPastChangeId, limit, cancellationToken);
 
-            if (changedResources.Count < limit + 1)
+            // The feed is followed over time, so every non-empty page links to the position after its
+            // last item, also when no more changes exist yet. Only an empty page has no next link: the
+            // consumer has caught up and keeps the token it already has.
+            if (changedResources.Count == 0)
             {
                 return Paginated.Create(changedResources, null);
             }
 
-            changedResources.RemoveRange(limit, changedResources.Count - limit);
             ResourceChange last = changedResources[^1];
 
             string nextUrl = Url.Link("changes", new
@@ -630,6 +649,46 @@ namespace Altinn.ResourceRegistry.Controllers
             });
 
             return Paginated.Create(changedResources, nextUrl);
+        }
+
+        /// <summary>
+        /// Checks that the resource owner owns the prefixes of the Maskinporten scopes on the resource.
+        /// </summary>
+        /// <returns>An error result, or <c>null</c> if the scopes are allowed</returns>
+        private async Task<ActionResult> CheckScopePrefixes(ServiceResource serviceResource, CancellationToken cancellationToken)
+        {
+            List<string> scopes = MaskinportenSchemaAuthorizer.GetMaskinportenScopesFromServiceResource(serviceResource);
+            if (scopes is not { Count: > 0 })
+            {
+                return null;
+            }
+
+            if (!await _featureManager.IsEnabledAsync(FeatureFlags.ValidateScopePrefixWithMaskinportenApi))
+            {
+                // Legacy check against the caller's token claims, skipped for the admin scope. Removed in #4341.
+                return MaskinportenSchemaAuthorizer.IsAuthorizedForChangeResourceWithScopes(scopes, HttpContext.User, out List<string> forbiddenScopes)
+                    ? null
+                    : Unauthorized(MaskinportenSchemaAuthorizer.CreateErrorResponseMissingPrefix(forbiddenScopes));
+            }
+
+            IReadOnlyList<string> unownedScopes;
+            try
+            {
+                unownedScopes = await _scopePrefixValidator.GetUnownedScopes(serviceResource.HasCompetentAuthority?.Organization, scopes, cancellationToken);
+            }
+            catch (ScopePrefixDataUnavailableException ex)
+            {
+                string safeResourceIdentifier = (serviceResource.Identifier ?? string.Empty)
+                    .Replace("\r", string.Empty)
+                    .Replace("\n", string.Empty);
+
+                _logger.LogError(ex, "Could not validate Maskinporten scope prefixes for resource {ResourceId}", safeResourceIdentifier);
+                return Problems.ScopePrefixList_Unavailable.ToActionResult();
+            }
+
+            return unownedScopes.Count == 0
+                ? null
+                : ValidationProblem(MaskinportenSchemaAuthorizer.CreateErrorResponseInvalidPrefix(unownedScopes));
         }
 
         private async Task<string> GetServiceOwnerOrgCode(ServiceResource serviceResource, CancellationToken cancellationToken)

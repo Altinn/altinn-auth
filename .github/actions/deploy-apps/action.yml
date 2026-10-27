@@ -1,0 +1,39 @@
+name: Deploy apps
+description: Record pending GitHub deployments, then promote built app manifest artifacts.
+
+inputs:
+  verticals:
+    description: Space or newline separated app vertical IDs (for example app:Altinn.Authorization).
+    required: true
+  environments:
+    description: Space or newline separated environment names to deploy to.
+    required: true
+  sha:
+    description: Commit SHA identifying the already-built manifest artifacts.
+    default: ${{ github.sha }}
+  token:
+    description: GitHub token with packages and deployments write permissions.
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Setup buildx
+      uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+    - name: Login to GHCR
+      uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ inputs.token }}
+
+    - name: Record deployments and promote manifests
+      shell: bash
+      env:
+        VERTICALS: ${{ inputs.verticals }}
+        ENVIRONMENTS: ${{ inputs.environments }}
+        SOURCE_SHA: ${{ inputs.sha }}
+        GH_TOKEN: ${{ inputs.token }}
+        ACTION_PATH: ${{ github.action_path }}
+      run: node --experimental-strip-types "$ACTION_PATH/deploy.mts"
