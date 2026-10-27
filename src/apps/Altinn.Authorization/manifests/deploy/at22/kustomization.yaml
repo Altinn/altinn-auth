@@ -3,7 +3,7 @@ kind: Kustomization
 namespace: product-authorization
 labels:
   - pairs:
-      app.kubernetes.io/name: authorization
+      app.kubernetes.io/name: authz-api
       app.kubernetes.io/part-of: altinn-auth
       app.kubernetes.io/version: latest
       app.kubernetes.io/managed-by: Kustomize

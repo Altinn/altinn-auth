@@ -11,6 +11,3 @@ configMapGenerator:
 
 generatorOptions:
   disableNameSuffixHash: true
-images:
-  - name: ghcr.io/altinn/altinn-auth/altinn-authorization
-  - newTag: 8c565e5

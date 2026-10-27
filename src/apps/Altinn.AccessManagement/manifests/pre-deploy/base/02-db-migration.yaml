@@ -18,12 +18,13 @@ spec:
       securityContext:
         runAsUser: 1000
         runAsGroup: 3000
-        allowPrivilegeEscalation: false
 
       containers:
         - name: access-management
           image: ghcr.io/altinn/altinn-auth/access-management-api:{{GIT_SHA}}
           imagePullPolicy: Always
+          securityContext:
+            allowPrivilegeEscalation: false
 
           resources:
             requests:
