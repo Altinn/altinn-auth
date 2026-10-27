@@ -32,6 +32,9 @@ module.exports = {
         client_B: {
           name: "ALFABETISK INITIATIVRIK TIGER AS",
           orgno: "313360210",
+          // Also regnskapsforer for REGN_Organisasjon in the register, so it holds regnskapsforer-lonn
+          // through that role as well as any package it grants the facilitator.
+          alsoCcrClientOfFacilitator: true,
           partyId: 51626870,
           partyUuid: "b37fd4fc-829c-4601-8dc3-d7849d0f7764",
           dagligleder: {
