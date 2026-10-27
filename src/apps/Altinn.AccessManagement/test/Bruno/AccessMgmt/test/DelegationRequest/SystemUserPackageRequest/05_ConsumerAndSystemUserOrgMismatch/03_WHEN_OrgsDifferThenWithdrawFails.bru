@@ -23,7 +23,7 @@ script:pre-request {
 	const { testdata, loginAsSystemUser } = require("./test/DelegationRequest/SystemUserPackageRequest/helpers.js");
 	const td = testdata();
 
-	bru.setVar("unknownRequestId", require("uuid").v4());
+  bru.setVar("unknownRequestId", require("uuid").v4());
 
 	await loginAsSystemUser(td.publicSectorConsumer.systemUser, td.publicSectorConsumer.orgno, td.privateConsumer.orgno);
 }

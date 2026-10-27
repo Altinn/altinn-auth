@@ -19,6 +19,8 @@ params:query {
 docs {
   WHEN the client list is filtered by two packages without a match value,
   THEN both clients are returned: each holds at least one of them.
+  AND the list includes clients that hold only one of the two packages, which
+  step 08 uses to show that match=all leaves them out.
 }
 
 script:pre-request {
@@ -46,11 +48,26 @@ tests {
     expect(data.some(item => item.client.id.toLowerCase() === clientA), "expected the CCR client in the list").to.be.true;
     expect(data.some(item => item.client.id.toLowerCase() === clientB), "expected the rightholder client in the list").to.be.true;
 
-    // In some environments the rightholder client is also a CCR client of the facilitator
-    // (AT22: regnskapsforer in the register) and then holds the lonn package through its role too.
+  });
+
+  test("AND the rightholder client holds the lonn package through a CCR role only when the fixture says so", function() {
     const rolePackage = td.clientDelegationV2.packages.regnskapsforerLonn;
-    const rightholderClient = data.find(item => item.client.id.toLowerCase() === clientB);
-    const holdsRolePackage = !!rightholderClient && rightholderClient.access.some(a => a.packages.some(p => p.urn === rolePackage));
-    bru.setVar("rightholderClientHoldsRolePackage", holdsRolePackage);
+    const fixture = td.REGN_Organisasjon.REGN_Org_Clients.client_B;
+    const rightholderClient = res.getBody().data.find(item => item.client.id.toLowerCase() === fixture.partyUuid.toLowerCase());
+    const holdsRolePackage = rightholderClient.access.some(a => a.packages.some(p => p.urn === rolePackage));
+    expect(holdsRolePackage, "client_B.alsoCcrClientOfFacilitator in the test data").to.equal(fixture.alsoCcrClientOfFacilitator === true);
+  });
+
+  test("AND the list includes clients that hold only one of the two packages", function() {
+    const rolePackage = td.clientDelegationV2.packages.regnskapsforerLonn;
+    const grantedPackage = td.clientDelegationV2.packages.skattegrunnlag;
+    const singlePackageClientIds = res.getBody().data
+      .filter(item => {
+        const urns = item.access.flatMap(a => a.packages.map(p => p.urn));
+        return urns.includes(rolePackage) !== urns.includes(grantedPackage);
+      })
+      .map(item => item.client.id.toLowerCase());
+    expect(singlePackageClientIds, "expected clients holding only one filter package, so step 08 can show match=all drops them").to.not.be.empty;
+    bru.setVar("singlePackageClientIds", JSON.stringify(singlePackageClientIds));
   });
 }
