@@ -52,6 +52,7 @@ namespace Altinn.Platform.Authorization.Controllers
         private readonly IRegisterService _registerService;
         private readonly IAccessListAuthorization _accessListAuthorization;
         private readonly DecisionTelemetry _decisionTelemetry;
+        private readonly TimeProvider _timeProvider;
 
         private readonly SortedDictionary<string, AuthInfo> _appInstanceInfo = new();
 
@@ -62,11 +63,11 @@ namespace Altinn.Platform.Authorization.Controllers
 
         /// <summary>
         /// The cache key does not hold the instance id; the instance filter in <see cref="AuthorizeUsingDelegations"/> runs on the
-        /// cached list. Instance delegations are created continuously, so a lookup for an instance keeps the list only briefly,
-        /// short enough that a fresh instance delegation becomes visible while repeated calls for the same instance still hit
-        /// the cache (#4742).
+        /// cached list. Instance delegations are created continuously, so a lookup for an instance accepts a cached list only
+        /// this long after it was fetched, whichever request fetched it: short enough that a fresh instance delegation becomes
+        /// visible while repeated calls for the same instance still hit the cache (#4742).
         /// </summary>
-        private static readonly TimeSpan InstanceDelegationCacheTimeout = TimeSpan.FromSeconds(10);
+        private static readonly TimeSpan InstanceDelegationMaxAge = TimeSpan.FromSeconds(10);
 
         /// <summary>
         /// Resolved once per request by <see cref="RecordPdpDecisionMetric"/>, see the comment there.
@@ -95,6 +96,7 @@ namespace Altinn.Platform.Authorization.Controllers
         /// <param name="eventLog">the authorization event logger</param>
         /// <param name="featureManager">the feature manager</param>
         /// <param name="decisionTelemetry">PDP decision metric recorder</param>
+        /// <param name="timeProvider">the clock the delegation cache ages entries by</param>
         public DecisionController(
             IAccessManagementWrapper accessManagement,
             IResourceRegistry resourceRegistry,
@@ -107,7 +109,8 @@ namespace Altinn.Platform.Authorization.Controllers
             IMemoryCache memoryCache,
             IEventLog eventLog,
             IFeatureManager featureManager,
-            DecisionTelemetry decisionTelemetry)
+            DecisionTelemetry decisionTelemetry,
+            TimeProvider timeProvider)
         {
             _pdp = new PolicyDecisionPoint();
             _prp = policyRetrievalPoint;
@@ -122,6 +125,7 @@ namespace Altinn.Platform.Authorization.Controllers
             _registerService = registerService;
             _accessListAuthorization = accessListAuthorization;
             _decisionTelemetry = decisionTelemetry;
+            _timeProvider = timeProvider;
         }
 
         /// <summary>
@@ -706,13 +710,13 @@ namespace Altinn.Platform.Authorization.Controllers
             }
 
             bool isInstanceAccessRequest = !string.IsNullOrEmpty(resourceAttributes.ResourceInstanceValue);
-            TimeSpan cacheTimeout = isInstanceAccessRequest ? InstanceDelegationCacheTimeout : DelegationCacheTimeout;
+            TimeSpan maxAge = isInstanceAccessRequest ? InstanceDelegationMaxAge : DelegationCacheTimeout;
 
             // Look up delegations from (cached) AccessManagement PIP API
             IEnumerable<DelegationChangeDto> delegations = new List<DelegationChangeDto>();
             if (IsTypeApp(resourceAttributes))
             {
-                delegations = await GetAllCachedDelegationChanges(cacheTimeout, cancellationToken, WithDefaultGetAllDelegationChangesInput(resourceAttributes, decisionRequest, accessRestriction), input => input.Resource = new List<AttributeMatchDto>()
+                delegations = await GetAllCachedDelegationChanges(maxAge, cancellationToken, WithDefaultGetAllDelegationChangesInput(resourceAttributes, decisionRequest, accessRestriction), input => input.Resource = new List<AttributeMatchDto>()
                 {
                     new(AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute, resourceAttributes.OrgValue),
                     new(AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute, resourceAttributes.AppValue),
@@ -721,7 +725,7 @@ namespace Altinn.Platform.Authorization.Controllers
 
             if (IsTypeResource(resourceAttributes))
             {
-                delegations = await GetAllCachedDelegationChanges(cacheTimeout, cancellationToken, WithDefaultGetAllDelegationChangesInput(resourceAttributes, decisionRequest, accessRestriction), input => input.Resource = new List<AttributeMatchDto>()
+                delegations = await GetAllCachedDelegationChanges(maxAge, cancellationToken, WithDefaultGetAllDelegationChangesInput(resourceAttributes, decisionRequest, accessRestriction), input => input.Resource = new List<AttributeMatchDto>()
                 {
                     new(AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistry, resourceAttributes.ResourceRegistryId)
                 });
@@ -759,7 +763,11 @@ namespace Altinn.Platform.Authorization.Controllers
             return await ProcessDelegationResult(decisionRequest, delegations, resourcePolicy, cancellationToken);
         }
 
-        private async Task<IEnumerable<DelegationChangeDto>> GetAllCachedDelegationChanges(TimeSpan cacheTimeout, CancellationToken cancellationToken = default, params Action<DelegationChangeInputDto>[] actions)
+        /// <summary>
+        /// Returns the delegation list for the subject, party and resource the <paramref name="actions"/> describe, from the cache
+        /// when the entry was fetched no longer than <paramref name="maxAge"/> ago, otherwise fresh from Access Management.
+        /// </summary>
+        private async Task<IEnumerable<DelegationChangeDto>> GetAllCachedDelegationChanges(TimeSpan maxAge, CancellationToken cancellationToken = default, params Action<DelegationChangeInputDto>[] actions)
         {
             var delegation = new DelegationChangeInputDto();
             foreach (var action in actions)
@@ -775,18 +783,20 @@ namespace Altinn.Platform.Authorization.Controllers
                 $"ac:{delegation.AccessRestriction}",
                 $"vp:{delegation.ViaPartyOrganizationNumber}");
 
-            if (!_memoryCache.TryGetValue(cacheKey, out IEnumerable<DelegationChangeDto> result))
+            if (!_memoryCache.TryGetValue(cacheKey, out CachedDelegationChanges cached) || _timeProvider.GetUtcNow() - cached.FetchedAt > maxAge)
             {
-                result = await _accessManagement.GetAllDelegationChanges(cancellationToken, actions);
+                cached = new CachedDelegationChanges(_timeProvider.GetUtcNow(), await _accessManagement.GetAllDelegationChanges(cancellationToken, actions));
                 var cacheEntryOptions = new MemoryCacheEntryOptions()
                     .SetPriority(CacheItemPriority.High)
-                    .SetAbsoluteExpiration(cacheTimeout);
+                    .SetAbsoluteExpiration(DelegationCacheTimeout);
 
-                _memoryCache.Set(cacheKey, result, cacheEntryOptions);
+                _memoryCache.Set(cacheKey, cached, cacheEntryOptions);
             }
 
-            return result;
+            return cached.Changes;
         }
+
+        private sealed record CachedDelegationChanges(DateTimeOffset FetchedAt, IEnumerable<DelegationChangeDto> Changes);
 
         private async Task<XacmlContextResponse> ProcessDelegationResult(XacmlContextRequest decisionRequest, IEnumerable<DelegationChangeDto> delegations, XacmlPolicy resourcePolicy, CancellationToken cancellationToken = default)
         {
