@@ -222,6 +222,34 @@ public class PolicyHelperTest
         Assert.Empty(roles);
     }
 
+    // --- GetResourcePoliciesFromXacmlPolicy ---
+    [Theory]
+    [InlineData(AltinnXacmlConstants.MatchAttributeIdentifiers.LegacyRoleAttribute, "DAGL")]
+    [InlineData(AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute, "innbygger-konkursbo-administrator")]
+    public void GetResourcePoliciesFromXacmlPolicy_RoleSubject_ReturnsRoleGrant(string roleAttributeId, string roleCode)
+    {
+        var policy = new XacmlPolicy(
+            new Uri("urn:policy:1"), new Uri(XacmlConstants.CombiningAlgorithms.PolicyDenyOverrides),
+            new XacmlTarget(new List<XacmlAnyOf>()));
+
+        policy.Rules.Add(new XacmlRule("rule1", XacmlEffectType.Permit)
+        {
+            Target = new XacmlTarget(new List<XacmlAnyOf>
+            {
+                new XacmlAnyOf(new List<XacmlAllOf> { new XacmlAllOf(new List<XacmlMatch> { CreateSubjectMatch(roleAttributeId, roleCode) }) }),
+                new XacmlAnyOf(new List<XacmlAllOf> { new XacmlAllOf(new List<XacmlMatch> { CreateMatch(XacmlConstants.MatchAttributeCategory.Resource, AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistry, "bankruptcy_estate_resource") }) }),
+                new XacmlAnyOf(new List<XacmlAllOf> { new XacmlAllOf(new List<XacmlMatch> { CreateMatch(XacmlConstants.MatchAttributeCategory.Action, XacmlConstants.MatchAttributeIdentifiers.ActionId, "read") }) })
+            })
+        });
+
+        var resourcePolicies = PolicyHelper.GetResourcePoliciesFromXacmlPolicy(policy, "nb");
+
+        var resourcePolicy = Assert.Single(resourcePolicies);
+        var action = Assert.Single(resourcePolicy.Actions);
+        var roleGrant = Assert.Single(action.RoleGrants);
+        Assert.Equal(roleCode, roleGrant.RoleTypeCode);
+    }
+
     // --- BuildDelegationPolicy ---
     [Fact]
     public void BuildDelegationPolicy_SingleRule_ReturnsPolicy()
@@ -290,10 +318,15 @@ public class PolicyHelperTest
     // Helpers
     private static XacmlMatch CreateSubjectMatch(string attributeId, string value)
     {
+        return CreateMatch(XacmlConstants.MatchAttributeCategory.Subject, attributeId, value);
+    }
+
+    private static XacmlMatch CreateMatch(string category, string attributeId, string value)
+    {
         return new XacmlMatch(
             new Uri(XacmlConstants.AttributeMatchFunction.StringEqual),
             new XacmlAttributeValue(new Uri(XacmlConstants.DataTypes.XMLString), value),
-            new XacmlAttributeDesignator(new Uri(XacmlConstants.MatchAttributeCategory.Subject), new Uri(attributeId), new Uri(XacmlConstants.DataTypes.XMLString), false));
+            new XacmlAttributeDesignator(new Uri(category), new Uri(attributeId), new Uri(XacmlConstants.DataTypes.XMLString), false));
     }
 
     private static XacmlPolicy CreatePermitPolicyWithSubjectMatches(params XacmlMatch[] matches)
