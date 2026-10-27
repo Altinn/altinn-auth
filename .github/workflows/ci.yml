@@ -106,7 +106,7 @@ jobs:
       # TODO: add find-verticals output to only run this when manifests has changed??
       - find-verticals
 
-    uses: dis-way/actions/.github/workflows/kustomize-diff.yml@8a0034943836baaa34c7e220854f950ce3a5f370 # main
+    uses: dis-way/actions/.github/workflows/kustomize-diff.yml@fb99a38f8177b38ff22ed45377418c4c84c7075d # main
     with:
       # base/ overlays are skipped by the reusable workflow, so the trailing * only
       # ever resolves to environment overlays.
