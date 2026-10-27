@@ -10,7 +10,8 @@ namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration;
 /// extracted by APIM under the name "v1" at <c>/swagger/v1/swagger.json</c>,
 /// so its URL, document name and path set must stay stable. Schema and
 /// operation contents are owned by the endpoints themselves and are not
-/// pinned here. Swagger is only mapped in the Development environment, which
+/// pinned here, except how <c>NonExhaustiveEnum</c> is described, which
+/// depends on host configuration. Swagger is only mapped in the Development environment, which
 /// is the default environment for the <see cref="ApiFixture"/> test host.
 /// </summary>
 public class SwaggerDocTest
@@ -110,6 +111,87 @@ public class SwaggerDocTest
 
             paths.Should().Contain(p => p.StartsWith($"{MaskinportenV2Route}/consumers", StringComparison.Ordinal));
             paths.Should().Contain(p => p.StartsWith($"{MaskinportenV2Route}/suppliers", StringComparison.Ordinal));
+        }
+    }
+
+    /// <summary>
+    /// Tests that <c>NonExhaustiveEnum</c> properties are described as the string
+    /// they serialize to: one string enum per known value, plus a plain string for
+    /// values the client does not know. Without the ModelUtils Swashbuckle support
+    /// they are described as an object with <c>isUnknown</c> and <c>value</c>.
+    /// </summary>
+    [IntegrationTest]
+    public class NonExhaustiveEnumSchemas : IClassFixture<ApiFixture>
+    {
+        public NonExhaustiveEnumSchemas(ApiFixture fixture)
+        {
+            fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.EnableEnduserRequestV2Api);
+            Client = fixture.BuildConfiguration();
+        }
+
+        private HttpClient Client { get; }
+
+        [Fact]
+        public async Task GetSwaggerJson_V1Doc_RequestStatusV2IsNonExhaustiveString()
+        {
+            var schemas = await GetSchemas(Client, "v1");
+
+            AssertNonExhaustiveRequestStatus(ResolveProperty(schemas, "AMCoreModels.RequestDto", "statusV2"));
+        }
+
+        [Fact]
+        public async Task GetSwaggerJson_V1Doc_RequestStatusIsPlainEnum()
+        {
+            var schemas = await GetSchemas(Client, "v1");
+
+            var status = ResolveProperty(schemas, "AMCoreModels.RequestDto", "status");
+            status.GetProperty("type").GetString().Should().Be("string");
+            status.GetProperty("enum").EnumerateArray().Select(e => e.GetString()).Should().Contain("Approved");
+        }
+
+        [Theory]
+        [InlineData("AMCoreModels.RequestDto")]
+        [InlineData("AMCoreModels.ActivityLogDto")]
+        [InlineData("AMCoreModels.ActivityTypeDto")]
+        public async Task GetSwaggerJson_V2Doc_StatusIsNonExhaustiveString(string schemaName)
+        {
+            var schemas = await GetSchemas(Client, "v2");
+
+            AssertNonExhaustiveRequestStatus(ResolveProperty(schemas, schemaName, "status"));
+        }
+
+        private static async Task<JsonElement> GetSchemas(HttpClient client, string docName)
+        {
+            var body = await client.GetStringAsync($"/swagger/{docName}/swagger.json", TestContext.Current.CancellationToken);
+            using var doc = JsonDocument.Parse(body);
+            return doc.RootElement.GetProperty("components").GetProperty("schemas").Clone();
+        }
+
+        /// <summary>
+        /// Returns the schema of a property, following its <c>$ref</c>.
+        /// </summary>
+        private static JsonElement ResolveProperty(JsonElement schemas, string schemaName, string propertyName)
+        {
+            var property = schemas.GetProperty(schemaName).GetProperty("properties").GetProperty(propertyName);
+            if (!property.TryGetProperty("$ref", out var reference))
+            {
+                return property;
+            }
+
+            return schemas.GetProperty(reference.GetString()!.Split('/').Last());
+        }
+
+        private static void AssertNonExhaustiveRequestStatus(JsonElement schema)
+        {
+            schema.TryGetProperty("properties", out _).Should().BeFalse("a NonExhaustiveEnum serializes as a string, not an object");
+
+            var oneOf = schema.GetProperty("oneOf").EnumerateArray().ToList();
+            oneOf.Select(s => s.GetProperty("type").GetString()).Should().OnlyContain(type => type == "string");
+
+            // Each known value is a single-value enum; the alternative without an enum takes unknown values.
+            var knownValues = oneOf.Where(s => s.TryGetProperty("enum", out _)).Select(s => s.GetProperty("enum")[0].GetString()).ToList();
+            knownValues.Should().Contain("PartialApprove");
+            oneOf.Count.Should().Be(knownValues.Count + 1, "unknown values must be allowed");
         }
     }
 }

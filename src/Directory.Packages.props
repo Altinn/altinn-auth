@@ -10,6 +10,8 @@
   <ItemGroup>
     <PackageVersion Include="Altinn.ApiClients.Maskinporten" Version="9.2.1" />
     <PackageVersion Include="Altinn.Authorization.ModelUtils" Version="3.5.0" />
+    <!-- 1.4.0 is the last version built for Swashbuckle 8. Move to 3.x together with Swashbuckle 9 upgrade. -->
+    <PackageVersion Include="Altinn.Authorization.ModelUtils.Swashbuckle" Version="1.4.0" />
     <PackageVersion Include="Altinn.Authorization.ProblemDetails.Abstractions" Version="4.0.1" />
     <PackageVersion Include="Altinn.Authorization.ProblemDetails" Version="4.0.1" />
     <PackageVersion Include="Altinn.Authorization.ServiceDefaults.HttpClient.MaskinPorten" Version="5.5.0" />
