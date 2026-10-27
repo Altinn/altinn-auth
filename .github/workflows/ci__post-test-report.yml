@@ -1,0 +1,30 @@
+name: 'Post CI: Test Report'
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read
+  checks: write
+
+# Publish from the default branch so fork PRs can get check runs too.
+# This workflow only parses result artifacts; it does not execute PR code.
+jobs:
+  report:
+    name: Publish test results
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test Report
+        uses: dorny/test-reporter@a43b3a5f7366b97d083190328d2c652e1a8b6aa2 # v3.0.0
+        with:
+          artifact: /test-results-(.*)/
+          name: '$1: Tests'
+          path: '**/*.trx'
+          reporter: dotnet-trx
+          list-tests: failed
+          max-annotations: 50
+          fail-on-empty: false
+          use-actions-summary: false

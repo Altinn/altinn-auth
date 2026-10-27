@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.Core.Services.Interfaces;
+﻿using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.TestUtils.Data;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessManagement.TestUtils.Mocks;

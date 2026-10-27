@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.Core.Models.Consent;
+﻿using Altinn.AccessManagement.Core.Models.Consent;
 
 namespace Altinn.AccessManagement.Tests.Unit.Models.Consent;
 

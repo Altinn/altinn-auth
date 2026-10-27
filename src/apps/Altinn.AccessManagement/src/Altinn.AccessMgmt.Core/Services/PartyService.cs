@@ -80,7 +80,7 @@ public class PartyService(AppDbContext db) : IPartyService
         {
             return false;
         }
-               
+
         if (party.EntityVariantType.Equals(EntityVariantConstants.SI_EDU.Entity.Name, StringComparison.InvariantCultureIgnoreCase))
         {
             return true;

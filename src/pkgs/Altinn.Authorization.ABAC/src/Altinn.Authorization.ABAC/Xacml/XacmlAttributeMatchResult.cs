@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.ABAC.Xacml
+﻿namespace Altinn.Authorization.ABAC.Xacml
 {
     /// <summary>
     /// Internal enum to be used in matching of attributes

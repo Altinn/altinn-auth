@@ -18,7 +18,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("Altinn:AuditVersion", 3)
-                .HasAnnotation("ProductVersion", "10.0.10")
+                .HasAnnotation("ProductVersion", "10.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -63,6 +63,247 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     NpgsqlIndexBuilderExtensions.IncludeProperties(b.HasIndex("FacilitatorId", "FromId"), new[] { "Id" });
 
                     b.ToTable("a2clientrole", "dbo");
+                });
+
+            modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.ActivityLog", b =>
+                {
+                    b.Property<DateTimeOffset>("When")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("when");
+
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id")
+                        .HasDefaultValueSql("dbo.uuid_generate_v7()");
+
+                    b.Property<Guid?>("ById")
+                        .HasColumnType("uuid")
+                        .HasColumnName("byid");
+
+                    b.Property<string>("ByName")
+                        .HasColumnType("text")
+                        .HasColumnName("byname");
+
+                    b.Property<string>("Details")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("details");
+
+                    b.Property<Guid?>("FromId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("fromid");
+
+                    b.Property<string>("FromName")
+                        .HasColumnType("text")
+                        .HasColumnName("fromname");
+
+                    b.Property<string>("FromType")
+                        .HasColumnType("text")
+                        .HasColumnName("fromtype");
+
+                    b.Property<string>("InstanceId")
+                        .HasColumnType("text")
+                        .HasColumnName("instanceid");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("itemid");
+
+                    b.Property<string>("OperationId")
+                        .HasColumnType("text")
+                        .HasColumnName("operationid");
+
+                    b.Property<Guid?>("PackageId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("packageid");
+
+                    b.Property<string>("PackageName")
+                        .HasColumnType("text")
+                        .HasColumnName("packagename");
+
+                    b.Property<Guid?>("ParentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("parentid");
+
+                    b.Property<Guid?>("ResourceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("resourceid");
+
+                    b.Property<string>("ResourceName")
+                        .HasColumnType("text")
+                        .HasColumnName("resourcename");
+
+                    b.Property<Guid?>("RoleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("roleid");
+
+                    b.Property<string>("RoleName")
+                        .HasColumnType("text")
+                        .HasColumnName("rolename");
+
+                    b.Property<Guid?>("SourceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("sourceid");
+
+                    b.Property<int?>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.Property<int?>("Subtype")
+                        .HasColumnType("integer")
+                        .HasColumnName("subtype");
+
+                    b.Property<Guid?>("ToId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("toid");
+
+                    b.Property<string>("ToName")
+                        .HasColumnType("text")
+                        .HasColumnName("toname");
+
+                    b.Property<string>("ToType")
+                        .HasColumnType("text")
+                        .HasColumnName("totype");
+
+                    b.Property<int>("Trigger")
+                        .HasColumnType("integer")
+                        .HasColumnName("trigger");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer")
+                        .HasColumnName("type");
+
+                    b.Property<Guid?>("ViaId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("viaid");
+
+                    b.Property<string>("ViaName")
+                        .HasColumnType("text")
+                        .HasColumnName("vianame");
+
+                    b.Property<Guid?>("ViaRoleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("viaroleid");
+
+                    b.Property<string>("ViaRoleName")
+                        .HasColumnType("text")
+                        .HasColumnName("viarolename");
+
+                    b.Property<string>("ViaType")
+                        .HasColumnType("text")
+                        .HasColumnName("viatype");
+
+                    b.HasKey("When", "Id")
+                        .HasName("pk_activitylog");
+
+                    b.HasIndex("ItemId")
+                        .HasDatabaseName("ix_activitylog_itemid");
+
+                    b.HasIndex("ParentId")
+                        .HasDatabaseName("ix_activitylog_parentid");
+
+                    b.HasIndex("FromId", "When")
+                        .HasDatabaseName("ix_activitylog_fromid_when");
+
+                    b.HasIndex("ToId", "When")
+                        .HasDatabaseName("ix_activitylog_toid_when");
+
+                    b.HasIndex("ViaId", "When")
+                        .HasDatabaseName("ix_activitylog_viaid_when");
+
+                    b.HasIndex("ById", "When")
+                        .HasDatabaseName("ix_activitylog_byid_when");
+
+                    b.ToTable("activitylog", "dbo");
+
+                    b.HasAnnotation("Altinn:PartitionByRangeColumn", "when");
+                });
+
+            modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.ActivityLogBackfillProgress", b =>
+                {
+                    b.Property<string>("Source")
+                        .HasColumnType("text")
+                        .HasColumnName("source");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completedat");
+
+                    b.Property<DateTimeOffset?>("Cursor")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cursor");
+
+                    b.Property<DateTimeOffset>("Cutoff")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("cutoff");
+
+                    b.HasKey("Source")
+                        .HasName("pk_activitylogbackfillprogress");
+
+                    b.ToTable("activitylogbackfillprogress", "dbo");
+                });
+
+            modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.ActivityType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Audit_ChangeOperation")
+                        .HasColumnType("text")
+                        .HasColumnName("audit_changeoperation");
+
+                    b.Property<Guid?>("Audit_ChangedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_changedby");
+
+                    b.Property<Guid?>("Audit_ChangedBySystem")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_changedbysystem");
+
+                    b.Property<DateTimeOffset>("Audit_ValidFrom")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("audit_validfrom");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.Property<int?>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.Property<int?>("Subtype")
+                        .HasColumnType("integer")
+                        .HasColumnName("subtype");
+
+                    b.Property<int>("Trigger")
+                        .HasColumnType("integer")
+                        .HasColumnName("trigger");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer")
+                        .HasColumnName("type");
+
+                    b.HasKey("Id")
+                        .HasName("pk_activitytype");
+
+                    b.HasIndex("Type", "Subtype", "Trigger", "Status")
+                        .IsUnique()
+                        .HasDatabaseName("ix_activitytype_type_subtype_trigger_status");
+
+                    NpgsqlIndexBuilderExtensions.AreNullsDistinct(b.HasIndex("Type", "Subtype", "Trigger", "Status"), false);
+
+                    b.ToTable("activitytype", "dbo");
+
+                    b.HasAnnotation("Altinn:AuditVersion", 3);
                 });
 
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.Area", b =>
@@ -237,7 +478,9 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 
                     b.ToTable("assignment", "dbo");
 
-                    b.HasAnnotation("Altinn:AuditVersion", 3);
+                    b
+                        .HasAnnotation("Altinn:ActivityLogVersion", 1)
+                        .HasAnnotation("Altinn:AuditVersion", 3);
                 });
 
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.AssignmentInstance", b =>
@@ -313,7 +556,9 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 
                     b.ToTable("assignmentinstance", "dbo");
 
-                    b.HasAnnotation("Altinn:AuditVersion", 3);
+                    b
+                        .HasAnnotation("Altinn:ActivityLogVersion", 1)
+                        .HasAnnotation("Altinn:AuditVersion", 3);
                 });
 
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.AssignmentPackage", b =>
@@ -362,7 +607,9 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 
                     b.ToTable("assignmentpackage", "dbo");
 
-                    b.HasAnnotation("Altinn:AuditVersion", 3);
+                    b
+                        .HasAnnotation("Altinn:ActivityLogVersion", 1)
+                        .HasAnnotation("Altinn:AuditVersion", 3);
                 });
 
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.AssignmentResource", b =>
@@ -428,7 +675,77 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 
                     b.ToTable("assignmentresource", "dbo");
 
-                    b.HasAnnotation("Altinn:AuditVersion", 3);
+                    b
+                        .HasAnnotation("Altinn:ActivityLogVersion", 1)
+                        .HasAnnotation("Altinn:AuditVersion", 3);
+                });
+
+            modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.Audit.AuditActivityType", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("Audit_ValidFrom")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("audit_validfrom");
+
+                    b.Property<DateTimeOffset>("Audit_ValidTo")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("audit_validto");
+
+                    b.Property<string>("Audit_ChangeOperation")
+                        .HasColumnType("text")
+                        .HasColumnName("audit_changeoperation");
+
+                    b.Property<Guid?>("Audit_ChangedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_changedby");
+
+                    b.Property<Guid?>("Audit_ChangedBySystem")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_changedbysystem");
+
+                    b.Property<string>("Audit_DeleteOperation")
+                        .HasColumnType("text")
+                        .HasColumnName("audit_deleteoperation");
+
+                    b.Property<Guid?>("Audit_DeletedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_deletedby");
+
+                    b.Property<Guid?>("Audit_DeletedBySystem")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_deletedbysystem");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("text")
+                        .HasColumnName("name");
+
+                    b.Property<int?>("Status")
+                        .HasColumnType("integer")
+                        .HasColumnName("status");
+
+                    b.Property<int?>("Subtype")
+                        .HasColumnType("integer")
+                        .HasColumnName("subtype");
+
+                    b.Property<int>("Trigger")
+                        .HasColumnType("integer")
+                        .HasColumnName("trigger");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer")
+                        .HasColumnName("type");
+
+                    b.HasKey("Id", "Audit_ValidFrom", "Audit_ValidTo")
+                        .HasName("pk_auditactivitytype");
+
+                    b.ToTable("auditactivitytype", "dbo_history");
                 });
 
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.Audit.AuditArea", b =>
@@ -2220,7 +2537,9 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 
                     b.ToTable("delegation", "dbo");
 
-                    b.HasAnnotation("Altinn:AuditVersion", 3);
+                    b
+                        .HasAnnotation("Altinn:ActivityLogVersion", 1)
+                        .HasAnnotation("Altinn:AuditVersion", 3);
                 });
 
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.DelegationPackage", b =>
@@ -2280,7 +2599,9 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 
                     b.ToTable("delegationpackage", "dbo");
 
-                    b.HasAnnotation("Altinn:AuditVersion", 3);
+                    b
+                        .HasAnnotation("Altinn:ActivityLogVersion", 1)
+                        .HasAnnotation("Altinn:AuditVersion", 3);
                 });
 
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.DelegationResource", b =>
@@ -2336,7 +2657,9 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 
                     b.ToTable("delegationresource", "dbo");
 
-                    b.HasAnnotation("Altinn:AuditVersion", 3);
+                    b
+                        .HasAnnotation("Altinn:ActivityLogVersion", 1)
+                        .HasAnnotation("Altinn:AuditVersion", 3);
                 });
 
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.Entity", b =>
@@ -3195,7 +3518,9 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 
                     b.ToTable("requestassignment", "dbo");
 
-                    b.HasAnnotation("Altinn:AuditVersion", 3);
+                    b
+                        .HasAnnotation("Altinn:ActivityLogVersion", 1)
+                        .HasAnnotation("Altinn:AuditVersion", 3);
                 });
 
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.RequestAssignmentPackage", b =>
@@ -3249,7 +3574,9 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 
                     b.ToTable("requestassignmentpackage", "dbo");
 
-                    b.HasAnnotation("Altinn:AuditVersion", 3);
+                    b
+                        .HasAnnotation("Altinn:ActivityLogVersion", 1)
+                        .HasAnnotation("Altinn:AuditVersion", 3);
                 });
 
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.RequestAssignmentResource", b =>
@@ -3307,7 +3634,9 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 
                     b.ToTable("requestassignmentresource", "dbo");
 
-                    b.HasAnnotation("Altinn:AuditVersion", 3);
+                    b
+                        .HasAnnotation("Altinn:ActivityLogVersion", 1)
+                        .HasAnnotation("Altinn:AuditVersion", 3);
                 });
 
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.Resource", b =>

@@ -15,6 +15,8 @@ This scope clarification was drafted with Codex (GPT-6). Human reader of the rev
 | Cross-cutting: repository conventions, build and CI, dependencies between verticals | `docs/adr/` (this folder) |
 | One vertical: flows, policy evaluation, API contracts, data model | `src/apps/<Vertical>/docs/adr/` (and the equivalent under `src/pkgs`, `src/libs`, `src/tools`) |
 
+Verticals with their own index today: [Altinn.Authorization](../../src/apps/Altinn.Authorization/docs/adr/README.md), [Altinn.AccessManagement](../../src/apps/Altinn.AccessManagement/docs/adr/README.md) and [Altinn.ResourceRegistry](../../src/apps/Altinn.ResourceRegistry/docs/adr/README.md).
+
 Each folder numbers its own ADRs from `0001`. A repository that is moved into this monorepo keeps its ADR numbers; only the folder changes. See [ADR-0001](0001-record-architecture-decisions.md).
 
 ## Rules
@@ -31,3 +33,5 @@ Each folder numbers its own ADRs from `0001`. A repository that is moved into th
 | --- | --- | --- |
 | [0001](0001-record-architecture-decisions.md) | Record architecture decisions | Accepted |
 | [0002](0002-tool-neutral-agent-contract.md) | Tool-neutral agent contract: `AGENTS.md` as the single source | Accepted |
+| [0003](0003-one-ai-review-bot.md) | One AI review bot, Copilot code review, advisory only | Accepted |
+| [0004](0004-issue-and-label-model.md) | One issue and label model for the monorepo | Accepted |

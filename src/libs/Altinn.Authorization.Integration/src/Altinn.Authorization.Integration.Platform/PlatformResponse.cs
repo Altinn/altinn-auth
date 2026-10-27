@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using Altinn.Authorization.ProblemDetails;
 
 namespace Altinn.Authorization.Integration.Platform;

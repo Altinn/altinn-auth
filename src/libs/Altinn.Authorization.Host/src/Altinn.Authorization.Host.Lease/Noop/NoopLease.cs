@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.Host.Lease.Noop;
+﻿namespace Altinn.Authorization.Host.Lease.Noop;
 
 public class NoopLease : ILease
 {

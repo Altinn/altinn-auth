@@ -13,7 +13,6 @@ using Altinn.Platform.Authorization.Services.Interfaces;
 using Altinn.Platform.Profile.Models;
 using Altinn.Platform.Register.Enums;
 using Altinn.Platform.Register.Models;
-using Authorization.Platform.Authorization.Models;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
@@ -28,7 +27,6 @@ namespace Altinn.Authorization.Tests.Unit;
 public class ContextHandlerUnitTest : IDisposable
 {
     private readonly Mock<IInstanceMetadataRepository> _policyInfoRepoMock = new();
-    private readonly Mock<IRoles> _rolesMock = new();
     private readonly Mock<IOedRoleAssignmentWrapper> _oedRolesMock = new();
     private readonly Mock<IProfile> _profileMock = new();
     private readonly MemoryCache _memoryCache = new(new MemoryCacheOptions());
@@ -44,7 +42,6 @@ public class ContextHandlerUnitTest : IDisposable
     {
         _sut = new TestableContextHandler(
             _policyInfoRepoMock.Object,
-            _rolesMock.Object,
             _oedRolesMock.Object,
             _profileMock.Object,
             _memoryCache,
@@ -237,6 +234,61 @@ public class ContextHandlerUnitTest : IDisposable
         var result = _sut.TestGetResourceAttributeValues(attrs);
 
         Assert.Equal("111111111", result.OrganizationNumber);
+    }
+
+    [Fact]
+    public void GetResourceAttributeValues_ViaPartyOrganization_ParsedCorrectly()
+    {
+        var attrs = CreateResourceAttributes(
+            (XacmlRequestAttribute.ViaPartyOrganizationIdentifierNoAttribute, "910514318"));
+
+        var result = _sut.TestGetResourceAttributeValues(attrs);
+
+        Assert.Equal("910514318", result.ViaPartyOrganizationNumber);
+    }
+
+    [Fact]
+    public void GetResourceAttributeValues_AccessRestrictionAbsent_DefaultsToNone()
+    {
+        var attrs = CreateResourceAttributes(
+            (XacmlRequestAttribute.OrgAttribute, "ttd"),
+            (XacmlRequestAttribute.AppAttribute, "myapp"));
+
+        var result = _sut.TestGetResourceAttributeValues(attrs);
+
+        Assert.Equal(Altinn.Authorization.Enums.AccessRestriction.None, result.AccessRestriction);
+        Assert.False(result.HasInvalidAccessRestriction);
+    }
+
+    [Theory]
+    [InlineData("ClientDelegation", Altinn.Authorization.Enums.AccessRestriction.ClientDelegation)]
+    [InlineData("clientdelegation", Altinn.Authorization.Enums.AccessRestriction.ClientDelegation)]
+    [InlineData("DirectAndHierarchy", Altinn.Authorization.Enums.AccessRestriction.DirectAndHierarchy)]
+    [InlineData("None", Altinn.Authorization.Enums.AccessRestriction.None)]
+    public void GetResourceAttributeValues_AccessRestriction_ParsedCaseInsensitively(string value, Altinn.Authorization.Enums.AccessRestriction expected)
+    {
+        var attrs = CreateResourceAttributes(
+            (XacmlRequestAttribute.AccessRestrictionAttribute, value));
+
+        var result = _sut.TestGetResourceAttributeValues(attrs);
+
+        Assert.Equal(expected, result.AccessRestriction);
+        Assert.False(result.HasInvalidAccessRestriction);
+    }
+
+    [Theory]
+    [InlineData("Bogus")]
+    [InlineData("42")]
+    [InlineData("")]
+    public void GetResourceAttributeValues_AccessRestrictionInvalid_FlagsInvalidAndDefaultsToNone(string value)
+    {
+        var attrs = CreateResourceAttributes(
+            (XacmlRequestAttribute.AccessRestrictionAttribute, value));
+
+        var result = _sut.TestGetResourceAttributeValues(attrs);
+
+        Assert.Equal(Altinn.Authorization.Enums.AccessRestriction.None, result.AccessRestriction);
+        Assert.True(result.HasInvalidAccessRestriction);
     }
 
     [Fact]
@@ -459,19 +511,6 @@ public class ContextHandlerUnitTest : IDisposable
     #region Cached lookups
 
     [Fact]
-    public async Task GetRoles_CachesResult()
-    {
-        var roles = new List<Role> { new Role { Value = "DAGL" } };
-        _rolesMock.Setup(r => r.GetDecisionPointRolesForUser(1, 2)).ReturnsAsync(roles);
-
-        var first = await _sut.TestGetRoles(1, 2);
-        var second = await _sut.TestGetRoles(1, 2);
-
-        Assert.Same(first, second);
-        _rolesMock.Verify(r => r.GetDecisionPointRolesForUser(1, 2), Times.Once);
-    }
-
-    [Fact]
     public async Task GetUserProfileByUserId_CachesAndCrossPopulatesSsn()
     {
         var profile = new UserProfile
@@ -530,19 +569,6 @@ public class ContextHandlerUnitTest : IDisposable
     #region Attribute builder helpers
 
     [Fact]
-    public void GetRoleAttribute_BuildsCorrectly()
-    {
-        var roles = new List<Role> { new() { Value = "DAGL" }, new() { Value = "REGNA" } };
-
-        var attr = _sut.TestGetRoleAttribute(roles);
-
-        Assert.Equal(XacmlRequestAttribute.RoleAttribute, attr.AttributeId.OriginalString);
-        Assert.Equal(2, attr.AttributeValues.Count);
-        Assert.Equal("DAGL", attr.AttributeValues.First().Value);
-        Assert.Equal("REGNA", attr.AttributeValues.Last().Value);
-    }
-
-    [Fact]
     public void GetPartyTypeAttribute_Organization()
     {
         var attr = _sut.TestGetPartyTypeAttribute(PartyType.Organisation);
@@ -570,10 +596,10 @@ public class ContextHandlerUnitTest : IDisposable
 
     #endregion
 
-    #region EnrichSubjectAttributes with AccessManagementAsPipForRoles
+    #region EnrichSubjectAttributes
 
     [Fact]
-    public async Task EnrichSubjectAttributes_WithFeatureFlag_EnrichesRolesFromAccessManagement()
+    public async Task EnrichSubjectAttributes_EnrichesRolesFromAccessManagement()
     {
         // Arrange
         int subjectUserId = 1001;
@@ -609,7 +635,7 @@ public class ContextHandlerUnitTest : IDisposable
     }
 
     [Fact]
-    public async Task EnrichSubjectAttributes_WithFeatureFlag_EnrichesAccessPackagesFromAccessManagement()
+    public async Task EnrichSubjectAttributes_EnrichesAccessPackagesFromAccessManagement()
     {
         // Arrange
         int subjectUserId = 1001;
@@ -643,7 +669,7 @@ public class ContextHandlerUnitTest : IDisposable
     }
 
     [Fact]
-    public async Task EnrichSubjectAttributes_WithFeatureFlag_EnrichesRolesAndAccessPackages_CacheEnsuresSingleApiCall()
+    public async Task EnrichSubjectAttributes_EnrichesRolesAndAccessPackages_CacheEnsuresSingleApiCall()
     {
         // Arrange
         int subjectUserId = 1001;
@@ -683,43 +709,42 @@ public class ContextHandlerUnitTest : IDisposable
     }
 
     [Fact]
-    public async Task EnrichSubjectAttributes_WithoutFeatureFlag_UsesLegacyRolesEndpoint()
+    public async Task EnrichSubjectAttributes_ClientDelegation_PassesAccessRestrictionAndViaPartyToPip()
     {
         // Arrange
         int subjectUserId = 1001;
         int resourcePartyId = 50001337;
         Guid subjectPartyUuid = Guid.Parse("00000000-0000-0000-0000-000000001001");
+        Guid resourcePartyUuid = Guid.Parse("00000000-0000-0000-0000-000000050001");
+        string viaParty = "910000000";
 
-        var legacyRoles = new List<Role> { new() { Value = "DAGL" }, new() { Value = "HADM" } };
-
-        _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.AccessManagementAsPipForRoles)).ReturnsAsync(false);
-        _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.UserAccessPackageAuthorization)).ReturnsAsync(false);
+        _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.UserAccessPackageAuthorization)).ReturnsAsync(true);
         _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.SystemUserAccessPackageAuthorization)).ReturnsAsync(false);
 
         _profileMock.Setup(p => p.GetUserProfile(subjectUserId, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new UserProfile { UserId = subjectUserId, Party = new Party { SSN = "01017012345", PartyTypeName = PartyType.Person, PartyUuid = subjectPartyUuid } });
 
-        _rolesMock.Setup(r => r.GetDecisionPointRolesForUser(subjectUserId, resourcePartyId)).ReturnsAsync(legacyRoles);
+        _accessMgmtMock.Setup(a => a.GetRolesAndAccessPackages(subjectPartyUuid, resourcePartyUuid, Altinn.Authorization.Enums.AccessRestriction.ClientDelegation, viaParty, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new PipResponseDto { Roles = [], AccessPackages = [AccessPackageUrn.Parse("urn:altinn:accesspackage:regnskapsforer-lonn")] });
 
-        var policy = CreatePolicyWithSubjectAttributes(policyHasRoles: true, policyHasAccessPackages: false);
+        var policy = CreatePolicyWithSubjectAttributes(policyHasRoles: true, policyHasAccessPackages: true);
         _prpMock.Setup(p => p.GetPolicyAsync(It.IsAny<XacmlContextRequest>())).ReturnsAsync(policy);
 
-        var (request, resourceAttrs) = CreateEnrichSubjectRequest(subjectUserId, resourcePartyId);
+        var (request, resourceAttrs) = CreateEnrichSubjectRequest(subjectUserId, resourcePartyId, resourcePartyUuid);
+        resourceAttrs.AccessRestriction = Altinn.Authorization.Enums.AccessRestriction.ClientDelegation;
+        resourceAttrs.ViaPartyOrganizationNumber = viaParty;
 
         // Act
         await _sut.TestEnrichSubjectAttributes(request, resourceAttrs, isExternalRequest: false, TestContext.Current.CancellationToken);
 
         // Assert
-        var subjectAttrs = request.GetSubjectAttributes();
-        AssertContainsAttributeValue(subjectAttrs, XacmlRequestAttribute.RoleAttribute, "DAGL");
-        AssertContainsAttributeValue(subjectAttrs, XacmlRequestAttribute.RoleAttribute, "HADM");
-
-        _accessMgmtMock.Verify(a => a.GetRolesAndAccessPackages(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<CancellationToken>()), Times.Never);
-        _rolesMock.Verify(r => r.GetDecisionPointRolesForUser(subjectUserId, resourcePartyId), Times.Once);
+        AssertContainsAttributeValue(request.GetSubjectAttributes(), "urn:altinn:accesspackage", "regnskapsforer-lonn");
+        _accessMgmtMock.Verify(a => a.GetRolesAndAccessPackages(It.IsAny<Guid>(), It.IsAny<Guid>(), It.Is<Altinn.Authorization.Enums.AccessRestriction>(c => c != Altinn.Authorization.Enums.AccessRestriction.ClientDelegation), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _accessMgmtMock.Verify(a => a.GetRolesAndAccessPackages(subjectPartyUuid, resourcePartyUuid, Altinn.Authorization.Enums.AccessRestriction.ClientDelegation, viaParty, It.IsAny<CancellationToken>()), Times.AtLeastOnce);
     }
 
     [Fact]
-    public async Task EnrichSubjectAttributes_WithFeatureFlag_EmptyPipResponse_NoAttributesAdded()
+    public async Task EnrichSubjectAttributes_EmptyPipResponse_NoAttributesAdded()
     {
         // Arrange
         int subjectUserId = 1001;
@@ -743,7 +768,7 @@ public class ContextHandlerUnitTest : IDisposable
     }
 
     [Fact]
-    public async Task EnrichSubjectAttributes_WithFeatureFlag_NoPartyUuidOnRequest_ResolvesViaEnrichResourceParty_AndEnrichesRoles()
+    public async Task EnrichSubjectAttributes_NoPartyUuidOnRequest_ResolvesViaEnrichResourceParty_AndEnrichesRoles()
     {
         // Arrange: ResourcePartyValue is set but PartyUuid is NOT (Guid.Empty).
         // This simulates a request that only specifies the integer party id.
@@ -795,7 +820,6 @@ public class ContextHandlerUnitTest : IDisposable
         int subjectUserId, int resourcePartyId, Guid subjectPartyUuid, Guid resourcePartyUuid,
         PipResponseDto pipResponse, bool policyHasRoles, bool policyHasAccessPackages)
     {
-        _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.AccessManagementAsPipForRoles)).ReturnsAsync(true);
         _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.UserAccessPackageAuthorization)).ReturnsAsync(true);
         _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.SystemUserAccessPackageAuthorization)).ReturnsAsync(false);
 
@@ -812,7 +836,6 @@ public class ContextHandlerUnitTest : IDisposable
 
         _cachingSut = new TestableContextHandler(
             _policyInfoRepoMock.Object,
-            _rolesMock.Object,
             _oedRolesMock.Object,
             _profileMock.Object,
             _memoryCache,
@@ -927,7 +950,6 @@ public class ContextHandlerUnitTest : IDisposable
     {
         public TestableContextHandler(
             IInstanceMetadataRepository policyInformationRepository,
-            IRoles rolesWrapper,
             IOedRoleAssignmentWrapper oedRolesWrapper,
             IProfile profileWrapper,
             IMemoryCache memoryCache,
@@ -937,7 +959,7 @@ public class ContextHandlerUnitTest : IDisposable
             IAccessManagementWrapper accessManagementWrapper,
             IFeatureManager featureManager,
             IResourceRegistry resourceRegistry)
-            : base(policyInformationRepository, rolesWrapper, oedRolesWrapper, profileWrapper, memoryCache, settings, registerService, prp, accessManagementWrapper, featureManager, resourceRegistry)
+            : base(policyInformationRepository, oedRolesWrapper, profileWrapper, memoryCache, settings, registerService, prp, accessManagementWrapper, featureManager, resourceRegistry)
         {
         }
 
@@ -953,9 +975,6 @@ public class ContextHandlerUnitTest : IDisposable
         public Task TestEnrichResourceParty(XacmlContextAttributes attrs, XacmlResourceAttributes resourceAttrs, bool isExternal, CancellationToken ct = default)
             => EnrichResourceParty(attrs, resourceAttrs, isExternal, ct);
 
-        public Task<List<Role>> TestGetRoles(int userId, int partyId)
-            => GetRoles(userId, partyId);
-
         public Task<UserProfile> TestGetUserProfileByUserId(int userId, CancellationToken ct = default)
             => GetUserProfileByUserId(userId, ct);
 
@@ -967,9 +986,6 @@ public class ContextHandlerUnitTest : IDisposable
 
         public Task TestEnrichSubjectAttributes(XacmlContextRequest request, XacmlResourceAttributes resourceAttrs, bool isExternalRequest, CancellationToken ct = default)
             => EnrichSubjectAttributes(request, resourceAttrs, isExternalRequest, ct);
-
-        public XacmlAttribute TestGetRoleAttribute(List<Role> roles)
-            => GetRoleAttribute(roles);
 
         public XacmlAttribute TestGetPartyTypeAttribute(PartyType partyType)
             => GetPartyTypeAttribute(partyType);
@@ -997,7 +1013,7 @@ public class ContextHandlerUnitTest : IDisposable
             _pipResponse = pipResponse;
         }
 
-        public Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, CancellationToken cancellationToken = default)
+        public Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, Altinn.Authorization.Enums.AccessRestriction accessRestriction = Altinn.Authorization.Enums.AccessRestriction.None, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default)
         {
             var cacheKey = $"RolesAndAccPkgs|f:{from}|t:{to}";
 
@@ -1015,9 +1031,6 @@ public class ContextHandlerUnitTest : IDisposable
 
             return Task.FromResult(result);
         }
-
-        public Task<IEnumerable<AccessPackageUrn>> GetAccessPackages(Guid to, Guid from, CancellationToken cancellationToken = default)
-            => throw new NotImplementedException();
 
         public Task<IEnumerable<DelegationChangeDto>> GetAllDelegationChanges(DelegationChangeInputDto input, CancellationToken cancellationToken = default)
             => throw new NotImplementedException();

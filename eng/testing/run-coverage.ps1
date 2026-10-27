@@ -55,7 +55,7 @@ $coverageFiles = @()
 # of all project times. Each project writes to a distinct output + log.
 $configurationLocal = $Configuration
 $resultsDirLocal = $resultsDir
-# Shared with CI (tpl-vertical-ci.yml): aligns the coverage denominator with
+# Aligns the local coverage denominator with the retained configuration for
 # SonarCloud by excluding generated code, migrations, and tooling.
 $coverageSettings = Join-Path $repoRoot 'eng/testing/coverage.settings'
 $throttle = [Math]::Min($Projects.Count, [Math]::Max(2, [Environment]::ProcessorCount))

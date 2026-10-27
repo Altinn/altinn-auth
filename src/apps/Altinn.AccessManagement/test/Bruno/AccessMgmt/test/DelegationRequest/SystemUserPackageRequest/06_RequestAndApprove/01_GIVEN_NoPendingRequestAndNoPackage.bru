@@ -1,0 +1,65 @@
+meta {
+	name: 01_GIVEN_NoPendingRequestAndNoPackage
+	type: http
+	seq: 1
+}
+
+get {
+	url: {{baseUrl}}/accessmanagement/api/v1/enduser/request/received?party={{party}}&from={{systemUser}}&status=Pending&type=package
+	body: none
+	auth: inherit
+}
+
+params:query {
+	party: {{party}}
+	from: {{systemUser}}
+	status: Pending
+	type: package
+}
+
+docs {
+	GIVEN the recipient has no pending package request from the system user, and the system user
+	does not hold the package from the recipient.
+
+	Idempotent reset: rejects any pending requests from the system user and removes the package
+	from the system user, so leftovers from earlier or crashed runs never break the scenario.
+}
+
+script:pre-request {
+  bru.setVar("approveRequestId", null);
+
+	const { testdata, loginAs } = require("./test/DelegationRequest/SystemUserPackageRequest/helpers.js");
+	const td = testdata();
+
+	bru.setVar("party", td.recipient.partyUuid);
+	bru.setVar("systemUser", td.publicSectorConsumer.systemUser.partyUuid);
+	bru.setVar("package", td.package);
+
+	await loginAs(td.recipient.dagligleder);
+}
+
+script:post-response {
+	const axios = require("axios");
+	const baseUrl = bru.getEnvVar("baseUrl");
+	const headers = { Authorization: `Bearer ${bru.getVar("bearerToken")}` };
+	const party = bru.getVar("party");
+	const systemUser = bru.getVar("systemUser");
+
+	const pending = (res.getBody() && res.getBody().data) || [];
+	for (const request of pending) {
+		await axios.put(
+			`${baseUrl}/accessmanagement/api/v1/enduser/request/received/reject?party=${party}&id=${request.id}`,
+			null,
+			{ headers });
+	}
+
+	await axios.delete(
+		`${baseUrl}/accessmanagement/api/v1/enduser/connections/accesspackages?party=${party}&from=${party}&to=${systemUser}&package=${bru.getVar("package")}`,
+		{ headers, validateStatus: () => true });
+}
+
+tests {
+	test("GIVEN the received requests can be listed, the request returns 200", function() {
+		expect(res.status).to.equal(200);
+	});
+}

@@ -1,4 +1,4 @@
-namespace Altinn.Platform.Authorization.Models.EventLog
+﻿namespace Altinn.Platform.Authorization.Models.EventLog
 {
     /// <summary>
     /// Whether an authorization event repeats one already seen within the deduplication window.

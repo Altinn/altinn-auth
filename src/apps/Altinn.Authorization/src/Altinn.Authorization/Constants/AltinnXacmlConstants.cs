@@ -120,6 +120,18 @@
             /// Party Id attribute match identifier 
             /// </summary>
             public const string PartyUUIdAttribute = "urn:altinn:party:uuid";
+
+            /// <summary>
+            /// Via-party organization (Norwegian organization number) attribute match identifier.
+            /// Identifies the organization through which client-delegated access was received.
+            /// </summary>
+            public const string ViaPartyOrganizationIdentifierNoAttribute = "urn:altinn:via-party:organization:identifier-no";
+
+            /// <summary>
+            /// access restriction attribute match identifier. Controls how client-delegated access is
+            /// considered when authorizing the request. Specified per request in the Resource category.
+            /// </summary>
+            public const string AccessRestrictionAttribute = "urn:altinn:authorization:access-restriction";
         }
 
         /// <summary>

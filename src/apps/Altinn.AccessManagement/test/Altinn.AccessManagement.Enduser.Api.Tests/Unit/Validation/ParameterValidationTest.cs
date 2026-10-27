@@ -1,4 +1,4 @@
-using System.Collections.Immutable;
+﻿using System.Collections.Immutable;
 using Altinn.AccessManagement.Api.Enduser.Validation;
 using Altinn.AccessMgmt.Core.Validation;
 using Altinn.Authorization.Api.Contracts.AccessManagement;

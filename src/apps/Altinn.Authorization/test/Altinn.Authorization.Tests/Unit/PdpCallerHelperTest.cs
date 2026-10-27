@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Altinn.Platform.Authorization.Helpers;
 using Altinn.Platform.Authorization.Telemetry;
 

@@ -1,4 +1,4 @@
-using System.Net.Mime;
+﻿using System.Net.Mime;
 using Altinn.Authorization.ProblemDetails;
 using Altinn.Platform.Authorization.Constants;
 using Altinn.Platform.Authorization.Models;

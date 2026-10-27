@@ -1,0 +1,52 @@
+meta {
+  name: 01_GIVEN_NoPendingSentRequestToRecipient
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/systemuser/request/sent?organization={{organization}}&status=Pending&type=package
+  body: none
+  auth: inherit
+}
+
+params:query {
+  organization: {{organization}}
+  status: Pending
+  type: package
+}
+
+docs {
+  GIVEN the system user has no pending package request sent to the recipient.
+
+  Idempotent reset: lists the system user's pending sent requests to the recipient and
+  withdraws each one, so leftovers from earlier or crashed runs never break the scenario.
+}
+
+script:pre-request {
+  bru.setVar("withdrawRequestId", null);
+
+  const { testdata, loginAsSystemUser } = require("./test/DelegationRequest/SystemUserPackageRequest/helpers.js");
+  const td = testdata();
+
+  bru.setVar("organization", td.recipient.orgno);
+
+  await loginAsSystemUser(td.publicSectorConsumer.systemUser, td.publicSectorConsumer.orgno, td.publicSectorConsumer.orgno);
+}
+
+script:post-response {
+  const axios = require("axios");
+  const pending = (res.getBody() && res.getBody().data) || [];
+  for (const request of pending) {
+    await axios.put(
+      `${bru.getEnvVar("baseUrl")}/accessmanagement/api/v1/systemuser/request/sent/withdraw?id=${request.id}`,
+      null,
+      { headers: { Authorization: `Bearer ${bru.getVar("bearerToken")}` } });
+  }
+}
+
+tests {
+  test("GIVEN the sent requests can be listed, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+}

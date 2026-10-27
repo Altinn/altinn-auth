@@ -22,6 +22,12 @@
     <EmbeddedResource Include="Migrations\ConsentSchema.sql">
       <LogicalName>Altinn.AccessMgmt.PersistenceEF.Migrations.ConsentSchema.sql</LogicalName>
     </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\ActivityLogFunctions.sql">
+      <LogicalName>Altinn.AccessMgmt.PersistenceEF.Migrations.ActivityLogFunctions.sql</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Migrations\ActivityLogPartitions.sql">
+      <LogicalName>Altinn.AccessMgmt.PersistenceEF.Migrations.ActivityLogPartitions.sql</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
   
   <ItemGroup>

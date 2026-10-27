@@ -1,0 +1,139 @@
+﻿using System;
+using System.Collections.Generic;
+using Altinn.Platform.Authentication.Enum;
+
+#nullable enable
+
+namespace Altinn.Platform.Authentication.Model
+{
+    /// <summary>
+    /// The information about the authenticated user
+    /// </summary>
+    public class UserAuthenticationModel
+    {
+        /// <summary>
+        /// Gets or sets the user id
+        /// </summary>
+        public int? UserID { get; set; }
+
+        /// <summary>
+        /// Gets or sets the username
+        /// </summary>
+        public string? Username { get; set; }
+
+        /// <summary>
+        /// Gets or sets the SSN
+        /// </summary>
+        public string? SSN { get; set; }
+
+        /// <summary>
+        /// Gets or sets the PartyId
+        /// </summary>
+        public int? PartyID { get; set; }
+
+        /// <summary>
+        /// Gets or sets the authentication method
+        /// </summary>
+        public AuthenticationMethod AuthenticationMethod { get; set; }
+
+        /// <summary>
+        /// Gets or sets the authentication level
+        /// </summary>
+        public SecurityLevel AuthenticationLevel { get; set; }
+
+        /// <summary>
+        /// Gets or sets a flag stating if the user is authenticated
+        /// </summary>
+        public bool IsAuthenticated { get; set; }
+
+        /// <summary>
+        /// Nonce used for OIDC requests
+        /// </summary>
+        public string? Nonce { get; set; }
+
+        /// <summary>
+        /// Additional claims from provider
+        /// </summary>
+        public Dictionary<string, List<string>> ProviderClaims { get; set; }
+
+        /// <summary>
+        /// The OIDC Issuer
+        /// </summary>
+        public string Iss { get; set; }
+
+        /// <summary>
+        /// The external identity
+        /// </summary>
+        public string ExternalIdentity { get; internal set; }
+
+        /// <summary>
+        /// The session identity
+        /// </summary>
+        public string? SessionId { get; internal set; }
+
+        /// <summary>
+        /// The external session identity (sid)
+        /// </summary>
+        public string ExternalSessionId { get; internal set; }
+
+        /// <summary>
+        /// The party uuid
+        /// </summary>
+        public Guid? PartyUuid { get; set; }
+
+        /// <summary>
+        /// The scopes granted
+        /// </summary>
+        public string? Scope { get; internal set; }
+
+        /// <summary>
+        /// The acr value
+        /// </summary>
+        public string? Acr { get; set; }
+
+        /// <summary>
+        /// The amr value
+        /// </summary>
+        public string[]? Amr { get; set; }
+
+        /// <summary>
+        /// Gets or sets the security identifier (SID) associated with the entity.
+        /// </summary>
+        public string? Sid { get; set; }
+
+        /// <summary>
+        /// Gets or sets the JWT ID (jti from token)
+        /// </summary>
+        public string? Jti { get; set; }
+
+        /// <summary>
+        /// Gets or sets the authentication time.
+        /// </summary>
+        public DateTimeOffset? AuthTime { get; set; }
+
+        /// <summary>
+        /// Sets the token issuer (iss from token)
+        /// </summary>
+        public string? TokenIssuer { get; set; }
+
+        /// <summary>
+        /// Gets or sets the subject associated with the token.
+        /// </summary>
+        public string? TokenSubject { get; set; }
+
+        /// <summary>
+        /// Preselected party UUID
+        /// </summary>
+        public Guid? PreselectedPartyUuid { get; set; }
+
+        /// <summary>
+        /// Preselected party Id
+        /// </summary>
+        public int? PreSelectedPartyId { get; set; }
+
+        /// <summary>
+        /// Gets the email address associated with the user.
+        /// </summary>
+        public string? Email { get; internal set; }
+    }
+}

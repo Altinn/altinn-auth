@@ -1,0 +1,60 @@
+meta {
+  name: 04_WHEN_TokenHasOnlyReadScopeThenCreateIsForbidden
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enterprise/consentrequests
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "id": "{{consentRequestId}}",
+    "from": "{{consentFrom}}",
+    "to": "{{consentTo}}",
+    "validTo": "{{consentValidTo}}",
+    "consentRights": [
+      {
+        "action": ["{{consentAction}}"],
+        "resource": [
+          {
+            "type": "urn:altinn:resource",
+            "value": "{{consentResource}}"
+          }
+        ],
+        "metadata": {
+          "inntektsaar": "{{consentMetadataValue}}"
+        }
+      }
+    ],
+    "redirectUrl": "https://altinn.no",
+    "portalViewMode": "show"
+  }
+}
+
+docs {
+  WHEN the token has only the read scope, the create is forbidden.
+
+  POST /accessmanagement/api/v1/enterprise/consentrequests
+
+  Creating needs altinn:consentrequests.write (or altinn:consentrequests.org). A token
+  with altinn:consentrequests.read only is refused with 403.
+}
+
+script:pre-request {
+  const { loginAsEnterprise, prepareConsentRequest, scopes, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  prepareConsentRequest("consentRequestId");
+
+  await loginAsEnterprise(td.enterprise, scopes.consentRequestsRead);
+}
+
+tests {
+  test("WHEN the token has only the read scope, the request returns 403", function() {
+    expect(res.status).to.equal(403);
+  });
+}

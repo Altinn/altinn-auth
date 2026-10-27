@@ -84,3 +84,8 @@ The reference is `test/EnduserAPI/ClientDelegationsV2/` (v2 client delegation):
   deployed environment. They are not part of GitHub CI (`dotnet test` / GitHub Actions).
 - **Manually:** open the collection in the Bruno app, or `bru run` via the CLI; pick an
   environment and supply secrets via `.env` (see `.env.sample`).
+
+`.bru` files must be UTF-8 **without** a BOM. The CLI parses the whole collection before
+it sends a request, so one `.bru` file with a BOM fails the entire run with
+`Expected end of input` at line 1, col 1. `.editorconfig` sets `charset = utf-8` for
+`*.bru`, overriding the repository default `utf-8-bom`.

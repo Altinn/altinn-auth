@@ -1,4 +1,4 @@
-namespace Altinn.AccessManagement.Persistence.Configuration
+﻿namespace Altinn.AccessManagement.Persistence.Configuration
 {
     /// <summary>
     /// Settings for Azure storage

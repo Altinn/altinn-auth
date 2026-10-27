@@ -133,6 +133,13 @@ public sealed class ConnectionQueryFilter
     public bool IncludeAdosSubunitInheritance { get; set; } = false;
 
     /// <summary>
+    /// Gets or sets a value indicating whether Altinn 2 roles should be excluded from the result.
+    /// When <c>true</c>, assignments of Altinn 2 roles and rolemap-derived roles (which are all Altinn 2 roles)
+    /// are excluded. Set by <see cref="ConnectionQuery"/> from the application lifecycle feature configuration.
+    /// </summary>
+    public bool ExcludeAltinn2Roles { get; set; } = false;
+
+    /// <summary>
     /// Returns true if at least one filter is provided.
     /// </summary>
     public bool HasAny =>

@@ -3,6 +3,7 @@ using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using Altinn.Authorization.Api.Contracts.Authorization;
+using Altinn.Authorization.Enums;
 using Altinn.Platform.Authorization.Clients;
 using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Models.AccessManagement;
@@ -116,45 +117,14 @@ public class AccessManagementWrapper : IAccessManagementWrapper
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<AccessPackageUrn>> GetAccessPackages(Guid to, Guid from, CancellationToken cancellationToken = default)
+    public async Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, AccessRestriction accessRestriction = AccessRestriction.None, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default)
     {
-        var cacheKey = $"AccPkgs|f:{from}|t:{to}";
-
-        if (!_memoryCache.TryGetValue(cacheKey, out IEnumerable<AccessPackageUrn> result))
-        {
-            var response = await _client.Client.SendAsync(
-                new(HttpMethod.Get, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), $"policyinformation/accesspackages?to={to}&from={from}")),
-                cancellationToken);
-
-            if (response.IsSuccessStatusCode)
-            {
-                result = await response.Content.ReadFromJsonAsync<IEnumerable<AccessPackageUrn>>(_serializerOptions, cancellationToken);
-
-                var cacheEntryOptions = new MemoryCacheEntryOptions()
-                .SetPriority(CacheItemPriority.High)
-                .SetAbsoluteExpiration(new TimeSpan(0, 0, _generalSettings.RoleCacheTimeout, 0));
-
-                _memoryCache.Set(cacheKey, result, cacheEntryOptions);
-
-                return result;
-            }
-
-            var content = await response.Content.ReadAsStringAsync(cancellationToken);
-            throw new HttpRequestException(content == string.Empty ? $"received status code {response.StatusCode}" : content);
-        }
-
-        return result;
-    }
-
-    /// <inheritdoc/>
-    public async Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, CancellationToken cancellationToken = default)
-    {   
-        var cacheKey = $"RolesAndAccPkgs|f:{from}|t:{to}";
+        var cacheKey = $"RolesAndAccPkgs|f:{from}|t:{to}|ac:{accessRestriction}|vp:{viaPartyOrganizationNumber}";
 
         if (!_memoryCache.TryGetValue(cacheKey, out PipResponseDto result))
         {
             var response = await _client.Client.SendAsync(
-                new(HttpMethod.Get, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), $"policyinformation/roles-and-accesspackages?to={to}&from={from}")),
+                new(HttpMethod.Get, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), $"policyinformation/roles-and-accesspackages?to={to}&from={from}&accessRestriction={accessRestriction}{ViaPartyQuery(viaPartyOrganizationNumber)}")),
                 cancellationToken);
 
             if (response.IsSuccessStatusCode)
@@ -178,4 +148,7 @@ public class AccessManagementWrapper : IAccessManagementWrapper
 
         return result;
     }
+
+    private static string ViaPartyQuery(string viaPartyOrganizationNumber) =>
+        string.IsNullOrWhiteSpace(viaPartyOrganizationNumber) ? string.Empty : $"&viaParty={Uri.EscapeDataString(viaPartyOrganizationNumber)}";
 }

@@ -1,4 +1,4 @@
-using Altinn.Common.PEP.Authorization;
+﻿using Altinn.Common.PEP.Authorization;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;

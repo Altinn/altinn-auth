@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text.Json;
 using Altinn.AccessMgmt.Core.Outbox;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
@@ -155,7 +155,7 @@ public static class RequestPendingNotification
                 o.Handler == Handler &&
                 o.Status == OutboxStatus.Pending,
                 ct);
-        
+
         if (message is null)
         {
             return;

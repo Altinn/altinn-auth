@@ -1,0 +1,54 @@
+meta {
+  name: 02_AND_NextPageFollowsTheContinuationToken
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enterprise/consentrequests/events?continuationToken={{eventsContinuationToken}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  continuationToken: {{eventsContinuationToken}}
+}
+
+docs {
+  AND the enterprise follows the next link to the following page.
+
+  GET /accessmanagement/api/v1/enterprise/consentrequests/events?continuationToken=:token
+
+  Paging is cursor based: pass the continuationToken from links.next of the previous
+  page (or simply follow links.next, which also repeats the filters). The next page
+  starts after the last event of the previous one.
+
+  When the previous page was the last one there is no token; the request then returns the
+  first page again and only the shape is asserted.
+}
+
+script:pre-request {
+  const { loginAsEnterprise, scopes, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  await loginAsEnterprise(td.enterprise, scopes.consentRequestsRead);
+}
+
+tests {
+  test("WHEN the next page is requested, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+    expect(res.getBody().data).to.be.an("array");
+  });
+
+  test("THEN the next page starts at or after the last event of the previous page", function() {
+    const token = bru.getVar("eventsContinuationToken");
+    const last = bru.getVar("eventsLastChangedDate");
+    if (!token || !last) {
+      return;
+    }
+    const lastTime = new Date(last).getTime();
+    res.getBody().data.forEach(e => {
+      expect(new Date(e.changedDate).getTime()).to.be.at.least(lastTime);
+    });
+  });
+}

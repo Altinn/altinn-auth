@@ -1,0 +1,36 @@
+meta {
+  name: 06_AND_RequesterCannotCountTheOrganizationsRequests
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/request/received/count?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+docs {
+  AND the requester cannot count the organization's received requests, even though it
+  sent one of them. The requester has no access to act for the organization, so the
+  request returns 403 with no body.
+}
+
+script:pre-request {
+  const { loginAs, testdata, scopes } = require("./test/DelegationRequest/DraftAndCounts/helpers.js");
+  const td = testdata();
+
+  bru.setVar("party", td.organization.partyUuid);
+
+  await loginAs(td.requester, scopes.sluttbrukerdelegationrequestread);
+}
+
+tests {
+  test("AND the requester is refused with 403", function() {
+    expect(res.status).to.equal(403);
+  });
+}

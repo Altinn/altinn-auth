@@ -1,0 +1,61 @@
+meta {
+  name: 01_GIVEN_EnterpriseCreatesConsentRequest
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enterprise/consentrequests
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "id": "{{boundaryRequestId}}",
+    "from": "{{consentFrom}}",
+    "to": "{{consentTo}}",
+    "validTo": "{{consentValidTo}}",
+    "consentRights": [
+      {
+        "action": ["{{consentAction}}"],
+        "resource": [
+          {
+            "type": "urn:altinn:resource",
+            "value": "{{consentResource}}"
+          }
+        ],
+        "metadata": {
+          "inntektsaar": "{{consentMetadataValue}}"
+        }
+      }
+    ],
+    "redirectUrl": "https://altinn.no",
+    "portalViewMode": "show"
+  }
+}
+
+docs {
+  GIVEN the enterprise has created a consent request for the person.
+
+  POST /accessmanagement/api/v1/enterprise/consentrequests
+
+  A fresh request with a new id. See scenario 01 step 02 for the endpoint and body.
+}
+
+script:pre-request {
+  const { loginAsEnterprise, prepareConsentRequest, scopes, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  prepareConsentRequest("boundaryRequestId");
+
+  await loginAsEnterprise(td.enterprise, scopes.consentRequestsWrite);
+}
+
+tests {
+  test("GIVEN the consent request is created, the request returns 201", function() {
+    expect(res.status).to.equal(201);
+    expect(res.getBody().id).to.equal(bru.getVar("boundaryRequestId"));
+    expect(res.getBody().status).to.equal("Created");
+  });
+}

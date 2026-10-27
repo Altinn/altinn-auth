@@ -4,19 +4,50 @@ This guide applies to everyone who changes this repository, whether you type eve
 
 ## Before you start
 
-- Every change starts from an issue. Reference it in the branch name and the PR title.
+- Every change starts from an issue. Reference it in the branch name and PR description, and in the commit body or trailers. Keep issue numbers out of commit and PR titles.
 - Read the [README](README.md) and the docs of the vertical you are changing. Agent guidance will live in `AGENTS.md` at the root (#4077) and in each vertical (#4078); until those land, the README is the guidance.
 - Integration tests need a running container runtime. A green local build is not proof; CI is the gate.
 
 ## Branches, commits and pull requests
 
+**TL;DR:** Encourage scopes for components within a vertical, omit them only for changes without a particular component, and reference issues in the body or trailers. Prefer `Resolves: #<issue>` in the PR description to close completed issues.
+
 - Branch from `main` as `type/<issue>_<short-slug>`, for example `fix/4044_remove_all_client_delegations`.
-- The PR title is a [Conventional Commit](https://www.conventionalcommits.org/) with the issue number: `fix(#4044): remove every delegation when a client is removed`. `main` is squash-only, and the release automation reads the squash commit's title. Today that title is the PR title for a PR with several commits but the commit title for a PR with one, so check it in the merge dialog before you merge (#4095 makes it always the PR title). `feat` and `fix` on a package under `src/pkgs` bump its version.
+- Commit messages and PR titles use [Conventional Commits](https://www.conventionalcommits.org/), for example `fix(authorized-parties): correct delegation lookup`. This rule overrides historical messages such as `fix(#4044): ...`. The scope appears in generated release notes and names a component or area **within** the vertical, such as `authorized-parties`, rather than the vertical itself or an issue number.
+- Scopes use **lowercase kebab-case**, for example `chore(authorized-parties): update test fixtures`, not `chore(AuthorizedParties): ...`. Use the same spelling consistently for the same component or area, independently of C# type or namespace names.
+- Scopes are optional but encouraged. Use one when changing a particular component or area. Omit it only when the change does not concern a particular component, for example `docs: document commit conventions`. For a change spanning several areas, use the primary affected area when there is one. Mark a breaking change with `!` immediately before the colon, for example `feat(authorized-parties)!: change delegation lookup semantics` or `feat!: remove support for .NET 8`.
+- Reference issues in the commit body or trailers separated from the body by a blank line, and in the PR description. Keep issue numbers out of commit and PR titles: GitHub appends the PR number on squash merge, so an issue suffix would produce `(#issue) (#pr)`. Use `Refs: #4044` for a reference that should leave the issue open. The **PR description is the primary closing mechanism**: use `Resolves: #4044` there only when the PR completes the issue. GitHub closes it when the PR merges into the default branch. Also include and preserve the `Resolves: #4044` trailer in the final squash commit so the completed issue remains visible in the commit log, even when the PR description handles closing it. Preserve **all commit trailers** in the final squash commit, including `Refs`, `Resolves`, `Release-As: 2.5.0`, and attribution such as `Co-authored-by`. These carry useful history or automation instructions. Intermediate commit trailers do not survive squashing automatically; review the squash message and carry them over.
+- `main` is squash-only, and release automation reads the squash commit. Today its title is the PR title for a PR with several commits but the commit title for a PR with one, so apply the convention to both and check the title in the merge dialog and all preserved commit trailers before you merge (#4095 makes it always the PR title). `feat` and `fix` on a package under `src/pkgs` bump its version.
 - Keep PRs small: aim for under **400 changed lines**, not counting mechanically generated files (generated clients, lock files) and test data. Code an assistant wrote counts in full. Split larger work, and agree the split with a reviewer before you start.
 - One approving review from a person and green required checks are needed to merge. Open a draft PR early if you want feedback.
 - Update affected documentation and agent guidance in the same PR as the behaviour they describe. An ADR is required only for a significant architectural decision or a lasting trade-off; touching an API contract, data model or authorization code does not by itself require one. See [When an ADR is required](#when-an-adr-is-required).
 - Tests are production code: reviewed with the same care, and never deleted or weakened without a reason a reviewer has agreed to. See the [testing guide](docs/testing/README.md). Say in the PR what you could not test locally.
-- Write for the reader. Anything a person is meant to read, whether an issue, a PR description, a comment or a doc, starts with a **TL;DR of at most five bullets**. An issue keeps under 200 words above the fold and puts the rest in a collapsed `<details>` block. A PR description is the TL;DR plus what you verified. A text drafted with a tool says so at the top, and leaves the reader unspecified until a person confirms they have read it. An unnamed reader is an honest signal, not a failure.
+- Write for the reader. Anything a person is meant to read, whether an issue, a PR description, a comment or a doc, starts with a **TL;DR of at most five bullets**. A short bug report starts with what happened instead; one sentence is enough. A long one, for example drafted with a tool, still starts with a TL;DR. An issue keeps under 200 words above the fold and puts the rest in a collapsed `<details>` block. A PR description is the TL;DR plus what you verified. A text drafted with a tool says so at the top, and leaves the reader unspecified until a person confirms they have read it. An unnamed reader is an honest signal, not a failure.
+
+## Issues and labels
+
+**TL;DR**
+
+- Write the issue. An incomplete issue is better than one never written; `status/triage` makes sure someone completes it.
+- Pick the form that fits, and the component it concerns. "Don't know" is a fine answer.
+- Write in English or Norwegian, whichever is quicker. The forms are in English.
+- One issue type and at least one `area/*` per issue. Everything else is optional.
+
+Why the model looks like this is in [ADR-0004](docs/adr/0004-issue-and-label-model.md). Until the labelling workflow ([#4357](https://github.com/Altinn/altinn-auth/issues/4357)) and `.github/labels.yml` ([#4356](https://github.com/Altinn/altinn-auth/issues/4356)) are in place, triage sets the `area/*` and layer labels by hand from the form's answers (`Backend` and `Frontend` until [#4360](https://github.com/Altinn/altinn-auth/issues/4360) renames them). What to set:
+
+| What | How | Required |
+| --- | --- | --- |
+| Kind of work | Issue type: Bug, Feature, Task, Epic, Enhancement. The form sets it. A user story is a Feature. | yes, at triage at the latest |
+| Component | One or more `area/*`, one per component the issue touches, for example `area/register`. The form asks for them; triage sets the labels until the workflow does. | yes, at triage at the latest |
+| Capability | `feature/*`, for example `feature/consent` | no |
+| Layer | `layer/backend`, `layer/frontend`, `layer/ux`, `layer/infra`, `layer/test`. The bug, feature and task forms ask for it. | when known: as soon as the work is identified as frontend, backend and so on |
+| Waiting for something | `status/blocked`, plus a "blocked by" link when the blocking issue is known | when it applies |
+| Release | Milestone | when planned |
+| Priority, horizon, progress | Fields on the project board | set in refinement |
+
+- Do not add a team label. The owning team follows from the component, through `.github/CODEOWNERS`.
+- Close a duplicate as *duplicate* and something you will not do as *not planned*, with the reason in a comment. There are no labels for these.
+- A new label is added in `.github/labels.yml` by pull request, not in the GitHub UI. Until that file exists, ask in triage before creating one.
 
 ## When an ADR is required
 

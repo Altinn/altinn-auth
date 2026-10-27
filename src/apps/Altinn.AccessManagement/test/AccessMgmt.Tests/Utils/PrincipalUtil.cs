@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Altinn.Common.AccessTokenClient.Constants;
 using AltinnCore.Authentication.Constants;
 
@@ -160,7 +160,6 @@ namespace Altinn.AccessManagement.Tests.Util
         /// <summary>
         /// Generates an Maskin-token for an organization with the provided scopes, essentially mocking a Maskinporten-token exchanged to an Altinn-token.
         /// </summary>
-        /// <param name="org">Org code</param>
         /// <param name="orgNumber">Organization number</param>
         /// <param name="scope">Scopes to add to token</param>
         /// <param name="supplier">The supplier</param>

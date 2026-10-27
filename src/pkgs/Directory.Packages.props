@@ -1,19 +1,9 @@
 ﻿<Project>
+    <!-- Shared by every package under src/pkgs; each package imports this from its own Directory.Packages.props. -->
     <PropertyGroup>
         <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
     </PropertyGroup>
     <ItemGroup>
-        <PackageVersion Include="coverlet.collector" Version="6.0.4" />
-        <PackageVersion Include="coverlet.msbuild" Version="6.0.4" />
-        <PackageVersion Include="AwesomeAssertions" Version="9.6.0" />
-        <PackageVersion Include="Microsoft.Build.Artifacts" Version="6.1.63" />
-        <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
-        <PackageVersion Include="Moq" Version="4.20.72" />
-        <PackageVersion Include="StyleCop.Analyzers" Version="1.2.0-beta.556" />
-        <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
-        <PackageVersion Include="xunit" Version="2.9.3" />
-        <PackageVersion Include="xunit.v3" Version="2.0.3" />
-        <PackageVersion Include="xunit.v3.assert" Version="2.0.3" />
-        <PackageVersion Include="xunit.v3.extensibility.core" Version="2.0.3" />
+        <GlobalPackageReference Include="DotNet.ReproducibleBuilds" Version="2.0.5" PrivateAssets="all" />
     </ItemGroup>
 </Project>

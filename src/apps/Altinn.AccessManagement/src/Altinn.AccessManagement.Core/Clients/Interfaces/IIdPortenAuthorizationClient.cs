@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using Altinn.AccessManagement.Core.Models.IdPortenAuthorization;
 
 namespace Altinn.AccessManagement.Core.Clients.Interfaces

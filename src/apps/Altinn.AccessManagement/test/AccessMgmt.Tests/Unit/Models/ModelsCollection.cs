@@ -1,4 +1,4 @@
-namespace Altinn.AccessManagement.Tests.Unit.Models;
+﻿namespace Altinn.AccessManagement.Tests.Unit.Models;
 
 /// <summary>
 /// Names the collection that groups the model unit tests so they run sequentially

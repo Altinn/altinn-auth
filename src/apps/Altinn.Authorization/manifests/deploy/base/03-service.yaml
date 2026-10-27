@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: authz-api
+  labels:
+    app.kubernetes.io/name: authz-api
+spec:
+  selector:
+    app.kubernetes.io/name: authz-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP

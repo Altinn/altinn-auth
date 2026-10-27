@@ -1,0 +1,70 @@
+meta {
+  name: 02_WHEN_RedirectUrlIsInvalidThenCreateFails
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enterprise/consentrequests
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "id": "{{consentRequestId}}",
+    "from": "{{consentFrom}}",
+    "to": "{{consentTo}}",
+    "validTo": "{{consentValidTo}}",
+    "consentRights": [
+      {
+        "action": ["{{consentAction}}"],
+        "resource": [
+          {
+            "type": "urn:altinn:resource",
+            "value": "{{consentResource}}"
+          }
+        ],
+        "metadata": {
+          "inntektsaar": "{{consentMetadataValue}}"
+        }
+      }
+    ],
+    "redirectUrl": "not a url",
+    "portalViewMode": "show"
+  }
+}
+
+docs {
+  WHEN the redirect URL is not a URL, the create fails with a validation error.
+
+  POST /accessmanagement/api/v1/enterprise/consentrequests
+
+  redirectUrl must be an absolute URL with an http or https scheme, or a custom scheme
+  for app deep links. Expects 400 with error code STD-00000 and validation error
+  AM.VLD-00027 whose path points at RedirectUrl.
+}
+
+script:pre-request {
+  const { loginAsEnterprise, prepareConsentRequest, scopes, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  prepareConsentRequest("consentRequestId");
+
+  await loginAsEnterprise(td.enterprise, scopes.consentRequestsWrite);
+}
+
+tests {
+  test("WHEN the redirect URL is invalid, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN validation error AM.VLD-00027 points at RedirectUrl", function() {
+    const body = res.getBody();
+    expect(body.status).to.equal(400);
+    expect(body.code).to.equal("STD-00000");
+    expect(body.validationErrors).to.have.lengthOf(1);
+    expect(body.validationErrors[0].code).to.equal("AM.VLD-00027");
+    expect(body.validationErrors[0].paths).to.deep.equal(["RedirectUrl"]);
+  });
+}

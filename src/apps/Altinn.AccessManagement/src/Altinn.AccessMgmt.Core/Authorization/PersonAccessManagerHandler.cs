@@ -9,9 +9,10 @@ namespace Altinn.AccessMgmt.Core.Authorization;
 /// <summary>
 /// Authorization handler that denies access when an access manager for a person
 /// attempts to access the "from-others" direction (incoming connections).
-/// 
+///
 /// Rules:
-/// - If direction is not from-others (party ≠ to) → succeed
+/// - If direction is not from-others (direction ≠ to when the request carries a direction
+///   parameter, otherwise party ≠ to) → succeed
 /// - If user IS the party (acting as self) → succeed
 /// - If party is a person → fail (access manager cannot read/write incoming connections)
 /// - Otherwise → succeed (access managers for organizations retain bidirectional access)
@@ -22,6 +23,7 @@ public class PersonAccessManagerHandler(
 {
     private const string ParamParty = "party";
     private const string ParamTo = "to";
+    private const string ParamDirection = "direction";
 
     protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, PersonAccessManagerRequirement requirement)
     {
@@ -40,16 +42,22 @@ public class PersonAccessManagerHandler(
             return;
         }
 
-        if (!TryGetGuidParam(query, ParamTo, out var to))
+        // The activity log endpoints carry the direction as its own parameter (from/to are
+        // plain filters there and may equal the party); the connections endpoints express
+        // the from-others direction as to=party. Either form marks incoming access.
+        bool isFromOthers;
+        if (query.TryGetValue(ParamDirection, out var direction))
         {
-            // No 'to' param means this is not a from-others direction request
-            context.Succeed(requirement);
-            return;
+            var value = direction.ToString();
+            isFromOthers = string.Equals(value, "to", StringComparison.OrdinalIgnoreCase) || value == "2";
+        }
+        else
+        {
+            isFromOthers = TryGetGuidParam(query, ParamTo, out var to) && party == to;
         }
 
-        if (party != to)
+        if (!isFromOthers)
         {
-            // Direction is to-others (party == from), not from-others → allow
             context.Succeed(requirement);
             return;
         }

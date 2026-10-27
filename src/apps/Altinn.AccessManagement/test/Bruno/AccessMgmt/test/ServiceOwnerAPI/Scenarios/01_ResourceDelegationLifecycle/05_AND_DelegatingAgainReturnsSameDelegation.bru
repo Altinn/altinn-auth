@@ -1,0 +1,57 @@
+meta {
+  name: 05_AND_DelegatingAgainReturnsSameDelegation
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/connections/resources
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "from": "urn:altinn:person:identifier-no:{{grantorPid}}",
+    "to": "urn:altinn:person:identifier-no:{{recipientPid}}",
+    "resource": "{{resource}}",
+    "rightKeys": {
+      "directRightKeys": ["{{so_readRightKey}}"]
+    }
+  }
+}
+
+docs {
+  AND delegating the same right again returns the same delegation. The endpoint is
+  idempotent for the service owner that made the delegation: 200 with the same
+  assignment resource. Once anyone else has changed the delegation the service owner
+  can no longer change it.
+}
+
+script:pre-request {
+  const { td, loginAsServiceOwner, scopes, serviceOwners } = require("./test/ServiceOwnerAPI/Scenarios/helpers.js");
+  const data = td();
+
+  bru.setVar("grantorPid", data.resourceDelegation.grantor.pid);
+  bru.setVar("recipientPid", data.resourceDelegation.recipient.pid);
+  bru.setVar("resource", data.resourceDelegation.resource);
+
+  await loginAsServiceOwner(serviceOwners.digdir, scopes.resourceDelegationWrite);
+}
+
+tests {
+  test("AND the repeated delegation returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND it points at the same assignment resource", function() {
+    const body = res.getBody();
+    expect(body.id).to.equal(bru.getVar("so_assignmentResourceId"));
+    expect(body.assignmentId).to.equal(bru.getVar("so_assignmentId"));
+  });
+}

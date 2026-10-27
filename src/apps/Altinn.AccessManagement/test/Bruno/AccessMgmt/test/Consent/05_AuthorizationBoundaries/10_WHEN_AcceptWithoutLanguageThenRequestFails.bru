@@ -1,0 +1,49 @@
+meta {
+  name: 10_WHEN_AcceptWithoutLanguageThenRequestFails
+  type: http
+  seq: 10
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/bff/consentrequests/:requestId/accept
+  body: json
+  auth: inherit
+}
+
+params:path {
+  requestId: {{boundaryRequestId}}
+}
+
+body:json {
+  {}
+}
+
+docs {
+  WHEN the person accepts without a language, the request fails validation.
+
+  POST /accessmanagement/api/v1/bff/consentrequests/:requestId/accept
+
+  language is required in the consent context. The body is rejected by ASP.NET model
+  validation before the controller runs, so the response is the framework's validation
+  problem (an errors map, no Altinn error code) and the request stays in status Created.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  await loginAs(td.consentingPerson);
+}
+
+tests {
+  test("WHEN the accept body has no language, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN the validation problem names the missing language property", function() {
+    const body = res.getBody();
+    expect(body.status).to.equal(400);
+    expect(body.errors).to.be.an("object");
+    expect(JSON.stringify(body.errors)).to.include("language");
+  });
+}

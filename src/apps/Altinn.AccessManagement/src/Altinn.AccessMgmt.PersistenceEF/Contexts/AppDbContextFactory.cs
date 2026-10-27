@@ -1,4 +1,4 @@
-using Altinn.AccessMgmt.PersistenceEF.Audit;
+﻿using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Microsoft.EntityFrameworkCore;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Contexts;

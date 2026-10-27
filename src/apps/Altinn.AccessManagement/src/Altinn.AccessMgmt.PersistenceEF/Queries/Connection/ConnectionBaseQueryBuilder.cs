@@ -45,6 +45,11 @@ internal class ConnectionBaseQueryBuilder
             roleSetExclude.Add(RoleConstants.AppControlledRightholder.Id); // App-controlled instance access should be excluded if not explicitly requested.
         }
 
+        if (filter.ExcludeAltinn2Roles)
+        {
+            roleSetExclude.UnionWith(RoleConstants.Altinn2RoleIds);
+        }
+
         return (viaSet, viaRoleSet, roleSet, roleSetExclude);
     }
 
@@ -224,9 +229,12 @@ internal class ConnectionBaseQueryBuilder
                     IsRoleMap = false,
                 });
 
+        // RoleMap is only relevant for Altinn 2 roles, so the lookup is skipped entirely when they are excluded.
+        var a1WithRoleMap = filter.ExcludeAltinn2Roles ? a1 : a1.Concat(rolemap);
+
         var a2 = filter.IncludeDelegation
-            ? a1.Concat(rolemap).Concat(delegations)
-            : a1.Concat(rolemap);
+            ? a1WithRoleMap.Concat(delegations)
+            : a1WithRoleMap;
 
         var fromChildren = !doChildNesting ? a2 :
         a2
@@ -237,19 +245,19 @@ internal class ConnectionBaseQueryBuilder
             (c, e) => new { c, e })
         .Where(x => filter.IncludeAdosSubunitInheritance || x.e.VariantId != EntityVariantConstants.ADOS.Id)
         .Select(x => new ConnectionQueryBaseRecord
-            {
-                AssignmentId = x.c.AssignmentId,
-                DelegationId = x.c.DelegationId,
-                FromId = x.e.Id,
-                ToId = x.c.ToId,
-                RoleId = x.c.RoleId,
-                ViaId = x.c.FromId,
-                ViaRoleId = x.c.ViaRoleId,
-                Reason = ConnectionReason.Hierarchy,
-                IsKeyRoleAccess = x.c.IsKeyRoleAccess,
-                IsMainUnitAccess = true,
-                IsRoleMap = x.c.IsRoleMap,
-            });
+        {
+            AssignmentId = x.c.AssignmentId,
+            DelegationId = x.c.DelegationId,
+            FromId = x.e.Id,
+            ToId = x.c.ToId,
+            RoleId = x.c.RoleId,
+            ViaId = x.c.FromId,
+            ViaRoleId = x.c.ViaRoleId,
+            Reason = ConnectionReason.Hierarchy,
+            IsKeyRoleAccess = x.c.IsKeyRoleAccess,
+            IsMainUnitAccess = true,
+            IsRoleMap = x.c.IsRoleMap,
+        });
 
         var innehaverConnections =
             from reviRegnConnection in a2
@@ -457,12 +465,17 @@ internal class ConnectionBaseQueryBuilder
                Reason = ConnectionReason.KeyRole
            };
 
-        var keyRoleAssignments = keyRoleAssignmentsWithoutRoleMap.Union(roleMapAssignmentsForKeyRoles);
+        var keyRoleAssignments = filter.ExcludeAltinn2Roles
+            ? keyRoleAssignmentsWithoutRoleMap
+            : keyRoleAssignmentsWithoutRoleMap.Union(roleMapAssignmentsForKeyRoles);
 
         /*
         Combine everything
+        RoleMap is only relevant for Altinn 2 roles, so it is skipped entirely when they are excluded.
         */
-        IQueryable<ConnectionQueryBaseRecord> allCombined = allAssignments.Union(roleMapAssignments);
+        IQueryable<ConnectionQueryBaseRecord> allCombined = filter.ExcludeAltinn2Roles
+            ? allAssignments
+            : allAssignments.Union(roleMapAssignments);
         if (filter.IncludeDelegation)
         {
             allCombined = allCombined.Union(clientDelegations);

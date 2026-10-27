@@ -5,9 +5,7 @@ using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.AccessList;
 using Altinn.AccessManagement.Core.Models.Party;
-using Altinn.AccessManagement.Core.Models.Register;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
-using Altinn.AccessManagement.Core.Models.Rights;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessMgmt.Core.Appsettings;
 using Altinn.AccessMgmt.Core.Constants.Translation;
@@ -30,6 +28,9 @@ using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
+using Altinn.Authorization.Api.Contracts.Authorization;
+using Altinn.Authorization.Api.Contracts.Register;
+using Altinn.Authorization.Api.Contracts.ResourceRegistry;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -691,6 +692,14 @@ public partial class ConnectionService(
         };
 
         await dbContext.AssignmentPackages.AddAsync(newAssignmentPackage, cancellationToken);
+
+        // System users cannot receive notifications.
+        if (to.TypeId == EntityTypeConstants.SystemUser)
+        {
+            await dbContext.SaveChangesAsync(cancellationToken);
+            return DtoMapper.Convert(newAssignmentPackage);
+        }
+
         await AccessAddedNotification.Upsert(
             dbContext,
             fromId,
@@ -937,6 +946,7 @@ public partial class ConnectionService(
             toId: toId.Value,
             toIsMainAdminForFrom,
             includeAdosSubunitInheritance: lifecycleFeatures.AdosSubunitInheritance,
+            excludeAltinn2Roles: lifecycleFeatures.DisableAltinn2Roles,
             ct: cancellationToken
         );
 
@@ -1395,7 +1405,7 @@ public partial class ConnectionService(
                 appsettings?.Value?.Notifications?.InstanceAddedNotifyInSeconds ?? InstanceAddedNotification.DefaultNotifyInSeconds,
                 cancellationToken
             );
-            
+
             await dbContext.SaveChangesAsync(cancellationToken);
         }
 
@@ -1744,7 +1754,7 @@ public partial class ConnectionService(
     private static ValidationErrorBuilder CheckFromAndToIsValidConnectingOldSIToEmailSI(Entity from, Entity to)
     {
         ValidationErrorBuilder errorBuilder = default;
-        
+
         // Guaranteed non-null here: TryBuild above returned false, so both from/to passed their null guards. Check that the variants are correct for a self-registration connection: from should be SI and to should be SI_EMAIL
         if (from!.VariantId != EntityVariantConstants.SI)
         {
@@ -1762,7 +1772,7 @@ public partial class ConnectionService(
     private static ValidationErrorBuilder CheckFromAndToIsValidRegisterSelfIdentifiedRoleToUser(Entity from, Entity to)
     {
         ValidationErrorBuilder errorBuilder = default;
-        
+
         // If from and to are the same this is only for the sub variants EMAIL and EDU
         if (from!.VariantId != EntityVariantConstants.SI_EDU && from.VariantId != EntityVariantConstants.SI_EMAIL)
         {
@@ -2427,6 +2437,7 @@ public partial class ConnectionService
                PolicyVersion = t.PolicyVersion,
                Reason = AccessReasonFlag.KeyRole
            });
+
         // Separate queries for the same reason as in GetResourceRights: the direct branch's null
         // Via/ViaRole constants cannot be part of a set operation with the key role branch's
         // entity references.

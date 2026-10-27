@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.Tests;
+﻿namespace Altinn.Authorization.Tests;
 
 /// <summary>
 /// Names the collection that groups the policy tests so they run sequentially

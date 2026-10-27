@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -72,6 +72,15 @@ namespace Altinn.ResourceRegistry.Tests
             Assert.NotNull(changes);
             Assert.Single(changes.Items);
             Assert.Equal("third", changes.Items.First().ResourceId);
+
+            // The last page with items still links on, so the consumer keeps its position
+            Assert.True(Uri.TryCreate(changes.Links.Next, UriKind.Absolute, out nextUri));
+            Assert.NotNull(nextUri);
+            response = await client.GetAsync(nextUri.PathAndQuery);
+            changes = await response.Content.ReadFromJsonAsync<Paginated<ResourceChange>>();
+
+            Assert.NotNull(changes);
+            Assert.Empty(changes.Items);
             Assert.Null(changes.Links.Next);
         }
 
@@ -2143,6 +2152,9 @@ namespace Altinn.ResourceRegistry.Tests
             Assert.True(response.IsSuccessStatusCode);
             string responseContent = await response.Content.ReadAsStringAsync();
             Assert.NotNull(responseContent);
+
+            // Exports every resource in Data/Resources. Error text would also come back with status 200, so parse it
+            RdfTestHelper.ParseTurtle(responseContent);
         }
 
         [Fact]

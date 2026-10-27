@@ -1,0 +1,70 @@
+meta {
+  name: 01_WHEN_RolesAreRequestedForAppWithPolicy
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/authorization/api/v1/policies/roleswithaccess/:org/:app
+  body: none
+  auth: none
+}
+
+params:path {
+  org: {{org}}
+  app: {{app}}
+}
+
+headers {
+  Accept: application/json
+  Ocp-Apim-Subscription-Key: {{apimSubscriptionKey}}
+}
+
+docs {
+  GET /authorization/api/v1/policies/roleswithaccess/{org}/{app}
+
+  Returns the role codes that the policy of an Altinn app grants access to,
+  for example to tell a user which roles they need before starting the app.
+
+  Path parameters:
+  - org: the app owner code, for example ttd.
+  - app: the app name within that owner.
+
+  Auth: anonymous in the application. Only the APIM subscription key header
+  (Ocp-Apim-Subscription-Key) is required.
+
+  Response 200, a JSON array of distinct role codes taken from the
+  urn:altinn:rolecode matches in the Permit rules of the policy:
+
+    ["priv", "dagl"]
+
+  The order follows the policy file and the casing is as written there. An
+  app whose policy has no role matches returns an empty array. An app with
+  no stored policy returns 404 (see the next step).
+}
+
+script:pre-request {
+  const td = require("./testdata/policies/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  bru.setVar("org", td.app.org);
+  bru.setVar("app", td.app.app);
+}
+
+tests {
+  const td = require("./testdata/policies/" + bru.getEnvVar("tokenEnv") + ".js");
+
+  test("WHEN the roles are requested for an app with a policy, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the body is the list of role codes in the policy", function() {
+    const body = res.getBody();
+    expect(body).to.be.an("array");
+    expect(body).to.have.members(td.app.roles);
+  });
+
+  test("AND every role code appears once", function() {
+    const body = res.getBody();
+    expect(new Set(body).size).to.equal(body.length);
+  });
+}

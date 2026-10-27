@@ -1,0 +1,22 @@
+meta {
+  name: 01_AvailableAndInstanceUsers
+  seq: 1
+}
+
+docs {
+  Scenario: The delegator lists available users and the users of an app instance
+
+    Given the delegator has no connection to the receiver
+    And the delegator makes the receiver a rightholder
+    When the delegator lists the available users
+    Then the receiver is among the available users
+    And an outsider cannot list the delegator's available users
+    Given the delegator checks which instance rights can be delegated
+    When the delegator delegates the app instance to the receiver
+    Then the receiver is listed as a user of the instance
+    And an instance identifier that is not a URN is rejected
+    And an unknown resource is rejected
+    When the delegator removes the instance delegation
+    And the delegator removes the connection to the receiver
+    Then the receiver is no longer among the available users
+}

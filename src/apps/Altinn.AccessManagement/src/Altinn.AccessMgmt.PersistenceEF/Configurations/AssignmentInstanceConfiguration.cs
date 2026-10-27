@@ -14,6 +14,7 @@ public class AssignmentInstanceConfiguration : IEntityTypeConfiguration<Assignme
     {
         builder.ToDefaultTable();
         builder.EnableAudit();
+        builder.EnableActivityLog();
 
         builder.HasKey(p => p.Id);
         builder.Property(p => p.InstanceSourceTypeId).IsRequired().HasDefaultValue(InstanceSourceTypeConstants.AltinnApp.Id);

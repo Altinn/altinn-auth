@@ -1,0 +1,15 @@
+meta {
+  name: 03_RequestAndWithdraw
+  seq: 3
+}
+
+docs {
+  Scenario: A public sector system user requests a package, sees it as sent and withdraws it
+
+    Given the system user has no pending sent request to the recipient
+    When the system user requests the package from the recipient by organisation number
+    Then the system user sees the request among its sent requests
+    When the system user withdraws the request
+    Then the request is withdrawn
+    And the request is no longer pending among the system user's sent requests
+}

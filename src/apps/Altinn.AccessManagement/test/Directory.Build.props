@@ -6,4 +6,10 @@
         <IsTestProject>true</IsTestProject>
     </PropertyGroup>
 
+    <ItemGroup>
+        <!-- AutoMapper advisory acknowledged for the test projects too; the reason is in
+             ../src/Directory.Build.props. -->
+        <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-rvv3-g6hj-g44x" />
+    </ItemGroup>
+
 </Project>

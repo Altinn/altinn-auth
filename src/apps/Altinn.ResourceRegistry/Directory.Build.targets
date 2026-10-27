@@ -1,4 +1,4 @@
-<Project>
+﻿<Project>
 
   <ItemGroup Condition=" '$(IsTestProject)' == 'true' ">
     <PackageReference Include="coverlet.collector">

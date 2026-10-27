@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.Integration.Platform.Appsettings
+﻿namespace Altinn.Authorization.Integration.Platform.Appsettings
 {
     /// <summary>
     /// Represents the platform-related configuration settings for Altinn authorization.

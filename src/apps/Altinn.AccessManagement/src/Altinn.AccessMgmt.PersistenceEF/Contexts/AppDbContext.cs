@@ -40,7 +40,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<Entity> Entities => Set<Entity>();
 
+#pragma warning disable CS0612 // EntityLookup is obsolete, but its table is still part of the model
     public DbSet<EntityLookup> EntityLookups => Set<EntityLookup>();
+#pragma warning restore CS0612
 
     public DbSet<EntityType> EntityTypes => Set<EntityType>();
 
@@ -83,6 +85,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<A2ClientRole> A2ClientRole => Set<A2ClientRole>();
 
     public DbSet<RightImportProgress> RightImportProgress => Set<RightImportProgress>();
+
+    public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
+
+    public DbSet<ActivityLogBackfillProgress> ActivityLogBackfillProgress => Set<ActivityLogBackfillProgress>();
+
+    public DbSet<ActivityType> ActivityTypes => Set<ActivityType>();
 
     #endregion
 
@@ -196,6 +204,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.ApplyConfiguration<AuditRequestAssignment>(new AuditRequestAssignmentConfiguration());
         modelBuilder.ApplyConfiguration<AuditRequestAssignmentPackage>(new AuditRequestAssignmentPackageConfiguration());
         modelBuilder.ApplyConfiguration<AuditRequestAssignmentResource>(new AuditRequestAssignmentResourceConfiguration());
+        modelBuilder.ApplyConfiguration<AuditActivityType>(new AuditActivityTypeConfiguration());
     }
 
     private static void ApplyConfiguration(ModelBuilder modelBuilder)
@@ -212,7 +221,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.ApplyConfiguration<DelegationPackage>(new DelegationPackageConfiguration());
         modelBuilder.ApplyConfiguration<DelegationResource>(new DelegationResourceConfiguration());
         modelBuilder.ApplyConfiguration<Entity>(new EntityConfiguration());
+#pragma warning disable CS0612 // EntityLookup is obsolete, but its table is still part of the model
         modelBuilder.ApplyConfiguration<EntityLookup>(new EntityLookupConfiguration());
+#pragma warning restore CS0612
         modelBuilder.ApplyConfiguration<EntityType>(new EntityTypeConfiguration());
         modelBuilder.ApplyConfiguration<EntityVariant>(new EntityVariantConfiguration());
         modelBuilder.ApplyConfiguration<EntityVariantRole>(new EntityVariantRoleConfiguration());
@@ -233,6 +244,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.ApplyConfiguration<A2ClientRole>(new A2ClientRoleConfiguration());
         modelBuilder.ApplyConfiguration<RightImportProgress>(new RightImportProgressConfiguration());
         modelBuilder.ApplyConfiguration<InstanceSourceType>(new InstanceSourceTypeConfiguration());
+        modelBuilder.ApplyConfiguration<ActivityLog>(new ActivityLogConfiguration());
+        modelBuilder.ApplyConfiguration<ActivityLogBackfillProgress>(new ActivityLogBackfillProgressConfiguration());
+        modelBuilder.ApplyConfiguration<ActivityType>(new ActivityTypeConfiguration());
     }
 
     #region Extensions

@@ -1,4 +1,4 @@
-namespace Altinn.Platform.Authorization.Models
+﻿namespace Altinn.Platform.Authorization.Models
 {
     /// <summary>
     /// Object to hold the receipt for a push queue action.

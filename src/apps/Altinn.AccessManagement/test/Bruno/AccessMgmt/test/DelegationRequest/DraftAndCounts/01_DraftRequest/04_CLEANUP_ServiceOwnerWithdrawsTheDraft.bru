@@ -1,0 +1,30 @@
+meta {
+  name: 04_CLEANUP_ServiceOwnerWithdrawsTheDraft
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/delegationrequests/{{dac_requestId}}/withdraw
+  body: none
+  auth: inherit
+}
+
+docs {
+  CLEANUP: the service owner withdraws the draft it created. Only the service owner that
+  created a request can withdraw it through the service owner API. Expects 200 with the
+  new status as a JSON string.
+}
+
+script:pre-request {
+  const { loginAsServiceOwner } = require("./test/DelegationRequest/DraftAndCounts/helpers.js");
+
+  await loginAsServiceOwner();
+}
+
+tests {
+  test("CLEANUP the draft is withdrawn with 200", function() {
+    expect(res.status).to.equal(200);
+    expect(res.getBody()).to.equal("Withdrawn");
+  });
+}

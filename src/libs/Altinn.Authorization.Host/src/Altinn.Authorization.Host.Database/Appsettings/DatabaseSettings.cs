@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.Host.Database.Appsettings;
+﻿namespace Altinn.Authorization.Host.Database.Appsettings;
 
 /// <summary>
 /// Appsettings for database settings.

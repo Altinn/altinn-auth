@@ -222,21 +222,6 @@ public class DelegationHelperAdditionalTest
         Assert.Equal(1, count);
     }
 
-    // --- GetRulesCountToDeleteFromRequestToDelete ---
-    [Fact]
-    public void GetRulesCountToDeleteFromRequestToDelete_ReturnsSum()
-    {
-        var requests = new List<RequestToDelete>
-        {
-            TestDataHelper.GetRequestToDeleteModel(20001, 50001, "org1", "app1", new List<string> { "r1", "r2" }, coveredByPartyId: 50002),
-            TestDataHelper.GetRequestToDeleteModel(20001, 50001, "org1", "app2", new List<string> { "r3" }, coveredByPartyId: 50002),
-        };
-
-        int count = DelegationHelper.GetRulesCountToDeleteFromRequestToDelete(requests);
-
-        Assert.Equal(3, count);
-    }
-
     // --- TryGetDelegationParamsFromRule ---
     [Fact]
     public void TryGetDelegationParamsFromRule_ValidRule_ReturnsTrue()

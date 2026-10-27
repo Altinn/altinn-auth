@@ -1,0 +1,20 @@
+meta {
+  name: 01_RolesWithAccess
+  seq: 1
+}
+
+docs {
+  Scenario: The roles that give access to an app can be read from its policy
+
+    Given the app ttd/authz-bruno-testapp1 has a stored policy
+    When the roles with access are requested for that app, the response is
+    200 with the role codes found in the policy
+    When the roles with access are requested for an app with no policy, the
+    response is 404
+
+  GET /authorization/api/v1/policies/roleswithaccess/{org}/{app} collects
+  every urn:altinn:rolecode value in the subject part of the Permit rules
+  of the app policy. The codes are returned as written in the policy, so
+  their casing follows the policy file. Access packages, resource rights
+  and the app owner (urn:altinn:org) are not included.
+}

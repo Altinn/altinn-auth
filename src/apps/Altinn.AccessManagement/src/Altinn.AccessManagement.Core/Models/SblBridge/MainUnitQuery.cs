@@ -1,4 +1,4 @@
-namespace Altinn.AccessManagement.Core.Models.SblBridge
+﻿namespace Altinn.AccessManagement.Core.Models.SblBridge
 {
     /// <summary>
     /// Input Model used by SBL Bridge partyparents endpoint, for listing the subunit partyIds to retrieve mainunit information for.

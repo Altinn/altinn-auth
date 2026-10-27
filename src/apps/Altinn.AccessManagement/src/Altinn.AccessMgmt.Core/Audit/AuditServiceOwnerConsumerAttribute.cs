@@ -1,4 +1,4 @@
-namespace Altinn.AccessMgmt.Core.Audit;
+﻿namespace Altinn.AccessMgmt.Core.Audit;
 
 /// <summary>
 /// Attribute to decorate for service owner consumer

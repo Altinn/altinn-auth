@@ -1,0 +1,39 @@
+meta {
+	name: 03_WHEN_OtherSystemUserWithdrawsThenWithdrawFails
+	type: http
+	seq: 3
+}
+
+put {
+	url: {{baseUrl}}/accessmanagement/api/v1/systemuser/request/sent/withdraw?id={{otherWithdrawRequestId}}
+	body: none
+	auth: inherit
+}
+
+params:query {
+	id: {{otherWithdrawRequestId}}
+}
+
+docs {
+	WHEN another public sector system user tries to withdraw the request, withdrawing fails with
+	400 and AM.VLD-00044 (Party cannot perform this status change).
+}
+
+script:pre-request {
+	const { testdata, loginAsSystemUser } = require("./test/DelegationRequest/SystemUserPackageRequest/helpers.js");
+	const td = testdata();
+
+	await loginAsSystemUser(td.otherPublicSectorConsumer.systemUser, td.otherPublicSectorConsumer.orgno, td.otherPublicSectorConsumer.orgno);
+}
+
+tests {
+	test("WHEN another system user withdraws the request, the request returns 400", function() {
+		expect(res.status).to.equal(400);
+	});
+
+	test("THEN the validation error says the party cannot perform this status change", function() {
+		const errors = res.getBody().validationErrors || [];
+		const error = errors.find(e => e.code === "AM.VLD-00044");
+		expect(error).to.not.be.undefined;
+	});
+}

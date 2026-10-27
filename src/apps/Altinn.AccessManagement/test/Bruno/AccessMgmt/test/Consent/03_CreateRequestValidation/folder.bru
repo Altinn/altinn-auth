@@ -1,0 +1,17 @@
+meta {
+  name: 03_CreateRequestValidation
+  seq: 3
+}
+
+docs {
+  Scenario: Invalid consent requests are refused and nothing is created
+
+    When validTo is in the past, the create fails with a validation error
+    When the redirect URL is not a URL, the create fails with a validation error
+    When required resource metadata is missing, the create fails with a problem
+    When the token has only the read scope, the create is forbidden
+    When no token is sent, the create is unauthorized
+
+  Every step sends a fresh request id. None of the requests is stored, so the scenario
+  needs no cleanup.
+}

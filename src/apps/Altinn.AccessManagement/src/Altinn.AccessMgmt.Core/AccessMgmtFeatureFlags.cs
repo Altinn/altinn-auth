@@ -110,6 +110,12 @@ public static class AccessMgmtFeatureFlags
     public const string EnableRequestAssignmentPackage = "AccessMgmt.Controller.RequestAssignment.Package";
 
     /// <summary>
+    /// Enables system users (from-party) to send access requests to organizations. Trial feature;
+    /// access to the endpoint is granted by the <c>altinn:accessmanagement/systemuser:requests.write</c> Maskinporten scope.
+    /// </summary>
+    public const string EnableSystemUserRequests = "AccessMgmt.Controller.RequestAssignment.SystemUserRequests";
+
+    /// <summary>
     /// Enables the resource delegation endpoints in the serviceowner connections API.
     /// </summary>
     public const string EnableServiceOwnerResourceDelegation = "AccessMgmt.Controller.ServiceOwner.ResourceDelegation";
@@ -140,4 +146,28 @@ public static class AccessMgmtFeatureFlags
     /// so the behavior is fully reversible without clearing stored parent references.
     /// </summary>
     public const string AdosSubunitInheritance = "AccessManagement.Subunit.AdosInheritance";
+
+    /// <summary>
+    /// Excludes all Altinn 2 roles (roles provided by <c>ProviderConstants.Altinn2</c>) from connections,
+    /// authorized parties, the policy information point and resource delegation checks.
+    /// Read-side only; stored assignments are kept, so the behavior is fully reversible.
+    /// </summary>
+    public const string DisableAltinn2Roles = "AccessManagement.Roles.DisableAltinn2";
+
+    /// <summary>
+    /// Enables the activity log endpoints under enduser/connections (assignment and
+    /// delegation events).
+    /// </summary>
+    public const string EnableEnduserConnectionsActivityLogApi = "AccessManagement.Enduser.ConnectionsActivityLogApi";
+
+    /// <summary>
+    /// Enables the activity log endpoints under enduser/request (access request events).
+    /// </summary>
+    public const string EnableEnduserRequestActivityLogApi = "AccessManagement.Enduser.RequestActivityLogApi";
+
+    /// <summary>
+    /// Enables the activity log endpoints under enduser/maskinporten (Maskinporten schema
+    /// delegation events — the Supplier-role slice of the log).
+    /// </summary>
+    public const string EnableEnduserMaskinportenActivityLogApi = "AccessManagement.Enduser.MaskinportenActivityLogApi";
 }

@@ -1,4 +1,4 @@
-using Altinn.Authorization.ABAC.Xacml;
+﻿using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Helpers;
 using Altinn.Platform.Authorization.Models;

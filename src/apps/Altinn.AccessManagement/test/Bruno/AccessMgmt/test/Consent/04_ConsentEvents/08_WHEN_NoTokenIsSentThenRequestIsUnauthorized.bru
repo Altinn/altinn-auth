@@ -1,0 +1,25 @@
+meta {
+  name: 08_WHEN_NoTokenIsSentThenRequestIsUnauthorized
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enterprise/consentrequests/events
+  body: none
+  auth: none
+}
+
+docs {
+  WHEN no token is sent, the request is unauthorized.
+
+  GET /accessmanagement/api/v1/enterprise/consentrequests/events
+
+  The request is sent without an Authorization header. Expects 401.
+}
+
+tests {
+  test("WHEN no token is sent, the request returns 401", function() {
+    expect(res.status).to.equal(401);
+  });
+}

@@ -1,0 +1,46 @@
+meta {
+  name: 03_WHEN_EnterpriseReadsUnknownRequestThenNotFound
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enterprise/consentrequests/:consentRequestId
+  body: none
+  auth: inherit
+}
+
+params:path {
+  consentRequestId: {{unknownRequestId}}
+}
+
+docs {
+  WHEN the enterprise reads an unknown request id, the request is not found.
+
+  GET /accessmanagement/api/v1/enterprise/consentrequests/:consentRequestId
+
+  A random id that was never created gives 404 with problem code AM-00001.
+}
+
+script:pre-request {
+  const { loginAsEnterprise, scopes, testdata } = require("./test/Consent/helpers.js");
+  const { v4: uuidv4 } = require("uuid");
+  const td = testdata();
+
+  bru.setVar("unknownRequestId", uuidv4());
+
+  await loginAsEnterprise(td.enterprise, scopes.consentRequestsRead);
+}
+
+tests {
+  test("WHEN an unknown id is read, the request returns 404", function() {
+    expect(res.status).to.equal(404);
+  });
+
+  test("THEN the problem is AM-00001, consent not found", function() {
+    const body = res.getBody();
+    expect(body.status).to.equal(404);
+    expect(body.code).to.equal("AM-00001");
+    expect(body.detail).to.equal("Consent not found");
+  });
+}

@@ -1,0 +1,33 @@
+meta {
+  name: 03_AND_OutsiderCannotOpenTheDraft
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/request/draft?id={{dac_requestId}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  id: {{dac_requestId}}
+}
+
+docs {
+  AND an outsider who knows the request id cannot open the draft. The outsider has no
+  access to act for the requester, so the request returns 403 with no body.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/DelegationRequest/DraftAndCounts/helpers.js");
+  const td = testdata();
+
+  await loginAs(td.outsider);
+}
+
+tests {
+  test("AND the outsider is refused with 403", function() {
+    expect(res.status).to.equal(403);
+  });
+}

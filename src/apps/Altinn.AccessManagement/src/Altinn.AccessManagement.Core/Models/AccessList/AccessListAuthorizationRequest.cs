@@ -1,10 +1,10 @@
-#nullable enable
+﻿#nullable enable
 
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
-using Altinn.AccessManagement.Core.Models.Register;
-using Altinn.AccessManagement.Core.Models.ResourceRegistry;
-using Altinn.AccessManagement.Core.Models.Rights;
+using Altinn.Authorization.Api.Contracts.Authorization;
+using Altinn.Authorization.Api.Contracts.Register;
+using Altinn.Authorization.Api.Contracts.ResourceRegistry;
 using Altinn.Urn.Json;
 
 namespace Altinn.AccessManagement.Core.Models.AccessList;

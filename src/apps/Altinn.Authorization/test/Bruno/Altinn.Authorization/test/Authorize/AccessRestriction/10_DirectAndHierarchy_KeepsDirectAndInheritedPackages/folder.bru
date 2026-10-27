@@ -1,0 +1,15 @@
+meta {
+	name: 10_DirectAndHierarchy_KeepsDirectAndInheritedPackages
+	seq: 10
+}
+
+auth {
+	mode: inherit
+}
+
+docs {
+	Guards against DirectAndHierarchy blocking too much.
+	GIVEN a person with a direct access package assignment from ULASTELIG RETTFERDIG TIGER AS
+	WHEN the person is authorized with access-restriction DirectAndHierarchy
+	THEN the decision is Permit for the main unit, and for its subunit through hierarchy
+}

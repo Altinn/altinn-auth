@@ -1,0 +1,33 @@
+﻿name: "Terraform: Shared"
+run-name: "${{ inputs.environment }}"
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        description: Environment
+        required: true
+        options:
+          - hub
+          - at22
+          - at23
+          - at24
+          - yt01
+          - tt02
+          - prod
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  hub:
+    name: ${{ inputs.environment }}
+    secrets: inherit
+    uses: ./.github/workflows/terraform-template.yml
+    with:
+      environment: ${{ inputs.environment == 'hub' && 'prod' || inputs.environment }}
+      tf_state: ${{ inputs.environment == 'hub' && 'hub' || 'spoke' }}.tfstate
+      working_dir: infra/deploy/${{ inputs.environment == 'hub' && 'hub' || 'spoke' }}

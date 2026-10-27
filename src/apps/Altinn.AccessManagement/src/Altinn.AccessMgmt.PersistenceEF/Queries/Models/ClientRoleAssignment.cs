@@ -6,7 +6,7 @@
         /// The Id for the A2ClientRole, which is the unique identifier for the client role.
         /// </summary>
         public Guid Id { get; set; }
-    
+
         /// <summary>
         /// The FromId for the A2ClientRole, which is the Id of the Client that the role is assigned from.
         /// </summary>

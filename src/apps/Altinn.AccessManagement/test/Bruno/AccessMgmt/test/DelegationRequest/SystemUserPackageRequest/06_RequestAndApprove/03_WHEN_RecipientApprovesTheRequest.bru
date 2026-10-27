@@ -1,0 +1,45 @@
+meta {
+	name: 03_WHEN_RecipientApprovesTheRequest
+	type: http
+	seq: 3
+}
+
+put {
+	url: {{baseUrl}}/accessmanagement/api/v1/enduser/request/received/approve?party={{party}}&id={{approveRequestId}}
+	body: none
+	auth: inherit
+}
+
+params:query {
+	party: {{party}}
+	id: {{approveRequestId}}
+}
+
+docs {
+	WHEN the recipient organisation approves the request from the system user.
+
+	Expects 200 with the request in status Approved.
+}
+
+script:pre-request {
+	if (!bru.getVar("approveRequestId")) {
+		throw new Error("approveRequestId is not set: run the scenario from step 01, and check that step 02 returned a request.");
+	}
+
+	const { testdata, loginAs } = require("./test/DelegationRequest/SystemUserPackageRequest/helpers.js");
+	const td = testdata();
+
+	bru.setVar("party", td.recipient.partyUuid);
+
+	await loginAs(td.recipient.dagligleder);
+}
+
+tests {
+	test("WHEN the recipient approves the request, the request returns 200", function() {
+		expect(res.status).to.equal(200);
+	});
+
+	test("THEN the request is approved", function() {
+		expect(res.getBody().status).to.equal("Approved");
+	});
+}

@@ -117,6 +117,37 @@ namespace Altinn.AccessManagement.Core.Helpers
         }
 
         /// <summary>
+        /// Gets the organization number of the system user owner (<c>systemuser_org</c> in <c>authorization_details</c>)
+        /// </summary>
+        /// <param name="context">the http context</param>
+        /// <returns>The owner organization number, or <c>null</c> if not present</returns>
+        public static string GetSystemUserOrgNo(HttpContext context)
+        {
+            var claim = context.User?.Claims.FirstOrDefault(c => c.Type.Equals("authorization_details"));
+            if (claim == null || string.IsNullOrEmpty(claim.Value))
+            {
+                return null;
+            }
+
+            try
+            {
+                AuthorizationDetails authDetails = JsonSerializer.Deserialize<AuthorizationDetails>(claim.Value);
+                var id = authDetails?.Type == "urn:altinn:systemuser" ? authDetails.SystemUserOrg?.Id : null;
+                if (string.IsNullOrEmpty(id))
+                {
+                    return null;
+                }
+
+                var parts = id.Split(':');
+                return parts.Length == 2 && parts[0] == "0192" ? parts[1] : null;
+            }
+            catch (JsonException)
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
         /// Gets the users authentication level
         /// </summary>
         /// <param name="context">the http context</param>

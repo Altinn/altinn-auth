@@ -53,6 +53,23 @@ public class RequestController(
         options.FilterToEntityTypes = [];
     };
 
+    /// <summary>
+    /// Connection configuration used when approving a package request. In addition to the
+    /// standard organization/person parties it permits a system user as the write/read target
+    /// (the requester of a system-user package request), since <c>AddPackage</c> is invoked with
+    /// the requester as the target. The request-recipient hard block (a system user can never be
+    /// the recipient of a request) is still enforced when the request is created.
+    /// </summary>
+    private Action<ConnectionOptions> ConfigurePackageApprovalConnections { get; } = options =>
+    {
+        options.AllowedWriteFromEntityTypes = [EntityTypeConstants.Organization, EntityTypeConstants.Person];
+        options.AllowedWriteToEntityTypes = [EntityTypeConstants.Organization, EntityTypeConstants.Person, EntityTypeConstants.SystemUser];
+        options.AllowedReadFromEntityTypes = [EntityTypeConstants.Organization, EntityTypeConstants.Person];
+        options.AllowedReadToEntityTypes = [EntityTypeConstants.Organization, EntityTypeConstants.Person, EntityTypeConstants.SystemUser];
+        options.FilterFromEntityTypes = [];
+        options.FilterToEntityTypes = [];
+    };
+
     [HttpGet]
     [FeatureGate(RequirementType.Any, AccessMgmtFeatureFlags.EnableRequestAssignmentResource, AccessMgmtFeatureFlags.EnableRequestAssignmentPackage)]
     [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_REQUESTS_READ)]
@@ -255,6 +272,44 @@ public class RequestController(
     }
 
     /// <summary>
+    /// Get the number of received requests for each subunit of the party.
+    /// Every direct subunit is included, also those with no requests. Returns an empty list if the party has no subunits.
+    /// </summary>
+    /// <param name="party">The party (main unit) whose subunits are counted</param>
+    /// <param name="from">Only count requests from this party. All requesters are counted if omitted</param>
+    /// <param name="status">Status filter. Defaults to Draft, Pending, Approved, Rejected and Withdrawn</param>
+    /// <param name="type">resource or package. Both are counted if omitted</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <response code="200">The number of received requests per subunit</response>
+    /// <response code="400">Bad request</response>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    [HttpGet("received/count/subunits")]
+    [FeatureGate(RequirementType.Any, AccessMgmtFeatureFlags.EnableRequestAssignmentResource, AccessMgmtFeatureFlags.EnableRequestAssignmentPackage)]
+    [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_REQUESTS_READ)]
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_READ)]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+    [ProducesResponseType<IEnumerable<ReceivedRequestCountSubunitDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetReceivedRequestsCountForSubunits(
+        [FromQuery][Required] Guid party,
+        [FromQuery] Guid? from,
+        [FromQuery] RequestStatus[]? status,
+        [FromQuery] string? type,
+        CancellationToken ct = default
+        )
+    {
+        var statusFilter = status == null || !status.Any()
+            ? DefaultStatusFilter
+            : status;
+
+        var result = await requestService.GetReceivedRequestsCountForSubunits(party, from, statusFilter, type, ct);
+        return result.IsSuccess ? Ok(result.Value) : result.Problem.ToActionResult();
+    }
+
+    /// <summary>
     /// Approve a pending request — runs the same delegation logic as AddPackages/AddResourceRights
     /// </summary>
     [HttpPut("received/approve")]
@@ -295,7 +350,8 @@ public class RequestController(
 
         var authUserUuid = AuthenticationHelper.GetAuthenticatedPartyUuid(HttpContext);
 
-        if (request.From.Id == authUserUuid) //User is authorizing his own request, check if he is mainadmin
+        // User is authorizing his own request, check if he is mainadmin
+        if (request.From.Id == authUserUuid)
         {
             // Check pdp is mainadmin
             bool isMainAdmin = await AuthorizeResourceAccess("altinn_access_management_hovedadmin", request.To.Id, User, "write");
@@ -406,6 +462,7 @@ public class RequestController(
         ==
         Per (by) ber om tilgang for Kari (for) til App (resource) hos Org (at).
         */
+
         // Guaranteed non-null here: TryBuild above returned false, so the GetResource lookup succeeded.
         var result = await requestService.CreateResourceRequest(
             toId: to,
@@ -499,7 +556,7 @@ public class RequestController(
             request.To.Id,
             request.From.Id,
             request.Package.Id.Value,
-            ConfigureConnections,
+            ConfigurePackageApprovalConnections,
             ct);
 
         if (result.IsProblem)

@@ -1,0 +1,38 @@
+meta {
+  name: Scenarios
+  seq: 4
+}
+
+docs {
+  # Service owner API scenarios
+
+  BDD scenarios for the service owner endpoints under
+  `/accessmanagement/api/v1/serviceowner`. They double as usage documentation: every
+  request carries a `docs` block with what the endpoint does, the parameters it takes,
+  the token and scope it needs, and the response it returns.
+
+  Each subfolder is one scenario. The files inside are the scenario steps, named
+  `NN_GIVEN|WHEN|THEN|AND|CLEANUP_...` and ordered by `seq`. A scenario starts from a
+  known state, removes what it created, and can run standalone or repeatedly.
+
+  ## Endpoints
+
+  - `POST authorizedparties`: the parties a person or organization can act on behalf of,
+    looked up by a service owner. Scope `altinn:accessmanagement/authorizedparties.resourceowner`.
+  - `GET connections/resources/rights`, `POST connections/resources` and
+    `POST connections/resources/revoke`: a service owner delegates single rights on its
+    own resource from one party to another, and revokes them again. Scope
+    `altinn:serviceowner/delegations:resource.write`, behind the feature flag
+    `AccessMgmt.Controller.ServiceOwner.ResourceDelegation`.
+
+  ## Tokens and fixtures
+
+  Every step mints a Maskinporten enterprise token through `helpers.js`
+  (`loginAsServiceOwner(serviceOwner, scope)`). The service owners come from
+  `testdata/sharedtestdata.js`: digdir owns the delegated resource and skd does not. The
+  resource and the two persons come from `testdata/serviceowner-scenarios/<env>.js`.
+
+  ## Environments
+
+  Written for and verified on AT22. There is no TT02 seed file yet.
+}

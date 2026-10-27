@@ -82,6 +82,18 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
         };
 
         var result = new List<DelegationChangeDto>();
+
+        // ClientDelegation only considers client delegations received through the requested via-party.
+        if (input.AccessRestriction == AccessRestrictionDto.ClientDelegation)
+        {
+            ConditionalAdd(
+                DelegationChangesTestData.Default(DelegationChangesTestData.WithResourceID("ttd-externalpdp-resource1"), DelegationChangesTestData.WithOfferedByPartyID(50005545), DelegationChangesTestData.WithToUuid(UuidTypeDto.SystemUser, Guid.Parse("47caea5b-a80b-4343-b1d3-31eb523a4e28"))),
+                delegation => delegation.ViaPartyOrganizationNumber == ClientAccessViaPartyOrgNo &&
+                    WithDefaultCondition("ttd-externalpdp-resource1", new AttributeMatch { Id = XacmlRequestAttribute.PartyAttribute, Value = "50005545" }, new AttributeMatch { Id = XacmlRequestAttribute.SystemUserIdAttribute, Value = "47caea5b-a80b-4343-b1d3-31eb523a4e28" })(delegation))(input, result);
+
+            return Task.FromResult(result as IEnumerable<DelegationChangeDto>);
+        }
+
         foreach (var item in data)
         {
             item(input, result);
@@ -89,6 +101,11 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
 
         return Task.FromResult(result as IEnumerable<DelegationChangeDto>);
     }
+
+    /// <summary>
+    /// Organization number of the via-party the mocked client delegation is received through.
+    /// </summary>
+    public const string ClientAccessViaPartyOrgNo = "910000001";
 
     public static Func<DelegationChangeInputDto, bool> WithDefaultCondition(string resourceId, AttributeMatch from, AttributeMatch to) => delegation =>
         (IfAltinnAppID(resourceId)(delegation) || IfResourceID(resourceId)(delegation)) &&
@@ -153,42 +170,6 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
         return Task.FromResult<IEnumerable<AuthorizedPartyDto>>([]);
     }
 
-    public Task<IEnumerable<AccessPackageUrn>> GetAccessPackages(Guid to, Guid from, CancellationToken cancellationToken = default)
-    {
-        var cacheKey = $"AccPkgs|f:{from}|t:{to}";
-
-        if (!_memoryCache.TryGetValue(cacheKey, out IEnumerable<AccessPackageUrn> result))
-        {
-            List<AccessPackageUrn> accessPackages = new();
-            if (from.ToString() == "066148fe-7077-4484-b7ea-44b5ede0014e" && to.ToString() == "e2eba2c3-b369-4ff9-8418-99a810d6bb58")
-            {
-                accessPackages.AddRange(new List<AccessPackageUrn>
-                {
-                    AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked("skatt-naering")),
-                    AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked("ansettelsesforhold")),
-                    AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked("maskinporten-scopes"))
-                });
-            }
-
-            // Person (party uuid) holding the 'ansettelsesforhold' access package on behalf of the reportee,
-            // used by the person-via-access-package decision test (#3498 area 3).
-            if (from == Guid.Parse("066148fe-7077-4484-b7ea-44b5ede0014e") && to == Guid.Parse("00000000-0000-0000-0000-0000000000aa"))
-            {
-                accessPackages.Add(AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked("ansettelsesforhold")));
-            }
-
-            result = accessPackages;
-
-            var cacheEntryOptions = new MemoryCacheEntryOptions()
-            .SetPriority(CacheItemPriority.High)
-            .SetAbsoluteExpiration(new TimeSpan(0, 0, 5, 0));
-
-            _memoryCache.Set(cacheKey, result, cacheEntryOptions);
-        }
-
-        return Task.FromResult(result);
-    }
-
     private static string GetAuthorizedPartiesPath(int userId)
     {
         return Path.Combine("Data", "AccessManagement", "AuthorizedParties", $"{userId}.json");
@@ -216,28 +197,21 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
         return null;
     }
 
-    public Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, CancellationToken cancellationToken = default)
+    public Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, Altinn.Authorization.Enums.AccessRestriction accessRestriction = Altinn.Authorization.Enums.AccessRestriction.None, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default)
     {
-        var cacheKey = $"RolesAndAccPkgs|f:{from}|t:{to}";
+        var cacheKey = $"RolesAndAccPkgs|f:{from}|t:{to}|ac:{accessRestriction}|vp:{viaPartyOrganizationNumber}";
 
         if (!_memoryCache.TryGetValue(cacheKey, out PipResponseDto result))
         {
             result = new PipResponseDto();
 
-            if (from.ToString() == "066148fe-7077-4484-b7ea-44b5ede0014e" && to.ToString() == "e2eba2c3-b369-4ff9-8418-99a810d6bb58")
+            // Roles and access packages the to-party holds on behalf of the from-party, keyed by party uuids
+            // the same way the real endpoint is.
+            string rolesAndAccessPackagesPath = GetRolesAndAccessPackagesPath(from, to);
+            if (File.Exists(rolesAndAccessPackagesPath))
             {
-                result.Roles.AddRange(new List<RoleUrn>
-                {
-                    RoleUrn.Parse("urn:altinn:external-role:ccr:daglig-leder"),
-                    RoleUrn.Parse("urn:altinn:rolecode:dagl"),
-                });
-
-                result.AccessPackages.AddRange(new List<AccessPackageUrn>
-                {
-                    AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked("skatt-naering")),
-                    AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked("ansettelsesforhold")),
-                    AccessPackageUrn.AccessPackageId.Create(AccessPackageIdentifier.CreateUnchecked("maskinporten-scopes")),
-                });
+                string content = File.ReadAllText(rolesAndAccessPackagesPath);
+                result = JsonSerializer.Deserialize<PipResponseDto>(content, _jsonOptions);
             }
 
             var cacheEntryOptions = new MemoryCacheEntryOptions()
@@ -248,5 +222,10 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
         }
 
         return Task.FromResult(result);
+    }
+
+    private static string GetRolesAndAccessPackagesPath(Guid from, Guid to)
+    {
+        return Path.Combine("Data", "AccessManagement", "RolesAndAccessPackages", from.ToString(), $"{to}.json");
     }
 }

@@ -1,4 +1,4 @@
-using Altinn.Authorization.ABAC.Xacml.JsonProfile;
+﻿using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Platform.Authorization.Models.External;
 
 namespace Altinn.Authorization.Tests.Unit;

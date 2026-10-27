@@ -1,0 +1,46 @@
+meta {
+  name: 02_WHEN_OrganisationNumberChecksumIsInvalidThenRequestFails
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/systemuser/request/package?organization=913456786&package={{package}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  organization: 913456786
+  package: {{package}}
+}
+
+docs {
+  WHEN the organisation number has nine digits but fails the modulus 11 check.
+
+  Expects 400 with error code STD-00000 and validation error AM.VLD-00007 whose paths point
+  at the organization query parameter.
+}
+
+script:pre-request {
+  const { testdata, loginAsSystemUser } = require("./test/DelegationRequest/SystemUserPackageRequest/helpers.js");
+  const td = testdata();
+
+  bru.setVar("package", td.package);
+
+  await loginAsSystemUser(td.publicSectorConsumer.systemUser, td.publicSectorConsumer.orgno, td.publicSectorConsumer.orgno);
+}
+
+tests {
+  test("WHEN the organisation number checksum is invalid, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN validation error AM.VLD-00007 points at the organization parameter", function() {
+    const body = res.getBody();
+    expect(body.code).to.equal("STD-00000");
+    const err = body.validationErrors.find(e => e.code === "AM.VLD-00007");
+    expect(err, "expected validation error AM.VLD-00007").to.not.be.undefined;
+    expect(JSON.stringify(err.paths)).to.include("organization");
+  });
+}

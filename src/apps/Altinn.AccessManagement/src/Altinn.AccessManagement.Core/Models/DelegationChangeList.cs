@@ -1,4 +1,4 @@
-namespace Altinn.AccessManagement.Core.Models
+﻿namespace Altinn.AccessManagement.Core.Models
 {
     /// <summary>
     /// Response model for the list of delegation changes for a resource/app that handles validation errors

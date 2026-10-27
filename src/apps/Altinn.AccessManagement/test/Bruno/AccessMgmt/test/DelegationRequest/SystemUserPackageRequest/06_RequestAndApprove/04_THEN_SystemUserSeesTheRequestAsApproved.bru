@@ -1,0 +1,41 @@
+meta {
+	name: 04_THEN_SystemUserSeesTheRequestAsApproved
+	type: http
+	seq: 4
+}
+
+get {
+	url: {{baseUrl}}/accessmanagement/api/v1/systemuser/request/sent?organization={{organization}}&status=Approved&type=package
+	body: none
+	auth: inherit
+}
+
+params:query {
+	organization: {{organization}}
+	status: Approved
+	type: package
+}
+
+docs {
+	THEN the system user sees the request as approved among its sent requests.
+}
+
+script:pre-request {
+	const { testdata, loginAsSystemUser } = require("./test/DelegationRequest/SystemUserPackageRequest/helpers.js");
+	const td = testdata();
+
+	bru.setVar("organization", td.recipient.orgno);
+
+	await loginAsSystemUser(td.publicSectorConsumer.systemUser, td.publicSectorConsumer.orgno, td.publicSectorConsumer.orgno);
+}
+
+tests {
+	test("THEN the sent requests can be listed, the request returns 200", function() {
+		expect(res.status).to.equal(200);
+	});
+
+	test("THEN the approved request is listed", function() {
+		const ids = res.getBody().data.map(r => r.id);
+		expect(ids).to.include(bru.getVar("approveRequestId"));
+	});
+}
