@@ -30,7 +30,7 @@ Developers. Board, columns are Status, sorted by Priority. Filter: `type:Task,Bu
 | FE1 Frontend: select rights on request · normal · ↑ F1 · waited for D2, released today | B7 Change feed sync in Access Management · `status/blocked` by Team Core | X2 Enduser-api: delegated clients 500 · Bug · PR open | |
 | | X1 RDF export omits contact points · Bug · ↑ F3 | | |
 
-- Only tasks and bugs. No test or design tasks, no features, no Backlog.
+- Only tasks, bugs and enhancements, the three types a developer builds. No test or design tasks, no features, no Backlog.
 - The parent feature (↑) is on every card, so a task is never picked without knowing which feature it serves.
 - In review means take the next one. The card leaves on merge, not on approval.
 
