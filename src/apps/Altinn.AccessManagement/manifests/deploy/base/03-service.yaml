@@ -4,11 +4,9 @@ metadata:
   name: am-api
   labels:
     app.kubernetes.io/name: am-api
-    app.kubernetes.io/part-of: access-management
 spec:
   selector:
     app.kubernetes.io/name: am-api
-    app.kubernetes.io/part-of: access-management
   ports:
     - name: http
       port: 80

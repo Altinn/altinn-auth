@@ -12,7 +12,6 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: am-api
-        app.kubernetes.io/part-of: access-management
         azure.workload.identity/use: "true"
       annotations:
         cluster-autoscaler.kubernetes.io/safe-to-evict: "true"

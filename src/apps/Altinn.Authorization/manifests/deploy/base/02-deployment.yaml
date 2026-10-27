@@ -12,7 +12,6 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: authz-api
-        app.kubernetes.io/part-of: authorization
         azure.workload.identity/use: "true"
       annotations:
         cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
