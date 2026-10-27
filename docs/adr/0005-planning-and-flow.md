@@ -263,7 +263,7 @@ Every role reads the same way: the view you look at, how you know it is your tur
   | Area, one per area | `label:area/<name> is:open`, grouped by parent issue | Status | Area owners |
   | Vakt | `label:kind/question,kind/incident is:open` | Status | The vakt |
 
-  Projects can filter by label but not group by it, so "per area" is one saved view per area, made by the area owner. Bugs show on the Developers board. We start with this and see after the first sprints what is missed.
+  Projects can filter by label but not group by it, so "per area" is one saved view per area, made by the area owner. Bugs show on the Developers board. We start with this and see after the first sprints what is missed. Each view, drawn with example issues, is in [0005-board-views.md](0005-board-views.md).
 
   The role views show sub-issues, since that is what people work on, and they start at Ready: Backlog is not a column in them. Backlog is seen in the Features view, which is where it is worked.
 
