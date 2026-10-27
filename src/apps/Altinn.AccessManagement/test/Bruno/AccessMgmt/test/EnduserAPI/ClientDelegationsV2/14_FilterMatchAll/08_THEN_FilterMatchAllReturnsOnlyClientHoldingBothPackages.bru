@@ -21,7 +21,9 @@ docs {
   THEN the same filter with match=all returns only the CCR client. It covers
   both packages across both ways in: the lonn package through the regnskapsforer
   role and the skattegrunnlag package through the grant on its rightholder relation.
-  The rightholder client holds only the granted package and drops out.
+  The rightholder client holds only the granted package and drops out, unless the
+  environment also registers it as a CCR client of the facilitator (AT22), in which
+  case it holds both packages and is returned. Step 07 records which case applies.
 }
 
 script:pre-request {
@@ -42,12 +44,18 @@ tests {
     expect(res.status).to.equal(200);
   });
 
-  test("THEN the CCR client is returned and the rightholder client is not", function() {
+  test("THEN the CCR client is returned and the rightholder client only when it holds both packages", function() {
     const data = res.getBody().data;
     const clientA = td.REGN_Organisasjon.REGN_Org_Clients.client_A.partyUuid.toLowerCase();
     const clientB = td.REGN_Organisasjon.REGN_Org_Clients.client_B.partyUuid.toLowerCase();
     expect(data.some(item => item.client.id.toLowerCase() === clientA), "expected the CCR client in the all mode list").to.be.true;
-    expect(data.some(item => item.client.id.toLowerCase() === clientB), "the rightholder client holds only one of the packages").to.be.false;
+
+    // Set by step 07: true where the rightholder client is also a CCR client holding the lonn package.
+    const holdsBoth = bru.getVar("rightholderClientHoldsRolePackage") === true;
+    const message = holdsBoth
+      ? "the rightholder client also holds the lonn package through a CCR role, so it holds both packages"
+      : "the rightholder client holds only one of the packages";
+    expect(data.some(item => item.client.id.toLowerCase() === clientB), message).to.equal(holdsBoth);
   });
 
   test("AND every returned client holds both filter packages", function() {

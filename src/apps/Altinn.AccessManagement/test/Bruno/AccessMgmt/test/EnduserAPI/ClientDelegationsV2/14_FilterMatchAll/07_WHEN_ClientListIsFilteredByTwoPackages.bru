@@ -45,5 +45,12 @@ tests {
     const clientB = td.REGN_Organisasjon.REGN_Org_Clients.client_B.partyUuid.toLowerCase();
     expect(data.some(item => item.client.id.toLowerCase() === clientA), "expected the CCR client in the list").to.be.true;
     expect(data.some(item => item.client.id.toLowerCase() === clientB), "expected the rightholder client in the list").to.be.true;
+
+    // In some environments the rightholder client is also a CCR client of the facilitator
+    // (AT22: regnskapsforer in the register) and then holds the lonn package through its role too.
+    const rolePackage = td.clientDelegationV2.packages.regnskapsforerLonn;
+    const rightholderClient = data.find(item => item.client.id.toLowerCase() === clientB);
+    const holdsRolePackage = !!rightholderClient && rightholderClient.access.some(a => a.packages.some(p => p.urn === rolePackage));
+    bru.setVar("rightholderClientHoldsRolePackage", holdsRolePackage);
   });
 }
