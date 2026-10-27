@@ -242,6 +242,8 @@ public partial class ResourceSyncService : IResourceSyncService
                     leaseData.ResourceChangesNextPageLink = page.Content.Links.Next;
                     await lease.Update(leaseData, cancellationToken);
                 }
+
+                dbContext.ChangeTracker.Clear();
             }
         }
         catch (Exception ex)
