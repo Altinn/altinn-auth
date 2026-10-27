@@ -37,6 +37,10 @@ namespace Altinn.Platform.Authorization.Helpers
                                 {
                                     roleCodes.Add(xacmlMatch.AttributeValue.Value);
                                 }
+                                else if (xacmlMatch.AttributeDesignator.AttributeId.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute))
+                                {
+                                    roleCodes.Add(xacmlMatch.AttributeValue.Value);
+                                }
                             }
                         }
                     }
