@@ -108,7 +108,7 @@ public class SystemUserRequestController(
             return Problems.SystemUserRequestNotAllowed.ToActionResult();
         }
 
-        var statusFilter = status == null || status.Length == 0 ? DefaultStatusFilter : status;
+        var statusFilter = DtoMapper.ConvertFromV1StatusFilter(status == null || status.Length == 0 ? DefaultStatusFilter : status);
         var systemUserUuid = AuthenticationHelper.GetSystemUserUuid(HttpContext);
 
         var result = await requestService.GetSystemUserSentRequests(systemUserUuid, consumerOrgNo, organization, statusFilter, type, ct);
@@ -146,7 +146,7 @@ public class SystemUserRequestController(
         return result.IsSuccess ? Ok(result.Value) : result.Problem.ToActionResult();
     }
 
-    private static readonly RequestStatus[] DefaultStatusFilter = [RequestStatus.Draft, RequestStatus.Pending, RequestStatus.Approved, RequestStatus.Rejected, RequestStatus.Withdrawn];
+    private static readonly RequestStatus[] DefaultStatusFilter = [RequestStatus.Draft, RequestStatus.Pending, RequestStatus.Approved, RequestStatus.PartialApprove, RequestStatus.Rejected, RequestStatus.Withdrawn];
 
     private static bool IsValidOrganizationNumber(string organization)
         => OrganizationNumber.TryParse(organization, null, out _);

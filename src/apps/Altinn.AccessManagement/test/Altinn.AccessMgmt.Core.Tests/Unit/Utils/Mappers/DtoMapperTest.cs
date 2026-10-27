@@ -1,9 +1,12 @@
 ﻿using Altinn.AccessManagement.Core.Enums;
 using Altinn.AccessManagement.Core.Models;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
+using Altinn.Authorization.Api.Contracts.AccessManagement.ActivityLog;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
+using Altinn.Authorization.ModelUtils;
 
 namespace Altinn.AccessMgmt.Core.Tests.Unit.Utils.Mappers;
 
@@ -751,6 +754,134 @@ public class DtoMapperTest
         dto.Resource!.Id.Should().Be(request.ResourceId);
         dto.By!.Id.Should().Be(by.Id);
         dto.LastUpdatedBy!.Id.Should().Be(changedBy);
+    }
+
+    // ── RequestMapper — Status and StatusV2 ─────────────────────────────────────
+    private static RequestAssignment MakeRequestAssignment()
+    {
+        var from = MakeEntity("From");
+        var to = MakeEntity("To");
+        var by = MakeEntity("By");
+        return new RequestAssignment { FromId = from.Id, ToId = to.Id, ById = by.Id, From = from, To = to, By = by };
+    }
+
+    [Fact]
+    public void Convert_RequestAssignmentResource_PartialApprove_StatusIsApprovedAndStatusV2IsPartialApprove()
+    {
+        var request = new RequestAssignmentResource { ResourceId = Guid.NewGuid(), Status = RequestStatus.PartialApprove, Assignment = MakeRequestAssignment() };
+
+        var dto = Altinn.AccessMgmt.Core.Utils.DtoMapper.Convert(request);
+
+        dto.Status.Should().Be(RequestStatus.Approved);
+        dto.StatusV2.Should().Be(NonExhaustiveEnum.Create(RequestStatus.PartialApprove));
+    }
+
+    [Fact]
+    public void Convert_RequestAssignmentPackage_PartialApprove_StatusIsApprovedAndStatusV2IsPartialApprove()
+    {
+        var request = new RequestAssignmentPackage { PackageId = Guid.NewGuid(), Status = RequestStatus.PartialApprove, Assignment = MakeRequestAssignment() };
+
+        var dto = Altinn.AccessMgmt.Core.Utils.DtoMapper.Convert(request);
+
+        dto.Status.Should().Be(RequestStatus.Approved);
+        dto.StatusV2.Should().Be(NonExhaustiveEnum.Create(RequestStatus.PartialApprove));
+    }
+
+    [Theory]
+    [InlineData(RequestStatus.None)]
+    [InlineData(RequestStatus.Draft)]
+    [InlineData(RequestStatus.Pending)]
+    [InlineData(RequestStatus.Approved)]
+    [InlineData(RequestStatus.Rejected)]
+    [InlineData(RequestStatus.Withdrawn)]
+    public void Convert_RequestAssignmentResource_OriginalStatus_IsUnchangedInStatusAndStatusV2(RequestStatus status)
+    {
+        var request = new RequestAssignmentResource { ResourceId = Guid.NewGuid(), Status = status, Assignment = MakeRequestAssignment() };
+
+        var dto = Altinn.AccessMgmt.Core.Utils.DtoMapper.Convert(request);
+
+        dto.Status.Should().Be(status);
+        dto.StatusV2.Should().Be(NonExhaustiveEnum.Create(status));
+    }
+
+    [Fact]
+    public void ConvertToV2_UsesStatusV2AsStatusAndCopiesAllFields()
+    {
+        var request = new RequestAssignmentResource
+        {
+            ResourceId = Guid.NewGuid(),
+            Status = RequestStatus.PartialApprove,
+            Assignment = MakeRequestAssignment(),
+            RightKeys = ["key-read", "key-write"],
+            Audit_ChangedBy = Guid.NewGuid(),
+        };
+        var v1 = Altinn.AccessMgmt.Core.Utils.DtoMapper.Convert(request);
+        v1.Links = new RequestLinks { StatusLink = "https://example.org/status" };
+
+        var v2 = Altinn.AccessMgmt.Core.Utils.DtoMapper.ConvertToV2(v1);
+
+        v2.Status.Should().Be(NonExhaustiveEnum.Create(RequestStatus.PartialApprove));
+        v2.Should().BeEquivalentTo(v1, options => options.Excluding(d => d.Status).Excluding(d => d.StatusV2));
+    }
+
+    [Fact]
+    public void ConvertFromV1StatusFilter_WithApproved_AddsPartialApprove()
+    {
+        var filter = Altinn.AccessMgmt.Core.Utils.DtoMapper.ConvertFromV1StatusFilter([RequestStatus.Pending, RequestStatus.Approved]);
+
+        filter.Should().BeEquivalentTo([RequestStatus.Pending, RequestStatus.Approved, RequestStatus.PartialApprove]);
+    }
+
+    [Fact]
+    public void ConvertFromV1StatusFilter_WithoutApproved_IsUnchanged()
+    {
+        var filter = Altinn.AccessMgmt.Core.Utils.DtoMapper.ConvertFromV1StatusFilter([RequestStatus.Pending, RequestStatus.Rejected]);
+
+        filter.Should().BeEquivalentTo([RequestStatus.Pending, RequestStatus.Rejected]);
+    }
+
+    [Fact]
+    public void ConvertFromV1StatusFilter_WithApprovedAndPartialApprove_HasNoDuplicates()
+    {
+        var filter = Altinn.AccessMgmt.Core.Utils.DtoMapper.ConvertFromV1StatusFilter([RequestStatus.Approved, RequestStatus.PartialApprove]);
+
+        filter.Should().BeEquivalentTo([RequestStatus.Approved, RequestStatus.PartialApprove]);
+    }
+
+    // ── DtoMapperActivityLog — Status ───────────────────────────────────────────
+    [Fact]
+    public void Convert_ActivityLog_PartialApprove_KeepsStatusAndResolvesActivityType()
+    {
+        var entry = new ActivityLog
+        {
+            Type = ActivityLogType.Request,
+            Subtype = ActivityLogSubtype.Resource,
+            Trigger = ActivityLogTrigger.Updated,
+            Status = RequestStatus.PartialApprove,
+        };
+
+        var dto = Altinn.AccessMgmt.Core.Utils.DtoMapper.Convert(entry);
+
+        dto.Status.Should().Be(NonExhaustiveEnum.Create(RequestStatus.PartialApprove));
+        dto.ActivityTypeId.Should().Be(ActivityTypeConstants.RequestResourceUpdatedPartialApprove.Id);
+    }
+
+    [Fact]
+    public void Convert_ActivityLog_WithoutStatus_StatusIsNull()
+    {
+        var entry = new ActivityLog { Type = ActivityLogType.Assignment, Trigger = ActivityLogTrigger.Created };
+
+        var dto = Altinn.AccessMgmt.Core.Utils.DtoMapper.Convert(entry);
+
+        dto.Status.Should().BeNull();
+    }
+
+    [Fact]
+    public void ToActivityTypeDto_PartialApproveEntry_HasPartialApproveStatus()
+    {
+        var dto = Altinn.AccessMgmt.Core.Utils.DtoMapper.ToActivityTypeDto(ActivityTypeConstants.RequestPackageUpdatedPartialApprove);
+
+        dto.Status.Should().Be(NonExhaustiveEnum.Create(RequestStatus.PartialApprove));
     }
 
     // ── RequestMapper — ConvertToIdentifiedParty ────────────────────────────────

@@ -82,6 +82,24 @@ public class ActivityTypeConstantsTests
     }
 
     [Fact]
+    public void Resolve_PackagePartialApprove_ResolvesItsOwnEntry()
+    {
+        var resolved = ActivityTypeConstants.Resolve(ActivityLogType.Request, ActivityLogSubtype.Package, ActivityLogTrigger.Updated, RequestStatus.PartialApprove);
+
+        Assert.NotNull(resolved);
+        Assert.Equal(ActivityTypeConstants.RequestPackageUpdatedPartialApprove.Id, resolved.Id);
+    }
+
+    [Fact]
+    public void Resolve_ResourcePartialApprove_ResolvesItsOwnEntry()
+    {
+        var resolved = ActivityTypeConstants.Resolve(ActivityLogType.Request, ActivityLogSubtype.Resource, ActivityLogTrigger.Updated, RequestStatus.PartialApprove);
+
+        Assert.NotNull(resolved);
+        Assert.Equal(ActivityTypeConstants.RequestResourceUpdatedPartialApprove.Id, resolved.Id);
+    }
+
+    [Fact]
     public void Resolve_SubtypeNullIsExactNotWildcard()
     {
         var parent = ActivityTypeConstants.Resolve(ActivityLogType.Assignment, null, ActivityLogTrigger.Created, null);

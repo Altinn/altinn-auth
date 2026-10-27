@@ -37,8 +37,9 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers.Base;
 /// Holds no route; each versioned controller owns its own route metadata.
 /// Creating a resource request is versioned, so it lives in the versioned controllers.
 /// </summary>
+/// <typeparam name="TRequest">The request model returned by the version, made by <see cref="ConvertRequest"/>.</typeparam>
 [ApiController]
-public abstract class RequestControllerBase(
+public abstract class RequestControllerBase<TRequest>(
     IRequestService requestService,
     IAssignmentService assignmentService,
     IConnectionService connectionService,
@@ -65,7 +66,18 @@ public abstract class RequestControllerBase(
 
     protected IPDP PDP { get; } = pdp;
 
-    private static readonly RequestStatus[] DefaultStatusFilter = [RequestStatus.Draft, RequestStatus.Pending, RequestStatus.Approved, RequestStatus.Rejected, RequestStatus.Withdrawn];
+    /// <summary>
+    /// Converts a request to the model returned by the version.
+    /// </summary>
+    protected abstract TRequest ConvertRequest(RequestDto request);
+
+    /// <summary>
+    /// The statuses to filter on, given the status query parameter. Defaults to every status except <see cref="RequestStatus.None"/>.
+    /// </summary>
+    protected virtual IEnumerable<RequestStatus> GetStatusFilter(RequestStatus[]? status)
+        => status == null || status.Length == 0 ? DefaultStatusFilter : status;
+
+    private static readonly RequestStatus[] DefaultStatusFilter = [RequestStatus.Draft, RequestStatus.Pending, RequestStatus.Approved, RequestStatus.PartialApprove, RequestStatus.Rejected, RequestStatus.Withdrawn];
 
     private Action<ConnectionOptions> ConfigureConnections { get; } = options =>
     {
@@ -99,11 +111,11 @@ public abstract class RequestControllerBase(
     [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_REQUESTS_READ)]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_READ)]
     [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
-    [ProducesResponseType<RequestDto>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetRequest(
+    public async Task<ActionResult<TRequest>> GetRequest(
     [FromQuery][Required] Guid party,
     [FromQuery][Required] Guid id,
     CancellationToken ct = default
@@ -121,17 +133,17 @@ public abstract class RequestControllerBase(
             return Forbid();
         }
 
-        return Ok(result.Value);
+        return Ok(ConvertRequest(result.Value));
     }
 
     [HttpGet("draft")]
     [FeatureGate(RequirementType.Any, AccessMgmtFeatureFlags.EnableRequestAssignmentResource)]
     [Authorize(Policy = AuthzConstants.SCOPE_PORTAL_ENDUSER)]
-    [ProducesResponseType<RequestDto>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetDraftRequest([FromQuery][Required] Guid id, CancellationToken ct = default)
+    public async Task<ActionResult<TRequest>> GetDraftRequest([FromQuery][Required] Guid id, CancellationToken ct = default)
     {
         var result = await RequestService.GetRequest(id, ct);
         if (result.IsProblem)
@@ -150,7 +162,7 @@ public abstract class RequestControllerBase(
             return Forbid();
         }
 
-        return Ok(result.Value);
+        return Ok(ConvertRequest(result.Value));
     }
 
     /// <summary>
@@ -161,9 +173,9 @@ public abstract class RequestControllerBase(
     [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
     [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_REQUESTS_WRITE)]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
-    [ProducesResponseType<RequestDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> ConfirmRequest(
+    public async Task<ActionResult<TRequest>> ConfirmRequest(
         [FromQuery][Required] Guid party,
         [FromQuery][Required] Guid id,
         CancellationToken ct = default
@@ -177,11 +189,11 @@ public abstract class RequestControllerBase(
     [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_REQUESTS_READ)]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_READ)]
     [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
-    [ProducesResponseType<PaginatedResult<RequestDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetSentRequests(
+    public async Task<ActionResult<PaginatedResult<TRequest>>> GetSentRequests(
         [FromQuery][Required] Guid party,
         [FromQuery] Guid? to,
         [FromQuery] RequestStatus[]? status,
@@ -190,13 +202,11 @@ public abstract class RequestControllerBase(
         CancellationToken ct = default
         )
     {
-        var statusFilter = status == null || !status.Any()
-            ? DefaultStatusFilter
-            : status;
+        var statusFilter = GetStatusFilter(status);
 
         var result = await RequestService.GetSentRequests(party, to, statusFilter, type, ct);
 
-        return result.IsSuccess ? Ok(PaginatedResult.Create(result.Value, null)) : result.Problem.ToActionResult();
+        return result.IsSuccess ? Ok(PaginatedResult.Create(result.Value.Select(ConvertRequest), null)) : result.Problem.ToActionResult();
     }
 
     [HttpGet("sent/count")]
@@ -216,9 +226,7 @@ public abstract class RequestControllerBase(
         CancellationToken ct = default
         )
     {
-        var statusFilter = status == null || !status.Any()
-            ? DefaultStatusFilter
-            : status;
+        var statusFilter = GetStatusFilter(status);
 
         var result = await RequestService.GetSentRequestsCount(party, to, statusFilter, type, ct);
 
@@ -233,9 +241,9 @@ public abstract class RequestControllerBase(
     [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
     [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_REQUESTS_WRITE)]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
-    [ProducesResponseType<RequestDto>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> WithdrawRequest(
+    public async Task<ActionResult<TRequest>> WithdrawRequest(
         [FromQuery][Required] Guid party,
         [FromQuery][Required] Guid id,
         CancellationToken ct = default
@@ -249,11 +257,11 @@ public abstract class RequestControllerBase(
     [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_REQUESTS_READ)]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_READ)]
     [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
-    [ProducesResponseType<PaginatedResult<RequestDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> GetReceivedRequests(
+    public async Task<ActionResult<PaginatedResult<TRequest>>> GetReceivedRequests(
         [FromQuery][Required] Guid party,
         [FromQuery] Guid? from,
         [FromQuery] RequestStatus[]? status,
@@ -262,12 +270,10 @@ public abstract class RequestControllerBase(
         CancellationToken ct = default
         )
     {
-        var statusFilter = status == null || !status.Any()
-            ? DefaultStatusFilter
-            : status;
+        var statusFilter = GetStatusFilter(status);
 
         var result = await RequestService.GetReceivedRequests(party, from, statusFilter, type, ct);
-        return result.IsSuccess ? Ok(PaginatedResult.Create(result.Value, null)) : result.Problem.ToActionResult();
+        return result.IsSuccess ? Ok(PaginatedResult.Create(result.Value.Select(ConvertRequest), null)) : result.Problem.ToActionResult();
     }
 
     [HttpGet("received/count")]
@@ -287,9 +293,7 @@ public abstract class RequestControllerBase(
         CancellationToken ct = default
         )
     {
-        var statusFilter = status == null || !status.Any()
-            ? DefaultStatusFilter
-            : status;
+        var statusFilter = GetStatusFilter(status);
 
         var result = await RequestService.GetReceivedRequestsCount(party, from, statusFilter, type, ct);
         return result.IsSuccess ? Ok(result.Value) : result.Problem.ToActionResult();
@@ -301,7 +305,7 @@ public abstract class RequestControllerBase(
     /// </summary>
     /// <param name="party">The party (main unit) whose subunits are counted</param>
     /// <param name="from">Only count requests from this party. All requesters are counted if omitted</param>
-    /// <param name="status">Status filter. Defaults to Draft, Pending, Approved, Rejected and Withdrawn</param>
+    /// <param name="status">Status filter. Defaults to Draft, Pending, Approved, PartialApprove, Rejected and Withdrawn</param>
     /// <param name="type">resource or package. Both are counted if omitted</param>
     /// <param name="ct">Cancellation token</param>
     /// <response code="200">The number of received requests per subunit</response>
@@ -325,9 +329,7 @@ public abstract class RequestControllerBase(
         CancellationToken ct = default
         )
     {
-        var statusFilter = status == null || !status.Any()
-            ? DefaultStatusFilter
-            : status;
+        var statusFilter = GetStatusFilter(status);
 
         var result = await RequestService.GetReceivedRequestsCountForSubunits(party, from, statusFilter, type, ct);
         return result.IsSuccess ? Ok(result.Value) : result.Problem.ToActionResult();
@@ -341,12 +343,12 @@ public abstract class RequestControllerBase(
     [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
     [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_REQUESTS_WRITE)]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
-    [ProducesResponseType<RequestDto>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> ApproveRequest(
+    public async Task<ActionResult<TRequest>> ApproveRequest(
         [FromQuery][Required] Guid party,
         [FromQuery][Required] Guid id,
         [FromBody] string[]? rightKeys,
@@ -407,12 +409,12 @@ public abstract class RequestControllerBase(
     [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
     [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_REQUESTS_WRITE)]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
-    [ProducesResponseType<RequestDto>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> RejectRequest(
+    public async Task<ActionResult<TRequest>> RejectRequest(
         [FromQuery][Required] Guid party,
         [FromQuery][Required] Guid id,
         CancellationToken ct = default
@@ -429,11 +431,11 @@ public abstract class RequestControllerBase(
     [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
     [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_REQUESTS_WRITE)]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
-    [ProducesResponseType<RequestDto>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    public async Task<IActionResult> CreatePackageRequest(
+    public async Task<ActionResult<TRequest>> CreatePackageRequest(
         [FromQuery][Required] Guid party,
         [FromQuery][Required] Guid to,
         [FromQuery][Required] string package,
@@ -473,10 +475,10 @@ public abstract class RequestControllerBase(
             return result.Problem.ToActionResult();
         }
 
-        return Ok(result.Value);
+        return Ok(ConvertRequest(result.Value));
     }
 
-    private async Task<IActionResult> ApprovePackageRequest(Guid partyUuid, RequestDto request, CancellationToken ct)
+    private async Task<ActionResult<TRequest>> ApprovePackageRequest(Guid partyUuid, RequestDto request, CancellationToken ct)
     {
         ValidationErrorBuilder errorBuilder = default;
 
@@ -509,10 +511,10 @@ public abstract class RequestControllerBase(
             return updateResult.Problem.ToActionResult();
         }
 
-        return Ok(updateResult.Value);
+        return Ok(ConvertRequest(updateResult.Value));
     }
 
-    private async Task<IActionResult> ApproveResourceRequest(Guid partyUuid, Guid authUserId, RequestDto request, IEnumerable<string> rightKeys, CancellationToken ct)
+    private async Task<ActionResult<TRequest>> ApproveResourceRequest(Guid partyUuid, Guid authUserId, RequestDto request, IEnumerable<string> rightKeys, CancellationToken ct)
     {
         var delegationCheck = await ConnectionService.ResourceDelegationCheck(
             authenticatedUserUuid: authUserId,
@@ -567,7 +569,7 @@ public abstract class RequestControllerBase(
             return updateResult.Problem.ToActionResult();
         }
 
-        return Ok(updateResult.Value);
+        return Ok(ConvertRequest(updateResult.Value));
     }
 
     /// <summary>
@@ -615,7 +617,7 @@ public abstract class RequestControllerBase(
         return (resourceObj, problem);
     }
 
-    private async Task<IActionResult> UpdateRequestStatus(Guid partyUuid, Guid id, RequestStatus status, CancellationToken ct)
+    private async Task<ActionResult<TRequest>> UpdateRequestStatus(Guid partyUuid, Guid id, RequestStatus status, CancellationToken ct)
     {
         var result = await RequestService.UpdateRequest(partyUuid, id, status, ct);
         if (result.IsProblem)
@@ -623,7 +625,7 @@ public abstract class RequestControllerBase(
             return result.Problem.ToActionResult();
         }
 
-        return Ok(result.Value);
+        return Ok(ConvertRequest(result.Value));
     }
 
     private async Task<bool> AuthorizeResourceAccess(string resource, Guid resourceParty, ClaimsPrincipal userPrincipal, string action)

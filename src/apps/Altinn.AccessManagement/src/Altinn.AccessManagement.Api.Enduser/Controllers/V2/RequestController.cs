@@ -8,6 +8,7 @@ using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.Core.Audit;
 using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.Core.Services.Contracts;
+using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
@@ -19,6 +20,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.FeatureManagement.Mvc;
+using RequestDtoV2 = Altinn.Authorization.Api.Contracts.AccessManagement.V2.RequestDto;
 
 namespace Altinn.AccessManagement.Api.Enduser.Controllers.V2;
 
@@ -40,7 +42,7 @@ public class RequestController(
     IEntityService entityService,
     IResourceRegistryClient resourceRegistryClient,
     IPDP pdp
-    ) : RequestControllerBase(
+    ) : RequestControllerBase<RequestDtoV2>(
     requestService,
     assignmentService,
     connectionService,
@@ -51,6 +53,9 @@ public class RequestController(
     pdp
     )
 {
+    /// <inheritdoc/>
+    protected override RequestDtoV2 ConvertRequest(RequestDto request) => DtoMapper.ConvertToV2(request);
+
     /// <summary>
     /// Create request for a resource on behalf of a party, optionally naming the rights being requested.
     /// Each right key must exist in the policy of the resource and be delegable.
@@ -60,7 +65,7 @@ public class RequestController(
     [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
     [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_REQUESTS_WRITE)]
     [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
-    [ProducesResponseType<RequestDto>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<RequestDtoV2>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -101,6 +106,6 @@ public class RequestController(
             return result.Problem.ToActionResult();
         }
 
-        return Ok(result.Value);
+        return Ok(ConvertRequest(result.Value));
     }
 }

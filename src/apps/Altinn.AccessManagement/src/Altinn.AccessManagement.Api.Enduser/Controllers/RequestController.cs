@@ -3,6 +3,7 @@ using System.Net.Mime;
 using System.Security.Claims;
 using Altinn.AccessManagement.Api.Enduser.Controllers.Base;
 using Altinn.AccessManagement.Api.Enduser.Models;
+using Altinn.AccessManagement.Api.Enduser.Utils;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Errors;
@@ -12,6 +13,7 @@ using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.Core.Audit;
 using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.Core.Services.Contracts;
+using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
@@ -31,9 +33,13 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers;
 
 /// <summary>
 /// Access requests (tilgangsforespørsler) in the enduser API, version 1.
-/// The shared actions are in <see cref="RequestControllerBase"/>.
+/// The shared actions are in <see cref="RequestControllerBase{TRequest}"/>.
+///
+/// Deprecated: use version 2 at accessmanagement/api/v2/enduser/request. Responses carry the
+/// <c>Deprecation</c> header and a <c>successor-version</c> link to version 2.
 /// </summary>
 [Route("accessmanagement/api/v1/enduser/request")]
+[DeprecatedApi(RequestController.DeprecationDate, SuccessorVersion = "/accessmanagement/api/v2/enduser/request")]
 public class RequestController(
     IRequestService requestService,
     IAssignmentService assignmentService,
@@ -43,7 +49,7 @@ public class RequestController(
     IEntityService entityService,
     IResourceRegistryClient resourceRegistryClient,
     IPDP pdp
-    ) : RequestControllerBase(
+    ) : RequestControllerBase<RequestDto>(
     requestService,
     assignmentService,
     connectionService,
@@ -54,6 +60,21 @@ public class RequestController(
     pdp
     )
 {
+    /// <summary>
+    /// The date version 1 is deprecated, sent in the <c>Deprecation</c> header.
+    /// </summary>
+    public const string DeprecationDate = "2027-05-31";
+
+    /// <inheritdoc/>
+    protected override RequestDto ConvertRequest(RequestDto request) => request;
+
+    /// <summary>
+    /// <see cref="RequestDto.Status"/> reports <see cref="RequestStatus.PartialApprove"/> as <see cref="RequestStatus.Approved"/>,
+    /// so filtering on Approved also includes PartialApprove.
+    /// </summary>
+    protected override IEnumerable<RequestStatus> GetStatusFilter(RequestStatus[]? status)
+        => DtoMapper.ConvertFromV1StatusFilter(base.GetStatusFilter(status));
+
     /// <summary>
     /// Create request on behalf of a party
     /// </summary>

@@ -2,6 +2,7 @@
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
+using RequestDtoV2 = Altinn.Authorization.Api.Contracts.AccessManagement.V2.RequestDto;
 
 namespace Altinn.AccessMgmt.Core.Utils;
 
@@ -22,7 +23,8 @@ public partial class DtoMapper : IDtoMapper
             From = ConvertToIdentifiedParty(request.Assignment.From),
             To = ConvertToIdentifiedParty(request.Assignment.To),
             By = ConvertToIdentifiedPartyOrStub(request.Assignment.By, request.Assignment.ById),
-            Status = request.Status,
+            Status = ConvertToV1Status(request.Status),
+            StatusV2 = request.Status,
             Package = new RequestReferenceDto() { Id = request.PackageId, ReferenceId = request.Package?.Urn },
         };
     }
@@ -38,11 +40,51 @@ public partial class DtoMapper : IDtoMapper
             From = ConvertToIdentifiedParty(request.Assignment.From),
             To = ConvertToIdentifiedParty(request.Assignment.To),
             By = ConvertToIdentifiedPartyOrStub(request.Assignment.By, request.Assignment.ById),
-            Status = request.Status,
+            Status = ConvertToV1Status(request.Status),
+            StatusV2 = request.Status,
             Resource = new RequestReferenceDto() { Id = request.ResourceId, ReferenceId = request.Resource?.RefId },
             RightKeys = request.RightKeys,
         };
     }
+
+    /// <summary>
+    /// Maps a request to the version 2 response, where the status is the full, non-exhaustive <see cref="RequestDto.StatusV2"/>.
+    /// </summary>
+    public static RequestDtoV2 ConvertToV2(RequestDto request)
+    {
+        return new RequestDtoV2
+        {
+            Id = request.Id,
+            Status = request.StatusV2,
+            Type = request.Type,
+            LastUpdated = request.LastUpdated,
+            LastUpdatedBy = request.LastUpdatedBy,
+            Resource = request.Resource,
+            RightKeys = request.RightKeys,
+            Package = request.Package,
+            Links = request.Links,
+            From = request.From,
+            To = request.To,
+            By = request.By,
+        };
+    }
+
+    /// <summary>
+    /// The status reported in <see cref="RequestDto.Status"/>, which v1 clients may check exhaustively:
+    /// statuses added later are reported as their closest original value.
+    /// </summary>
+    public static RequestStatus ConvertToV1Status(RequestStatus status) => status switch
+    {
+        RequestStatus.PartialApprove => RequestStatus.Approved,
+        _ => status,
+    };
+
+    /// <summary>
+    /// The statuses to filter on for a status filter from a v1 client. Since <see cref="ConvertToV1Status"/>
+    /// reports PartialApprove as Approved, filtering on Approved also includes PartialApprove.
+    /// </summary>
+    public static IEnumerable<RequestStatus> ConvertFromV1StatusFilter(IEnumerable<RequestStatus> statuses)
+        => statuses.Contains(RequestStatus.Approved) ? statuses.Append(RequestStatus.PartialApprove).Distinct() : statuses;
 
     /// <summary>
     /// Maps a party the caller is entitled to identify, including its organisation number or

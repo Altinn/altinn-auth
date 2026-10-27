@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Serialization;
+using Altinn.Authorization.ModelUtils;
 
 namespace Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 
@@ -13,9 +14,16 @@ public class RequestDto
     public Guid Id { get; set; }
 
     /// <summary>
-    /// Request status (e.g. draft, pending, approved, rejected, withdrawn)
+    /// Request status (e.g. draft, pending, approved, rejected, withdrawn).
+    /// Never <see cref="RequestStatus.PartialApprove"/>, which is reported as <see cref="RequestStatus.Approved"/>; see <see cref="StatusV2"/>.
     /// </summary>
     public RequestStatus Status { get; set; }
+
+    /// <summary>
+    /// Request status, including values added after <see cref="Status"/> was fixed, such as
+    /// <see cref="RequestStatus.PartialApprove"/>. Clients must accept values they do not know.
+    /// </summary>
+    public NonExhaustiveEnum<RequestStatus> StatusV2 { get; set; }
 
     /// <summary>
     /// Type of request

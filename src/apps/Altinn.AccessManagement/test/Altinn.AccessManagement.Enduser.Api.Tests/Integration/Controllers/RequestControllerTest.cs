@@ -1176,4 +1176,160 @@ public class RequestControllerTest
     }
 
     #endregion
+
+    #region PartialApprove — v1 reports it as Approved, StatusV2 carries it
+
+    /// <summary>
+    /// v1 clients may check <see cref="RequestDto.Status"/> exhaustively, so a request stored as
+    /// <see cref="RequestStatus.PartialApprove"/> is reported as Approved there, and as PartialApprove in StatusV2.
+    /// Own fixture, so the seeded request does not change counts in the shared read-only collection.
+    /// </summary>
+    [IntegrationTest]
+    public class PartialApproveRequest : IClassFixture<ApiFixture>
+    {
+        private static readonly Guid PartialApproveRequestId = Guid.Parse("0196b0d0-0000-7000-8000-000000000001");
+
+        public PartialApproveRequest(ApiFixture fixture)
+        {
+            Fixture = fixture;
+            EnableFeatureFlags(fixture);
+            fixture.EnsureSeedOnce<PartialApproveRequest>(db =>
+            {
+                var reqAssignment = new RequestAssignment
+                {
+                    FromId = TestData.TrondLarsen.Id,
+                    ToId = TestData.BakerJohnsen.Id,
+                    ById = TestData.TrondLarsen.Id,
+                    RoleId = RoleConstants.Rightholder,
+                };
+                db.RequestAssignments.Add(reqAssignment);
+                db.SaveChanges();
+
+                db.RequestAssignmentPackages.Add(new RequestAssignmentPackage
+                {
+                    Id = PartialApproveRequestId,
+                    AssignmentId = reqAssignment.Id,
+                    PackageId = PackageConstants.Agriculture.Id,
+                    Status = RequestStatus.PartialApprove,
+                });
+                db.SaveChanges();
+            });
+        }
+
+        public ApiFixture Fixture { get; }
+
+        private async Task<JsonElement?> FindReceived(string statusQuery)
+        {
+            var client = CreateSystemClient(Fixture, TestData.BakerJohnsen.Id);
+            var response = await client.GetAsync(
+                $"{Route}/received?party={TestData.BakerJohnsen.Id}&from={TestData.TrondLarsen.Id}{statusQuery}",
+                TestContext.Current.CancellationToken);
+
+            var json = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Body: {json}");
+
+            using var doc = JsonDocument.Parse(json);
+            foreach (var item in doc.RootElement.GetProperty("data").EnumerateArray())
+            {
+                if (item.GetProperty("id").GetGuid() == PartialApproveRequestId)
+                {
+                    return item.Clone();
+                }
+            }
+
+            return null;
+        }
+
+        [Fact]
+        public async Task GetRequest_StatusIsApprovedAndStatusV2IsPartialApprove()
+        {
+            var client = CreateSystemClient(Fixture, TestData.BakerJohnsen.Id);
+
+            var response = await client.GetAsync(
+                $"{Route}?party={TestData.BakerJohnsen.Id}&id={PartialApproveRequestId}",
+                TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+            Assert.Equal("Approved", doc.RootElement.GetProperty("status").GetString());
+            Assert.Equal("PartialApprove", doc.RootElement.GetProperty("statusV2").GetString());
+        }
+
+        [Fact]
+        public async Task GetReceived_WithoutStatusFilter_IncludesRequestAsApproved()
+        {
+            var item = await FindReceived(string.Empty);
+
+            Assert.NotNull(item);
+            Assert.Equal("Approved", item.Value.GetProperty("status").GetString());
+            Assert.Equal("PartialApprove", item.Value.GetProperty("statusV2").GetString());
+        }
+
+        [Fact]
+        public async Task GetReceived_FilterOnApproved_IncludesRequest()
+        {
+            var item = await FindReceived("&status=Approved");
+
+            Assert.NotNull(item);
+        }
+
+        [Fact]
+        public async Task GetReceived_FilterOnPending_ExcludesRequest()
+        {
+            var item = await FindReceived("&status=Pending");
+
+            Assert.Null(item);
+        }
+    }
+
+    #endregion
+
+    #region Deprecation headers
+
+    /// <summary>
+    /// Version 1 is deprecated in favour of version 2, which responses announce with the
+    /// <c>Deprecation</c> header (RFC 9745) and a <c>successor-version</c> link (RFC 8288).
+    /// </summary>
+    [IntegrationTest]
+    public class DeprecationHeaders : IClassFixture<ApiFixture>
+    {
+        // 2027-05-31T00:00:00Z as an RFC 9745 date: @ followed by seconds since the Unix epoch.
+        private const string ExpectedDeprecation = "@1811721600";
+
+        private const string ExpectedLink = "</accessmanagement/api/v2/enduser/request>; rel=\"successor-version\"";
+
+        public DeprecationHeaders(ApiFixture fixture)
+        {
+            Fixture = fixture;
+            EnableFeatureFlags(fixture);
+        }
+
+        public ApiFixture Fixture { get; }
+
+        [Fact]
+        public async Task SuccessfulResponse_HasDeprecationAndSuccessorLink()
+        {
+            var client = CreateSystemClient(Fixture, TestData.BakerJohnsen.Id);
+
+            var response = await client.GetAsync($"{Route}/received?party={TestData.BakerJohnsen.Id}", TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            Assert.Equal(ExpectedDeprecation, Assert.Single(response.Headers.GetValues("Deprecation")));
+            Assert.Equal(ExpectedLink, Assert.Single(response.Headers.GetValues("Link")));
+        }
+
+        [Fact]
+        public async Task ForbiddenResultFromAction_HasDeprecationAndSuccessorLink()
+        {
+            var client = CreateSystemClient(Fixture, TestData.BakerJohnsen.Id);
+
+            var response = await client.GetAsync($"{Route}?party={TestData.BakerJohnsen.Id}&id={Guid.NewGuid()}", TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+            Assert.Equal(ExpectedDeprecation, Assert.Single(response.Headers.GetValues("Deprecation")));
+            Assert.Equal(ExpectedLink, Assert.Single(response.Headers.GetValues("Link")));
+        }
+    }
+
+    #endregion
 }

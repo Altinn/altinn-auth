@@ -36,5 +36,10 @@ public enum RequestStatus
     /// <summary>
     /// Request is withdrawn by the requester, and will not be processed
     /// </summary>
-    Withdrawn = 5
+    Withdrawn = 5,
+
+    /// <summary>
+    /// Request is approved, but what was granted does not match what was requested
+    /// </summary>
+    PartialApprove = 6
 }
