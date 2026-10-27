@@ -1,5 +1,5 @@
 FROM aspnet-builder AS build
-RUN dotnet publish /src/apps/Authorization/src/Authorization -c Release -o /app
+RUN dotnet publish /src/apps/Altinn.Authorization/src/Altinn.Authorization -c Release -o /app
 
 FROM aspnet-runtime AS final
 COPY --from=build /app .
