@@ -4,11 +4,9 @@ metadata:
   name: authz-api
   labels:
     app.kubernetes.io/name: authz-api
-    app.kubernetes.io/part-of: authorization
 spec:
   selector:
     app.kubernetes.io/name: authz-api
-    app.kubernetes.io/part-of: authorization
   ports:
     - name: http
       port: 80
