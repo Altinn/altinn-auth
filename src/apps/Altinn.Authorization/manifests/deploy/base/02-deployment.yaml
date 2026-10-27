@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: authorization
+  name: authz-api
   labels:
     app.kubernetes.io/name: authz-api
 spec:
