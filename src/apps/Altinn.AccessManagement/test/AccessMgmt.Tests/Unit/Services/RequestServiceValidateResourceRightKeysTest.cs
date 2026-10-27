@@ -1,8 +1,10 @@
 ﻿using Altinn.AccessManagement.Core.Errors;
+using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.Core.Utils.Helper;
 using Altinn.Authorization.ABAC.Xacml;
+using Moq;
 
 namespace Altinn.AccessManagement.Tests.Unit.Services;
 
@@ -106,5 +108,27 @@ public class RequestServiceValidateResourceRightKeysTest
         Assert.NotNull(problem);
         var error = Assert.Single(problem.Errors);
         Assert.Equal(ValidationErrors.RightKeyNotFound.ErrorCode, error.ErrorCode);
+    }
+
+    [Fact]
+    public async Task ValidateResourceRightKeys_KeyOnlyInDenyRule_ReturnsRightKeyNotDelegable()
+    {
+        // The role rule of the test policy, turned into a Deny rule: its keys exist but are not given by any Permit rule.
+        var (delegableKeys, _) = await GetPolicyKeys();
+        XacmlPolicy original = await _policyRetrievalPoint.GetPolicyAsync(Resource, TestContext.Current.CancellationToken);
+        var policy = new XacmlPolicy(original.PolicyId, original.RuleCombiningAlgId, original.Target);
+        policy.Rules.Add(new XacmlRule("deny-role-rule", XacmlEffectType.Deny) { Target = original.Rules.ElementAt(0).Target });
+        policy.Rules.Add(original.Rules.ElementAt(1));
+
+        var policyRetrievalPoint = new Mock<IPolicyRetrievalPoint>();
+        policyRetrievalPoint.Setup(p => p.GetPolicyAsync(Resource, It.IsAny<CancellationToken>())).ReturnsAsync(policy);
+        var service = new RequestService(db: null, appsettings: null, featureManager: null, policyRetrievalPoint: policyRetrievalPoint.Object);
+
+        var problem = await service.ValidateResourceRightKeys(Resource, [delegableKeys[0]], TestContext.Current.CancellationToken);
+
+        Assert.NotNull(problem);
+        var error = Assert.Single(problem.Errors);
+        Assert.Equal(ValidationErrors.RightKeyNotDelegable.ErrorCode, error.ErrorCode);
+        Assert.Equal(2, policy.Rules.Count);
     }
 }

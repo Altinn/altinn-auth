@@ -12,6 +12,7 @@ using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Models.Contracts;
+using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
@@ -225,10 +226,11 @@ public class RequestService(
             ? await policyRetrievalPoint.GetPolicyAsync(org, app, ct)
             : await policyRetrievalPoint.GetPolicyAsync(resource, ct);
 
-        // A key exists if any rule in the policy gives it. It is delegable if a rule gives it to a role or
-        // access package; keys given only to other subjects, such as the service owner org, are not.
+        // A key exists if any rule in the policy mentions it. It is delegable if a Permit rule gives it to a role or
+        // access package; keys given only to other subjects, such as the service owner org, or only mentioned
+        // in Deny rules, are not.
         HashSet<string> policyKeys = policy is null ? [] : [.. policy.Rules.SelectMany(rule => DelegationCheckHelper.CalculateRightKeys(rule, resource))];
-        HashSet<string> delegableKeys = policy is null ? [] : [.. DelegationCheckHelper.DecomposePolicy(policy, resource).Select(right => right.Key)];
+        HashSet<string> delegableKeys = policy is null ? [] : [.. DelegationCheckHelper.DecomposePolicy(WithPermitRulesOnly(policy), resource).Select(right => right.Key)];
 
         ValidationErrorBuilder errors = default;
         for (int i = 0; i < requestedKeys.Count; i++)
@@ -320,6 +322,21 @@ public class RequestService(
             .Where(e => e.OrganizationIdentifier == organizationNo && e.TypeId == organizationTypeId)
             .Select(e => (Guid?)e.Id)
             .FirstOrDefaultAsync(ct);
+    }
+
+    /// <summary>
+    /// Returns a copy of the policy with only its Permit rules, since <see cref="DelegationCheckHelper.DecomposePolicy"/>
+    /// does not check the rule effect. The retrieved policy is left untouched, as it may be cached.
+    /// </summary>
+    private static XacmlPolicy WithPermitRulesOnly(XacmlPolicy policy)
+    {
+        var permitPolicy = new XacmlPolicy(policy.PolicyId, policy.RuleCombiningAlgId, policy.Target);
+        foreach (var rule in policy.Rules.Where(rule => rule.Effect == XacmlEffectType.Permit))
+        {
+            permitPolicy.Rules.Add(rule);
+        }
+
+        return permitPolicy;
     }
 
     private static ValidationProblemInstance OrganizationNotFoundProblem()
