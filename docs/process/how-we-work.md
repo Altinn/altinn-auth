@@ -6,7 +6,7 @@
 
 - Two-week iterations: planning on the first Monday, status per area, prioritisation on the second Thursday, result meeting and retro on the second Friday.
 - A feature is refined in the iteration before it is built, with designer, developer and tester in the room, to "enough to start": goal, main acceptance criteria, named people, a first task. The developer splits the rest during the iteration; the designer works on the frontend task with the developer, not on a task of their own.
-- Every role has its own issue and its own board view. You get your issue when the previous one closes, and the person who finished moves it or mentions you.
+- Every step of the work is an issue with one person who closes it, and every role has its own board view. Your issue is yours when the one it waits for closes, and the person who finished moves it or mentions you.
 - A task is done when merged; a feature when its test task is approved and the change is in production.
 - Backlog is everything not in an iteration. The developers' board starts at Ready; designers see Backlog too.
 
@@ -50,7 +50,7 @@ Each role owns one kind of decision and has the last word on it.
 
 ## 3. The flow in short
 
-One rule: **every role has its own issue on the board. You get it when the previous issue closes, and you close it when your part is done.** A feature is split into backend, frontend and test tasks, as sub-issues of the feature: the first in refinement, the rest by the developer during the iteration. There is no design task: where a change needs design, decided in refinement, the designer and the developer are assigned to the frontend task together and work on it side by side. Closing an issue makes the issues that waited for it eligible for their next step; the person who finished makes the handoff, a move or a mention.
+One rule: **every step of the work is an issue on the board, with one person who closes it. It is yours when the issue it waits for closes, and you close it when your part is done.** Not every role has an issue of its own: the designer shares the frontend task with the developer, the product owner's issue is the epic, and the area owner, tech lead and agile coach close nothing in the chain. A feature is split into backend, frontend and test tasks, as sub-issues of the feature: the first in refinement, the rest by the developer during the iteration. There is no design task: where a change needs design, decided in refinement, the designer and the developer are assigned to the frontend task together and work on it side by side. Closing an issue makes the issues that waited for it eligible for their next step; the person who finished makes the handoff, a move or a mention.
 
 ```mermaid
 flowchart LR
