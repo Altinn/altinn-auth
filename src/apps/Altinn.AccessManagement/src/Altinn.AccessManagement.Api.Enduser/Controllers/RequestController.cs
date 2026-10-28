@@ -115,7 +115,7 @@ public class RequestController(
             byId: authUserUuid,
             roleId: RoleConstants.Rightholder.Id,
             resourceId: resourceObj!.Id,
-            rightKeys: null,
+            requestedRightKeys: null,
             status: RequestStatus.Pending,
             ct: ct
             );

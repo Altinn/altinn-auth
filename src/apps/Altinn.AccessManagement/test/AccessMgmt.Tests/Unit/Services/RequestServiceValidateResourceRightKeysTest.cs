@@ -96,8 +96,8 @@ public class RequestServiceValidateResourceRightKeysTest
 
         Assert.NotNull(problem);
         Assert.Equal(2, problem.Errors.Length);
-        Assert.Contains(problem.Errors, e => e.ErrorCode == ValidationErrors.RightKeyNotFound.ErrorCode && e.Paths.Any(p => p.EndsWith("/rightKeys/1")));
-        Assert.Contains(problem.Errors, e => e.ErrorCode == ValidationErrors.RightKeyNotDelegable.ErrorCode && e.Paths.Any(p => p.EndsWith("/rightKeys/2")));
+        Assert.Contains(problem.Errors, e => e.ErrorCode == ValidationErrors.RightKeyNotFound.ErrorCode && e.Paths.Any(p => p.EndsWith("/requestedRightKeys/1")));
+        Assert.Contains(problem.Errors, e => e.ErrorCode == ValidationErrors.RightKeyNotDelegable.ErrorCode && e.Paths.Any(p => p.EndsWith("/requestedRightKeys/2")));
     }
 
     [Fact]

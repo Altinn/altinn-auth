@@ -1,5 +1,4 @@
-﻿using System.Text.Json.Serialization;
-using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
+﻿using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 using Altinn.Authorization.ModelUtils;
 
 namespace Altinn.Authorization.Api.Contracts.AccessManagement.V2;
@@ -38,16 +37,9 @@ public class RequestDto
     public PartyReferenceDto? LastUpdatedBy { get; set; }
 
     /// <summary>
-    /// Requested resource
+    /// Requested resource, with the rights requested for it
     /// </summary>
-    public RequestReferenceDto Resource { get; set; }
-
-    /// <summary>
-    /// The rights requested for the resource, as right keys from the resource policy.
-    /// Not set for package requests or when no specific rights were requested.
-    /// </summary>
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public IEnumerable<string>? RightKeys { get; set; }
+    public RequestResourceReferenceDto Resource { get; set; }
 
     /// <summary>
     /// Requested package

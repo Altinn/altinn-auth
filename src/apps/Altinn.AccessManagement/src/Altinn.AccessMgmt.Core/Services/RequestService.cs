@@ -181,7 +181,7 @@ public class RequestService(
     }
 
     /// <inheritdoc/>
-    public async Task<Result<RequestDto>> CreateResourceRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, Guid resourceId, IEnumerable<string>? rightKeys, RequestStatus status = RequestStatus.Pending, CancellationToken ct = default)
+    public async Task<Result<RequestDto>> CreateResourceRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, Guid resourceId, IEnumerable<string>? requestedRightKeys, RequestStatus status = RequestStatus.Pending, CancellationToken ct = default)
     {
         var systemUserProblem = await ValidateRecipientNotSystemUser(toId, ct);
         if (systemUserProblem is { } resourceGuard)
@@ -210,7 +210,7 @@ public class RequestService(
            );
         var requestAssignment = requestAssignmentResult.Value;
 
-        return await CreateResourceRequest(requestAssignment, resourceId, rightKeys, status, ct);
+        return await CreateResourceRequest(requestAssignment, resourceId, requestedRightKeys, status, ct);
     }
 
     /// <inheritdoc/>
@@ -238,11 +238,11 @@ public class RequestService(
             var key = requestedKeys[i];
             if (key is null || !policyKeys.Contains(key))
             {
-                errors.Add(ValidationErrors.RightKeyNotFound, $"/rightKeys/{i}", [new("rightKey", $"Right key '{key}' does not exist in the policy for resource '{resource}'.")]);
+                errors.Add(ValidationErrors.RightKeyNotFound, $"/requestedRightKeys/{i}", [new("rightKey", $"Right key '{key}' does not exist in the policy for resource '{resource}'.")]);
             }
             else if (!delegableKeys.Contains(key))
             {
-                errors.Add(ValidationErrors.RightKeyNotDelegable, $"/rightKeys/{i}", [new("rightKey", $"Right key '{key}' cannot be delegated for resource '{resource}'.")]);
+                errors.Add(ValidationErrors.RightKeyNotDelegable, $"/requestedRightKeys/{i}", [new("rightKey", $"Right key '{key}' cannot be delegated for resource '{resource}'.")]);
             }
         }
 
@@ -444,7 +444,7 @@ public class RequestService(
         return null;
     }
 
-    private async Task<Result<RequestDto>> CreateResourceRequest(RequestAssignment assignment, Guid resourceId, IEnumerable<string>? rightKeys, RequestStatus initialStatus = RequestStatus.Pending, CancellationToken ct = default)
+    private async Task<Result<RequestDto>> CreateResourceRequest(RequestAssignment assignment, Guid resourceId, IEnumerable<string>? requestedRightKeys, RequestStatus initialStatus = RequestStatus.Pending, CancellationToken ct = default)
     {
         var request = await db.RequestAssignmentResources
             .Include(r => r.Assignment)
@@ -457,7 +457,7 @@ public class RequestService(
                 Status = initialStatus,
                 AssignmentId = assignment.Id,
                 ResourceId = resourceId,
-                RightKeys = NormalizeRightKeys(rightKeys),
+                RequestedRightKeys = NormalizeRightKeys(requestedRightKeys),
             };
             db.RequestAssignmentResources.Add(request);
             await UpsertOutboxMessage(ct);

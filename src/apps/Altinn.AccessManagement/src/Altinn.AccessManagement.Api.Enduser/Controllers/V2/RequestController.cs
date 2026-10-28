@@ -84,7 +84,7 @@ public class RequestController(
             return problem.ToActionResult();
         }
 
-        var rightKeysProblem = await RequestService.ValidateResourceRightKeys(resourceObj.RefId, input?.RightKeys, ct);
+        var rightKeysProblem = await RequestService.ValidateResourceRightKeys(resourceObj.RefId, input?.RequestedRightKeys, ct);
         if (rightKeysProblem is { })
         {
             return rightKeysProblem.ToActionResult();
@@ -96,7 +96,7 @@ public class RequestController(
             byId: authUserUuid,
             roleId: RoleConstants.Rightholder.Id,
             resourceId: resourceObj.Id,
-            rightKeys: input?.RightKeys,
+            requestedRightKeys: input?.RequestedRightKeys,
             status: RequestStatus.Pending,
             ct: ct
             );

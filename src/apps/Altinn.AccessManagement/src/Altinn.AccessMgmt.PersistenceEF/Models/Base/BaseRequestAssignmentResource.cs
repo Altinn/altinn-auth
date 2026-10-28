@@ -37,5 +37,5 @@ public class BaseRequestAssignmentResource : BaseAudit, IEntityId
     /// <summary>
     /// The rights requested for the resource, as right keys from the resource policy. Null when no specific rights were requested.
     /// </summary>
-    public List<string>? RightKeys { get; set; }
+    public List<string>? RequestedRightKeys { get; set; }
 }

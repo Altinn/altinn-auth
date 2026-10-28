@@ -90,7 +90,7 @@ public class RequestControllerTest
 
             var response = await client.PostAsJsonAsync(
                 CreateResourceRequestUrl(),
-                new RequestedRightKeysDto { RightKeys = delegableKeys },
+                new RequestedRightKeysDto { RequestedRightKeys = delegableKeys },
                 TestContext.Current.CancellationToken);
 
             var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
@@ -98,13 +98,18 @@ public class RequestControllerTest
 
             var request = await response.Content.ReadFromJsonAsync<RequestDtoV2>(TestContext.Current.CancellationToken);
             Assert.Equal(RequestStatus.Pending, request.Status.Value);
-            Assert.Equal(delegableKeys, request.RightKeys);
+            Assert.Equal(delegableKeys, request.Resource.RequestedRightKeys);
+
+            // The keys are part of the resource, not the request itself
+            using var json = JsonDocument.Parse(content);
+            Assert.True(json.RootElement.GetProperty("resource").TryGetProperty("requestedRightKeys", out _));
+            Assert.False(json.RootElement.TryGetProperty("requestedRightKeys", out _));
 
             // Reading the request back returns the stored keys
             var getResponse = await client.GetAsync($"{Route}?party={TestData.KnutVik.Id}&id={request.Id}", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
             var fetched = await getResponse.Content.ReadFromJsonAsync<RequestDtoV2>(TestContext.Current.CancellationToken);
-            Assert.Equal(delegableKeys, fetched.RightKeys);
+            Assert.Equal(delegableKeys, fetched.Resource.RequestedRightKeys);
         }
 
         [Fact]
@@ -118,7 +123,7 @@ public class RequestControllerTest
 
             var response = await client.PostAsJsonAsync(
                 $"{Route}/resource?party={TestData.SvendsenAutomobil.Id}&to={TestData.KaosMagicDesignAndArts.Id}&resource={Resource}",
-                new RequestedRightKeysDto { RightKeys = delegableKeys },
+                new RequestedRightKeysDto { RequestedRightKeys = delegableKeys },
                 TestContext.Current.CancellationToken);
 
             var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
@@ -128,13 +133,13 @@ public class RequestControllerTest
             Assert.Equal(RequestStatus.Pending, request.Status.Value);
             Assert.Equal(TestData.SvendsenAutomobil.Id, request.From.Id);
             Assert.Equal(TestData.KaosMagicDesignAndArts.Id, request.To.Id);
-            Assert.Equal(delegableKeys, request.RightKeys);
+            Assert.Equal(delegableKeys, request.Resource.RequestedRightKeys);
 
             // Reading the request back as the organisation returns the stored keys
             var getResponse = await client.GetAsync($"{Route}?party={TestData.SvendsenAutomobil.Id}&id={request.Id}", TestContext.Current.CancellationToken);
             Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
             var fetched = await getResponse.Content.ReadFromJsonAsync<RequestDtoV2>(TestContext.Current.CancellationToken);
-            Assert.Equal(delegableKeys, fetched.RightKeys);
+            Assert.Equal(delegableKeys, fetched.Resource.RequestedRightKeys);
         }
 
         [Fact]
@@ -155,11 +160,11 @@ public class RequestControllerTest
 
             var request = JsonSerializer.Deserialize<RequestDtoV2>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             Assert.Equal(RequestStatus.Pending, request.Status.Value);
-            Assert.Null(request.RightKeys);
+            Assert.Null(request.Resource.RequestedRightKeys);
 
             // The field is left out of the JSON instead of being written as null
             using var json = JsonDocument.Parse(content);
-            Assert.False(json.RootElement.TryGetProperty("rightKeys", out _));
+            Assert.False(json.RootElement.GetProperty("resource").TryGetProperty("requestedRightKeys", out _));
         }
 
         [Fact]
@@ -169,13 +174,14 @@ public class RequestControllerTest
 
             var response = await client.PostAsJsonAsync(
                 CreateResourceRequestUrl(),
-                new RequestedRightKeysDto { RightKeys = ["unknown-right-key"] },
+                new RequestedRightKeysDto { RequestedRightKeys = ["unknown-right-key"] },
                 TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
             var problem = await ReadProblem(response);
             var error = Assert.Single(problem.Errors);
             Assert.Equal(ValidationErrors.RightKeyNotFound.ErrorCode, error.ErrorCode);
+            Assert.Contains(error.Paths, p => p.EndsWith("/requestedRightKeys/0", StringComparison.Ordinal));
         }
 
         [Fact]
@@ -186,7 +192,7 @@ public class RequestControllerTest
 
             var response = await client.PostAsJsonAsync(
                 CreateResourceRequestUrl(),
-                new RequestedRightKeysDto { RightKeys = nonDelegableKeys },
+                new RequestedRightKeysDto { RequestedRightKeys = nonDelegableKeys },
                 TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);

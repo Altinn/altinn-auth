@@ -3,6 +3,7 @@ using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 using RequestDtoV2 = Altinn.Authorization.Api.Contracts.AccessManagement.V2.RequestDto;
+using RequestResourceReferenceDto = Altinn.Authorization.Api.Contracts.AccessManagement.V2.RequestResourceReferenceDto;
 
 namespace Altinn.AccessMgmt.Core.Utils;
 
@@ -43,12 +44,13 @@ public partial class DtoMapper : IDtoMapper
             Status = ConvertToV1Status(request.Status),
             StatusV2 = request.Status,
             Resource = new RequestReferenceDto() { Id = request.ResourceId, ReferenceId = request.Resource?.RefId },
-            RightKeys = request.RightKeys,
+            RequestedRightKeys = request.RequestedRightKeys,
         };
     }
 
     /// <summary>
-    /// Maps a request to the version 2 response, where the status is the full, non-exhaustive <see cref="RequestDto.StatusV2"/>.
+    /// Maps a request to the version 2 response, where the status is the full, non-exhaustive <see cref="RequestDto.StatusV2"/>
+    /// and the requested rights are part of the resource.
     /// </summary>
     public static RequestDtoV2 ConvertToV2(RequestDto request)
     {
@@ -59,8 +61,12 @@ public partial class DtoMapper : IDtoMapper
             Type = request.Type,
             LastUpdated = request.LastUpdated,
             LastUpdatedBy = request.LastUpdatedBy,
-            Resource = request.Resource,
-            RightKeys = request.RightKeys,
+            Resource = request.Resource is null ? null : new RequestResourceReferenceDto
+            {
+                Id = request.Resource.Id,
+                ReferenceId = request.Resource.ReferenceId,
+                RequestedRightKeys = request.RequestedRightKeys,
+            },
             Package = request.Package,
             Links = request.Links,
             From = request.From,

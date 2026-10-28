@@ -2027,13 +2027,13 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("audit_deletedbysystem");
 
+                    b.PrimitiveCollection<List<string>>("RequestedRightKeys")
+                        .HasColumnType("text[]")
+                        .HasColumnName("requestedrightkeys");
+
                     b.Property<Guid>("ResourceId")
                         .HasColumnType("uuid")
                         .HasColumnName("resourceid");
-
-                    b.PrimitiveCollection<List<string>>("RightKeys")
-                        .HasColumnType("text[]")
-                        .HasColumnName("rightkeys");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer")
@@ -3615,13 +3615,13 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("audit_validfrom");
 
+                    b.PrimitiveCollection<List<string>>("RequestedRightKeys")
+                        .HasColumnType("text[]")
+                        .HasColumnName("requestedrightkeys");
+
                     b.Property<Guid>("ResourceId")
                         .HasColumnType("uuid")
                         .HasColumnName("resourceid");
-
-                    b.PrimitiveCollection<List<string>>("RightKeys")
-                        .HasColumnType("text[]")
-                        .HasColumnName("rightkeys");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer")

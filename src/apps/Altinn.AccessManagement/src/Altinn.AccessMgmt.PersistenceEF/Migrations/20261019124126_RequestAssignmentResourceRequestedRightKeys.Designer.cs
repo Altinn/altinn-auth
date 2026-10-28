@@ -13,8 +13,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20261019124126_RequestAssignmentResourceRightKeys")]
-    partial class RequestAssignmentResourceRightKeys
+    [Migration("20261019124126_RequestAssignmentResourceRequestedRightKeys")]
+    partial class RequestAssignmentResourceRequestedRightKeys
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -2030,13 +2030,13 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("audit_deletedbysystem");
 
+                    b.PrimitiveCollection<List<string>>("RequestedRightKeys")
+                        .HasColumnType("text[]")
+                        .HasColumnName("requestedrightkeys");
+
                     b.Property<Guid>("ResourceId")
                         .HasColumnType("uuid")
                         .HasColumnName("resourceid");
-
-                    b.PrimitiveCollection<List<string>>("RightKeys")
-                        .HasColumnType("text[]")
-                        .HasColumnName("rightkeys");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer")
@@ -3618,13 +3618,13 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("audit_validfrom");
 
+                    b.PrimitiveCollection<List<string>>("RequestedRightKeys")
+                        .HasColumnType("text[]")
+                        .HasColumnName("requestedrightkeys");
+
                     b.Property<Guid>("ResourceId")
                         .HasColumnType("uuid")
                         .HasColumnName("resourceid");
-
-                    b.PrimitiveCollection<List<string>>("RightKeys")
-                        .HasColumnType("text[]")
-                        .HasColumnName("rightkeys");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer")

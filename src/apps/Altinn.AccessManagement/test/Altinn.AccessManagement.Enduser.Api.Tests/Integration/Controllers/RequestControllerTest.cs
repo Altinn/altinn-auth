@@ -129,7 +129,7 @@ public class RequestControllerTest
             // v1 cannot store right keys, so its responses must not contain the field added for v2
             var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             using var json = JsonDocument.Parse(content);
-            Assert.False(json.RootElement.TryGetProperty("rightKeys", out _));
+            Assert.False(json.RootElement.TryGetProperty("requestedRightKeys", out _));
         }
 
         [Fact]
@@ -158,7 +158,7 @@ public class RequestControllerTest
                 byId: TestData.KnutVik.Id,
                 roleId: RoleConstants.Rightholder.Id,
                 resourceId: TestResourceId,
-                rightKeys: null,
+                requestedRightKeys: null,
                 ct: TestContext.Current.CancellationToken);
 
             Assert.True(result.IsProblem);
@@ -1279,6 +1279,85 @@ public class RequestControllerTest
             var item = await FindReceived("&status=Pending");
 
             Assert.Null(item);
+        }
+    }
+
+    #endregion
+
+    #region Requested right keys — only in v2, never in v1
+
+    /// <summary>
+    /// A request created through v2 with right keys is also visible in v1, but v1 does not expose the keys.
+    /// </summary>
+    [IntegrationTest]
+    public class RequestWithRequestedRightKeys : IClassFixture<ApiFixture>
+    {
+        private static readonly ResourceType TestResourceType = new()
+        {
+            Id = Guid.Parse("0196b0d2-0000-7000-8000-000000000001"),
+            Name = "RequestedRightKeysTestType",
+        };
+
+        private static readonly Guid TestResourceId = Guid.Parse("0196b0d2-0000-7000-8000-000000000002");
+        private static readonly Guid RequestId = Guid.Parse("0196b0d2-0000-7000-8000-000000000003");
+
+        public RequestWithRequestedRightKeys(ApiFixture fixture)
+        {
+            Fixture = fixture;
+            EnableFeatureFlags(fixture);
+            fixture.EnsureSeedOnce<RequestWithRequestedRightKeys>(db =>
+            {
+                db.ResourceTypes.Add(TestResourceType);
+                db.SaveChanges();
+                db.Resources.Add(new Resource
+                {
+                    Id = TestResourceId,
+                    Name = "RequestedRightKeysTest",
+                    Description = "Test resource for a request with requested right keys",
+                    RefId = "requested-right-keys-test-1",
+                    ProviderId = ProviderConstants.ResourceRegistry,
+                    TypeId = TestResourceType.Id,
+                });
+                db.SaveChanges();
+
+                var reqAssignment = new RequestAssignment
+                {
+                    FromId = TestData.TrondLarsen.Id,
+                    ToId = TestData.BakerJohnsen.Id,
+                    ById = TestData.TrondLarsen.Id,
+                    RoleId = RoleConstants.Rightholder,
+                };
+                db.RequestAssignments.Add(reqAssignment);
+                db.SaveChanges();
+
+                db.RequestAssignmentResources.Add(new RequestAssignmentResource
+                {
+                    Id = RequestId,
+                    AssignmentId = reqAssignment.Id,
+                    ResourceId = TestResourceId,
+                    Status = RequestStatus.Pending,
+                    RequestedRightKeys = ["key-read"],
+                });
+                db.SaveChanges();
+            });
+        }
+
+        public ApiFixture Fixture { get; }
+
+        [Fact]
+        public async Task GetRequest_DoesNotExposeRequestedRightKeys()
+        {
+            var client = CreateSystemClient(Fixture, TestData.BakerJohnsen.Id);
+
+            var response = await client.GetAsync(
+                $"{Route}?party={TestData.BakerJohnsen.Id}&id={RequestId}",
+                TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+            Assert.False(doc.RootElement.TryGetProperty("requestedRightKeys", out _));
+            Assert.False(doc.RootElement.TryGetProperty("rightKeys", out _));
+            Assert.False(doc.RootElement.GetProperty("resource").TryGetProperty("requestedRightKeys", out _));
         }
     }
 

@@ -346,7 +346,7 @@ public class RequestController(
             byId: byId,
             roleId: roleId,
             resourceId: resource.Id,
-            rightKeys: null,
+            requestedRightKeys: null,
             status: status,
             ct: ct
         );

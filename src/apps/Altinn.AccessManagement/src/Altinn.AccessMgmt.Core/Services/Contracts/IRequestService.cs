@@ -46,7 +46,7 @@ public interface IRequestService
     /// The right keys being requested must already be validated with <see cref="ValidateResourceRightKeys"/>;
     /// pass null or an empty list when no specific rights are requested.
     /// </summary>
-    Task<Result<RequestDto>> CreateResourceRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, Guid resourceId, IEnumerable<string>? rightKeys, RequestStatus status = RequestStatus.Pending, CancellationToken ct = default);
+    Task<Result<RequestDto>> CreateResourceRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, Guid resourceId, IEnumerable<string>? requestedRightKeys, RequestStatus status = RequestStatus.Pending, CancellationToken ct = default);
 
     /// <summary>
     /// Validates the right keys of a resource request against the policy of the resource.

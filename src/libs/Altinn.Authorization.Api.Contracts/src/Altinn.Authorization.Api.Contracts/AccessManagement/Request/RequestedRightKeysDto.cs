@@ -10,5 +10,5 @@ public class RequestedRightKeysDto
     /// The rights being requested, as right keys from the policy of the resource.
     /// Leave out to request the resource without naming specific rights.
     /// </summary>
-    public IEnumerable<string>? RightKeys { get; set; }
+    public IEnumerable<string>? RequestedRightKeys { get; set; }
 }

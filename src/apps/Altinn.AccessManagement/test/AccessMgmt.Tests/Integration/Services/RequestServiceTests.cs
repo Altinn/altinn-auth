@@ -156,8 +156,8 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
         var created = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, ["key-a", "key-b"], RequestStatus.Pending, TestContext.Current.CancellationToken)).Value;
         var fetched = (await _requestService.GetRequest(created.Id, TestContext.Current.CancellationToken)).Value;
 
-        Assert.Equal(["key-a", "key-b"], created.RightKeys);
-        Assert.Equal(["key-a", "key-b"], fetched.RightKeys);
+        Assert.Equal(["key-a", "key-b"], created.RequestedRightKeys);
+        Assert.Equal(["key-a", "key-b"], fetched.RequestedRightKeys);
     }
 
     [Fact]
@@ -167,7 +167,7 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
 
         var created = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, ["key-b", "key-a", "key-b"], RequestStatus.Pending, TestContext.Current.CancellationToken)).Value;
 
-        Assert.Equal(["key-b", "key-a"], created.RightKeys);
+        Assert.Equal(["key-b", "key-a"], created.RequestedRightKeys);
     }
 
     [Fact]
@@ -178,8 +178,8 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
         var created = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, [], RequestStatus.Pending, TestContext.Current.CancellationToken)).Value;
         var stored = await _db.RequestAssignmentResources.AsNoTracking().SingleAsync(r => r.Id == created.Id, TestContext.Current.CancellationToken);
 
-        Assert.Null(created.RightKeys);
-        Assert.Null(stored.RightKeys);
+        Assert.Null(created.RequestedRightKeys);
+        Assert.Null(stored.RequestedRightKeys);
     }
 
     [Fact]
@@ -191,8 +191,8 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
         var sent = await _requestService.GetSentRequests(partyId: PersonTo.Id, toId: OrgFrom.Id, status: [RequestStatus.Pending], type: "resource", ct: TestContext.Current.CancellationToken);
         var received = await _requestService.GetReceivedRequests(partyId: OrgFrom.Id, fromId: PersonTo.Id, status: [RequestStatus.Pending], type: "resource", ct: TestContext.Current.CancellationToken);
 
-        Assert.Equal(["key-a"], Assert.Single(sent.Value, r => r.Id == created.Id).RightKeys);
-        Assert.Equal(["key-a"], Assert.Single(received.Value, r => r.Id == created.Id).RightKeys);
+        Assert.Equal(["key-a"], Assert.Single(sent.Value, r => r.Id == created.Id).RequestedRightKeys);
+        Assert.Equal(["key-a"], Assert.Single(received.Value, r => r.Id == created.Id).RequestedRightKeys);
     }
 
     #endregion

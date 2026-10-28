@@ -47,10 +47,11 @@ public class RequestDto
 
     /// <summary>
     /// The rights requested for the resource, as right keys from the resource policy.
-    /// Not set for package requests or when no specific rights were requested.
+    /// Not part of this contract: it only carries the keys to the version 2 response,
+    /// where they are in <see cref="V2.RequestResourceReferenceDto.RequestedRightKeys"/>.
     /// </summary>
-    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public IEnumerable<string>? RightKeys { get; set; }
+    [JsonIgnore]
+    public IEnumerable<string>? RequestedRightKeys { get; set; }
 
     /// <summary>
     /// Requested package

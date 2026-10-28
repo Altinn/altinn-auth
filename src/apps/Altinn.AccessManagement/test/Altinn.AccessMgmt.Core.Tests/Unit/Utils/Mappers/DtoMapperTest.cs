@@ -812,7 +812,7 @@ public class DtoMapperTest
             ResourceId = Guid.NewGuid(),
             Status = RequestStatus.PartialApprove,
             Assignment = MakeRequestAssignment(),
-            RightKeys = ["key-read", "key-write"],
+            RequestedRightKeys = ["key-read", "key-write"],
             Audit_ChangedBy = Guid.NewGuid(),
         };
         var v1 = Altinn.AccessMgmt.Core.Utils.DtoMapper.Convert(request);
@@ -821,7 +821,25 @@ public class DtoMapperTest
         var v2 = Altinn.AccessMgmt.Core.Utils.DtoMapper.ConvertToV2(v1);
 
         v2.Status.Should().Be(NonExhaustiveEnum.Create(RequestStatus.PartialApprove));
-        v2.Should().BeEquivalentTo(v1, options => options.Excluding(d => d.Status).Excluding(d => d.StatusV2));
+        v2.Should().BeEquivalentTo(v1, options => options.Excluding(d => d.Status).Excluding(d => d.StatusV2).Excluding(d => d.RequestedRightKeys));
+        v2.Resource.RequestedRightKeys.Should().Equal("key-read", "key-write");
+    }
+
+    [Fact]
+    public void ConvertToV2_PackageRequest_HasNoResource()
+    {
+        var request = new RequestAssignmentPackage
+        {
+            PackageId = Guid.NewGuid(),
+            Status = RequestStatus.Pending,
+            Assignment = MakeRequestAssignment(),
+            Audit_ChangedBy = Guid.NewGuid(),
+        };
+
+        var v2 = Altinn.AccessMgmt.Core.Utils.DtoMapper.ConvertToV2(Altinn.AccessMgmt.Core.Utils.DtoMapper.Convert(request));
+
+        v2.Resource.Should().BeNull();
+        v2.Package.Id.Should().Be(request.PackageId);
     }
 
     [Fact]
