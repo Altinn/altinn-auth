@@ -131,7 +131,7 @@ public class AuthorizedPartyRepoServiceEf(AppDbContext db, ConnectionQuery conne
             ToIds = [toId],
             FromIds = filters?.PartyFilter?.Keys.ToList(),
             EnrichEntities = enrichEntities,
-            IncludeSubConnections = filters?.IncludeSubParties != AuthorizedPartiesIncludeFilter.False,
+            IncludeSubConnections = filters?.IncludeSubParties == AuthorizedPartiesIncludeFilter.True ? true : false,
             IncludeKeyRole = filters?.IncludePartiesViaKeyRoles == AuthorizedPartiesIncludeFilter.True ? true : false,
             IncludeMainUnitConnections = true,
             IncludeDelegation = true,

@@ -267,11 +267,11 @@ public class AuthorizedPartiesServiceEfSubAndInactivePartiesTest
     }
 
     [Fact]
-    public void BuildFromOthersFilter_NoFilters_IncludesEverything()
+    public void BuildFromOthersFilter_NoFilters_DoesNotIncludeSubConnectionsAndDoesNotExcludeDeleted()
     {
         var filter = AuthorizedPartyRepoServiceEf.BuildFromOthersFilter(Subject.Id, filters: null, enrichEntities: true, includeDelegationResources: false);
 
-        filter.IncludeSubConnections.Should().BeTrue();
+        filter.IncludeSubConnections.Should().BeFalse();
         filter.ExcludeDeleted.Should().BeFalse();
     }
 }
