@@ -109,10 +109,10 @@ module.exports =
                 "roleDelegatedToKeyRoleUnit": "LOPER",
                 "resourceIdDelegatedToPerson": "devtest_gar_authparties-sub-to-person",
                 "resourceIdDelegatedToKeyRoleUnit": "devtest_gar_authparties-sub-to-org",
-                "instanceIdDelegatedToPerson": "de5d0a27-3a5f-4c04-951e-70581c5b29d8",
-                "instanceRefDelegatedToPerson": "urn:altinn:instance-id:51961130/de5d0a27-3a5f-4c04-951e-70581c5b29d8",
-                "instanceIdDelegatedToKeyRoleUnit": "7d79836f-cee4-48ec-ad7e-caa198a1923d",
-                "instanceRefDelegatedToKeyRoleUnit": "urn:altinn:instance-id:51961130/7d79836f-cee4-48ec-ad7e-caa198a1923d"
+                "instanceIdDelegatedToPerson": "fce53ec6-7201-41eb-809d-4a56b9f100bf",
+                "instanceRefDelegatedToPerson": "urn:altinn:instance-id:51961130/fce53ec6-7201-41eb-809d-4a56b9f100bf",
+                "instanceIdDelegatedToKeyRoleUnit": "12c2b8ac-af75-49ef-824c-d55364a4b6d0",
+                "instanceRefDelegatedToKeyRoleUnit": "urn:altinn:instance-id:51961130/12c2b8ac-af75-49ef-824c-d55364a4b6d0"
             },
             "directPackageToDelegate": "mobler-og-annen-industri",
             "directPackageToDelegate2": "revisorattesterer",
@@ -123,8 +123,8 @@ module.exports =
             "resourceIdDelegatedToKeyRoleUnit": "devtest_gar_authparties-main-to-org",
             "appIdDelegatedToPerson": "app_ttd_authz-bruno-testapp1",
             "appIdDelegatedToKeyRoleUnit": "app_ttd_authz-bruno-testapp2",
-            "instanceIdDelegatedToPerson": "74638d4c-275f-4568-8040-af6979246694",
-            "instanceRefDelegatedToPerson": "urn:altinn:instance-id:51871764/74638d4c-275f-4568-8040-af6979246694",
+            "instanceIdDelegatedToPerson": "aef1eef3-87cb-4a83-b0ac-c9e11e55e581",
+            "instanceRefDelegatedToPerson": "urn:altinn:instance-id:51871764/aef1eef3-87cb-4a83-b0ac-c9e11e55e581",
             "instanceIdDelegatedToKeyRoleUnit": "b9468899-35b9-4956-99ab-2dcb0cc065fb",
             "instanceRefDelegatedToKeyRoleUnit": "urn:altinn:instance-id:51871764/b9468899-35b9-4956-99ab-2dcb0cc065fb"
         },

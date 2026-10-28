@@ -156,7 +156,14 @@ tests {
     assert.exists(nonBrlEsekTargetParty, 'Expected NonBrlESEK-ClientParty: '+testdata.forretningsforerNonfigurativEmosjonellPuma.nonBrlEsekClient.name+' to exist');  
     
     assert.includeMembers(esekTargetParty.authorizedAccessPackages, ["forretningsforer-eiendom"]);
-    assert.notIncludeMembers(nonBrlEsekTargetParty.authorizedAccessPackages, ["forretningsforer-eiendom"]);
+
+    // The forretningsforer role gives forretningsforer-eiendom to BRL and ESEK clients only (IngestRolePackage).
+    // The register varies per environment: this client is an AS in AT22 but a BRL in TT02.
+    if (["BRL", "ESEK"].includes(nonBrlEsekTargetParty.unitType)) {
+      assert.includeMembers(nonBrlEsekTargetParty.authorizedAccessPackages, ["forretningsforer-eiendom"], `Expected ${nonBrlEsekTargetParty.unitType} client to hold forretningsforer-eiendom`);
+    } else {
+      assert.notIncludeMembers(nonBrlEsekTargetParty.authorizedAccessPackages, ["forretningsforer-eiendom"], `Expected ${nonBrlEsekTargetParty.unitType} client not to hold forretningsforer-eiendom`);
+    }
   });
   
   test(requestName + "|Find expected KeyRole AuthorizedParty and AuthorizedAccessPackages", function() {    

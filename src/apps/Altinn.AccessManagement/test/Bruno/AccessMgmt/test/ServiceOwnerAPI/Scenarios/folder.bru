@@ -34,5 +34,14 @@ docs {
 
   ## Environments
 
-  Written for and verified on AT22. There is no TT02 seed file yet.
+  Written for and verified on AT22. The service owner API is not deployed in TT02 yet
+  (every endpoint answers 404 there), so the folder skips every request where the
+  environment lists serviceowner-api in notYetDeployed (see testdata/environment-features.js).
+}
+
+script:pre-request {
+  const { FEATURES, notYetDeployed } = require("./testdata/environment-features.js");
+  if (notYetDeployed(FEATURES.serviceOwnerApi)) {
+    bru.runner.skipRequest();
+  }
 }
