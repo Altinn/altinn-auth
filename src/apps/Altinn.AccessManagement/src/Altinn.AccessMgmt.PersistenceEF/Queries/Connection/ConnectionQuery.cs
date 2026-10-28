@@ -262,7 +262,7 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
     }
 
     /// <summary>
-    /// Removes connections to deleted parties, and to parties whose main unit is deleted, for <see cref="ConnectionQueryFilter.ExcludeDeleted"/>.
+    /// Removes connections to deleted parties, <see cref="ConnectionQueryFilter.ExcludeDeleted"/>.
     /// The party is <c>From</c> for FromOthers and <c>To</c> for ToOthers. Only the parties already found through the connections
     /// are looked up, by primary key, so the cost follows the size of the result and not the number of deleted entities.
     /// </summary>
@@ -279,7 +279,7 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
         var deletedPartyIds = await db.Entities
             .AsNoTracking()
             .Where(e => partyIds.Contains(e.Id))
-            .Where(e => e.IsDeleted || (e.Parent != null && e.Parent.IsDeleted))
+            .Where(e => e.IsDeleted)
             .Select(e => e.Id)
             .ToListAsync(ct);
 
