@@ -2,7 +2,7 @@
 
 *Companion to [How we work](how-we-work.md) and [ADR-0005](../adr/0005-planning-and-flow.md), Decision 4. Drafted with AI assistance (Claude) on 2026-10-27. Human reader: @acn-dgopa. The issues are invented examples, named with letters so that nothing here links to a real issue; the filters are the real ones.*
 
-One board, one saved view per role. Each view is a filter and a column field, nothing more. Below, each view as it looks on a normal day in an iteration. F is a feature, E an epic, D a design task, B a backend task, FE a frontend task, T a test task, X a bug, Q a vakt case.
+One board, one saved view per role. Each view is a filter and a column field, nothing more. Below, each view as it looks on a normal day in an iteration. F is a feature, E an epic, B a backend task, FE a frontend task, T a test task, X a bug, Q a vakt case.
 
 ## Iteration board, the default
 
@@ -12,25 +12,26 @@ Everyone. Board, columns are Status, sorted by Priority. Filter: `iteration:@cur
 | --- | --- | --- | --- |
 | B5 Add via-party mode to Authorize API · Task · `area/authorization` | B2 ConnectionQuery: prune on resource filter · Task · PR open | B6 Query param for party switch · Task · PR open | B1 Backend: approval limited to RightKeys · merged |
 | T4 Test: Delegation overview end to end · `kind/testplan` | B7 Change feed sync in Access Management · `status/blocked` | X2 Enduser-api: delegated clients 500 · Bug · PR open | T1 Test: Approval limited to RightKeys · approved |
-| D2 Design: Consent dialog, rights selection · `kind/design` | T2 Test: Rights selection on approval · `kind/testplan` · Preparing | | B8 Drop old AM database schemas · merged |
-| | D1 Design: System user delegation flow · `kind/design` | | D4 Design: Activity log pagination |
+| FE1 Frontend: select rights on request · Task · designer and developer | T2 Test: Rights selection on approval · `kind/testplan` · Preparing | | B8 Drop old AM database schemas · merged |
+| | FE4 Frontend: System user delegation flow · Task · designer and developer | | FE2 Frontend: select rights on approval · merged |
 | | X1 RDF export omits contact points · Bug | | |
 
 - No Backlog column. Everything here is in the iteration, so it is at least Ready.
-- The only view where a design task, a developer task and a test task sit side by side.
+- The only view where developer tasks and test tasks sit side by side.
 - Done fills during the iteration; the agile coach archives it after the result meeting.
 
 ## Developers
 
-Developers. Board, columns are Status, sorted by Priority. Filter: `type:Task,Bug,Enhancement -label:kind/testplan -label:kind/design iteration:@current`
+Developers. Board, columns are Status, sorted by Priority. Filter: `type:Task,Bug,Enhancement -label:kind/testplan iteration:@current`
 
 | Ready | In progress | In review | Done |
 | --- | --- | --- | --- |
 | B5 Add via-party mode to Authorize API · high · ↑ F5 | B2 ConnectionQuery: prune on resource filter · PR open | B6 Query param for party switch · PR open · `Resolves:` | B1 Backend: approval limited to RightKeys · merged 09:40 · tester mentioned in T1 |
-| FE1 Frontend: select rights on request · normal · ↑ F1 · waited for D2, released today | B7 Change feed sync in Access Management · `status/blocked` by Team Core | X2 Enduser-api: delegated clients 500 · Bug · PR open | |
+| FE1 Frontend: select rights on request · normal · ↑ F1 · designer and developer assigned | B7 Change feed sync in Access Management · `status/blocked` by Team Core | X2 Enduser-api: delegated clients 500 · Bug · PR open | |
+| | FE4 Frontend: System user delegation flow · ↑ F2 · designer and developer | | |
 | | X1 RDF export omits contact points · Bug · ↑ F3 | | |
 
-- Only tasks, bugs and enhancements, the three types a developer builds. No test or design tasks, no features, no Backlog.
+- Only tasks, bugs and enhancements, the three types a developer builds. No test tasks, no features, no Backlog. A frontend task with a designer assigned is on this board like any other task.
 - The parent feature (↑) is on every card, so a task is never picked without knowing which feature it serves.
 - In review means take the next one. The card leaves on merge, not on approval.
 
@@ -40,7 +41,7 @@ Testers. Board, columns are the **Test phase** field, not Status. Filter: `label
 
 | No phase | Preparing | Executing | Retest |
 | --- | --- | --- | --- |
-| T4 Test: Delegation overview end to end · ↑ F4 · next iteration | T2 Test: Rights selection on approval · ↑ F1 · feature 2 of 5 | T1 Test: Approval limited to RightKeys · ↑ F1 · developer mentioned tester 09:40 · design lead added | |
+| T4 Test: Delegation overview end to end · ↑ F4 · next iteration | T2 Test: Rights selection on approval · ↑ F1 · feature 2 of 5 | T1 Test: Approval limited to RightKeys · ↑ F1 · developer mentioned tester 09:40 · deferred design review done | |
 | | T5 Test: Via-party mode, alone · ↑ B5 | T3 Test: System user delegation flow · ↑ F2 · bug X3 filed | |
 
 - Columns are the Test phase field. Status still says In progress for most of these on the iteration board; here the phase is what matters.
@@ -50,17 +51,15 @@ Testers. Board, columns are the **Test phase** field, not Status. Filter: `label
 
 ## Design
 
-Designers. Board, columns are Status, sorted by Iteration. Filter: `label:kind/design -status:Backlog`
+Designers. Board, columns are Status, sorted by Priority. Filter: `assignee:@me -label:kind/testplan iteration:@current`
 
 | Ready | In progress | In review | Done |
 | --- | --- | --- | --- |
-| D2 Design: Consent dialog, rights selection · ↑ F4 · Iteration 1 | D1 Design: System user delegation flow · ↑ F2 · Iteration 1 | | D4 Design: Activity log pagination · ↑ F6 · good enough to build |
-| D3 Design: Activity log, empty state iteration · ↑ F6 · Iteration 2 | | | |
+| FE1 Frontend: select rights on request · ↑ F1 · with the developer | FE4 Frontend: System user delegation flow · ↑ F2 · with the developer | | FE2 Frontend: select rights on approval · ↑ F1 · merged |
 
-- The same shape as the developers' board: only design tasks, the parent feature (↑) on every card, no Backlog.
-- Working one iteration ahead: D2 belongs to a feature the developers build next iteration; the design task is in this iteration.
-- What waits on a design task is not on the card; Projects has no dependency field. The designer sees it in the task's own "blocking" list, or in the Area view where the feature's tasks sit together.
-- D3 is design debt: a small follow-up iteration created after design review. Done is closed at "good enough to build"; the frontend tasks that waited are then moved to Ready by the designer.
+- The same shape as the developers' board, filtered to the tasks you are assigned to: the frontend tasks where you and the developer work together. No Backlog.
+- There is no design task. `assignee:@me` shows each designer their own tasks, so one saved view serves every designer.
+- A design change while the task is open is a comment on it. A follow-up accepted for later is a new, small frontend task under the feature, in Backlog until it is picked: that is the design debt, seen in the Area view.
 
 ## Features
 
@@ -75,7 +74,7 @@ Product owners, design lead, tech leads, area owners. Table, sorted by Milestone
 | F7 Bulk revoke | Feature | — | — | Backlog | — | — |
 | E2 Move to DIS | Epic | 2027-03 | normal | Backlog | 0 of 3 features | — |
 
-- No tasks here. Progress is read from sub-issue counts, never from individual tasks. The count includes the design and test tasks, so "4 of 5" with one open usually means waiting for test.
+- No tasks here. Progress is read from sub-issue counts, never from individual tasks. The count includes the test tasks, so "4 of 5" with one open usually means waiting for test.
 - Backlog is visible: features without a milestone, and prioritised features not yet refined. Setting a milestone is the signal to the area owner that refinement is next.
 - Epic progress counts features, and the product owner closes the epic when the last one is Done.
 
@@ -94,7 +93,7 @@ The area owner. Board, columns are Status, grouped by Parent issue. Filter: `lab
 
 | Ready | In progress | In review | Done |
 | --- | --- | --- | --- |
-| D2 Design: Consent dialog, rights selection · `kind/design` | | | |
+| FE3 Frontend: consent dialog, rights selection · designer and developer | | | |
 | B9 Backend: overview query | | | |
 
 **F7 Bulk revoke · no milestone · Backlog, not refined**
