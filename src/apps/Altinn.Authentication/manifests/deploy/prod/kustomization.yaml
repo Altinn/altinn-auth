@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: product-authentication
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: authentication
+    includeSelectors: true
+    includeTemplates: true
+resources:
+  - ../base
+
+patches:
+  - patch: |-
+      apiVersion: apps/v1
+      kind: Deployment
+      metadata:
+        name: authn-api
+      spec:
+        template:
+          spec:
+            containers:
+              - name: authentication
+                resources:
+                  requests:
+                    cpu: 50m
+                    memory: 384Mi
