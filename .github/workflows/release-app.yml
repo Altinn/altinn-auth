@@ -9,6 +9,9 @@ on:
         type: choice
         options:
           - Altinn.AccessManagement
+          - Altinn.Authorization
+          - Altinn.Authentication
+          - Altinn.ResourceRegistry
 
       version:
         description: Version override (defaults to today's UTC date) - should be a valid calendar version
