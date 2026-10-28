@@ -301,6 +301,9 @@ module.exports =
         "nonBrlEsekClient": {
             "name": "SKEPTISK LILLA HEST BORETTSLAG",
             "orgno": "311115057",
+            // No client of this forretningsforer is neither BRL nor ESEK in TT02 (all 52 are BRL, ESEK
+            // or their AAFY subunits), so this one is a BRL there and the negative case runs in AT22 only.
+            "unitType": "BRL",
             "partyId": 51623312,
             "partyUuid": "8b8ae7e6-6982-408e-b9bc-9f800081512c",
             "dagligleder": {

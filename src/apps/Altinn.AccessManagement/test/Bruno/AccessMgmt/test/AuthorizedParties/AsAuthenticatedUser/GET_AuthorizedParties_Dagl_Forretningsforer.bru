@@ -158,11 +158,14 @@ tests {
     assert.includeMembers(esekTargetParty.authorizedAccessPackages, ["forretningsforer-eiendom"]);
 
     // The forretningsforer role gives forretningsforer-eiendom to BRL and ESEK clients only (IngestRolePackage).
-    // The register varies per environment: this client is an AS in AT22 but a BRL in TT02.
-    if (["BRL", "ESEK"].includes(nonBrlEsekTargetParty.unitType)) {
-      assert.includeMembers(nonBrlEsekTargetParty.authorizedAccessPackages, ["forretningsforer-eiendom"], `Expected ${nonBrlEsekTargetParty.unitType} client to hold forretningsforer-eiendom`);
+    // The register varies per environment, so the test data records the client's unit type: AS in AT22,
+    // BRL in TT02. The response must match it, and the expected package follows the test data.
+    const expectedUnitType = testdata.forretningsforerNonfigurativEmosjonellPuma.nonBrlEsekClient.unitType;
+    assert.strictEqual(nonBrlEsekTargetParty.unitType, expectedUnitType, `Expected NonBrlESEK-ClientParty unitType to be ${expectedUnitType}`);
+    if (["BRL", "ESEK"].includes(expectedUnitType)) {
+      assert.includeMembers(nonBrlEsekTargetParty.authorizedAccessPackages, ["forretningsforer-eiendom"], `Expected ${expectedUnitType} client to hold forretningsforer-eiendom`);
     } else {
-      assert.notIncludeMembers(nonBrlEsekTargetParty.authorizedAccessPackages, ["forretningsforer-eiendom"], `Expected ${nonBrlEsekTargetParty.unitType} client not to hold forretningsforer-eiendom`);
+      assert.notIncludeMembers(nonBrlEsekTargetParty.authorizedAccessPackages, ["forretningsforer-eiendom"], `Expected ${expectedUnitType} client not to hold forretningsforer-eiendom`);
     }
   });
   
