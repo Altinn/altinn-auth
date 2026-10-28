@@ -11,8 +11,8 @@ Everyone. Board, columns are Status, sorted by Priority. Filter: `iteration:@cur
 | Ready | In progress | In review | Done |
 | --- | --- | --- | --- |
 | B5 Add via-party mode to Authorize API · Task · `area/authorization` | B2 ConnectionQuery: prune on resource filter · Task · PR open | B6 Query param for party switch · Task · PR open | B1 Backend: approval limited to RightKeys · merged |
-| T4 Test: Delegation overview end to end · `kind/testplan` | B7 Change feed sync in Access Management · `status/blocked` | X2 Enduser-api: delegated clients 500 · Bug · PR open | T1 Test: Approval limited to RightKeys · approved |
-| FE1 Frontend: select rights on request · Task · designer and developer | T2 Test: Rights selection on approval · `kind/testplan` · Preparing | | B8 Drop old AM database schemas · merged |
+| T4 Test: Delegation overview end to end · `skill/test` `kind/testplan` | B7 Change feed sync in Access Management · `status/blocked` | X2 Enduser-api: delegated clients 500 · Bug · PR open | T1 Test: Approval limited to RightKeys · approved |
+| FE1 Frontend: select rights on request · Task · designer and developer | T2 Test: Rights selection on approval · `skill/test` · Preparing | | B8 Drop old AM database schemas · merged |
 | | FE4 Frontend: System user delegation flow · Task · designer and developer | | FE2 Frontend: select rights on approval · merged |
 | | X1 RDF export omits contact points · Bug | | |
 
@@ -22,7 +22,7 @@ Everyone. Board, columns are Status, sorted by Priority. Filter: `iteration:@cur
 
 ## Developers
 
-Developers. Board, columns are Status, sorted by Priority. Filter: `type:Task,Bug,Enhancement -label:kind/testplan iteration:@current`
+Developers. Board, columns are Status, sorted by Priority. Filter: `type:Task,Bug,Enhancement -label:skill/test iteration:@current`
 
 | Ready | In progress | In review | Done |
 | --- | --- | --- | --- |
@@ -37,7 +37,7 @@ Developers. Board, columns are Status, sorted by Priority. Filter: `type:Task,Bu
 
 ## Test board
 
-Testers. Board, columns are the **Test phase** field, not Status. Filter: `label:kind/testplan is:open`
+Testers. Board, columns are the **Test phase** field, not Status. Filter: `label:skill/test is:open`
 
 | No phase | Preparing | Executing | Retest |
 | --- | --- | --- | --- |
@@ -51,15 +51,16 @@ Testers. Board, columns are the **Test phase** field, not Status. Filter: `label
 
 ## Design
 
-Designers. Board, columns are Status, sorted by Priority. Filter: `assignee:@me -label:kind/testplan iteration:@current`
+Designers and the design lead. Board, columns are Status, sorted by Iteration then Priority. Filter: `label:skill/design is:open`
 
-| Ready | In progress | In review | Done |
-| --- | --- | --- | --- |
-| FE1 Frontend: select rights on request · ↑ F1 · with the developer | FE4 Frontend: System user delegation flow · ↑ F2 · with the developer | | FE2 Frontend: select rights on approval · ↑ F1 · merged |
+| Backlog | Ready | In progress | In review | Done |
+| --- | --- | --- | --- | --- |
+| FE3 Frontend: consent dialog, rights selection · ↑ F4 · next iteration | FE1 Frontend: select rights on request · ↑ F1 · with the developer | FE4 Frontend: System user delegation flow · ↑ F2 · with the developer | | FE2 Frontend: select rights on approval · ↑ F1 · merged |
+| FE5 Frontend: activity log, empty state · ↑ F6 · design debt | | | | |
 
-- The same shape as the developers' board, filtered to the tasks you are assigned to: the frontend tasks where you and the developer work together. No Backlog.
-- There is no design task. `assignee:@me` shows each designer their own tasks, so one saved view serves every designer.
-- A design change while the task is open is a comment on it. A follow-up accepted for later is a new, small frontend task under the feature, in Backlog until it is picked: that is the design debt, seen in the Area view.
+- The same shape as the developers' board, filtered to the tasks with `skill/design`: the frontend tasks where a designer and the developer work together. Backlog is a column here, so designers see what is coming: the tasks refined for the next iteration, and the design debt.
+- There is no design task. The label goes on in refinement when the designer is assigned, so every designer and the design lead see all design work in the iteration on one board.
+- A design change while the task is open is a comment on it. A follow-up accepted for later is a new, small frontend task under the feature, in Backlog until it is picked: that is the design debt, seen here and in the Area view.
 
 ## Features
 
@@ -86,7 +87,7 @@ The area owner. Board, columns are Status, grouped by Parent issue. Filter: `lab
 
 | Ready | In progress | In review | Done |
 | --- | --- | --- | --- |
-| T1 Test: Approval limited to RightKeys · `kind/testplan` | | | B1 Backend: approval limited to RightKeys |
+| T1 Test: Approval limited to RightKeys · `skill/test` `kind/testplan` | | | B1 Backend: approval limited to RightKeys |
 | | | | FE2 Frontend: select rights on approval |
 
 **F4 Delegation overview · 2026-12 · refined, next iteration**
@@ -128,4 +129,4 @@ Everyone. Board, columns are Status, sorted by Priority. Filter: `type:Bug is:op
 
 ## Where Backlog shows
 
-Backlog belongs in four views: Features, Area, Vakt and Bugs. Those are the views where someone decides what to do with an issue that is not yet started. The role boards for developers, designers and testers never show it.
+Backlog belongs in five views: Design, Features, Area, Vakt and Bugs. Those are the views where someone decides what to do with an issue that is not yet started, or, for designers, sees what is coming. The role boards for developers and testers never show it.
