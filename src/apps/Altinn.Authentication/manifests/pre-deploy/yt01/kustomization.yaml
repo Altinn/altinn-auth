@@ -24,6 +24,6 @@ patches:
       apiVersion: vault.dis.altinn.cloud/v1alpha1
       kind: Vault
       metadata:
-        name: authentication-vault
+        name: authn-api-vault
       spec:
         groupObjectId: 77287093-5698-4886-8bba-e856ca7fff39 # DIS
