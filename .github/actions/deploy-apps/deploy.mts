@@ -82,11 +82,10 @@ function main(): void {
       console.log(`Created pending deployment ${id} for ${deploymentEnvironment}`);
     }
 
-    const image = `ghcr.io/altinn/altinn-auth/${shortSlug}-manifests`;
-    run("docker", [
-      "buildx", "imagetools", "create",
-      ...environments.flatMap((environment) => ["-t", `${image}:${environment}`]),
-      `${image}:${sha}`,
+    const image = `oci://ghcr.io/altinn/altinn-auth/${shortSlug}-manifests`;
+    run("flux", [
+      "tag", "artifact", `${image}:${sha}`, 
+      ...environments.flatMap((environment) => ["--tag", `${environment}`]),
     ]);
   }
 }

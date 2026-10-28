@@ -157,6 +157,13 @@ public static class AccessMgmtFeatureFlags
     public const string AdosSubunitInheritance = "AccessManagement.Subunit.AdosInheritance";
 
     /// <summary>
+    /// Excludes all Altinn 2 roles (roles provided by <c>ProviderConstants.Altinn2</c>) from connections,
+    /// authorized parties, the policy information point and resource delegation checks.
+    /// Read-side only; stored assignments are kept, so the behavior is fully reversible.
+    /// </summary>
+    public const string DisableAltinn2Roles = "AccessManagement.Roles.DisableAltinn2";
+
+    /// <summary>
     /// Enables the activity log endpoints under enduser/connections (assignment and
     /// delegation events).
     /// </summary>

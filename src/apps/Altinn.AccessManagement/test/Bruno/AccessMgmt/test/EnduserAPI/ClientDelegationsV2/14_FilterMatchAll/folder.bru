@@ -16,6 +16,9 @@ docs {
 
   The CCR client is the one case that needs both ways in at once: the lonn package
   comes from the regnskapsforer role, the skattegrunnlag package from the grant the
-  scenario sets up. The rightholder client only holds skattegrunnlag and drops out
-  of the all mode. The scenario removes both rightholder relations it created.
+  scenario sets up. The rightholder client drops out of the all mode unless it is a
+  CCR client of the facilitator too, which the test data records per environment
+  (client_B.alsoCcrClientOfFacilitator). What proves the filter is the facilitator's
+  other CCR clients: they hold only the lonn package, appear in the any mode and must
+  not appear with match=all. The scenario removes both rightholder relations it created.
 }
