@@ -3,4 +3,4 @@ RUN dotnet publish /src/apps/Altinn.Authentication/src/Altinn.Platform.Authentic
 
 FROM aspnet-runtime AS final
 COPY --from=build /app .
-ENTRYPOINT ["dotnet", "Altinn.Authentication.dll"]
+ENTRYPOINT ["dotnet", "Altinn.Platform.Authentication.dll"]
