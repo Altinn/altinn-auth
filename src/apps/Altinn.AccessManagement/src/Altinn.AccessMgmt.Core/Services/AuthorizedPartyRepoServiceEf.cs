@@ -120,7 +120,7 @@ public class AuthorizedPartyRepoServiceEf(AppDbContext db, ConnectionQuery conne
 
     /// <summary>
     /// Maps the AuthorizedParties filters to a ConnectionQuery filter. The include filters are expected to be resolved
-    /// from <c>auto</c> already; anything other than <c>false</c> includes, so the default is to return everything.
+    /// from <c>auto</c> already; only a specific <c>true</c> returns everything as false is the default value.
     /// </summary>
     internal static ConnectionQueryFilter BuildFromOthersFilter(Guid toId, AuthorizedPartiesFilters? filters, bool enrichEntities, bool includeDelegationResources)
     {
