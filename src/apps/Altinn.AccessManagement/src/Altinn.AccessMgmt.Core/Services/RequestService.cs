@@ -597,13 +597,13 @@ public class RequestService(
         {
             errorBuilder.Add(ValidationErrors.DbNoRowsFound, nameof(db.RequestAssignmentPackages));
             errorBuilder.TryBuild(out var errors);
-            return errors!;
+            return errors;
         }
 
         var isRequestFromDraftToPending = request.Status == RequestStatus.Draft && status == RequestStatus.Pending;
         if (isRequestFromDraftToPending)
         {
-            await UpsertPendingOutboxMessage(status, request, ct);
+            await UpsertPendingOutboxMessage(request, ct);
         }
 
         request.Status = status;
@@ -622,12 +622,22 @@ public class RequestService(
         var notifyRequester = !await IsSystemUser(request.Assignment.FromId, ct);
         if (notifyRequester && (status == RequestStatus.Approved || status == RequestStatus.Rejected))
         {
-            await UpsertReviewedOutboxMessage(status, request, ct);
+            await UpsertReviewedOutboxMessage(request, ct);
         }
 
-        var saved = notifyRequester
-            ? await db.SaveChangesWithOutboxRetry(() => UpsertReviewedOutboxMessage(status, request, ct), ct)
-            : await db.SaveChangesAsync(ct);
+        int saved = 0;
+        if (isRequestFromDraftToPending)
+        {
+            saved = await db.SaveChangesWithOutboxRetry(() => UpsertPendingOutboxMessage(request, ct), ct);
+        }
+        else if (notifyRequester)
+        {
+            saved = await db.SaveChangesWithOutboxRetry(() => UpsertReviewedOutboxMessage(request, ct), ct);
+        }
+        else
+        {
+            saved = await db.SaveChangesAsync(ct);
+        }
 
         if (saved == 0)
         {
@@ -641,7 +651,7 @@ public class RequestService(
 
         return await GetRequest(id, ct);
 
-        async Task UpsertPendingOutboxMessage(RequestStatus status, RequestAssignmentPackage request, CancellationToken ct)
+        async Task UpsertPendingOutboxMessage(RequestAssignmentPackage request, CancellationToken ct)
         {
             await RequestPendingNotification.Upsert(
                 db,
@@ -654,7 +664,7 @@ public class RequestService(
             );
         }
 
-        async Task UpsertReviewedOutboxMessage(RequestStatus status, RequestAssignmentPackage request, CancellationToken ct)
+        async Task UpsertReviewedOutboxMessage(RequestAssignmentPackage request, CancellationToken ct)
         {
             await RequestReviewedNotification.Upsert(
                 db,
@@ -681,13 +691,13 @@ public class RequestService(
         {
             errorBuilder.Add(ValidationErrors.DbNoRowsFound, nameof(db.RequestAssignmentResources));
             errorBuilder.TryBuild(out var errors);
-            return errors!;
+            return errors;
         }
 
         var isRequestFromDraftToPending = request.Status == RequestStatus.Draft && status == RequestStatus.Pending;
         if (isRequestFromDraftToPending)
         {
-            await UpsertPendingOutboxMessage(status, request, ct);
+            await UpsertPendingOutboxMessage(request, ct);
         }
 
         request.Status = status;
@@ -706,12 +716,22 @@ public class RequestService(
         var notifyRequester = !await IsSystemUser(request.Assignment.FromId, ct);
         if (notifyRequester && (status == RequestStatus.Approved || status == RequestStatus.Rejected))
         {
-            await UpsertReviewedOutboxMessage(status, request, ct);
+            await UpsertReviewedOutboxMessage(request, ct);
         }
 
-        var saved = notifyRequester
-            ? await db.SaveChangesWithOutboxRetry(() => UpsertReviewedOutboxMessage(status, request, ct), ct)
-            : await db.SaveChangesAsync(ct);
+        int saved;
+        if (isRequestFromDraftToPending)
+        {
+            saved = await db.SaveChangesWithOutboxRetry(() => UpsertPendingOutboxMessage(request, ct), ct);
+        }
+        else if (notifyRequester)
+        {
+            saved = await db.SaveChangesWithOutboxRetry(() => UpsertReviewedOutboxMessage(request, ct), ct);
+        }
+        else
+        {
+            saved = await db.SaveChangesAsync(ct);
+        }
 
         if (saved == 0)
         {
@@ -725,7 +745,7 @@ public class RequestService(
 
         return await GetRequest(id, ct);
 
-        async Task UpsertPendingOutboxMessage(RequestStatus status, RequestAssignmentResource request, CancellationToken ct)
+        async Task UpsertPendingOutboxMessage(RequestAssignmentResource request, CancellationToken ct)
         {
             await RequestPendingNotification.Upsert(
                 db,
@@ -738,7 +758,7 @@ public class RequestService(
             );
         }
 
-        async Task UpsertReviewedOutboxMessage(RequestStatus status, RequestAssignmentResource request, CancellationToken ct)
+        async Task UpsertReviewedOutboxMessage(RequestAssignmentResource request, CancellationToken ct)
         {
             await RequestReviewedNotification.Upsert(
                 db,
