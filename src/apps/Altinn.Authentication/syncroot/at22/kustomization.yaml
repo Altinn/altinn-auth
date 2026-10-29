@@ -18,7 +18,7 @@ patches:
 
   - target:
       kind: Kustomization
-      name: authentication-pre-deploy
+      name: pre-deploy
     patch: |-
       apiVersion: kustomize.toolkit.fluxcd.io/v1
       kind: Kustomization
@@ -29,7 +29,7 @@ patches:
 
   - target:
       kind: Kustomization
-      name: authentication-deploy
+      name: deploy
     patch: |-
       apiVersion: kustomize.toolkit.fluxcd.io/v1
       kind: Kustomization
