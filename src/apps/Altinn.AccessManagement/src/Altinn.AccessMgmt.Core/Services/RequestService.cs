@@ -402,18 +402,20 @@ public class RequestService(
                 AssignmentId = assignment.Id,
                 ResourceId = resourceId
             };
+            
+            db.RequestAssignmentResources.Add(request);
         }
 
         if (initialStatus == RequestStatus.Pending)
         {
-            db.RequestAssignmentResources.Add(request);
             await UpsertOutboxMessage(ct);
-            if (await db.SaveChangesWithOutboxRetry(() => UpsertOutboxMessage(ct), ct) == 0)
-            {
-                return Problems.RequestCreationFailed;
-            }
         }
 
+        if (await db.SaveChangesWithOutboxRetry(() => UpsertOutboxMessage(ct), ct) == 0)
+        {
+            return Problems.RequestCreationFailed;
+        }
+        
         return await GetRequest(request.Id, ct);
 
         async Task UpsertOutboxMessage(CancellationToken ct)
@@ -457,12 +459,12 @@ public class RequestService(
         if (initialStatus == RequestStatus.Pending)
         {
             await UpsertOutboxMessage(ct);
-            if (await db.SaveChangesWithOutboxRetry(() => UpsertOutboxMessage(ct), ct) == 0)
-            {
-                return Problems.RequestCreationFailed;
-            }
         }
 
+        if (await db.SaveChangesWithOutboxRetry(() => UpsertOutboxMessage(ct), ct) == 0)
+        {
+            return Problems.RequestCreationFailed;
+        }
         return await GetRequest(request.Id, ct);
 
         async Task UpsertOutboxMessage(CancellationToken ct)
