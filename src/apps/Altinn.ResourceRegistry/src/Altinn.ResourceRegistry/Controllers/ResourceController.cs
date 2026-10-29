@@ -148,10 +148,7 @@ namespace Altinn.ResourceRegistry.Controllers
                 return ValidationProblem(ModelState);
             }
 
-            if (serviceResource.HasCompetentAuthority is { Organization: not null } competentAuthority)
-            {
-                competentAuthority.Organization = competentAuthority.Organization.Trim();
-            }
+            TrimOrganizationNumber(serviceResource);
 
             // Validate Resource
             if (!ServiceResourceHelper.ValidateResource(serviceResource, await GetServiceOwnerOrgCode(serviceResource, cancellationToken), true, out Dictionary<string, List<string>> message))
@@ -237,10 +234,7 @@ namespace Altinn.ResourceRegistry.Controllers
                 return ValidationProblem(ModelState);
             }
 
-            if (serviceResource.HasCompetentAuthority is { Organization: not null } competentAuthority)
-            {
-                competentAuthority.Organization = competentAuthority.Organization.Trim();
-            }
+            TrimOrganizationNumber(serviceResource);
 
             // Validate Resource
             if (!ServiceResourceHelper.ValidateResource(serviceResource, await GetServiceOwnerOrgCode(serviceResource, cancellationToken), false, out Dictionary<string, List<string>> message))
@@ -715,6 +709,14 @@ namespace Altinn.ResourceRegistry.Controllers
 
             ServiceOwnerLookup serviceOwners = await _serviceOwnerService.GetServiceOwners(cancellationToken);
             return serviceOwners.TryFind(org, out var owners) && owners.Length > 0 ? owners[0].OrgCode : null;
+        }
+
+        private static void TrimOrganizationNumber(ServiceResource serviceResource)
+        {
+            if (serviceResource.HasCompetentAuthority is { Organization: not null } competentAuthority)
+            {
+                competentAuthority.Organization = competentAuthority.Organization.Trim();
+            }
         }
     }
 
