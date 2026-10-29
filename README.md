@@ -97,6 +97,11 @@ dotnet user-secrets set "Platform:Token:TestTool:Password" $(az keyvault secret 
 dotnet user-secrets set "Platform:Token:TestTool:Username" $(az keyvault secret show --id=https://<key-vault-name>.vault.azure.net/secrets/Platform--Token--TestTool--Username --query value --output tsv) --id Altinn.Authorization
 ```
 
+The platform access tokens are fetched from `{Endpoint}/api/GetPlatformAccessToken`. For a token generator whose
+endpoint is somewhere else (a local mock below a path prefix), set `Platform:Token:TestTool:PlatformAccessTokenUrl` to
+the full URL of its platform access token endpoint; it is used as is, with the `env`, `ttl` and `app` query parameters
+appended, and `Endpoint` is then optional.
+
 ### 3. Bootstrap the database
 
 Open [`http://localhost:8000`](http://localhost:8000) and log in with

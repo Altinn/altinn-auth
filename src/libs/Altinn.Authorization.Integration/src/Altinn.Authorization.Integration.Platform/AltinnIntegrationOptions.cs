@@ -74,6 +74,14 @@ public class AltinnIntegrationOptions
             public Uri Endpoint { get; set; }
 
             /// <summary>
+            /// The full URL of the test tool's platform access token endpoint. When set, it is called as is (with the
+            /// <c>env</c>, <c>ttl</c> and <c>app</c> query parameters appended) instead of
+            /// <see cref="Endpoint"/> + <c>/api/GetPlatformAccessToken</c>, so a token generator below a path prefix
+            /// (a local mock) can be used.
+            /// </summary>
+            public Uri PlatformAccessTokenUrl { get; set; }
+
+            /// <summary>
             /// Basic Auth username.
             /// </summary>
             public string Username { get; set; } = string.Empty;
