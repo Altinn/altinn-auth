@@ -47,6 +47,7 @@ public static partial class ServiceCollectionExtensions
                 Log.AddTestToolTokenSource(Logger);
                 opts.PlatformAccessToken.TokenSource = AltinnIntegrationOptions.TokenSource.TestTool;
                 opts.PlatformAccessToken.TestTool.Endpoint = appsettings.Token.TestTool.Endpoint;
+                opts.PlatformAccessToken.TestTool.PlatformAccessTokenUrl = appsettings.Token.TestTool.PlatformAccessTokenUrl;
                 opts.PlatformAccessToken.TestTool.Username = appsettings.Token.TestTool.Username;
                 opts.PlatformAccessToken.TestTool.Password = appsettings.Token.TestTool.Password;
                 opts.PlatformAccessToken.TestTool.Environment = appsettings.Token.TestTool.Environment;
@@ -96,8 +97,8 @@ public static partial class ServiceCollectionExtensions
                 opts => opts.PlatformAccessToken.TokenSource != AltinnIntegrationOptions.TokenSource.TestTool || !string.IsNullOrEmpty(opts.PlatformAccessToken.TestTool.Username),
                 $"Can't use test tool token generator and not having '{nameof(AltinnIntegrationOptions.PlatformAccessToken.TestTool.Username)}' specified")
             .Validate(
-                opts => opts.PlatformAccessToken.TokenSource != AltinnIntegrationOptions.TokenSource.TestTool || opts.PlatformAccessToken.TestTool.Endpoint != null,
-                $"Can't use test tool token generator and not having '{nameof(AltinnIntegrationOptions.PlatformAccessToken.TestTool.Endpoint)}' specified")
+                opts => opts.PlatformAccessToken.TokenSource != AltinnIntegrationOptions.TokenSource.TestTool || opts.PlatformAccessToken.TestTool.Endpoint != null || opts.PlatformAccessToken.TestTool.PlatformAccessTokenUrl != null,
+                $"Can't use test tool token generator and not having '{nameof(AltinnIntegrationOptions.PlatformAccessToken.TestTool.Endpoint)}' or '{nameof(AltinnIntegrationOptions.PlatformAccessToken.TestTool.PlatformAccessTokenUrl)}' specified")
             .Validate(
                 opts => opts.PlatformAccessToken.TokenSource != AltinnIntegrationOptions.TokenSource.TestTool || !string.IsNullOrEmpty(opts.PlatformAccessToken.TestTool.Password),
                 $"Can't use test tool token generator and not having '{nameof(AltinnIntegrationOptions.PlatformAccessToken.TestTool.Password)}' specified")
