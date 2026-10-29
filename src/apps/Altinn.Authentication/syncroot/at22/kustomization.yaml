@@ -1,0 +1,40 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: product-authentication
+resources:
+  - ../base
+patches:
+  - target:
+      kind: OCIRepository
+      name: manifests
+    patch: |-
+      apiVersion: source.toolkit.fluxcd.io/v1
+      kind: OCIRepository
+      metadata:
+        name: manifests
+      spec:
+        ref:
+          tag: at22
+
+  - target:
+      kind: Kustomization
+      name: authentication-pre-deploy
+    patch: |-
+      apiVersion: kustomize.toolkit.fluxcd.io/v1
+      kind: Kustomization
+      metadata:
+        name: authentication-pre-deploy
+      spec:
+        path: ./pre-deploy/at22
+
+  - target:
+      kind: Kustomization
+      name: authentication-deploy
+    patch: |-
+      apiVersion: kustomize.toolkit.fluxcd.io/v1
+      kind: Kustomization
+      metadata:
+        name: authentication-deploy
+      spec:
+        path: ./deploy/at22
+  
