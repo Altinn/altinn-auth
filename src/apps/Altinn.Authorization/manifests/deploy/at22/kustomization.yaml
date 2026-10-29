@@ -7,13 +7,13 @@ labels:
     includeSelectors: true
     includeTemplates: true
 resources:
-- ../base
+  - ../base
 
 configMapGenerator:
-- name: environment
-  namespace: product-authorization
-  envs:
-  - ./config/environment.env
+  - name: environment
+    namespace: product-authorization
+    envs:
+      - ./config/environment.env
 
 generatorOptions:
   disableNameSuffixHash: true
