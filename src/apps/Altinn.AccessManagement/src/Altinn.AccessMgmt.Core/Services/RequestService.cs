@@ -403,18 +403,21 @@ public class RequestService(
                 ResourceId = resourceId
             };
             db.RequestAssignmentResources.Add(request);
+
+            if (initialStatus == RequestStatus.Pending)
+            {
+                await UpsertOutboxMessage(ct);
+                if (await db.SaveChangesWithOutboxRetry(() => UpsertOutboxMessage(ct), ct) == 0)
+                {
+                    return Problems.RequestCreationFailed;
+                }
+            }
+            else if (await db.SaveChangesAsync(ct) == 0)
+            {
+                return Problems.RequestCreationFailed;
+            }
         }
 
-        if (initialStatus == RequestStatus.Pending)
-        {
-            await UpsertOutboxMessage(ct);
-        }
-
-        if (await db.SaveChangesWithOutboxRetry(() => UpsertOutboxMessage(ct), ct) == 0)
-        {
-            return Problems.RequestCreationFailed;
-        }
-        
         return await GetRequest(request.Id, ct);
 
         async Task UpsertOutboxMessage(CancellationToken ct)
@@ -453,18 +456,21 @@ public class RequestService(
                 PackageId = packageId,
             };
             db.RequestAssignmentPackages.Add(request);
+
+            if (initialStatus == RequestStatus.Pending)
+            {
+                await UpsertOutboxMessage(ct);
+                if (await db.SaveChangesWithOutboxRetry(() => UpsertOutboxMessage(ct), ct) == 0)
+                {
+                    return Problems.RequestCreationFailed;
+                }
+            }
+            else if (await db.SaveChangesAsync(ct) == 0)
+            {
+                return Problems.RequestCreationFailed;
+            }
         }
 
-        if (initialStatus == RequestStatus.Pending)
-        {
-            await UpsertOutboxMessage(ct);
-        }
-
-        if (await db.SaveChangesWithOutboxRetry(() => UpsertOutboxMessage(ct), ct) == 0)
-        {
-            return Problems.RequestCreationFailed;
-        }
-        
         return await GetRequest(request.Id, ct);
 
         async Task UpsertOutboxMessage(CancellationToken ct)
@@ -622,7 +628,7 @@ public class RequestService(
         var saved = notifyRequester
             ? await db.SaveChangesWithOutboxRetry(() => UpsertReviewedOutboxMessage(status, request, ct), ct)
             : await db.SaveChangesAsync(ct);
-        
+
         if (saved == 0)
         {
             errorBuilder.Add(ValidationErrors.DbNoRowsAffected, nameof(db.RequestAssignmentPackages));
@@ -706,7 +712,7 @@ public class RequestService(
         var saved = notifyRequester
             ? await db.SaveChangesWithOutboxRetry(() => UpsertReviewedOutboxMessage(status, request, ct), ct)
             : await db.SaveChangesAsync(ct);
-        
+
         if (saved == 0)
         {
             errorBuilder.Add(ValidationErrors.DbNoRowsAffected, nameof(db.RequestAssignmentResources));
