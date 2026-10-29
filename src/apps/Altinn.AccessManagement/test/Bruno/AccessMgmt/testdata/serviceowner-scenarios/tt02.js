@@ -1,32 +1,29 @@
-// Placeholder seed data for the service owner API scenarios under test/ServiceOwnerAPI/Scenarios.
-// In TT02 the API gateway answers 404 for serviceowner/authorizedparties and the three
-// serviceowner/connections/resources endpoints the scenarios call. environments/TT02.bru lists
-// serviceowner-authorizedparties-and-resources in notYetDeployed, so the folder skips every
-// request. The values below are empty on purpose; the request scripts read them before the
-// request is skipped.
+// Seed data for the service owner API scenarios under test/ServiceOwnerAPI/Scenarios.
+// The service owners come from testdata/sharedtestdata.js through the suite's helpers.js.
 //
-// Once those endpoints answer in TT02 (check the gateway route and the feature flag
-// AccessMgmt.Controller.ServiceOwner.ResourceDelegation), remove the name from notYetDeployed and
-// fill in the resource and two TT02 persons, as in at22.js: the grantor must have no other parties
-// visible to digdir as service owner, since 03_AuthorizedPartiesLookup expects only the person's
-// own party.
+// The two persons are synthetic TT02 test persons from testdata/be-om-tilgang/tt02.js
+// (Bot_package_person_reject and Bot_package_person_withdraw). The suites there never pair
+// them with each other, so the delegation between them belongs to these scenarios. The grantor
+// has no other party visible to digdir as service owner, as 03_AuthorizedPartiesLookup expects.
+// Names are as the register returns them.
 module.exports = {
   env: "tt02",
 
   resourceDelegation: {
+    // Delegable GenericAccessResource owned by digdir, with read and write rights.
     resource: "k6-serviceowner-resource-delegation",
     unknownResource: "bruno-serviceowner-scenarios-unknown-resource",
     grantor: {
-      name: "",
-      pid: "",
-      partyid: 0,
-      partyuuid: "",
+      name: "GUL KALV",
+      pid: "27920999617",
+      partyid: 50886468,
+      partyuuid: "000124da-184f-44bf-9618-d3dfeea3e23c",
     },
     recipient: {
-      name: "",
-      pid: "",
-      partyid: 0,
-      partyuuid: "",
+      name: "FULLKOMMEN FAMILIEBARNEHAGE",
+      pid: "13859797622",
+      partyid: 50865622,
+      partyuuid: "af504a64-5060-42aa-b84e-1f7c0e81923d",
     },
   },
 };

@@ -15,13 +15,6 @@ params:query {
 }
 
 script:pre-request {
-  // The subunits count endpoint (#4337) is not deployed everywhere yet (see testdata/environment-features.js).
-  const { FEATURES, notYetDeployed } = require("./testdata/environment-features.js");
-  if (notYetDeployed(FEATURES.requestCountSubunits)) {
-    bru.runner.skipRequest();
-    return;
-  }
-
   const sharedtestdata = require(`./testdata/sharedtestdata.js`);
     const testdata = require(`./testdata/be-om-tilgang/${bru.getEnvVar("tokenEnv")}.js`);
     bru.setVar("party", testdata.Bot_Org_SubUnits.partyuuid);

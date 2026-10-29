@@ -34,18 +34,8 @@ docs {
 
   ## Environments
 
-  Written for and verified on AT22. In TT02 the API gateway answers 404 for
-  serviceowner/authorizedparties and the three serviceowner/connections/resources endpoints,
-  the same as for a path that does not exist (the rest of the service owner API, such as
-  serviceowner/connections/accesspackages, works there). The folder skips every request where
-  the environment lists serviceowner-authorizedparties-and-resources in notYetDeployed (see
-  testdata/environment-features.js). Before removing it from TT02.bru, check the gateway route
-  and the feature flag AccessMgmt.Controller.ServiceOwner.ResourceDelegation.
-}
-
-script:pre-request {
-  const { FEATURES, notYetDeployed } = require("./testdata/environment-features.js");
-  if (notYetDeployed(FEATURES.serviceOwnerAuthorizedPartiesAndResources)) {
-    bru.runner.skipRequest();
-  }
+  Written for and verified on AT22. TT02 has its own seed file. There the scenarios need
+  the API gateway to route serviceowner/authorizedparties and the three
+  serviceowner/connections/resources endpoints, and the feature flag
+  AccessMgmt.Controller.ServiceOwner.ResourceDelegation to be on.
 }
