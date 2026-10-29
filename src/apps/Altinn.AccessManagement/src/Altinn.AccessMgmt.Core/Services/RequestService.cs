@@ -402,7 +402,6 @@ public class RequestService(
                 AssignmentId = assignment.Id,
                 ResourceId = resourceId
             };
-            
             db.RequestAssignmentResources.Add(request);
         }
 
@@ -465,6 +464,7 @@ public class RequestService(
         {
             return Problems.RequestCreationFailed;
         }
+        
         return await GetRequest(request.Id, ct);
 
         async Task UpsertOutboxMessage(CancellationToken ct)
