@@ -10,8 +10,13 @@ EXPOSE 5110
 WORKDIR /app
 COPY --from=build /app .
 
-# Install tzdata for timezone support, which is needed for correct handling of dates and times in the application
-RUN apk add --no-cache tzdata krb5-libs
+# Install tzdata for timezone support, which is needed for correct handling of dates and times in the application.
+# Do not add krb5-libs: once libgssapi_krb5 is present, Npgsql's default GssEncryptionMode=Prefer runs native
+# Kerberos code on every new physical connection. We authenticate to Azure PostgreSQL with Entra tokens, not Kerberos.
+RUN apk add --no-cache tzdata
+
+# Never attempt GSS encryption towards PostgreSQL, whatever the image contains. Npgsql reads PGGSSENCMODE.
+ENV PGGSSENCMODE=disable
 
 # setup the user and group
 # the user will have no password, using shell /bin/false and using the group dotnet
