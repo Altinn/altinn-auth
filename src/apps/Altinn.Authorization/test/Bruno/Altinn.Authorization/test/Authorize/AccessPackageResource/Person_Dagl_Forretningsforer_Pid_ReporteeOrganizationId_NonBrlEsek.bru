@@ -66,7 +66,8 @@ script:pre-request {
   bru.setVar("requestName", "Person_Dagl_Forretningsforer_Pid_ReporteeOrganizationId_NonBrlEsek");
   
   bru.setVar("resourceId", testdata.resources.forretningsforerResource);
-  bru.setVar("subjectPersonId", testdata.forretningsforerNonfigurativEmosjonellPuma.dagligleder.pid);
+  // The dagligleder of the client's own forretningsforer, which differs from the one above in TT02.
+  bru.setVar("subjectPersonId", testdata.forretningsforerNonfigurativEmosjonellPuma.nonBrlEsekClient.forretningsforer.dagligleder.pid);
   bru.setVar("resourceOrganizationId", testdata.forretningsforerNonfigurativEmosjonellPuma.nonBrlEsekClient.orgno);
   
   var getTokenParameters = {

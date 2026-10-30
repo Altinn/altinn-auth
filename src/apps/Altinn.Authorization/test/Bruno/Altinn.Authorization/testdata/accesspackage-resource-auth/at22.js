@@ -213,6 +213,17 @@ module.exports =
       "orgno": "311115057",
       "partyId": 51409777,
       "partyUuid": "02f2e6c8-b67e-4ee7-b98d-8c6541eb0bfa",
+      "forretningsforer": {
+        "name": "NONFIGURATIV EMOSJONELL PUMA",
+        "orgno": "313760243",
+        "dagligleder": {
+          "name": "SPETTETE DALSIDE",
+          "pid": "08817696563",
+          "userId": 21129089,
+          "partyId": 50639183,
+          "partyUuid": "ec30c235-d7f6-432b-b060-bdbbe9cdd8ec"
+        }
+      },
       "dagligleder": {
         "name": "??",
         "pid": "??",
