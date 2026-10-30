@@ -18,6 +18,17 @@ patches:
 
   - target:
       kind: Kustomization
+      name: pre-deploy
+    patch: |-
+      apiVersion: kustomize.toolkit.fluxcd.io/v1
+      kind: Kustomization
+      metadata:
+        name: pre-deploy
+      spec:
+        path: ./pre-deploy/at24
+
+  - target:
+      kind: Kustomization
       name: deploy
     patch: |-
       apiVersion: kustomize.toolkit.fluxcd.io/v1
