@@ -84,6 +84,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
         [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status409Conflict, MediaTypeNames.Application.Json)]
         [ProducesResponseType(StatusCodes.Status429TooManyRequests)]
         public async Task<IActionResult> AddBankruptcyEstateAdministrator(
             [FromQuery(Name = "party")][Required] Guid party,
@@ -120,6 +121,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers
         [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
         [ProducesResponseType(StatusCodes.Status401Unauthorized)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status409Conflict, MediaTypeNames.Application.Json)]
         public async Task<IActionResult> RevokeBankruptcyEstateAdministrator(
             [FromQuery(Name = "party")][Required] Guid party,
             [FromQuery(Name = "user")][Required] Guid user,

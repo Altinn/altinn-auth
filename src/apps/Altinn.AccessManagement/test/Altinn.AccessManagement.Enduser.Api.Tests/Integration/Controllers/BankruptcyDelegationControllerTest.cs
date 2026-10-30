@@ -10,6 +10,7 @@ using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.Profile;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.TestUtils;
+using Altinn.AccessManagement.TestUtils.Concurrency;
 using Altinn.AccessManagement.TestUtils.Data;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessManagement.TestUtils.Mocks;
@@ -898,7 +899,8 @@ public class BankruptcyDelegationControllerTest
     /// administrator, which no later revoke can find.
     /// </summary>
     /// <remarks>
-    /// Anne, Arne and Astrid are administrators from Bodil without any estate access, as if the estates were new.
+    /// Anne, Arne, Astrid and Asle are administrators from Bodil without any estate access, as if the estates were new.
+    /// The last tests make every save conflict and check that add and revoke give up with a 409 problem.
     /// </remarks>
     [IntegrationTest]
     public class ConcurrentAdministratorChanges : IClassFixture<ApiFixture>
@@ -912,7 +914,7 @@ public class BankruptcyDelegationControllerTest
             Fixture = fixture;
             Fixture.EnsureSeedOnce<ConcurrentAdministratorChanges>(SeedBankruptcyEstates, db =>
             {
-                foreach (var assistant in new[] { AssistantAnne, AssistantArne, AssistantAstrid })
+                foreach (var assistant in new[] { AssistantAnne, AssistantArne, AssistantAstrid, AssistantAsle })
                 {
                     db.Assignments.Add(new Assignment { FromId = LawyerBodil, ToId = assistant, RoleId = RoleConstants.BankruptcyEstateAdministrator });
                 }
@@ -979,6 +981,66 @@ public class BankruptcyDelegationControllerTest
 
             await AssertBlockedUntilResumed(cleanup, pause, grant);
             await AssertNoAccess(AssistantAstrid);
+        }
+
+        /// <summary>
+        /// Bodil adds Aud while every save fails on the assignment's unique index, as if another request kept
+        /// committing first. Expects three attempts, then a 409 conflict problem, and Aud not to become an administrator.
+        /// </summary>
+        [Fact]
+        public async Task AddAdministrator_WhenEverySaveConflicts_ReturnsConflictAfterThreeAttempts()
+        {
+            var conflict = new FailEverySave(AssignmentUniqueIndex);
+            var result = await InScope((db, _) =>
+            {
+                conflict.Attach(db);
+                return new BankruptcyEstateDelegationService(db).AddBankruptcyEstateAdministrator(LawyerBodil, AssistantAud, ConfigureConnections, TestContext.Current.CancellationToken);
+            });
+
+            Assert.True(result.IsProblem);
+            AssertConcurrentPersistenceConflict(result.Problem);
+            Assert.Equal(3, conflict.Attempts);
+            Assert.False(await IsAdministrator(AssistantAud));
+        }
+
+        /// <summary>
+        /// Bodil revokes Asle while every save fails on the assignment's unique index. Expects three attempts, then a
+        /// 409 conflict problem, and Asle to remain an administrator.
+        /// </summary>
+        [Fact]
+        public async Task RevokeAdministrator_WhenEverySaveConflicts_ReturnsConflictAfterThreeAttempts()
+        {
+            var conflict = new FailEverySave(AssignmentUniqueIndex);
+            var problem = await InScope((db, _) =>
+            {
+                conflict.Attach(db);
+                return new BankruptcyEstateDelegationService(db).RevokeBankruptcyEstateAdministrator(LawyerBodil, AssistantAsle, ConfigureConnections, TestContext.Current.CancellationToken);
+            });
+
+            AssertConcurrentPersistenceConflict(problem);
+            Assert.Equal(3, conflict.Attempts);
+            Assert.True(await IsAdministrator(AssistantAsle));
+        }
+
+        private const string AssignmentUniqueIndex = "ix_assignment_fromid_toid_roleid";
+
+        private static void AssertConcurrentPersistenceConflict(ProblemInstance problem)
+        {
+            Assert.NotNull(problem);
+            Assert.Equal(Problems.ConcurrentPersistenceConflict.ErrorCode, problem.ErrorCode);
+            Assert.Equal(HttpStatusCode.Conflict, problem.StatusCode);
+        }
+
+        private async Task<bool> IsAdministrator(Guid user)
+        {
+            var isAdministrator = false;
+            await Fixture.QueryDb(async db =>
+            {
+                isAdministrator = await db.Assignments.AsNoTracking()
+                    .AnyAsync(a => a.FromId == LawyerBodil && a.ToId == user && a.RoleId == RoleConstants.BankruptcyEstateAdministrator, TestContext.Current.CancellationToken);
+            });
+
+            return isAdministrator;
         }
 
         private static readonly AuditValues TestAudit = new(SystemEntityConstants.StaticDataIngest, SystemEntityConstants.StaticDataIngest);

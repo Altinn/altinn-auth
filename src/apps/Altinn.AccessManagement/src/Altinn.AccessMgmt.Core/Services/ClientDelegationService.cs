@@ -21,6 +21,8 @@ namespace Altinn.AccessMgmt.Core.Services;
 /// <inheritdoc/>
 public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> appsettings) : IClientDelegationService
 {
+    private const int MaxSaveAttempts = 3;
+
     private IEnumerable<ConstantDefinition<EntityType>> SupportedToTypes { get; } = [
         EntityTypeConstants.Person,
         EntityTypeConstants.SystemUser
@@ -1143,6 +1145,28 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         ClientDelegationParameterNames parameterNames,
         CancellationToken cancellationToken = default)
     {
+        // Delegating packages and resources for the same client and agent at the same time can create the
+        // same delegation row twice. The losing request runs again and finds the row the other one committed.
+        try
+        {
+            return await db.RetryOnConcurrentWriteConflict(
+                () => DelegateAccessPackageToAgentAttempt(partyId, fromId, toId, payload, parameterNames, cancellationToken),
+                MaxSaveAttempts);
+        }
+        catch (Exception ex) when (ex.IsConcurrentWriteConflict())
+        {
+            return Problems.ConcurrentPersistenceConflict;
+        }
+    }
+
+    private async Task<Result<List<DelegationDto>>> DelegateAccessPackageToAgentAttempt(
+        Guid partyId,
+        Guid fromId,
+        Guid toId,
+        DelegationBatchInputDto payload,
+        ClientDelegationParameterNames parameterNames,
+        CancellationToken cancellationToken)
+    {
         ValidationErrorBuilder errorBuilder = default;
         var inputs = payload.Values
             .Select((r, idx) =>
@@ -1286,9 +1310,16 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         }
 
         var result = new List<DelegationDto>();
+
+        // The batch can repeat a role across values or a package within a value. Rows added to the
+        // change tracker are invisible to the database lookups, so created delegations and delegation
+        // packages are tracked locally to keep repeated entries idempotent instead of colliding with
+        // the unique indexes at save time.
+        var createdDelegations = new Dictionary<Guid, Delegation>();
+        var addedDelegationPackages = new HashSet<(Guid DelegationId, Guid PackageId)>();
         foreach (var input in inputs)
         {
-            var pkgIds = input.Packages.Select(p => p.Package).Select(p => p.Id).Distinct();
+            var pkgIds = input.Packages.Select(p => p.Package).Select(p => p.Id).Distinct().ToList();
             var clientAssignment = await db.Assignments.AsNoTracking().FirstOrDefaultAsync(t => t.FromId == fromId && t.ToId == partyId && t.RoleId == input.Role.Id, cancellationToken);
 
             if (clientAssignment is null)
@@ -1306,7 +1337,9 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
             var rolePackages = await db.RolePackages.AsNoTracking().Where(rp => rp.RoleId == input.Role.Id && pkgIds.Contains(rp.PackageId)).ToListAsync(cancellationToken);
             var assignmentPackages = await db.AssignmentPackages.AsNoTracking().Where(ap => ap.AssignmentId == clientAssignment.Id && pkgIds.Contains(ap.PackageId)).ToListAsync(cancellationToken);
 
-            var delegation = await db.Delegations.AsNoTracking().FirstOrDefaultAsync(t => t.FromId == clientAssignment.Id && t.ToId == agentAssignment.Id && t.FacilitatorId == partyId, cancellationToken);
+            var delegation = createdDelegations.TryGetValue(clientAssignment.Id, out var createdDelegation)
+                ? createdDelegation
+                : await db.Delegations.AsNoTracking().FirstOrDefaultAsync(t => t.FromId == clientAssignment.Id && t.ToId == agentAssignment.Id && t.FacilitatorId == partyId, cancellationToken);
             if (delegation is null)
             {
                 delegation = new Delegation()
@@ -1317,6 +1350,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
                 };
 
                 db.Delegations.Add(delegation);
+                createdDelegations[clientAssignment.Id] = delegation;
                 await ClientAddedNotification.Upsert(
                     db,
                     partyId,
@@ -1327,7 +1361,14 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
                 );
             }
 
-            var existingDelegationPackages = db.DelegationPackages.Where(t => t.DelegationId == delegation.Id);
+            // A delegation created in this batch has no persisted rows yet, so the lookup only runs
+            // for pre-existing delegations, once per input value.
+            List<DelegationPackage> existingDelegationPackages = createdDelegations.ContainsKey(clientAssignment.Id)
+                ? []
+                : await db.DelegationPackages
+                    .AsNoTracking()
+                    .Where(t => t.DelegationId == delegation.Id && pkgIds.Contains(t.PackageId))
+                    .ToListAsync(cancellationToken);
             foreach (var pkg in input.Packages)
             {
                 var rolePackage = rolePackages
@@ -1370,13 +1411,10 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
                     continue;
                 }
 
-                var delegationExist = await existingDelegationPackages.AnyAsync(
-                    t =>
-                    t.DelegationId == delegation.Id &&
-                    t.PackageId == pkg.Package.Id &&
-                    t.RolePackageId == rolePackageId &&
-                    t.AssignmentPackageId == assignmentPackageId,
-                    cancellationToken);
+                // Matches on the columns of the unique index (delegationid, packageid). A package already
+                // delegated through another role package or assignment package is left as it is.
+                var delegationExist = addedDelegationPackages.Contains((delegation.Id, pkg.Package.Id))
+                    || existingDelegationPackages.Any(t => t.PackageId == pkg.Package.Id);
 
                 if (!delegationExist)
                 {
@@ -1387,6 +1425,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
                         RolePackageId = rolePackageId,
                         AssignmentPackageId = assignmentPackageId,
                     });
+                    addedDelegationPackages.Add((delegation.Id, pkg.Package.Id));
                 }
 
                 result.Add(new()
@@ -1426,6 +1465,27 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         Guid toId,
         ContractsV2.ResourceDelegationBatchInputDto payload,
         CancellationToken cancellationToken = default)
+    {
+        // See DelegateAccessPackageToAgent: concurrent calls for the same client and agent can create the
+        // same delegation row, so the losing request runs again against the committed rows.
+        try
+        {
+            return await db.RetryOnConcurrentWriteConflict(
+                () => DelegateResourceToAgentAttempt(partyId, fromId, toId, payload, cancellationToken),
+                MaxSaveAttempts);
+        }
+        catch (Exception ex) when (ex.IsConcurrentWriteConflict())
+        {
+            return Problems.ConcurrentPersistenceConflict;
+        }
+    }
+
+    private async Task<Result<List<ContractsV2.ResourceDelegationDto>>> DelegateResourceToAgentAttempt(
+        Guid partyId,
+        Guid fromId,
+        Guid toId,
+        ContractsV2.ResourceDelegationBatchInputDto payload,
+        CancellationToken cancellationToken)
     {
         ValidationErrorBuilder errorBuilder = default;
 
