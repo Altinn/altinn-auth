@@ -1,0 +1,29 @@
+meta {
+  name: 01_ConnectionsActivityLog
+  seq: 1
+}
+
+auth {
+  mode: inherit
+}
+
+docs {
+  Scenario: Giving and removing access is recorded in the connections activity log
+
+    Given the delegator has no connection to the receiver
+    And the delegator makes the receiver a rightholder
+    And the delegator gives the receiver an access package
+    When the delegator reads the log of access it has given
+    Then the role assignment and the access package are recorded as created
+    And the receiver sees the same events in the log of access it has received
+    And the log can be narrowed to one activity type
+    And the filter values list the receiver
+    And the log is paginated newest first
+    And the next page continues without overlap
+    And an outsider cannot read the delegator's log
+    And the receiver cannot read the delegator's log either
+    And the to-others scope reads the access given
+    But the to-others scope does not read the access received
+    When the delegator removes the connection to the receiver
+    Then the removal of the role assignment and the access package is recorded
+}

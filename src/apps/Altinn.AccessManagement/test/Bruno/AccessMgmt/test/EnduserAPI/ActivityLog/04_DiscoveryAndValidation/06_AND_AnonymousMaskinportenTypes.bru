@@ -1,0 +1,35 @@
+meta {
+  name: 06_AND_AnonymousMaskinportenTypes
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/maskinporten/activitylog/types
+  body: none
+  auth: none
+}
+
+docs {
+  AND the Maskinporten area lists only the assignment main-row and resource types: the
+  supplier relation and the delegated scope resources.
+}
+
+tests {
+  const { activityTypes } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const body = res.getBody();
+
+  test("AND the Maskinporten types return 200 without a token", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND they are the four assignment and resource types", function() {
+    const ids = body.map(t => t.id).sort();
+    expect(ids).to.deep.equal([
+      activityTypes.roleAssignmentCreated,
+      activityTypes.roleAssignmentDeleted,
+      activityTypes.resourceGranted,
+      activityTypes.resourceRemoved,
+    ].sort());
+  });
+}

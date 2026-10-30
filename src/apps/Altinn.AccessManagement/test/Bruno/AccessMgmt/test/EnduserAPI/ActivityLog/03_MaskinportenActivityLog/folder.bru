@@ -1,0 +1,24 @@
+meta {
+  name: 03_MaskinportenActivityLog
+  seq: 3
+}
+
+auth {
+  mode: inherit
+}
+
+docs {
+  Scenario: A Maskinporten scope delegation is recorded in the Maskinporten activity log only
+
+    Given the consumer has no supplier relation to the supplier
+    And the consumer adds the supplier
+    And the consumer delegates a Maskinporten scope resource to the supplier
+    When the consumer reads the Maskinporten log of access it has given
+    Then the supplier relation and the resource are recorded as created
+    And the supplier sees the same events in the log of access it has received
+    And the events are not in the consumer's connections log
+    And the suppliers read scope does not read the access received
+    And the supplier cannot read the consumer's log
+    When the consumer removes the supplier
+    Then the removal of the relation and the resource is recorded
+}

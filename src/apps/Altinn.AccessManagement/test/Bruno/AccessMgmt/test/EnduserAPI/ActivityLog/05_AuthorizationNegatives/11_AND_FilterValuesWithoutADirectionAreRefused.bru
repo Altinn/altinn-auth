@@ -1,0 +1,35 @@
+meta {
+  name: 11_AND_FilterValuesWithoutADirectionAreRefused
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/connections/activitylog/filter/To?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+docs {
+  AND the filter value lookup has the same authorization as the log: without a
+  direction it is refused with 403.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata();
+
+  bru.setVar("party", td.connections.delegator.partyUuid);
+
+  await loginAs(td.connections.delegator);
+}
+
+tests {
+  test("AND the request is refused with 403", function() {
+    expect(res.status).to.equal(403);
+  });
+}

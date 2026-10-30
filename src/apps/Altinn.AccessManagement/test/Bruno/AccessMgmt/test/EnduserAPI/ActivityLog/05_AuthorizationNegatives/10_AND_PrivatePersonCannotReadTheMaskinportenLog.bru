@@ -1,0 +1,37 @@
+meta {
+  name: 10_AND_PrivatePersonCannotReadTheMaskinportenLog
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/maskinporten/activitylog?party={{party}}&direction=from
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  direction: from
+}
+
+docs {
+  AND a private person acting for itself cannot read the Maskinporten log: the area also
+  requires read access to `altinn_maskinporten_scope_delegation` for the party, which
+  only organizations have. 403.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata();
+
+  bru.setVar("party", td.connections.delegator.partyUuid);
+
+  await loginAs(td.connections.delegator);
+}
+
+tests {
+  test("AND the request is refused with 403", function() {
+    expect(res.status).to.equal(403);
+  });
+}

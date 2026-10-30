@@ -1,0 +1,33 @@
+meta {
+  name: 05_AND_UnknownPartyIsRefused
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/connections/activitylog?party=11111111-2222-3333-4444-555555555555&direction=from
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: 11111111-2222-3333-4444-555555555555
+  direction: from
+}
+
+docs {
+  AND a well-formed uuid that is no party the user can act for is refused: 403.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata();
+
+  await loginAs(td.connections.delegator);
+}
+
+tests {
+  test("AND the request is refused with 403", function() {
+    expect(res.status).to.equal(403);
+  });
+}

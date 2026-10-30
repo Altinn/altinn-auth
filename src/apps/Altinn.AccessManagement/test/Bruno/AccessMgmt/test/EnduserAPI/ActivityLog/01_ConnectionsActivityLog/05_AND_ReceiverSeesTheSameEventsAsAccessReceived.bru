@@ -1,0 +1,57 @@
+meta {
+  name: 05_AND_ReceiverSeesTheSameEventsAsAccessReceived
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/connections/activitylog?party={{party}}&direction=to&from={{from}}&pageSize=50
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  direction: to
+  from: {{from}}
+  pageSize: 50
+}
+
+docs {
+  AND the receiver sees the same events in the log of access it has received
+  (`direction=to`, filtered to the delegator with `from`). Both sides read the same
+  entries, so the entry ids match.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().connections;
+
+  bru.setVar("party", td.receiver.partyUuid);
+  bru.setVar("from", td.delegator.partyUuid);
+
+  await loginAs(td.receiver);
+}
+
+tests {
+  const { activityTypes, entriesFor, sameId, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().connections;
+  const body = res.getBody();
+
+  test("AND the receiver reads its log, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND every entry is anchored on the receiver", function() {
+    body.data.forEach(e => expect(sameId(e.toId, td.receiver.partyUuid), "toId").to.equal(true));
+  });
+
+  test("AND the receiver sees the role assignment and the access package as created", function() {
+    const assignment = entriesFor(body, bru.getVar("al_assignmentId"));
+    const pkg = entriesFor(body, bru.getVar("al_assignmentPackageId"));
+    expect(assignment).to.have.lengthOf(1);
+    expect(pkg).to.have.lengthOf(1);
+    expect(assignment[0].activityTypeId).to.equal(activityTypes.roleAssignmentCreated);
+    expect(pkg[0].activityTypeId).to.equal(activityTypes.packageGranted);
+  });
+}

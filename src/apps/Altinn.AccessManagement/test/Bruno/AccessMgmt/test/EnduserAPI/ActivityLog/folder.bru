@@ -1,0 +1,93 @@
+meta {
+  name: ActivityLog
+  seq: 5
+}
+
+auth {
+  mode: inherit
+}
+
+script:pre-request {
+  // The activity log routes are behind feature flags that are off in TT02; remove this when they are on.
+  if (bru.getEnvVar("tokenEnv") === "tt02") {
+    bru.runner.skipRequest();
+  }
+}
+
+docs {
+  # Enduser activity log
+
+  BDD scenarios for the activity log, which records every change to assignments,
+  delegations and access requests. Database triggers write the entries, so a change is in
+  the log as soon as it is committed. The log is split into three disjoint areas under
+  `/accessmanagement/api/v2/enduser`, each with the same four routes:
+
+  - `GET {area}/activitylog`: the entries involving `party`, newest first. `party` and
+    `direction` (`from`: access given, `to`: access received) are required; every other
+    field is a repeatable filter. Paginated with `pageSize` and `pageNo`.
+  - `GET {area}/activitylog/filter/{field}`: the values occurring in the party's log for
+    one filter field, as `{ id, name }` pairs.
+  - `GET {area}/activitylog/filter/fields`: the fields the area offers. Anonymous.
+  - `GET {area}/activitylog/types`: the activity type catalog entries the area accepts as
+    `typeId`, localized by `Accept-Language`. Anonymous.
+
+  The areas are `connections` (assignments and delegations), `request` (access requests)
+  and `maskinporten` (Maskinporten schema delegations, which every other area hides).
+
+  Scenarios 01-03 are lifecycles, one per area. 04 covers the discovery endpoints and
+  the validation of filters against the area. 05 covers authorization negatives (party,
+  direction, token types).
+
+  The suite runs after deployment, so it covers what depends on the deployed environment:
+  real tokens, the real authorization service, the database triggers and the feature
+  flags. Input validation, paging edge cases and the scope per direction are covered by
+  the .NET tests, which run on every pull request.
+
+  Each subfolder is one scenario, with steps named `NN_GIVEN|WHEN|THEN|AND|BUT_...` and
+  ordered by `seq`. The lifecycle scenarios make a change, read it back from the log, undo
+  the change and read the undo back. They find their own entries by the ids of the rows
+  they created (`itemId`, `parentId`) rather than by time, so they do not depend on the
+  clock or on entries from earlier runs, and they can run repeatedly against a shared
+  environment.
+
+  ## Personas and fixtures
+
+  Seed data comes from `testdata/enduser-activitylog/<env>.js`, which only maps personas
+  from the shared fixtures to the roles below:
+
+  - connections: a delegator and a receiver, both private persons. No other suite pairs
+    them, so the scenario owns the connection between the two.
+  - request: the requester and organization of the DraftAndCounts scenarios, and the ttd
+    service owner, which creates and withdraws the draft.
+  - maskinporten: a consumer organization acting through its daglig leder and a supplier
+    organization acting through its innehaver. No other suite pairs them.
+  - outsider: a private person with no relation to any of the parties.
+
+  Every step mints its own token through `helpers.js` (`loginAs(persona, scopes?)` and
+  `loginAsServiceOwner()`). `helpers.js` also holds the activity type catalog ids, which
+  are fixed in code and the same in every environment.
+
+  ## Behaviour worth knowing
+
+  - Authorization runs before validation. A query without `direction`, or with
+    `direction=via`, is refused with 403 rather than 400, because the scope policies pick
+    the required scope from the direction.
+  - `links.next` is built from the host the service sees, which behind the platform
+    gateway is an internal host name. The pagination steps check only the path and query
+    of the link, and ask for the next page with `pageNo` directly.
+  - A bearer token with three dot-separated parts that is not a JWT (`abc.def.ghi`)
+    returns 500 from every Access Management endpoint. Scenario 05 asserts 401 only for a
+    token that is not a JWT at all.
+
+  ## Environments
+
+  Verified on AT22. The TT02 seed file maps the same personas from the TT02 versions of
+  the shared fixtures, but is not verified yet: the activity log routes returned 404 on
+  TT02 when it was added (October 2026). The routes sit behind the feature
+  flags `AccessManagement.Enduser.ConnectionsActivityLogApi`,
+  `AccessManagement.Enduser.RequestActivityLogApi` and
+  `AccessManagement.Enduser.MaskinportenActivityLogApi`; with a flag off, that area
+  returns 404. Until the flags are on in TT02, this folder's pre-request script skips
+  every request when the environment is TT02, because the Azure DevOps post-deployment
+  run executes the whole `test` folder there.
+}

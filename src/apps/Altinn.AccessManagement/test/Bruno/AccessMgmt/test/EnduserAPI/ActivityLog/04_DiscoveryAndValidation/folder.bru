@@ -1,0 +1,26 @@
+meta {
+  name: 04_DiscoveryAndValidation
+  seq: 4
+}
+
+auth {
+  mode: inherit
+}
+
+docs {
+  Scenario: The discovery endpoints describe each area, and queries outside an area are rejected
+
+    When anyone reads the filter fields of each area without a token
+    Then each area lists exactly the fields it offers
+    When anyone reads the activity types of each area without a token
+    Then each area lists only its own catalog entries, in the requested language
+    Given a call without a token to the log
+    Then it is rejected with 401
+    Given a delegator reading its own connections log
+    Then an unknown activity type id is rejected with 400
+    And an activity type from another area is rejected with 400
+    And a type outside the area is rejected with 400
+    And an unknown filter field is rejected with 400
+    And a filter field outside the area is rejected with 400
+    And a query without a direction is refused with 403
+}

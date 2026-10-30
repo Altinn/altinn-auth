@@ -1,0 +1,47 @@
+meta {
+  name: 04_WHEN_AnonymousConnectionsTypes
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/connections/activitylog/types
+  body: none
+  auth: none
+}
+
+headers {
+  Accept-Language: en
+}
+
+docs {
+  WHEN anyone reads the activity types of the connections area, in English.
+
+  `GET .../activitylog/types` lists the activity type catalog entries the area
+  accepts as `typeId`, with name and description in the language of
+  `Accept-Language`. Anonymous, cached per language.
+}
+
+tests {
+  const { activityTypes } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const body = res.getBody();
+
+  test("THEN the connections types return 200 without a token", function() {
+    expect(res.status).to.equal(200);
+    expect(body).to.be.an("array").that.is.not.empty;
+  });
+
+  test("THEN they hold only assignment and delegation types", function() {
+    body.forEach(t => expect(["Assignment", "Delegation"]).to.include(t.type));
+  });
+
+  test("THEN the package granted type has its English name and a description", function() {
+    const t = body.find(x => x.id === activityTypes.packageGranted);
+    expect(t, "expected the package granted type").to.not.be.undefined;
+    expect(t.type).to.equal("Assignment");
+    expect(t.subtype).to.equal("Package");
+    expect(t.trigger).to.equal("Created");
+    expect(t.name).to.equal("Access package granted");
+    expect(t.description).to.be.a("string").that.is.not.empty;
+  });
+}

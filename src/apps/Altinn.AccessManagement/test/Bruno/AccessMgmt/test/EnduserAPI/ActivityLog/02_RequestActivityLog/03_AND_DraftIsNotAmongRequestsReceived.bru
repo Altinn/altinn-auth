@@ -1,0 +1,38 @@
+meta {
+  name: 03_AND_DraftIsNotAmongRequestsReceived
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/request/activitylog?party={{party}}&direction=to&itemId={{al_requestId}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  direction: to
+  itemId: {{al_requestId}}
+}
+
+docs {
+  AND the draft is not in the requester's log of requests received: with
+  `direction=to` the requester is anchored as the receiver, which it is not.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().request;
+
+  bru.setVar("party", td.requester.partyUuid);
+
+  await loginAs(td.requester);
+}
+
+tests {
+  test("AND the requests received hold no entry for the draft", function() {
+    expect(res.status).to.equal(200);
+    expect(res.getBody().data).to.have.lengthOf(0);
+  });
+}

@@ -1,0 +1,38 @@
+meta {
+  name: 09_WHEN_ConsumerRemovesTheSupplier
+  type: http
+  seq: 9
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/maskinporten/suppliers?party={{party}}&supplier={{supplierOrgNo}}&cascade=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  supplier: {{supplierOrgNo}}
+  cascade: true
+}
+
+docs {
+  WHEN the consumer removes the supplier with the delegated resource (cascade=true). This
+  is also the cleanup of the scenario.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().maskinporten;
+
+  bru.setVar("party", td.consumer.partyUuid);
+  bru.setVar("supplierOrgNo", td.supplier.orgNo);
+
+  await loginAs(td.consumer.dagligleder);
+}
+
+tests {
+  test("WHEN the supplier is removed, the request returns 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

@@ -1,0 +1,23 @@
+meta {
+  name: 02_RequestActivityLog
+  seq: 2
+}
+
+auth {
+  mode: inherit
+}
+
+docs {
+  Scenario: A request's draft and withdrawal are recorded in the request activity log
+
+    Given the service owner creates a draft package request for the requester
+    When the requester reads the log of requests it has made
+    Then the draft is recorded as created, by the service owner
+    And the draft is not in the requester's log of requests received
+    And the requests read scope is enough to read the log
+    But the connections scopes are not
+    And an outsider cannot read the requester's log
+    When the service owner withdraws the draft
+    Then the withdrawal is recorded with the previous status
+    And the activity type filter values list the draft and the withdrawal
+}

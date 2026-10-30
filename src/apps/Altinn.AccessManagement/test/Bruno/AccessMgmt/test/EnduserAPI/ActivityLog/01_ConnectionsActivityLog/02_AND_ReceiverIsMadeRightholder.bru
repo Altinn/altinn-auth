@@ -1,0 +1,67 @@
+meta {
+  name: 02_AND_ReceiverIsMadeRightholder
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{party}}&from={{party}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+}
+
+body:json {
+  {
+    "personIdentifier": "{{receiverPid}}",
+    "lastName": "{{receiverLastName}}"
+  }
+}
+
+docs {
+  AND the delegator makes the receiver a rightholder, identified by person number and
+  last name.
+
+  Expects 200 with the created assignment. Its id is the itemId of the role assignment
+  entries in the log, and the parentId of the access package entries, so the following
+  steps find this run's events by it rather than by time.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().connections;
+
+  bru.setVar("party", td.delegator.partyUuid);
+  bru.setVar("receiverPid", td.receiver.pid);
+  bru.setVar("receiverLastName", td.receiver.lastname);
+
+  await loginAs(td.delegator);
+}
+
+script:post-response {
+  const body = res.getBody();
+  if (body && body.id) {
+    bru.setVar("al_assignmentId", body.id);
+  }
+}
+
+tests {
+  const { rightholderRoleId, sameId, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().connections;
+
+  test("AND the receiver is made rightholder, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the assignment connects the delegator to the receiver with the rightholder role", function() {
+    const body = res.getBody();
+    expect(body.id).to.be.a("string").that.is.not.empty;
+    expect(sameId(body.fromId, td.delegator.partyUuid)).to.equal(true);
+    expect(sameId(body.toId, td.receiver.partyUuid)).to.equal(true);
+    expect(sameId(body.roleId, rightholderRoleId)).to.equal(true);
+  });
+}
