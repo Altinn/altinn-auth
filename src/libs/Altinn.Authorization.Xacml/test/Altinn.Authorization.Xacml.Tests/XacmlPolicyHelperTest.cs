@@ -138,6 +138,27 @@ public class XacmlPolicyHelperTest
         Assert.Equal(3, result);
     }
 
+    // Authorization's copy threw on an assignment without a category; the shared helper skips it, as Access Management did.
+    [Fact]
+    public void GetMinimumAuthenticationLevelFromXacmlPolicy_AssignmentWithoutCategory_SkipsItAndReturnsLevel()
+    {
+        const string LevelAssignment = "<xacml:AttributeAssignmentExpression AttributeId=\"urn:altinn:obligation-assignment:1\"";
+        const string UncategorisedAssignmentFirst = """
+            <xacml:AttributeAssignmentExpression AttributeId="urn:altinn:obligation-assignment:0">
+                <xacml:AttributeValue DataType="http://www.w3.org/2001/XMLSchema#integer">2</xacml:AttributeValue>
+              </xacml:AttributeAssignmentExpression>
+              <xacml:AttributeAssignmentExpression AttributeId="urn:altinn:obligation-assignment:1"
+            """;
+        string policyXml = PolicyXml.Replace(LevelAssignment, UncategorisedAssignmentFirst);
+        using var stream = new MemoryStream(Encoding.UTF8.GetBytes(policyXml));
+        XacmlPolicy policy = XacmlPolicyHelper.ParsePolicy(stream);
+        Assert.Null(policy.ObligationExpressions.Single().AttributeAssignmentExpressions.First().Category);
+
+        int result = XacmlPolicyHelper.GetMinimumAuthenticationLevelFromXacmlPolicy(policy);
+
+        Assert.Equal(3, result);
+    }
+
     // --- GetRulePolicyAttributeMatchesForCategory ---
     [Fact]
     public void GetRulePolicyAttributeMatchesForCategory_GroupsMatchesPerAllOfAndSkipsOtherCategories()

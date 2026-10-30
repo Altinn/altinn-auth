@@ -456,6 +456,12 @@ namespace Altinn.ResourceRegistry.Core.Services
             return rights;
         }
 
+        /// <summary>
+        /// Gets and parses the policy for a resource, or for an Altinn app when the identifier has the app resource prefix.
+        /// </summary>
+        /// <param name="resourceIdentifer">The resource identifier, or <c>app_{org}_{app}</c> for an app</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>The parsed policy, or <c>null</c> if no policy is found</returns>
         private async Task<XacmlPolicy> GetXacmlPolicy(string resourceIdentifer, CancellationToken cancellationToken)
         {
             Stream policyContent = null;

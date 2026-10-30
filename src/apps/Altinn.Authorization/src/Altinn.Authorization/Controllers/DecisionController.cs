@@ -681,6 +681,15 @@ namespace Altinn.Platform.Authorization.Controllers
             input.ViaPartyOrganizationNumber = resourceAttributes.ViaPartyOrganizationNumber;
         };
 
+        /// <summary>
+        /// Authorizes the request against the delegations the subject has received for the app or resource,
+        /// as reported by Access Management.
+        /// </summary>
+        /// <param name="decisionRequest">The decision request</param>
+        /// <param name="resourcePolicy">The policy of the app or resource the request is for</param>
+        /// <param name="accessRestriction">Restricts which kinds of delegation are considered</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>The decision based on delegations; Indeterminate if the request lacks attributes, NotApplicable if no delegation applies</returns>
         private async Task<XacmlContextResponse> AuthorizeUsingDelegations(XacmlContextRequest decisionRequest, XacmlPolicy resourcePolicy, AccessRestriction accessRestriction = AccessRestriction.None, CancellationToken cancellationToken = default)
         {
             var resourceAttributes = _delegationContextHandler.GetResourceAttributes(decisionRequest);
