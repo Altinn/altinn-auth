@@ -1,0 +1,40 @@
+meta {
+  name: 04_WHEN_BostyrerRevokesThroughPostDelete
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/administrators/delete?party={{party}}&user={{user}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  user: {{user}}
+}
+
+docs {
+  WHEN the bostyrer revokes the assistant through POST administrators/delete, the alias for
+  clients that cannot send DELETE, with the dedicated write scope. Expects 204.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  bru.setVar("party", td.BOSTYRER.partyUuid);
+  bru.setVar("user", td.user_LUN_ANALYSE_GÅSTOL.partyUuid);
+
+  await helpers.loginAs(td.BOSTYRER, helpers.scopes.bankruptcyEstateWrite);
+}
+
+tests {
+  test("WHEN the bostyrer revokes through POST administrators/delete, the request returns 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

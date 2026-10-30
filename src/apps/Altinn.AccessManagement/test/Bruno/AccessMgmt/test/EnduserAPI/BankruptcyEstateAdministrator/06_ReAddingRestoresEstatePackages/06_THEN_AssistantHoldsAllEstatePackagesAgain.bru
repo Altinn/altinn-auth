@@ -1,0 +1,47 @@
+meta {
+  name: 06_THEN_AssistantHoldsAllEstatePackagesAgain
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{assistant}}&from={{estateId}}&to={{assistant}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{assistant}}
+  from: {{estateId}}
+  to: {{assistant}}
+}
+
+docs {
+  THEN the assistant holds all three estate packages from the estate again.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  bru.setVar("assistant", td.user_LUN_ANALYSE_GÅSTOL.partyUuid);
+  bru.setVar("estateId", td.BOSTYRER.client_BLAUT_FRYKTLØS_ØGLE_KONKURSBO.partyUuid);
+
+  await helpers.loginAs(td.user_LUN_ANALYSE_GÅSTOL);
+}
+
+tests {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+
+  test("THEN the assistant's packages from the estate can be listed, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the assistant holds the three estate packages again", function() {
+    const urns = res.getBody().data.map(item => item.package.urn);
+    expect(urns).to.include.members(helpers.estatePackageUrns);
+  });
+}

@@ -1,0 +1,19 @@
+meta {
+  name: 03_AddAdministratorValidation
+  seq: 3
+}
+
+docs {
+  Scenario: Adding an administrator with incomplete input fails and adds nobody
+
+    Given the assistant is not an administrator for the bostyrer
+    When no person is given the request fails
+    When only the user query parameter is given the request fails
+    When the last name is missing the request fails
+    When the person identifier is blank the request fails
+    When the body is not valid JSON the request fails
+    Then the assistant was not added
+
+    Every input here is rejected before the person lookup, so none of these count as failed
+    lookups. Wrong last names and unknown persons are in 08_PersonLookupFailures.
+}

@@ -1,0 +1,26 @@
+meta {
+  name: 08_PersonLookupFailures
+  seq: 8
+}
+
+docs {
+  Scenario: Failed person lookups are rejected and then throttled
+
+    Given the assistant is not an administrator for the bostyrer
+    When the last name does not match the SSN the request fails
+    When the person is unknown the request fails
+    When the bostyrer has failed too many lookups even a valid add is throttled
+    Then the assistant was not added
+
+    Opt-in. Every step skips itself unless the environment variable runPersonLookupNegatives
+    is `true`, for example:
+
+      bru run test/EnduserAPI/BankruptcyEstateAdministrator --env AT22 --env-var runPersonLookupNegatives=true
+
+    Running it locks the bostyrer out of person lookups for an hour
+    (FailedAttemptsCacheLifetimeSeconds) on the pod that served the requests, so the add steps
+    in 01, 02 and 06 then fail with 429 there. The counter is per pod: AT22 runs several
+    replicas, so the steps can land on different pods and step 04 then gets 200 instead of 429
+    (observed: six valid adds right after two failures returned 200 429 429 200 200 429). Run it
+    alone, on a quiet environment, and not more than once an hour.
+}
