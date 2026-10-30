@@ -335,6 +335,7 @@ public partial class ConnectionService(
                 IncludeKeyRole = true,
                 IncludeMainUnitConnections = false,
                 IncludeSubConnections = false,
+                IncludeInnehaverConnections = false,
                 IncludePackages = false,
                 EnrichPackageResources = false,
                 IncludeDelegation = false,
