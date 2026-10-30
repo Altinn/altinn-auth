@@ -220,22 +220,19 @@ public class RequestControllerTests(
     [Fact]
     public async Task Request_Create_Failed_WrongRights()
     {
-        string dataFileName = "Data/SystemRegister/Json/SystemRegisterSubRights.json";
+        string dataFileName = "Data/SystemRegister/Json/SystemRegister2Rights.json";
         HttpResponseMessage response = await CreateSystemRegister(dataFileName);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         HttpClient client = CreateClient();
         string token = AddSystemUserRequestWriteTestTokenToClient(client);
         string endpoint = $"/authentication/api/v1/systemuser/request/vendor";
 
+        // Not one of the System's Rights
         Right right = new()
         {
             Resource =
             [
-                new AttributePair()
-                {
-                    Id = "urn:altinn:resource",
-                    Value = "ske-krav-og-betalinger"
-                },
                 new AttributePair()
                 {
                     Id = "urn:altinn:resource",
@@ -260,6 +257,39 @@ public class RequestControllerTests(
         HttpResponseMessage message = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 
         Assert.Equal(HttpStatusCode.BadRequest, message.StatusCode);
+        ProblemDetails? problemDetails = await message.Content.ReadFromJsonAsync<ProblemDetails>();
+        Assert.NotNull(problemDetails);
+        Assert.Equal(Problem.Rights_NotFound_Or_NotDelegable.Title, problemDetails.Title);
+    }
+
+    [Fact]
+    public async Task Request_Create_RightWithNoResource_ReturnBadRequest()
+    {
+        HttpResponseMessage response = await CreateSystemRegister("Data/SystemRegister/Json/SystemRegister2Rights.json");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        HttpClient client = CreateClient();
+        AddSystemUserRequestWriteTestTokenToClient(client);
+
+        // A Right with no resource names nothing the System can give
+        CreateRequestSystemUser req = new()
+        {
+            ExternalRef = "external",
+            SystemId = "991825827_the_matrix",
+            PartyOrgNo = "910493353",
+            Rights = [new Right()]
+        };
+
+        HttpRequestMessage request = new(HttpMethod.Post, "/authentication/api/v1/systemuser/request/vendor")
+        {
+            Content = JsonContent.Create(req)
+        };
+        HttpResponseMessage message = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+
+        Assert.Equal(HttpStatusCode.BadRequest, message.StatusCode);
+        ProblemDetails? problemDetails = await message.Content.ReadFromJsonAsync<ProblemDetails>();
+        Assert.NotNull(problemDetails);
+        Assert.Equal(Problem.Rights_NotFound_Or_NotDelegable.Title, problemDetails.Title);
     }
 
     [Fact]
@@ -421,15 +451,17 @@ public class RequestControllerTests(
     }
 
     [Fact]
-    public async Task Request_Create_Succeed_SubResource()
+    public async Task Request_Create_RightWithTwoResources_ReturnBadRequest()
     {
-        string dataFileName = "Data/SystemRegister/Json/SystemRegisterSubRights.json";
+        string dataFileName = "Data/SystemRegister/Json/SystemRegister2Rights.json";
         HttpResponseMessage response = await CreateSystemRegister(dataFileName);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
 
         HttpClient client = CreateClient();
         string token = AddSystemUserRequestWriteTestTokenToClient(client);
         string endpoint = $"/authentication/api/v1/systemuser/request/vendor";
 
+        // Both resources are on the System, but as two Rights. One Right per resource.
         Right right = new()
         {
             Resource =
@@ -462,11 +494,10 @@ public class RequestControllerTests(
         };
         HttpResponseMessage message = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
 
-        Assert.Equal(HttpStatusCode.Created, message.StatusCode);
-
-        RequestSystemResponse? res = await message.Content.ReadFromJsonAsync<RequestSystemResponse>();
-        Assert.NotNull(res);
-        Assert.Equal(req.ExternalRef, res.ExternalRef);
+        Assert.Equal(HttpStatusCode.BadRequest, message.StatusCode);
+        ProblemDetails? problemDetails = await message.Content.ReadFromJsonAsync<ProblemDetails>();
+        Assert.NotNull(problemDetails);
+        Assert.Equal(Problem.Rights_MustHaveOneResource.Title, problemDetails.Title);
     }
 
     [Fact]

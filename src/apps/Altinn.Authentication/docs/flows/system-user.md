@@ -58,6 +58,23 @@ sequenceDiagram
 - **Status:** a request moves from a pending state to `Accepted` / `Rejected` (see `RequestStatus`). The vendor reads status via the `vendor/...` GET endpoints; the customer approves/rejects via the `{party}/{requestId}/approve|reject` endpoints.
 - **Confirmation URL:** built from the host + request id (with the `DONTCHOOSEREPORTEE` parameter for the portal), this is where the customer is sent to approve. The portal redirects through to the Access Management UI.
 
+## Rights
+
+A right names at most one resource. It has either no attribute, or one attribute with the id `urn:altinn:resource`. To give access to two resources, send two rights:
+
+```json
+"rights": [
+  { "resource": [ { "id": "urn:altinn:resource", "value": "resource-a" } ] },
+  { "resource": [ { "id": "urn:altinn:resource", "value": "resource-b" } ] }
+]
+```
+
+A right with no attribute (`{ "resource": [] }`) names nothing. Systems that only use access packages send one. It is accepted, and delegation and revoke skip it. A system user request, or the required rights of a change request, may not hold one, even when the system has one. It is rejected with `Rights_NotFound_Or_NotDelegable`.
+
+Any other right is rejected with `400`. That is a right with several attributes, or with another id than `urn:altinn:resource`. The error is `AUTH-00083` (`Rights_MustHaveOneResource`). In the system register it is the validation error `AUTH.VLD-00022` (`SystemRegister_Right_MustHaveOneResource`), and another id also gets `SystemRegister_ResourceId_InvalidFormat`.
+
+Every path that takes in rights runs this check (`AuthenticationHelper.HasMalformedRight`), and approving a system user request runs it again.
+
 ## Agent system users & client delegation
 
 An **agent** system user acts on behalf of **multiple clients** — the classic case being an accountant/auditor firm whose system manages many customers. Beyond the standard flow:

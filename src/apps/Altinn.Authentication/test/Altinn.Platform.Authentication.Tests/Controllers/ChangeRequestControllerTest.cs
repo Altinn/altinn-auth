@@ -1456,6 +1456,102 @@ public class ChangeRequestControllerTest(
         Assert.Equal(systemUserIdFromChangeRequest, Guid.Parse(systemUser.Id));
     }
 
+    public static TheoryData<List<Right>, List<Right>> RequiredAndUnwantedRightsNotNamingOneResource => new()
+    {
+        // A required Right with two resources
+        { [CreateRight("ske-krav-og-betalinger", "ske-krav-og-betalinger-2")], [] },
+
+        // An unwanted Right with another id
+        { [], [new Right { Resource = [new AttributePair { Id = "urn:altinn:org", Value = "ske-krav-og-betalinger-2" }] }] },
+    };
+
+    /// <summary>
+    /// A ChangeRequest where a required or unwanted Right does not name one resource is rejected.
+    /// </summary>
+    [Theory]
+    [MemberData(nameof(RequiredAndUnwantedRightsNotNamingOneResource))]
+    public async Task ChangeRequest_Create_RightNotNamingOneResource_ReturnBadRequest(List<Right> requiredRights, List<Right> unwantedRights)
+    {
+        (HttpClient client, string systemUserId) = await CreateApprovedSystemUser();
+
+        ChangeRequestSystemUser change = new()
+        {
+            RequiredRights = requiredRights,
+            UnwantedRights = unwantedRights
+        };
+
+        HttpRequestMessage createChangeRequestMessage = new(HttpMethod.Post, $"/authentication/api/v1/systemuser/changerequest/vendor?correlation-id={Guid.NewGuid()}&system-user-id={systemUserId}")
+        {
+            Content = JsonContent.Create(change)
+        };
+        HttpResponseMessage response = await client.SendAsync(createChangeRequestMessage, HttpCompletionOption.ResponseHeadersRead);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        ProblemDetails? problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>();
+        Assert.NotNull(problemDetails);
+        Assert.Equal(Problem.Rights_MustHaveOneResource.Title, problemDetails.Title);
+    }
+
+    // Creates a System with two Rights and an approved SystemUser with the first Right.
+    // Returns the vendor's client and the SystemUser id.
+    private async Task<(HttpClient VendorClient, string SystemUserId)> CreateApprovedSystemUser()
+    {
+        _pdpMock.Setup(p => p.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>())).ReturnsAsync(new XacmlJsonResponse
+        {
+            Response = GetDecisionResultSingle()
+        });
+
+        Right right = CreateRight("ske-krav-og-betalinger");
+
+        HttpResponseMessage createSystemResponse = await CreateSystemRegister("Data/SystemRegister/Json/SystemRegister2Rights.json");
+        Assert.Equal(HttpStatusCode.OK, createSystemResponse.StatusCode);
+
+        // Create and approve a SystemUser with one of the two Rights
+        HttpClient client = CreateClient();
+        AddSystemUserRequestWriteTestTokenToClient(client);
+
+        CreateRequestSystemUser req = new()
+        {
+            ExternalRef = "external",
+            SystemId = "991825827_the_matrix",
+            PartyOrgNo = "910493353",
+            Rights = [right]
+        };
+
+        HttpRequestMessage request = new(HttpMethod.Post, "/authentication/api/v1/systemuser/request/vendor")
+        {
+            Content = JsonContent.Create(req)
+        };
+        HttpResponseMessage message = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+        Assert.Equal(HttpStatusCode.Created, message.StatusCode);
+
+        RequestSystemResponse? res = await message.Content.ReadFromJsonAsync<RequestSystemResponse>();
+        Assert.NotNull(res);
+
+        HttpClient client2 = CreateClient();
+        client2.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337, null, 3, true, now: TestTime));
+
+        int partyId = 500000;
+
+        HttpRequestMessage approveRequestMessage = new(HttpMethod.Post, $"/authentication/api/v1/systemuser/request/{partyId}/{res.Id}/approve");
+        HttpResponseMessage approveResponseMessage = await client2.SendAsync(approveRequestMessage, HttpCompletionOption.ResponseHeadersRead);
+        Assert.Equal(HttpStatusCode.OK, approveResponseMessage.StatusCode);
+
+        string getEndpoint = $"/authentication/api/v1/systemuser/vendor/byquery?system-id={req.SystemId}&orgno={req.PartyOrgNo}&external-ref={req.ExternalRef}";
+        HttpResponseMessage getResponseMessage = await client.SendAsync(new HttpRequestMessage(HttpMethod.Get, getEndpoint));
+        Assert.Equal(HttpStatusCode.OK, getResponseMessage.StatusCode);
+
+        SystemUserDetailExternalDTO? systemuser = await getResponseMessage.Content.ReadFromJsonAsync<SystemUserDetailExternalDTO>();
+        Assert.NotNull(systemuser);
+
+        return (client, systemuser.Id);
+    }
+
+    private static Right CreateRight(params string[] resourceIds) => new()
+    {
+        Resource = [.. resourceIds.Select(id => new AttributePair { Id = "urn:altinn:resource", Value = id })]
+    };
+
     /// <summary>
     /// After having verified that the ChangeRequest is needed, create a ChangeRequest, then approve it
     /// </summary>

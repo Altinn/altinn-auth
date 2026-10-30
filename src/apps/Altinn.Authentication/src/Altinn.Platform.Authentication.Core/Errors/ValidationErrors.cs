@@ -144,4 +144,10 @@ public static class ValidationErrors
     /// </summary>
     public static ValidationErrorDescriptor SystemRegister_ResourceId_ResourceNotDelegable { get; }
         = _factory.Create(21, "One or more resources specified in rights is marked as not delegable in the resource registry.");
+
+    /// <summary>
+    /// Gets a validation error descriptor when a right has more than one resource, or an attribute that is not a resource.
+    /// </summary>
+    public static ValidationErrorDescriptor SystemRegister_Right_MustHaveOneResource { get; }
+        = _factory.Create(22, "A right can have at most one resource, with the id urn:altinn:resource. Use one right per resource.");
 }
