@@ -68,7 +68,7 @@ public class SystemUserRequestController(
            consumerOrgNo: consumerOrgNo,
            roleId: RoleConstants.Rightholder.Id,
            package: package,
-           status: RequestStatus.Pending,
+           status: RequestStatusV2.Pending,
            ct: ct
         );
 
@@ -77,7 +77,7 @@ public class SystemUserRequestController(
             return result.Problem.ToActionResult();
         }
 
-        return Ok(result.Value);
+        return Ok(DtoMapper.ConvertToV1(result.Value));
     }
 
     /// <summary>
@@ -108,12 +108,12 @@ public class SystemUserRequestController(
             return Problems.SystemUserRequestNotAllowed.ToActionResult();
         }
 
-        var statusFilter = DtoMapper.ConvertFromV1StatusFilter(status == null || status.Length == 0 ? DefaultStatusFilter : status);
+        var statusFilter = status == null || status.Length == 0 ? DefaultStatusFilter : DtoMapper.ConvertFromV1StatusFilter(status);
         var systemUserUuid = AuthenticationHelper.GetSystemUserUuid(HttpContext);
 
         var result = await requestService.GetSystemUserSentRequests(systemUserUuid, consumerOrgNo, organization, statusFilter, type, ct);
 
-        return result.IsSuccess ? Ok(PaginatedResult.Create(result.Value, null)) : result.Problem.ToActionResult();
+        return result.IsSuccess ? Ok(PaginatedResult.Create(result.Value.Select(DtoMapper.ConvertToV1), null)) : result.Problem.ToActionResult();
     }
 
     /// <summary>
@@ -143,10 +143,10 @@ public class SystemUserRequestController(
 
         var result = await requestService.WithdrawSystemUserRequest(systemUserUuid, consumerOrgNo, id, ct);
 
-        return result.IsSuccess ? Ok(result.Value) : result.Problem.ToActionResult();
+        return result.IsSuccess ? Ok(DtoMapper.ConvertToV1(result.Value)) : result.Problem.ToActionResult();
     }
 
-    private static readonly RequestStatus[] DefaultStatusFilter = [RequestStatus.Draft, RequestStatus.Pending, RequestStatus.Approved, RequestStatus.PartialApprove, RequestStatus.Rejected, RequestStatus.Withdrawn];
+    private static readonly RequestStatusV2[] DefaultStatusFilter = [RequestStatusV2.Draft, RequestStatusV2.Pending, RequestStatusV2.Approved, RequestStatusV2.PartialApprove, RequestStatusV2.Rejected, RequestStatusV2.Withdrawn];
 
     private static bool IsValidOrganizationNumber(string organization)
         => OrganizationNumber.TryParse(organization, null, out _);

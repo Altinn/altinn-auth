@@ -11,6 +11,7 @@ using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.Core.Audit;
+using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
@@ -33,7 +34,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers;
 
 /// <summary>
 /// Access requests (tilgangsforespørsler) in the enduser API, version 1.
-/// The shared actions are in <see cref="RequestControllerBase{TRequest}"/>.
+/// The shared actions are in <see cref="RequestControllerBase{TRequest, TStatus}"/>.
 ///
 /// Deprecated: use version 2 at accessmanagement/api/v2/enduser/request. Responses carry the
 /// <c>Deprecation</c> header and a <c>successor-version</c> link to version 2.
@@ -49,7 +50,7 @@ public class RequestController(
     IEntityService entityService,
     IResourceRegistryClient resourceRegistryClient,
     IPDP pdp
-    ) : RequestControllerBase<RequestDto>(
+    ) : RequestControllerBase<RequestDto, RequestStatus>(
     requestService,
     assignmentService,
     connectionService,
@@ -66,14 +67,14 @@ public class RequestController(
     public const string DeprecationDate = "2027-05-31";
 
     /// <inheritdoc/>
-    protected override RequestDto ConvertRequest(RequestDto request) => request;
+    protected override RequestDto ConvertRequest(AccessRequest request) => DtoMapper.ConvertToV1(request);
 
     /// <summary>
-    /// <see cref="RequestDto.Status"/> reports <see cref="RequestStatus.PartialApprove"/> as <see cref="RequestStatus.Approved"/>,
-    /// so filtering on Approved also includes PartialApprove.
+    /// Filters on the version 1 statuses. <see cref="RequestDto.Status"/> reports <see cref="RequestStatusV2.PartialApprove"/>
+    /// as <see cref="RequestStatus.Approved"/>, so filtering on Approved also includes PartialApprove.
     /// </summary>
-    protected override IEnumerable<RequestStatus> GetStatusFilter(RequestStatus[]? status)
-        => DtoMapper.ConvertFromV1StatusFilter(base.GetStatusFilter(status));
+    protected override IEnumerable<RequestStatusV2> GetStatusFilter(RequestStatus[]? status)
+        => status == null || status.Length == 0 ? DefaultStatusFilter : DtoMapper.ConvertFromV1StatusFilter(status);
 
     /// <summary>
     /// Create request on behalf of a party
@@ -116,7 +117,7 @@ public class RequestController(
             roleId: RoleConstants.Rightholder.Id,
             resourceId: resourceObj!.Id,
             requestedRightKeys: null,
-            status: RequestStatus.Pending,
+            status: RequestStatusV2.Pending,
             ct: ct
             );
 
@@ -125,6 +126,6 @@ public class RequestController(
             return result.Problem.ToActionResult();
         }
 
-        return Ok(result.Value);
+        return Ok(ConvertRequest(result.Value));
     }
 }

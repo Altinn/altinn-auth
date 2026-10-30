@@ -243,23 +243,23 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
         var package = await _db.Packages.AsNoTracking().OrderBy(p => p.Id).FirstAsync(TestContext.Current.CancellationToken);
 
         var request = new RequestAssignment { Id = Guid.CreateVersion7(), FromId = from.Id, ToId = to.Id, RoleId = RoleConstants.Rightholder, ById = from.Id };
-        var requestPackage = new RequestAssignmentPackage { Id = Guid.CreateVersion7(), AssignmentId = request.Id, PackageId = package.Id, Status = RequestStatus.Pending };
+        var requestPackage = new RequestAssignmentPackage { Id = Guid.CreateVersion7(), AssignmentId = request.Id, PackageId = package.Id, Status = RequestStatusV2.Pending };
         _db.RequestAssignments.Add(request);
         _db.RequestAssignmentPackages.Add(requestPackage);
         await _db.SaveChangesAsync(Seeder, TestContext.Current.CancellationToken);
 
         var created = await SingleEvent(requestPackage.Id, ActivityLogTrigger.Created);
         Assert.Equal(ActivityLogType.Request, created.Type);
-        Assert.Equal(RequestStatus.Pending, created.Status);
+        Assert.Equal(RequestStatusV2.Pending, created.Status);
         Assert.Equal(request.Id, created.ParentId);
         Assert.Contains("requestedById", created.Details);
 
         var tracked = await _db.RequestAssignmentPackages.FirstAsync(t => t.Id == requestPackage.Id, TestContext.Current.CancellationToken);
-        tracked.Status = RequestStatus.Approved;
+        tracked.Status = RequestStatusV2.Approved;
         await _db.SaveChangesAsync(Seeder, TestContext.Current.CancellationToken);
 
         var updated = await SingleEvent(requestPackage.Id, ActivityLogTrigger.Updated);
-        Assert.Equal(RequestStatus.Approved, updated.Status);
+        Assert.Equal(RequestStatusV2.Approved, updated.Status);
         Assert.Contains("previousStatus", updated.Details);
         Assert.Equal(from.Name, updated.FromName);
         Assert.Equal(to.Name, updated.ToName);

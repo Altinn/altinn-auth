@@ -19,9 +19,9 @@ public class ActivityTypeConstantsTests
     /// cover all request child events regardless of trigger, since the status column copies
     /// whatever the row holds at that point.
     /// </summary>
-    public static TheoryData<ActivityLogType, ActivityLogSubtype?, ActivityLogTrigger, RequestStatus?> ProducibleEvents()
+    public static TheoryData<ActivityLogType, ActivityLogSubtype?, ActivityLogTrigger, RequestStatusV2?> ProducibleEvents()
     {
-        var data = new TheoryData<ActivityLogType, ActivityLogSubtype?, ActivityLogTrigger, RequestStatus?>();
+        var data = new TheoryData<ActivityLogType, ActivityLogSubtype?, ActivityLogTrigger, RequestStatusV2?>();
 
         foreach (var trigger in new[] { ActivityLogTrigger.Created, ActivityLogTrigger.Deleted })
         {
@@ -41,7 +41,7 @@ public class ActivityTypeConstantsTests
         {
             foreach (var trigger in new[] { ActivityLogTrigger.Created, ActivityLogTrigger.Updated, ActivityLogTrigger.Deleted })
             {
-                foreach (var status in Enum.GetValues<RequestStatus>())
+                foreach (var status in Enum.GetValues<RequestStatusV2>())
                 {
                     data.Add(ActivityLogType.Request, subtype, trigger, status);
                 }
@@ -53,7 +53,7 @@ public class ActivityTypeConstantsTests
 
     [Theory]
     [MemberData(nameof(ProducibleEvents))]
-    public void Resolve_EveryProducibleEvent_HasCatalogEntry(ActivityLogType type, ActivityLogSubtype? subtype, ActivityLogTrigger trigger, RequestStatus? status)
+    public void Resolve_EveryProducibleEvent_HasCatalogEntry(ActivityLogType type, ActivityLogSubtype? subtype, ActivityLogTrigger trigger, RequestStatusV2? status)
     {
         var resolved = ActivityTypeConstants.Resolve(type, subtype, trigger, status);
 
@@ -66,7 +66,7 @@ public class ActivityTypeConstantsTests
     [Fact]
     public void Resolve_StatusSpecificEntryBeatsFallback()
     {
-        var approved = ActivityTypeConstants.Resolve(ActivityLogType.Request, ActivityLogSubtype.Package, ActivityLogTrigger.Updated, RequestStatus.Approved);
+        var approved = ActivityTypeConstants.Resolve(ActivityLogType.Request, ActivityLogSubtype.Package, ActivityLogTrigger.Updated, RequestStatusV2.Approved);
 
         Assert.NotNull(approved);
         Assert.Equal(ActivityTypeConstants.RequestPackageUpdatedApproved.Id, approved.Id);
@@ -75,7 +75,7 @@ public class ActivityTypeConstantsTests
     [Fact]
     public void Resolve_UncoveredStatusFallsBackToStatusNullEntry()
     {
-        var fallback = ActivityTypeConstants.Resolve(ActivityLogType.Request, ActivityLogSubtype.Package, ActivityLogTrigger.Updated, RequestStatus.None);
+        var fallback = ActivityTypeConstants.Resolve(ActivityLogType.Request, ActivityLogSubtype.Package, ActivityLogTrigger.Updated, RequestStatusV2.None);
 
         Assert.NotNull(fallback);
         Assert.Equal(ActivityTypeConstants.RequestPackageUpdated.Id, fallback.Id);
@@ -84,7 +84,7 @@ public class ActivityTypeConstantsTests
     [Fact]
     public void Resolve_PackagePartialApprove_ResolvesItsOwnEntry()
     {
-        var resolved = ActivityTypeConstants.Resolve(ActivityLogType.Request, ActivityLogSubtype.Package, ActivityLogTrigger.Updated, RequestStatus.PartialApprove);
+        var resolved = ActivityTypeConstants.Resolve(ActivityLogType.Request, ActivityLogSubtype.Package, ActivityLogTrigger.Updated, RequestStatusV2.PartialApprove);
 
         Assert.NotNull(resolved);
         Assert.Equal(ActivityTypeConstants.RequestPackageUpdatedPartialApprove.Id, resolved.Id);
@@ -93,7 +93,7 @@ public class ActivityTypeConstantsTests
     [Fact]
     public void Resolve_ResourcePartialApprove_ResolvesItsOwnEntry()
     {
-        var resolved = ActivityTypeConstants.Resolve(ActivityLogType.Request, ActivityLogSubtype.Resource, ActivityLogTrigger.Updated, RequestStatus.PartialApprove);
+        var resolved = ActivityTypeConstants.Resolve(ActivityLogType.Request, ActivityLogSubtype.Resource, ActivityLogTrigger.Updated, RequestStatusV2.PartialApprove);
 
         Assert.NotNull(resolved);
         Assert.Equal(ActivityTypeConstants.RequestResourceUpdatedPartialApprove.Id, resolved.Id);

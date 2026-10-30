@@ -146,7 +146,7 @@ public class SwaggerDocTest
 
             var status = ResolveProperty(schemas, "AMCoreModels.RequestDto", "status");
             status.GetProperty("type").GetString().Should().Be("string");
-            status.GetProperty("enum").EnumerateArray().Select(e => e.GetString()).Should().Contain("Approved");
+            status.GetProperty("enum").EnumerateArray().Select(e => e.GetString()).Should().Contain("Approved").And.NotContain("PartialApprove");
         }
 
         [Theory]
@@ -192,6 +192,51 @@ public class SwaggerDocTest
             var knownValues = oneOf.Where(s => s.TryGetProperty("enum", out _)).Select(s => s.GetProperty("enum")[0].GetString()).ToList();
             knownValues.Should().Contain("PartialApprove");
             oneOf.Count.Should().Be(knownValues.Count + 1, "unknown values must be allowed");
+        }
+    }
+
+    /// <summary>
+    /// Tests that the status filter of the request endpoints is versioned: version 1 only
+    /// offers the statuses it was published with, while version 2 also offers those added later.
+    /// </summary>
+    [IntegrationTest]
+    public class RequestStatusFilter : IClassFixture<ApiFixture>
+    {
+        public RequestStatusFilter(ApiFixture fixture)
+        {
+            fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.EnableRequestAssignmentResource);
+            fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.EnableRequestAssignmentPackage);
+            fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.EnableEnduserRequestV2Api);
+            Client = fixture.BuildConfiguration();
+        }
+
+        private HttpClient Client { get; }
+
+        [Theory]
+        [InlineData("v1", false)]
+        [InlineData("v2", true)]
+        public async Task GetSwaggerJson_SentRequestsStatusFilter_OffersPartialApproveOnlyInV2(string version, bool offersPartialApprove)
+        {
+            var body = await Client.GetStringAsync($"/swagger/{version}/swagger.json", TestContext.Current.CancellationToken);
+            using var doc = JsonDocument.Parse(body);
+            var schemas = doc.RootElement.GetProperty("components").GetProperty("schemas");
+
+            var parameter = doc.RootElement
+                .GetProperty("paths")
+                .GetProperty($"/accessmanagement/api/{version}/enduser/request/sent")
+                .GetProperty("get")
+                .GetProperty("parameters")
+                .EnumerateArray()
+                .Single(p => p.GetProperty("name").GetString() == "status");
+
+            var items = parameter.GetProperty("schema").GetProperty("items");
+            var statuses = items.TryGetProperty("$ref", out var reference)
+                ? schemas.GetProperty(reference.GetString()!.Split('/').Last())
+                : items;
+
+            var values = statuses.GetProperty("enum").EnumerateArray().Select(e => e.GetString()).ToList();
+            values.Should().Contain("Approved");
+            values.Contains("PartialApprove").Should().Be(offersPartialApprove);
         }
     }
 }

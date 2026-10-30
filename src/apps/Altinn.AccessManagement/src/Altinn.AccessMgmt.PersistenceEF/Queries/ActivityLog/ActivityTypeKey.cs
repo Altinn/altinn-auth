@@ -10,4 +10,4 @@ namespace Altinn.AccessMgmt.PersistenceEF.Queries;
 /// is a wildcard (request child entries always carry a status, so the fallback row must match
 /// them all). Multiple keys in a filter are OR'ed together.
 /// </summary>
-public sealed record ActivityTypeKey(ActivityLogType Type, ActivityLogSubtype? Subtype, ActivityLogTrigger Trigger, RequestStatus? Status);
+public sealed record ActivityTypeKey(ActivityLogType Type, ActivityLogSubtype? Subtype, ActivityLogTrigger Trigger, RequestStatusV2? Status);

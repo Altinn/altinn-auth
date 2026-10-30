@@ -1,5 +1,4 @@
-﻿using System.Text.Json.Serialization;
-using Altinn.Authorization.ModelUtils;
+﻿using Altinn.Authorization.ModelUtils;
 
 namespace Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 
@@ -15,15 +14,16 @@ public class RequestDto
 
     /// <summary>
     /// Request status (e.g. draft, pending, approved, rejected, withdrawn).
-    /// Never <see cref="RequestStatus.PartialApprove"/>, which is reported as <see cref="RequestStatus.Approved"/>; see <see cref="StatusV2"/>.
+    /// Statuses added later are reported as their closest version 1 value, such as
+    /// <see cref="RequestStatusV2.PartialApprove"/> as <see cref="RequestStatus.Approved"/>; see <see cref="StatusV2"/>.
     /// </summary>
     public RequestStatus Status { get; set; }
 
     /// <summary>
     /// Request status, including values added after <see cref="Status"/> was fixed, such as
-    /// <see cref="RequestStatus.PartialApprove"/>. Clients must accept values they do not know.
+    /// <see cref="RequestStatusV2.PartialApprove"/>. Clients must accept values they do not know.
     /// </summary>
-    public NonExhaustiveEnum<RequestStatus> StatusV2 { get; set; }
+    public NonExhaustiveEnum<RequestStatusV2> StatusV2 { get; set; }
 
     /// <summary>
     /// Type of request
@@ -44,14 +44,6 @@ public class RequestDto
     /// Requested resource
     /// </summary>
     public RequestReferenceDto Resource { get; set; }
-
-    /// <summary>
-    /// The rights requested for the resource, as right keys from the resource policy.
-    /// Not part of this contract: it only carries the keys to the version 2 response,
-    /// where they are in <see cref="V2.RequestResourceReferenceDto.RequestedRightKeys"/>.
-    /// </summary>
-    [JsonIgnore]
-    public IEnumerable<string>? RequestedRightKeys { get; set; }
 
     /// <summary>
     /// Requested package

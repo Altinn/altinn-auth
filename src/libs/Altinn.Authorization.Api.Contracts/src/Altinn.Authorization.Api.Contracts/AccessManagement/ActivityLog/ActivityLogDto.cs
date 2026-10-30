@@ -34,7 +34,7 @@ public class ActivityLogDto
     /// The (new) request status for request entries.
     /// Clients must accept values they do not know.
     /// </summary>
-    public NonExhaustiveEnum<RequestStatus>? Status { get; set; }
+    public NonExhaustiveEnum<RequestStatusV2>? Status { get; set; }
 
     /// <summary>
     /// When the event happened.

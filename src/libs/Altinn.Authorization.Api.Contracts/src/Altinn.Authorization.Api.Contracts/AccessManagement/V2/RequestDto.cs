@@ -19,7 +19,7 @@ public class RequestDto
     /// Request status (e.g. draft, pending, approved, partial approve, rejected, withdrawn).
     /// Clients must accept values they do not know.
     /// </summary>
-    public NonExhaustiveEnum<RequestStatus> Status { get; set; }
+    public NonExhaustiveEnum<RequestStatusV2> Status { get; set; }
 
     /// <summary>
     /// Type of request

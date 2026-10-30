@@ -124,10 +124,10 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
     public async Task CreateRequestAssignmentResource_WithValidInput_CreatesDraftRequest()
     {
         var resource = await SeedUniqueResource();
-        var result = await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, null, RequestStatus.Draft, TestContext.Current.CancellationToken);
+        var result = await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, null, RequestStatusV2.Draft, TestContext.Current.CancellationToken);
 
         Assert.False(result.IsProblem);
-        Assert.Equal(RequestStatus.Draft, result.Value.Status);
+        Assert.Equal(RequestStatusV2.Draft, result.Value.Status);
         Assert.Equal(resource.Id, result.Value.Resource.Id);
         Assert.NotEqual(Guid.Empty, result.Value.Id);
     }
@@ -137,8 +137,8 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
     {
         var resource = await SeedUniqueResource();
 
-        var first = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, null, RequestStatus.Pending, TestContext.Current.CancellationToken)).Value;
-        var second = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, null, RequestStatus.Pending, TestContext.Current.CancellationToken)).Value;
+        var first = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, null, RequestStatusV2.Pending, TestContext.Current.CancellationToken)).Value;
+        var second = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, null, RequestStatusV2.Pending, TestContext.Current.CancellationToken)).Value;
 
         Assert.Equal(first.Id, second.Id);
     }
@@ -153,7 +153,7 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
     {
         var resource = await SeedUniqueResource();
 
-        var created = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, ["key-a", "key-b"], RequestStatus.Pending, TestContext.Current.CancellationToken)).Value;
+        var created = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, ["key-a", "key-b"], RequestStatusV2.Pending, TestContext.Current.CancellationToken)).Value;
         var fetched = (await _requestService.GetRequest(created.Id, TestContext.Current.CancellationToken)).Value;
 
         Assert.Equal(["key-a", "key-b"], created.RequestedRightKeys);
@@ -165,7 +165,7 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
     {
         var resource = await SeedUniqueResource();
 
-        var created = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, ["key-b", "key-a", "key-b"], RequestStatus.Pending, TestContext.Current.CancellationToken)).Value;
+        var created = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, ["key-b", "key-a", "key-b"], RequestStatusV2.Pending, TestContext.Current.CancellationToken)).Value;
 
         Assert.Equal(["key-b", "key-a"], created.RequestedRightKeys);
     }
@@ -175,7 +175,7 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
     {
         var resource = await SeedUniqueResource();
 
-        var created = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, [], RequestStatus.Pending, TestContext.Current.CancellationToken)).Value;
+        var created = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, [], RequestStatusV2.Pending, TestContext.Current.CancellationToken)).Value;
         var stored = await _db.RequestAssignmentResources.AsNoTracking().SingleAsync(r => r.Id == created.Id, TestContext.Current.CancellationToken);
 
         Assert.Null(created.RequestedRightKeys);
@@ -186,10 +186,10 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
     public async Task GetSentAndReceivedRequests_IncludeRightKeys()
     {
         var resource = await SeedUniqueResource();
-        var created = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, ["key-a"], RequestStatus.Pending, TestContext.Current.CancellationToken)).Value;
+        var created = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, ["key-a"], RequestStatusV2.Pending, TestContext.Current.CancellationToken)).Value;
 
-        var sent = await _requestService.GetSentRequests(partyId: PersonTo.Id, toId: OrgFrom.Id, status: [RequestStatus.Pending], type: "resource", ct: TestContext.Current.CancellationToken);
-        var received = await _requestService.GetReceivedRequests(partyId: OrgFrom.Id, fromId: PersonTo.Id, status: [RequestStatus.Pending], type: "resource", ct: TestContext.Current.CancellationToken);
+        var sent = await _requestService.GetSentRequests(partyId: PersonTo.Id, toId: OrgFrom.Id, status: [RequestStatusV2.Pending], type: "resource", ct: TestContext.Current.CancellationToken);
+        var received = await _requestService.GetReceivedRequests(partyId: OrgFrom.Id, fromId: PersonTo.Id, status: [RequestStatusV2.Pending], type: "resource", ct: TestContext.Current.CancellationToken);
 
         Assert.Equal(["key-a"], Assert.Single(sent.Value, r => r.Id == created.Id).RequestedRightKeys);
         Assert.Equal(["key-a"], Assert.Single(received.Value, r => r.Id == created.Id).RequestedRightKeys);
@@ -203,23 +203,23 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
     public async Task GetRequest_WithResourceRequestId_ReturnsRequestDto()
     {
         var resource = await SeedUniqueResource();
-        var created = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, null, RequestStatus.Draft, TestContext.Current.CancellationToken)).Value;
+        var created = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, null, RequestStatusV2.Draft, TestContext.Current.CancellationToken)).Value;
 
         var result = await _requestService.GetRequest(created.Id, TestContext.Current.CancellationToken);
 
         Assert.Equal(created.Id, result.Value.Id);
-        Assert.Equal(RequestStatus.Draft, result.Value.Status);
+        Assert.Equal(RequestStatusV2.Draft, result.Value.Status);
     }
 
     [Fact]
     public async Task GetRequest_WithPackageRequestId_ReturnsRequestDto()
     {
-        var created = (await _requestService.CreatePackageRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, PackageConstants.Agriculture.Id, RequestStatus.Draft, TestContext.Current.CancellationToken)).Value;
+        var created = (await _requestService.CreatePackageRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, PackageConstants.Agriculture.Id, RequestStatusV2.Draft, TestContext.Current.CancellationToken)).Value;
 
         var result = await _requestService.GetRequest(created.Id, TestContext.Current.CancellationToken);
 
         Assert.Equal(created.Id, result.Value.Id);
-        Assert.Equal(RequestStatus.Draft, result.Value.Status);
+        Assert.Equal(RequestStatusV2.Draft, result.Value.Status);
     }
 
     [Fact]
@@ -237,7 +237,7 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
     public async Task GetSentRequests_ReturnsOnlyMatchingRequests()
     {
         var resource = await SeedUniqueResource();
-        var created = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, null, RequestStatus.Pending, TestContext.Current.CancellationToken)).Value;
+        var created = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, null, RequestStatusV2.Pending, TestContext.Current.CancellationToken)).Value;
 
         var results = await _requestService.GetSentRequests(partyId: PersonTo.Id, toId: OrgFrom.Id, status: null, type: null, ct: TestContext.Current.CancellationToken);
 
@@ -249,7 +249,7 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
     public async Task GetReceivedRequests_ReturnsOnlyMatchingRequests()
     {
         var resource = await SeedUniqueResource();
-        var created = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, null, RequestStatus.Pending, TestContext.Current.CancellationToken)).Value;
+        var created = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, null, RequestStatusV2.Pending, TestContext.Current.CancellationToken)).Value;
 
         var results = await _requestService.GetReceivedRequests(partyId: OrgFrom.Id, fromId: PersonTo.Id, status: null, type: null, ct: TestContext.Current.CancellationToken);
 
@@ -264,18 +264,18 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
     [Fact]
     public async Task CreateRequestAssignmentPackage_WithValidInput_CreatesDraftRequest()
     {
-        var result = await _requestService.CreatePackageRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, PackageConstants.Agriculture.Id, RequestStatus.Draft, TestContext.Current.CancellationToken);
+        var result = await _requestService.CreatePackageRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, PackageConstants.Agriculture.Id, RequestStatusV2.Draft, TestContext.Current.CancellationToken);
 
         Assert.False(result.IsProblem);
-        Assert.Equal(RequestStatus.Draft, result.Value.Status);
+        Assert.Equal(RequestStatusV2.Draft, result.Value.Status);
         Assert.Equal(PackageConstants.Agriculture.Id, result.Value.Package.Id);
     }
 
     [Fact]
     public async Task CreateRequestAssignmentPackage_CalledTwice_ReturnsExistingPendingRequest()
     {
-        var first = (await _requestService.CreatePackageRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, PackageConstants.Agriculture.Id, RequestStatus.Draft, TestContext.Current.CancellationToken)).Value;
-        var second = (await _requestService.CreatePackageRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, PackageConstants.Agriculture.Id, RequestStatus.Draft, TestContext.Current.CancellationToken)).Value;
+        var first = (await _requestService.CreatePackageRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, PackageConstants.Agriculture.Id, RequestStatusV2.Draft, TestContext.Current.CancellationToken)).Value;
+        var second = (await _requestService.CreatePackageRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, PackageConstants.Agriculture.Id, RequestStatusV2.Draft, TestContext.Current.CancellationToken)).Value;
 
         Assert.Equal(first.Id, second.Id);
     }
@@ -287,10 +287,10 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
     public async Task ResourceRequest_EnduserCreate_CreatesPendingRequest()
     {
         var resource = await SeedUniqueResource();
-        var result = await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, null, RequestStatus.Pending, TestContext.Current.CancellationToken);
+        var result = await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, null, RequestStatusV2.Pending, TestContext.Current.CancellationToken);
 
         Assert.False(result.IsProblem);
-        Assert.Equal(RequestStatus.Pending, result.Value.Status);
+        Assert.Equal(RequestStatusV2.Pending, result.Value.Status);
     }
 
     [Fact]
@@ -299,52 +299,52 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
         var resource = await SeedUniqueResource();
 
         // 1. ServiceOwner creates request — status should be Draft
-        var created = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, null, RequestStatus.Draft, TestContext.Current.CancellationToken)).Value;
+        var created = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, null, RequestStatusV2.Draft, TestContext.Current.CancellationToken)).Value;
 
-        Assert.Equal(RequestStatus.Draft, created.Status);
+        Assert.Equal(RequestStatusV2.Draft, created.Status);
 
         // 2. Enduser sets status to Pending (acknowledges the request)
-        var pending = (await _requestService.UpdateRequest(PersonTo.Id, created.Id, RequestStatus.Pending, TestContext.Current.CancellationToken)).Value;
-        Assert.Equal(RequestStatus.Pending, pending.Status);
+        var pending = (await _requestService.UpdateRequest(PersonTo.Id, created.Id, RequestStatusV2.Pending, TestContext.Current.CancellationToken)).Value;
+        Assert.Equal(RequestStatusV2.Pending, pending.Status);
 
         // 3. ServiceOwner checks that status has changed from Draft
         var afterPending = await _requestService.GetRequest(created.Id, TestContext.Current.CancellationToken);
-        Assert.NotEqual(RequestStatus.Draft, afterPending.Value.Status);
-        Assert.Equal(RequestStatus.Pending, afterPending.Value.Status);
+        Assert.NotEqual(RequestStatusV2.Draft, afterPending.Value.Status);
+        Assert.Equal(RequestStatusV2.Pending, afterPending.Value.Status);
 
         // 4. Enduser fetches the request
         var fetched = await _requestService.GetRequest(created.Id, TestContext.Current.CancellationToken);
         Assert.Equal(created.Id, fetched.Value.Id);
 
         // 5. Enduser accepts
-        var accepted = (await _requestService.UpdateRequest(OrgFrom.Id, created.Id, RequestStatus.Approved, TestContext.Current.CancellationToken)).Value;
-        Assert.Equal(RequestStatus.Approved, accepted.Status);
+        var accepted = (await _requestService.UpdateRequest(OrgFrom.Id, created.Id, RequestStatusV2.Approved, TestContext.Current.CancellationToken)).Value;
+        Assert.Equal(RequestStatusV2.Approved, accepted.Status);
     }
 
     [Fact]
     public async Task PackageRequest_FullLifecycle_DraftToPendingToAccepted()
     {
         // 1. ServiceOwner creates request — status should be Draft
-        var created = (await _requestService.CreatePackageRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, PackageConstants.Agriculture.Id, RequestStatus.Draft, TestContext.Current.CancellationToken)).Value;
-        Assert.Equal(RequestStatus.Draft, created.Status);
+        var created = (await _requestService.CreatePackageRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, PackageConstants.Agriculture.Id, RequestStatusV2.Draft, TestContext.Current.CancellationToken)).Value;
+        Assert.Equal(RequestStatusV2.Draft, created.Status);
 
         // 2. Enduser sets status to Pending (acknowledges the request)
-        var pendingResult = await _requestService.UpdateRequest(PersonTo.Id, created.Id, RequestStatus.Pending, TestContext.Current.CancellationToken);
+        var pendingResult = await _requestService.UpdateRequest(PersonTo.Id, created.Id, RequestStatusV2.Pending, TestContext.Current.CancellationToken);
         Assert.False(pendingResult.IsProblem);
-        Assert.Equal(RequestStatus.Pending, pendingResult.Value.Status);
+        Assert.Equal(RequestStatusV2.Pending, pendingResult.Value.Status);
 
         // 3. ServiceOwner checks that status has changed from Draft
         var afterPending = await _requestService.GetRequest(created.Id, TestContext.Current.CancellationToken);
-        Assert.NotEqual(RequestStatus.Draft, afterPending.Value.Status);
-        Assert.Equal(RequestStatus.Pending, afterPending.Value.Status);
+        Assert.NotEqual(RequestStatusV2.Draft, afterPending.Value.Status);
+        Assert.Equal(RequestStatusV2.Pending, afterPending.Value.Status);
 
         // 4. Enduser fetches the request
         var fetched = await _requestService.GetRequest(created.Id, TestContext.Current.CancellationToken);
         Assert.Equal(created.Id, fetched.Value.Id);
 
         // 5. Enduser accepts
-        var accepted = (await _requestService.UpdateRequest(OrgFrom.Id, created.Id, RequestStatus.Approved, TestContext.Current.CancellationToken)).Value;
-        Assert.Equal(RequestStatus.Approved, accepted.Status);
+        var accepted = (await _requestService.UpdateRequest(OrgFrom.Id, created.Id, RequestStatusV2.Approved, TestContext.Current.CancellationToken)).Value;
+        Assert.Equal(RequestStatusV2.Approved, accepted.Status);
     }
 
     [Fact]
@@ -353,25 +353,25 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
         var resource = await SeedUniqueResource();
 
         // 1. ServiceOwner creates request — status should be Draft
-        var created = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, null, RequestStatus.Draft, TestContext.Current.CancellationToken)).Value;
-        Assert.Equal(RequestStatus.Draft, created.Status);
+        var created = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, null, RequestStatusV2.Draft, TestContext.Current.CancellationToken)).Value;
+        Assert.Equal(RequestStatusV2.Draft, created.Status);
 
         // 2. Enduser sets status to Pending (acknowledges the request)
-        var pending = (await _requestService.UpdateRequest(PersonTo.Id, created.Id, RequestStatus.Pending, TestContext.Current.CancellationToken)).Value;
-        Assert.Equal(RequestStatus.Pending, pending.Status);
+        var pending = (await _requestService.UpdateRequest(PersonTo.Id, created.Id, RequestStatusV2.Pending, TestContext.Current.CancellationToken)).Value;
+        Assert.Equal(RequestStatusV2.Pending, pending.Status);
 
         // 3. ServiceOwner checks that status has changed from Draft
         var afterPending = await _requestService.GetRequest(created.Id, TestContext.Current.CancellationToken);
-        Assert.NotEqual(RequestStatus.Draft, afterPending.Value.Status);
-        Assert.Equal(RequestStatus.Pending, afterPending.Value.Status);
+        Assert.NotEqual(RequestStatusV2.Draft, afterPending.Value.Status);
+        Assert.Equal(RequestStatusV2.Pending, afterPending.Value.Status);
 
         // 4. Enduser fetches the request
         var fetched = await _requestService.GetRequest(created.Id, TestContext.Current.CancellationToken);
         Assert.Equal(created.Id, fetched.Value.Id);
 
         // 5. Enduser rejects
-        var rejected = (await _requestService.UpdateRequest(OrgFrom.Id, created.Id, RequestStatus.Rejected, TestContext.Current.CancellationToken)).Value;
-        Assert.Equal(RequestStatus.Rejected, rejected.Status);
+        var rejected = (await _requestService.UpdateRequest(OrgFrom.Id, created.Id, RequestStatusV2.Rejected, TestContext.Current.CancellationToken)).Value;
+        Assert.Equal(RequestStatusV2.Rejected, rejected.Status);
     }
     #endregion
 

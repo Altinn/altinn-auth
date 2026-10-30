@@ -6,6 +6,7 @@ using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.Core.Audit;
+using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
@@ -42,7 +43,7 @@ public class RequestController(
     IEntityService entityService,
     IResourceRegistryClient resourceRegistryClient,
     IPDP pdp
-    ) : RequestControllerBase<RequestDtoV2>(
+    ) : RequestControllerBase<RequestDtoV2, RequestStatusV2>(
     requestService,
     assignmentService,
     connectionService,
@@ -54,7 +55,13 @@ public class RequestController(
     )
 {
     /// <inheritdoc/>
-    protected override RequestDtoV2 ConvertRequest(RequestDto request) => DtoMapper.ConvertToV2(request);
+    protected override RequestDtoV2 ConvertRequest(AccessRequest request) => DtoMapper.ConvertToV2(request);
+
+    /// <summary>
+    /// Filters on every status, including those added after version 1.
+    /// </summary>
+    protected override IEnumerable<RequestStatusV2> GetStatusFilter(RequestStatusV2[]? status)
+        => status == null || status.Length == 0 ? DefaultStatusFilter : status;
 
     /// <summary>
     /// Create request for a resource on behalf of a party, optionally naming the rights being requested.
@@ -97,7 +104,7 @@ public class RequestController(
             roleId: RoleConstants.Rightholder.Id,
             resourceId: resourceObj.Id,
             requestedRightKeys: input?.RequestedRightKeys,
-            status: RequestStatus.Pending,
+            status: RequestStatusV2.Pending,
             ct: ct
             );
 

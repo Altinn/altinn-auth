@@ -262,7 +262,7 @@ public class RequestControllerTest
                     Id = PendingPackageRequestId,
                     AssignmentId = reqAssignment.Id,
                     PackageId = PackageConstants.Agriculture.Id,
-                    Status = RequestStatus.Pending,
+                    Status = RequestStatusV2.Pending,
                 });
                 db.SaveChanges();
             });
@@ -349,7 +349,7 @@ public class RequestControllerTest
                     Id = PendingResourceRequestId,
                     AssignmentId = reqAssignment.Id,
                     ResourceId = TestResourceId,
-                    Status = RequestStatus.Pending,
+                    Status = RequestStatusV2.Pending,
                 });
                 db.SaveChanges();
             });
@@ -436,7 +436,7 @@ public class RequestControllerTest
                     Id = PendingResourceRequestId,
                     AssignmentId = reqAssignment.Id,
                     ResourceId = TestResourceId,
-                    Status = RequestStatus.Pending,
+                    Status = RequestStatusV2.Pending,
                 });
                 db.SaveChanges();
             });
@@ -491,7 +491,7 @@ public class RequestControllerTest
                     Id = PendingPackageRequestId,
                     AssignmentId = reqAssignment.Id,
                     PackageId = PackageConstants.Agriculture.Id,
-                    Status = RequestStatus.Pending,
+                    Status = RequestStatusV2.Pending,
                 });
                 db.SaveChanges();
             });
@@ -546,7 +546,7 @@ public class RequestControllerTest
                     Id = DraftPackageRequestId,
                     AssignmentId = reqAssignment.Id,
                     PackageId = PackageConstants.Agriculture.Id,
-                    Status = RequestStatus.Draft,
+                    Status = RequestStatusV2.Draft,
                 });
                 db.SaveChanges();
             });
@@ -601,7 +601,7 @@ public class RequestControllerTest
                     Id = PendingPackageRequestId,
                     AssignmentId = reqAssignment.Id,
                     PackageId = PackageConstants.Agriculture.Id,
-                    Status = RequestStatus.Pending,
+                    Status = RequestStatusV2.Pending,
                 });
                 db.SaveChanges();
             });
@@ -690,7 +690,7 @@ public class RequestControllerTest
                     Id = PendingPackageRequestId,
                     AssignmentId = reqAssignment.Id,
                     PackageId = PackageConstants.Agriculture.Id,
-                    Status = RequestStatus.Pending,
+                    Status = RequestStatusV2.Pending,
                 });
                 db.SaveChanges();
             });
@@ -745,7 +745,7 @@ public class RequestControllerTest
                     Id = PendingPackageRequestId,
                     AssignmentId = reqAssignment.Id,
                     PackageId = PackageConstants.Agriculture.Id,
-                    Status = RequestStatus.Pending,
+                    Status = RequestStatusV2.Pending,
                 });
                 db.SaveChanges();
             });
@@ -822,7 +822,7 @@ public class RequestControllerTest
                     Id = PendingPackageRequestId,
                     AssignmentId = reqAssignment.Id,
                     PackageId = PackageConstants.Agriculture.Id,
-                    Status = RequestStatus.Pending,
+                    Status = RequestStatusV2.Pending,
                 });
                 db.SaveChanges();
             });
@@ -913,7 +913,7 @@ public class RequestControllerTest
                     Id = PendingResourceRequestId,
                     AssignmentId = reqAssignment.Id,
                     ResourceId = TestResourceId,
-                    Status = RequestStatus.Pending,
+                    Status = RequestStatusV2.Pending,
                 });
                 db.SaveChanges();
             });
@@ -972,7 +972,7 @@ public class RequestControllerTest
                     Id = PendingPackageRequestId,
                     AssignmentId = reqAssignment.Id,
                     PackageId = PackageConstants.Agriculture.Id,
-                    Status = RequestStatus.Pending,
+                    Status = RequestStatusV2.Pending,
                 });
                 db.SaveChanges();
             });
@@ -1053,12 +1053,12 @@ public class RequestControllerTest
                 db.SaveChanges();
 
                 db.RequestAssignmentPackages.AddRange(
-                    new RequestAssignmentPackage { AssignmentId = fromGeirToA.Id, PackageId = PackageConstants.Agriculture.Id, Status = RequestStatus.Pending },
-                    new RequestAssignmentPackage { AssignmentId = fromGeirToA.Id, PackageId = PackageConstants.Fishing.Id, Status = RequestStatus.Approved },
-                    new RequestAssignmentPackage { AssignmentId = fromAstridToA.Id, PackageId = PackageConstants.Forestry.Id, Status = RequestStatus.Pending },
-                    new RequestAssignmentPackage { AssignmentId = fromGeirToMain.Id, PackageId = PackageConstants.Agriculture.Id, Status = RequestStatus.Pending });
+                    new RequestAssignmentPackage { AssignmentId = fromGeirToA.Id, PackageId = PackageConstants.Agriculture.Id, Status = RequestStatusV2.Pending },
+                    new RequestAssignmentPackage { AssignmentId = fromGeirToA.Id, PackageId = PackageConstants.Fishing.Id, Status = RequestStatusV2.Approved },
+                    new RequestAssignmentPackage { AssignmentId = fromAstridToA.Id, PackageId = PackageConstants.Forestry.Id, Status = RequestStatusV2.Pending },
+                    new RequestAssignmentPackage { AssignmentId = fromGeirToMain.Id, PackageId = PackageConstants.Agriculture.Id, Status = RequestStatusV2.Pending });
                 db.RequestAssignmentResources.Add(
-                    new RequestAssignmentResource { AssignmentId = fromGeirToA.Id, ResourceId = TestResourceId, Status = RequestStatus.Pending });
+                    new RequestAssignmentResource { AssignmentId = fromGeirToA.Id, ResourceId = TestResourceId, Status = RequestStatusV2.Pending });
                 db.SaveChanges();
             });
         }
@@ -1210,7 +1210,7 @@ public class RequestControllerTest
                     Id = PartialApproveRequestId,
                     AssignmentId = reqAssignment.Id,
                     PackageId = PackageConstants.Agriculture.Id,
-                    Status = RequestStatus.PartialApprove,
+                    Status = RequestStatusV2.PartialApprove,
                 });
                 db.SaveChanges();
             });
@@ -1280,6 +1280,19 @@ public class RequestControllerTest
 
             Assert.Null(item);
         }
+
+        [Fact]
+        public async Task GetReceived_FilterOnPartialApprove_Returns400()
+        {
+            // PartialApprove is not a version 1 status, so version 1 does not accept it as a filter
+            var client = CreateSystemClient(Fixture, TestData.BakerJohnsen.Id);
+
+            var response = await client.GetAsync(
+                $"{Route}/received?party={TestData.BakerJohnsen.Id}&status=PartialApprove",
+                TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
     }
 
     #endregion
@@ -1335,7 +1348,7 @@ public class RequestControllerTest
                     Id = RequestId,
                     AssignmentId = reqAssignment.Id,
                     ResourceId = TestResourceId,
-                    Status = RequestStatus.Pending,
+                    Status = RequestStatusV2.Pending,
                     RequestedRightKeys = ["key-read"],
                 });
                 db.SaveChanges();

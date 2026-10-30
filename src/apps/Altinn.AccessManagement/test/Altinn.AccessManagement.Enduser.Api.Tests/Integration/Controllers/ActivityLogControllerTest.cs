@@ -65,7 +65,7 @@ public class ActivityLogControllerTest : IClassFixture<ApiFixture>
             {
                 AssignmentId = request.Id,
                 PackageId = db.Packages.OrderBy(p => p.Id).First().Id,
-                Status = RequestStatus.Pending,
+                Status = RequestStatusV2.Pending,
             });
 
             db.SaveChanges();

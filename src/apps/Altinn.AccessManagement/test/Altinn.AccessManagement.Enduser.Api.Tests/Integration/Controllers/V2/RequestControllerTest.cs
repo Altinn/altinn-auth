@@ -97,7 +97,7 @@ public class RequestControllerTest
             Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {content}");
 
             var request = await response.Content.ReadFromJsonAsync<RequestDtoV2>(TestContext.Current.CancellationToken);
-            Assert.Equal(RequestStatus.Pending, request.Status.Value);
+            Assert.Equal(RequestStatusV2.Pending, request.Status.Value);
             Assert.Equal(delegableKeys, request.Resource.RequestedRightKeys);
 
             // The keys are part of the resource, not the request itself
@@ -130,7 +130,7 @@ public class RequestControllerTest
             Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {content}");
 
             var request = await response.Content.ReadFromJsonAsync<RequestDtoV2>(TestContext.Current.CancellationToken);
-            Assert.Equal(RequestStatus.Pending, request.Status.Value);
+            Assert.Equal(RequestStatusV2.Pending, request.Status.Value);
             Assert.Equal(TestData.SvendsenAutomobil.Id, request.From.Id);
             Assert.Equal(TestData.KaosMagicDesignAndArts.Id, request.To.Id);
             Assert.Equal(delegableKeys, request.Resource.RequestedRightKeys);
@@ -159,7 +159,7 @@ public class RequestControllerTest
             Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {content}");
 
             var request = JsonSerializer.Deserialize<RequestDtoV2>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            Assert.Equal(RequestStatus.Pending, request.Status.Value);
+            Assert.Equal(RequestStatusV2.Pending, request.Status.Value);
             Assert.Null(request.Resource.RequestedRightKeys);
 
             // The field is left out of the JSON instead of being written as null
@@ -259,7 +259,7 @@ public class RequestControllerTest
                     Id = PartialApproveRequestId,
                     AssignmentId = reqAssignment.Id,
                     PackageId = PackageConstants.Agriculture.Id,
-                    Status = RequestStatus.PartialApprove,
+                    Status = RequestStatusV2.PartialApprove,
                 });
                 db.SaveChanges();
             });
@@ -305,7 +305,7 @@ public class RequestControllerTest
             Assert.False(doc.RootElement.TryGetProperty("statusV2", out _));
 
             var request = JsonSerializer.Deserialize<RequestDtoV2>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            Assert.Equal(RequestStatus.PartialApprove, request.Status.Value);
+            Assert.Equal(RequestStatusV2.PartialApprove, request.Status.Value);
         }
 
         [Fact]

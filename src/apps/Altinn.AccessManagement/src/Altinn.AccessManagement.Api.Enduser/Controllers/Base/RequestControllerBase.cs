@@ -9,6 +9,7 @@ using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.Core.Audit;
+using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
@@ -38,8 +39,9 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers.Base;
 /// Creating a resource request is versioned, so it lives in the versioned controllers.
 /// </summary>
 /// <typeparam name="TRequest">The request model returned by the version, made by <see cref="ConvertRequest"/>.</typeparam>
+/// <typeparam name="TStatus">The status type the version filters on, turned into statuses by <see cref="GetStatusFilter"/>.</typeparam>
 [ApiController]
-public abstract class RequestControllerBase<TRequest>(
+public abstract class RequestControllerBase<TRequest, TStatus>(
     IRequestService requestService,
     IAssignmentService assignmentService,
     IConnectionService connectionService,
@@ -49,6 +51,7 @@ public abstract class RequestControllerBase<TRequest>(
     IResourceRegistryClient resourceRegistryClient,
     IPDP pdp
     ) : ControllerBase
+    where TStatus : struct, Enum
 {
     protected IRequestService RequestService { get; } = requestService;
 
@@ -69,15 +72,18 @@ public abstract class RequestControllerBase<TRequest>(
     /// <summary>
     /// Converts a request to the model returned by the version.
     /// </summary>
-    protected abstract TRequest ConvertRequest(RequestDto request);
+    protected abstract TRequest ConvertRequest(AccessRequest request);
 
     /// <summary>
-    /// The statuses to filter on, given the status query parameter. Defaults to every status except <see cref="RequestStatus.None"/>.
+    /// The statuses to filter on, given the status query parameter of the version.
+    /// When none are given, use <see cref="DefaultStatusFilter"/>.
     /// </summary>
-    protected virtual IEnumerable<RequestStatus> GetStatusFilter(RequestStatus[]? status)
-        => status == null || status.Length == 0 ? DefaultStatusFilter : status;
+    protected abstract IEnumerable<RequestStatusV2> GetStatusFilter(TStatus[]? status);
 
-    private static readonly RequestStatus[] DefaultStatusFilter = [RequestStatus.Draft, RequestStatus.Pending, RequestStatus.Approved, RequestStatus.PartialApprove, RequestStatus.Rejected, RequestStatus.Withdrawn];
+    /// <summary>
+    /// The statuses filtered on when none are given: every status except <see cref="RequestStatusV2.None"/>.
+    /// </summary>
+    protected static readonly RequestStatusV2[] DefaultStatusFilter = [RequestStatusV2.Draft, RequestStatusV2.Pending, RequestStatusV2.Approved, RequestStatusV2.PartialApprove, RequestStatusV2.Rejected, RequestStatusV2.Withdrawn];
 
     private Action<ConnectionOptions> ConfigureConnections { get; } = options =>
     {
@@ -151,7 +157,7 @@ public abstract class RequestControllerBase<TRequest>(
             return Forbid();
         }
 
-        if (result.Value.Status != RequestStatus.Draft)
+        if (result.Value.Status != RequestStatusV2.Draft)
         {
             return Forbid();
         }
@@ -181,7 +187,7 @@ public abstract class RequestControllerBase<TRequest>(
         CancellationToken ct = default
         )
     {
-        return await UpdateRequestStatus(party, id, RequestStatus.Pending, ct);
+        return await UpdateRequestStatus(party, id, RequestStatusV2.Pending, ct);
     }
 
     [HttpGet("sent")]
@@ -196,7 +202,7 @@ public abstract class RequestControllerBase<TRequest>(
     public async Task<ActionResult<PaginatedResult<TRequest>>> GetSentRequests(
         [FromQuery][Required] Guid party,
         [FromQuery] Guid? to,
-        [FromQuery] RequestStatus[]? status,
+        [FromQuery] TStatus[]? status,
         [FromQuery] string type,
         [FromQuery, FromHeader] PagingInput paging,
         CancellationToken ct = default
@@ -221,7 +227,7 @@ public abstract class RequestControllerBase<TRequest>(
     public async Task<IActionResult> GetSentRequestsCount(
         [FromQuery][Required] Guid party,
         [FromQuery] Guid? to,
-        [FromQuery] RequestStatus[]? status,
+        [FromQuery] TStatus[]? status,
         [FromQuery] string type,
         CancellationToken ct = default
         )
@@ -249,7 +255,7 @@ public abstract class RequestControllerBase<TRequest>(
         CancellationToken ct = default
         )
     {
-        return await UpdateRequestStatus(party, id, RequestStatus.Withdrawn, ct);
+        return await UpdateRequestStatus(party, id, RequestStatusV2.Withdrawn, ct);
     }
 
     [HttpGet("received")]
@@ -264,7 +270,7 @@ public abstract class RequestControllerBase<TRequest>(
     public async Task<ActionResult<PaginatedResult<TRequest>>> GetReceivedRequests(
         [FromQuery][Required] Guid party,
         [FromQuery] Guid? from,
-        [FromQuery] RequestStatus[]? status,
+        [FromQuery] TStatus[]? status,
         [FromQuery] string type,
         [FromQuery, FromHeader] PagingInput paging,
         CancellationToken ct = default
@@ -288,7 +294,7 @@ public abstract class RequestControllerBase<TRequest>(
     public async Task<IActionResult> GetReceivedRequestsCount(
         [FromQuery][Required] Guid party,
         [FromQuery] Guid? from,
-        [FromQuery] RequestStatus[]? status,
+        [FromQuery] TStatus[]? status,
         [FromQuery] string type,
         CancellationToken ct = default
         )
@@ -305,7 +311,7 @@ public abstract class RequestControllerBase<TRequest>(
     /// </summary>
     /// <param name="party">The party (main unit) whose subunits are counted</param>
     /// <param name="from">Only count requests from this party. All requesters are counted if omitted</param>
-    /// <param name="status">Status filter. Defaults to Draft, Pending, Approved, PartialApprove, Rejected and Withdrawn</param>
+    /// <param name="status">Status filter. Defaults to every status except None</param>
     /// <param name="type">resource or package. Both are counted if omitted</param>
     /// <param name="ct">Cancellation token</param>
     /// <response code="200">The number of received requests per subunit</response>
@@ -324,7 +330,7 @@ public abstract class RequestControllerBase<TRequest>(
     public async Task<IActionResult> GetReceivedRequestsCountForSubunits(
         [FromQuery][Required] Guid party,
         [FromQuery] Guid? from,
-        [FromQuery] RequestStatus[]? status,
+        [FromQuery] TStatus[]? status,
         [FromQuery] string? type,
         CancellationToken ct = default
         )
@@ -420,7 +426,7 @@ public abstract class RequestControllerBase<TRequest>(
         CancellationToken ct = default
         )
     {
-        return await UpdateRequestStatus(party, id, RequestStatus.Rejected, ct);
+        return await UpdateRequestStatus(party, id, RequestStatusV2.Rejected, ct);
     }
 
     /// <summary>
@@ -466,7 +472,7 @@ public abstract class RequestControllerBase<TRequest>(
            byId: authUserUuid,
            roleId: RoleConstants.Rightholder.Id,
            package: package,
-           status: RequestStatus.Pending,
+           status: RequestStatusV2.Pending,
            ct: ct
         );
 
@@ -478,7 +484,7 @@ public abstract class RequestControllerBase<TRequest>(
         return Ok(ConvertRequest(result.Value));
     }
 
-    private async Task<ActionResult<TRequest>> ApprovePackageRequest(Guid partyUuid, RequestDto request, CancellationToken ct)
+    private async Task<ActionResult<TRequest>> ApprovePackageRequest(Guid partyUuid, AccessRequest request, CancellationToken ct)
     {
         ValidationErrorBuilder errorBuilder = default;
 
@@ -505,7 +511,7 @@ public abstract class RequestControllerBase<TRequest>(
             return result.Problem.ToActionResult();
         }
 
-        var updateResult = await RequestService.UpdateRequest(partyUuid, request.Id, RequestStatus.Approved, ct);
+        var updateResult = await RequestService.UpdateRequest(partyUuid, request.Id, RequestStatusV2.Approved, ct);
         if (updateResult.IsProblem)
         {
             return updateResult.Problem.ToActionResult();
@@ -514,7 +520,7 @@ public abstract class RequestControllerBase<TRequest>(
         return Ok(ConvertRequest(updateResult.Value));
     }
 
-    private async Task<ActionResult<TRequest>> ApproveResourceRequest(Guid partyUuid, Guid authUserId, RequestDto request, IEnumerable<string> rightKeys, CancellationToken ct)
+    private async Task<ActionResult<TRequest>> ApproveResourceRequest(Guid partyUuid, Guid authUserId, AccessRequest request, IEnumerable<string> rightKeys, CancellationToken ct)
     {
         var delegationCheck = await ConnectionService.ResourceDelegationCheck(
             authenticatedUserUuid: authUserId,
@@ -563,7 +569,7 @@ public abstract class RequestControllerBase<TRequest>(
             return result.Problem.ToActionResult();
         }
 
-        var updateResult = await RequestService.UpdateRequest(partyUuid, request.Id, RequestStatus.Approved, ct);
+        var updateResult = await RequestService.UpdateRequest(partyUuid, request.Id, RequestStatusV2.Approved, ct);
         if (updateResult.IsProblem)
         {
             return updateResult.Problem.ToActionResult();
@@ -617,7 +623,7 @@ public abstract class RequestControllerBase<TRequest>(
         return (resourceObj, problem);
     }
 
-    private async Task<ActionResult<TRequest>> UpdateRequestStatus(Guid partyUuid, Guid id, RequestStatus status, CancellationToken ct)
+    private async Task<ActionResult<TRequest>> UpdateRequestStatus(Guid partyUuid, Guid id, RequestStatusV2 status, CancellationToken ct)
     {
         var result = await RequestService.UpdateRequest(partyUuid, id, status, ct);
         if (result.IsProblem)

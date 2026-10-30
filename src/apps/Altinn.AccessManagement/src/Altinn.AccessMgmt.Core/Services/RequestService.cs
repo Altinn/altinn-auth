@@ -2,6 +2,7 @@
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessMgmt.Core.Appsettings;
+using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Core.Notifications;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
@@ -29,7 +30,7 @@ public class RequestService(
     IPolicyRetrievalPoint policyRetrievalPoint) : IRequestService
 {
     /// <inheritdoc/>
-    public async Task<Result<RequestDto>> GetRequest(Guid requestId, CancellationToken ct = default)
+    public async Task<Result<AccessRequest>> GetRequest(Guid requestId, CancellationToken ct = default)
     {
         ValidationErrorBuilder error = default;
 
@@ -71,7 +72,7 @@ public class RequestService(
     }
 
     /// <inheritdoc/>
-    public async Task<Result<IEnumerable<RequestDto>>> GetSentRequests(Guid partyId, Guid? toId, IEnumerable<RequestStatus> status, string? type, CancellationToken ct = default)
+    public async Task<Result<IEnumerable<AccessRequest>>> GetSentRequests(Guid partyId, Guid? toId, IEnumerable<RequestStatusV2> status, string? type, CancellationToken ct = default)
     {
         var filter = QuerySentFilter(partyId, toId);
         var requestResources = string.IsNullOrEmpty(type) || type.Equals("resource", StringComparison.OrdinalIgnoreCase) ? await GetRequestAssignmentResource(filter, status, ct) : new List<RequestAssignmentResource>();
@@ -84,7 +85,7 @@ public class RequestService(
     }
 
     /// <inheritdoc/>
-    public async Task<Result<IEnumerable<RequestDto>>> GetReceivedRequests(Guid partyId, Guid? fromId, IEnumerable<RequestStatus> status, string? type, CancellationToken ct = default)
+    public async Task<Result<IEnumerable<AccessRequest>>> GetReceivedRequests(Guid partyId, Guid? fromId, IEnumerable<RequestStatusV2> status, string? type, CancellationToken ct = default)
     {
         var filter = QueryReceivedFilter(partyId, fromId);
         var requestResources = string.IsNullOrEmpty(type) || type.Equals("resource", StringComparison.OrdinalIgnoreCase) ? await GetRequestAssignmentResource(filter, status, ct) : new List<RequestAssignmentResource>();
@@ -97,7 +98,7 @@ public class RequestService(
     }
 
     /// <inheritdoc/>
-    public async Task<Result<int>> GetSentRequestsCount(Guid partyId, Guid? toId, IEnumerable<RequestStatus> status, string? type, CancellationToken ct = default)
+    public async Task<Result<int>> GetSentRequestsCount(Guid partyId, Guid? toId, IEnumerable<RequestStatusV2> status, string? type, CancellationToken ct = default)
     {
         var filter = QuerySentFilter(partyId, toId);
         var resourceCount = string.IsNullOrEmpty(type) || type.Equals("resource", StringComparison.OrdinalIgnoreCase) ? await GetRequestAssignmentResourceCount(filter, status, ct) : 0;
@@ -107,7 +108,7 @@ public class RequestService(
     }
 
     /// <inheritdoc/>
-    public async Task<Result<int>> GetReceivedRequestsCount(Guid partyId, Guid? fromId, IEnumerable<RequestStatus> status, string? type, CancellationToken ct = default)
+    public async Task<Result<int>> GetReceivedRequestsCount(Guid partyId, Guid? fromId, IEnumerable<RequestStatusV2> status, string? type, CancellationToken ct = default)
     {
         var filter = QueryReceivedFilter(partyId, fromId);
         var resourceCount = string.IsNullOrEmpty(type) || type.Equals("resource", StringComparison.OrdinalIgnoreCase) ? await GetRequestAssignmentResourceCount(filter, status, ct) : 0;
@@ -117,7 +118,7 @@ public class RequestService(
     }
 
     /// <inheritdoc/>
-    public async Task<Result<IEnumerable<ReceivedRequestCountSubunitDto>>> GetReceivedRequestsCountForSubunits(Guid partyId, Guid? fromId, IEnumerable<RequestStatus> status, string? type, CancellationToken ct = default)
+    public async Task<Result<IEnumerable<ReceivedRequestCountSubunitDto>>> GetReceivedRequestsCountForSubunits(Guid partyId, Guid? fromId, IEnumerable<RequestStatusV2> status, string? type, CancellationToken ct = default)
     {
         var subunits = await db.Entities.AsNoTracking()
             .Where(e => e.ParentId == partyId)
@@ -151,7 +152,7 @@ public class RequestService(
     }
 
     /// <inheritdoc/>
-    public async Task<Result<RequestDto>> UpdateRequest(Guid partyUuid, Guid requestId, RequestStatus status, CancellationToken ct = default)
+    public async Task<Result<AccessRequest>> UpdateRequest(Guid partyUuid, Guid requestId, RequestStatusV2 status, CancellationToken ct = default)
     {
         ValidationErrorBuilder errorBuilder = default;
 
@@ -181,7 +182,7 @@ public class RequestService(
     }
 
     /// <inheritdoc/>
-    public async Task<Result<RequestDto>> CreateResourceRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, Guid resourceId, IEnumerable<string>? requestedRightKeys, RequestStatus status = RequestStatus.Pending, CancellationToken ct = default)
+    public async Task<Result<AccessRequest>> CreateResourceRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, Guid resourceId, IEnumerable<string>? requestedRightKeys, RequestStatusV2 status = RequestStatusV2.Pending, CancellationToken ct = default)
     {
         var systemUserProblem = await ValidateRecipientNotSystemUser(toId, ct);
         if (systemUserProblem is { } resourceGuard)
@@ -251,7 +252,7 @@ public class RequestService(
     }
 
     /// <inheritdoc/>
-    public async Task<Result<RequestDto>> CreatePackageRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, string package, RequestStatus status = RequestStatus.Pending, CancellationToken ct = default)
+    public async Task<Result<AccessRequest>> CreatePackageRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, string package, RequestStatusV2 status = RequestStatusV2.Pending, CancellationToken ct = default)
     {
         var systemUserProblem = await ValidateRecipientNotSystemUser(toId, ct);
         if (systemUserProblem is { } packageGuard)
@@ -263,7 +264,7 @@ public class RequestService(
     }
 
     /// <inheritdoc/>
-    public async Task<Result<RequestDto>> CreateSystemUserPackageRequest(string organizationNo, Guid systemUserId, string consumerOrgNo, Guid roleId, string package, RequestStatus status = RequestStatus.Pending, CancellationToken ct = default)
+    public async Task<Result<AccessRequest>> CreateSystemUserPackageRequest(string organizationNo, Guid systemUserId, string consumerOrgNo, Guid roleId, string package, RequestStatusV2 status = RequestStatusV2.Pending, CancellationToken ct = default)
     {
         var systemUserProblem = await ValidateSystemUserSender(systemUserId, consumerOrgNo, ct);
         if (systemUserProblem is { } senderGuard)
@@ -282,7 +283,7 @@ public class RequestService(
     }
 
     /// <inheritdoc/>
-    public async Task<Result<IEnumerable<RequestDto>>> GetSystemUserSentRequests(Guid systemUserId, string consumerOrgNo, string? toOrganizationNo, IEnumerable<RequestStatus> status, string? type, CancellationToken ct = default)
+    public async Task<Result<IEnumerable<AccessRequest>>> GetSystemUserSentRequests(Guid systemUserId, string consumerOrgNo, string? toOrganizationNo, IEnumerable<RequestStatusV2> status, string? type, CancellationToken ct = default)
     {
         var senderProblem = await ValidateSystemUserSender(systemUserId, consumerOrgNo, ct);
         if (senderProblem is { } senderGuard)
@@ -304,7 +305,7 @@ public class RequestService(
     }
 
     /// <inheritdoc/>
-    public async Task<Result<RequestDto>> WithdrawSystemUserRequest(Guid systemUserId, string consumerOrgNo, Guid requestId, CancellationToken ct = default)
+    public async Task<Result<AccessRequest>> WithdrawSystemUserRequest(Guid systemUserId, string consumerOrgNo, Guid requestId, CancellationToken ct = default)
     {
         var senderProblem = await ValidateSystemUserSender(systemUserId, consumerOrgNo, ct);
         if (senderProblem is { } senderGuard)
@@ -312,7 +313,7 @@ public class RequestService(
             return senderGuard;
         }
 
-        return await UpdateRequest(systemUserId, requestId, RequestStatus.Withdrawn, ct);
+        return await UpdateRequest(systemUserId, requestId, RequestStatusV2.Withdrawn, ct);
     }
 
     private async Task<Guid?> GetOrganizationIdByOrgNo(string organizationNo, CancellationToken ct)
@@ -347,7 +348,7 @@ public class RequestService(
         return notFound;
     }
 
-    private async Task<Result<RequestDto>> CreatePackageRequestInternal(Guid toId, Guid fromId, Guid byId, Guid roleId, string package, RequestStatus status, CancellationToken ct)
+    private async Task<Result<AccessRequest>> CreatePackageRequestInternal(Guid toId, Guid fromId, Guid byId, Guid roleId, string package, RequestStatusV2 status, CancellationToken ct)
     {
         var to = await db.Entities.Include(t => t.Type).FirstOrDefaultAsync(e => e.Id == toId, ct);
         var from = await db.Entities.Include(t => t.Type).FirstOrDefaultAsync(e => e.Id == fromId, ct);
@@ -380,7 +381,7 @@ public class RequestService(
     }
 
     /// <inheritdoc/>
-    public async Task<Result<RequestDto>> CreatePackageRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, Guid packageId, RequestStatus status = RequestStatus.Pending, CancellationToken ct = default)
+    public async Task<Result<AccessRequest>> CreatePackageRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, Guid packageId, RequestStatusV2 status = RequestStatusV2.Pending, CancellationToken ct = default)
     {
         return await CreatePackageRequest(toId, fromId, byId, roleId, packageId.ToString(), status, ct);
     }
@@ -444,7 +445,7 @@ public class RequestService(
         return null;
     }
 
-    private async Task<Result<RequestDto>> CreateResourceRequest(RequestAssignment assignment, Guid resourceId, IEnumerable<string>? requestedRightKeys, RequestStatus initialStatus = RequestStatus.Pending, CancellationToken ct = default)
+    private async Task<Result<AccessRequest>> CreateResourceRequest(RequestAssignment assignment, Guid resourceId, IEnumerable<string>? requestedRightKeys, RequestStatusV2 initialStatus = RequestStatusV2.Pending, CancellationToken ct = default)
     {
         var request = await db.RequestAssignmentResources
             .Include(r => r.Assignment)
@@ -493,7 +494,7 @@ public class RequestService(
         return keys is { Count: > 0 } ? keys : null;
     }
 
-    private async Task<Result<RequestDto>> CreatePackageRequest(RequestAssignment assignment, string package, RequestStatus initialStatus = RequestStatus.Pending, CancellationToken ct = default)
+    private async Task<Result<AccessRequest>> CreatePackageRequest(RequestAssignment assignment, string package, RequestStatusV2 initialStatus = RequestStatusV2.Pending, CancellationToken ct = default)
     {
         if (!PackageConstants.TryGetByAll(package, out var packageObj))
         {
@@ -538,23 +539,24 @@ public class RequestService(
         }
     }
 
-    private static Result<RequestDto> VerifyRequestStatusUpdate(RequestDto request, Guid partyUuid, RequestStatus status)
+    private static Result<AccessRequest> VerifyRequestStatusUpdate(AccessRequest request, Guid partyUuid, RequestStatusV2 status)
     {
         ValidationErrorBuilder errorBuilder = default;
 
         switch (request.Status)
         {
-            case RequestStatus.Draft:
+            case RequestStatusV2.Draft:
                 ValidateDraft(request, partyUuid, status, ref errorBuilder);
                 break;
 
-            case RequestStatus.Pending:
+            case RequestStatusV2.Pending:
                 ValidatePending(request, partyUuid, status, ref errorBuilder);
                 break;
 
-            case RequestStatus.Approved:
-            case RequestStatus.Rejected:
-            case RequestStatus.Withdrawn:
+            case RequestStatusV2.Approved:
+            case RequestStatusV2.PartialApprove:
+            case RequestStatusV2.Rejected:
+            case RequestStatusV2.Withdrawn:
                 AddUnsupportedStatusError(request, status, ref errorBuilder);
                 break;
         }
@@ -564,9 +566,9 @@ public class RequestService(
         return problems != null ? problems : request;
     }
 
-    private static void ValidateDraft(RequestDto request, Guid partyUuid, RequestStatus status, ref ValidationErrorBuilder errorBuilder)
+    private static void ValidateDraft(AccessRequest request, Guid partyUuid, RequestStatusV2 status, ref ValidationErrorBuilder errorBuilder)
     {
-        if (status != RequestStatus.Pending && status != RequestStatus.Withdrawn)
+        if (status != RequestStatusV2.Pending && status != RequestStatusV2.Withdrawn)
         {
             AddUnsupportedStatusError(request, status, ref errorBuilder);
             return;
@@ -578,11 +580,11 @@ public class RequestService(
         }
     }
 
-    private static void ValidatePending(RequestDto request, Guid partyUuid, RequestStatus status, ref ValidationErrorBuilder errorBuilder)
+    private static void ValidatePending(AccessRequest request, Guid partyUuid, RequestStatusV2 status, ref ValidationErrorBuilder errorBuilder)
     {
         switch (status)
         {
-            case RequestStatus.Withdrawn:
+            case RequestStatusV2.Withdrawn:
                 if (request.From.Id != partyUuid)
                 {
                     AddUnauthorizedStatusError(request, status, ref errorBuilder);
@@ -590,8 +592,8 @@ public class RequestService(
 
                 break;
 
-            case RequestStatus.Approved:
-            case RequestStatus.Rejected:
+            case RequestStatusV2.Approved:
+            case RequestStatusV2.Rejected:
                 if (request.To.Id != partyUuid)
                 {
                     AddUnauthorizedStatusError(request, status, ref errorBuilder);
@@ -605,7 +607,7 @@ public class RequestService(
         }
     }
 
-    private static void AddUnsupportedStatusError(RequestDto request, RequestStatus status, ref ValidationErrorBuilder errorBuilder)
+    private static void AddUnsupportedStatusError(AccessRequest request, RequestStatusV2 status, ref ValidationErrorBuilder errorBuilder)
     {
         var paramName = "party";
 
@@ -616,7 +618,7 @@ public class RequestService(
         );
     }
 
-    private static void AddUnauthorizedStatusError(RequestDto request, RequestStatus status, ref ValidationErrorBuilder errorBuilder)
+    private static void AddUnauthorizedStatusError(AccessRequest request, RequestStatusV2 status, ref ValidationErrorBuilder errorBuilder)
     {
         var paramName = "party";
 
@@ -636,7 +638,7 @@ public class RequestService(
         return db.Entities.AsNoTracking().AnyAsync(e => e.Id == entityId && e.TypeId == systemUserTypeId, ct);
     }
 
-    private async Task<Result<RequestDto>> UpdatePackageRequestStatus(Guid id, RequestStatus status, CancellationToken ct = default)
+    private async Task<Result<AccessRequest>> UpdatePackageRequestStatus(Guid id, RequestStatusV2 status, CancellationToken ct = default)
     {
         ValidationErrorBuilder errorBuilder = default;
 
@@ -652,7 +654,7 @@ public class RequestService(
         }
 
         request.Status = status;
-        if (status == RequestStatus.Withdrawn)
+        if (status == RequestStatusV2.Withdrawn)
         {
             await RequestPendingNotification.RemoveValue(
                 db,
@@ -665,7 +667,7 @@ public class RequestService(
         }
 
         var notifyRequester = !await IsSystemUser(request.Assignment.FromId, ct);
-        if (notifyRequester && (status == RequestStatus.Approved || status == RequestStatus.Rejected))
+        if (notifyRequester && (status == RequestStatusV2.Approved || status == RequestStatusV2.Rejected))
         {
             await UpsertOutboxMessage(status, request, ct);
         }
@@ -685,7 +687,7 @@ public class RequestService(
 
         return await GetRequest(id, ct);
 
-        async Task UpsertOutboxMessage(RequestStatus status, RequestAssignmentPackage request, CancellationToken ct)
+        async Task UpsertOutboxMessage(RequestStatusV2 status, RequestAssignmentPackage request, CancellationToken ct)
         {
             await RequestReviewedNotification.Upsert(
                 db,
@@ -693,14 +695,14 @@ public class RequestService(
                 request.Assignment.FromId,
                 null,
                 request.PackageId,
-                status == RequestStatus.Approved,
+                status == RequestStatusV2.Approved,
                 appsettings?.Value?.Request?.NotifyRequestApprovedInSeconds ?? (60 * 15),
                 ct
             );
         }
     }
 
-    private async Task<Result<RequestDto>> UpdateResourceRequestStatus(Guid id, RequestStatus status, CancellationToken ct = default)
+    private async Task<Result<AccessRequest>> UpdateResourceRequestStatus(Guid id, RequestStatusV2 status, CancellationToken ct = default)
     {
         ValidationErrorBuilder errorBuilder = default;
 
@@ -716,7 +718,7 @@ public class RequestService(
         }
 
         request.Status = status;
-        if (status == RequestStatus.Withdrawn)
+        if (status == RequestStatusV2.Withdrawn)
         {
             await RequestPendingNotification.RemoveValue(
                 db,
@@ -729,7 +731,7 @@ public class RequestService(
         }
 
         var notifyRequester = !await IsSystemUser(request.Assignment.FromId, ct);
-        if (notifyRequester && (status == RequestStatus.Approved || status == RequestStatus.Rejected))
+        if (notifyRequester && (status == RequestStatusV2.Approved || status == RequestStatusV2.Rejected))
         {
             await UpsertOutboxMessage(status, request, ct);
         }
@@ -749,7 +751,7 @@ public class RequestService(
 
         return await GetRequest(id, ct);
 
-        async Task UpsertOutboxMessage(RequestStatus status, RequestAssignmentResource request, CancellationToken ct)
+        async Task UpsertOutboxMessage(RequestStatusV2 status, RequestAssignmentResource request, CancellationToken ct)
         {
             await RequestReviewedNotification.Upsert(
                 db,
@@ -757,14 +759,14 @@ public class RequestService(
                 request.Assignment.FromId,
                 request.ResourceId,
                 null,
-                status == RequestStatus.Approved,
+                status == RequestStatusV2.Approved,
                 appsettings?.Value?.Request?.NotifyRequestApprovedInSeconds ?? (60 * 15),
                 ct
             );
         }
     }
 
-    private async Task<IEnumerable<RequestAssignmentResource>> GetRequestAssignmentResource(RequestFilter filter, IEnumerable<RequestStatus> status, CancellationToken ct)
+    private async Task<IEnumerable<RequestAssignmentResource>> GetRequestAssignmentResource(RequestFilter filter, IEnumerable<RequestStatusV2> status, CancellationToken ct)
     {
         ValidateFilter(filter);
 
@@ -780,7 +782,7 @@ public class RequestService(
         return requests;
     }
 
-    private async Task<IEnumerable<RequestAssignmentPackage>> GetRequestAssignmentPackage(RequestFilter filter, IEnumerable<RequestStatus> status, CancellationToken ct)
+    private async Task<IEnumerable<RequestAssignmentPackage>> GetRequestAssignmentPackage(RequestFilter filter, IEnumerable<RequestStatusV2> status, CancellationToken ct)
     {
         ValidateFilter(filter);
 
@@ -832,19 +834,19 @@ public class RequestService(
         }
     }
 
-    private async Task<int> GetRequestAssignmentResourceCount(RequestFilter filter, IEnumerable<RequestStatus> status, CancellationToken ct)
+    private async Task<int> GetRequestAssignmentResourceCount(RequestFilter filter, IEnumerable<RequestStatusV2> status, CancellationToken ct)
     {
         ValidateFilter(filter);
         return await BuildRequestAssignmentResourceQuery(filter, status).CountAsync(cancellationToken: ct);
     }
 
-    private async Task<int> GetRequestAssignmentPackageCount(RequestFilter filter, IEnumerable<RequestStatus> status, CancellationToken ct)
+    private async Task<int> GetRequestAssignmentPackageCount(RequestFilter filter, IEnumerable<RequestStatusV2> status, CancellationToken ct)
     {
         ValidateFilter(filter);
         return await BuildRequestAssignmentPackageQuery(filter, status).CountAsync(cancellationToken: ct);
     }
 
-    private IQueryable<RequestAssignmentResource> BuildRequestAssignmentResourceQuery(RequestFilter filter, IEnumerable<RequestStatus> status)
+    private IQueryable<RequestAssignmentResource> BuildRequestAssignmentResourceQuery(RequestFilter filter, IEnumerable<RequestStatusV2> status)
     {
         return db.RequestAssignmentResources
             .WhereIf(filter.FromId.HasValue, r => r.Assignment.FromId == filter.FromId.Value)
@@ -853,7 +855,7 @@ public class RequestService(
             .WhereIf(status?.Any() == true, r => status.Contains(r.Status));
     }
 
-    private IQueryable<RequestAssignmentPackage> BuildRequestAssignmentPackageQuery(RequestFilter filter, IEnumerable<RequestStatus> status)
+    private IQueryable<RequestAssignmentPackage> BuildRequestAssignmentPackageQuery(RequestFilter filter, IEnumerable<RequestStatusV2> status)
     {
         return db.RequestAssignmentPackages
             .WhereIf(filter.FromId.HasValue, r => r.Assignment.FromId == filter.FromId.Value)

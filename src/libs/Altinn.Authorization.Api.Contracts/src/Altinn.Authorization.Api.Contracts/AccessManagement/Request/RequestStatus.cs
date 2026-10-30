@@ -3,7 +3,8 @@
 namespace Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 
 /// <summary>
-/// Request status
+/// Request status, version 1. The values are fixed, since version 1 clients may check them
+/// exhaustively; statuses added later are only in <see cref="RequestStatusV2"/>.
 /// </summary>
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum RequestStatus
@@ -36,10 +37,5 @@ public enum RequestStatus
     /// <summary>
     /// Request is withdrawn by the requester, and will not be processed
     /// </summary>
-    Withdrawn = 5,
-
-    /// <summary>
-    /// Request is approved, but what was granted does not match what was requested
-    /// </summary>
-    PartialApprove = 6
+    Withdrawn = 5
 }

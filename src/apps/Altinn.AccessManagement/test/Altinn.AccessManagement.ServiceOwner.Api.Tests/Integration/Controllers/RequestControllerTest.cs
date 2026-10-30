@@ -426,7 +426,7 @@ public class RequestControllerTest
             await Fixture.QueryDb(async db =>
             {
                 var request = await db.RequestAssignmentPackages.FirstOrDefaultAsync(t => t.Id == obj.Id);
-                request.Status = RequestStatus.Approved;
+                request.Status = RequestStatusV2.Approved;
                 db.RequestAssignmentPackages.Update(request);
                 await db.SaveChangesAsync(TestContext.Current.CancellationToken);
             });
@@ -466,7 +466,7 @@ public class RequestControllerTest
             await Fixture.QueryDb(async db =>
             {
                 var request = await db.RequestAssignmentPackages.FirstOrDefaultAsync(t => t.Id == obj.Id);
-                request.Status = RequestStatus.Pending;
+                request.Status = RequestStatusV2.Pending;
                 db.RequestAssignmentPackages.Update(request);
                 await db.SaveChangesAsync(TestContext.Current.CancellationToken);
             });
@@ -715,7 +715,7 @@ public class RequestControllerTest
             await Fixture.QueryDb(async db =>
             {
                 var request = await db.RequestAssignmentResources.SingleAsync(r => r.Id == id, TestContext.Current.CancellationToken);
-                request.Status = RequestStatus.PartialApprove;
+                request.Status = RequestStatusV2.PartialApprove;
                 await db.SaveChangesAsync(TestContext.Current.CancellationToken);
             });
 
