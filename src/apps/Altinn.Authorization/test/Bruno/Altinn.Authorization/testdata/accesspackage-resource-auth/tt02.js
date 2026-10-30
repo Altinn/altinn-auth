@@ -208,17 +208,24 @@ module.exports =
             },
             "clientPackage": "forretningsforer-eiendom"
         },
+        // A forretningsforer client that is neither BRL nor ESEK, as it comes from Tenor (unit type FLI).
+        // In TT02 every client of NONFIGURATIV EMOSJONELL PUMA is BRL or ESEK, so this one belongs to
+        // another forretningsforer: FRYKTLØS FIRKANTET TIGER AS (regnskapsforer in systemuser-clientdelegation).
         "nonBrlEsekClient": {
-            "name": "SKEPTISK LILLA HEST BORETTSLAG",
-            "orgno": "311115057",
-            "partyId": 51623312,
-            "partyUuid": "8b8ae7e6-6982-408e-b9bc-9f800081512c",
-            "dagligleder": {
-                "name": "??",
-                "pid": "??",
-                "userId": 0,
-                "partyId": 0,
-                "partyUuid": "??"
+            "name": "JURIDISK OBSERVANT APE",
+            "orgno": "211155922",
+            "partyId": 51461603,
+            "partyUuid": "a1486fad-0e5c-41bc-815c-3bcd7362118a",
+            "forretningsforer": {
+                "name": "FRYKTLØS FIRKANTET TIGER AS",
+                "orgno": "314095693",
+                "dagligleder": {
+                    "name": "SKÅNSOM PARYKK",
+                    "pid": "20897496934",
+                    "userId": 1435102,
+                    "partyId": 51372438,
+                    "partyUuid": "0599d337-f822-4cd3-a58a-35b7b1120b76"
+                }
             }
         }
     }
