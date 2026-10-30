@@ -33,8 +33,6 @@ spec:
               cpu: 750m
               memory: 1500Mi
           envFrom:
-            - secretRef:
-                name: rr-api-secrets
             - configMapRef:
                 name: environment
           env:
