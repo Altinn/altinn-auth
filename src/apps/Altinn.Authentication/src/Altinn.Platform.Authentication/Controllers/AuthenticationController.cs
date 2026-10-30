@@ -911,11 +911,11 @@ namespace Altinn.Platform.Authentication.Controllers
 
             DateTimeOffset now = _timeProvider.GetUtcNow();
 
-            // If GetLatestCertificateWithRolloverDelay uses "now", pass it in so it also honors TimeProvider.
-            var certificate = GetLatestCertificateWithRolloverDelay(
+            X509Certificate2 certificate = SigningCertificateSelector.Select(
                 certificates,
                 _generalSettings.JwtSigningCertificateRolloverDelayHours,
-                now);
+                now,
+                _logger);
 
             var lifetime = TimeSpan.FromMinutes(_generalSettings.JwtValidityMinutes);
             var exp = (expires ?? now.Add(lifetime)).UtcDateTime;
@@ -933,36 +933,6 @@ namespace Altinn.Platform.Authentication.Controllers
 
             var token = tokenHandler.CreateToken(descriptor);
             return tokenHandler.WriteToken(token);
-        }
-
-        /// <summary>
-        /// Selects the newest signing certificate that has been valid for at least <paramref name="rolloverDelayHours"/>
-        /// hours (by <c>NotBefore</c>). The delay gives a freshly-published certificate time to propagate to token
-        /// consumers before it is used to sign. If no certificate is old enough, it falls back to the newest currently
-        /// valid certificate.
-        /// </summary>
-        /// <param name="certificates">The available signing certificates.</param>
-        /// <param name="rolloverDelayHours">How long a certificate must have existed before it is used for signing.</param>
-        /// <param name="now">The current time (injected for testability).</param>
-        /// <returns>The chosen certificate, or <c>null</c> if none are usable.</returns>
-        private X509Certificate2 GetLatestCertificateWithRolloverDelay(
-            List<X509Certificate2> certificates, int rolloverDelayHours, DateTimeOffset now)
-        {
-            // First limit the search to just those certificates that have existed longer than the rollover delay.
-            var rolloverCutoff = now.AddHours(-rolloverDelayHours);
-            var potentialCerts =
-                certificates.Where(c => c.NotBefore < rolloverCutoff).ToList();
-
-            // If no certs could be found, then widen the search to any usable certificate.
-            if (!potentialCerts.Any())
-            {
-                potentialCerts = certificates.Where(c => c.NotBefore < now).ToList();
-            }
-
-            // Of the potential certs, return the newest one.
-            return potentialCerts
-                .OrderByDescending(c => c.NotBefore)
-                .FirstOrDefault();
         }
 
         private async Task<JwtSecurityToken> ValidateAndExtractOidcToken(string originalToken, string wellKnownConfigEndpoint, string alternativeWellKnownConfigEndpoint = null)
