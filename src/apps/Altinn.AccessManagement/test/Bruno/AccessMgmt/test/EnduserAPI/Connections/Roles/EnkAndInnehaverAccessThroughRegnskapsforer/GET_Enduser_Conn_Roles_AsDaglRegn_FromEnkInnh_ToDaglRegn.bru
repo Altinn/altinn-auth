@@ -57,7 +57,17 @@ tests {
   });
   
   // Expected results
-  const expectedRoles = ["a0239", "a0240", "a0241", "regnskapsforer"];
+  // Altinn 2 roles are hidden where AccessManagement.Roles.DisableAltinn2 is on (see testdata/altinn2-roles.js).
+  const { ALTINN2_PROVIDER, altinn2RolesDisabled } = require("./testdata/altinn2-roles.js");
+  const altinn2Roles = altinn2RolesDisabled() ? [] : ["a0239", "a0240", "a0241"];
+  const expectedRoles = [...altinn2Roles, "regnskapsforer"];
+
+  if (altinn2RolesDisabled()) {
+    test(requestName + "|No Altinn 2 roles are returned", () => {
+      const shown = data.filter(item => item.role.provider?.code === ALTINN2_PROVIDER).map(item => item.role.code);
+      assert.isEmpty(shown, `Altinn 2 roles should be hidden, but got: ${shown.join(", ")}`);
+    });
+  }
   const expectedFrom = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL.innehaver;
   const expectedTo = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.dagligleder;
   const expectedVia = testdata.REGN_ULASTELIG_RETTFERDIG_TIGER.client_ENK_HUMAN_TOPP_KATT_BIL;

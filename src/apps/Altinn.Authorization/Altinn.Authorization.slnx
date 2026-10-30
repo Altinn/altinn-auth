@@ -6,6 +6,9 @@
   <Folder Name="/deps/PEP/">
     <Project Path="../../pkgs/Altinn.Authorization.PEP/src/Altinn.Authorization.PEP/Altinn.Authorization.PEP.csproj" />
   </Folder>
+  <Folder Name="/deps/Api.Contracts/">
+    <Project Path="../../libs/Altinn.Authorization.Api.Contracts/src/Altinn.Authorization.Api.Contracts/Altinn.Authorization.Api.Contracts.csproj" />
+  </Folder>
   <Folder Name="/deps/Host/">
     <Project Path="../../libs/Altinn.Authorization.Host/src/Altinn.Authorization.Host/Altinn.Authorization.Host.csproj" />
     <Project Path="../../libs/Altinn.Authorization.Host/src/Altinn.Authorization.Host.Database/Altinn.Authorization.Host.Database.csproj" />

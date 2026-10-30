@@ -756,23 +756,6 @@ public class RequestSystemUserService(
         return verifiedRights;
     }
 
-    private static (bool CanDelegate, List<DetailExternal> Errors) ResolveIfHasAccess(List<DelegationResponseData> rightResponse)
-    {
-        List<DetailExternal> errors = [];
-        var canDelegate = true;
-
-        foreach (var data in rightResponse)
-        {
-            if (data.Status != "Delegable")
-            {
-                errors.AddRange(data.Details);
-                canDelegate = false;
-            }
-        }
-
-        return (canDelegate, errors);
-    }
-
     /// <inheritdoc/>
     public async Task<Result<Page<RequestSystemResponse, Guid>>> GetAllRequestsForVendor(
         OrganisationNumber vendorOrgNo,

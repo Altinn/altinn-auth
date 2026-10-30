@@ -9,6 +9,7 @@ using Altinn.ResourceRegistry.Tests.Mocks;
 using Altinn.ResourceRegistry.Tests.Utils;
 using Altinn.ResourceRegistry.TestUtils;
 using AngleSharp.Text;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net;
 using System.Net.Http.Headers;
@@ -227,7 +228,57 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
         Assert.NotNull(changes);
         Assert.Single(changes.Items);
         Assert.Equal("changes_res3", changes.Items.First().ResourceId);
+
+        // The last page with items still links on, so the consumer keeps its position
+        Assert.True(Uri.TryCreate(changes.Links.Next, UriKind.Absolute, out nextUri));
+        Assert.NotNull(nextUri);
+        response = await client.GetAsync(nextUri.PathAndQuery);
+        changes = await response.Content.ReadFromJsonAsync<Paginated<ResourceChange>>();
+
+        Assert.NotNull(changes);
+        Assert.Empty(changes.Items);
         Assert.Null(changes.Links.Next);
+    }
+
+    [Fact]
+    public async Task GetResourceChanges_ResumesFromLastPageAfterNewChange()
+    {
+        ServiceResource resource1 = CreateTestResource("changes_resume_res1");
+        await Repository.CreateResource(resource1);
+        await Repository.CreateResource(CreateTestResource("changes_resume_res2"));
+        await Repository.SetResourceSubjects(CreateResourceSubjects("urn:altinn:resource:changes_resume_res1", ["urn:altinn:rolecode:r001"], "ttd"), logPolicyChange: true);
+        await Repository.SetResourceSubjects(CreateResourceSubjects("urn:altinn:resource:changes_resume_res2", ["urn:altinn:rolecode:r001"], "ttd"), logPolicyChange: true);
+
+        using var client = CreateClient();
+
+        // Drain the feed in one page, which is also the last page
+        HttpResponseMessage response = await client.GetAsync("resourceregistry/api/v1/resource/changes");
+        Paginated<ResourceChange>? changes = await response.Content.ReadFromJsonAsync<Paginated<ResourceChange>>();
+        Assert.NotNull(changes);
+        Assert.Equal(2, changes.Items.Count());
+        Assert.True(Uri.TryCreate(changes.Links.Next, UriKind.Absolute, out Uri? savedNextUri));
+        Assert.NotNull(savedNextUri);
+
+        // Check that the next page before update returns no next link, and empty content
+        response = await client.GetAsync(savedNextUri.PathAndQuery);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        changes = await response.Content.ReadFromJsonAsync<Paginated<ResourceChange>>();
+
+        Assert.NotNull(changes);
+        Assert.Empty(changes.Items);
+        Assert.Null(changes.Links.Next);
+
+        // A change made after the consumer caught up is the only item when resuming from the saved link
+        await Repository.UpdateResource(resource1);
+
+        response = await client.GetAsync(savedNextUri.PathAndQuery);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        changes = await response.Content.ReadFromJsonAsync<Paginated<ResourceChange>>();
+
+        Assert.NotNull(changes);
+        Assert.Single(changes.Items);
+        Assert.Equal("changes_resume_res1", changes.Items.First().ResourceId);
+        Assert.NotNull(changes.Links.Next);
     }
 
     [Fact]
@@ -657,6 +708,62 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
         HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData(" 974761076", "skd", HttpStatusCode.Created)]
+    [InlineData("974761076 ", "skd", HttpStatusCode.Created)]
+    [InlineData("974 761 076", "skd", HttpStatusCode.BadRequest)]
+    [InlineData("991 825 827", "ttd", HttpStatusCode.BadRequest)]
+    public async Task CreateResource_OrganizationNumberFormat(string organization, string orgCode, HttpStatusCode expected)
+    {
+        var client = CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetOrganizationNumberFormatToken(orgCode));
+
+        ServiceResource resource = CreateOrganizationNumberFormatResource(organization, orgCode);
+
+        string requestUri = "resourceregistry/api/v1/Resource/";
+
+        HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+        {
+            Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
+        };
+
+        httpRequestMessage.Headers.Add("Accept", "application/json");
+        httpRequestMessage.Headers.Add("ContentType", "application/json");
+
+        HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+        await AssertOrganizationNumberFormatResult(response, expected, resource.Identifier!, organization);
+    }
+
+    [Theory]
+    [InlineData(" 974761076", "skd", HttpStatusCode.OK)]
+    [InlineData("974761076 ", "skd", HttpStatusCode.OK)]
+    [InlineData("974 761 076", "skd", HttpStatusCode.BadRequest)]
+    [InlineData("991 825 827", "ttd", HttpStatusCode.BadRequest)]
+    public async Task UpdateResource_OrganizationNumberFormat(string organization, string orgCode, HttpStatusCode expected)
+    {
+        await Repository.CreateResource(CreateOrganizationNumberFormatResource(organization.Replace(" ", string.Empty), orgCode));
+
+        var client = CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetOrganizationNumberFormatToken(orgCode));
+
+        ServiceResource resource = CreateOrganizationNumberFormatResource(organization, orgCode);
+
+        string requestUri = $"resourceregistry/api/v1/Resource/{resource.Identifier}";
+
+        HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Put, requestUri)
+        {
+            Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
+        };
+
+        httpRequestMessage.Headers.Add("Accept", "application/json");
+        httpRequestMessage.Headers.Add("ContentType", "application/json");
+
+        HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+        await AssertOrganizationNumberFormatResult(response, expected, resource.Identifier!, organization);
     }
 
     [Fact]
@@ -1198,6 +1305,41 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
         Assert.Contains("Skattegrunnlag latest version", responseContent);
     }
 
+    [Fact]
+    public async Task Export_ContactPoints_AreExportedAsCvContactPoint()
+    {
+        await LoadTestDataWithUpdates();
+        var client = CreateClient();
+        string requestUri = "resourceregistry/api/v1/Resource/export";
+
+        HttpResponseMessage response = await client.GetAsync(requestUri);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        IGraph graph = RdfTestHelper.ParseTurtle(await response.Content.ReadAsStringAsync());
+
+        // A single contact point with a category and an email, other fields stored as ""
+        INode dsbContactPoint = Assert.Single(RdfTestHelper.GetContactPoints(graph, "korrespondanse-fra-sivilforsvaret"));
+        RdfTestHelper.AssertCategory(graph, dsbContactPoint, "Brukerstøtte");
+        RdfTestHelper.AssertLiteral(graph, dsbContactPoint, RdfTestHelper.Email, "postmottak@dsb.no");
+        RdfTestHelper.AssertAbsent(graph, dsbContactPoint, RdfTestHelper.Telephone);
+        RdfTestHelper.AssertAbsent(graph, dsbContactPoint, RdfTestHelper.ContactPage);
+
+        // Three contact points, one of them stored with a leading space in the email
+        List<INode> digdirContactPoints = RdfTestHelper.GetContactPoints(graph, "eformidling-dpo-meldingsutveksling");
+        Assert.Equal(3, digdirContactPoints.Count);
+        List<ILiteralNode> digdirEmails = digdirContactPoints
+            .SelectMany(cp => RdfTestHelper.GetObjects(graph, cp, RdfTestHelper.Email))
+            .Cast<ILiteralNode>()
+            .ToList();
+        Assert.Equal(3, digdirEmails.Count);
+        Assert.All(digdirEmails, l => Assert.Equal(l.Value.Trim(), l.Value));
+
+        // Contact page stored without a scheme is not a valid IRI, so only the category remains
+        INode skdContactPoint = Assert.Single(RdfTestHelper.GetContactPoints(graph, "ske-innrapportering-boligsameie"));
+        RdfTestHelper.AssertCategory(graph, skdContactPoint, "Innrapportering");
+        RdfTestHelper.AssertAbsent(graph, skdContactPoint, RdfTestHelper.ContactPage);
+    }
+
     /// <summary>
     /// Scenario: Create an app resource and store a policy with org/app XACML attributes.
     /// This tests the fix for issue #730 where app policies using urn:altinn:org and urn:altinn:app
@@ -1353,6 +1495,49 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
     }
 
     #region Utils
+    // TTD runs as an admin, which skips the owner check, so only validation stops an invalid organization number
+    private static string GetOrganizationNumberFormatToken(string orgCode)
+        => orgCode == "ttd"
+            ? PrincipalUtil.GetOrgToken("digdir", "991825827", "altinn:resourceregistry/resource.admin")
+            : PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write");
+
+    private static ServiceResource CreateOrganizationNumberFormatResource(string organization, string orgCode)
+    {
+        return new ServiceResource()
+        {
+            Identifier = "superdupertjenestene",
+            Title = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+            Description = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+            RightDescription = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+            Status = "Completed",
+            ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
+            HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
+            {
+                Organization = organization,
+                Orgcode = orgCode,
+            },
+            ResourceType = ResourceType.GenericAccessResource,
+        };
+    }
+
+    private async Task AssertOrganizationNumberFormatResult(HttpResponseMessage response, HttpStatusCode expected, string identifier, string organization)
+    {
+        Assert.Equal(expected, response.StatusCode);
+
+        if (response.IsSuccessStatusCode)
+        {
+            ServiceResource? stored = await Repository.GetResource(identifier, null);
+            Assert.NotNull(stored);
+            Assert.Equal(organization.Trim(), stored.HasCompetentAuthority?.Organization);
+        }
+        else
+        {
+            ValidationProblemDetails? errordetails = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>(_jsonOptions);
+            Assert.NotNull(errordetails);
+            Assert.Contains(errordetails.Errors, e => e.Key == "HasCompetentAuthority.Organization");
+        }
+    }
+
     private static ServiceResource CreateTestResource(string identifier, string orgCode = "ttd")
     {
         return new ServiceResource
@@ -1360,7 +1545,7 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
             Identifier = identifier,
             HasCompetentAuthority = new CompetentAuthority
             {
-                Organization = "974761076",
+                Organization = "991825827",
                 Orgcode = orgCode
             }
         };

@@ -1,0 +1,15 @@
+meta {
+	name: 03_ClientDelegation_ViaPartyFilter
+	seq: 3
+}
+
+auth {
+	mode: inherit
+}
+
+docs {
+	GIVEN the system user (Fiken) has a client delegation from client USENSUELL UVIRKSOM TIGER AS
+		via the accounting firm ULASTELIG RETTFERDIG TIGER AS
+	WHEN the system user is authorized with access-restriction ClientDelegation
+	THEN the request permits only when the via-party matches the accounting firm
+}

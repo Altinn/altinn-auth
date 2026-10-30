@@ -20,17 +20,17 @@
         /// <summary>
         /// Gets or sets the username (login key, matches <c>oidc_session.subject_user_name</c>).
         /// </summary>
-        public string UserName { get; set; }
+        public required string UserName { get; set; }
 
         /// <summary>
         /// Gets or sets the Base64-encoded SHA1 password hash, copied verbatim from Altinn 2.
         /// </summary>
-        public string PasswordHash { get; set; }
+        public required string PasswordHash { get; set; }
 
         /// <summary>
         /// Gets or sets the Base64-encoded salt, copied verbatim from Altinn 2.
         /// </summary>
-        public string Salt { get; set; }
+        public required string Salt { get; set; }
 
         /// <summary>
         /// Gets or sets the password expiry timestamp.

@@ -23,7 +23,7 @@
         /// <summary>
         /// Gets or sets the user's language preference in Altinn.
         /// </summary>
-        public string Language { get; set; }
+        public string? Language { get; set; }
 
         /// <summary>
         /// Gets or sets the user's preselected party.

@@ -25,11 +25,11 @@ public class PolicyRightsDTO
     /// <summary>
     /// Returns the right key for the right part of policy resource action
     /// </summary>
-    public string RightKey { get; init; }
+    public required string RightKey { get; init; }
 
     /// <summary>
     /// Returns a list of subject types that is allowed to perform the action on the resource
     /// IS used for filtering the 
     /// </summary>
-    public List<string> SubjectTypes { get; init; }
+    public required List<string> SubjectTypes { get; init; }
 }

@@ -5,5 +5,8 @@
 /// </summary>
 public class RightKeyListDto
 {
-    public IEnumerable<string> DirectRightKeys { get; set; }
+    /// <summary>
+    /// The right keys to delegate directly to the system user
+    /// </summary>
+    public required IEnumerable<string> DirectRightKeys { get; set; }
 }

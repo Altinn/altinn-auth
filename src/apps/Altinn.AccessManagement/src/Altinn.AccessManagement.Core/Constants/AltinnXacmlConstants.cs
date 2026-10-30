@@ -89,7 +89,12 @@
             /// <summary>
             /// Role Code attribute match identifier 
             /// </summary>
-            public const string RoleAttribute = "urn:altinn:rolecode";
+            public const string LegacyRoleAttribute = "urn:altinn:rolecode";
+
+            /// <summary>
+            /// Role attribute match identifier
+            /// </summary>
+            public const string RoleAttribute = "urn:altinn:role";
 
             /// <summary>
             /// External CCR Role Code attribute match identifier 

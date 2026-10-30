@@ -16,12 +16,12 @@ namespace Altinn.AccessManagement.Core.Helpers
         public static string GetTokenFromContext(HttpContext context, string cookieName)
         {
             // Get the cookie from request 
-            string token = context.Request.Cookies[cookieName];
+            string? token = context.Request.Cookies[cookieName];
 
             // If no cookie present 
             if (string.IsNullOrEmpty(token))
             {
-                string authorization = context.Request.Headers["Authorization"];
+                string? authorization = context.Request.Headers["Authorization"];
 
                 // If no authorization header found, nothing to process further
                 if (string.IsNullOrEmpty(authorization))
@@ -35,7 +35,7 @@ namespace Altinn.AccessManagement.Core.Helpers
                 }
             }
 
-            return token;
+            return token ?? string.Empty;
         }
 
         /// <summary>

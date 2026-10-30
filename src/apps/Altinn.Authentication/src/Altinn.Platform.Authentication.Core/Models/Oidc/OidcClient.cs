@@ -162,15 +162,15 @@
             PostLogoutRedirectUris = (postLogoutRedirectUris ?? Array.Empty<Uri>()).ToArray();
 
             AllowedScopes = (allowedScopes ?? throw new ArgumentNullException(nameof(allowedScopes)))
-                .Select(s => s?.Trim().ToLowerInvariant())
                 .Where(s => !string.IsNullOrWhiteSpace(s))
+                .Select(s => s.Trim().ToLowerInvariant())
                 .Distinct()
                 .ToArray();
 
             RequirePkce = requirePkce;
             AllowedCodeChallengeMethods = (allowedCodeChallengeMethods ?? new[] { "S256" })
-                .Select(m => m?.ToUpperInvariant())
                 .Where(m => !string.IsNullOrWhiteSpace(m))
+                .Select(m => m.ToUpperInvariant())
                 .Distinct()
                 .ToArray();
 

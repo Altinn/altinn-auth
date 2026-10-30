@@ -21,12 +21,12 @@ namespace Altinn.Platform.Authentication.Core.Models.Profile
         /// <summary>
         /// Gets or sets the username
         /// </summary>
-        public string UserName { get; set; }
+        public string? UserName { get; set; }
 
         /// <summary>
         /// Gets or sets ExternalIdentity
         /// </summary>
-        public string ExternalIdentity { get; set; }
+        public string? ExternalIdentity { get; set; }
 
         /// <summary>
         /// Gets or sets a boolean indicating whether the user has reserved themselves from electronic communication
@@ -36,12 +36,12 @@ namespace Altinn.Platform.Authentication.Core.Models.Profile
         /// <summary>
         /// Gets or sets the phone number
         /// </summary>
-        public string PhoneNumber { get; set; }
+        public string? PhoneNumber { get; set; }
 
         /// <summary>
         /// Gets or sets the email address
         /// </summary>
-        public string Email { get; set; }
+        public string? Email { get; set; }
 
         /// <summary>
         /// Gets or sets the party ID
@@ -51,7 +51,10 @@ namespace Altinn.Platform.Authentication.Core.Models.Profile
         /// <summary>
         /// Gets or sets the <see cref="Party"/>
         /// </summary>
-        public Party Party { get; set; }
+        /// <remarks>
+        /// Always populated by the Profile API, so it is set on deserialization.
+        /// </remarks>
+        public Party Party { get; set; } = null!;
 
         /// <summary>
         /// Gets or sets the <see cref="UserType"/>
@@ -61,6 +64,6 @@ namespace Altinn.Platform.Authentication.Core.Models.Profile
         /// <summary>
         /// Gets or sets the <see cref="ProfileSettingPreference"/>
         /// </summary>
-        public ProfileSettingPreference ProfileSettingPreference { get; set; }
+        public ProfileSettingPreference? ProfileSettingPreference { get; set; }
     }
 }

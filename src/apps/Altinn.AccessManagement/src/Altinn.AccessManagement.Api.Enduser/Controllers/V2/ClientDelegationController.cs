@@ -280,6 +280,7 @@ public class ClientDelegationController(
                 options.AllowedToEntityTypes = [EntityTypeConstants.Person, EntityTypeConstants.SystemUser];
                 options.EntitiesToValidateForAnyConnections = [EntityTypeConstants.Person];
                 options.ToParameterName = "agent";
+                options.PerformToEntityTypeValidation = false;
             },
             cancellationToken);
 
@@ -395,6 +396,7 @@ public class ClientDelegationController(
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status409Conflict, MediaTypeNames.Application.Json)]
     public async Task<IActionResult> DelegateAccessPackageToAgent(
         [FromQuery(Name = "party")][Required] Guid party,
         [FromQuery(Name = "client")][Required] Guid client,
@@ -487,6 +489,7 @@ public class ClientDelegationController(
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status409Conflict, MediaTypeNames.Application.Json)]
     public async Task<IActionResult> DelegateResourceToAgent(
         [FromQuery(Name = "party")][Required] Guid party,
         [FromQuery(Name = "client")][Required] Guid client,

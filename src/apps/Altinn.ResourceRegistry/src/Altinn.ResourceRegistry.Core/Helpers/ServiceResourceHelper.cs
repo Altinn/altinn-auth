@@ -2,6 +2,7 @@
 using Altinn.ResourceRegistry.Core.Constants;
 using Altinn.ResourceRegistry.Core.Enums;
 using Altinn.ResourceRegistry.Core.Models;
+using Altinn.ResourceRegistry.Core.Register;
 
 namespace Altinn.ResourceRegistry.Core.Helpers
 {
@@ -244,6 +245,13 @@ namespace Altinn.ResourceRegistry.Core.Helpers
             static bool ValidateResourceOwner(ServiceResource serviceResource, string orgCode)
             {
                 if (serviceResource.HasCompetentAuthority == null)
+                {
+                    return false;
+                }
+
+                // An organization number is optional for TTD, but must be valid when set
+                if (!string.IsNullOrEmpty(serviceResource.HasCompetentAuthority.Organization)
+                    && !OrganizationNumber.TryParse(serviceResource.HasCompetentAuthority.Organization, null, out _))
                 {
                     return false;
                 }
