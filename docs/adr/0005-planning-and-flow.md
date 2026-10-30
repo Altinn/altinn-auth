@@ -1,0 +1,97 @@
+# ADR-0005: How work is planned and flows on the shared board
+
+- **Status:** Proposed
+- **Date:** 2026-10-27
+- **Deciders:** `@altinn/team-access-management` and `@altinn/team-access-info`, through six working groups after the workshop on 2026-10-19, a joint decision meeting, and review of [PR #4577](https://github.com/Altinn/altinn-auth/pull/4577)
+- **Supplements:** [ADR-0004](0004-issue-and-label-model.md). **Amends** ADR-0004 in two places, listed under Decision 5.
+
+Drafted with AI assistance (Claude) on 2026-10-27 from the working groups' pages and revised through review in the PR. Human reader of the final wording: not confirmed. This record holds the decisions. How the process is run day to day is the handbook [How we work](../process/how-we-work.md), and each role's board view is drawn in [Board views](../process/board-views.md).
+
+**TL;DR**
+
+- One board for both teams, five Status columns: Backlog, Ready, In progress, In review, Done. Every step of the work is an issue with one person who closes it; it is yours when the issue it waits for closes, and you close it when your part is done. Closing is what moves cards; the handoff between roles is a move or a mention by hand for now.
+- Work is features under epics. Refinement, in the iteration before build, gives a feature enough to start: goal, main acceptance criteria, named people, a first task. The developer splits the rest during the iteration. A task is done when merged. A feature is done when its test task is approved and the change is in production.
+- Two-week iterations from 2026-11-09. Each role owns one kind of decision and has the last word on it. Area owners with deputies own their area end to end.
+- There is no design task. Where a change needs design, decided in refinement, the designer and the developer are assigned to the frontend task together and work on it side by side. Design review is one review by the designer on the task; the developer who opens the pull request decides whether it is taken on that pull request or later, once the related pull requests are merged. Two amendments to ADR-0004: the horizon field is not on the board, and the `layer/*` label group becomes `skill/*`.
+- Tried unchanged for three iterations and reviewed at the retro on 2026-12-18. The release process is decided later.
+
+## Context
+
+ADR-0004 gave every issue a type, a component and a capability, moved releases to milestones, and set up one board for both teams. A first proposal for how work flows on that board was discussed at a workshop on 19 October. The feedback was that it started from a solution before the problems were named, that horizon, priority and milestone together were too much to take in, that roles were undefined so everyone owned everything and nobody acted, and that not all work can be split small.
+
+Six working groups then wrote their part of the process from the problems up. The problems they named: nobody has the overview across the two teams, nobody owns an area, two sets of meetings, nobody plans who tests before a change reaches AT, and closed has never meant verified. This ADR records what they decided. The handbook describes how it is run.
+
+## Decision
+
+### 1. Working method
+
+We work in two-week iterations, shared by both teams, on one board. Work is organised as features under epics, and every feature is split into tasks as sub-issues: backend, frontend, test. There is no design task: where a change needs design, decided in refinement, the designer and the developer are assigned to the frontend task together, and the merge closes it for both. User research before build is part of refinement and is tracked on the feature. Refinement produces enough to start; the developer splits the rest during the iteration. The iteration, the meetings and the roles are described in the handbook, sections 1 to 3.
+
+One rule drives the flow: **every step of the work is an issue on the board, with one person who closes it. It is yours when the issue it waits for closes, and you close it when your part is done.** The developer and the tester each have their own tasks; the designer shares the frontend task with the developer; the product owner's issue is the epic; the area owner, tech lead and agile coach close nothing in the chain. A merged pull request closes the task and the board moves it to Done. Closing a dependency makes the next issue eligible for its handoff; in the first iteration the handoff itself is a move or a mention by the person who finished. An automation for it is a later iteration (Consequences).
+
+The process has no name and follows no named method. Its parts are called what they do. Where a practice from Scrum or Kanban fits, we use it; where it does not, we leave it out.
+
+### 2. Agreements
+
+**Definition of Ready** means enough to start, not fully specified. A feature moves to Ready when all of these hold: it has a priority and a milestone, set when it was picked as a candidate, and belongs to an epic where one exists; it states the goal and the main acceptance criteria, written so that someone other than the author can test against them; it has a named tester, a named designer wherever the change affects what users see, however small, assigned to the frontend task together with the developer, and a named developer where one is known in refinement, otherwise the developer who pulls its first task becomes its developer and owns the split; and its first task exists as a sub-issue. The developer splits the rest into tasks during the iteration, pulling in the people they need, and the tester adds test tasks as the split shows what can be tested alone. A feature that does not yet meet all of these stays in Backlog, even if it has been picked as a candidate for the next iteration; priority decides what is refined first, and it is adjusted at planning among the Ready features if the picture has changed. Work that cannot be shipped in pieces is split by steps of work instead, and may span iterations as long as one task closes per iteration; what cannot even do that stays in In progress with one line of status before each result meeting.
+
+**Definition of Done**, at two levels. A task is done when its pull request is merged and the automated tests are green; the unit and integration tests for the change are part of the task and are written before it goes to In review. A feature is done when all its tasks are merged, the test task is closed with an approved result, and the change is in production. Design review is one review by the designer assigned to the task. The developer who opens the pull request decides when it is taken: on that pull request, on the branch run locally, before merge; or later, on the merged result in AT, once the related pull requests are in. A deferred review is done before the feature's test task closes and is noted there. Every change that affects what users see goes through a designer, however small: a task or bug with such a change has a designer assigned and gets the review; only a task that changes nothing users see has none. A standalone task or bug, one with no feature, that needs manual verification gets its own test task when the pull request is opened, the same way a feature does. A test task is normally created in refinement but can be added at any point when development shows a change needs manual testing.
+
+**Decisions.** One role has the last word: product owner on priority, tech lead on technology, design lead on design, area owner on their area. A discussion in a meeting is timeboxed; not agreed, it leaves the meeting and the owner books a short one with the people it needs. The facilitator reads decisions back at the end of every meeting. Iteration goals are written in the iteration and in Slack, a decision about an issue on the issue, a decision for the whole team in `docs/decisions.md`, one row per decision. The repository is public, so the log records that a decision was made and where the details live, never details of a vulnerability or an incident with customer data; the [data policy](../ai/data-policy.md) applies.
+
+### 3. How work ends
+
+| What | Closed by | When |
+| --- | --- | --- |
+| Developer task | The merge | The pull request merges |
+| Test task | The tester | The result is written and approved, and a deferred design review is done |
+| Feature | The tester | Checked in production after the weekly deploy |
+| Epic | The product owner, in the result meeting | The last feature is closed, which says the roadmap goal is met |
+
+The result meeting gives every unfinished issue a decision: continue, split or drop. The agile coach archives Done after the result meeting.
+
+### 4. The board
+
+- **One board**, Team Autorisasjon, for both teams. No boards per role; one saved view per role instead, plus one for bugs.
+- **Five Status columns.** Backlog: not in an iteration, whether new, triaged or refined. Ready: refined and in the iteration, the top card is the one to take. In progress: being worked, few per person, no hard limit. In review: pull request open; kept short, since reviewing others' pull requests comes before taking a new task. Done: closed.
+- **Hierarchy.** Epic, feature, task, from ADR-0004's issue types. A task is a sub-issue of its feature where it has one; a bug or a small task may stand alone. Test tasks carry `skill/test`; a test task that is a test plan, written with the test plan form, carries `kind/testplan` as well. A task that needs design carries `skill/design` and has the designer and the developer as assignees. A task that waits for another is marked "blocked by" it, as ADR-0004 requires when the blocker is known.
+- **Fields.** Iteration is the two-week period, set at planning for the tasks a feature has then; an issue created during an iteration, a task from the developer's split, a test task added later or a small fix, gets the current iteration when it is created, so it shows on the boards that filter on it. Milestone is a dated roadmap target, set by the product owner; features carry it, epics need none. Deadlines from outside live on the milestone and are the product owner's to hold; developers work to the iteration. Priority is set in the prioritisation meeting when a feature is picked as a candidate, orders refinement, and is adjusted at planning among the Ready features if needed; `urgent` requires a date in the issue. Test phase, Preparing, Executing, Retest, is set by the tester on test tasks and gives the test board its columns. There is no horizon field. Now, next and later are read from the two fields, the iteration taking precedence: an item in the current iteration is now, whatever its milestone; an item in a future iteration is next; an item with no iteration and a milestone is next; an item with neither is later. Every item matches exactly one.
+- **Views.** Eight, each a filter and a column field: Iteration (default), Developers, Test board by Test phase, Design (the tasks with `skill/design`), Features (table), one per area, Vakt, Bugs. The Developers board starts at Ready; Backlog is seen in Design, Features, Area, Vakt and Bugs. Drawn in [Board views](../process/board-views.md).
+- **Automation.** Built in only: auto-add from the repository, item closed to Done, item reopened to In progress. Archiving is by hand after the result meeting. The handoff Action is a later iteration.
+
+### 5. Amendments to ADR-0004
+
+- The `layer/*` group in ADR-0004 decision 4 is renamed `skill/*`, with the values `backend`, `frontend`, `design`, `infra` and `test`, rule 0–n. The group answers *which skill the work needs*, not which part of the stack it touches: `backend`, `frontend` and `infra` are layers, but `ux` and `test` never were, and the process in this record assigns people by skill. `ux` becomes `design`, the role's name; `kind/testplan` still says what a test task is, `skill/test` who works on it. The `area/infra` versus `skill/infra` distinction is unchanged from `layer/infra`. Renaming keeps the labels on existing issues.
+- The horizon field that ADR-0004 decision 5 put on the board is not used. Now, next and later are read from iteration and milestone by the precedence in Decision 4, which covers every combination. If the product owners want a Now, Next, Later roadmap view, it is a field on epics only.
+
+ADR-0004 is not edited while this ADR is Proposed. When this ADR is accepted, the same pull request adds an "Amended by ADR-0005" note to ADR-0004's status line, naming these two points; ADR-0004 is otherwise unchanged and stays in force.
+
+### Alternatives considered
+
+- **A Test column after In review**, proposed in review on 2026-10-14. Rejected by the test and developer groups: verification is a test task that flows through the same columns, so a task closes on merge as GitHub expects and the board needs no extra state.
+- **Closed and Done as two states of one issue**, the board status saying whether a merged issue is verified. Rejected: it needs custom automation and two readings of one card; two levels of issue, task and feature, say the same with GitHub's defaults.
+- **Full breakdown before planning**: every task created and every acceptance criterion written in refinement. Rejected in review: refinement becomes the bottleneck and a feature that misses it waits an iteration. Ready means enough to start; the developer splits the rest.
+- **A Refinement column and a must-test label**, proposed on 2026-10-21. Refinement is a Backlog state, not a column, since Ready already means refined; the must-test need is met by a test task under the issue, the same mechanism as for features.
+- **A design task of its own under each feature**, as the first draft of this record proposed, closed by the designer at "good enough to build" and blocking the frontend task. Rejected by the designers at the decision meeting on 2026-10-28: design and frontend go back and forth during build, so a separate issue would need a handoff at every turn. The designer is assigned to the frontend task together with the developer; user research before build is part of refinement.
+- **Design review in two steps**, the designer on every pull request and a last check by the design lead in TT02 before release, and before that **design review only at the end**, in the feature's test task in parallel with the functional test in AT. Both set aside at the decision meeting on 2026-10-28 for the simplest form: one review by the designer on the task, timed by the developer who opens the pull request, now or once the related pull requests are merged. A last check in TT02 is reconsidered at the retro if design problems reach production. The test group's proposal of 2026-10-23, review before testing starts, is met when the review is taken on the pull request. Letting small visual changes merge without a designer was rejected with it: every change users see goes through a designer; what varies is when the review is taken, not whether.
+- **Keep the horizon field**, as ADR-0004 decided. Rejected after the workshop feedback that three scheduling fields were too many; the board already shows the three states.
+- **A hard limit on issues in progress.** Rejected by the developers: a number makes people cut issues to fit it; the iteration is the limit.
+- **Automating the handoffs from the start.** Deferred: the handoffs are by hand for the first iterations, so the chain is understood before it is automated.
+
+## Consequences
+
+- **Preconditions before the first iteration**, listed line by line in [Board set-up](../process/board-setup.md) and tracked in [#4088](https://github.com/Altinn/altinn-auth/issues/4088), which today covers only Status, Iteration, Team, Priority and the built-in workflows: the labels brought in line with ADR-0004 as amended here, since the repository has `Testplan` and no `kind/testplan`, `kind/incident`, `kind/security` or `status/blocked` today, where `Testplan` and `Blocked` are renamed rather than replaced, so every existing issue keeps its label under the new name and no relabelling of open issues is needed; the test plan form changed; the Iteration and Test phase fields; the Priority values as named in Decision 4; the eight views; and the area owners with deputies, and the holders of the other roles, named in #4088 before the first planning. Until the labels exist, the views match nothing.
+- The meetings in the handbook replace each team's grooming, team meeting and Friday meeting from 2026-11-09.
+- The `ukesrapport` skill ([#4615](https://github.com/Altinn/altinn-auth/pull/4615)) should distinguish closed tasks, merged work, from closed features, delivered work.
+- A decision log is started at `docs/decisions.md`.
+- Tried unchanged for three iterations and reviewed at the retro that closes iteration 3, on 2026-12-18, and again in January when the teams become one. A change to a decision here is a new ADR that supersedes this one; a change to how the process is run is a change to the handbook.
+- Decided later: the release process, by the release group, and the handoff Action, specified in #4088 once the labels and forms exist.
+
+## References
+
+- [ADR-0004: One issue and label model for the monorepo](0004-issue-and-label-model.md). Board set-up issue: [#4088](https://github.com/Altinn/altinn-auth/issues/4088).
+- Handbook: [How we work](../process/how-we-work.md). Views: [Board views](../process/board-views.md).
+- Shared board: [Team Autorisasjon](https://github.com/orgs/Altinn/projects/196).
+- Working-group pages: comments on [PR #4577](https://github.com/Altinn/altinn-auth/pull/4577).
+- Agent skills for the weekly report, board status and closure candidates: [#4615](https://github.com/Altinn/altinn-auth/pull/4615).
+- Practice elsewhere: [VS Code issue tracking](https://github.com/Microsoft/vscode/wiki/Issue-Tracking), [Kubernetes issue triage](https://www.k8s.dev/docs/guide/issue-triage/), [GitHub Docs, best practices for projects](https://docs.github.com/en/issues/planning-and-tracking-with-projects/learning-about-projects/best-practices-for-projects).
