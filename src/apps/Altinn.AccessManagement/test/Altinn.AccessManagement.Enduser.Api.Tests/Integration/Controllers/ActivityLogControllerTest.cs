@@ -25,6 +25,7 @@ namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers;
 /// <remarks>
 /// Seed data (own parties from the shared catalog, own assignments):
 /// - Verdiq AS -> Paula: Agent assignment (connections slice, Verdiq outgoing)
+/// - Verdiq AS -> Ørsta: Agent assignment (second outgoing connection, so paging has a next page)
 /// - Nordis AS -> Verdiq AS: Rightholder assignment (Verdiq incoming, pins the anchor)
 /// - Nordis AS -> Ørsta: Supplier assignment (the Maskinporten schema slice)
 /// - Verdiq AS -> Paula: pending package request (the request area, same pair as the Agent
@@ -56,6 +57,7 @@ public class ActivityLogControllerTest : IClassFixture<ApiFixture>
         {
             db.Assignments.AddRange(
                 new Assignment { FromId = Verdiq, ToId = Paula, RoleId = RoleConstants.Agent },
+                new Assignment { FromId = Verdiq, ToId = Orsta, RoleId = RoleConstants.Agent },
                 new Assignment { FromId = Nordis, ToId = Verdiq, RoleId = RoleConstants.Rightholder },
                 new Assignment { FromId = Nordis, ToId = Orsta, RoleId = RoleConstants.Supplier });
 
@@ -180,6 +182,33 @@ public class ActivityLogControllerTest : IClassFixture<ApiFixture>
         Assert.NotNull(result);
         Assert.Contains(result.Items, e => e.FromId == Verdiq);
         Assert.DoesNotContain(result.Items, e => e.FromId == Nordis);
+    }
+
+    /// <summary>
+    /// The next link must be relative (path and query only). The service sits behind proxies
+    /// and does not know its public base address, so a link built from the request's scheme
+    /// and host would expose the internal base URL (#4663).
+    /// </summary>
+    [Fact]
+    public async Task Connections_WithMorePages_NextLinkIsRelative()
+    {
+        var client = CreateClient(Verdiq, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
+
+        var response = await client.GetAsync($"{ConnectionsRoute}?party={Verdiq}&direction=from&pageSize=1", TestContext.Current.CancellationToken);
+
+        var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Body: {body}");
+
+        var result = JsonSerializer.Deserialize<PaginatedResult<ActivityLogDto>>(body, JsonOpts);
+        Assert.NotNull(result);
+        Assert.Single(result.Items);
+
+        var next = result.Links.Next;
+        Assert.NotNull(next);
+        Assert.StartsWith($"/{ConnectionsRoute}?", next);
+        Assert.True(Uri.TryCreate(next, UriKind.Relative, out _), $"Expected a relative URL but got {next}");
+        Assert.Contains("pageSize=1", next);
+        Assert.Contains("pageNo=1", next);
     }
 
     [Fact]
