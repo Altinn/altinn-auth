@@ -6,6 +6,7 @@ using Altinn.AccessMgmt.Core.HostedServices.Leases;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.AccessMgmt.PersistenceEF.Models.Enums;
 using Altinn.Authorization.Host.Lease;
 using Altinn.Authorization.Integration.Platform;
 using Altinn.Authorization.Integration.Platform.ResourceRegistry;
@@ -28,6 +29,9 @@ public class ResourceSyncServiceTest : IClassFixture<ApiFixture>
     public ResourceSyncServiceTest(ApiFixture fixture)
     {
         Fixture = fixture;
+
+        // These tests cover the sync without the change feed. Set the flag explicitly, so local user secrets cannot turn it on.
+        Fixture.WithDisabledFeatureFlag(AccessMgmtFeatureFlags.HostedServicesResourceRegistrySyncChangeFeed);
         Fixture.ConfigureServices(services =>
         {
             services.RemoveAll<IAltinnResourceRegistry>();
@@ -376,13 +380,63 @@ public class ResourceSyncServiceTest : IClassFixture<ApiFixture>
         Assert.Equal(default, lease.Data.Since);
     }
 
+    [Fact]
+    public async Task SyncResources_DoesNotReadChangeFeed_WhenFeatureFlagIsOff()
+    {
+        Registry.StreamCalls.Clear();
+        Registry.ChangePagesFactory = _ => [Problem<PageStream<ResourceChangeModel>>()];
+        Registry.StreamPagesFactory = (_, _) => [];
+
+        var lease = new FakeLease();
+        await ResolveService().SyncResources(lease, TestContext.Current.CancellationToken);
+
+        // With the change feed flag off, the sync reads only the updated feed, as before.
+        Assert.Equal(["updated"], Registry.StreamCalls);
+        Assert.Null(lease.Data.ResourceChangesNextPageLink);
+    }
+
+    [Fact]
+    public async Task SyncResources_ImportsDelegableAccessListModeAndScopes_FromUpdatedFeed()
+    {
+        var refId = "rsst-updated-scopes-" + Guid.NewGuid().ToString("N");
+        Registry.ResourceFactory = id => Success(MaskinportenResourceModel(id, delegable: false, "Enabled", "test:scope.a"));
+        Registry.StreamPagesFactory = (_, _) => [Success(new PageStream<ResourceUpdatedModel>
+        {
+            Stats = new PageStream<ResourceUpdatedModel>.StatsStream(),
+            Links = new PageStream<ResourceUpdatedModel>.LinksStream { Next = null },
+            Data =
+            [
+                new ResourceUpdatedModel
+                {
+                    SubjectUrn = "urn:altinn:rolecode:priv",
+                    ResourceUrn = "urn:altinn:resource:" + refId,
+                    UpdatedAt = DateTime.UtcNow,
+                },
+            ],
+        })];
+
+        await ResolveService().SyncResources(new FakeLease(), TestContext.Current.CancellationToken);
+
+        await Fixture.QueryDb(async db =>
+        {
+            var resource = await db.Resources
+                .AsNoTracking()
+                .Include(r => r.Scopes)
+                .SingleOrDefaultAsync(r => r.RefId == refId, TestContext.Current.CancellationToken);
+            Assert.NotNull(resource);
+            Assert.False(resource.Delegable);
+            Assert.Equal(ResourceAccessListMode.Enabled, resource.AccessListMode);
+            Assert.Equal(["test:scope.a"], resource.Scopes.Select(s => s.Scope));
+        });
+    }
+
     private IResourceSyncService ResolveService()
     {
         using var scope = Fixture.Services.CreateScope();
         return scope.ServiceProvider.GetRequiredService<IResourceSyncService>();
     }
 
-    private static ResourceModel NewResourceModel(string identifier) => new()
+    internal static ResourceModel NewResourceModel(string identifier) => new()
     {
         Identifier = identifier,
         Title = new ResourceTitle { Nb = "Resource " + identifier },
@@ -395,20 +449,37 @@ public class ResourceSyncServiceTest : IClassFixture<ApiFixture>
         ResourceType = "GenericAccessResource",
     };
 
-    private static PlatformResponse<T> Success<T>(T content) => new()
+    /// <summary>
+    /// A Maskinporten schema with the given scopes, mixed with a reference of another type that is not a scope.
+    /// </summary>
+    internal static ResourceModel MaskinportenResourceModel(string identifier, bool delegable, string? accessListMode, params string[] scopes)
+    {
+        var model = NewResourceModel(identifier);
+        model.ResourceType = "MaskinportenSchema";
+        model.Delegable = delegable;
+        model.AccessListMode = accessListMode;
+        model.ResourceReferences =
+        [
+            .. scopes.Select(scope => new ResourceReference { ReferenceSource = "ExternalPlatform", ReferenceType = "MaskinportenScope", Reference = scope }),
+            new ResourceReference { ReferenceSource = "Default", ReferenceType = "Uri", Reference = "https://example.test" },
+        ];
+        return model;
+    }
+
+    internal static PlatformResponse<T> Success<T>(T content) => new()
     {
         IsSuccessful = true,
         StatusCode = HttpStatusCode.OK,
         Content = content,
     };
 
-    private static PlatformResponse<T> Problem<T>() => new()
+    internal static PlatformResponse<T> Problem<T>() => new()
     {
         IsSuccessful = false,
         StatusCode = HttpStatusCode.InternalServerError,
     };
 
-    private sealed class FakeResourceRegistry : IAltinnResourceRegistry
+    internal sealed class FakeResourceRegistry : IAltinnResourceRegistry
     {
         public PlatformResponse<ServiceOwners> ServiceOwnersResponse { get; set; } = new() { IsSuccessful = true, Content = new ServiceOwners { Orgs = new Dictionary<string, ServiceOwner>() } };
 
@@ -416,23 +487,46 @@ public class ResourceSyncServiceTest : IClassFixture<ApiFixture>
 
         public Func<DateTime, string?, IEnumerable<PlatformResponse<PageStream<ResourceUpdatedModel>>>> StreamPagesFactory { get; set; } = (_, _) => [];
 
+        public Func<string?, IEnumerable<PlatformResponse<PageStream<ResourceChangeModel>>>> ChangePagesFactory { get; set; } = _ => [];
+
+        /// <summary>
+        /// The feeds that were opened, in order: <c>changes</c> or <c>updated</c>.
+        /// </summary>
+        public List<string> StreamCalls { get; } = [];
+
+        /// <summary>
+        /// The resource identifiers fetched with <see cref="GetResource"/>, in order.
+        /// </summary>
+        public List<string> GetResourceCalls { get; } = [];
+
         public Task<PlatformResponse<ServiceOwners>> GetServiceOwners(CancellationToken cancellationToken = default) =>
             Task.FromResult(ServiceOwnersResponse);
 
-        public Task<PlatformResponse<ResourceModel>> GetResource(string id, CancellationToken cancellationToken = default) =>
-            Task.FromResult(ResourceFactory(id));
+        public Task<PlatformResponse<ResourceModel>> GetResource(string id, CancellationToken cancellationToken = default)
+        {
+            GetResourceCalls.Add(id);
+            return Task.FromResult(ResourceFactory(id));
+        }
 
         public Task<PlatformResponse<List<ResourceModel>>> GetResources(CancellationToken cancellationToken = default) =>
             throw new NotImplementedException();
 
         public Task<IAsyncEnumerable<PlatformResponse<PageStream<ResourceUpdatedModel>>>> StreamResources(DateTime since = default, string nextPage = null, CancellationToken cancellationToken = default)
         {
+            StreamCalls.Add("updated");
             var pages = StreamPagesFactory(since, nextPage);
             return Task.FromResult(ToAsync(pages, cancellationToken));
         }
 
-        private static async IAsyncEnumerable<PlatformResponse<PageStream<ResourceUpdatedModel>>> ToAsync(
-            IEnumerable<PlatformResponse<PageStream<ResourceUpdatedModel>>> pages,
+        public Task<IAsyncEnumerable<PlatformResponse<PageStream<ResourceChangeModel>>>> StreamResourceChanges(string nextPage = null, CancellationToken cancellationToken = default)
+        {
+            StreamCalls.Add("changes");
+            var pages = ChangePagesFactory(nextPage);
+            return Task.FromResult(ToAsync(pages, cancellationToken));
+        }
+
+        private static async IAsyncEnumerable<PlatformResponse<PageStream<T>>> ToAsync<T>(
+            IEnumerable<PlatformResponse<PageStream<T>>> pages,
             [EnumeratorCancellation] CancellationToken cancellationToken)
         {
             foreach (var page in pages)
@@ -444,7 +538,11 @@ public class ResourceSyncServiceTest : IClassFixture<ApiFixture>
         }
     }
 
-    private sealed class FakeLease : ILease
+    /// <summary>
+    /// A lease that, like the real one, hands out a copy of its data, so <see cref="Data"/> is the persisted
+    /// state and only changes when the service calls <c>Update</c>.
+    /// </summary>
+    internal sealed class FakeLease : ILease
     {
         public ResourceRegistryLease Data { get; set; } = new();
 
@@ -453,7 +551,7 @@ public class ResourceSyncServiceTest : IClassFixture<ApiFixture>
         public Task<T> Get<T>(CancellationToken cancellationToken = default)
             where T : class, new()
         {
-            if (Data is T typed)
+            if (Copy(Data) is T typed)
             {
                 return Task.FromResult(typed);
             }
@@ -466,11 +564,18 @@ public class ResourceSyncServiceTest : IClassFixture<ApiFixture>
         {
             if (data is ResourceRegistryLease lease)
             {
-                Data = lease;
+                Data = Copy(lease);
             }
 
             return Task.CompletedTask;
         }
+
+        private static ResourceRegistryLease Copy(ResourceRegistryLease lease) => new()
+        {
+            Since = lease.Since,
+            ResourceNextPageLink = lease.ResourceNextPageLink,
+            ResourceChangesNextPageLink = lease.ResourceChangesNextPageLink,
+        };
 
         public Task Update<T>(Action<T> configureData, CancellationToken cancellationToken = default)
             where T : class, new()

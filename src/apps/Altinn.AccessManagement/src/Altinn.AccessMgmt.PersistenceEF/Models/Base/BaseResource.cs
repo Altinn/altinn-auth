@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using Altinn.AccessMgmt.PersistenceEF.Models.Audit.Base;
 using Altinn.AccessMgmt.PersistenceEF.Models.Contracts;
+using Altinn.AccessMgmt.PersistenceEF.Models.Enums;
 using Altinn.AccessMgmt.PersistenceEF.Models.Extensions;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Models.Base;
@@ -59,7 +60,22 @@ public class BaseResource : BaseAudit, IEntityId
     public string Description { get; set; }
 
     /// <summary>
+    /// Description of the rights the resource grants, shown when delegating it
+    /// </summary>
+    public string? RightDescription { get; set; }
+
+    /// <summary>
     /// Reference identifier
     /// </summary>
     public string RefId { get; set; }
+
+    /// <summary>
+    /// Whether the resource can be delegated
+    /// </summary>
+    public bool Delegable { get; set; } = true;
+
+    /// <summary>
+    /// Access list mode
+    /// </summary>
+    public ResourceAccessListMode AccessListMode { get; set; }
 }
