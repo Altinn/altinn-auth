@@ -1,0 +1,654 @@
+﻿using System.ComponentModel.DataAnnotations;
+using System.Net.Mime;
+using System.Security.Claims;
+using Altinn.AccessManagement.Api.Enduser.Models;
+using Altinn.AccessManagement.Core.Clients.Interfaces;
+using Altinn.AccessManagement.Core.Constants;
+using Altinn.AccessManagement.Core.Errors;
+using Altinn.AccessManagement.Core.Helpers;
+using Altinn.AccessManagement.Core.Models;
+using Altinn.AccessMgmt.Core;
+using Altinn.AccessMgmt.Core.Audit;
+using Altinn.AccessMgmt.Core.Models;
+using Altinn.AccessMgmt.Core.Services;
+using Altinn.AccessMgmt.Core.Services.Contracts;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
+using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
+using Altinn.AccessMgmt.PersistenceEF.Utils;
+using Altinn.Authorization.ABAC.Xacml.JsonProfile;
+using Altinn.Authorization.Api.Contracts.AccessManagement;
+using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
+using Altinn.Authorization.ProblemDetails;
+using Altinn.Common.PEP.Helpers;
+using Altinn.Common.PEP.Interfaces;
+using Azure.Core;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.FeatureManagement;
+using Microsoft.FeatureManagement.Mvc;
+
+namespace Altinn.AccessManagement.Api.Enduser.Controllers.Base;
+
+/// <summary>
+/// NOTE! This controller is only meant to hold shared logic for the versioned controllers.
+/// It is not meant to be used directly, and should not get new logic added that needs to be versioned.
+/// If you need to add new logic, add it to the versioned controller instead.
+///
+/// Shared actions for access requests (tilgangsforespørsler) in the enduser API.
+/// Holds no route; each versioned controller owns its own route metadata.
+/// Creating a resource request is versioned, so it lives in the versioned controllers.
+/// </summary>
+/// <typeparam name="TRequest">The request model returned by the version, made by <see cref="ConvertRequest"/>.</typeparam>
+/// <typeparam name="TStatus">The status type the version filters on, turned into statuses by <see cref="GetStatusFilter"/>.</typeparam>
+[ApiController]
+public abstract class RequestControllerBase<TRequest, TStatus>(
+    IRequestService requestService,
+    IAssignmentService assignmentService,
+    IConnectionService connectionService,
+    ConnectionQuery connectionQuery,
+    IResourceService resourceService,
+    IEntityService entityService,
+    IResourceRegistryClient resourceRegistryClient,
+    IPDP pdp
+    ) : ControllerBase
+    where TStatus : struct, Enum
+{
+    protected IRequestService RequestService { get; } = requestService;
+
+    protected IAssignmentService AssignmentService { get; } = assignmentService;
+
+    protected IConnectionService ConnectionService { get; } = connectionService;
+
+    protected ConnectionQuery ConnectionQuery { get; } = connectionQuery;
+
+    protected IResourceService ResourceService { get; } = resourceService;
+
+    protected IEntityService EntityService { get; } = entityService;
+
+    protected IResourceRegistryClient ResourceRegistryClient { get; } = resourceRegistryClient;
+
+    protected IPDP PDP { get; } = pdp;
+
+    /// <summary>
+    /// Converts a request to the model returned by the version.
+    /// </summary>
+    protected abstract TRequest ConvertRequest(AccessRequest request);
+
+    /// <summary>
+    /// The statuses to filter on, given the status query parameter of the version.
+    /// When none are given, use <see cref="DefaultStatusFilter"/>.
+    /// </summary>
+    protected abstract IEnumerable<RequestStatusV2> GetStatusFilter(TStatus[]? status);
+
+    /// <summary>
+    /// The statuses filtered on when none are given: every status except <see cref="RequestStatusV2.None"/>.
+    /// </summary>
+    protected static readonly RequestStatusV2[] DefaultStatusFilter = [RequestStatusV2.Draft, RequestStatusV2.Pending, RequestStatusV2.Approved, RequestStatusV2.PartialApprove, RequestStatusV2.Rejected, RequestStatusV2.Withdrawn];
+
+    private Action<ConnectionOptions> ConfigureConnections { get; } = options =>
+    {
+        options.AllowedWriteFromEntityTypes = [EntityTypeConstants.Organization, EntityTypeConstants.Person];
+        options.AllowedWriteToEntityTypes = [EntityTypeConstants.Organization, EntityTypeConstants.Person];
+        options.AllowedReadFromEntityTypes = [EntityTypeConstants.Organization, EntityTypeConstants.Person];
+        options.AllowedReadToEntityTypes = [EntityTypeConstants.Organization, EntityTypeConstants.Person];
+        options.FilterFromEntityTypes = [];
+        options.FilterToEntityTypes = [];
+    };
+
+    /// <summary>
+    /// Connection configuration used when approving a package request. In addition to the
+    /// standard organization/person parties it permits a system user as the write/read target
+    /// (the requester of a system-user package request), since <c>AddPackage</c> is invoked with
+    /// the requester as the target. The request-recipient hard block (a system user can never be
+    /// the recipient of a request) is still enforced when the request is created.
+    /// </summary>
+    private Action<ConnectionOptions> ConfigurePackageApprovalConnections { get; } = options =>
+    {
+        options.AllowedWriteFromEntityTypes = [EntityTypeConstants.Organization, EntityTypeConstants.Person];
+        options.AllowedWriteToEntityTypes = [EntityTypeConstants.Organization, EntityTypeConstants.Person, EntityTypeConstants.SystemUser];
+        options.AllowedReadFromEntityTypes = [EntityTypeConstants.Organization, EntityTypeConstants.Person];
+        options.AllowedReadToEntityTypes = [EntityTypeConstants.Organization, EntityTypeConstants.Person, EntityTypeConstants.SystemUser];
+        options.FilterFromEntityTypes = [];
+        options.FilterToEntityTypes = [];
+    };
+
+    [HttpGet]
+    [FeatureGate(RequirementType.Any, AccessMgmtFeatureFlags.EnableRequestAssignmentResource, AccessMgmtFeatureFlags.EnableRequestAssignmentPackage)]
+    [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_REQUESTS_READ)]
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_READ)]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<TRequest>> GetRequest(
+    [FromQuery][Required] Guid party,
+    [FromQuery][Required] Guid id,
+    CancellationToken ct = default
+    )
+    {
+        var result = await RequestService.GetRequest(id, ct);
+
+        if (!result.IsSuccess)
+        {
+            return Forbid(); // Don't reveal whether the request exists or not
+        }
+
+        if (result.Value.From.Id != party && result.Value.To.Id != party)
+        {
+            return Forbid();
+        }
+
+        return Ok(ConvertRequest(result.Value));
+    }
+
+    [HttpGet("draft")]
+    [FeatureGate(RequirementType.Any, AccessMgmtFeatureFlags.EnableRequestAssignmentResource)]
+    [Authorize(Policy = AuthzConstants.SCOPE_PORTAL_ENDUSER)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<TRequest>> GetDraftRequest([FromQuery][Required] Guid id, CancellationToken ct = default)
+    {
+        var result = await RequestService.GetRequest(id, ct);
+        if (result.IsProblem)
+        {
+            return Forbid();
+        }
+
+        if (result.Value.Status != RequestStatusV2.Draft)
+        {
+            return Forbid();
+        }
+
+        bool isAuthorized = await AuthorizeResourceAccess("altinn_access_management", result.Value.From.Id, User, "write");
+        if (!isAuthorized)
+        {
+            return Forbid();
+        }
+
+        return Ok(ConvertRequest(result.Value));
+    }
+
+    /// <summary>
+    /// Confirm a draft request (transitions Draft → Pending)
+    /// </summary>
+    [HttpPut("draft/confirm")]
+    [FeatureGate(RequirementType.Any, AccessMgmtFeatureFlags.EnableRequestAssignmentResource, AccessMgmtFeatureFlags.EnableRequestAssignmentPackage)]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+    [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_REQUESTS_WRITE)]
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<TRequest>> ConfirmRequest(
+        [FromQuery][Required] Guid party,
+        [FromQuery][Required] Guid id,
+        CancellationToken ct = default
+        )
+    {
+        return await UpdateRequestStatus(party, id, RequestStatusV2.Pending, ct);
+    }
+
+    [HttpGet("sent")]
+    [FeatureGate(RequirementType.Any, AccessMgmtFeatureFlags.EnableRequestAssignmentResource, AccessMgmtFeatureFlags.EnableRequestAssignmentPackage)]
+    [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_REQUESTS_READ)]
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_READ)]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<PaginatedResult<TRequest>>> GetSentRequests(
+        [FromQuery][Required] Guid party,
+        [FromQuery] Guid? to,
+        [FromQuery] TStatus[]? status,
+        [FromQuery] string type,
+        [FromQuery, FromHeader] PagingInput paging,
+        CancellationToken ct = default
+        )
+    {
+        var statusFilter = GetStatusFilter(status);
+
+        var result = await RequestService.GetSentRequests(party, to, statusFilter, type, ct);
+
+        return result.IsSuccess ? Ok(PaginatedResult.Create(result.Value.Select(ConvertRequest), null)) : result.Problem.ToActionResult();
+    }
+
+    [HttpGet("sent/count")]
+    [FeatureGate(RequirementType.Any, AccessMgmtFeatureFlags.EnableRequestAssignmentResource, AccessMgmtFeatureFlags.EnableRequestAssignmentPackage)]
+    [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_REQUESTS_READ)]
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_READ)]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+    [ProducesResponseType<int>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetSentRequestsCount(
+        [FromQuery][Required] Guid party,
+        [FromQuery] Guid? to,
+        [FromQuery] TStatus[]? status,
+        [FromQuery] string type,
+        CancellationToken ct = default
+        )
+    {
+        var statusFilter = GetStatusFilter(status);
+
+        var result = await RequestService.GetSentRequestsCount(party, to, statusFilter, type, ct);
+
+        return result.IsSuccess ? Ok(result.Value) : result.Problem.ToActionResult();
+    }
+
+    /// <summary>
+    /// Withdraw a request
+    /// </summary>
+    [HttpPut("sent/withdraw")]
+    [FeatureGate(RequirementType.Any, AccessMgmtFeatureFlags.EnableRequestAssignmentResource, AccessMgmtFeatureFlags.EnableRequestAssignmentPackage)]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+    [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_REQUESTS_WRITE)]
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<TRequest>> WithdrawRequest(
+        [FromQuery][Required] Guid party,
+        [FromQuery][Required] Guid id,
+        CancellationToken ct = default
+        )
+    {
+        return await UpdateRequestStatus(party, id, RequestStatusV2.Withdrawn, ct);
+    }
+
+    [HttpGet("received")]
+    [FeatureGate(RequirementType.Any, AccessMgmtFeatureFlags.EnableRequestAssignmentResource, AccessMgmtFeatureFlags.EnableRequestAssignmentPackage)]
+    [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_REQUESTS_READ)]
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_READ)]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<PaginatedResult<TRequest>>> GetReceivedRequests(
+        [FromQuery][Required] Guid party,
+        [FromQuery] Guid? from,
+        [FromQuery] TStatus[]? status,
+        [FromQuery] string type,
+        [FromQuery, FromHeader] PagingInput paging,
+        CancellationToken ct = default
+        )
+    {
+        var statusFilter = GetStatusFilter(status);
+
+        var result = await RequestService.GetReceivedRequests(party, from, statusFilter, type, ct);
+        return result.IsSuccess ? Ok(PaginatedResult.Create(result.Value.Select(ConvertRequest), null)) : result.Problem.ToActionResult();
+    }
+
+    [HttpGet("received/count")]
+    [FeatureGate(RequirementType.Any, AccessMgmtFeatureFlags.EnableRequestAssignmentResource, AccessMgmtFeatureFlags.EnableRequestAssignmentPackage)]
+    [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_REQUESTS_READ)]
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_READ)]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+    [ProducesResponseType<int>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetReceivedRequestsCount(
+        [FromQuery][Required] Guid party,
+        [FromQuery] Guid? from,
+        [FromQuery] TStatus[]? status,
+        [FromQuery] string type,
+        CancellationToken ct = default
+        )
+    {
+        var statusFilter = GetStatusFilter(status);
+
+        var result = await RequestService.GetReceivedRequestsCount(party, from, statusFilter, type, ct);
+        return result.IsSuccess ? Ok(result.Value) : result.Problem.ToActionResult();
+    }
+
+    /// <summary>
+    /// Get the number of received requests for each subunit of the party.
+    /// Every direct subunit is included, also those with no requests. Returns an empty list if the party has no subunits.
+    /// </summary>
+    /// <param name="party">The party (main unit) whose subunits are counted</param>
+    /// <param name="from">Only count requests from this party. All requesters are counted if omitted</param>
+    /// <param name="status">Status filter. Defaults to every status except None</param>
+    /// <param name="type">resource or package. Both are counted if omitted</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <response code="200">The number of received requests per subunit</response>
+    /// <response code="400">Bad request</response>
+    /// <response code="401">Unauthorized</response>
+    /// <response code="403">Forbidden</response>
+    [HttpGet("received/count/subunits")]
+    [FeatureGate(RequirementType.Any, AccessMgmtFeatureFlags.EnableRequestAssignmentResource, AccessMgmtFeatureFlags.EnableRequestAssignmentPackage)]
+    [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_REQUESTS_READ)]
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_READ)]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+    [ProducesResponseType<IEnumerable<ReceivedRequestCountSubunitDto>>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<IActionResult> GetReceivedRequestsCountForSubunits(
+        [FromQuery][Required] Guid party,
+        [FromQuery] Guid? from,
+        [FromQuery] TStatus[]? status,
+        [FromQuery] string? type,
+        CancellationToken ct = default
+        )
+    {
+        var statusFilter = GetStatusFilter(status);
+
+        var result = await RequestService.GetReceivedRequestsCountForSubunits(party, from, statusFilter, type, ct);
+        return result.IsSuccess ? Ok(result.Value) : result.Problem.ToActionResult();
+    }
+
+    /// <summary>
+    /// Approve a pending request — runs the same delegation logic as AddPackages/AddResourceRights
+    /// </summary>
+    [HttpPut("received/approve")]
+    [FeatureGate(RequirementType.Any, AccessMgmtFeatureFlags.EnableRequestAssignmentResource, AccessMgmtFeatureFlags.EnableRequestAssignmentPackage)]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+    [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_REQUESTS_WRITE)]
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<TRequest>> ApproveRequest(
+        [FromQuery][Required] Guid party,
+        [FromQuery][Required] Guid id,
+        [FromBody] string[]? rightKeys,
+        CancellationToken ct = default
+        )
+    {
+        ValidationErrorBuilder errorBuilder = default;
+
+        var requestResult = await RequestService.GetRequest(id, ct);
+        if (requestResult.IsProblem)
+        {
+            return requestResult.Problem.ToActionResult();
+        }
+
+        var request = requestResult.Value;
+        if (request is null || request.To.Id != party)
+        {
+            errorBuilder.Add(ValidationErrors.RequestUnauthorizedStatusUpdate);
+        }
+
+        if (errorBuilder.TryBuild(out var problem))
+        {
+            return problem.ToActionResult();
+        }
+
+        var authUserUuid = AuthenticationHelper.GetAuthenticatedPartyUuid(HttpContext);
+
+        // User is authorizing his own request, check if he is mainadmin
+        if (request.From.Id == authUserUuid)
+        {
+            // Check pdp is mainadmin
+            bool isMainAdmin = await AuthorizeResourceAccess("altinn_access_management_hovedadmin", request.To.Id, User, "write");
+            if (!isMainAdmin)
+            {
+                errorBuilder.Add(ValidationErrors.RequestFromSelfNotAllowed);
+            }
+
+            if (errorBuilder.TryBuild(out problem))
+            {
+                return problem.ToActionResult();
+            }
+        }
+
+        // Guaranteed non-null here: TryBuild above returned false, so the null/auth check passed.
+        return request!.Type switch
+        {
+            "resource" => await ApproveResourceRequest(party, authUserUuid, request, rightKeys, ct),
+            "package" => await ApprovePackageRequest(party, request, ct),
+            _ => BadRequest(),
+        };
+    }
+
+    /// <summary>
+    /// Reject a pending request
+    /// </summary>
+    [HttpPut("received/reject")]
+    [FeatureGate(RequirementType.Any, AccessMgmtFeatureFlags.EnableRequestAssignmentResource, AccessMgmtFeatureFlags.EnableRequestAssignmentPackage)]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+    [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_REQUESTS_WRITE)]
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<TRequest>> RejectRequest(
+        [FromQuery][Required] Guid party,
+        [FromQuery][Required] Guid id,
+        CancellationToken ct = default
+        )
+    {
+        return await UpdateRequestStatus(party, id, RequestStatusV2.Rejected, ct);
+    }
+
+    /// <summary>
+    /// Create request on behalf of a party
+    /// </summary>
+    [HttpPost("package")]
+    [FeatureGate(AccessMgmtFeatureFlags.EnableRequestAssignmentPackage)]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+    [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_REQUESTS_WRITE)]
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<TRequest>> CreatePackageRequest(
+        [FromQuery][Required] Guid party,
+        [FromQuery][Required] Guid to,
+        [FromQuery][Required] string package,
+        CancellationToken ct = default
+        )
+    {
+        ValidationErrorBuilder errorBuilder = default;
+
+        var authUserUuid = AuthenticationHelper.GetAuthenticatedPartyUuid(HttpContext);
+        var (hasConnections, _) = await ConnectionQuery.HasConnection(to, party);
+        if (!hasConnections)
+        {
+            errorBuilder.Add(ValidationErrors.RequestConnectionNotFound, "/to", [new("to", $"No connection between party:'{party}' and to:'{to}'")]);
+        }
+
+        if (errorBuilder.TryBuild(out var problem))
+        {
+            return problem.ToActionResult();
+        }
+
+        /*
+        A Request from Kari by NAV to BakerAS for AppResource01.
+        Will create an Assignment from BakerAS to Kari with an AssignmentResource for AppResource01.
+        */
+        var result = await RequestService.CreatePackageRequest(
+           toId: to,
+           fromId: party,
+           byId: authUserUuid,
+           roleId: RoleConstants.Rightholder.Id,
+           package: package,
+           status: RequestStatusV2.Pending,
+           ct: ct
+        );
+
+        if (result.IsProblem)
+        {
+            return result.Problem.ToActionResult();
+        }
+
+        return Ok(ConvertRequest(result.Value));
+    }
+
+    private async Task<ActionResult<TRequest>> ApprovePackageRequest(Guid partyUuid, AccessRequest request, CancellationToken ct)
+    {
+        ValidationErrorBuilder errorBuilder = default;
+
+        var assignment = await AssignmentService.GetOrCreateAssignment(request.To.Id, request.From.Id, RoleConstants.Rightholder, cancellationToken: ct);
+        if (assignment is null)
+        {
+            errorBuilder.Add(ValidationErrors.RequestFailedToApprove, "Approve", [new("Approve", $"Unable to get or create rightholder assignment")]);
+        }
+
+        if (errorBuilder.TryBuild(out var problem))
+        {
+            return problem.ToActionResult();
+        }
+
+        var result = await ConnectionService.AddPackage(
+            request.To.Id,
+            request.From.Id,
+            request.Package.Id.Value,
+            ConfigurePackageApprovalConnections,
+            ct);
+
+        if (result.IsProblem)
+        {
+            return result.Problem.ToActionResult();
+        }
+
+        var updateResult = await RequestService.UpdateRequest(partyUuid, request.Id, RequestStatusV2.Approved, ct);
+        if (updateResult.IsProblem)
+        {
+            return updateResult.Problem.ToActionResult();
+        }
+
+        return Ok(ConvertRequest(updateResult.Value));
+    }
+
+    private async Task<ActionResult<TRequest>> ApproveResourceRequest(Guid partyUuid, Guid authUserId, AccessRequest request, IEnumerable<string> rightKeys, CancellationToken ct)
+    {
+        var delegationCheck = await ConnectionService.ResourceDelegationCheck(
+            authenticatedUserUuid: authUserId,
+            party: partyUuid,
+            resource: request.Resource.ReferenceId,
+            configureConnection: ConfigureConnections,
+            cancellationToken: ct);
+
+        if (delegationCheck.IsProblem)
+        {
+            return delegationCheck.Problem.ToActionResult();
+        }
+
+        rightKeys = delegationCheck.Value.Rights
+            .Where(r => r.Result)
+            .Select(r => r.Right.Key)
+            .ToList();
+
+        if (!rightKeys.Any())
+        {
+            return Forbid("Missing rights to give");
+        }
+
+        var from = await EntityService.GetEntity(request.From.Id, ct);
+        var to = await EntityService.GetEntity(request.To.Id, ct);
+        var authUser = await EntityService.GetEntity(authUserId, ct);
+        var resource = await ResourceService.GetResource(request.Resource.Id.Value, ct);
+
+        var assignment = await AssignmentService.GetOrCreateAssignment(to.Id, from.Id, RoleConstants.Rightholder, cancellationToken: ct);
+        if (assignment is null)
+        {
+            return Problem("Unable to get or create rightholder assignment");
+        }
+
+        var result = await ConnectionService.AddResource(
+            to,
+            from,
+            resource,
+            new RightKeyListDto { DirectRightKeys = rightKeys },
+            authUser,
+            ConfigureConnections,
+            ct);
+
+        if (result.IsProblem)
+        {
+            return result.Problem.ToActionResult();
+        }
+
+        var updateResult = await RequestService.UpdateRequest(partyUuid, request.Id, RequestStatusV2.Approved, ct);
+        if (updateResult.IsProblem)
+        {
+            return updateResult.Problem.ToActionResult();
+        }
+
+        return Ok(ConvertRequest(updateResult.Value));
+    }
+
+    /// <summary>
+    /// Validation shared by the versioned endpoints for creating a resource request: the parties must be
+    /// connected, and the resource must exist and must not be marked as non-delegable in the resource registry.
+    /// </summary>
+    /// <returns>The resource when valid, otherwise the problem to return.</returns>
+    protected async Task<(Altinn.AccessMgmt.PersistenceEF.Models.Resource Resource, ValidationProblemInstance Problem)> ValidateResourceRequest(Guid party, Guid to, string resource, CancellationToken ct)
+    {
+        ValidationErrorBuilder errorBuilder = default;
+
+        var (hasConnections, _) = await ConnectionQuery.HasConnection(to, party);
+        if (!hasConnections)
+        {
+            errorBuilder.Add(ValidationErrors.RequestConnectionNotFound, "/to", [new("to", $"No connection between party:'{party}' and to:'{to}'")]);
+        }
+
+        var resourceObj = await ResourceService.GetResource(resource, ct);
+        if (resourceObj is not { })
+        {
+            errorBuilder.Add(ValidationErrors.ResourceNotExists, "/resource", [new("resource", $"Unable to get resource '{resource}'")]);
+        }
+
+        if (resourceObj is { })
+        {
+            try
+            {
+                var serviceResource = await ResourceRegistryClient.GetResource(resourceObj.RefId, ct);
+
+                if (serviceResource is { Delegable: false })
+                {
+                    errorBuilder.Add(ValidationErrors.ResourceIsNotDelegable, "/resource", [new("resource", $"Resource with reference ID '{resourceObj.RefId}' is not delegable.")]);
+                }
+            }
+            catch (HttpRequestException)
+            {
+                // Registry unreachable: don't gate the user's request on registry availability.
+                // The earlier `resourceObj is not null` check already validated that the resource
+                // is known to us locally. Only fail when the registry positively confirms the
+                // resource is non-delegable (the `Delegable: false` arm above).
+            }
+        }
+
+        errorBuilder.TryBuild(out var problem);
+        return (resourceObj, problem);
+    }
+
+    private async Task<ActionResult<TRequest>> UpdateRequestStatus(Guid partyUuid, Guid id, RequestStatusV2 status, CancellationToken ct)
+    {
+        var result = await RequestService.UpdateRequest(partyUuid, id, status, ct);
+        if (result.IsProblem)
+        {
+            return result.Problem.ToActionResult();
+        }
+
+        return Ok(ConvertRequest(result.Value));
+    }
+
+    private async Task<bool> AuthorizeResourceAccess(string resource, Guid resourceParty, ClaimsPrincipal userPrincipal, string action)
+    {
+        XacmlJsonRequestRoot request = DecisionHelper.CreateDecisionRequestForResourceRegistryResource(resource, resourceParty, userPrincipal, action);
+        XacmlJsonResponse response = await PDP.GetDecisionForRequest(request);
+
+        if (response?.Response == null)
+        {
+            throw new InvalidOperationException("response");
+        }
+
+        if (!DecisionHelper.ValidatePdpDecision(response.Response, userPrincipal))
+        {
+            return false;
+        }
+
+        return true;
+    }
+}

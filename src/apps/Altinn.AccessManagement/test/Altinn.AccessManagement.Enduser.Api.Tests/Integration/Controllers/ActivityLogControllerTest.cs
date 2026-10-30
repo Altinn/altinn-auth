@@ -65,7 +65,7 @@ public class ActivityLogControllerTest : IClassFixture<ApiFixture>
             {
                 AssignmentId = request.Id,
                 PackageId = db.Packages.OrderBy(p => p.Id).First().Id,
-                Status = RequestStatus.Pending,
+                Status = RequestStatusV2.Pending,
             });
 
             db.SaveChanges();
@@ -363,6 +363,29 @@ public class ActivityLogControllerTest : IClassFixture<ApiFixture>
         var result = JsonSerializer.Deserialize<PaginatedResult<ActivityLogFilterValueDto>>(body, JsonOpts);
         Assert.NotNull(result);
         Assert.Contains(result.Items, v => v.Id == Paula);
+    }
+
+    /// <summary>
+    /// The request area offers the PartialApprove catalog entries, with the status as a plain string.
+    /// </summary>
+    [Fact]
+    public async Task Request_Types_IncludePartialApproveEntriesWithStringStatus()
+    {
+        var client = Fixture.Server.CreateClient();
+
+        var response = await client.GetAsync($"{RequestRoute}/types", TestContext.Current.CancellationToken);
+
+        var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Body: {body}");
+
+        using var doc = JsonDocument.Parse(body);
+        var partialApproveIds = doc.RootElement.EnumerateArray()
+            .Where(t => t.TryGetProperty("status", out var status) && status.ValueKind == JsonValueKind.String && status.GetString() == "PartialApprove")
+            .Select(t => t.GetProperty("id").GetGuid())
+            .ToList();
+
+        Assert.Contains(ActivityTypeConstants.RequestPackageUpdatedPartialApprove.Id, partialApproveIds);
+        Assert.Contains(ActivityTypeConstants.RequestResourceUpdatedPartialApprove.Id, partialApproveIds);
     }
 
     private HttpClient CreateClient(Guid partyUuid, params string[] scopes)

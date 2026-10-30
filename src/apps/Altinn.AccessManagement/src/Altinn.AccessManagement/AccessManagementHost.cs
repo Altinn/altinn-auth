@@ -315,6 +315,10 @@ internal static partial class AccessManagementHost
         });
 
         builder.Services.AddUrnSwaggerSupport();
+
+        // Describes NonExhaustiveEnum<T> as the string it serializes to, instead of an object.
+        // Becomes AddNonExhaustiveSupport() with ModelUtils.Swashbuckle 3.x.
+        builder.Services.AddAuthorizationModelUtilsSwaggerSupport();
     }
 
     private static void ConfigureAppsettings(this WebApplicationBuilder builder)

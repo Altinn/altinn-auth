@@ -175,6 +175,12 @@ public static class AccessMgmtFeatureFlags
     public const string EnableEnduserRequestActivityLogApi = "AccessManagement.Enduser.RequestActivityLogApi";
 
     /// <summary>
+    /// Enables the v2 request endpoints under enduser/request, where resource requests
+    /// can name the rights (right keys) being requested.
+    /// </summary>
+    public const string EnableEnduserRequestV2Api = "AccessManagement.Enduser.RequestV2Api";
+
+    /// <summary>
     /// Enables the activity log endpoints under enduser/maskinporten (Maskinporten schema
     /// delegation events — the Supplier-role slice of the log).
     /// </summary>
