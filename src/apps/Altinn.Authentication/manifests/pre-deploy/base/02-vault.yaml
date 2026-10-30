@@ -1,0 +1,14 @@
+apiVersion: vault.dis.altinn.cloud/v1alpha1
+kind: Vault
+metadata:
+  name: authn-api-vault
+spec:
+  identityRef:
+    name: authn-api
+  groupObjectId: fake
+  externalSecrets: true
+  sku: premium
+  softDeleteRetentionDays: 30
+  tags:
+    app: Authentication
+    team: Team Autorization

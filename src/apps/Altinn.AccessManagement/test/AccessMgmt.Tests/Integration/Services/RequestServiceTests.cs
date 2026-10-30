@@ -1,5 +1,6 @@
 ﻿using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.Core.Appsettings;
+using Altinn.AccessMgmt.Core.Notifications;
 using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
@@ -224,6 +225,58 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
 
         Assert.Equal(first.Id, second.Id);
     }
+    #endregion
+
+    #region Outbox
+
+    [Fact]
+    public async Task CreateResourceRequest_WithDraftStatus_DoesNotWriteToOutbox()
+    {
+        var testStart = DateTime.UtcNow;
+        var resource = await SeedUniqueResource();
+        await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, RequestStatus.Draft, TestContext.Current.CancellationToken);
+
+        var refId = $"{RequestPendingNotification.Handler}_{PersonTo.Id}_{OrgFrom.Id}";
+        var outbox = await _db.OutboxMessages.AsNoTracking().Where(o => o.RefId == refId && o.CreatedAt >= testStart).ToListAsync(TestContext.Current.CancellationToken);
+
+        Assert.Empty(outbox);
+    }
+
+    [Fact]
+    public async Task CreatePackageRequest_WithDraftStatus_DoesNotWriteToOutbox()
+    {
+        var testStart = DateTime.UtcNow;
+        await _requestService.CreatePackageRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, PackageConstants.Agriculture.Id, RequestStatus.Draft, TestContext.Current.CancellationToken);
+
+        var refId = $"{RequestPendingNotification.Handler}_{PersonTo.Id}_{OrgFrom.Id}";
+        var outbox = await _db.OutboxMessages.AsNoTracking().Where(o => o.RefId == refId && o.CreatedAt >= testStart).ToListAsync(TestContext.Current.CancellationToken);
+
+        Assert.Empty(outbox);
+    }
+
+    [Fact]
+    public async Task CreateResourceRequest_WithPendingStatus_WritesToOutbox()
+    {
+        var resource = await SeedUniqueResource();
+        await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, RequestStatus.Pending, TestContext.Current.CancellationToken);
+
+        var refId = $"{RequestPendingNotification.Handler}_{PersonTo.Id}_{OrgFrom.Id}";
+        var outbox = await _db.OutboxMessages.AsNoTracking().Where(o => o.RefId == refId).ToListAsync(TestContext.Current.CancellationToken);
+
+        Assert.NotEmpty(outbox);
+    }
+
+    [Fact]
+    public async Task CreatePackageRequest_WithPendingStatus_WritesToOutbox()
+    {
+        await _requestService.CreatePackageRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, PackageConstants.Agriculture.Id, RequestStatus.Pending, TestContext.Current.CancellationToken);
+
+        var refId = $"{RequestPendingNotification.Handler}_{PersonTo.Id}_{OrgFrom.Id}";
+        var outbox = await _db.OutboxMessages.AsNoTracking().Where(o => o.RefId == refId).ToListAsync(TestContext.Current.CancellationToken);
+
+        Assert.NotEmpty(outbox);
+    }
+
     #endregion
 
     #region Full lifecycle scenarios

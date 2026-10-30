@@ -1,16 +1,18 @@
 name: "Publish Syncroot"
-run-name: ${{ inputs.app }} ${{ inputs.environment }}
+run-name: Publish syncroot for ${{ inputs.vertical }} to ${{ inputs.environment }}
 
 on:
   workflow_dispatch:
     inputs:
-      vertical_id:
+      vertical:
         description: App
         type: choice
         required: true
         options:
-          - app:Altinn.AccessManagement
-          - app:Altinn.Authorization
+          - Altinn.AccessManagement
+          - Altinn.Authorization
+          - Altinn.Authentication
+          - Altinn.ResourceRegistry
 
       environment:
         description: "Environment"
@@ -20,17 +22,18 @@ on:
           - at22
           - at23
           - at24
-          - tt02
           - yt01
-          - prod
+          # - tt02
+          # - prod
 
 permissions:
   contents: read
   id-token: write
 
 concurrency:
-  group: publish-flux-artifacts-${{ inputs.environment }}
+  group: publish-flux-artifacts-${{ inputs.vertical }}-${{ inputs.environment }}
   cancel-in-progress: false
+  queue: max
 
 jobs:
   publish-app-syncroot:
@@ -38,18 +41,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Init
-        uses: Altinn/altinn-auth/.github/actions/init@8785549c5be10aeef8ec31c6c7010d593a8c9128
-
+        uses: $/.github/actions/init
       - name: Extract app config
+        env:
+          VERTICAL: ${{ inputs.vertical }}
         run: |
-          repoctl github export-vertical ${{ inputs.vertical_id}}
+          repoctl ci export-vertical "app:$VERTICAL"
 
       - name: Build and push syncroot artifact
         uses: Altinn/altinn-platform/actions/flux/build-push-image@3535bba3d301df5778ce420f7adf10edd748cc3f # main
         with:
-          image_name: ${{ env.VERTICAL_DIR }}/syncroot
+          image_name: ${{ env.VERTICAL_SHORT_SLUG }}/syncroot
           tag: ${{ inputs.environment }}
-          workdir: ./src/apps/${{ env.VERTICAL_NAME }}/syncroot
+          workdir: ${{ env.VERTICAL_DIR }}/syncroot
           azure_subscription_id: ${{ secrets.DIS_SYNCROOT_AZURE_SUBSCRIPTION_ID }}
           azure_app_id: ${{ secrets.DIS_SYNCROOT_AZURE_CLIENT_ID }}
           azure_tenant_id: ${{ secrets.DIS_SYNCROOT_AZURE_TENANT_ID }}

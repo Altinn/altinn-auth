@@ -1,8 +1,14 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
-namespace: product-access-management
+namespace: product-authentication
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: authentication
+    includeSelectors: true
+    includeTemplates: true
 resources:
   - ../base
+  - 01-secrets.yaml
 
 configMapGenerator:
   - name: environment

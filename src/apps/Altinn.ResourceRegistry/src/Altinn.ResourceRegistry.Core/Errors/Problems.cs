@@ -36,4 +36,11 @@ public static class Problems
     /// </summary>
     public static ProblemDescriptor AccessList_References_OtherServiceOwners_Resource { get; }
         = _factory.Create(4, HttpStatusCode.Forbidden, "Cannot create a access-list connection to a resource not owned by the same service-owner as the access-list.");
+
+    /// <summary>
+    /// Gets a <see cref="ProblemDescriptor"/> for when Maskinporten scope prefixes cannot be checked
+    /// because the prefix list from Samarbeidsportalen is unavailable.
+    /// </summary>
+    public static ProblemDescriptor ScopePrefixList_Unavailable { get; }
+        = _factory.Create(5, HttpStatusCode.ServiceUnavailable, "Maskinporten scope prefixes cannot be validated right now. Try again later.");
 }

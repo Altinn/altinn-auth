@@ -1,6 +1,11 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: product-authorization
+labels:
+  - pairs:
+      app.kubernetes.io/part-of: authorization
+    includeSelectors: true
+    includeTemplates: true
 resources:
   - ../base
 

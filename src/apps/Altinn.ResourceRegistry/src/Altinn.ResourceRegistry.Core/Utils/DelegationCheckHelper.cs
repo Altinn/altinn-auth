@@ -228,7 +228,11 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
             List<string> result = [];
             foreach (string urn in accessUrns)
             {
-                if (urn.StartsWith(AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute))
+                if (urn.StartsWith(AltinnXacmlConstants.MatchAttributeIdentifiers.LegacyRoleAttribute))
+                {
+                    result.Add(urn);
+                }
+                else if (urn.StartsWith($"{AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute}:"))
                 {
                     result.Add(urn);
                 }

@@ -23,6 +23,7 @@
     <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" />
     <PackageReference Include="Microsoft.ApplicationInsights.WindowsServer.TelemetryChannel" />
     <PackageReference Include="Microsoft.Extensions.Logging.ApplicationInsights" />
+    <PackageReference Include="Microsoft.FeatureManagement.AspNetCore" />
     <PackageReference Include="Swashbuckle.AspNetCore.Annotations" />
     <PackageReference Include="Swashbuckle.AspNetCore.Filters" />
     <PackageReference Include="Swashbuckle.AspNetCore" />

@@ -16,7 +16,12 @@ namespace Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 /// Resolved once at DI setup from the application lifecycle feature configuration rather than per request.
 /// Defaults to <c>false</c> (fully reversible) when not supplied.
 /// </param>
-public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled = false)
+/// <param name="excludeAltinn2Roles">
+/// Whether Altinn 2 roles (including rolemap-derived roles) should be excluded from all connection lookups.
+/// Resolved once at DI setup from the application lifecycle feature configuration rather than per request.
+/// Defaults to <c>false</c> when not supplied.
+/// </param>
+public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled = false, bool excludeAltinn2Roles = false)
 {
     private readonly ConnectionBaseQueryBuilder _baseQueryBuilder = new();
 
@@ -65,10 +70,12 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
             return (false, null);
         }
 
+        var excludedRoleIds = excludeAltinn2Roles ? RoleConstants.Altinn2RoleIds.ToHashSet() : [];
+
         if (reasons.Contains(ConnectionReason.Assignment))
         {
             var assignments = db.Assignments.AsNoTracking()
-                .Where(t => t.FromId == fromId && t.ToId == toId);
+                .Where(t => t.FromId == fromId && t.ToId == toId && !excludedRoleIds.Contains(t.RoleId));
 
             if (await assignments.AnyAsync())
             {
@@ -79,7 +86,7 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
         if (reasons.Contains(ConnectionReason.Delegation))
         {
             var delegations = db.Delegations.AsNoTracking()
-                .Where(t => t.From.FromId == fromId && t.To.ToId == toId);
+                .Where(t => t.From.FromId == fromId && t.To.ToId == toId && !excludedRoleIds.Contains(t.From.RoleId));
 
             if (await delegations.AnyAsync())
             {
@@ -95,6 +102,7 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
             from a in db.Assignments.AsNoTracking()
             join e in db.Entities.AsNoTracking() on a.FromId equals e.ParentId
             where a.ToId == toId && e.Id == fromId
+                && !excludedRoleIds.Contains(a.RoleId)
                 && (includeAdosSubunitInheritance || e.VariantId != EntityVariantConstants.ADOS.Id)
             select 1;
 
@@ -114,6 +122,8 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
                 a.FromId == fromId &&
                 kr.IsKeyRole == true &&
                 k.ToId == toId &&
+                !excludedRoleIds.Contains(a.RoleId) &&
+                !excludedRoleIds.Contains(k.RoleId) &&
                 (a.RoleId != RoleConstants.ParticipantSharedResponsibility.Id || a.From.VariantId != EntityVariantConstants.IKS.Id) &&
                 (k.RoleId != RoleConstants.ParticipantSharedResponsibility.Id || a.To.VariantId != EntityVariantConstants.IKS.Id)
             select 1;
@@ -135,6 +145,7 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
         try
         {
             filter.IncludeAdosSubunitInheritance = adosSubunitInheritanceEnabled;
+            filter.ExcludeAltinn2Roles = excludeAltinn2Roles;
 
             bool delayChildNesting = true;
             bool delayFromFilter = true;
