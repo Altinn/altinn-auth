@@ -8,9 +8,7 @@ spec:
   groupObjectId: fake
   externalSecrets: true
   sku: premium
-  publicNetworkAccess: Disabled
   softDeleteRetentionDays: 30
-  purgeProtectionEnabled: true
   tags:
     app: Authentication
     team: Team Autorization
