@@ -97,7 +97,7 @@ public class ScheduledActivityLogBackfillOptions
 
     public int DelayMs { get; set; } = 250;
 
-    /// <summary>Total batch budget per scheduled run; 0 = run until done.</summary>
+    /// <summary>Budget of batches that write, per scheduled run; 0 = run until done.</summary>
     public int MaxBatches { get; set; } = 0;
 }
 

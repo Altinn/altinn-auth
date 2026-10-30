@@ -8,8 +8,10 @@
 <MudText Typo="Typo.body1" Class="mb-6 mud-text-secondary">
     Fyller <code>dbo.activitylog</code> med hendelser syntetisert fra live-tabellene og
     <code>dbo_history</code> for alt som skjedde før trigger-cutoff. Jobben er idempotent og kan
-    stoppes/gjenopptas fritt — fremdrift ligger i <code>dbo.activitylogbackfillprogress</code>.
-    Innsettingen skjer i små batcher med pause mellom, så den kan gå stille i bakgrunnen.
+    stoppes/gjenopptas fritt — siste id lagres i <code>dbo.activitylogbackfillprogress</code>
+    etter hver batch, en ny kjøring fortsetter derfra, og ferdige kilder er markert samme sted.
+    Innsettingen skjer i små batcher (et antall kilde-id-er per batch) med pause mellom, så den
+    kan gå stille i bakgrunnen og begynner å skrive med en gang.
     «Analyser» teller hva en kjøring ville satt inn — per kilde og hendelsestype — uten å skrive noe.
 </MudText>
 
@@ -32,7 +34,7 @@
             </MudSelect>
         </MudItem>
         <MudItem xs="12" md="3">
-            <MudNumericField T="int" @bind-Value="_batchSize" Label="Batch-størrelse" Variant="Variant.Outlined" Min="100" Max="100000" />
+            <MudNumericField T="int" @bind-Value="_batchSize" Label="Batch-størrelse (kilde-id-er)" Variant="Variant.Outlined" Min="100" Max="100000" />
         </MudItem>
         <MudItem xs="12" md="3">
             <MudNumericField T="int" @bind-Value="_delayMs" Label="Pause mellom batcher (ms)" Variant="Variant.Outlined" Min="0" Max="60000" />

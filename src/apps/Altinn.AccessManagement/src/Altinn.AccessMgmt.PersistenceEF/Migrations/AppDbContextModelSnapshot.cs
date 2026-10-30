@@ -18,7 +18,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("Altinn:AuditVersion", 3)
-                .HasAnnotation("ProductVersion", "10.0.11")
+                .HasAnnotation("ProductVersion", "10.0.12")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -202,6 +202,9 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.HasIndex("ParentId")
                         .HasDatabaseName("ix_activitylog_parentid");
 
+                    b.HasIndex("ById", "When")
+                        .HasDatabaseName("ix_activitylog_byid_when");
+
                     b.HasIndex("FromId", "When")
                         .HasDatabaseName("ix_activitylog_fromid_when");
 
@@ -210,9 +213,6 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 
                     b.HasIndex("ViaId", "When")
                         .HasDatabaseName("ix_activitylog_viaid_when");
-
-                    b.HasIndex("ById", "When")
-                        .HasDatabaseName("ix_activitylog_byid_when");
 
                     b.ToTable("activitylog", "dbo");
 
@@ -236,6 +236,10 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.Property<DateTimeOffset>("Cutoff")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("cutoff");
+
+                    b.Property<Guid?>("LastId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("lastid");
 
                     b.HasKey("Source")
                         .HasName("pk_activitylogbackfillprogress");
