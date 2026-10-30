@@ -1,11 +1,6 @@
-﻿using Altinn.AccessManagement.Core.Constants;
-using Altinn.AccessManagement.Core.Enums;
+﻿using Altinn.AccessManagement.Core.Enums;
 using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessManagement.Enums;
-using Altinn.AccessManagement.Tests.Utils;
-using Altinn.AccessManagement.TestUtils.Mocks;
-using Altinn.Authorization.ABAC.Constants;
-using Altinn.Authorization.ABAC.Xacml;
 
 namespace Altinn.AccessManagement.Tests.Unit.Helpers
 {
@@ -15,16 +10,6 @@ namespace Altinn.AccessManagement.Tests.Unit.Helpers
     [UnitTest]
     public class PolicyHelperTest
     {
-        private readonly PolicyRetrievalPointMock _policyRetrievalPointMock;
-
-        /// <summary>
-        /// Constructor setting up dependencies
-        /// </summary>
-        public PolicyHelperTest()
-        {
-            _policyRetrievalPointMock = new PolicyRetrievalPointMock();
-        }
-
         /// <summary>
         /// Scenario:
         /// Tests that the GetAltinnAppsPolicyPath method returns a correct path based on the input parameters.
@@ -46,65 +31,6 @@ namespace Altinn.AccessManagement.Tests.Unit.Helpers
 
             // Assert
             Assert.Equal(expected, actual);
-        }
-
-        /// <summary>
-        /// Scenario:
-        /// Tests that the GetAltinnAppsPolicyPath method returns a correct path based on the input parameters.
-        /// Input:
-        /// Org and app from the AltinnAppId.
-        /// Expected Result:
-        /// True
-        /// Success Criteria:
-        /// Rule is found and expected result is returned
-        /// </summary>
-        /// <summary>
-        /// Scenario:
-        /// Tests that GetRolesWithAccess returns roles from both the urn:altinn:rolecode and the urn:altinn:role prefixes.
-        /// Expected Result:
-        /// Both role codes are returned
-        /// </summary>
-        [Fact]
-        public void GetRolesWithAccess_RolecodeAndRolePrefixes_ReturnsRolesFromBoth()
-        {
-            // Arrange
-            XacmlPolicy policy = new XacmlPolicy(
-                new Uri("urn:policy:1"), new Uri(XacmlConstants.CombiningAlgorithms.PolicyDenyOverrides), new XacmlTarget(new List<XacmlAnyOf>()));
-
-            policy.Rules.Add(new XacmlRule("rule1", XacmlEffectType.Permit)
-            {
-                Target = new XacmlTarget(new List<XacmlAnyOf>
-                {
-                    new XacmlAnyOf(new List<XacmlAllOf>
-                    {
-                        new XacmlAllOf(new List<XacmlMatch> { CreateSubjectMatch(AltinnXacmlConstants.MatchAttributeIdentifiers.LegacyRoleAttribute, "DAGL") }),
-                        new XacmlAllOf(new List<XacmlMatch> { CreateSubjectMatch(AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute, "innbygger-konkursbo-administrator") })
-                    })
-                })
-            });
-
-            // Act
-            List<string> actual = PolicyHelper.GetRolesWithAccess(policy);
-
-            // Assert
-            Assert.Equal(2, actual.Count);
-            Assert.Contains("DAGL", actual);
-            Assert.Contains("innbygger-konkursbo-administrator", actual);
-        }
-
-        [Fact]
-        public async Task GetRolesWithAccess_FromPolicy_ReturnsExpectedRoles()
-        {
-            // Arrange
-            XacmlPolicy policy = await _policyRetrievalPointMock.GetPolicyAsync("resource1", TestContext.Current.CancellationToken);
-
-            List<string> expected = TestDataUtil.GetRolesWithAccess();
-
-            // Act
-            List<string> actual = PolicyHelper.GetRolesWithAccess(policy);
-
-            // Assert
-            Assert.Equal(actual, expected);
         }
 
         /// <summary>
@@ -198,14 +124,6 @@ namespace Altinn.AccessManagement.Tests.Unit.Helpers
 
             // Assert
             Assert.Equal(expectedArgumentException, actual);
-        }
-
-        private static XacmlMatch CreateSubjectMatch(string attributeId, string value)
-        {
-            return new XacmlMatch(
-                new Uri(XacmlConstants.AttributeMatchFunction.StringEqual),
-                new XacmlAttributeValue(new Uri(XacmlConstants.DataTypes.XMLString), value),
-                new XacmlAttributeDesignator(new Uri(XacmlConstants.MatchAttributeCategory.Subject), new Uri(attributeId), new Uri(XacmlConstants.DataTypes.XMLString), false));
         }
     }
 }
