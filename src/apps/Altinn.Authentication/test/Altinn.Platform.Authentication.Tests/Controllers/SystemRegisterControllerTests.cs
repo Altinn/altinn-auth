@@ -8,6 +8,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using Altinn.Authentication.Tests.Mocks;
 using Altinn.Authorization.ProblemDetails;
@@ -252,10 +253,11 @@ namespace Altinn.Platform.Authentication.Tests.Controllers
             Assert.Equal(System.Net.HttpStatusCode.BadRequest, response.StatusCode);
             AltinnValidationProblemDetails? problemDetails = await response.Content.ReadFromJsonAsync<AltinnValidationProblemDetails>();
             Assert.NotNull(problemDetails);
-            Assert.Single(problemDetails.Errors);
+            Assert.Equal(2, problemDetails.Errors.Count);
             AltinnValidationError error = problemDetails.Errors.Single(e => e.ErrorCode == ValidationErrors.SystemRegister_ResourceId_InvalidFormat.ErrorCode);
             Assert.Equal("/registersystemrequest/rights/resource", error.Paths.Single(p => p.Equals("/registersystemrequest/rights/resource")));
             Assert.Equal(ValidationErrors.SystemRegister_ResourceId_InvalidFormat.Title, error.Title);
+            Assert.Contains(problemDetails.Errors, e => e.ErrorCode == ValidationErrors.SystemRegister_Right_MustHaveOneResource.ErrorCode);
         }
 
         [Fact]
@@ -284,7 +286,8 @@ namespace Altinn.Platform.Authentication.Tests.Controllers
             Assert.Equal(System.Net.HttpStatusCode.BadRequest, response.StatusCode);
             AltinnValidationProblemDetails? problemDetails = await response.Content.ReadFromJsonAsync<AltinnValidationProblemDetails>();
             Assert.NotNull(problemDetails);
-            Assert.Equal(2, problemDetails.Errors.Count);
+            Assert.Equal(3, problemDetails.Errors.Count);
+            Assert.Contains(problemDetails.Errors, e => e.ErrorCode == ValidationErrors.SystemRegister_Right_MustHaveOneResource.ErrorCode);
             AltinnValidationError error = problemDetails.Errors.Single(e => e.ErrorCode == ValidationErrors.SystemRegister_ResourceId_NotDelegable.ErrorCode);
             Assert.Equal("/registersystemrequest/rights/resource", error.Paths.Single(p => p.Equals("/registersystemrequest/rights/resource")));
             Assert.Equal(ValidationErrors.SystemRegister_ResourceId_NotDelegable.Title, error.Title);
@@ -765,6 +768,39 @@ namespace Altinn.Platform.Authentication.Tests.Controllers
                 Assert.Equal("/registersystemrequest/rights/resource", error.Paths.Single(p => p.Equals("/registersystemrequest/rights/resource")));
                 Assert.Equal(ValidationErrors.SystemRegister_ResourceId_Duplicates.Title, error.Title);
             }
+        }
+
+        // Create and both updates share one validation, so create covers all three
+        [Fact]
+        public async Task SystemRegister_Create_RightWithTwoResources_BadRequest()
+        {
+            HttpClient client = GetAuthenticatedClient(Admin, ValidOrg);
+            HttpResponseMessage response = await SystemRegisterTestHelper.CreateSystemRegister(client, "Data/SystemRegister/Json/SystemRegister2RightsSubResource.json");
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            AltinnValidationProblemDetails? problemDetails = await response.Content.ReadFromJsonAsync<AltinnValidationProblemDetails>();
+            Assert.NotNull(problemDetails);
+            AltinnValidationError error = Assert.Single(problemDetails.Errors);
+            Assert.Equal(ValidationErrors.SystemRegister_Right_MustHaveOneResource.ErrorCode, error.ErrorCode);
+            Assert.Contains("/registersystemrequest/rights/resource", error.Paths);
+        }
+
+        [Fact]
+        public async Task SystemRegister_Create_AccessPackageAndRightWithNoResource_Success()
+        {
+            HttpClient client = GetAuthenticatedClient(Admin, ValidOrg);
+
+            // A Right with no attribute, as sent by systems that only use access packages
+            JsonNode createRequest = JsonNode.Parse(await File.ReadAllTextAsync("Data/SystemRegister/Json/SystemRegisterWithAccessPackage.json"))!;
+            createRequest["rights"] = JsonNode.Parse("""[ { "resource": [] } ]""");
+
+            HttpRequestMessage request = new(HttpMethod.Post, "/authentication/api/v1/systemregister/vendor/")
+            {
+                Content = new StringContent(createRequest.ToJsonString(), Encoding.UTF8, "application/json")
+            };
+            HttpResponseMessage response = await client.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         }
 
         [Fact]

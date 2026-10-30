@@ -505,6 +505,13 @@ public class SystemRegisterController : ControllerBase
             ]);
         }
 
+        if (AuthenticationHelper.HasMalformedRight(rights))
+        {
+            errors.Add(ValidationErrors.SystemRegister_Right_MustHaveOneResource, [
+                ErrorPathConstant.RESOURCERIGHTS
+            ]);
+        }
+
         return errors;
     }
 

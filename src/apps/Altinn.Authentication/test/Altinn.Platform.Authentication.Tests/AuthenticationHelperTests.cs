@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using Altinn.Authentication.Core.Problems;
 using Altinn.Platform.Authentication.Core.Models;
 using Altinn.Platform.Authentication.Core.SystemRegister.Models;
@@ -11,6 +12,34 @@ namespace Altinn.Platform.Authentication.Tests
 {
     public class AuthenticationHelperTests
     {
+        public static TheoryData<List<Right>?, bool> RightsAndWhetherOneIsMalformed => new()
+        {
+            { null, false },
+            { [], false },
+            { [CreateRight()], false },
+            { [CreateRight(("urn:altinn:resource", "a"))], false },
+            { [CreateRight(("urn:altinn:resource", "a")), CreateRight(("urn:altinn:resource", "b"))], false },
+            { [CreateRight(), CreateRight(("urn:altinn:resource", "a"))], false },
+
+            // No Right, two resources, another id, a resource next to another id, a blank value
+            { [null!], true },
+            { [CreateRight(("urn:altinn:resource", "a"), ("urn:altinn:resource", "b"))], true },
+            { [CreateRight(("urn:altinn:org", "ttd"))], true },
+            { [CreateRight(("urn:altinn:resource", "a"), ("urn:altinn:org", "ttd"))], true },
+            { [CreateRight(("urn:altinn:resource", " "))], true },
+
+            // One bad Right is enough
+            { [CreateRight(("urn:altinn:resource", "a")), CreateRight(("urn:altinn:app", "a"))], true },
+            { [CreateRight(), CreateRight(("urn:altinn:resource", "a"), ("urn:altinn:resource", "b"))], true },
+        };
+
+        [Theory]
+        [MemberData(nameof(RightsAndWhetherOneIsMalformed))]
+        public void HasMalformedRight_ReturnsWhetherAnyRightIsNeitherEmptyNorOneResource(List<Right>? rights, bool expected)
+        {
+            Assert.Equal(expected, AuthenticationHelper.HasMalformedRight(rights));
+        }
+
         [Fact]
         public void HasDuplicateRights_NoDuplicates_ReturnsFalse()
         {
@@ -400,5 +429,10 @@ namespace Altinn.Platform.Authentication.Tests
             Assert.False(ok);
             Assert.Empty(values);
         }
+
+        private static Right CreateRight(params (string Id, string Value)[] attributes) => new()
+        {
+            Resource = [.. attributes.Select(attribute => new AttributePair { Id = attribute.Id, Value = attribute.Value })]
+        };
     }
 }

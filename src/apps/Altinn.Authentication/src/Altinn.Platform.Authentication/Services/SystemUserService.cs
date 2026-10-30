@@ -675,6 +675,12 @@ namespace Altinn.Platform.Authentication.Services
         /// <inheritdoc/>
         public async Task<Result<bool>> ValidateRights(List<Right> rights, RegisteredSystemResponse systemInfo, CancellationToken cancellationToken = default)
         {
+            // Checked before matching, so a malformed Right gets its own error
+            if (AuthenticationHelper.HasMalformedRight(rights))
+            {
+                return Problem.Rights_MustHaveOneResource;
+            }
+
             if ((rights.Count > 0 && systemInfo.Rights is null) || (rights.Count > systemInfo.Rights!.Count))
             {
                 return Problem.Rights_NotFound_Or_NotDelegable;
@@ -683,6 +689,12 @@ namespace Altinn.Platform.Authentication.Services
             bool[] validate = new bool[rights.Count];
             foreach (var requestRight in rights)
             {
+                // A Right with no resource names nothing the System can give
+                if (requestRight.Resource is [])
+                {
+                    return Problem.Rights_NotFound_Or_NotDelegable;
+                }
+
                 // Find the first matching Right in the list of Rights, with a matching TOP level AttributePair in the Resource list
                 List<Right> topMatchesInSystem = FindListOfMatchingRightsOnTopAttribute(requestRight.Resource[0], systemInfo.Rights);
                 if (topMatchesInSystem.Count == 0)
