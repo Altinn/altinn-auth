@@ -23,6 +23,11 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
             return await GetResource(id, null, cancellationToken);
         }
 
+        public Task<DateTimeOffset?> GetResourceDeletedAt(string id, CancellationToken cancellationToken = default)
+        {
+            return Task.FromResult<DateTimeOffset?>(null);
+        }
+
         public async Task<ServiceResource?> GetResource(string id, int? versionID, CancellationToken cancellationToken = default)
         {
             string? resourcePath = GetResourcePath(id);

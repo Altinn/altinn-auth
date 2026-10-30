@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using Altinn.Authorization.ProblemDetails;
 using Altinn.ResourceRegistry.Core;
+using Altinn.ResourceRegistry.Core.Constants;
 using Altinn.ResourceRegistry.Core.Errors;
 using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Persistence.Extensions;
@@ -127,13 +128,50 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
 
         try
         {
-            await using (var cmd1 = new NpgsqlCommand(
+            // A deleted resource keeps its resource_identifier row (see DeleteResource), so reuse it
+            // when the identifier is created again. The policy was removed with the resource, so the
+            // revived row starts without one, like a new resource, and any subjects still left from
+            // the old policy (resources deleted before subjects were cleared on delete) are removed.
+            long revived;
+            await using (var revive = new NpgsqlCommand(
                 @"
-                INSERT INTO resourceregistry.resource_identifier(identifier, created)
-                VALUES (@identifier, now());",
+                WITH revived AS (
+                    UPDATE resourceregistry.resource_identifier
+                    SET deleted = false,
+                        created = now(),
+                        policy_uploaded = false,
+                        global_change_id = resourceregistry.tx_nextval('resourceregistry.resource_change_id_seq'),
+                        last_changed = now()
+                    WHERE identifier = @identifier
+                      AND deleted
+                    RETURNING identifier
+                ), subjects AS (
+                    UPDATE resourceregistry.resourcesubjects
+                    SET deleted = true,
+                        updated_at = now()
+                    WHERE resource_urn = @resource_urn
+                      AND deleted = false
+                      AND EXISTS (SELECT 1 FROM revived)
+                )
+                SELECT count(*) FROM revived;",
                 conn,
                 tx))
             {
+                revive.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, resource.Identifier);
+                revive.Parameters.AddWithValue("resource_urn", NpgsqlDbType.Text, ResourceUrn(resource.Identifier));
+                revived = (long)(await revive.ExecuteScalarAsync(cancellationToken))!;
+            }
+
+            // Otherwise insert a new row. For a live resource this raises the unique violation that
+            // the caller reports as a conflict.
+            if (revived == 0)
+            {
+                await using var cmd1 = new NpgsqlCommand(
+                    @"
+                    INSERT INTO resourceregistry.resource_identifier(identifier, created)
+                    VALUES (@identifier, now());",
+                    conn,
+                    tx);
                 cmd1.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, resource.Identifier);
                 await cmd1.ExecuteNonQueryAsync(cancellationToken);
             }
@@ -172,8 +210,8 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
                 }
             }
 
-            // The new resource_identifier row gets its global_change_id and last_changed from the
-            // column defaults (tx_nextval and now()).
+            // A new resource_identifier row gets its global_change_id and last_changed from the
+            // column defaults (tx_nextval and now()); a revived row got them in the update above.
             await tx.CommitAsync(cancellationToken);
             return serviceResource;
         }
@@ -193,7 +231,8 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
     {
         // Deleting a resource removes all its version rows; the latest version is returned. The
         // resource_identifier row is kept and marked deleted, so the change feed can exclude the
-        // resource (and expose the deletion later if needed).
+        // resource (and expose the deletion later if needed). The subjects from its policy are
+        // soft-deleted, so consumers of the updated subjects see them removed.
         const string QUERY = /*strpsql*/@"
             WITH del AS (
                 DELETE FROM resourceregistry.resources
@@ -205,6 +244,13 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
                     global_change_id = resourceregistry.tx_nextval('resourceregistry.resource_change_id_seq'),
                     last_changed = now()
                 WHERE ri.identifier = @identifier
+                  AND EXISTS (SELECT 1 FROM del)
+            ), subjects AS (
+                UPDATE resourceregistry.resourcesubjects
+                SET deleted = true,
+                    updated_at = now()
+                WHERE resource_urn = @resource_urn
+                  AND deleted = false
                   AND EXISTS (SELECT 1 FROM del)
             )
             SELECT del.identifier, ri.created, del.modified, del.serviceresourcejson, del.version_id
@@ -218,6 +264,7 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
         {
             await using var pgcom = _conn.CreateCommand(QUERY);
             pgcom.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, id);
+            pgcom.Parameters.AddWithValue("resource_urn", NpgsqlDbType.Text, ResourceUrn(id));
 
             var serviceResource = await pgcom.ExecuteEnumerableAsync(cancellationToken)
                 .Select(GetServiceResource)
@@ -231,6 +278,39 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
             throw;
         }
     }
+
+    /// <inheritdoc/>
+    public async Task<DateTimeOffset?> GetResourceDeletedAt(string id, CancellationToken cancellationToken = default)
+    {
+        // last_changed is set when the resource is deleted, and nothing changes a deleted row
+        // until the identifier is created again.
+        const string QUERY = /*strpsql*/@"
+            SELECT last_changed
+            FROM resourceregistry.resource_identifier
+            WHERE identifier = @identifier
+              AND deleted";
+
+        try
+        {
+            await using var pgcom = _conn.CreateCommand(QUERY);
+            pgcom.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, id);
+
+            return await pgcom.ExecuteScalarAsync(cancellationToken) switch
+            {
+                DateTime deletedAt => new DateTimeOffset(deletedAt, TimeSpan.Zero),
+                DateTimeOffset deletedAt => deletedAt,
+                _ => null,
+            };
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Authorization // ResourceRegistryRepository // GetResourceDeletedAt // Exception");
+            throw;
+        }
+    }
+
+    private static string ResourceUrn(string id)
+        => $"{AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute}:{id}";
 
     /// <inheritdoc/>
     public async Task<ServiceResource?> GetResource(string id, int? versionId, CancellationToken cancellationToken = default)

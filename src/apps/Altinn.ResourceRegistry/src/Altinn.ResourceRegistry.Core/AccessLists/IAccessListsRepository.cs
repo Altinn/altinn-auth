@@ -36,6 +36,17 @@ public interface IAccessListsRepository
         CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Get all access lists that are connected to a given resource.
+    /// </summary>
+    /// <param name="resourceIdentifier">The resource identifier.</param>
+    /// <param name="connectedBefore">Only include connections created at or before this time.</param>
+    /// <param name="cancellationToken">A <see cref="CancellationToken"/>.</param>
+    Task<IReadOnlyList<AccessListInfo>> GetAccessListsByResource(
+        string resourceIdentifier,
+        DateTimeOffset connectedBefore,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Lookup access list info by id.
     /// </summary>
     /// <param name="id">The id</param>
