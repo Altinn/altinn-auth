@@ -287,7 +287,7 @@ namespace Altinn.Platform.Authentication.Controllers
 
             OidcSession? session = await _oidcServerService.HandleSessionRefresh(principal, cancellationToken);
 
-            _eventLog.CreateAuthenticationEventAsync(_featureManager, serializedToken, AuthenticationEventType.Refresh, HttpContext.Connection.RemoteIpAddress);
+            await _eventLog.CreateAuthenticationEventAsync(_featureManager, serializedToken, AuthenticationEventType.Refresh, HttpContext.Connection.RemoteIpAddress);
             _logger.LogInformation("End of refreshing token");
 
             // For test we return cookie also as a cookie
