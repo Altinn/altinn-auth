@@ -7,7 +7,7 @@ spec:
     name: authn-api
   groupObjectId: fake
   externalSecrets: true
-  sku: Premium
+  sku: standard
   publicNetworkAccess: Disabled
   softDeleteRetentionDays: 30
   purgeProtectionEnabled: true
