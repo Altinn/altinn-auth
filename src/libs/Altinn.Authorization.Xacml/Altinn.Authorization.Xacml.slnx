@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/deps/" />
+  <Folder Name="/deps/ABAC/">
+    <Project Path="../../pkgs/Altinn.Authorization.ABAC/src/Altinn.Authorization.ABAC/Altinn.Authorization.ABAC.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/Altinn.Authorization.Xacml/Altinn.Authorization.Xacml.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/Altinn.Authorization.Xacml.Tests/Altinn.Authorization.Xacml.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -4,7 +4,6 @@
     <PackageReference Include="Altinn.Authorization.ModelUtils" />
     <PackageReference Include="CommunityToolkit.Diagnostics" />
     <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" />
-    <PackageReference Include="Altinn.Authorization.ABAC" />
     <PackageReference Include="Altinn.Authorization.ProblemDetails.Abstractions" />
     <PackageReference Include="Altinn.Common.AccessTokenClient" />
     <PackageReference Include="Altinn.Platform.Storage.Interface" />
@@ -17,6 +16,10 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
     <PackageReference Include="Nerdbank.Streams" />
     <PackageReference Include="Npgsql" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\libs\Altinn.Authorization.Xacml\src\Altinn.Authorization.Xacml\Altinn.Authorization.Xacml.csproj" />
   </ItemGroup>
 
   <ItemGroup>

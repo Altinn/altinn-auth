@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
-using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
@@ -18,6 +17,7 @@ using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.ProblemDetails;
+using Altinn.Authorization.Xacml.Constants;
 using Altinn.Urn;
 using Altinn.Urn.Json;
 using Microsoft.EntityFrameworkCore;

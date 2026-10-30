@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Enums;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
@@ -7,6 +6,7 @@ using Altinn.AccessManagement.Models;
 using Altinn.AccessManagement.Tests.Integration.Controllers;
 using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.Authorization.ABAC.Constants;
+using Altinn.Authorization.Xacml.Constants;
 using Altinn.Platform.Register.Models;
 
 namespace Altinn.AccessManagement.Tests.Utils

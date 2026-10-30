@@ -11,6 +11,7 @@ using Altinn.Authorization.Api.Contracts.ResourceRegistry;
 using Altinn.Authorization.Enums;
 using Altinn.Authorization.Models.ResourceRegistry;
 using Altinn.Authorization.ProblemDetails;
+using Altinn.Authorization.Xacml.Constants;
 using Altinn.Platform.Authenticaiton.Extensions;
 using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Constants;
@@ -680,6 +681,15 @@ namespace Altinn.Platform.Authorization.Controllers
             input.ViaPartyOrganizationNumber = resourceAttributes.ViaPartyOrganizationNumber;
         };
 
+        /// <summary>
+        /// Authorizes the request against the delegations the subject has received for the app or resource,
+        /// as reported by Access Management.
+        /// </summary>
+        /// <param name="decisionRequest">The decision request</param>
+        /// <param name="resourcePolicy">The policy of the app or resource the request is for</param>
+        /// <param name="accessRestriction">Restricts which kinds of delegation are considered</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>The decision based on delegations; Indeterminate if the request lacks attributes, NotApplicable if no delegation applies</returns>
         private async Task<XacmlContextResponse> AuthorizeUsingDelegations(XacmlContextRequest decisionRequest, XacmlPolicy resourcePolicy, AccessRestriction accessRestriction = AccessRestriction.None, CancellationToken cancellationToken = default)
         {
             var resourceAttributes = _delegationContextHandler.GetResourceAttributes(decisionRequest);
@@ -707,7 +717,7 @@ namespace Altinn.Platform.Authorization.Controllers
             {
                 delegations = await GetAllCachedDelegationChanges(cancellationToken, WithDefaultGetAllDelegationChangesInput(resourceAttributes, decisionRequest, accessRestriction), input => input.Resource = new List<AttributeMatchDto>()
                 {
-                    new(AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistry, resourceAttributes.ResourceRegistryId)
+                    new(AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute, resourceAttributes.ResourceRegistryId)
                 });
             }
 
@@ -758,7 +768,7 @@ namespace Altinn.Platform.Authorization.Controllers
                 $"s:{delegation.Subject.Id}:{delegation.Subject.Value}",
                 $"p:{delegation.Party.Value}",
                 $"a:{delegation.Resource.FirstOrDefault(r => r.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute)?.Value}/{delegation.Resource.FirstOrDefault(r => r.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute)?.Value}",
-                $"r:{delegation.Resource.FirstOrDefault(r => r.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistry)?.Value}",
+                $"r:{delegation.Resource.FirstOrDefault(r => r.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute)?.Value}",
                 $"ac:{delegation.AccessRestriction}",
                 $"vp:{delegation.ViaPartyOrganizationNumber}");
 

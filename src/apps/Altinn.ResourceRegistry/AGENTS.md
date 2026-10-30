@@ -18,6 +18,8 @@ Routes are under `resourceregistry/api/v1/`, except `ResourceV2Controller` at `r
 
 Four source projects: `Altinn.ResourceRegistry` (the host and its controllers for resources, resource owners, access lists and access-list memberships, plus a v2 resource controller), `.Core`, `.Persistence` and `.Integration`. Tests are `Altinn.ResourceRegistry.Tests` and `Altinn.ResourceRegistry.Persistence.Tests`, with shared helpers in `Altinn.ResourceRegistry.TestUtils` and API tests under `test/Bruno`.
 
+The Altinn XACML constants (`AltinnXacmlConstants`) and the policy helpers this vertical shares with Authorization and Access Management (`XacmlPolicyHelper`) come from `src/libs/Altinn.Authorization.Xacml`, which `.Core` references as a project. ABAC therefore comes from `src/pkgs` as a project, like in the other verticals, rather than as a NuGet package. Keep vertical-specific policy code, such as `EnsureValidPolicy`, in `Core/Helpers/PolicyHelper.cs`.
+
 Decisions for this vertical are in [`docs/adr/`](docs/adr/README.md). Read [ADR-0001](docs/adr/0001-resource-timestamps.md), still *Proposed*, before changing how `createdAt` and `updatedAt` are stored or returned.
 
 ## Landmines

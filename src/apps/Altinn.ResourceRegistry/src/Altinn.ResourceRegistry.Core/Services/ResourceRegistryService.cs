@@ -4,6 +4,8 @@ using Altinn.AccessMgmt.Core.Utils.Helper;
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.ProblemDetails;
+using Altinn.Authorization.Xacml;
+using Altinn.Authorization.Xacml.Constants;
 using Altinn.Platform.Storage.Interface.Models;
 using Altinn.ResourceRegistry.Core.Constants;
 using Altinn.ResourceRegistry.Core.Exceptions;
@@ -166,7 +168,7 @@ namespace Altinn.ResourceRegistry.Core.Services
             }
 
             policyContent.Position = 0;
-            XacmlPolicy policy = await PolicyHelper.ParsePolicy(policyContent);
+            XacmlPolicy policy = await XacmlPolicyHelper.ParsePolicyAsync(policyContent, cancellationToken);
             IDictionary<string, ICollection<string>> subjectAttributes = policy.GetAttributeDictionaryByCategory(XacmlConstants.MatchAttributeCategory.Subject);
             ServiceResource virtualAppResource = new ServiceResource()
             {
@@ -454,6 +456,12 @@ namespace Altinn.ResourceRegistry.Core.Services
             return rights;
         }
 
+        /// <summary>
+        /// Gets and parses the policy for a resource, or for an Altinn app when the identifier has the app resource prefix.
+        /// </summary>
+        /// <param name="resourceIdentifer">The resource identifier, or <c>app_{org}_{app}</c> for an app</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>The parsed policy, or <c>null</c> if no policy is found</returns>
         private async Task<XacmlPolicy> GetXacmlPolicy(string resourceIdentifer, CancellationToken cancellationToken)
         {
             Stream policyContent = null;
@@ -480,7 +488,7 @@ namespace Altinn.ResourceRegistry.Core.Services
             }
 
             policyContent.Position = 0;
-            XacmlPolicy policy = await PolicyHelper.ParsePolicy(policyContent);
+            XacmlPolicy policy = await XacmlPolicyHelper.ParsePolicyAsync(policyContent, cancellationToken);
             return policy;
         }
     }

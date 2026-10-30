@@ -1,0 +1,263 @@
+﻿namespace Altinn.Authorization.Xacml.Constants;
+
+/// <summary>
+/// Altinn specific XACML constants used for urn identifiers and attributes
+/// </summary>
+public static class AltinnXacmlConstants
+{
+    /// <summary>
+    /// Altinn specific prefixes
+    /// </summary>
+    public static class Prefixes
+    {
+        /// <summary>
+        /// The Policy Id prefix.
+        /// </summary>
+        public const string PolicyId = "urn:altinn:policyid:";
+
+        /// <summary>
+        /// The Obligation Id prefix.
+        /// </summary>
+        public const string ObligationId = "urn:altinn:obligationid:";
+
+        /// <summary>
+        /// The Obligation Assignment Id prefix.
+        /// </summary>
+        public const string ObligationAssignmentid = "urn:altinn:obligation-assignmentid:";
+    }
+
+    /// <summary>
+    /// Match attribute identifiers
+    /// </summary>
+    public static class MatchAttributeIdentifiers
+    {
+        /// <summary>
+        /// Org attribute match identifier
+        /// </summary>
+        public const string OrgAttribute = "urn:altinn:org";
+
+        /// <summary>
+        /// App attribute match identifier
+        /// </summary>
+        public const string AppAttribute = "urn:altinn:app";
+
+        /// <summary>
+        /// Instance attribute match identifier
+        /// </summary>
+        public const string InstanceAttribute = "urn:altinn:instance-id";
+
+        /// <summary>
+        /// Correspondence instance attribute match identifier
+        /// </summary>
+        public const string CorrespondenceInstanceAttribute = "urn:altinn:correspondence-id";
+
+        /// <summary>
+        /// Resource Registry instance attribute match identifier
+        /// </summary>
+        public const string ResourceInstanceAttribute = "urn:altinn:resource:instance-id";
+
+        /// <summary>
+        /// App resource attribute match identifier
+        /// </summary>
+        public const string AppResourceAttribute = "urn:altinn:appresource";
+
+        /// <summary>
+        /// Task attribute match identifier
+        /// </summary>
+        public const string TaskAttribute = "urn:altinn:task";
+
+        /// <summary>
+        /// End-event attribute match identifier
+        /// </summary>
+        public const string EndEventAttribute = "urn:altinn:end-event";
+
+        /// <summary>
+        /// Party Id attribute match identifier
+        /// </summary>
+        public const string PartyAttribute = "urn:altinn:partyid";
+
+        /// <summary>
+        /// Party uuid attribute match identifier
+        /// </summary>
+        public const string PartyUuidAttribute = "urn:altinn:party:uuid";
+
+        /// <summary>
+        /// Party type attribute match identifier
+        /// </summary>
+        public const string PartyTypeAttribute = "urn:altinn:partytype";
+
+        /// <summary>
+        /// User Id attribute match identifier
+        /// </summary>
+        public const string UserAttribute = "urn:altinn:userid";
+
+        /// <summary>
+        /// Role Code attribute match identifier
+        /// </summary>
+        public const string LegacyRoleAttribute = "urn:altinn:rolecode";
+
+        /// <summary>
+        /// Role attribute match identifier
+        /// </summary>
+        public const string RoleAttribute = "urn:altinn:role";
+
+        /// <summary>
+        /// Digitalt Dødsbo Role Code Attribute match identifier
+        /// </summary>
+        public const string OedRoleAttribute = "urn:digitaltdodsbo:rolecode";
+
+        /// <summary>
+        /// External CCR Role Code attribute match identifier
+        /// </summary>
+        public const string ExternalCcrRoleAttribute = "urn:altinn:external-role:ccr";
+
+        /// <summary>
+        /// External CRA Role Code attribute match identifier
+        /// </summary>
+        public const string ExternalCraRoleAttribute = "urn:altinn:external-role:cra";
+
+        /// <summary>
+        /// Access package attribute match identifier
+        /// </summary>
+        public const string AccessPackageAttribute = "urn:altinn:accesspackage";
+
+        /// <summary>
+        /// Access list attribute match identifier
+        /// </summary>
+        public const string AccessListAttribute = "urn:altinn:access-list";
+
+        /// <summary>
+        /// Resource Registry attribute match identifier
+        /// </summary>
+        public const string ResourceRegistryAttribute = "urn:altinn:resource";
+
+        /// <summary>
+        /// Resource delegation urn prefix used in Xacml policy rule subjects to identify rights the resourceId value of the attribute, is allowed to perform delegation of.
+        /// Also used as the delegation attribute match identifier for user controlled delegation.
+        /// </summary>
+        public const string ResourceDelegationAttribute = "urn:altinn:resource:delegation";
+
+        /// <summary>
+        /// Organization name
+        /// </summary>
+        public const string OrganizationName = "urn:altinn:organization:name";
+
+        /// <summary>
+        /// Organization number attribute match identifier
+        /// </summary>
+        public const string OrganizationNumberAttribute = "urn:altinn:organizationnumber";
+
+        /// <summary>
+        /// Altinn 2 service code attribute match identifier
+        /// </summary>
+        public const string ServiceCodeAttribute = "urn:altinn:servicecode";
+
+        /// <summary>
+        /// Altinn 2 service edition code attribute match identifier
+        /// </summary>
+        public const string ServiceEditionCodeAttribute = "urn:altinn:serviceeditioncode";
+
+        /// <summary>
+        /// Person uuid
+        /// </summary>
+        public const string PersonUuid = "urn:altinn:person:uuid";
+
+        /// <summary>
+        /// National identity number for a person
+        /// </summary>
+        public const string PersonId = "urn:altinn:person:identifier-no";
+
+        /// <summary>
+        /// Last name of a person
+        /// </summary>
+        public const string PersonLastName = "urn:altinn:person:lastname";
+
+        /// <summary>
+        /// Person username
+        /// </summary>
+        public const string PersonUserName = "urn:altinn:person:username";
+
+        /// <summary>
+        /// Enterprise user uuid
+        /// </summary>
+        public const string EnterpriseUserUuid = "urn:altinn:enterpriseuser:uuid";
+
+        /// <summary>
+        /// Enterprise user username
+        /// </summary>
+        public const string EnterpriseUserName = "urn:altinn:enterpriseuser:username";
+
+        /// <summary>
+        /// Organization uuid
+        /// </summary>
+        public const string OrganizationUuid = "urn:altinn:organization:uuid";
+
+        /// <summary>
+        /// Organization number
+        /// </summary>
+        public const string OrganizationId = "urn:altinn:organization:identifier-no";
+
+        /// <summary>
+        /// SystemUser uuid
+        /// </summary>
+        public const string SystemUserUuid = "urn:altinn:systemuser:uuid";
+
+        /// <summary>
+        /// Email-user uuid
+        /// </summary>
+        public const string IdPortenEmail = "urn:altinn:person:idporten-email";
+
+        /// <summary>
+        /// Legacy self-identified user
+        /// </summary>
+        public const string LegacySelfIdentified = "urn:altinn:person:legacy-selfidentified";
+
+        /// <summary>
+        /// Attribute Matching Identity.
+        /// </summary>
+        public const string ActionId = "urn:oasis:names:tc:xacml:1.0:action:action-id";
+
+        /// <summary>
+        /// Get the value scope
+        /// </summary>
+        public const string Scope = "urn:scope";
+
+        /// <summary>
+        /// Get the value sessionid
+        /// </summary>
+        public const string SessionId = "urn:altinn:sessionid";
+
+        /// <summary>
+        /// Gets the value action id for request consent
+        /// </summary>
+        public const string RequestconsentAction = "requestconsent";
+
+        /// <summary>
+        /// Via-party organization (Norwegian organization number) attribute match identifier.
+        /// Identifies the organization through which client-delegated access was received.
+        /// </summary>
+        public const string ViaPartyOrganizationIdentifierNoAttribute = "urn:altinn:via-party:organization:identifier-no";
+
+        /// <summary>
+        /// access restriction attribute match identifier. Controls how client-delegated access is
+        /// considered when authorizing the request. Specified per request in the Resource category.
+        /// </summary>
+        public const string AccessRestrictionAttribute = "urn:altinn:authorization:access-restriction";
+    }
+
+    /// <summary>
+    /// Attribute categories.
+    /// </summary>
+    public static class MatchAttributeCategory
+    {
+        /// <summary>
+        /// The minimum authentication level category.
+        /// </summary>
+        public const string MinimumAuthenticationLevel = "urn:altinn:minimum-authenticationlevel";
+
+        /// <summary>
+        /// The minimum authentication level for organization category
+        /// </summary>
+        public const string MinimumAuthenticationLevelOrg = "urn:altinn:minimum-authenticationlevel-org";
+    }
+}
