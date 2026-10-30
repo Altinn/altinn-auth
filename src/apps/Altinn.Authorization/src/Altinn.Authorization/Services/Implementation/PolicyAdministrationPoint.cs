@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using Altinn.Authorization.Xacml;
 using Altinn.Platform.Authorization.Helpers;
 using Altinn.Platform.Authorization.Repositories.Interface;
 using Altinn.Platform.Authorization.Services.Interface;
@@ -31,7 +32,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 throw new ArgumentException("The policy file can not be null");
             }
 
-            string filePath = PolicyHelper.GetAltinnAppsPolicyPath(org, app);
+            string filePath = XacmlPolicyHelper.GetAltinnAppsPolicyPath(org, app);
             Response<BlobContentInfo> response = await _policyRepository.WritePolicyAsync(filePath, fileStream);
 
             return response?.GetRawResponse()?.Status == (int)HttpStatusCode.Created;

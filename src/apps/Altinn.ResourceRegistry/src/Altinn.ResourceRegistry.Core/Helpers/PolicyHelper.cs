@@ -4,13 +4,13 @@ using System.Xml;
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Utils;
 using Altinn.Authorization.ABAC.Xacml;
+using Altinn.Authorization.Xacml;
 using Altinn.ResourceRegistry.Core.Constants;
-using Altinn.ResourceRegistry.Core.Extensions;
 using Altinn.ResourceRegistry.Core.Models;
 using Altinn.Urn;
 using Altinn.Urn.Json;
 using Nerdbank.Streams;
-using static Altinn.ResourceRegistry.Core.Constants.AltinnXacmlConstants;
+using static Altinn.Authorization.Xacml.Constants.AltinnXacmlConstants;
 
 namespace Altinn.ResourceRegistry.Core.Helpers
 {
@@ -83,75 +83,6 @@ namespace Altinn.ResourceRegistry.Core.Helpers
         }
 
         /// <summary>
-        /// Takes the file IO stream and parses the policy file to a XacmlPolicy <see cref="XacmlPolicy"/>
-        /// </summary>
-        /// <param name="stream">The file IO stream</param>
-        /// <returns>XacmlPolicy</returns>
-        public static async Task<XacmlPolicy> ParsePolicy(Stream stream)
-        {
-            MemoryStream memoryStreamPolicy = new MemoryStream();
-            await stream.CopyToAsync(memoryStreamPolicy);
-            memoryStreamPolicy.Position = 0;
-            return ParsePolicy(memoryStreamPolicy);
-        }
-
-        /// <summary>
-        /// Takes the memorystream and parses the policy file to a XacmlPolicy <see cref="XacmlPolicy"/>
-        /// </summary>
-        /// <param name="stream">The file IO stream</param>
-        /// <returns>XacmlPolicy</returns>
-        public static XacmlPolicy ParsePolicy(MemoryStream stream)
-        {
-            using XmlReader reader = XmlReader.Create(stream);
-            XacmlPolicy policy = XacmlParser.ParseXacmlPolicy(reader);
-            return policy;
-        }
-
-        /// <summary>
-        /// Gets the authentication level requirement from the obligation expression of the XacmlPolicy if specified 
-        /// </summary>
-        /// <param name="policy">The policy</param>
-        /// <returns>Minimum authentication level requirement</returns>
-        public static int GetMinimumAuthenticationLevelFromXacmlPolicy(XacmlPolicy policy)
-        {
-            foreach (XacmlObligationExpression oblExpr in policy.ObligationExpressions)
-            {
-                foreach (XacmlAttributeAssignmentExpression attrExpr in oblExpr.AttributeAssignmentExpressions)
-                {
-                    if (attrExpr.Category.OriginalString == AltinnXacmlConstants.MatchAttributeCategory.MinimumAuthenticationLevel &&
-                        attrExpr.Property is XacmlAttributeValue attrValue &&
-                        int.TryParse(attrValue.Value, out int minAuthLevel))
-                    {
-                        return minAuthLevel;
-                    }
-                }
-            }
-
-            return 0;
-        }
-
-        /// <summary>
-        /// Builds the policy path based on org and app names
-        /// </summary>
-        /// <param name="org">The organization name/identifier</param>
-        /// <param name="app">The altinn app name</param>
-        /// <returns></returns>
-        public static string GetAltinnAppsPolicyPath(string org, string app)
-        {
-            if (string.IsNullOrWhiteSpace(org))
-            {
-                throw new ArgumentException("Org was not defined");
-            }
-
-            if (string.IsNullOrWhiteSpace(app))
-            {
-                throw new ArgumentException("App was not defined");
-            }
-
-            return $"{org.AsFileName()}/{app.AsFileName()}/policy.xml";
-        }
-
-        /// <summary>
         /// Converts a XACML policy to a list of PolicyRule
         /// </summary>
         public static List<PolicyRule> ConvertToPolicyRules(XacmlPolicy xacmlPolicy)
@@ -208,29 +139,7 @@ namespace Altinn.ResourceRegistry.Core.Helpers
         /// <returns>Nested list of PolicyAttributeMatch models</returns>
         public static List<List<PolicyAttributeMatch>> GetRulePolicyAttributeMatchesForCategory(XacmlRule rule, string category)
         {
-            List<List<PolicyAttributeMatch>> ruleAttributeMatches = new();
-
-            foreach (XacmlAnyOf anyOf in rule.Target.AnyOf)
-            {
-                foreach (XacmlAllOf allOf in anyOf.AllOf)
-                {
-                    List<PolicyAttributeMatch> anyOfAttributeMatches = new();
-                    foreach (XacmlMatch xacmlMatch in allOf.Matches)
-                    {
-                        if (xacmlMatch.AttributeDesignator.Category.Equals(category))
-                        {
-                            anyOfAttributeMatches.Add(new PolicyAttributeMatch { Type = xacmlMatch.AttributeDesignator.AttributeId.OriginalString, Value = xacmlMatch.AttributeValue.Value });
-                        }
-                    }
-
-                    if (anyOfAttributeMatches.Any())
-                    {
-                        ruleAttributeMatches.Add(anyOfAttributeMatches);
-                    }
-                }
-            }
-
-            return ruleAttributeMatches;
+            return XacmlPolicyHelper.GetRulePolicyAttributeMatchesForCategory(rule, category, (type, value) => new PolicyAttributeMatch { Type = type, Value = value });
         }
 
         /// <summary>

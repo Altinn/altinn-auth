@@ -1,4 +1,5 @@
 ﻿using Altinn.Authorization.ABAC.Xacml;
+using Altinn.Authorization.Xacml;
 using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Helpers;
 using Altinn.Platform.Authorization.Models;
@@ -50,7 +51,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         /// <inheritdoc/>
         public async Task<XacmlPolicy> GetPolicyAsync(string org, string app)
         {
-            string policyPath = PolicyHelper.GetAltinnAppsPolicyPath(org, app);
+            string policyPath = XacmlPolicyHelper.GetAltinnAppsPolicyPath(org, app);
             return await GetPolicyInternalAsync(policyPath);
         }
 
@@ -101,7 +102,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         private static XacmlPolicy ParsePolicyDocument(byte[] policyDocument)
         {
             using MemoryStream stream = new MemoryStream(policyDocument, writable: false);
-            return PolicyHelper.ParsePolicy(stream);
+            return XacmlPolicyHelper.ParsePolicy(stream);
         }
 
         private void PutPolicyDocumentInCache(string cacheKey, byte[] policyDocument)

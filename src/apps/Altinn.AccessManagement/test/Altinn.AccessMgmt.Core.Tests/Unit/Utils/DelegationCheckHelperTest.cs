@@ -1,9 +1,9 @@
-﻿using Altinn.AccessManagement.Core.Constants;
-using Altinn.AccessManagement.Core.Enums.ResourceRegistry;
+﻿using Altinn.AccessManagement.Core.Enums.ResourceRegistry;
 using Altinn.AccessMgmt.Core.Utils.Helper;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
+using Altinn.Authorization.Xacml.Constants;
 
 namespace Altinn.AccessMgmt.Core.Tests.Unit.Utils;
 

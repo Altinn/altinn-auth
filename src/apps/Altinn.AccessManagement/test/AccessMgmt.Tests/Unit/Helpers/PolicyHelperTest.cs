@@ -12,29 +12,6 @@ namespace Altinn.AccessManagement.Tests.Unit.Helpers
     {
         /// <summary>
         /// Scenario:
-        /// Tests that the GetAltinnAppsPolicyPath method returns a correct path based on the input parameters.
-        /// Input:
-        /// Org and app from the AltinnAppId.
-        /// Expected Result:
-        /// True
-        /// Success Criteria:
-        /// Rule is found and expected result is returned
-        /// </summary>
-        [Fact]
-        public void GetAltinnAppsPolicyPath_OrgAndApp_ReturnsExpectedPath()
-        {
-            // Arrange
-            string expected = $"org1/app1/policy.xml";
-
-            // Act
-            string actual = PolicyHelper.GetAltinnAppsPolicyPath("org1", "app1");
-
-            // Assert
-            Assert.Equal(expected, actual);
-        }
-
-        /// <summary>
-        /// Scenario:
         /// Tests that the GetDelegationPolicyPath method throws the expected argument exception when org does not have a value
         /// Input:
         /// ResourceId is null because this is a org/app scenario but only app has been provided as part of the resource

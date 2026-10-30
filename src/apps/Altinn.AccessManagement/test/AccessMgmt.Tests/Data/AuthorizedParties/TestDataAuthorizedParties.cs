@@ -1,9 +1,9 @@
 ﻿using System.Text.Json;
-using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Tests.Util;
 using Altinn.AccessManagement.Tests.Utils;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
+using Altinn.Authorization.Xacml.Constants;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Altinn.AccessManagement.Tests.Data;

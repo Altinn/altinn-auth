@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Altinn.Authorization.Xacml/Altinn.Authorization.Xacml.csproj" />
+  </Folder>
+  <Folder Name="/test/">
+    <Project Path="test/Altinn.Authorization.Xacml.Tests/Altinn.Authorization.Xacml.Tests.csproj" />
+  </Folder>
+</Solution>

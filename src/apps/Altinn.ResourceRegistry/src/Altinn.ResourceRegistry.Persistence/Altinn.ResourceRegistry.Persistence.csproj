@@ -6,7 +6,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Altinn.Authorization.ABAC" />
     <PackageReference Include="Altinn.Authorization.ServiceDefaults.Npgsql" />
     <PackageReference Include="Altinn.Authorization.ServiceDefaults.Npgsql.Yuniql" />
     <PackageReference Include="Azure.Storage.Blobs" />

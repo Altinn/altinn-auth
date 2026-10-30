@@ -46,7 +46,7 @@ Code sits in verticals. A vertical always has its own `.slnx`, `src/` and `conf.
 | Path | Contents |
 | --- | --- |
 | `src/apps` | Deployable services: [`Altinn.Authorization`](src/apps/Altinn.Authorization/AGENTS.md) (PDP), [`Altinn.AccessManagement`](src/apps/Altinn.AccessManagement/AGENTS.md), [`Altinn.ResourceRegistry`](src/apps/Altinn.ResourceRegistry/AGENTS.md), [`Altinn.Authentication`](src/apps/Altinn.Authentication/AGENTS.md), [`Altinn.Mockporten`](src/apps/Altinn.Mockporten/AGENTS.md), `Altinn.Register` |
-| `src/libs` | Shared libraries: `Api.Contracts`, `Host`, `Integration`, `Testing` |
+| `src/libs` | Shared libraries: `Api.Contracts`, `Host`, `Integration`, `Testing`, and `Xacml` for the Altinn XACML constants and the policy helpers used by Authorization, Access Management and Resource Registry |
 | `src/pkgs` | Published NuGet packages: `Altinn.Authorization.ABAC`, `Altinn.Authorization.PEP` (ships as `Altinn.Common.PEP`) and `JWTCookieAuthentication` |
 | `src/tools` | `Altinn.Authorization.Cli` and the [`Altinn.AccessMgmt.FFB`](src/tools/Altinn.AccessMgmt.FFB/AGENTS.md) admin tool, which has its own guidance |
 | `docs/testing` | How the test suite is organised, fixtures, mocks, naming |

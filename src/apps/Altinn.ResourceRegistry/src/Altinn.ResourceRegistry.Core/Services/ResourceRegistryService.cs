@@ -4,6 +4,8 @@ using Altinn.AccessMgmt.Core.Utils.Helper;
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.ProblemDetails;
+using Altinn.Authorization.Xacml;
+using Altinn.Authorization.Xacml.Constants;
 using Altinn.Platform.Storage.Interface.Models;
 using Altinn.ResourceRegistry.Core.Constants;
 using Altinn.ResourceRegistry.Core.Exceptions;
@@ -166,7 +168,7 @@ namespace Altinn.ResourceRegistry.Core.Services
             }
 
             policyContent.Position = 0;
-            XacmlPolicy policy = await PolicyHelper.ParsePolicy(policyContent);
+            XacmlPolicy policy = await XacmlPolicyHelper.ParsePolicyAsync(policyContent, cancellationToken);
             IDictionary<string, ICollection<string>> subjectAttributes = policy.GetAttributeDictionaryByCategory(XacmlConstants.MatchAttributeCategory.Subject);
             ServiceResource virtualAppResource = new ServiceResource()
             {
@@ -480,7 +482,7 @@ namespace Altinn.ResourceRegistry.Core.Services
             }
 
             policyContent.Position = 0;
-            XacmlPolicy policy = await PolicyHelper.ParsePolicy(policyContent);
+            XacmlPolicy policy = await XacmlPolicyHelper.ParsePolicyAsync(policyContent, cancellationToken);
             return policy;
         }
     }

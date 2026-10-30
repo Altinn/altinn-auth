@@ -1,7 +1,7 @@
 ﻿using Altinn.AccessManagement.Core.Asserters;
-using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Resolvers;
+using Altinn.Authorization.Xacml.Constants;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Altinn.AccessManagement.Tests.Unit.Asserters;

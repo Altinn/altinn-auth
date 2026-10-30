@@ -11,6 +11,7 @@ using Altinn.Authorization.Api.Contracts.ResourceRegistry;
 using Altinn.Authorization.Enums;
 using Altinn.Authorization.Models.ResourceRegistry;
 using Altinn.Authorization.ProblemDetails;
+using Altinn.Authorization.Xacml.Constants;
 using Altinn.Platform.Authenticaiton.Extensions;
 using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Constants;
@@ -707,7 +708,7 @@ namespace Altinn.Platform.Authorization.Controllers
             {
                 delegations = await GetAllCachedDelegationChanges(cancellationToken, WithDefaultGetAllDelegationChangesInput(resourceAttributes, decisionRequest, accessRestriction), input => input.Resource = new List<AttributeMatchDto>()
                 {
-                    new(AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistry, resourceAttributes.ResourceRegistryId)
+                    new(AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute, resourceAttributes.ResourceRegistryId)
                 });
             }
 
@@ -758,7 +759,7 @@ namespace Altinn.Platform.Authorization.Controllers
                 $"s:{delegation.Subject.Id}:{delegation.Subject.Value}",
                 $"p:{delegation.Party.Value}",
                 $"a:{delegation.Resource.FirstOrDefault(r => r.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute)?.Value}/{delegation.Resource.FirstOrDefault(r => r.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute)?.Value}",
-                $"r:{delegation.Resource.FirstOrDefault(r => r.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistry)?.Value}",
+                $"r:{delegation.Resource.FirstOrDefault(r => r.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute)?.Value}",
                 $"ac:{delegation.AccessRestriction}",
                 $"vp:{delegation.ViaPartyOrganizationNumber}");
 
