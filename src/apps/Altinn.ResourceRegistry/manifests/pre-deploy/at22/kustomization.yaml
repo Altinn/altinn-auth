@@ -8,7 +8,6 @@ labels:
     includeTemplates: true
 resources:
   - ../base
-  - 01-secrets.yaml
 
 configMapGenerator:
   - name: environment
