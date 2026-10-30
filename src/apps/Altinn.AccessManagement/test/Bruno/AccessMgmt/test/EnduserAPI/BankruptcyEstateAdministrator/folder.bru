@@ -1,0 +1,62 @@
+meta {
+  name: BankruptcyEstateAdministrator
+  seq: 5
+}
+
+docs {
+  # Bankruptcy estate administrator (konkursbo administrator) scenarios
+
+  BDD scenarios for the enduser bankruptcy estate API at
+  `/accessmanagement/api/v1/enduser/bankruptcyestate`.
+
+  Feature: A bostyrer gives assistants access to all of their bankruptcy estates
+
+    A bostyrer is a person holding the CCR role `bostyrer` (urn:altinn:external-role:ccr:bostyrer)
+    for one or more bankruptcy estates (konkursbo). The bostyrer can make another person
+    a bankruptcy estate administrator (role `innbygger-konkursbo-administrator`). The
+    administrator then gets a rightholder connection from every estate of the bostyrer, with
+    the packages hovedadministrator, konkursbo-lesetilgang and konkursbo-skrivetilgang.
+    Revoking the role removes that estate access again.
+
+    - GET  estates/any            does the party hold any bankruptcy estates
+    - GET  administrators         the party's administrators and their estate access
+    - POST administrators         add an administrator, identified by SSN or username and last name
+    - DELETE administrators       revoke an administrator, identified by `user` (party uuid)
+    - POST administrators/delete  the same revoke, for clients that cannot send DELETE
+
+    Reads need the scope altinn:portal/enduser or altinn:bankruptcyestatedelegations.read,
+    writes altinn:portal/enduser or altinn:bankruptcyestatedelegations.write, and the PDP must
+    grant read or write on the resource altinn_bankruptcy_estate_admin for the party.
+
+  Each subfolder is one scenario. The files inside are its steps, named
+  `NN_GIVEN|WHEN|THEN|AND|CLEANUP_...` and ordered by `seq`. Every scenario starts from a
+  known state and removes what it created, so the folder can run repeatedly against a shared
+  environment and each scenario can run standalone.
+
+  ## Personas
+
+  Seed data comes from `testdata/bankruptcyestate-delegation/<env>.js`:
+
+  - Bostyrer: BOSTYRER, a person who is bostyrer for a set of konkursbo and tvangsavviklingsbo.
+  - Assistant: user_LUN_ANALYSE_GÅSTOL, the person made administrator and revoked again.
+  - Outsider: creditor_VILJESTERK_GRANDIS, a person with no access to the bostyrer.
+  - Organisation: creditor_GLAD_SLAPP_TIGER_AS, used where a person is required.
+
+  admin_UGLESETT_FARMOR is left alone: it may be a standing administrator other tests rely on.
+
+  ## Environments
+
+  Runs in AT22 only for now. Every step skips itself when `tokenEnv` is not listed in
+  `supportedEnvironments` in `helpers.js`; add an environment there once its seed data is
+  verified.
+
+  ## Failed person lookups lock the caller out
+
+  Adding an administrator looks the person up by identifier and last name. Access Management
+  counts failed lookups per authenticated user and, after `MaximumFailedAttempts` (2) of
+  them, refuses every lookup by that user with 429 AM-00026 for
+  `FailedAttemptsCacheLifetimeSeconds` (one hour). The counter lives in each pod's memory.
+  Wrong last names and unknown persons therefore cannot run on every pass without breaking
+  the bostyrer's own adds for the next hour, so `08_PersonLookupFailures` is opt-in; see its
+  folder docs. The other validation scenarios only use inputs rejected before any lookup.
+}

@@ -1,0 +1,20 @@
+meta {
+  name: 01_AdministratorLifecycle
+  seq: 1
+}
+
+docs {
+  Scenario: A bostyrer adds an assistant as administrator and revokes the role again
+
+    Given the assistant is not an administrator for the bostyrer
+    And the bostyrer holds bankruptcy estates
+    When the bostyrer adds the assistant by SSN and last name
+    Then the assistant is listed as administrator with access to the estates
+    And the assistant holds the three estate packages from an estate
+    And adding the assistant again returns the same assignment
+    And the assistant is listed only once
+    When the bostyrer revokes the assistant
+    Then the assistant is no longer listed
+    And the assistant no longer holds the estate packages
+    And revoking again succeeds without change
+}

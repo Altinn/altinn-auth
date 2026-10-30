@@ -1,0 +1,42 @@
+meta {
+  name: 02_AND_BostyrerHasBankruptcyEstates
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/estates/any?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+docs {
+  AND the bostyrer holds at least one bankruptcy estate, so adding an administrator has
+  estate access to hand out. Expects 200 with the body `true`.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  bru.setVar("party", td.BOSTYRER.partyUuid);
+
+  await helpers.loginAs(td.BOSTYRER);
+}
+
+tests {
+  test("AND the estate check returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the bostyrer has bankruptcy estates", function() {
+    expect(res.getBody()).to.equal(true);
+  });
+}

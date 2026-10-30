@@ -1,0 +1,44 @@
+meta {
+  name: 02_WHEN_NoTokenIsProvidedThenAddFails
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/administrators?party={{party}}
+  body: json
+  auth: none
+}
+
+params:query {
+  party: {{party}}
+}
+
+body:json {
+  {
+    "personIdentifier": "{{personIdentifier}}",
+    "lastName": "{{lastName}}"
+  }
+}
+
+docs {
+  WHEN no token is provided, adding an administrator fails with 401.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  bru.setVar("party", td.BOSTYRER.partyUuid);
+  bru.setVar("personIdentifier", td.user_LUN_ANALYSE_GÅSTOL.pid);
+  bru.setVar("lastName", td.user_LUN_ANALYSE_GÅSTOL.lastname);
+}
+
+tests {
+  test("WHEN no token is provided, the request returns 401", function() {
+    expect(res.status).to.equal(401);
+  });
+}

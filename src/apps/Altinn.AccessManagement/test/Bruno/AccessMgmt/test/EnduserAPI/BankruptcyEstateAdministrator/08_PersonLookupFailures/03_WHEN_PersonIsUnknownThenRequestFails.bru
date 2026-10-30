@@ -1,0 +1,56 @@
+meta {
+  name: 03_WHEN_PersonIsUnknownThenRequestFails
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/administrators?party={{party}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+body:json {
+  {
+    "personIdentifier": "{{personIdentifier}}",
+    "lastName": "{{lastName}}"
+  }
+}
+
+docs {
+  WHEN the bostyrer gives a username nobody has. Expects 400 with validation error
+  AM.VLD-00034. This is the bostyrer's second failed lookup, which reaches
+  MaximumFailedAttempts.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipUnlessPersonLookupNegativesEnabled()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  bru.setVar("party", td.BOSTYRER.partyUuid);
+  bru.setVar("personIdentifier", "bruno-ukjent-bruker-finnes-ikke");
+  bru.setVar("lastName", "Ukjent");
+
+  await helpers.loginAs(td.BOSTYRER);
+}
+
+tests {
+  test("WHEN the person is unknown, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN the error body reports validation error AM.VLD-00034 on /PersonIdentifier", function() {
+    const body = res.getBody();
+    expect(body.code).to.equal("STD-00000");
+    const err = body.validationErrors.find(e => e.code === "AM.VLD-00034");
+    expect(err, "expected validation error AM.VLD-00034").to.not.be.undefined;
+    expect(err.paths).to.include("/PersonIdentifier");
+  });
+}

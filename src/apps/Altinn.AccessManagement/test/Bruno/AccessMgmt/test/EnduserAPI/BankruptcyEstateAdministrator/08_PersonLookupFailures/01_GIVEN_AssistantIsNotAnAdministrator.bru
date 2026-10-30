@@ -1,0 +1,40 @@
+meta {
+  name: 01_GIVEN_AssistantIsNotAnAdministrator
+  type: http
+  seq: 1
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/administrators?party={{party}}&user={{user}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  user: {{user}}
+}
+
+docs {
+  GIVEN the assistant does not hold the bankruptcy estate administrator role from the
+  bostyrer. Reset step; idempotent, returns 204 either way.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipUnlessPersonLookupNegativesEnabled()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  bru.setVar("party", td.BOSTYRER.partyUuid);
+  bru.setVar("user", td.user_LUN_ANALYSE_GÅSTOL.partyUuid);
+
+  await helpers.loginAs(td.BOSTYRER);
+}
+
+tests {
+  test("WHEN the assistant is reset, the request returns 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

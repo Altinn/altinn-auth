@@ -1,0 +1,49 @@
+meta {
+  name: 10_AND_AssistantNoLongerHoldsEstatePackages
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{assistant}}&from={{estateId}}&to={{assistant}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{assistant}}
+  from: {{estateId}}
+  to: {{assistant}}
+}
+
+docs {
+  AND the revoke also removed the estate access: the assistant no longer holds any of the
+  three estate packages from the estate.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  bru.setVar("assistant", td.user_LUN_ANALYSE_GÅSTOL.partyUuid);
+
+  await helpers.loginAs(td.user_LUN_ANALYSE_GÅSTOL);
+}
+
+tests {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+
+  test("AND the assistant's packages from the estate can be listed, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the assistant holds none of the estate packages from the estate", function() {
+    const urns = ((res.getBody() && res.getBody().data) || []).map(item => item.package.urn);
+    for (const urn of helpers.estatePackageUrns) {
+      expect(urns).to.not.include(urn);
+    }
+  });
+}

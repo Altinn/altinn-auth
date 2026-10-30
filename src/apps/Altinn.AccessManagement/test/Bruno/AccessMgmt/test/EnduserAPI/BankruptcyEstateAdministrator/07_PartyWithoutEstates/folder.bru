@@ -1,0 +1,14 @@
+meta {
+  name: 07_PartyWithoutEstates
+  seq: 7
+}
+
+docs {
+  Scenario: A person who is not a bostyrer has no estates and no administrators
+
+    When a person with no bankruptcy estates checks their own party
+    Then the estate check returns false
+    And their administrator list is empty
+
+    Every person may call the API for their own party; it simply has nothing to show.
+}

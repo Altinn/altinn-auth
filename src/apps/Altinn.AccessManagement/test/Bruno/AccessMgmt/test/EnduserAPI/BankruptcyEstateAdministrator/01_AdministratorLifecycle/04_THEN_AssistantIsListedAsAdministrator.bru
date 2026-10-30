@@ -1,0 +1,66 @@
+meta {
+  name: 04_THEN_AssistantIsListedAsAdministrator
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/administrators?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+docs {
+  THEN the assistant is listed among the bostyrer's administrators, with the administrator
+  role and access to the estates. Every estate access entry carries the three estate
+  packages. Other administrators may be listed too; only the assistant's entry is asserted.
+
+  Stores one of the estates as `estateId` for the next steps.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  bru.setVar("party", td.BOSTYRER.partyUuid);
+
+  await helpers.loginAs(td.BOSTYRER);
+}
+
+script:post-response {
+  const { testdata, findAdministrator } = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  const entry = res.status === 200 && findAdministrator(res.getBody(), testdata().user_LUN_ANALYSE_GÅSTOL.partyUuid);
+  bru.setVar("estateId", entry && entry.estateaccess.length > 0 ? entry.estateaccess[0].estate.id : null);
+}
+
+tests {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  const td = helpers.testdata();
+
+  test("THEN the administrators can be listed, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the assistant is listed with the bankruptcy estate administrator role", function() {
+    const entry = helpers.findAdministrator(res.getBody(), td.user_LUN_ANALYSE_GÅSTOL.partyUuid);
+    expect(entry, "expected the assistant to be listed").to.not.be.undefined;
+    expect(entry.adminrole.code).to.equal(helpers.administratorRole.code);
+    expect(entry.adminaddedat).to.be.a("string").that.is.not.empty;
+  });
+
+  test("AND the assistant has access to the estates with the three estate packages", function() {
+    const entry = helpers.findAdministrator(res.getBody(), td.user_LUN_ANALYSE_GÅSTOL.partyUuid);
+    expect(entry.estateaccess).to.be.an("array").that.is.not.empty;
+    for (const access of entry.estateaccess) {
+      const urns = access.packages.map(p => p.urn);
+      expect(urns, `packages on estate ${access.estate.id}`).to.include.members(helpers.estatePackageUrns);
+    }
+  });
+}
