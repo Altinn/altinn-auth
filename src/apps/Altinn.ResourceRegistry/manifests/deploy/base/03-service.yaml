@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: rr-api
+  labels:
+    app.kubernetes.io/name: rr-api
+spec:
+  selector:
+    app.kubernetes.io/name: rr-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
