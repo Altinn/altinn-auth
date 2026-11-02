@@ -134,7 +134,7 @@ public class ContextRetrievalServiceCacheTest
 
     private async Task AssertRoundTrip<T>(T value)
     {
-        string key = $"roundtrip:{typeof(T).Name}";
+        string key = $"roundtrip:{typeof(T).FullName}";
         await _cache.SetAsync(key, value, cancellationToken: TestContext.Current.CancellationToken);
         T read = await _cache.GetOrCreateAsync<T>(key, _ => throw new InvalidOperationException("expected a cache hit"), cancellationToken: TestContext.Current.CancellationToken);
 
