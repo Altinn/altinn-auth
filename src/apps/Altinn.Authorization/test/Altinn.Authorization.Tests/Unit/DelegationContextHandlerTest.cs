@@ -1,5 +1,6 @@
 ﻿using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
+using Altinn.Authorization.Tests.Util;
 using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Constants;
 using Altinn.Platform.Authorization.Repositories.Interface;
@@ -9,7 +10,7 @@ using Altinn.Platform.Authorization.Services.Interfaces;
 using Altinn.Platform.Profile.Models;
 using Altinn.Platform.Register.Enums;
 using Altinn.Platform.Register.Models;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 using Moq;
@@ -17,14 +18,14 @@ using Moq;
 namespace Altinn.Authorization.Tests.Unit;
 
 [UnitTest]
-public class DelegationContextHandlerTest : IDisposable
+public class DelegationContextHandlerTest
 {
     private static readonly Uri StringDataType = new("http://www.w3.org/2001/XMLSchema#string");
 
     private readonly Mock<IInstanceMetadataRepository> _policyInfoRepoMock = new();
     private readonly Mock<IOedRoleAssignmentWrapper> _oedRolesMock = new();
     private readonly Mock<IProfile> _profileMock = new();
-    private readonly IMemoryCache _memoryCache = new MemoryCache(new MemoryCacheOptions());
+    private readonly HybridCache _cache = TestSetupUtil.CreateHybridCache();
     private readonly Mock<IRegisterService> _registerServiceMock = new();
     private readonly Mock<IPolicyRetrievalPoint> _prpMock = new();
     private readonly Mock<IAccessManagementWrapper> _accMgmtMock = new();
@@ -38,11 +39,9 @@ public class DelegationContextHandlerTest : IDisposable
         var settings = Options.Create(new GeneralSettings { RoleCacheTimeout = 5, MainUnitCacheTimeout = 5 });
         _sut = new DelegationContextHandler(
             _policyInfoRepoMock.Object, _oedRolesMock.Object,
-            _profileMock.Object, _memoryCache, settings, _registerServiceMock.Object,
+            _profileMock.Object, _cache, settings, _registerServiceMock.Object,
             _prpMock.Object, _accMgmtMock.Object, _featureManagerMock.Object, _resourceRegistryMock.Object);
     }
-
-    public void Dispose() => _memoryCache.Dispose();
 
     #region GetSubjectUserId
 

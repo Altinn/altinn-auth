@@ -10,7 +10,7 @@ using Altinn.Platform.Authorization.Extensions;
 using Altinn.Platform.Authorization.Services.Interfaces;
 using Altinn.Platform.Register.Models;
 using AltinnCore.Authentication.Utils;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Options;
 
 namespace Altinn.Platform.Authorization.Services
@@ -21,12 +21,19 @@ namespace Altinn.Platform.Authorization.Services
     [ExcludeFromCodeCoverage]
     public class RegisterService : IRegisterService
     {
+        private static readonly string[] PartyTags = ["party"];
+
+        // The cache is read and written in two steps instead of through the factory of GetOrCreateAsync: a party list is
+        // fetched for the ids that missed in one call, and a failed lookup must not be cached.
+        private static readonly HybridCacheEntryOptions ReadOptions = new() { Flags = HybridCacheEntryFlags.DisableUnderlyingData };
+        private static readonly HybridCacheEntryOptions WriteOptions = new() { Expiration = TimeSpan.FromMinutes(10) };
+
         private readonly HttpClient _client;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly GeneralSettings _generalSettings;
         private readonly IAccessTokenGenerator _accessTokenGenerator;
         private readonly ILogger<IRegisterService> _logger;
-        private readonly IMemoryCache _memoryCache;
+        private readonly HybridCache _cache;
         private readonly JsonSerializerOptions _serializerOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
         /// <summary>
@@ -39,7 +46,7 @@ namespace Altinn.Platform.Authorization.Services
             IOptions<GeneralSettings> generalSettings,
             IOptions<PlatformSettings> platformSettings,
             ILogger<IRegisterService> logger,
-            IMemoryCache memoryCache)
+            HybridCache cache)
         {
             httpClient.BaseAddress = new Uri(platformSettings.Value.ApiRegisterEndpoint);
             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -48,7 +55,7 @@ namespace Altinn.Platform.Authorization.Services
             _generalSettings = generalSettings.Value;
             _accessTokenGenerator = accessTokenGenerator;
             _logger = logger;
-            _memoryCache = memoryCache;
+            _cache = cache;
         }
 
         /// <inheritdoc/>
@@ -66,7 +73,8 @@ namespace Altinn.Platform.Authorization.Services
 
             foreach (Guid partyUuid in partyUuids.Distinct())
             {
-                if (_memoryCache.TryGetValue($"p-uuid:{partyUuid}|inclSubunits:{includeSubunits}", out Party party))
+                Party party = await GetCachedAsync(GetPartyUuidCacheKey(partyUuid, includeSubunits), cancellationToken);
+                if (party != null)
                 {
                     parties.Add(party);
                 }
@@ -102,8 +110,7 @@ namespace Altinn.Platform.Authorization.Services
                     if (party?.PartyId != null)
                     {
                         parties.Add(party);
-                        PutInCache($"p:{party.PartyId}|inclSubunits:{includeSubunits}", 10, party);
-                        PutInCache($"p-uuid:{party.PartyUuid}|inclSubunits:{includeSubunits}", 10, party);
+                        await PutInCacheAsync(party, includeSubunits, cancellationToken);
                     }
                 }
             }
@@ -119,7 +126,8 @@ namespace Altinn.Platform.Authorization.Services
 
             foreach (int partyId in partyIds.Distinct())
             {
-                if (_memoryCache.TryGetValue($"p:{partyId}|inclSubunits:{includeSubunits}", out Party party))
+                Party party = await GetCachedAsync(GetPartyIdCacheKey(partyId, includeSubunits), cancellationToken);
+                if (party != null)
                 {
                     parties.Add(party);
                 }
@@ -155,8 +163,7 @@ namespace Altinn.Platform.Authorization.Services
                     if (party?.PartyId != null)
                     {
                         parties.Add(party);
-                        PutInCache($"p:{party.PartyId}|inclSubunits:{includeSubunits}", 10, party);
-                        PutInCache($"p-uuid:{party.PartyUuid}|inclSubunits:{includeSubunits}", 10, party);
+                        await PutInCacheAsync(party, includeSubunits, cancellationToken);
                     }
                 }
             }
@@ -172,12 +179,12 @@ namespace Altinn.Platform.Authorization.Services
 
             if (!string.IsNullOrWhiteSpace(orgNo))
             {
-                cacheKey = $"org:{orgNo}";
+                cacheKey = $"party:org:{orgNo}";
                 partyLookup = new PartyLookup { OrgNo = orgNo };
             }
             else if (!string.IsNullOrWhiteSpace(person))
             {
-                cacheKey = $"fnr:{person}";
+                cacheKey = $"party:fnr:{person}";
                 partyLookup = new PartyLookup { Ssn = person };
             }
             else
@@ -185,7 +192,8 @@ namespace Altinn.Platform.Authorization.Services
                 return null;
             }
 
-            if (!_memoryCache.TryGetValue(cacheKey, out Party party))
+            Party party = await GetCachedAsync(cacheKey, cancellationToken);
+            if (party == null)
             {
                 string endpointUrl = "parties/lookup";
 
@@ -201,7 +209,10 @@ namespace Altinn.Platform.Authorization.Services
                 {
                     string responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
                     party = JsonSerializer.Deserialize<Party>(responseContent, _serializerOptions);
-                    PutInCache(cacheKey, 10, party);
+                    if (party != null)
+                    {
+                        await _cache.SetAsync(cacheKey, party, WriteOptions, PartyTags, cancellationToken);
+                    }
                 }
                 else
                 {
@@ -215,13 +226,17 @@ namespace Altinn.Platform.Authorization.Services
             return party;
         }
 
-        private void PutInCache(string cachekey, int cacheTimeout, object cacheObject)
-        {
-            var cacheEntryOptions = new MemoryCacheEntryOptions()
-               .SetPriority(CacheItemPriority.High)
-               .SetAbsoluteExpiration(new TimeSpan(0, cacheTimeout, 0));
+        private static string GetPartyIdCacheKey(int partyId, bool includeSubunits) => $"party:{partyId}|inclSubunits:{includeSubunits}";
 
-            _memoryCache.Set(cachekey, cacheObject, cacheEntryOptions);
+        private static string GetPartyUuidCacheKey(Guid partyUuid, bool includeSubunits) => $"party-uuid:{partyUuid}|inclSubunits:{includeSubunits}";
+
+        private ValueTask<Party> GetCachedAsync(string cacheKey, CancellationToken cancellationToken)
+            => _cache.GetOrCreateAsync<Party>(cacheKey, static _ => default, ReadOptions, cancellationToken: cancellationToken);
+
+        private async Task PutInCacheAsync(Party party, bool includeSubunits, CancellationToken cancellationToken)
+        {
+            await _cache.SetAsync(GetPartyIdCacheKey(party.PartyId, includeSubunits), party, WriteOptions, PartyTags, cancellationToken);
+            await _cache.SetAsync(GetPartyUuidCacheKey(party.PartyUuid.Value, includeSubunits), party, WriteOptions, PartyTags, cancellationToken);
         }
     }
 }
