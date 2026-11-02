@@ -24,7 +24,7 @@ namespace Altinn.AccessManagement.Integration.Clients
     public class ResourceRegistryClient : IResourceRegistryClient
     {
         private static readonly HybridCacheEntryOptions ConsentTemplateCacheOptions = new() { Expiration = TimeSpan.FromHours(4) };
-        private static readonly string[] ResourceTag = ["resource"];
+        private static readonly string[] ConsentTemplateTag = ["consent"];
         private readonly HttpClient _httpClient = new();
         private readonly ILogger<IResourceRegistryClient> _logger;
         private readonly JsonSerializerOptions options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
@@ -188,7 +188,7 @@ namespace Altinn.AccessManagement.Integration.Clients
                     }
                 },
                 ConsentTemplateCacheOptions,
-                ResourceTag,
+                ConsentTemplateTag,
                 CancellationToken.None);
         }
     }

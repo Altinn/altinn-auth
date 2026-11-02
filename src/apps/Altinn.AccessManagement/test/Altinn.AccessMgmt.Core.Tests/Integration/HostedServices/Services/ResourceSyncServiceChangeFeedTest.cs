@@ -89,6 +89,21 @@ public class ResourceSyncServiceChangeFeedTest : IClassFixture<ApiFixture>
     }
 
     [Fact]
+    public async Task SyncResources_NothingWritten_KeepsTaggedEntries()
+    {
+        Registry.StreamPagesFactory = (_, _) => [];
+        Registry.ChangePagesFactory = _ => [];
+        var cache = Fixture.Services.GetRequiredService<HybridCache>();
+        var ct = TestContext.Current.CancellationToken;
+        await cache.SetAsync("probe:resource:untouched", "kept", tags: ["resource"], cancellationToken: ct);
+
+        await ResolveService().SyncResources(new FakeLease(), ct);
+
+        var lookupOnly = new HybridCacheEntryOptions { Flags = HybridCacheEntryFlags.DisableUnderlyingData };
+        Assert.Equal("kept", await cache.GetOrCreateAsync<string>("probe:resource:untouched", _ => default, lookupOnly, cancellationToken: ct));
+    }
+
+    [Fact]
     public async Task SyncResources_ReadsChangeFeedBeforeUpdatedFeed_AndLinksNewResource()
     {
         var refId = "rsst-change-order-" + Guid.NewGuid().ToString("N");

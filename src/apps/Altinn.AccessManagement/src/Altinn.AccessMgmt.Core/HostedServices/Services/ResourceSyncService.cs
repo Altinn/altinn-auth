@@ -113,78 +113,83 @@ public partial class ResourceSyncService : IResourceSyncService
         var featureManager = scope.ServiceProvider.GetRequiredService<IFeatureManager>();
         var useChangeFeed = await featureManager.IsEnabledAsync(AccessMgmtFeatureFlags.HostedServicesResourceRegistrySyncChangeFeed, cancellationToken);
         bool changed = false;
-        if (useChangeFeed)
+        try
         {
-            ChangeFeedResult phase1 = await SyncResourceChanges(dbContext, lease, leaseData, activity, cancellationToken);
-            changed = phase1.Changed;
-            if (!phase1.Completed)
+            if (useChangeFeed)
             {
-                await InvalidateCachesIfChanged(changed);
-                return;
-            }
-        }
-
-        // Phase 2 (Fetch policies): subject relations (role and access package) from the updated feed. With the change feed,
-        // resources are usually synced by phase 1 and only looked up here; without it, they are upserted.
-        await foreach (var page in await _resourceRegistry.StreamResources(leaseData.Since, leaseData.ResourceNextPageLink, cancellationToken))
-        {
-            try
-            {
-                if (page.IsProblem)
+                ChangeFeedResult phase1 = await SyncResourceChanges(dbContext, lease, leaseData, activity, cancellationToken);
+                changed = phase1.Changed;
+                if (!phase1.Completed)
                 {
-                    Log.FailedToReadFromStream(_logger);
-                    await InvalidateCachesIfChanged(changed);
                     return;
                 }
-
-                foreach (var updatedResource in page.Content.Data)
-                {
-                    try
-                    {
-                        var resource = useChangeFeed
-                            ? await FindOrFetchResource(dbContext, updatedResource, cancellationToken)
-                            : await UpsertResource(dbContext, updatedResource, cancellationToken);
-                        if (resource is null)
-                        {
-                            continue;
-                        }
-
-                        if (updatedResource.Deleted)
-                        {
-                            await DeleteUpdatedSubject(dbContext, updatedResource, resource, cancellationToken);
-                        }
-                        else
-                        {
-                            await UpsertUpdatedSubject(dbContext, updatedResource, resource, cancellationToken);
-                        }
-
-                        leaseData.Since = updatedResource.UpdatedAt;
-                        changed = true;
-                    }
-                    catch (Exception ex)
-                    {
-                        Log.FailedToWriteUpdateSubjectForResource(_logger, ex, updatedResource.SubjectUrn, updatedResource.ResourceUrn);
-                        throw;
-                    }
-                }
-
-                leaseData.ResourceNextPageLink = page.Content.Links.Next;
-                await lease.Update(leaseData, cancellationToken);
             }
-            catch (Exception ex)
+
+            // Phase 2 (Fetch policies): subject relations (role and access package) from the updated feed. With the change feed,
+            // resources are usually synced by phase 1 and only looked up here; without it, they are upserted.
+            await foreach (var page in await _resourceRegistry.StreamResources(leaseData.Since, leaseData.ResourceNextPageLink, cancellationToken))
             {
-                activity?.AddException(ex);
-                activity?.SetStatus(ActivityStatusCode.Error);
-                CoreTelemetry.HostedServicesFailures.Add(1, OtelTags);
-                CoreTelemetry.HostedServicesOk.Record(0, OtelTags);
-                await InvalidateCachesIfChanged(changed);
-                return;
-            }
-        }
+                try
+                {
+                    if (page.IsProblem)
+                    {
+                        Log.FailedToReadFromStream(_logger);
+                        return;
+                    }
 
-        await InvalidateCachesIfChanged(changed);
-        CoreTelemetry.HostedServicesSuccess.Add(1, OtelTags);
-        CoreTelemetry.HostedServicesOk.Record(1, OtelTags);
+                    foreach (var updatedResource in page.Content.Data)
+                    {
+                        try
+                        {
+                            var resource = useChangeFeed
+                                ? await FindOrFetchResource(dbContext, updatedResource, cancellationToken)
+                                : await UpsertResource(dbContext, updatedResource, cancellationToken);
+                            if (resource is null)
+                            {
+                                continue;
+                            }
+
+                            // FindOrFetchResource and UpsertResource may have written the resource row already.
+                            changed = true;
+
+                            if (updatedResource.Deleted)
+                            {
+                                await DeleteUpdatedSubject(dbContext, updatedResource, resource, cancellationToken);
+                            }
+                            else
+                            {
+                                await UpsertUpdatedSubject(dbContext, updatedResource, resource, cancellationToken);
+                            }
+
+                            leaseData.Since = updatedResource.UpdatedAt;
+                        }
+                        catch (Exception ex)
+                        {
+                            Log.FailedToWriteUpdateSubjectForResource(_logger, ex, updatedResource.SubjectUrn, updatedResource.ResourceUrn);
+                            throw;
+                        }
+                    }
+
+                    leaseData.ResourceNextPageLink = page.Content.Links.Next;
+                    await lease.Update(leaseData, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    activity?.AddException(ex);
+                    activity?.SetStatus(ActivityStatusCode.Error);
+                    CoreTelemetry.HostedServicesFailures.Add(1, OtelTags);
+                    CoreTelemetry.HostedServicesOk.Record(0, OtelTags);
+                    return;
+                }
+            }
+
+            CoreTelemetry.HostedServicesSuccess.Add(1, OtelTags);
+            CoreTelemetry.HostedServicesOk.Record(1, OtelTags);
+        }
+        finally
+        {
+            await InvalidateCachesIfChanged(changed);
+        }
     }
 
     /// <summary>
@@ -277,9 +282,20 @@ public partial class ResourceSyncService : IResourceSyncService
     /// </summary>
     private async Task InvalidateCachesIfChanged(bool changed)
     {
-        if (changed)
+        if (!changed)
+        {
+            return;
+        }
+
+        try
         {
             await _cache.RemoveByTagAsync(SyncedTags);
+        }
+        catch (Exception ex)
+        {
+            // The rows are written and the lease has moved; a cache that cannot be reached must not fail the run.
+            // The entries then live until their own expiration.
+            Log.FailedToInvalidateCaches(_logger, ex);
         }
     }
 
@@ -593,5 +609,8 @@ public partial class ResourceSyncService : IResourceSyncService
 
         [LoggerMessage(EventId = 11, Level = LogLevel.Warning, Message = "Changed resource '{ResourceId}' could not be synced, for example because its service owner is unknown, and was skipped.")]
         internal static partial void ChangedResourceNotSynced(ILogger logger, string resourceId);
+
+        [LoggerMessage(EventId = 12, Level = LogLevel.Warning, Message = "Failed to invalidate the resource and package caches after the resource sync; the entries live until they expire.")]
+        internal static partial void FailedToInvalidateCaches(ILogger logger, Exception ex);
     }
 }

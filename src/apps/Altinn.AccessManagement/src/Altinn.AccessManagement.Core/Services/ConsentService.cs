@@ -4,6 +4,7 @@ using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Configuration;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Errors;
+using Altinn.AccessManagement.Core.Helpers.Extensions;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.Consent;
 using Altinn.AccessManagement.Core.Models.Party;
@@ -494,9 +495,10 @@ namespace Altinn.AccessManagement.Core.Services
         {
             if (consentPartyUrn.IsPartyUuid(out Guid partyUuid))
             {
-                return await _cache.GetOrCreateAsync(
+                // One lookup per caller: the party service behind GetExternalIdentifier is request scoped.
+                return await _cache.GetOrFetchAsync(
                     $"consent:party:{partyUuid}",
-                    async ct => await GetExternalIdentifier(partyUuid, ct),
+                    ct => GetExternalIdentifier(partyUuid, ct),
                     ExternalIdentityCacheOptions,
                     PartyTag,
                     cancellationToken);

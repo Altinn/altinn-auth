@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Security.Cryptography;
 using System.Text;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Enums;
@@ -628,9 +629,12 @@ public class AuthorizedPartiesServiceEf(
             filter.PackageFilter?.ToList().ForEach(p => cacheBuilder.Append($"{p.Key}:"));
             cacheBuilder.Append("|");
             filter.RoleFilter?.ToList().ForEach(r => cacheBuilder.Append($"{r.Key}:"));
-            string cacheKey = cacheBuilder.ToString();
+
+            // The resource ids are unbounded query input, and HybridCache rejects keys over 1024 characters (an error log
+            // and no caching), so the key carries a hash of the filter instead of the filter itself.
+            string cacheKey = "authorizedparties:filters:" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(cacheBuilder.ToString())));
             ProviderResourceFilters? cachedFilters = await cache.GetOrFetchAsync<ProviderResourceFilters>(
-                "authorizedparties:filters:" + cacheKey,
+                cacheKey,
                 async ct =>
                 {
                     List<Resource> resources = await repoService.GetResources(filter.ProviderCode, filter.AnyOfResourceIds, ct: ct);

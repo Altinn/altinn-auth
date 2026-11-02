@@ -2,6 +2,7 @@
 using System.Net.Mime;
 using Altinn.AccessManagement.Core.Configuration;
 using Altinn.AccessManagement.Core.Constants;
+using Altinn.AccessManagement.Core.Helpers.Extensions;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Telemetry;
@@ -191,15 +192,19 @@ public class AuthorizedPartiesController(
         {
             // Cached because orgnumber→orgcode is effectively static and this endpoint is high-traffic.
             var orgNumberKey = organizationId.ToString();
-            string? orgCode = await cache.GetOrCreateAsync(
+
+            // One lookup per caller rather than a factory shared between concurrent misses: the provider service is request
+            // scoped, and a cancelled request must not dispose it under another request's lookup. An org number without a
+            // provider is cached as an empty string, so the lookup is not repeated for it.
+            string? orgCode = await cache.GetOrFetchAsync<string>(
                 $"authorizedparties:orgcode:{orgNumberKey}",
-                async ct => (await providerService.GetProviderByOrganizationId(orgNumberKey, ct))?.Code,
+                async ct => (await providerService.GetProviderByOrganizationId(orgNumberKey, ct))?.Code ?? string.Empty,
                 OrgCodeCacheOptions,
                 ProviderTag,
                 cancellationToken);
 
             // Fall back to orgnumber when the caller has the scope but is not a registered tjenesteier in Altinn.
-            return orgCode ?? orgNumberKey;
+            return string.IsNullOrEmpty(orgCode) ? orgNumberKey : orgCode;
         }
 
         return AuthorizedPartiesTelemetry.UnknownDimensionValue;
