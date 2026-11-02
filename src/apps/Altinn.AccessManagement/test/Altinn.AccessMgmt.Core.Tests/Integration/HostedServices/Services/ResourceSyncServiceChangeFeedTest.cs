@@ -5,6 +5,7 @@ using Altinn.AccessMgmt.Core.HostedServices.Leases;
 using Altinn.Authorization.Integration.Platform;
 using Altinn.Authorization.Integration.Platform.ResourceRegistry;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using static Altinn.AccessMgmt.Core.Tests.Integration.HostedServices.Services.ResourceSyncServiceTest;
@@ -64,6 +65,27 @@ public class ResourceSyncServiceChangeFeedTest : IClassFixture<ApiFixture>
 
         await AssertResourceName(refId, "Renamed " + refId);
         Assert.Equal(NextLink2, lease.Data.ResourceChangesNextPageLink);
+    }
+
+    [Fact]
+    public async Task SyncResources_WroteAResource_DropsEntriesTaggedResourceAndPackage()
+    {
+        var refId = "rsst-change-cache-" + Guid.NewGuid().ToString("N");
+        Registry.StreamPagesFactory = (_, _) => [];
+        Registry.ChangePagesFactory = _ => [ChangesPage(NextLink1, refId)];
+        Registry.ResourceFactory = id => id == refId ? Success(NewResourceModel(refId)) : Problem<ResourceModel>();
+        var cache = Fixture.Services.GetRequiredService<HybridCache>();
+        var ct = TestContext.Current.CancellationToken;
+        await cache.SetAsync("probe:resource", "stale", tags: ["resource"], cancellationToken: ct);
+        await cache.SetAsync("probe:package", "stale", tags: ["package"], cancellationToken: ct);
+        await cache.SetAsync("probe:other", "kept", tags: ["party"], cancellationToken: ct);
+
+        await ResolveService().SyncResources(new FakeLease(), ct);
+
+        var lookupOnly = new HybridCacheEntryOptions { Flags = HybridCacheEntryFlags.DisableUnderlyingData };
+        Assert.Null(await cache.GetOrCreateAsync<string>("probe:resource", _ => default, lookupOnly, cancellationToken: ct));
+        Assert.Null(await cache.GetOrCreateAsync<string>("probe:package", _ => default, lookupOnly, cancellationToken: ct));
+        Assert.Equal("kept", await cache.GetOrCreateAsync<string>("probe:other", _ => default, lookupOnly, cancellationToken: ct));
     }
 
     [Fact]

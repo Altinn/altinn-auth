@@ -11,6 +11,7 @@ using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Host.Lease;
 using Altinn.Authorization.Integration.Platform.ResourceRegistry;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.FeatureManagement;
@@ -22,6 +23,8 @@ public partial class ResourceSyncService : IResourceSyncService
 {
     private const string ResourceUrnPrefix = "urn:altinn:resource:";
     private readonly ILogger<ResourceSyncService> _logger;
+    private readonly HybridCache _cache;
+    private static readonly string[] SyncedTags = ["resource", "package"];
     private readonly IAltinnResourceRegistry _resourceRegistry;
     private readonly IServiceProvider _serviceProvider;
 
@@ -33,9 +36,11 @@ public partial class ResourceSyncService : IResourceSyncService
     public ResourceSyncService(
         IAltinnResourceRegistry resourceRegistry,
         IServiceProvider serviceProvider,
-        ILogger<ResourceSyncService> logger)
+        ILogger<ResourceSyncService> logger,
+        HybridCache cache)
     {
         _logger = logger;
+        _cache = cache;
         _resourceRegistry = resourceRegistry;
         _serviceProvider = serviceProvider;
     }
@@ -107,9 +112,16 @@ public partial class ResourceSyncService : IResourceSyncService
         // subject relations in phase 2 already exist, and phase 2 is skipped when it does not complete.
         var featureManager = scope.ServiceProvider.GetRequiredService<IFeatureManager>();
         var useChangeFeed = await featureManager.IsEnabledAsync(AccessMgmtFeatureFlags.HostedServicesResourceRegistrySyncChangeFeed, cancellationToken);
-        if (useChangeFeed && !await SyncResourceChanges(dbContext, lease, leaseData, activity, cancellationToken))
+        bool changed = false;
+        if (useChangeFeed)
         {
-            return;
+            ChangeFeedResult phase1 = await SyncResourceChanges(dbContext, lease, leaseData, activity, cancellationToken);
+            changed = phase1.Changed;
+            if (!phase1.Completed)
+            {
+                await InvalidateCachesIfChanged(changed);
+                return;
+            }
         }
 
         // Phase 2 (Fetch policies): subject relations (role and access package) from the updated feed. With the change feed,
@@ -121,6 +133,7 @@ public partial class ResourceSyncService : IResourceSyncService
                 if (page.IsProblem)
                 {
                     Log.FailedToReadFromStream(_logger);
+                    await InvalidateCachesIfChanged(changed);
                     return;
                 }
 
@@ -146,6 +159,7 @@ public partial class ResourceSyncService : IResourceSyncService
                         }
 
                         leaseData.Since = updatedResource.UpdatedAt;
+                        changed = true;
                     }
                     catch (Exception ex)
                     {
@@ -163,10 +177,12 @@ public partial class ResourceSyncService : IResourceSyncService
                 activity?.SetStatus(ActivityStatusCode.Error);
                 CoreTelemetry.HostedServicesFailures.Add(1, OtelTags);
                 CoreTelemetry.HostedServicesOk.Record(0, OtelTags);
+                await InvalidateCachesIfChanged(changed);
                 return;
             }
         }
 
+        await InvalidateCachesIfChanged(changed);
         CoreTelemetry.HostedServicesSuccess.Add(1, OtelTags);
         CoreTelemetry.HostedServicesOk.Record(1, OtelTags);
     }
@@ -183,9 +199,10 @@ public partial class ResourceSyncService : IResourceSyncService
     /// open question in https://github.com/Altinn/altinn-auth/issues/4256, and handling them here is tracked in
     /// https://github.com/Altinn/altinn-auth/issues/4621.
     /// </remarks>
-    /// <returns>true when the feed was drained; false when it stopped on an error and phase 2 should not run.</returns>
-    private async Task<bool> SyncResourceChanges(AppDbContext dbContext, ILease lease, ResourceRegistryLease leaseData, Activity? activity, CancellationToken cancellationToken)
+    /// <returns>Whether the feed was drained (false when it stopped on an error and phase 2 should not run), and whether any resource was written.</returns>
+    private async Task<ChangeFeedResult> SyncResourceChanges(AppDbContext dbContext, ILease lease, ResourceRegistryLease leaseData, Activity? activity, CancellationToken cancellationToken)
     {
+        bool changed = false;
         try
         {
             // The try covers the whole enumeration, since opening the feed and fetching later pages can throw too.
@@ -196,7 +213,7 @@ public partial class ResourceSyncService : IResourceSyncService
                 {
                     Log.FailedToReadFromChangeStream(_logger);
                     RecordFailure(activity);
-                    return false;
+                    return new ChangeFeedResult(false, changed);
                 }
 
                 foreach (var change in page.Content.Data)
@@ -216,7 +233,7 @@ public partial class ResourceSyncService : IResourceSyncService
                             // Stop without moving the cursor, so the page is retried on the next run.
                             Log.FailedToGetResource(_logger, change.ResourceId);
                             RecordFailure(activity);
-                            return false;
+                            return new ChangeFeedResult(false, changed);
                         }
 
                         // An unknown service owner is skipped rather than retried, as in the updated feed: blocking
@@ -224,6 +241,10 @@ public partial class ResourceSyncService : IResourceSyncService
                         if (await UpsertResource(dbContext, response.Content, cancellationToken) is null)
                         {
                             Log.ChangedResourceNotSynced(_logger, change.ResourceId);
+                        }
+                        else
+                        {
+                            changed = true;
                         }
                     }
                     catch (Exception ex)
@@ -244,11 +265,25 @@ public partial class ResourceSyncService : IResourceSyncService
         {
             activity?.AddException(ex);
             RecordFailure(activity);
-            return false;
+            return new ChangeFeedResult(false, changed);
         }
 
-        return true;
+        return new ChangeFeedResult(true, changed);
     }
+
+    /// <summary>
+    /// Drops what the services cached from the resource, package and role-resource tables once a run has written to
+    /// them. With the distributed tier on this clears Valkey too; the other pods' memory tier follows at its local expiry.
+    /// </summary>
+    private async Task InvalidateCachesIfChanged(bool changed)
+    {
+        if (changed)
+        {
+            await _cache.RemoveByTagAsync(SyncedTags);
+        }
+    }
+
+    private readonly record struct ChangeFeedResult(bool Completed, bool Changed);
 
     private void RecordFailure(Activity? activity)
     {

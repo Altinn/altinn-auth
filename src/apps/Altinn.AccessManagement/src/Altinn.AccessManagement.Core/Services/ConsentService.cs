@@ -15,7 +15,7 @@ using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.Register;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using static Altinn.Authorization.ABAC.Constants.XacmlConstants;
@@ -30,10 +30,13 @@ namespace Altinn.AccessManagement.Core.Services
     /// </remarks>
     public class ConsentService : IConsent
     {
+        private static readonly HybridCacheEntryOptions ExternalIdentityCacheOptions = new() { Expiration = TimeSpan.FromMinutes(5) };
+        private static readonly string[] PartyTag = ["party"];
+
         private readonly IConsentRepository _consentRepository;
         private readonly IResourceRegistryClient _resourceRegistryClient;
         private readonly IAMPartyService _ampartyService;
-        private readonly IMemoryCache _memoryCache;
+        private readonly HybridCache _cache;
         private readonly TimeProvider _timeProvider;
         private readonly GeneralSettings _generalSettings;
         private readonly AppDbContext _db;
@@ -48,7 +51,7 @@ namespace Altinn.AccessManagement.Core.Services
             IConsentRepository consentRepository,
             IResourceRegistryClient resourceRegistryClient,
             IAMPartyService ampartyService,
-            IMemoryCache memoryCache,
+            HybridCache cache,
             TimeProvider timeProvider,
             IOptions<GeneralSettings> generalSettings,
             IConsentDelegationCheckService consentDelegationCheckService)
@@ -58,7 +61,7 @@ namespace Altinn.AccessManagement.Core.Services
             _consentRepository = consentRepository;
             _resourceRegistryClient = resourceRegistryClient;
             _ampartyService = ampartyService;
-            _memoryCache = memoryCache;
+            _cache = cache;
             _timeProvider = timeProvider;
             _generalSettings = generalSettings.Value;
             _consentDelegationCheckService = consentDelegationCheckService;
@@ -491,16 +494,12 @@ namespace Altinn.AccessManagement.Core.Services
         {
             if (consentPartyUrn.IsPartyUuid(out Guid partyUuid))
             {
-                if (_memoryCache.TryGetValue(partyUuid, out ConsentPartyUrn consentPartyUrnCache))
-                {
-                    return consentPartyUrnCache;
-                }
-                else
-                {
-                    ConsentPartyUrn consentPartyUrnFromRegister = await GetExternalIdentifier(partyUuid, cancellationToken);
-                    _memoryCache.Set(partyUuid, consentPartyUrnFromRegister, TimeSpan.FromMinutes(5));
-                    return consentPartyUrnFromRegister;
-                }
+                return await _cache.GetOrCreateAsync(
+                    $"consent:party:{partyUuid}",
+                    async ct => await GetExternalIdentifier(partyUuid, ct),
+                    ExternalIdentityCacheOptions,
+                    PartyTag,
+                    cancellationToken);
             }
 
             return consentPartyUrn;
