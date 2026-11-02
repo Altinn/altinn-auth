@@ -529,6 +529,11 @@ public class ContextHandlerUnitTest
         Assert.Equal(result.UserId, cached.UserId);
         Assert.Equal(result.Party.SSN, cached.Party.SSN);
         _profileMock.Verify(p => p.GetUserProfile(42, It.IsAny<CancellationToken>()), Times.Once);
+
+        // The fetch also stored the profile under the national id, so the lookup by person id makes no call
+        var byPersonId = await _sut.TestGetUserProfileByPersonId("01017012345", TestContext.Current.CancellationToken);
+        Assert.Equal(42, byPersonId.UserId);
+        _profileMock.Verify(p => p.GetUserProfileByPersonId(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -550,6 +555,11 @@ public class ContextHandlerUnitTest
         Assert.Equal(result.UserId, cached.UserId);
         Assert.Equal(result.Party.SSN, cached.Party.SSN);
         _profileMock.Verify(p => p.GetUserProfileByPersonId("01017012345", It.IsAny<CancellationToken>()), Times.Once);
+
+        // The fetch also stored the profile under the user id, so the lookup by user id makes no call
+        var byUserId = await _sut.TestGetUserProfileByUserId(42, TestContext.Current.CancellationToken);
+        Assert.Equal("01017012345", byUserId.Party.SSN);
+        _profileMock.Verify(p => p.GetUserProfile(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]

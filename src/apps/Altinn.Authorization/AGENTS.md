@@ -36,7 +36,7 @@ Decisions for this vertical are in [`docs/adr/`](docs/adr/README.md). Read [ADR-
 
 - **`PolicyRetrievalPoint` and `ResourceRegistryWrapper` read and write `HybridCache` in two steps on purpose.** The factory of `GetOrCreateAsync` cannot decline to cache, and empty or unparseable policies and non-OK responses must not be cached. The read passes `DisableUnderlyingData`; on a `SetAsync` that flag silently writes nothing.
 - **The resource policy stays in the local tier.** `XacmlPolicy` serializes but throws on deserialization, so it is wrapped in an immutable type with the distributed tier disabled. Every other cached value is copied through System.Text.Json on each hit.
-- **`ContextHandler` goes through the factory of `GetOrCreateAsync` on purpose.** A profile lookup that answers `null` and an OED role lookup that answers an empty list are cached for `RoleCacheTimeout` minutes, as they were in `IMemoryCache`. `GetSSnForParty` has no cache of its own: `RegisterService` caches the party.
+- **`ContextHandler` goes through the factory of `GetOrCreateAsync` on purpose.** A profile lookup that answers `null` and an OED role lookup that answers an empty list are cached for `RoleCacheTimeout` minutes, as they were in `IMemoryCache`. `GetSSnForParty` has no cache of its own: `RegisterService` caches the party when Register returns one, and a missing party is looked up again on the next decision.
 
 ## Test gotchas
 

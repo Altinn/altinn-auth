@@ -236,7 +236,10 @@ namespace Altinn.Platform.Authorization.Services
         private async Task PutInCacheAsync(Party party, bool includeSubunits, CancellationToken cancellationToken)
         {
             await _cache.SetAsync(GetPartyIdCacheKey(party.PartyId, includeSubunits), party, WriteOptions, PartyTags, cancellationToken);
-            await _cache.SetAsync(GetPartyUuidCacheKey(party.PartyUuid.Value, includeSubunits), party, WriteOptions, PartyTags, cancellationToken);
+            if (party.PartyUuid.HasValue)
+            {
+                await _cache.SetAsync(GetPartyUuidCacheKey(party.PartyUuid.Value, includeSubunits), party, WriteOptions, PartyTags, cancellationToken);
+            }
         }
     }
 }
