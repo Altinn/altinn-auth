@@ -304,38 +304,26 @@ public static class ValidationErrors
         = _factory.Create(56, $"The operation could not be completed.");
 
     /// <summary>
-    /// Gets a validation error descriptor for when an object is not found.
-    /// </summary>
-    public static ValidationErrorDescriptor NotFound { get; }
-        = _factory.Create(57, "Object not found");
-
-    /// <summary>
-    /// Gets a validation error descriptor for when an invalid instance URN format is provided.
-    /// </summary>
-    public static ValidationErrorDescriptor InvalidInstanceUrn { get; }
-        = _factory.Create(58, "Instance must use a valid URN format: 'urn:altinn:instance-id:', 'urn:altinn:correspondence-id:', or 'urn:altinn:dialog-id:'.");
-
-    /// <summary>
     /// Gets a validation error descriptor for when an assignment has resources delegated.
     /// </summary>
     public static ValidationErrorDescriptor AssignmentResourcesExist { get; }
-        = _factory.Create(59, "Assignment has resources delegated.");
+        = _factory.Create(57, "Assignment has resources delegated.");
 
     /// <summary>
     /// Gets a validation error descriptor for when a resource type is invalid.
     /// </summary>
     public static ValidationErrorDescriptor InvalidResourceType { get; }
-        = _factory.Create(60, "Invalid resource type.");
+        = _factory.Create(58, "Invalid resource type.");
 
     /// <summary>
     /// Gets a validation error descriptor for when clearing delegation policy rules fails.
     /// </summary>
     public static ValidationErrorDescriptor PolicyClearFailed { get; }
-        = _factory.Create(61, "Failed to clear delegation policy rules.");
+        = _factory.Create(59, "Failed to clear delegation policy rules.");
 
     /// <summary>
     /// Gets a validation error descriptor for when a resource is held through a client delegation and cannot be revoked on this endpoint.
     /// </summary>
     public static ValidationErrorDescriptor ResourceNotRevocableViaClientDelegation { get; }
-        = _factory.Create(62, "Resource is delegated through a client delegation.");
+        = _factory.Create(60, "Resource is delegated through a client delegation.");
 }
