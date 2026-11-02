@@ -491,9 +491,15 @@ public class SystemRegisterController : ControllerBase
     {
         ValidationProblemBuilder errors = default;
 
-        var (invalidFormatResourceIds, notFoundResourceIds, unsupportedResourceTypeIds, notDelegableResourceIds) = await _systemRegisterService.GetInvalidResourceIdsDetailed(rights, cancellationToken);
+        // Checked first, since the checks below can't read a null Right or attribute
+        List<int> malformedRightIndexes = AuthenticationHelper.GetMalformedRightIndexes(rights);
+        if (malformedRightIndexes.Count > 0)
+        {
+            return AddErrorIfAny(errors, malformedRightIndexes.ConvertAll(index => index.ToString()), ValidationErrors.SystemRegister_Right_MustHaveOneResource, "Malformed Right Indexes : ");
+        }
 
-        errors = AddErrorIfAny(errors, invalidFormatResourceIds, ValidationErrors.SystemRegister_ResourceId_InvalidFormat, "Invalid Resource Id Details : ");
+        var (_, notFoundResourceIds, unsupportedResourceTypeIds, notDelegableResourceIds) = await _systemRegisterService.GetInvalidResourceIdsDetailed(rights, cancellationToken);
+
         errors = AddErrorIfAny(errors, notFoundResourceIds, ValidationErrors.SystemRegister_ResourceId_DoesNotExist, "ResourceIds Not Found : ");
         errors = AddErrorIfAny(errors, unsupportedResourceTypeIds, ValidationErrors.SystemRegister_ResourceId_NotDelegable, "ResourceIds Not Delegable : ");
         errors = AddErrorIfAny(errors, notDelegableResourceIds, ValidationErrors.SystemRegister_ResourceId_ResourceNotDelegable, "Resources Not Delegable : ");
@@ -501,13 +507,6 @@ public class SystemRegisterController : ControllerBase
         if (AuthenticationHelper.HasDuplicateRights(rights))
         {
             errors.Add(ValidationErrors.SystemRegister_ResourceId_Duplicates, [
-                ErrorPathConstant.RESOURCERIGHTS
-            ]);
-        }
-
-        if (AuthenticationHelper.HasMalformedRight(rights))
-        {
-            errors.Add(ValidationErrors.SystemRegister_Right_MustHaveOneResource, [
                 ErrorPathConstant.RESOURCERIGHTS
             ]);
         }

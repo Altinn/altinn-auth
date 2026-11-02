@@ -253,11 +253,10 @@ namespace Altinn.Platform.Authentication.Tests.Controllers
             Assert.Equal(System.Net.HttpStatusCode.BadRequest, response.StatusCode);
             AltinnValidationProblemDetails? problemDetails = await response.Content.ReadFromJsonAsync<AltinnValidationProblemDetails>();
             Assert.NotNull(problemDetails);
-            Assert.Equal(2, problemDetails.Errors.Count);
-            AltinnValidationError error = problemDetails.Errors.Single(e => e.ErrorCode == ValidationErrors.SystemRegister_ResourceId_InvalidFormat.ErrorCode);
+            AltinnValidationError error = Assert.Single(problemDetails.Errors);
+            Assert.Equal(ValidationErrors.SystemRegister_Right_MustHaveOneResource.ErrorCode, error.ErrorCode);
             Assert.Equal("/registersystemrequest/rights/resource", error.Paths.Single(p => p.Equals("/registersystemrequest/rights/resource")));
-            Assert.Equal(ValidationErrors.SystemRegister_ResourceId_InvalidFormat.Title, error.Title);
-            Assert.Contains(problemDetails.Errors, e => e.ErrorCode == ValidationErrors.SystemRegister_Right_MustHaveOneResource.ErrorCode);
+            Assert.Equal("0", error.Extensions["Malformed Right Indexes : "]?.ToString());
         }
 
         [Fact]
@@ -286,19 +285,12 @@ namespace Altinn.Platform.Authentication.Tests.Controllers
             Assert.Equal(System.Net.HttpStatusCode.BadRequest, response.StatusCode);
             AltinnValidationProblemDetails? problemDetails = await response.Content.ReadFromJsonAsync<AltinnValidationProblemDetails>();
             Assert.NotNull(problemDetails);
-            Assert.Equal(3, problemDetails.Errors.Count);
-            Assert.Contains(problemDetails.Errors, e => e.ErrorCode == ValidationErrors.SystemRegister_Right_MustHaveOneResource.ErrorCode);
+            Assert.Single(problemDetails.Errors);
             AltinnValidationError error = problemDetails.Errors.Single(e => e.ErrorCode == ValidationErrors.SystemRegister_ResourceId_NotDelegable.ErrorCode);
             Assert.Equal("/registersystemrequest/rights/resource", error.Paths.Single(p => p.Equals("/registersystemrequest/rights/resource")));
             Assert.Equal(ValidationErrors.SystemRegister_ResourceId_NotDelegable.Title, error.Title);
             string? notDelegableExtensionValue = error.Extensions["ResourceIds Not Delegable : "]?.ToString();
             Assert.Equal("ttd-am-k6", notDelegableExtensionValue);
-
-            AltinnValidationError invalidFormatError = problemDetails.Errors.Single(e => e.ErrorCode == ValidationErrors.SystemRegister_ResourceId_InvalidFormat.ErrorCode);
-            Assert.Equal("/registersystemrequest/rights/resource", invalidFormatError.Paths.Single(p => p.Equals("/registersystemrequest/rights/resource")));
-            Assert.Equal(ValidationErrors.SystemRegister_ResourceId_InvalidFormat.Title, invalidFormatError.Title);
-            string? invalidFormatErrorExtensionValue = invalidFormatError.Extensions["Invalid Resource Id Details : "]?.ToString();
-            Assert.Equal("ttd-am-invalidresformat", invalidFormatErrorExtensionValue);
         }
 
         [Fact]
@@ -783,6 +775,7 @@ namespace Altinn.Platform.Authentication.Tests.Controllers
             AltinnValidationError error = Assert.Single(problemDetails.Errors);
             Assert.Equal(ValidationErrors.SystemRegister_Right_MustHaveOneResource.ErrorCode, error.ErrorCode);
             Assert.Contains("/registersystemrequest/rights/resource", error.Paths);
+            Assert.Equal("1", error.Extensions["Malformed Right Indexes : "]?.ToString());
         }
 
         [Fact]

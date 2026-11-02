@@ -41,6 +41,22 @@ namespace Altinn.Platform.Authentication.Tests
         }
 
         [Fact]
+        public void GetMalformedRightIndexes_ReturnsIndexesOfMalformedRights()
+        {
+            List<Right> rights =
+            [
+                CreateRight(("urn:altinn:resource", "a")),
+                null!,
+                CreateRight(("urn:altinn:resource", "a"), ("urn:altinn:resource", "b")),
+                CreateRight(),
+                CreateRight(("urn:altinn:org", "ttd")),
+            ];
+
+            List<int> expected = [1, 2, 4];
+            Assert.Equal(expected, AuthenticationHelper.GetMalformedRightIndexes(rights));
+        }
+
+        [Fact]
         public void HasDuplicateRights_NoDuplicates_ReturnsFalse()
         {
             // Arrange
