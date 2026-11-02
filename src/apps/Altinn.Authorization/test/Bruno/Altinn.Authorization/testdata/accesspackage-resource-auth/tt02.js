@@ -207,26 +207,27 @@ module.exports =
                 "partyUuid": "??"
             },
             "clientPackage": "forretningsforer-eiendom"
+        }
+    },
+    // Forretningsforer whose client JURIDISK OBSERVANT APE is neither BRL nor ESEK (unit type FLI),
+    // as it comes from Tenor. Used for the NotApplicable case of the forretningsforer-eiendom package.
+    "forretningsforerFryktlosFirkantetTiger": {
+        "name": "FRYKTLØS FIRKANTET TIGER AS",
+        "orgno": "314095693",
+        "partyId": 51449074,
+        "partyUuid": "897a37ee-ebd2-4dfe-8e8c-5fa8909845a9",
+        "dagligleder": {
+            "name": "SKÅNSOM PARYKK",
+            "pid": "20897496934",
+            "userId": 1435102,
+            "partyId": 51372438,
+            "partyUuid": "0599d337-f822-4cd3-a58a-35b7b1120b76"
         },
-        // A forretningsforer client that is neither BRL nor ESEK, as it comes from Tenor (unit type FLI).
-        // In TT02 every client of NONFIGURATIV EMOSJONELL PUMA is BRL or ESEK, so this one belongs to
-        // another forretningsforer: FRYKTLØS FIRKANTET TIGER AS (regnskapsforer in systemuser-clientdelegation).
         "nonBrlEsekClient": {
             "name": "JURIDISK OBSERVANT APE",
             "orgno": "211155922",
             "partyId": 51461603,
-            "partyUuid": "a1486fad-0e5c-41bc-815c-3bcd7362118a",
-            "forretningsforer": {
-                "name": "FRYKTLØS FIRKANTET TIGER AS",
-                "orgno": "314095693",
-                "dagligleder": {
-                    "name": "SKÅNSOM PARYKK",
-                    "pid": "20897496934",
-                    "userId": 1435102,
-                    "partyId": 51372438,
-                    "partyUuid": "0599d337-f822-4cd3-a58a-35b7b1120b76"
-                }
-            }
+            "partyUuid": "a1486fad-0e5c-41bc-815c-3bcd7362118a"
         }
     }
 };
