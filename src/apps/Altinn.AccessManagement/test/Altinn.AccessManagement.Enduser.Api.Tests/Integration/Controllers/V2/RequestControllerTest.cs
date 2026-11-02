@@ -1,6 +1,8 @@
 ﻿using System.Net;
 using System.Net.Http.Json;
+using System.Net.Mime;
 using System.Security.Claims;
+using System.Text;
 using System.Text.Json;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Errors;
@@ -176,6 +178,23 @@ public class RequestControllerTest
                 CreateResourceRequestUrl(),
                 new RequestedRightKeysDto { RequestedRightKeys = ["unknown-right-key"] },
                 TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            var problem = await ReadProblem(response);
+            var error = Assert.Single(problem.Errors);
+            Assert.Equal(ValidationErrors.RightKeyNotFound.ErrorCode, error.ErrorCode);
+            Assert.Contains(error.Paths, p => p.EndsWith("/requestedRightKeys/0", StringComparison.Ordinal));
+        }
+
+        [Fact]
+        public async Task WithRawJsonBody_BindsRequestedRightKeys()
+        {
+            // The tests above serialize RequestedRightKeysDto, so they pass whatever the field is called in JSON.
+            // This sends the documented body as written, so renaming the field fails here.
+            var client = CreateClient(Fixture, TestData.KnutVik.Id);
+            using var body = new StringContent("""{ "requestedRightKeys": ["unknown-right-key"] }""", Encoding.UTF8, MediaTypeNames.Application.Json);
+
+            var response = await client.PostAsync(CreateResourceRequestUrl(), body, TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
             var problem = await ReadProblem(response);
