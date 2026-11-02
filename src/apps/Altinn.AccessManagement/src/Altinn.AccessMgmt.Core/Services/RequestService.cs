@@ -27,7 +27,7 @@ public class RequestService(
     /// <inheritdoc/>
     public async Task<Result<RequestDto>> GetRequest(Guid requestId, CancellationToken ct = default)
     {
-        ValidationErrorBuilder error = default;
+        ValidationProblemBuilder error = default;
 
         var requestResource = await db.RequestAssignmentResources.AsNoTracking()
             .Include(r => r.Assignment).ThenInclude(a => a.From)
@@ -149,7 +149,7 @@ public class RequestService(
     /// <inheritdoc/>
     public async Task<Result<RequestDto>> UpdateRequest(Guid partyUuid, Guid requestId, RequestStatus status, CancellationToken ct = default)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         var requestResult = await GetRequest(requestId, ct);
         if (requestResult.IsProblem)
@@ -285,7 +285,7 @@ public class RequestService(
 
     private static ValidationProblemInstance OrganizationNotFoundProblem()
     {
-        ValidationErrorBuilder errors = default;
+        ValidationProblemBuilder errors = default;
         errors.Add(ValidationErrors.EntityNotExists, "QUERY/organization");
         errors.TryBuild(out var notFound);
         return notFound;
@@ -489,7 +489,7 @@ public class RequestService(
 
     private static Result<RequestDto> VerifyRequestStatusUpdate(RequestDto request, Guid partyUuid, RequestStatus status)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         switch (request.Status)
         {
@@ -513,7 +513,7 @@ public class RequestService(
         return problems != null ? problems : request;
     }
 
-    private static void ValidateDraft(RequestDto request, Guid partyUuid, RequestStatus status, ref ValidationErrorBuilder errorBuilder)
+    private static void ValidateDraft(RequestDto request, Guid partyUuid, RequestStatus status, ref ValidationProblemBuilder errorBuilder)
     {
         if (status != RequestStatus.Pending && status != RequestStatus.Withdrawn)
         {
@@ -527,7 +527,7 @@ public class RequestService(
         }
     }
 
-    private static void ValidatePending(RequestDto request, Guid partyUuid, RequestStatus status, ref ValidationErrorBuilder errorBuilder)
+    private static void ValidatePending(RequestDto request, Guid partyUuid, RequestStatus status, ref ValidationProblemBuilder errorBuilder)
     {
         switch (status)
         {
@@ -554,7 +554,7 @@ public class RequestService(
         }
     }
 
-    private static void AddUnsupportedStatusError(RequestDto request, RequestStatus status, ref ValidationErrorBuilder errorBuilder)
+    private static void AddUnsupportedStatusError(RequestDto request, RequestStatus status, ref ValidationProblemBuilder errorBuilder)
     {
         var paramName = "party";
 
@@ -565,7 +565,7 @@ public class RequestService(
         );
     }
 
-    private static void AddUnauthorizedStatusError(RequestDto request, RequestStatus status, ref ValidationErrorBuilder errorBuilder)
+    private static void AddUnauthorizedStatusError(RequestDto request, RequestStatus status, ref ValidationProblemBuilder errorBuilder)
     {
         var paramName = "party";
 
@@ -587,7 +587,7 @@ public class RequestService(
 
     private async Task<Result<RequestDto>> UpdatePackageRequestStatus(Guid id, RequestStatus status, CancellationToken ct = default)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         var request = await db.RequestAssignmentPackages
             .Include(t => t.Assignment)
@@ -681,7 +681,7 @@ public class RequestService(
 
     private async Task<Result<RequestDto>> UpdateResourceRequestStatus(Guid id, RequestStatus status, CancellationToken ct = default)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         var request = await db.RequestAssignmentResources
             .Include(t => t.Assignment)

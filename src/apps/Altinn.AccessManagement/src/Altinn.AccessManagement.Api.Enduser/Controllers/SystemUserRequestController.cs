@@ -153,7 +153,7 @@ public class SystemUserRequestController(
 
     private static IActionResult InvalidOrganizationProblem()
     {
-        ValidationErrorBuilder errors = default;
+        ValidationProblemBuilder errors = default;
         errors.Add(ValidationErrors.InvalidQueryParameter, "QUERY/organization");
         errors.TryBuild(out var invalidOrganization);
         return invalidOrganization.ToActionResult();

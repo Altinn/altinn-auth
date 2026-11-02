@@ -329,7 +329,7 @@ public class RequestController(
         CancellationToken ct = default
         )
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         var requestResult = await requestService.GetRequest(id, ct);
         if (requestResult.IsProblem)
@@ -417,7 +417,7 @@ public class RequestController(
         CancellationToken ct = default
         )
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         var authUserUuid = AuthenticationHelper.GetAuthenticatedPartyUuid(HttpContext);
         var (hasConnections, _) = await connectionQuery.HasConnection(to, party);
@@ -501,7 +501,7 @@ public class RequestController(
         CancellationToken ct = default
         )
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         var authUserUuid = AuthenticationHelper.GetAuthenticatedPartyUuid(HttpContext);
         var (hasConnections, _) = await connectionQuery.HasConnection(to, party);
@@ -539,7 +539,7 @@ public class RequestController(
 
     private async Task<IActionResult> ApprovePackageRequest(Guid partyUuid, RequestDto request, CancellationToken ct)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         var assignment = await assignmentService.GetOrCreateAssignment(request.To.Id, request.From.Id, RoleConstants.Rightholder, cancellationToken: ct);
         if (assignment is null)

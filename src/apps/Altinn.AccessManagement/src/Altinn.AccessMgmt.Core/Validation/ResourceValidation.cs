@@ -18,7 +18,7 @@ public static class ResourceValidation
             return null;
         }
 
-        return (ref ValidationErrorBuilder errors) =>
+        return (ref ValidationProblemBuilder errors) =>
             errors.Add(ValidationErrors.ResourceNotExists, $"QUERY/{paramName}", [new("resources", $"No resources with name '{resourceName}' exists.")]
         );
     };
@@ -28,7 +28,7 @@ public static class ResourceValidation
         if (resources.Any(p => !p.Result))
         {
             var resourceKeys = string.Join(", ", resources.Select(p => p.Resource.RefId));
-            return (ref ValidationErrorBuilder errors) => errors.Add(ValidationErrors.UserNotAuthorized, $"QUERY/{paramName}", [new("resources", $"User is not allowed to assign the following resource(s) '{resourceKeys}'.")]);
+            return (ref ValidationProblemBuilder errors) => errors.Add(ValidationErrors.UserNotAuthorized, $"QUERY/{paramName}", [new("resources", $"User is not allowed to assign the following resource(s) '{resourceKeys}'.")]);
         }
 
         return null;
@@ -53,7 +53,7 @@ public static class ResourceValidation
 
             if (packagesNotAssignableToOrg.Any())
             {
-                return (ref ValidationErrorBuilder errors) =>
+                return (ref ValidationProblemBuilder errors) =>
                     errors.Add(ValidationErrors.PackageIsNotAssignableToRecipient, $"QUERY/{paramName}", [new("Packages", $"{string.Join(", ", packagesNotAssignableToOrg)} are not assignable to an organization.")]);
             }
         }
@@ -76,7 +76,7 @@ public static class ResourceValidation
         if (!packageLookupResult.Any())
         {
             var msg = string.Join(",", packageName.Select(p => p.ToString()));
-            return (ref ValidationErrorBuilder errors) =>
+            return (ref ValidationProblemBuilder errors) =>
                 errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{paramName}", [new("packages", $"No packages were found with the names '{msg}'.")]
             );
         }
@@ -84,7 +84,7 @@ public static class ResourceValidation
         if (packageLookupResult.Count() != packageName.Count())
         {
             var pkgsNotFound = packageName.Where(n => packageLookupResult.Any(p => p.Name.Equals(n, StringComparison.InvariantCultureIgnoreCase)));
-            return (ref ValidationErrorBuilder errors) =>
+            return (ref ValidationProblemBuilder errors) =>
                 errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{paramName}", [new("packages", $"Packages with name(s) was not found '{pkgsNotFound}'.")]
             );
         }
@@ -99,7 +99,7 @@ public static class ResourceValidation
 
         if (assignedResources.Any())
         {
-            return (ref ValidationErrorBuilder errors) =>
+            return (ref ValidationProblemBuilder errors) =>
             {
                 errors.Add(ValidationErrors.AssignmentResourcesExist, $"QUERY/{paramName}", [new("assignmentResources", "Cannot remove supplier assignment while resources are still delegated. Use cascade=true or remove resources first.")]);
             };
@@ -117,7 +117,7 @@ public static class ResourceValidation
             return null;
         }
 
-        return (ref ValidationErrorBuilder errors) =>
+        return (ref ValidationProblemBuilder errors) =>
         {
             errors.Add(ValidationErrors.ResourceNotRevocableViaClientDelegation, $"QUERY/{paramName}", [new(paramName, "Resources delegated through a client delegation cannot be revoked on this endpoint. Use the client delegation API to revoke them.")]);
         };
@@ -130,7 +130,7 @@ public static class ResourceValidation
             return null;
         }
 
-        return (ref ValidationErrorBuilder errors) =>
+        return (ref ValidationProblemBuilder errors) =>
         {
             errors.Add(ValidationErrors.InvalidResourceType, $"QUERY/{paramName}", [new("resourceType", $"Resource '{resource?.RefId}' must be of type '{expectedTypeName}'.")]);
         };
@@ -143,7 +143,7 @@ public static class ResourceValidation
             return null;
         }
 
-        return (ref ValidationErrorBuilder errors) =>
+        return (ref ValidationProblemBuilder errors) =>
         {
             errors.Add(ValidationErrors.PolicyClearFailed, $"QUERY/{paramName}", [new("resource", $"Failed to clear delegation policy for resource '{resourceRefId}'.")]);
         };
@@ -156,7 +156,7 @@ public static class ResourceValidation
             return null;
         }
 
-        return (ref ValidationErrorBuilder errors) =>
+        return (ref ValidationProblemBuilder errors) =>
         {
             errors.Add(ValidationErrors.PolicyClearFailed, $"QUERY/{paramName}", [new("assignmentResources", "Failed to clear delegation policies during cascade deletion.")]);
         };

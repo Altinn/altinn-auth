@@ -306,7 +306,7 @@ public static class TestDataAppsInstanceDelegation
             ErrorDetails expectedDetail = JsonSerializer.Deserialize<ErrorDetails>(expectedExtensionList[i].GetRawText(), JsonOptions);
             ErrorDetails actualDetail = JsonSerializer.Deserialize<ErrorDetails>(actualExtensionList[i].GetRawText(), JsonOptions);
             Assert.Equal(expectedDetail.Code, actualDetail.Code);
-            Assert.Equal(expectedDetail.Detail, actualDetail.Detail);
+            Assert.Equal(expectedDetail.Title, actualDetail.Title);
 
             if (expectedDetail.Paths == null)
             {
@@ -329,7 +329,7 @@ public static class TestDataAppsInstanceDelegation
     {
         public string Code { get; set; }
 
-        public string Detail { get; set; }
+        public string Title { get; set; }
 
         public List<string> Paths { get; set; }
     }
