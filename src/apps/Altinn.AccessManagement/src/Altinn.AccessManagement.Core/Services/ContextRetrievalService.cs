@@ -216,7 +216,10 @@ public class ContextRetrievalService : IContextRetrievalService
                 if (party != null && party.PartyUuid != Guid.Empty)
                 {
                     parties.Add($"{party.PartyUuid}", party);
-                    await _cache.SetAsync(PartyUuidKey(party.PartyUuid.Value, includeSubunits), party, _partyOptions, PartyTag, cancellationToken);
+                    if (party.PartyUuid.HasValue)
+                    {
+                        await _cache.SetAsync(PartyUuidKey(party.PartyUuid.Value, includeSubunits), party, _partyOptions, PartyTag, cancellationToken);
+                    }
                 }
             }
         }
