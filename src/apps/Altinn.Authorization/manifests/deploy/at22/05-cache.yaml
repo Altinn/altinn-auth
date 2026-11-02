@@ -1,0 +1,10 @@
+apiVersion: cache.dis.altinn.cloud/v1alpha1
+kind: Cache
+metadata:
+  name: authorization-cache
+  namespace: product-authorization
+spec:
+  size: small
+  persistence: false
+  passwordRotation:
+    intervalDays: 90

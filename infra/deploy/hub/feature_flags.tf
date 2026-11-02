@@ -53,6 +53,7 @@ locals {
     "AccessManagement.Subunit.AdosInheritance"                               = { description = "Specifies if ADOS administrative units should be treated as subunits that inherit mainunit access (equal to BEDR/AAFY) in ConnectionQuery and AuthorizedParties. Reversible; defaults to false." },
     "AccessManagement.Roles.DisableAltinn2"                                  = { description = "Specifies if Altinn 2 roles should be excluded from ConnectionQuery, AuthorizedParties, PIP and resource delegation checks. Read-side only and reversible; defaults to false." },
     "AccessMgmt.Core.HostedServices.ResourceRegistrySync.ChangeFeed"         = { description = "Specifies if we should use the new change feed to process all resources before we start to process the permission or do as before only process the permission and update resources with changed permissions." },
+    "AccessManagement.Cache.Distributed"                                     = { description = "Specifies if the shared HybridCache also writes to and reads from the Valkey tier (the Cache resource in the app namespace). Off means in-memory per pod only. Changing it needs a restart." },
   }
 
   access_management_feature_flags_ui = {
