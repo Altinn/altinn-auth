@@ -4,7 +4,7 @@ using Altinn.Platform.Authorization.Helpers;
 using Altinn.Platform.Authorization.Models;
 using Altinn.Platform.Authorization.Repositories.Interface;
 using Altinn.Platform.Authorization.Services.Interface;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Options;
 
 namespace Altinn.Platform.Authorization.Services.Implementation
@@ -15,25 +15,38 @@ namespace Altinn.Platform.Authorization.Services.Implementation
     /// </summary>
     public class PolicyRetrievalPoint : IPolicyRetrievalPoint
     {
+        private static readonly string[] CacheTags = ["policy"];
+
+        // The cache is read and written in two steps instead of through the factory of GetOrCreateAsync: the factory
+        // cannot decline to cache its result, and an empty or unparseable document must not be cached.
+        private static readonly HybridCacheEntryOptions ReadOptions = new() { Flags = HybridCacheEntryFlags.DisableUnderlyingData };
+
         private readonly IPolicyRepository _repository;
-        private readonly IMemoryCache _memoryCache;
-        private readonly GeneralSettings _generalSettings;
+        private readonly HybridCache _cache;
+        private readonly HybridCacheEntryOptions _writeOptions;
         private readonly IResourceRegistry _resourceRegistry;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PolicyRetrievalPoint"/> class.
         /// </summary>
         /// <param name="policyRepository">The policy Repository..</param>
-        /// <param name="memoryCache">The cache handler </param>
+        /// <param name="cache">The cache handler </param>
         /// <param name="settings">The app settings</param>
         /// <param name="resourceRegistry">The regis</param>
-        public PolicyRetrievalPoint(IPolicyRepository policyRepository, IMemoryCache memoryCache, IOptions<GeneralSettings> settings, IResourceRegistry resourceRegistry)
+        public PolicyRetrievalPoint(IPolicyRepository policyRepository, HybridCache cache, IOptions<GeneralSettings> settings, IResourceRegistry resourceRegistry)
         {
             _repository = policyRepository;
-            _memoryCache = memoryCache;
-            _generalSettings = settings.Value;
+            _cache = cache;
+            _writeOptions = new HybridCacheEntryOptions { Expiration = TimeSpan.FromMinutes(settings.Value.PolicyCacheTimeout) };
             _resourceRegistry = resourceRegistry;
         }
+
+        /// <summary>
+        /// Gets the cache key under which the policy document at <paramref name="policyPath"/> is held.
+        /// </summary>
+        /// <param name="policyPath">The blob storage path of the policy</param>
+        /// <param name="version">The blob storage version, or empty for the current policy</param>
+        internal static string GetCacheKey(string policyPath, string version = "") => "policy:" + policyPath + version;
 
         /// <inheritdoc/>
         public async Task<XacmlPolicy> GetPolicyAsync(XacmlContextRequest request)
@@ -62,8 +75,9 @@ namespace Altinn.Platform.Authorization.Services.Implementation
 
         private async Task<XacmlPolicy> GetPolicyInternalAsync(string policyPath, string version = "", CancellationToken cancellationToken = default)
         {
-            string cacheKey = policyPath + version;
-            if (_memoryCache.TryGetValue(cacheKey, out byte[] cachedDocument))
+            string cacheKey = GetCacheKey(policyPath, version);
+            byte[] cachedDocument = await _cache.GetOrCreateAsync<byte[]>(cacheKey, static _ => default, ReadOptions, cancellationToken: cancellationToken);
+            if (cachedDocument != null)
             {
                 return ParsePolicyDocument(cachedDocument);
             }
@@ -91,7 +105,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
             // Parse before caching, so a document that fails to parse is never cached and the next
             // read fetches a fresh copy.
             XacmlPolicy policy = ParsePolicyDocument(policyDocument);
-            PutPolicyDocumentInCache(cacheKey, policyDocument);
+            await _cache.SetAsync(cacheKey, policyDocument, _writeOptions, CacheTags, cancellationToken);
 
             return policy;
         }
@@ -102,15 +116,6 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         {
             using MemoryStream stream = new MemoryStream(policyDocument, writable: false);
             return PolicyHelper.ParsePolicy(stream);
-        }
-
-        private void PutPolicyDocumentInCache(string cacheKey, byte[] policyDocument)
-        {
-            var cacheEntryOptions = new MemoryCacheEntryOptions()
-               .SetPriority(CacheItemPriority.High)
-               .SetAbsoluteExpiration(new TimeSpan(0, _generalSettings.PolicyCacheTimeout, 0));
-
-            _memoryCache.Set(cacheKey, policyDocument, cacheEntryOptions);
         }
     }
 }

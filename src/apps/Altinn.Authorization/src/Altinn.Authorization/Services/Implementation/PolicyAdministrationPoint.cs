@@ -4,6 +4,7 @@ using Altinn.Platform.Authorization.Repositories.Interface;
 using Altinn.Platform.Authorization.Services.Interface;
 using Azure;
 using Azure.Storage.Blobs.Models;
+using Microsoft.Extensions.Caching.Hybrid;
 
 namespace Altinn.Platform.Authorization.Services.Implementation
 {
@@ -13,14 +14,17 @@ namespace Altinn.Platform.Authorization.Services.Implementation
     public class PolicyAdministrationPoint : IPolicyAdministrationPoint
     {
         private readonly IPolicyRepository _policyRepository;
+        private readonly HybridCache _cache;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PolicyAdministrationPoint"/> class.
         /// </summary>
         /// <param name="policyRepository">The policy repository (blob storage)</param>
-        public PolicyAdministrationPoint(IPolicyRepository policyRepository)
+        /// <param name="cache">The cache <see cref="PolicyRetrievalPoint"/> serves policies from</param>
+        public PolicyAdministrationPoint(IPolicyRepository policyRepository, HybridCache cache)
         {
             _policyRepository = policyRepository;
+            _cache = cache;
         }
 
         /// <inheritdoc/>
@@ -34,7 +38,15 @@ namespace Altinn.Platform.Authorization.Services.Implementation
             string filePath = PolicyHelper.GetAltinnAppsPolicyPath(org, app);
             Response<BlobContentInfo> response = await _policyRepository.WritePolicyAsync(filePath, fileStream);
 
-            return response?.GetRawResponse()?.Status == (int)HttpStatusCode.Created;
+            bool stored = response?.GetRawResponse()?.Status == (int)HttpStatusCode.Created;
+            if (stored)
+            {
+                // PolicyRetrievalPoint may hold the previous policy for PolicyCacheTimeout minutes. Removing the entry
+                // clears this process, and the shared tier once one is configured; other pods keep their copy until it expires.
+                await _cache.RemoveAsync(PolicyRetrievalPoint.GetCacheKey(filePath));
+            }
+
+            return stored;
         }
     }
 }

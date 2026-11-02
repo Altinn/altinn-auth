@@ -1,13 +1,16 @@
-﻿using System.Text;
+﻿using System.Net;
+using System.Text;
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.Tests.MockServices;
+using Altinn.Authorization.Tests.Util;
 using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Repositories.Interface;
 using Altinn.Platform.Authorization.Services.Implementation;
 using Altinn.Platform.Authorization.Services.Interface;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.DependencyInjection;
+using Azure;
+using Azure.Storage.Blobs.Models;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -26,15 +29,9 @@ namespace Altinn.Authorization.Tests.Unit
 
         public PolicyRetrievalPointTest()
         {
-            ServiceCollection services = new ServiceCollection();
-            services.AddMemoryCache();
-            ServiceProvider serviceProvider = services.BuildServiceProvider();
-
-            IMemoryCache memoryCache = serviceProvider.GetService<IMemoryCache>();
-
             _prp = new PolicyRetrievalPoint(
                 new PolicyRepositoryMock(new Mock<ILogger<PolicyRepositoryMock>>().Object),
-                memoryCache,
+                TestSetupUtil.CreateHybridCache(),
                 Options.Create(new GeneralSettings { PolicyCacheTimeout = 1 }),
                 new ResourceRegistryMock());
         }
@@ -302,17 +299,55 @@ namespace Altinn.Authorization.Tests.Unit
             repository.Verify(r => r.GetPolicyVersionAsync(POLICYPATH, "v8", It.IsAny<CancellationToken>()), Times.Exactly(2));
         }
 
-        private static (PolicyRetrievalPoint Prp, Mock<IPolicyRepository> Repository) CreatePolicyRetrievalPointWithMockedRepository()
+        /// <summary>
+        /// Test case: Read a policy, write a new policy for the same org and app, then read it again.
+        /// Expected: The second read returns the written policy instead of the cached one.
+        /// </summary>
+        [Fact]
+        public async Task GetPolicyAsync_PolicyWrittenAfterFirstRead_ReturnsWrittenPolicy()
+        {
+            // Arrange
+            HybridCache cache = TestSetupUtil.CreateHybridCache();
+            (PolicyRetrievalPoint prp, Mock<IPolicyRepository> repository) = CreatePolicyRetrievalPointWithMockedRepository(cache);
+            PolicyAdministrationPoint pap = new PolicyAdministrationPoint(repository.Object, cache);
+            repository
+                .SetupSequence(r => r.GetPolicyAsync(POLICYPATH, It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult(GetPolicyStream("current")))
+                .Returns(Task.FromResult(GetPolicyStream("written")));
+            repository
+                .Setup(r => r.WritePolicyAsync(POLICYPATH, It.IsAny<Stream>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(CreatedResponse());
+
+            // Act
+            XacmlPolicy before = await prp.GetPolicyAsync(ORG, APP);
+            bool stored = await pap.WritePolicyAsync(ORG, APP, GetPolicyStream("written"));
+            XacmlPolicy after = await prp.GetPolicyAsync(ORG, APP);
+
+            // Assert
+            before.PolicyId.ToString().Should().Be("urn:altinn:policyid:current");
+            stored.Should().BeTrue();
+            after.PolicyId.ToString().Should().Be("urn:altinn:policyid:written");
+            repository.Verify(r => r.GetPolicyAsync(POLICYPATH, It.IsAny<CancellationToken>()), Times.Exactly(2));
+        }
+
+        private static (PolicyRetrievalPoint Prp, Mock<IPolicyRepository> Repository) CreatePolicyRetrievalPointWithMockedRepository(HybridCache cache = null)
         {
             Mock<IPolicyRepository> repository = new Mock<IPolicyRepository>(MockBehavior.Strict);
 
             PolicyRetrievalPoint prp = new PolicyRetrievalPoint(
                 repository.Object,
-                new MemoryCache(new MemoryCacheOptions()),
+                cache ?? TestSetupUtil.CreateHybridCache(),
                 Options.Create(new GeneralSettings { PolicyCacheTimeout = 1 }),
                 new ResourceRegistryMock());
 
             return (prp, repository);
+        }
+
+        private static Response<BlobContentInfo> CreatedResponse()
+        {
+            Mock<Response> rawResponse = new Mock<Response>();
+            rawResponse.SetupGet(r => r.Status).Returns((int)HttpStatusCode.Created);
+            return Response.FromValue<BlobContentInfo>(null, rawResponse.Object);
         }
 
         private static Stream GetPolicyStream(string id) =>
