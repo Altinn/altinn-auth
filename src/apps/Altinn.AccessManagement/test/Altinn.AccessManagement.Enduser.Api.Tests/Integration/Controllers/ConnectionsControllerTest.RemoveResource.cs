@@ -336,7 +336,7 @@ public partial class ConnectionsControllerTest
             Assert.True(problemDetails.Extensions.TryGetValue("validationErrors", out object errorsValue), $"Expected validationErrors in the problem details. Response body: {responseContent}");
             JsonElement errors = Assert.IsType<JsonElement>(errorsValue);
 
-            Assert.Equal("AM.VLD-00035", errors[0].GetProperty("code").GetString());
+            Assert.Equal("AM.VLD-00062", errors[0].GetProperty("code").GetString());
 
             await Fixture.QueryDb(async db =>
             {

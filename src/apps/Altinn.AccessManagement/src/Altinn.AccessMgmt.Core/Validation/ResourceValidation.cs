@@ -1,8 +1,8 @@
-﻿using Altinn.AccessMgmt.PersistenceEF.Constants;
+﻿using Altinn.AccessManagement.Core.Errors;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.ProblemDetails;
-using ValidationErrors = Altinn.AccessMgmt.Core.Utils.Models.ValidationErrors;
 
 namespace Altinn.AccessMgmt.Core.Validation;
 
