@@ -18,23 +18,23 @@ patches:
 
   - target:
       kind: Kustomization
-      name: access-management-pre-deploy
+      name: pre-deploy
     patch: |-
       apiVersion: kustomize.toolkit.fluxcd.io/v1
       kind: Kustomization
       metadata:
-        name: access-management-pre-deploy
+        name: pre-deploy
       spec:
         path: ./pre-deploy/at22
 
   - target:
       kind: Kustomization
-      name: access-management-deploy
+      name: deploy
     patch: |-
       apiVersion: kustomize.toolkit.fluxcd.io/v1
       kind: Kustomization
       metadata:
-        name: access-management-deploy
+        name: deploy
       spec:
         path: ./deploy/at22
   

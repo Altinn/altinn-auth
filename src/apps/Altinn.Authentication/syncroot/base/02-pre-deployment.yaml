@@ -1,0 +1,14 @@
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: pre-deploy
+spec:
+  interval: 60m
+  path: ./fake
+  prune: true
+  wait: true
+  force: true
+  targetNamespace: product-authentication
+  sourceRef:
+    kind: OCIRepository
+    name: manifests

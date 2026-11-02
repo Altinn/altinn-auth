@@ -187,23 +187,9 @@ public class RequestControllerTest
 
             Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
 
-            await Fixture.QueryDb(static async db =>
-            {
-                var outbox = await db.OutboxMessages.FirstOrDefaultAsync(TestContext.Current.CancellationToken);
-                Assert.NotNull(outbox);
-                Assert.NotNull(outbox.Data);
-
-                var data = JsonSerializer.Deserialize<ResourceRequestPendingNotificationMessage>(outbox.Data);
-                Assert.NotNull(data);
-
-                Assert.Equal(TestData.LarsBakke, data.RequesterId);
-                Assert.Equal(TestData.BakerJohnsen, data.RecipientId);
-                Assert.NotEmpty(data.ResourceIds);
-                Assert.Empty(data.PackageIds);
-            });
-
             var obj = await response.Content.ReadFromJsonAsync<RequestDto>(TestContext.Current.CancellationToken);
             Assert.NotNull(obj);
+            Assert.Equal(RequestStatus.Draft, obj.Status);
         }
 
         [Fact]

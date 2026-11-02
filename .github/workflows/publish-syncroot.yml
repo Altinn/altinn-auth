@@ -11,6 +11,8 @@ on:
         options:
           - Altinn.AccessManagement
           - Altinn.Authorization
+          - Altinn.Authentication
+          - Altinn.ResourceRegistry
 
       environment:
         description: "Environment"

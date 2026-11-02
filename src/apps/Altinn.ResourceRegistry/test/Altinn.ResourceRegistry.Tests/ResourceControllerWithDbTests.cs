@@ -9,6 +9,7 @@ using Altinn.ResourceRegistry.Tests.Mocks;
 using Altinn.ResourceRegistry.Tests.Utils;
 using Altinn.ResourceRegistry.TestUtils;
 using AngleSharp.Text;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using System.Net;
 using System.Net.Http.Headers;
@@ -707,6 +708,62 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
         HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+    }
+
+    [Theory]
+    [InlineData(" 974761076", "skd", HttpStatusCode.Created)]
+    [InlineData("974761076 ", "skd", HttpStatusCode.Created)]
+    [InlineData("974 761 076", "skd", HttpStatusCode.BadRequest)]
+    [InlineData("991 825 827", "ttd", HttpStatusCode.BadRequest)]
+    public async Task CreateResource_OrganizationNumberFormat(string organization, string orgCode, HttpStatusCode expected)
+    {
+        var client = CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetOrganizationNumberFormatToken(orgCode));
+
+        ServiceResource resource = CreateOrganizationNumberFormatResource(organization, orgCode);
+
+        string requestUri = "resourceregistry/api/v1/Resource/";
+
+        HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
+        {
+            Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
+        };
+
+        httpRequestMessage.Headers.Add("Accept", "application/json");
+        httpRequestMessage.Headers.Add("ContentType", "application/json");
+
+        HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+        await AssertOrganizationNumberFormatResult(response, expected, resource.Identifier!, organization);
+    }
+
+    [Theory]
+    [InlineData(" 974761076", "skd", HttpStatusCode.OK)]
+    [InlineData("974761076 ", "skd", HttpStatusCode.OK)]
+    [InlineData("974 761 076", "skd", HttpStatusCode.BadRequest)]
+    [InlineData("991 825 827", "ttd", HttpStatusCode.BadRequest)]
+    public async Task UpdateResource_OrganizationNumberFormat(string organization, string orgCode, HttpStatusCode expected)
+    {
+        await Repository.CreateResource(CreateOrganizationNumberFormatResource(organization.Replace(" ", string.Empty), orgCode));
+
+        var client = CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", GetOrganizationNumberFormatToken(orgCode));
+
+        ServiceResource resource = CreateOrganizationNumberFormatResource(organization, orgCode);
+
+        string requestUri = $"resourceregistry/api/v1/Resource/{resource.Identifier}";
+
+        HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Put, requestUri)
+        {
+            Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
+        };
+
+        httpRequestMessage.Headers.Add("Accept", "application/json");
+        httpRequestMessage.Headers.Add("ContentType", "application/json");
+
+        HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
+
+        await AssertOrganizationNumberFormatResult(response, expected, resource.Identifier!, organization);
     }
 
     [Fact]
@@ -1438,6 +1495,49 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
     }
 
     #region Utils
+    // TTD runs as an admin, which skips the owner check, so only validation stops an invalid organization number
+    private static string GetOrganizationNumberFormatToken(string orgCode)
+        => orgCode == "ttd"
+            ? PrincipalUtil.GetOrgToken("digdir", "991825827", "altinn:resourceregistry/resource.admin")
+            : PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write");
+
+    private static ServiceResource CreateOrganizationNumberFormatResource(string organization, string orgCode)
+    {
+        return new ServiceResource()
+        {
+            Identifier = "superdupertjenestene",
+            Title = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+            Description = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+            RightDescription = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+            Status = "Completed",
+            ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
+            HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
+            {
+                Organization = organization,
+                Orgcode = orgCode,
+            },
+            ResourceType = ResourceType.GenericAccessResource,
+        };
+    }
+
+    private async Task AssertOrganizationNumberFormatResult(HttpResponseMessage response, HttpStatusCode expected, string identifier, string organization)
+    {
+        Assert.Equal(expected, response.StatusCode);
+
+        if (response.IsSuccessStatusCode)
+        {
+            ServiceResource? stored = await Repository.GetResource(identifier, null);
+            Assert.NotNull(stored);
+            Assert.Equal(organization.Trim(), stored.HasCompetentAuthority?.Organization);
+        }
+        else
+        {
+            ValidationProblemDetails? errordetails = await response.Content.ReadFromJsonAsync<ValidationProblemDetails>(_jsonOptions);
+            Assert.NotNull(errordetails);
+            Assert.Contains(errordetails.Errors, e => e.Key == "HasCompetentAuthority.Organization");
+        }
+    }
+
     private static ServiceResource CreateTestResource(string identifier, string orgCode = "ttd")
     {
         return new ServiceResource
@@ -1445,7 +1545,7 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
             Identifier = identifier,
             HasCompetentAuthority = new CompetentAuthority
             {
-                Organization = "974761076",
+                Organization = "991825827",
                 Orgcode = orgCode
             }
         };

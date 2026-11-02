@@ -1,4 +1,4 @@
-{
+module.exports = {
     "auth_scopes": {
         "resourceregistryAdmin": "altinn:resourceregistry/resource.admin",
         "resourceregistryWrite": "altinn:resourceregistry/resource.write"
@@ -21,4 +21,4 @@
       "orgno": "991825827"
     }
   }
-}
+};

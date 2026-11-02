@@ -33,7 +33,11 @@ namespace Altinn.Platform.Authorization.Helpers
                         {
                             foreach (XacmlMatch xacmlMatch in allOf.Matches)
                             {
-                                if (xacmlMatch.AttributeDesignator.AttributeId.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute))
+                                if (xacmlMatch.AttributeDesignator.AttributeId.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.LegacyRoleAttribute))
+                                {
+                                    roleCodes.Add(xacmlMatch.AttributeValue.Value);
+                                }
+                                else if (xacmlMatch.AttributeDesignator.AttributeId.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute))
                                 {
                                     roleCodes.Add(xacmlMatch.AttributeValue.Value);
                                 }
@@ -541,7 +545,9 @@ namespace Altinn.Platform.Authorization.Helpers
                 {
                     foreach (XacmlMatch xacmlMatch in allOf.Matches)
                     {
-                        if (xacmlMatch.AttributeDesignator.Category.Equals(XacmlConstants.MatchAttributeCategory.Subject) && xacmlMatch.AttributeDesignator.AttributeId.Equals(XacmlRequestAttribute.RoleAttribute))
+                        if (xacmlMatch.AttributeDesignator.Category.Equals(XacmlConstants.MatchAttributeCategory.Subject)
+                            && (xacmlMatch.AttributeDesignator.AttributeId.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.LegacyRoleAttribute)
+                                || xacmlMatch.AttributeDesignator.AttributeId.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute)))
                         {
                             roles.Add(new RoleGrant { RoleTypeCode = xacmlMatch.AttributeValue.Value, IsDelegable = true });
                         }

@@ -20,7 +20,6 @@ module.exports = {
     regn_not_assignable:
       "urn:altinn:accesspackage:regnskapsforer-med-signeringsrettighet",
     eksplisitt: "urn:altinn:accesspackage:eksplisitt",
-    konkbotilg: "urn:altinn:accesspackage:konkursbo-tilgangsstyrer",
   },
   Bot_person: {
     lastname: "INGREDIENS",

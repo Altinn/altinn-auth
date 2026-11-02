@@ -43,9 +43,17 @@ const token = await testTokenGenerator.getToken(getTokenParameters);
 
 tests {
   test("Negative : DelegationCheck for FFØR package which is not direct delegable", function() {
+    // The check needs write on altinn_access_management for the client. The forretningsforer only gets that
+    // through an Altinn 2 role, so it is 403 where AccessManagement.Roles.DisableAltinn2 is on.
+    const { altinn2RolesDisabled } = require("./testdata/altinn2-roles.js");
+    if (altinn2RolesDisabled()) {
+      expect(res.status).to.equal(403);
+      return;
+    }
+
     const body = res.getBody();
     const data = body.data;
-    
+
     expect(res.status).to.equal(200);
     expect(data[0].result).to.equal(false)
     

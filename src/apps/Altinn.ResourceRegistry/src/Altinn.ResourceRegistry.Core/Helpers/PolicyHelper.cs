@@ -88,7 +88,8 @@ namespace Altinn.ResourceRegistry.Core.Helpers
                         {
                             foreach (XacmlMatch xacmlMatch in allOf.Matches)
                             {
-                                if (xacmlMatch.AttributeDesignator.AttributeId.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute))
+                                if (xacmlMatch.AttributeDesignator.AttributeId.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.LegacyRoleAttribute)
+                                    || xacmlMatch.AttributeDesignator.AttributeId.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute))
                                 {
                                     roleCodes.Add(xacmlMatch.AttributeValue.Value);
                                 }
