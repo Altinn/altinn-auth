@@ -2,6 +2,7 @@
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using Altinn.AccessManagement.Core.Constants;
+using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
@@ -554,7 +555,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
                     .ToListAsync(cancellationToken);
         if (packages != null && packages.Any())
         {
-            errors.Add(ValidationErrors.AssignmentIsActiveInOneOrMoreDelegations, "$QUERY/cascade", [new("packages", string.Join(",", packages.Select(p => p.Id.ToString())))]);
+            errors.Add(ValidationErrors.AssignmentHasActiveConnections, "$QUERY/cascade", [new("packages", string.Join(",", packages.Select(p => p.Id.ToString())))]);
         }
 
         var resources = await db.AssignmentResources.AsNoTracking()
@@ -562,7 +563,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
             .ToListAsync(cancellationToken);
         if (resources != null && resources.Any())
         {
-            errors.Add(ValidationErrors.AssignmentIsActiveInOneOrMoreDelegations, "$QUERY/cascade", [new("resources", string.Join(",", resources.Select(p => p.Id.ToString())))]);
+            errors.Add(ValidationErrors.AssignmentHasActiveConnections, "$QUERY/cascade", [new("resources", string.Join(",", resources.Select(p => p.Id.ToString())))]);
         }
 
         var instances = await db.AssignmentInstances.AsNoTracking()
@@ -570,7 +571,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
             .ToListAsync(cancellationToken);
         if (instances != null && instances.Any())
         {
-            errors.Add(ValidationErrors.AssignmentIsActiveInOneOrMoreDelegations, "$QUERY/cascade", [new("resources", string.Join(",", instances.Select(p => p.Id.ToString())))]);
+            errors.Add(ValidationErrors.AssignmentHasActiveConnections, "$QUERY/cascade", [new("resources", string.Join(",", instances.Select(p => p.Id.ToString())))]);
         }
 
         var delegationsFromAssingment = await db.Delegations.AsNoTracking()
@@ -578,7 +579,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
             .ToListAsync(cancellationToken);
         if (delegationsFromAssingment != null && delegationsFromAssingment.Any())
         {
-            errors.Add(ValidationErrors.AssignmentIsActiveInOneOrMoreDelegations, "$QUERY/cascade", [new("delegations", string.Join(",", delegationsFromAssingment.Select(p => p.Id.ToString())))]);
+            errors.Add(ValidationErrors.AssignmentHasActiveConnections, "$QUERY/cascade", [new("delegations", string.Join(",", delegationsFromAssingment.Select(p => p.Id.ToString())))]);
         }
 
         var delegationsToAssignment = await db.Delegations.AsNoTracking()
@@ -586,7 +587,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
             .ToListAsync(cancellationToken);
         if (delegationsToAssignment != null && delegationsToAssignment.Any())
         {
-            errors.Add(ValidationErrors.AssignmentIsActiveInOneOrMoreDelegations, "$QUERY/cascade", [new("delegations", string.Join(",", delegationsToAssignment.Select(p => p.Id.ToString())))]);
+            errors.Add(ValidationErrors.AssignmentHasActiveConnections, "$QUERY/cascade", [new("delegations", string.Join(",", delegationsToAssignment.Select(p => p.Id.ToString())))]);
         }
 
         return errors;
