@@ -79,7 +79,10 @@ public class ConnectionsControllerTest : IClassFixture<ApiFixture>
         });
 
         var token = TestTokenGenerator.CreateToken(new ClaimsIdentity("mock"), claims =>
-            claims.Add(new Claim(AltinnCoreClaimTypes.PartyUuid, TestEntities.OrganizationVerdiqAS.Id.ToString())));
+        {
+            claims.Add(new Claim(AltinnCoreClaimTypes.PartyUuid, TestEntities.OrganizationVerdiqAS.Id.ToString()));
+            claims.Add(new Claim("scope", AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ));
+        });
 
         _client = fixture.BuildConfiguration(c =>
             c.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token));
@@ -88,7 +91,9 @@ public class ConnectionsControllerTest : IClassFixture<ApiFixture>
     [Fact]
     public async Task GetConnections_ForSeededAssignment_Returns200()
     {
-        var response = await _client.GetAsync($"/accessmanagement/api/v1/enduser/connections?party={TestEntities.OrganizationVerdiqAS.Id}");
+        // The scope check applies only when `from` or `to` equals `party`; from = party needs the to-others scope.
+        var party = TestEntities.OrganizationVerdiqAS.Id;
+        var response = await _client.GetAsync($"/accessmanagement/api/v1/enduser/connections?party={party}&from={party}");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }

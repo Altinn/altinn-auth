@@ -65,7 +65,7 @@ token helpers and checked-in `.pfx` files.
 1. Check if the interface is already mocked (see table above + `TestUtils/Mocks/`).
 2. If genuinely new, implement it in `TestUtils/Mocks/YourThingMock.cs`.
 3. Register it via `ApiFixture.ConfigureServices` in the test that needs it.
-4. If it keeps canned responses, add the data to `TestUtils/Data/`.
+4. If it keeps canned responses, add the data to `AccessMgmt.Tests/Data/` and read it through `TestDataDirectory`.
 5. Extract common seeding behaviour into a static helper so other projects can
    reuse it.
 

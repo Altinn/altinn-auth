@@ -18,10 +18,12 @@ and known-good seed-data IDs.
 | Authentication | `src/apps/Altinn.Authentication/test/Bruno/Altinn.Authentication/` |
 | ResourceRegistry | `src/apps/Altinn.ResourceRegistry/test/Bruno/Altinn.ResourceRegistry/` |
 
-The ResourceRegistry collection also provisions fixtures the others depend on: its
-`Resource/DevTest Resources`, `Resource/System Resources` and `AccessLists/authz-bruno`
-folders create the `devtest_*` resources, their policies and the `authz-bruno` access
-list.
+The ResourceRegistry collection also provisions some fixtures the others depend on:
+`Resource/DevTest Resources` creates some of the `devtest_*` resources and their
+policies, `Resource/System Resources` creates `altinn_*` resources, and
+`AccessLists/authz-bruno` creates the `authz-bruno` access list. Other `devtest_*` IDs in
+the test data, such as `devtest_gar_bruno_direct_resource`, have no creation request
+anywhere and rely on data already in the environment.
 
 ## Layout (AccessMgmt collection)
 
