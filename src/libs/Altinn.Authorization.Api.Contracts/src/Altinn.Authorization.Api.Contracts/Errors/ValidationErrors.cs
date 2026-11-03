@@ -56,10 +56,10 @@ public static class ValidationErrors
         = _factory.Create(6, $"Entity do not exists.");
 
     /// <summary>
-    /// Gets a validation error descriptor for when one or more query parameters are invalid.
+    /// Gets a validation error descriptor for when a role does not exist.
     /// </summary>
-    public static ValidationErrorDescriptor InvalidQueryParameter { get; }
-        = _factory.Create(7, $"One or more query parameters are invalid.");
+    public static ValidationErrorDescriptor RoleNotExists { get; }
+        = _factory.Create(7, $"Role do not exsists.");
 
     /// <summary>
     /// Gets a validation error descriptor for when the entity type is not allowed.
@@ -68,11 +68,9 @@ public static class ValidationErrors
         = _factory.Create(8, $"This entity type is not allowed here.");
 
     /// <summary>
-    /// Retired. <see cref="InvalidQueryParameter"/> used this code from October 2025 until it went back to code 7.
-    /// Kept so the code is never given to another error.
+    /// Gets a validation error descriptor for when one or more query parameters are invalid.
     /// </summary>
-    [Obsolete("Retired. Use InvalidQueryParameter.")]
-    public static ValidationErrorDescriptor RetiredInvalidQueryParameter { get; }
+    public static ValidationErrorDescriptor InvalidQueryParameter { get; }
         = _factory.Create(9, $"One or more query parameters are invalid.");
 
     /// <summary>
@@ -286,44 +284,38 @@ public static class ValidationErrors
     = _factory.Create(53, $"The continuation token is invalid.");
 
     /// <summary>
-    /// Gets a validation error descriptor for when a role does not exist.
-    /// </summary>
-    public static ValidationErrorDescriptor RoleNotExists { get; }
-        = _factory.Create(54, $"Role do not exsists.");
-
-    /// <summary>
     /// Gets a validation error descriptor for when a role assignment cannot be revoked.
     /// </summary>
     public static ValidationErrorDescriptor UnableToRevokeRoleAssignment { get; }
-        = _factory.Create(55, $"Role assignment cannot be revoked.");
+        = _factory.Create(54, $"Role assignment cannot be revoked.");
 
     /// <summary>
     /// Gets a validation error descriptor for when the operation could not be completed.
     /// </summary>
     public static ValidationErrorDescriptor UnableToCompleteOperation { get; }
-        = _factory.Create(56, $"The operation could not be completed.");
+        = _factory.Create(55, $"The operation could not be completed.");
 
     /// <summary>
     /// Gets a validation error descriptor for when an assignment has resources delegated.
     /// </summary>
     public static ValidationErrorDescriptor AssignmentResourcesExist { get; }
-        = _factory.Create(57, "Assignment has resources delegated.");
+        = _factory.Create(56, "Assignment has resources delegated.");
 
     /// <summary>
     /// Gets a validation error descriptor for when a resource type is invalid.
     /// </summary>
     public static ValidationErrorDescriptor InvalidResourceType { get; }
-        = _factory.Create(58, "Invalid resource type.");
+        = _factory.Create(57, "Invalid resource type.");
 
     /// <summary>
     /// Gets a validation error descriptor for when clearing delegation policy rules fails.
     /// </summary>
     public static ValidationErrorDescriptor PolicyClearFailed { get; }
-        = _factory.Create(59, "Failed to clear delegation policy rules.");
+        = _factory.Create(58, "Failed to clear delegation policy rules.");
 
     /// <summary>
     /// Gets a validation error descriptor for when a resource is held through a client delegation and cannot be revoked on this endpoint.
     /// </summary>
     public static ValidationErrorDescriptor ResourceNotRevocableViaClientDelegation { get; }
-        = _factory.Create(60, "Resource is delegated through a client delegation.");
+        = _factory.Create(59, "Resource is delegated through a client delegation.");
 }
