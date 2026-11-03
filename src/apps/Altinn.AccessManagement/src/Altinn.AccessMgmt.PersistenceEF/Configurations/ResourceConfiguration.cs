@@ -2,7 +2,7 @@
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Models.Audit;
-using Altinn.AccessMgmt.PersistenceEF.Models.Enums;
+using Altinn.Authorization.Api.Contracts.ResourceRegistry.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 

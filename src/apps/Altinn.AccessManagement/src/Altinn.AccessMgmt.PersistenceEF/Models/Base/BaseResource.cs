@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using Altinn.AccessMgmt.PersistenceEF.Models.Audit.Base;
 using Altinn.AccessMgmt.PersistenceEF.Models.Contracts;
-using Altinn.AccessMgmt.PersistenceEF.Models.Enums;
 using Altinn.AccessMgmt.PersistenceEF.Models.Extensions;
+using Altinn.Authorization.Api.Contracts.ResourceRegistry.Enums;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Models.Base;
 
