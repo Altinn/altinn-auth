@@ -8,6 +8,7 @@ spec:
   selector:
     matchLabels:
       app.kubernetes.io/name: am-api
+
   template:
     metadata:
       labels:

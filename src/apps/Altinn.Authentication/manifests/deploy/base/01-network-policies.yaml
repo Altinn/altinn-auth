@@ -1,0 +1,14 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: authn-api
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: authn-api
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: product-authorization
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: product-access-management
