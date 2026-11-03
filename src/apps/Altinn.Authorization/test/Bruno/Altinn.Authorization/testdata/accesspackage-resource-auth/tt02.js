@@ -207,19 +207,27 @@ module.exports =
                 "partyUuid": "??"
             },
             "clientPackage": "forretningsforer-eiendom"
+        }
+    },
+    // Forretningsforer whose client JURIDISK OBSERVANT APE is neither BRL nor ESEK (unit type FLI),
+    // as it comes from Tenor. Used for the NotApplicable case of the forretningsforer-eiendom package.
+    "forretningsforerFryktlosFirkantetTiger": {
+        "name": "FRYKTLØS FIRKANTET TIGER AS",
+        "orgno": "314095693",
+        "partyId": 51449074,
+        "partyUuid": "897a37ee-ebd2-4dfe-8e8c-5fa8909845a9",
+        "dagligleder": {
+            "name": "SKÅNSOM PARYKK",
+            "pid": "20897496934",
+            "userId": 1435102,
+            "partyId": 51372438,
+            "partyUuid": "0599d337-f822-4cd3-a58a-35b7b1120b76"
         },
         "nonBrlEsekClient": {
-            "name": "SKEPTISK LILLA HEST BORETTSLAG",
-            "orgno": "311115057",
-            "partyId": 51623312,
-            "partyUuid": "8b8ae7e6-6982-408e-b9bc-9f800081512c",
-            "dagligleder": {
-                "name": "??",
-                "pid": "??",
-                "userId": 0,
-                "partyId": 0,
-                "partyUuid": "??"
-            }
+            "name": "JURIDISK OBSERVANT APE",
+            "orgno": "211155922",
+            "partyId": 51461603,
+            "partyUuid": "a1486fad-0e5c-41bc-815c-3bcd7362118a"
         }
     }
 };
