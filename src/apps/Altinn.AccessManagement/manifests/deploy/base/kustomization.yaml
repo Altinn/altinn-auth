@@ -3,13 +3,12 @@ kind: Kustomization
 labels:
 - pairs:
     app.kubernetes.io/part-of: access-management
-    app.kubernetes.io/version: latest
-    azure.workload.identity/use: "true"
   includeSelectors: true
   includeTemplates: true
 
 resources:
-  - 01-network-policies.yaml
-  - 02-deployment.yaml
-  - 03-service.yaml
+  - 01-deployment.yaml
+  - 02-service.yaml
+  - 03-hpa.yaml
   - 04-route.yaml
+  - 05-linkerd.yaml
