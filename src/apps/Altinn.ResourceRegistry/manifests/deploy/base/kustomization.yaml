@@ -8,6 +8,7 @@ labels:
   includeTemplates: true
 
 resources:
+  - 01-network-policies.yaml
   - 02-deployment.yaml
   - 03-service.yaml
   - 04-route.yaml

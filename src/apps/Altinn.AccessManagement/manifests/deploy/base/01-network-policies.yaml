@@ -1,0 +1,14 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: am-api
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: am-api
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: product-authorization
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: product-authentication

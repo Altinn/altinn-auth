@@ -1,0 +1,14 @@
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: authz-api
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: authz-api
+  ingress:
+  - fromEndpoints:
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: product-authentication
+    - matchLabels:
+        k8s:io.kubernetes.pod.namespace: product-access-management
