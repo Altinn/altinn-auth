@@ -7,8 +7,14 @@ spec:
     matchLabels:
       app.kubernetes.io/name: am-api
   ingress:
+  # Direct
   - fromEndpoints:
     - matchLabels:
         k8s:io.kubernetes.pod.namespace: product-authorization
     - matchLabels:
         k8s:io.kubernetes.pod.namespace: product-authentication
+  # DIS proxy
+  - fromEndpoints:
+    - matchLabels:
+        dis.altinn.no/proxy-for: altinn-access-management
+        k8s:io.kubernetes.pod.namespace: default
