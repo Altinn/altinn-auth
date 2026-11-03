@@ -1,0 +1,119 @@
+# Linkerd inbound authorization for resource-registry pods (port 8080).
+#
+# defaultInboundPolicy is deny, so :8080 is default-deny. Access is scoped per
+# HTTP route, so the kubelet reaches only its probe paths — never the application:
+#   - "/"        -> mesh (mTLS) identity: internal resource-registry components and
+#                   traefik ingress. Will add more internal components as needed.
+#   - all endpoints prefixed with /health -> the kubelet, for the probes, which
+#                   hit :8080 unmeshed from the node.
+#
+# Defining HTTPRoutes replaces the Server's default catch-all, so "/" is an
+# explicit catch-all (every request except the probe paths matches it). Node subnet on
+# dis-core clusters is 10.205.0.0/16 (+ fd12:2291:d70a::/48), verified on
+# at22/at23 — deliberately not the pod subnet (10.240.0.0/16).
+apiVersion: policy.linkerd.io/v1beta3
+kind: Server
+metadata:
+  name: resource-registry-api
+  labels:
+    app.kubernetes.io/part-of: resource-registry
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: resource-registry
+  port: 8080
+  proxyProtocol: HTTP/1
+---
+apiVersion: policy.linkerd.io/v1alpha1
+kind: MeshTLSAuthentication
+metadata:
+  name: resource-registry-mesh-authn
+  labels:
+    app.kubernetes.io/part-of: resource-registry
+spec:
+  identities:
+    - "authz-api.product-authorization.serviceaccount.identity.linkerd.cluster.local"
+    - "authn-api.product-authentication.serviceaccount.identity.linkerd.cluster.local"
+    - "am-api.product-access-management.serviceaccount.identity.linkerd.cluster.local"
+    - "altinn-traefik.traefik.serviceaccount.identity.linkerd.cluster.local"
+---
+apiVersion: policy.linkerd.io/v1alpha1
+kind: NetworkAuthentication
+metadata:
+  name: resource-registry-kubelet
+  labels:
+    app.kubernetes.io/part-of: resource-registry
+spec:
+  # Node subnet (kubelet source) — excludes the pod subnet (10.240.0.0/16).
+  networks:
+    - cidr: 10.205.0.0/16
+    - cidr: fd12:2291:d70a::/48
+---
+# Catch-all route: everything except the probe paths, authorized by mesh identity below.
+apiVersion: policy.linkerd.io/v1beta3
+kind: HTTPRoute
+metadata:
+  name: resource-registry-app
+  labels:
+    app.kubernetes.io/part-of: resource-registry
+spec:
+  parentRefs:
+    - group: policy.linkerd.io
+      kind: Server
+      name: resource-registry-api
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+---
+# Probe route: exactly the startup/liveness/readiness paths the deployments probe,
+# authorized for the kubelet below.
+apiVersion: policy.linkerd.io/v1beta3
+kind: HTTPRoute
+metadata:
+  name: resource-registry-health
+  labels:
+    app.kubernetes.io/part-of: resource-registry
+spec:
+  parentRefs:
+    - group: policy.linkerd.io
+      kind: Server
+      name: resource-registry-api
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /health
+---
+apiVersion: policy.linkerd.io/v1alpha1
+kind: AuthorizationPolicy
+metadata:
+  name: resource-registry-allow-meshed
+  labels:
+    app.kubernetes.io/part-of: resource-registry
+spec:
+  targetRef:
+    group: policy.linkerd.io
+    kind: HTTPRoute
+    name: resource-registry-app
+  requiredAuthenticationRefs:
+    - group: policy.linkerd.io
+      kind: MeshTLSAuthentication
+      name: resource-registry-mesh-authn
+---
+apiVersion: policy.linkerd.io/v1alpha1
+kind: AuthorizationPolicy
+metadata:
+  name: resource-registry-allow-kubelet
+  labels:
+    app.kubernetes.io/part-of: resource-registry
+spec:
+  targetRef:
+    group: policy.linkerd.io
+    kind: HTTPRoute
+    name: resource-registry-health
+  requiredAuthenticationRefs:
+    - group: policy.linkerd.io
+      kind: NetworkAuthentication
+      name: resource-registry-kubelet

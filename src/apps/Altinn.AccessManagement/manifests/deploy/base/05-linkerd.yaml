@@ -1,0 +1,117 @@
+# Linkerd inbound authorization for access-management pods (port 8080).
+#
+# defaultInboundPolicy is deny, so :8080 is default-deny. Access is scoped per
+# HTTP route, so the kubelet reaches only its probe paths — never the application:
+#   - "/"        -> mesh (mTLS) identity: internal access-management components and
+#                   traefik ingress. Will add more internal components as needed.
+#   - all endpoints prefixed with /health -> the kubelet, for the probes, which
+#                   hit :8080 unmeshed from the node.
+#
+# Defining HTTPRoutes replaces the Server's default catch-all, so "/" is an
+# explicit catch-all (every request except the probe paths matches it). Node subnet on
+# dis-core clusters is 10.205.0.0/16 (+ fd12:2291:d70a::/48), verified on
+# at22/at23 — deliberately not the pod subnet (10.240.0.0/16).
+apiVersion: policy.linkerd.io/v1beta3
+kind: Server
+metadata:
+  name: access-management-api
+  labels:
+    app.kubernetes.io/part-of: access-management
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/part-of: access-management
+  port: 8080
+  proxyProtocol: HTTP/1
+---
+apiVersion: policy.linkerd.io/v1alpha1
+kind: MeshTLSAuthentication
+metadata:
+  name: access-management-mesh-authn
+  labels:
+    app.kubernetes.io/part-of: access-management
+spec:
+  identities:
+    - "authz-api.product-authorization.serviceaccount.identity.linkerd.cluster.local"
+    - "authn-api.product-authentication.serviceaccount.identity.linkerd.cluster.local"
+---
+apiVersion: policy.linkerd.io/v1alpha1
+kind: NetworkAuthentication
+metadata:
+  name: access-management-kubelet
+  labels:
+    app.kubernetes.io/part-of: access-management
+spec:
+  # Node subnet (kubelet source) — excludes the pod subnet (10.240.0.0/16).
+  networks:
+    - cidr: 10.205.0.0/16
+    - cidr: fd12:2291:d70a::/48
+---
+# Catch-all route: everything except the probe paths, authorized by mesh identity below.
+apiVersion: policy.linkerd.io/v1beta3
+kind: HTTPRoute
+metadata:
+  name: access-management-app
+  labels:
+    app.kubernetes.io/part-of: access-management
+spec:
+  parentRefs:
+    - group: policy.linkerd.io
+      kind: Server
+      name: access-management-api
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+---
+# Probe route: exactly the startup/liveness/readiness paths the deployments probe,
+# authorized for the kubelet below.
+apiVersion: policy.linkerd.io/v1beta3
+kind: HTTPRoute
+metadata:
+  name: access-management-health
+  labels:
+    app.kubernetes.io/part-of: access-management
+spec:
+  parentRefs:
+    - group: policy.linkerd.io
+      kind: Server
+      name: access-management-api
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /health
+---
+apiVersion: policy.linkerd.io/v1alpha1
+kind: AuthorizationPolicy
+metadata:
+  name: access-management-allow-meshed
+  labels:
+    app.kubernetes.io/part-of: access-management
+spec:
+  targetRef:
+    group: policy.linkerd.io
+    kind: HTTPRoute
+    name: access-management-app
+  requiredAuthenticationRefs:
+    - group: policy.linkerd.io
+      kind: MeshTLSAuthentication
+      name: access-management-mesh-authn
+---
+apiVersion: policy.linkerd.io/v1alpha1
+kind: AuthorizationPolicy
+metadata:
+  name: access-management-allow-kubelet
+  labels:
+    app.kubernetes.io/part-of: access-management
+spec:
+  targetRef:
+    group: policy.linkerd.io
+    kind: HTTPRoute
+    name: access-management-health
+  requiredAuthenticationRefs:
+    - group: policy.linkerd.io
+      kind: NetworkAuthentication
+      name: access-management-kubelet

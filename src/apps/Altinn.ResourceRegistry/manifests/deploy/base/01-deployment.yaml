@@ -12,13 +12,14 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: rr-api
-        azure.workload.identity/use: "true"
       annotations:
+        azure.workload.identity/use: "true"
         cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
         linkerd.io/inject: enabled
     spec:
       serviceAccountName: rr-api
       securityContext:
+        runAsNonRoot: true
         runAsUser: 1000
         runAsGroup: 3000
 
@@ -28,9 +29,12 @@ spec:
           imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
           resources:
             requests:
-              cpu: 750m
+              cpu: 500m
               memory: 1500Mi
           envFrom:
             - configMapRef:
@@ -60,7 +64,6 @@ spec:
               containerPort: 8080
               protocol: TCP
           readinessProbe:
-            # an http probe
             httpGet:
               path: /health/
               port: 8080
@@ -68,21 +71,19 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 10
           livenessProbe:
-              # an http probe
-              httpGet:
-                path: /health/
-                port: 8080
-              failureThreshold: 3
-              periodSeconds: 10
-              timeoutSeconds: 10
+            httpGet:
+              path: /health/
+              port: 8080
+            failureThreshold: 3
+            periodSeconds: 10
+            timeoutSeconds: 10
           startupProbe:
-              # an http probe
-              httpGet:
-                path: /health/
-                port: 8080
-              failureThreshold: 30
-              periodSeconds: 10
-              timeoutSeconds: 10
+            httpGet:
+              path: /health/
+              port: 8080
+            failureThreshold: 30
+            periodSeconds: 10
+            timeoutSeconds: 10
           volumeMounts:
             - name: tmp
               mountPath: /tmp
