@@ -27,7 +27,7 @@ const estatePackageUrns = [
 const unknownPartyUuid = "5b1e0f3c-8d2a-4c7e-9f41-0a6b2d9e7c13";
 
 // Environments whose seed data has been verified for this suite.
-const supportedEnvironments = ["at22"];
+const supportedEnvironments = ["at22", "tt02"];
 
 // Skips the current request outside the supported environments. Returns true when skipped,
 // so the caller can stop before it loads seed data that does not exist there.
