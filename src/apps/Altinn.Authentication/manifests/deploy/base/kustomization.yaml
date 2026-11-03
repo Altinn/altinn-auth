@@ -3,7 +3,6 @@ kind: Kustomization
 labels:
 - pairs:
     app.kubernetes.io/part-of: authentication
-    azure.workload.identity/use: "true"
   includeSelectors: true
   includeTemplates: true
 

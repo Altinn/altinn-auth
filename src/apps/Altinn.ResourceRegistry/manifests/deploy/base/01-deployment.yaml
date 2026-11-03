@@ -12,8 +12,8 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: rr-api
-      annotations:
         azure.workload.identity/use: "true"
+      annotations:
         cluster-autoscaler.kubernetes.io/safe-to-evict: "true"
         linkerd.io/inject: enabled
     spec:
