@@ -20,8 +20,9 @@ docs {
   revoke is idempotent, so it returns 204.
 
   A 204 alone would also pass if the person had been an administrator and was removed, so the
-  step lists the administrators before and after the revoke and asserts the person is absent
-  both times.
+  step lists the administrators before and after the revoke. It asserts the person is absent
+  both times, and that the list is otherwise unchanged, so a revoke that removed someone else
+  fails too.
 }
 
 script:pre-request {
@@ -59,5 +60,10 @@ tests {
   test("THEN the person is still not an administrator", function() {
     const body = JSON.parse(bru.getVar("administratorsAfterRevoke"));
     expect(helpers.findAdministrator(body, td.creditor_VILJESTERK_GRANDIS.partyUuid)).to.be.undefined;
+  });
+
+  test("AND no other administrator was removed or added", function() {
+    const ids = body => JSON.parse(body).data.map(e => e.administrator.id.toLowerCase()).sort();
+    expect(ids(bru.getVar("administratorsAfterRevoke"))).to.deep.equal(ids(bru.getVar("administratorsBeforeRevoke")));
   });
 }

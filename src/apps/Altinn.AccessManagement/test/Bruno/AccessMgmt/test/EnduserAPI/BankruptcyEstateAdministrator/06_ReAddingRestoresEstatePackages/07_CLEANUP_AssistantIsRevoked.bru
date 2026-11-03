@@ -16,7 +16,8 @@ params:query {
 }
 
 docs {
-  CLEANUP: the bostyrer revokes the assistant. Expects 204.
+  CLEANUP: the bostyrer revokes the assistant. Expects 204, and then lists the administrators
+  to assert the assistant is gone, since revoke also returns 204 when nothing was removed.
 }
 
 script:pre-request {
@@ -32,8 +33,23 @@ script:pre-request {
   await helpers.loginAs(td.BOSTYRER);
 }
 
+script:post-response {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (res.status === 204) {
+    bru.setVar("administratorsAfterCleanup", JSON.stringify(await helpers.listAdministrators(bru.getVar("party"))));
+  }
+}
+
 tests {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  const td = helpers.testdata();
+
   test("WHEN the assistant is revoked, the request returns 204", function() {
     expect(res.status).to.equal(204);
+  });
+
+  test("THEN the assistant is no longer listed as an administrator", function() {
+    const body = JSON.parse(bru.getVar("administratorsAfterCleanup"));
+    expect(helpers.findAdministrator(body, td.user_LUN_ANALYSE_GÅSTOL.partyUuid)).to.be.undefined;
   });
 }
