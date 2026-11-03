@@ -68,10 +68,10 @@ The reference is `test/EnduserAPI/ClientDelegationsV2/` (v2 client delegation):
   responses carry no problem body.
 - A suite whose seed data exists only in some environments skips itself elsewhere: each
   step calls a `helpers.js` guard that runs `bru.runner.skipRequest()` unless `tokenEnv` is
-  supported. `test/EnduserAPI/BankruptcyEstateAdministrator/` runs in AT22 and TT02. Negatives
-  that would leave lasting state, such as failed person lookups that lock the caller out
-  for an hour, sit in their own opt-in scenario behind an environment variable
-  (`--env-var runPersonLookupNegatives=true`) instead of running on every pass.
+  supported. `test/EnduserAPI/BankruptcyEstateAdministrator/` runs in AT22 and TT02.
+- Leave out negatives that would leave lasting state in the shared environment, such as
+  failed person lookups, which lock the caller out of lookups for an hour. Cover those in
+  unit or integration tests instead.
 
 ## Using them as a spec for C# tests
 

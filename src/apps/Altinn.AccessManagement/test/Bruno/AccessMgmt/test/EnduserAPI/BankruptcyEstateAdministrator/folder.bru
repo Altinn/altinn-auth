@@ -50,13 +50,14 @@ docs {
   `tokenEnv` is not listed in `supportedEnvironments` in `helpers.js`; add an environment
   there once its seed data is verified.
 
-  ## Failed person lookups lock the caller out
+  ## No wrong-name or unknown-person tests
 
   Adding an administrator looks the person up by identifier and last name. Access Management
   counts failed lookups per authenticated user and, after `MaximumFailedAttempts` (2) of
   them, refuses every lookup by that user with 429 AM-00026 for
-  `FailedAttemptsCacheLifetimeSeconds` (one hour). The counter lives in each pod's memory.
-  Wrong last names and unknown persons therefore cannot run on every pass without breaking
-  the bostyrer's own adds for the next hour, so `08_PersonLookupFailures` is opt-in; see its
-  folder docs. The other validation scenarios only use inputs rejected before any lookup.
+  `FailedAttemptsCacheLifetimeSeconds` (one hour), counted in each pod's memory. A wrong last
+  name or an unknown person here would lock the bostyrer out of adds for an hour for
+  everyone using the persona, so the suite has none. The validation scenarios only use
+  inputs rejected before any lookup. Lookup failures belong in unit tests of
+  `UserProfileLookupService` and the controller integration tests.
 }

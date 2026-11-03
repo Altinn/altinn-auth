@@ -40,21 +40,6 @@ function skipOutsideSupportedEnvironments() {
   return true;
 }
 
-// Like skipOutsideSupportedEnvironments, and also skips unless the person lookup negatives are
-// switched on with the runPersonLookupNegatives environment variable. See 08_PersonLookupFailures.
-function skipUnlessPersonLookupNegativesEnabled() {
-  if (skipOutsideSupportedEnvironments()) {
-    return true;
-  }
-
-  if (String(bru.getEnvVar("runPersonLookupNegatives")).toLowerCase() === "true") {
-    return false;
-  }
-
-  bru.runner.skipRequest();
-  return true;
-}
-
 function testdata() {
   return require(`../../../testdata/bankruptcyestate-delegation/${bru.getEnvVar("tokenEnv")}.js`);
 }
@@ -94,30 +79,6 @@ async function listAdministrators(party) {
   return response.data;
 }
 
-// Adds an administrator with the current bearer token, outside the step's own request, until a
-// response has the wanted status or maxAttempts requests have been sent. Returns every response
-// as { status, code }. The failed-lookup counter is per pod, so the 08 scenario repeats requests
-// until one lands on a pod in the state it is checking.
-async function addAdministratorUntil(party, person, wantedStatus, maxAttempts) {
-  const axios = require("axios");
-  const responses = [];
-  while (responses.length < maxAttempts) {
-    const response = await axios.post(
-      `${bru.getEnvVar("baseUrl")}/accessmanagement/api/v1/enduser/bankruptcyestate/administrators?party=${party}`,
-      person,
-      {
-        headers: { Authorization: `Bearer ${bru.getVar("bearerToken")}` },
-        validateStatus: () => true,
-      });
-    responses.push({ status: response.status, code: response.data && response.data.code });
-    if (response.status === wantedStatus) {
-      break;
-    }
-  }
-
-  return responses;
-}
-
 // The party uuids of the bostyrer's estates in the seed data (the client_* entries).
 function estateIds(bostyrer) {
   return Object.keys(bostyrer)
@@ -132,11 +93,9 @@ module.exports = {
   unknownPartyUuid,
   supportedEnvironments,
   skipOutsideSupportedEnvironments,
-  skipUnlessPersonLookupNegativesEnabled,
   testdata,
   loginAs,
   findAdministrator,
   listAdministrators,
-  addAdministratorUntil,
   estateIds,
 };
