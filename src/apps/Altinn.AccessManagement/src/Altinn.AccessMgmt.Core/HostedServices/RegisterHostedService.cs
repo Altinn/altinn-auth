@@ -35,15 +35,30 @@ public partial class RegisterHostedService(
     private Timer _timer = null;
     private readonly CancellationTokenSource _stop = new();
     private int _isRunning = 0;
+    private volatile Task _sync = Task.CompletedTask;
 
     /// <inheritdoc/>
     public Task StartAsync(CancellationToken cancellationToken)
     {
         Log.StartRegisterSync(_logger);
 
-        _timer = new Timer(async state => await SyncRegisterDispatcher(state), _stop.Token, TimeSpan.Zero, TimeSpan.FromMinutes(2));
+        _timer = new Timer(DispatchSync, _stop.Token, TimeSpan.Zero, TimeSpan.FromMinutes(2));
 
         return Task.CompletedTask;
+    }
+
+    /// <summary>
+    /// Starts a sync unless one is already running, and keeps its task so that <see cref="StopAsync"/> can wait for it.
+    /// </summary>
+    /// <param name="state">Cancellation token for stopping execution.</param>
+    private void DispatchSync(object state)
+    {
+        if (Interlocked.Exchange(ref _isRunning, 1) == 1)
+        {
+            return;
+        }
+
+        _sync = SyncRegisterDispatcher(state);
     }
 
     public async Task EnsureDbIsIngestWithRegisterData(CancellationToken cancellationToken)
@@ -91,11 +106,6 @@ public partial class RegisterHostedService(
     /// <param name="state">Cancellation token for stopping execution.</param>
     private async Task SyncRegisterDispatcher(object state)
     {
-        if (Interlocked.Exchange(ref _isRunning, 1) == 1)
-        {
-            return;
-        }
-
         try
         {
             var cancellationToken = (CancellationToken)state;
@@ -173,7 +183,7 @@ public partial class RegisterHostedService(
     }
 
     /// <inheritdoc/>
-    public Task StopAsync(CancellationToken cancellationToken)
+    public async Task StopAsync(CancellationToken cancellationToken)
     {
         try
         {
@@ -184,7 +194,17 @@ public partial class RegisterHostedService(
             _timer?.Change(Timeout.Infinite, 0);
         }
 
-        return Task.CompletedTask;
+        // A sync still running when the host disposes the logger would fail to log, and crash the process.
+        await _stop.CancelAsync();
+
+        try
+        {
+            await _sync.WaitAsync(cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            // The host stopped waiting; the sync has been asked to stop.
+        }
     }
 
     /// <inheritdoc/>
