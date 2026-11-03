@@ -73,10 +73,56 @@ async function loginAs(person, authScopes) {
   bru.setVar("bearerToken", token);
 }
 
-// Finds the entry for an administrator in a GET administrators response body.
+// Finds the entry for an administrator in a GET administrators response body. Throws when the
+// body has no data array, so an absence check cannot pass on a malformed response.
 function findAdministrator(body, partyUuid) {
-  return ((body && body.data) || []).find(
+  if (!body || !Array.isArray(body.data)) {
+    throw new Error(`expected a body with a data array, got ${JSON.stringify(body)}`);
+  }
+
+  return body.data.find(
     entry => entry.administrator && entry.administrator.id.toLowerCase() === partyUuid.toLowerCase());
+}
+
+// Lists the administrators of a party with the current bearer token, outside the step's own
+// request. Used to check state before or after a write in the same step.
+async function listAdministrators(party) {
+  const axios = require("axios");
+  const response = await axios.get(
+    `${bru.getEnvVar("baseUrl")}/accessmanagement/api/v1/enduser/bankruptcyestate/administrators?party=${party}`,
+    { headers: { Authorization: `Bearer ${bru.getVar("bearerToken")}` } });
+  return response.data;
+}
+
+// Adds an administrator with the current bearer token, outside the step's own request, until a
+// response has the wanted status or maxAttempts requests have been sent. Returns every response
+// as { status, code }. The failed-lookup counter is per pod, so the 08 scenario repeats requests
+// until one lands on a pod in the state it is checking.
+async function addAdministratorUntil(party, person, wantedStatus, maxAttempts) {
+  const axios = require("axios");
+  const responses = [];
+  while (responses.length < maxAttempts) {
+    const response = await axios.post(
+      `${bru.getEnvVar("baseUrl")}/accessmanagement/api/v1/enduser/bankruptcyestate/administrators?party=${party}`,
+      person,
+      {
+        headers: { Authorization: `Bearer ${bru.getVar("bearerToken")}` },
+        validateStatus: () => true,
+      });
+    responses.push({ status: response.status, code: response.data && response.data.code });
+    if (response.status === wantedStatus) {
+      break;
+    }
+  }
+
+  return responses;
+}
+
+// The party uuids of the bostyrer's estates in the seed data (the client_* entries).
+function estateIds(bostyrer) {
+  return Object.keys(bostyrer)
+    .filter(key => key.startsWith("client_"))
+    .map(key => bostyrer[key].partyUuid.toLowerCase());
 }
 
 module.exports = {
@@ -90,4 +136,7 @@ module.exports = {
   testdata,
   loginAs,
   findAdministrator,
+  listAdministrators,
+  addAdministratorUntil,
+  estateIds,
 };

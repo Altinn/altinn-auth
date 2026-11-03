@@ -18,6 +18,10 @@ params:query {
 docs {
   WHEN the bostyrer revokes a person who is not their administrator. Nothing changes and the
   revoke is idempotent, so it returns 204.
+
+  A 204 alone would also pass if the person had been an administrator and was removed, so the
+  step lists the administrators before and after the revoke and asserts the person is absent
+  both times.
 }
 
 script:pre-request {
@@ -31,10 +35,29 @@ script:pre-request {
   bru.setVar("user", td.creditor_VILJESTERK_GRANDIS.partyUuid);
 
   await helpers.loginAs(td.BOSTYRER);
+  bru.setVar("administratorsBeforeRevoke", JSON.stringify(await helpers.listAdministrators(td.BOSTYRER.partyUuid)));
+}
+
+script:post-response {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  bru.setVar("administratorsAfterRevoke", JSON.stringify(await helpers.listAdministrators(bru.getVar("party"))));
 }
 
 tests {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  const td = helpers.testdata();
+
+  test("GIVEN the person is not an administrator before the revoke", function() {
+    const body = JSON.parse(bru.getVar("administratorsBeforeRevoke"));
+    expect(helpers.findAdministrator(body, td.creditor_VILJESTERK_GRANDIS.partyUuid)).to.be.undefined;
+  });
+
   test("WHEN the person is not an administrator, the request returns 204", function() {
     expect(res.status).to.equal(204);
+  });
+
+  test("THEN the person is still not an administrator", function() {
+    const body = JSON.parse(bru.getVar("administratorsAfterRevoke"));
+    expect(helpers.findAdministrator(body, td.creditor_VILJESTERK_GRANDIS.partyUuid)).to.be.undefined;
   });
 }

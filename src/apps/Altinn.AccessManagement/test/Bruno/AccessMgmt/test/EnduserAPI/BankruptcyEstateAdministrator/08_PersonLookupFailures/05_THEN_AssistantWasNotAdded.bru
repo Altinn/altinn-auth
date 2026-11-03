@@ -15,8 +15,9 @@ params:query {
 }
 
 docs {
-  THEN none of the failed requests made the assistant an administrator. Listing does not
-  look anyone up, so it is not throttled.
+  THEN none of the failed lookups made the assistant an administrator. Runs before the valid
+  add in step 06, which may add the assistant. Listing does not look anyone up, so it is not
+  throttled.
 }
 
 script:pre-request {

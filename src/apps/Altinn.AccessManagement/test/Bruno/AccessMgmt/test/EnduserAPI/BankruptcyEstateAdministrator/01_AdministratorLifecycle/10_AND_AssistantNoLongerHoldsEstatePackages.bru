@@ -41,7 +41,9 @@ tests {
   });
 
   test("AND the assistant holds none of the estate packages from the estate", function() {
-    const urns = ((res.getBody() && res.getBody().data) || []).map(item => item.package.urn);
+    const data = res.getBody() && res.getBody().data;
+    expect(data, "packages response data").to.be.an("array");
+    const urns = data.map(item => item.package.urn);
     for (const urn of helpers.estatePackageUrns) {
       expect(urns).to.not.include(urn);
     }

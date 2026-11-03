@@ -17,7 +17,8 @@ params:query {
 
 docs {
   GIVEN the assistant does not hold the bankruptcy estate administrator role from the
-  bostyrer. Reset step; idempotent, returns 204 either way.
+  bostyrer. Reset step; idempotent, returns 204 either way, then asserts the assistant is no
+  longer listed.
 }
 
 script:pre-request {
@@ -33,8 +34,23 @@ script:pre-request {
   await helpers.loginAs(td.BOSTYRER);
 }
 
+script:post-response {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (res.status === 204) {
+    bru.setVar("administratorsAfterReset", JSON.stringify(await helpers.listAdministrators(bru.getVar("party"))));
+  }
+}
+
 tests {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  const td = helpers.testdata();
+
   test("WHEN the assistant is reset, the request returns 204", function() {
     expect(res.status).to.equal(204);
+  });
+
+  test("GIVEN the reset, the assistant is no longer listed as an administrator", function() {
+    const body = JSON.parse(bru.getVar("administratorsAfterReset"));
+    expect(helpers.findAdministrator(body, td.user_LUN_ANALYSE_GÅSTOL.partyUuid)).to.be.undefined;
   });
 }

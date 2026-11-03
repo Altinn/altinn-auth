@@ -19,7 +19,9 @@ docs {
   GIVEN the assistant does not hold the bankruptcy estate administrator role from the bostyrer.
 
   Reset step: revokes any leftover administrator role from earlier or crashed runs, together
-  with the estate access it carries. The revoke is idempotent and returns 204 either way.
+  with the estate access it carries. The revoke is idempotent and returns 204 either way; the
+  step then lists the administrators and asserts the assistant is gone, so a 204 that left the
+  role in place fails here instead of letting a later add return the old assignment.
 }
 
 script:pre-request {
@@ -35,8 +37,23 @@ script:pre-request {
   await helpers.loginAs(td.BOSTYRER);
 }
 
+script:post-response {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (res.status === 204) {
+    bru.setVar("administratorsAfterReset", JSON.stringify(await helpers.listAdministrators(bru.getVar("party"))));
+  }
+}
+
 tests {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  const td = helpers.testdata();
+
   test("GIVEN the assistant is not an administrator, the reset revoke returns 204", function() {
     expect(res.status).to.equal(204);
+  });
+
+  test("GIVEN the reset, the assistant is no longer listed as an administrator", function() {
+    const body = JSON.parse(bru.getVar("administratorsAfterReset"));
+    expect(helpers.findAdministrator(body, td.user_LUN_ANALYSE_GÅSTOL.partyUuid)).to.be.undefined;
   });
 }

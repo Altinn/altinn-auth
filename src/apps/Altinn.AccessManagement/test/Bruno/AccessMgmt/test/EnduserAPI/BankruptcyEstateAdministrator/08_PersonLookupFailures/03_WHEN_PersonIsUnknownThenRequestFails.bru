@@ -23,8 +23,8 @@ body:json {
 
 docs {
   WHEN the bostyrer gives a username nobody has. Expects 400 with validation error
-  AM.VLD-00034. This is the bostyrer's second failed lookup, which reaches
-  MaximumFailedAttempts.
+  AM.VLD-00034. If steps 02 and 03 reach the same pod, this is its second failed lookup for
+  the bostyrer and reaches MaximumFailedAttempts there; step 04 makes sure some pod does.
 }
 
 script:pre-request {
