@@ -34,8 +34,10 @@ public partial class RegisterHostedService(
     private readonly IRoleSyncService roleSyncService = roleSyncService;
     private Timer _timer = null;
     private readonly CancellationTokenSource _stop = new();
-    private int _isRunning = 0;
-    private volatile Task _sync = Task.CompletedTask;
+    private readonly Lock _syncLock = new();
+    private Task _sync = Task.CompletedTask;
+    private bool _stopping;
+    private bool _disposed;
 
     /// <inheritdoc/>
     public Task StartAsync(CancellationToken cancellationToken)
@@ -48,17 +50,23 @@ public partial class RegisterHostedService(
     }
 
     /// <summary>
-    /// Starts a sync unless one is already running, and keeps its task so that <see cref="StopAsync"/> can wait for it.
+    /// Starts a sync unless one is already running or the service is stopping, and keeps its task so that
+    /// <see cref="StopAsync"/> can wait for it.
     /// </summary>
     /// <param name="state">Cancellation token for stopping execution.</param>
     private void DispatchSync(object state)
     {
-        if (Interlocked.Exchange(ref _isRunning, 1) == 1)
+        // The timer can still run a callback queued before it was stopped, so the check and the assignment
+        // share a lock with StopAsync.
+        lock (_syncLock)
         {
-            return;
-        }
+            if (_stopping || !_sync.IsCompleted)
+            {
+                return;
+            }
 
-        _sync = SyncRegisterDispatcher(state);
+            _sync = SyncRegisterDispatcher(state);
+        }
     }
 
     public async Task EnsureDbIsIngestWithRegisterData(CancellationToken cancellationToken)
@@ -139,10 +147,6 @@ public partial class RegisterHostedService(
         {
             Log.SyncError(_logger, ex);
         }
-        finally
-        {
-            _isRunning = 0;
-        }
     }
 
     private async Task SyncRegisterRoles(ILease lease, CancellationToken cancellationToken)
@@ -185,6 +189,13 @@ public partial class RegisterHostedService(
     /// <inheritdoc/>
     public async Task StopAsync(CancellationToken cancellationToken)
     {
+        Task sync;
+        lock (_syncLock)
+        {
+            _stopping = true;
+            sync = _sync;
+        }
+
         try
         {
             Log.QuitRegisterSync(_logger);
@@ -195,11 +206,18 @@ public partial class RegisterHostedService(
         }
 
         // A sync still running when the host disposes the logger would fail to log, and crash the process.
-        await _stop.CancelAsync();
+        try
+        {
+            await _stop.CancelAsync();
+        }
+        catch (ObjectDisposedException)
+        {
+            // Dispose has already run, and it cancels the sync itself.
+        }
 
         try
         {
-            await _sync.WaitAsync(cancellationToken);
+            await sync.WaitAsync(cancellationToken);
         }
         catch (OperationCanceledException)
         {
@@ -222,9 +240,20 @@ public partial class RegisterHostedService(
     {
         if (disposing)
         {
+            lock (_syncLock)
+            {
+                if (_disposed)
+                {
+                    return;
+                }
+
+                _disposed = true;
+                _stopping = true;
+            }
+
             _timer?.Dispose();
-            _stop?.Cancel();
-            _stop?.Dispose();
+            _stop.Cancel();
+            _stop.Dispose();
         }
     }
 }
