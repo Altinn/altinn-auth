@@ -138,7 +138,7 @@ public static partial class StaticDataIngest
             },
             cancellationToken);
 
-        /* Packages */
+        /* Packages. Packages that exist only in the database, added by script in one environment, are not touched. */
         await AutoIngest(
             dbContext,
             PackageConstants.AllEntities(),

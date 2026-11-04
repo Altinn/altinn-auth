@@ -32,6 +32,7 @@ public class RequestControllerUnitTest
             requestService: requestService,
             entityService: null!,
             resourceService: null!,
+            packageService: null!,
             auditAccessor: auditAccessor,
             resourceRegistryClient: null!,
             generalSettings: Options.Create(new GeneralSettings()));

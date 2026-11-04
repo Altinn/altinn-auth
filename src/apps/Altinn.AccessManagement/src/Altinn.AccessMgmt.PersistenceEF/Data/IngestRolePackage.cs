@@ -1605,9 +1605,10 @@ public static partial class StaticDataIngest
             new RolePackage() { RoleId = roleFfor, PackageId = PackageConstants.CompanyRepresentativeFormTasks.Id, EntityVariantId = EntityVariantConstants.VPFO.Id, CanDelegate = true, HasAccess = true }
         };
 
-        // The table only ever holds this seed set, so a single query keyed on the
-        // (RoleId, PackageId, EntityVariantId) triple finds what is missing or changed,
-        // instead of one existence check per row.
+        // A single query keyed on the (RoleId, PackageId, EntityVariantId) triple finds what
+        // is missing or changed, instead of one existence check per row. Rows outside this
+        // seed set, such as role rows a script added for a package that exists in one
+        // environment only, are left as they are: the ingest only adds and updates.
         var existing = await dbContext.RolePackages
             .AsTracking()
             .ToDictionaryAsync(t => (t.RoleId, t.PackageId, t.EntityVariantId), cancellationToken);

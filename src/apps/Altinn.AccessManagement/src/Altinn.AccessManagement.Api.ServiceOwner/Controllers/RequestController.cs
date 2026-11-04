@@ -29,6 +29,7 @@ public class RequestController(
     IRequestService requestService,
     IEntityService entityService,
     IResourceService resourceService,
+    IPackageService packageService,
     IAuditAccessor auditAccessor,
     IResourceRegistryClient resourceRegistryClient,
     IOptions<GeneralSettings> generalSettings
@@ -179,12 +180,13 @@ public class RequestController(
         var toResult = await GetEntity(data.To, "/to", ct);
         toResult.Problems(ref errorBuilder);
 
-        if (!PackageConstants.TryGetByAll(data.Package, out var packageObj))
+        var packageObj = await packageService.FindPackage(data.Package, ct);
+        if (packageObj is null)
         {
             errorBuilder.Add(ValidationErrors.PackageNotExists, "/package", [new("package", $"No package was found with value '{data.Package}'.")]);
         }
 
-        if (packageObj != null && !packageObj.Entity.IsAssignable)
+        if (packageObj is { IsAssignable: false })
         {
             errorBuilder.Add(ValidationErrors.PackageIsNotAssignable, "/package", [new("package", $"Package '{data.Package}' is not assignable.")]);
         }
@@ -201,14 +203,14 @@ public class RequestController(
         NAV (by) ber om tilgang for Kari (for) til App (resource) hos Org (at).
         */
 
-        // Guaranteed non-null here: TryBuild above returned false, so TryGetByAll succeeded and packageObj was set.
+        // Guaranteed non-null here: TryBuild above returned false, so FindPackage found the package.
         return await CreatePackageRequest(
             toId: toResult.Entity.Id,
             fromId: fromResult.Entity.Id,
             byId: auditAccessor.AuditValues.ChangedBy,
             roleId: RoleConstants.Rightholder.Id,
             status: RequestStatus.Draft,
-            package: new RequestReferenceDto() { Id = packageObj!.Id, ReferenceId = packageObj.Entity.Urn },
+            package: new RequestReferenceDto() { Id = packageObj!.Id, ReferenceId = packageObj.Urn },
             ct: ct
             );
     }
@@ -364,12 +366,13 @@ public class RequestController(
     {
         ValidationErrorBuilder errorBuilder = default;
 
-        if (!PackageConstants.TryGetByAll(package.ReferenceId, out var packageObj))
+        var packageObj = await packageService.FindPackage(package.ReferenceId, ct);
+        if (packageObj is null)
         {
             errorBuilder.Add(ValidationErrors.PackageNotExists, "/package", [new("package", $"No package was found with value '{package.ReferenceId}'.")]);
         }
 
-        if (!packageObj.Entity.IsAssignable)
+        if (packageObj is { IsAssignable: false })
         {
             errorBuilder.Add(ValidationErrors.PackageIsNotAssignable, "/package", [new("package", $"Package with reference ID '{package.ReferenceId}' is not assignable.")]);
         }

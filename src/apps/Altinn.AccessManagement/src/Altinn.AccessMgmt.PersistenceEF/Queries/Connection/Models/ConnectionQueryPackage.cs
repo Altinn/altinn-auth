@@ -26,6 +26,11 @@ public sealed class ConnectionQueryPackage
     public string Urn { get; init; } = string.Empty;
 
     /// <summary>
+    /// Package code
+    /// </summary>
+    public string Code { get; init; } = string.Empty;
+
+    /// <summary>
     /// Package resources
     /// </summary>
     public List<ConnectionQueryResource> Resources { get; set; }

@@ -9,6 +9,7 @@ using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -79,7 +80,8 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
         _requestService = new RequestService(
             _db,
             sp.GetRequiredService<IOptions<CoreAppsettings>>(),
-            new DisabledFeatureManager());
+            new DisabledFeatureManager(),
+            new PackageLookupService(_db, new MemoryCache(new MemoryCacheOptions())));
     }
 
     /// <inheritdoc />

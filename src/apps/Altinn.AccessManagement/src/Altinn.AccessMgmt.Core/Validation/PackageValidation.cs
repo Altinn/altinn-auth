@@ -37,11 +37,11 @@ public static class PackageValidation
     /// <summary>
     /// Checks the list of packages that all are assignable to the recipient entity type.
     /// </summary>
-    /// <param name="packages">list of packages</param>
+    /// <param name="packages">packages, as found in the database</param>
     /// <param name="assignedToType">entity the assignment is to be made to</param>
     /// <param name="paramName">name of the query parameter</param>
     /// <returns></returns>
-    internal static RuleExpression PackageIsAssignableTo(IEnumerable<string> packages, EntityType assignedToType, string paramName = "packageId") => () =>
+    internal static RuleExpression PackageIsAssignableTo(IEnumerable<Package> packages, EntityType assignedToType, string paramName = "packageId") => () =>
     {
         ArgumentNullException.ThrowIfNull(packages);
         ArgumentException.ThrowIfNullOrEmpty(paramName);
@@ -53,32 +53,26 @@ public static class PackageValidation
 
         var notAssignablePackages = new List<string>();
 
-        foreach (var package in packages)
+        foreach (var package in packages.Where(p => p is { }))
         {
-            if (PackageConstants.TryGetByAll(package, out var packageObj))
+            if (assignedToType.Id == EntityTypeConstants.Organization)
             {
-                if (assignedToType.Id == EntityTypeConstants.Organization)
+                if (package.Id == PackageConstants.MainAdministrator.Id)
                 {
-                    if (packageObj.Id == PackageConstants.MainAdministrator.Id)
-                    {
-                        notAssignablePackages.Add(package);
-                    }
-
-                    if (packageObj.Id == PackageConstants.CompanyRepresentativeFormTasks.Id)
-                    {
-                        notAssignablePackages.Add(package);
-                    }
+                    notAssignablePackages.Add(package.Urn);
                 }
 
-                if (assignedToType.Id == EntityTypeConstants.SystemUser)
+                if (package.Id == PackageConstants.CompanyRepresentativeFormTasks.Id)
                 {
-                    if (PackageConstants.TryGetByAll(package, out packageObj))
-                    {
-                        if (packageObj.Id == PackageConstants.CompanyRepresentativeFormTasks.Id)
-                        {
-                            notAssignablePackages.Add(package);
-                        }
-                    }
+                    notAssignablePackages.Add(package.Urn);
+                }
+            }
+
+            if (assignedToType.Id == EntityTypeConstants.SystemUser)
+            {
+                if (package.Id == PackageConstants.CompanyRepresentativeFormTasks.Id)
+                {
+                    notAssignablePackages.Add(package.Urn);
                 }
             }
         }
@@ -95,11 +89,11 @@ public static class PackageValidation
     /// <summary>
     /// Checks the list of packages that all are assignable by the entity type of the from party.
     /// </summary>
-    /// <param name="packages">list of packages</param>
+    /// <param name="packages">packages, as found in the database</param>
     /// <param name="assignedFromType">entity the assignment is to be made from</param>
     /// <param name="paramName">name of the query parameter</param>
     /// <returns></returns>
-    internal static RuleExpression PackageIsAssignableFrom(IEnumerable<string> packages, EntityType assignedFromType, string paramName = "packageId") => () =>
+    internal static RuleExpression PackageIsAssignableFrom(IEnumerable<Package> packages, EntityType assignedFromType, string paramName = "packageId") => () =>
     {
         ArgumentNullException.ThrowIfNull(packages);
         ArgumentException.ThrowIfNullOrEmpty(paramName);
@@ -111,14 +105,11 @@ public static class PackageValidation
 
         var packagesNotAssignableFromOrg = new List<string>();
 
-        foreach (var p in packages)
+        foreach (var package in packages.Where(p => p is { }))
         {
-            if (PackageConstants.TryGetByAll(p, out var package))
+            if (package.EntityTypeId != assignedFromType.Id)
             {
-                if (package is { } && package.Entity.EntityTypeId != assignedFromType.Id)
-                {
-                    packagesNotAssignableFromOrg.Add(package.Entity.Urn);
-                }
+                packagesNotAssignableFromOrg.Add(package.Urn);
             }
         }
 
@@ -132,25 +123,24 @@ public static class PackageValidation
     };
 
     /// <summary>
-    /// Checks if package is assignable.
+    /// Checks that the package exists and is assignable.
     /// </summary>
-    /// <param name="package">package</param>
+    /// <param name="package">package as found in the database, or <c>null</c> when not found</param>
+    /// <param name="packageValue">the value the package was looked up with, used in error messages</param>
     /// <param name="paramName">name of the query parameter</param>
     /// <returns></returns>
-    internal static RuleExpression PackageIsAssignable(string package, string paramName = "packageId") => () =>
+    internal static RuleExpression PackageIsAssignable(Package package, string packageValue, string paramName = "packageId") => () =>
     {
-        if (PackageConstants.TryGetByAll(package, out var packageObj))
-        {
-            if (!packageObj.Entity.IsAssignable)
-            {
-                return (ref ValidationErrorBuilder errors) =>
-                        errors.Add(ValidationErrors.PackageIsNotAssignable, paramName, [new(paramName, $"Package '{package}' is not assignable.")]);
-            }
-        }
-        else
+        if (package is null)
         {
             return (ref ValidationErrorBuilder errors) =>
-                   errors.Add(ValidationErrors.PackageNotExists, paramName, [new(paramName, $"No package was found with value '{package}'.")]);
+                   errors.Add(ValidationErrors.PackageNotExists, paramName, [new(paramName, $"No package was found with value '{packageValue}'.")]);
+        }
+
+        if (!package.IsAssignable)
+        {
+            return (ref ValidationErrorBuilder errors) =>
+                    errors.Add(ValidationErrors.PackageIsNotAssignable, paramName, [new(paramName, $"Package '{packageValue}' is not assignable.")]);
         }
 
         return null;

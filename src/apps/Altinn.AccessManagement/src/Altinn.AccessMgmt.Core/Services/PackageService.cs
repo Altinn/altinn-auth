@@ -21,16 +21,18 @@ public class PackageService : IPackageService
     public ITranslationService TranslationService { get; set; }
 
     private IMemoryCache _memoryCache;
+    private IPackageLookupService _packageLookup;
     private static readonly MemoryCacheEntryOptions _cacheOptions = new()
     {
         AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
     };
 
-    public PackageService(AppDbContext appDbContext, ITranslationService translationService, IMemoryCache memoryCache)
+    public PackageService(AppDbContext appDbContext, ITranslationService translationService, IMemoryCache memoryCache, IPackageLookupService packageLookup)
     {
         DbContext = appDbContext;
         TranslationService = translationService;
         _memoryCache = memoryCache;
+        _packageLookup = packageLookup;
     }
 
     private const StringComparison Ic = StringComparison.InvariantCultureIgnoreCase;
@@ -205,12 +207,7 @@ public class PackageService : IPackageService
             _memoryCache.Set(cacheKey, areas, _cacheOptions);
         }
 
-        cacheKey = "packageSvcPackages";
-        if (!_memoryCache.TryGetValue(cacheKey, out List<Package> allPackages))
-        {
-            allPackages = await DbContext.Packages.AsNoTracking().Include(t => t.EntityType).ToListAsync(cancellationToken);
-            _memoryCache.Set(cacheKey, allPackages, _cacheOptions);
-        }
+        var allPackages = await _packageLookup.GetPackages(cancellationToken);
 
         var packages = allPackages.Where(p => typeId.HasValue && typeId.Value != Guid.Empty ? p.EntityTypeId == typeId.Value : true);
 
@@ -270,6 +267,13 @@ public class PackageService : IPackageService
         var resources = await DbContext.PackageResources.AsNoTracking().Where(t => t.PackageId == package.Id).Include(t => t.Resource).Select(t => t.Resource).ToListAsync(cancellationToken);
 
         return DtoMapper.Convert(package, package.Area, resources);
+    }
+
+    /// <inheritdoc/>
+    public async Task<PackageDto> FindPackage(string value, CancellationToken cancellationToken = default)
+    {
+        var package = await _packageLookup.Find(value, cancellationToken);
+        return DtoMapper.Convert(package);
     }
 
     /// <inheritdoc/>

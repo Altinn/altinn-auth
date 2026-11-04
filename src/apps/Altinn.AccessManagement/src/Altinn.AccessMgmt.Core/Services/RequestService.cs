@@ -22,7 +22,8 @@ namespace Altinn.AccessMgmt.Core.Services;
 public class RequestService(
     AppDbContext db,
     IOptions<CoreAppsettings> appsettings,
-    IFeatureManager featureManager) : IRequestService
+    IFeatureManager featureManager,
+    IPackageLookupService packageLookup) : IRequestService
 {
     /// <inheritdoc/>
     public async Task<Result<RequestDto>> GetRequest(Guid requestId, CancellationToken ct = default)
@@ -295,13 +296,15 @@ public class RequestService(
     {
         var to = await db.Entities.Include(t => t.Type).FirstOrDefaultAsync(e => e.Id == toId, ct);
         var from = await db.Entities.Include(t => t.Type).FirstOrDefaultAsync(e => e.Id == fromId, ct);
+        var packageObj = await packageLookup.Find(package, ct);
+        List<Package> packages = packageObj is { } ? [packageObj] : [];
 
         var problem = ValidationComposer.Validate(
             EntityValidation.ToExists(to),
             EntityValidation.ToExists(from),
-            PackageValidation.PackageIsAssignable(package),
-            PackageValidation.PackageIsAssignableTo([package], from?.Type),
-            PackageValidation.PackageIsAssignableFrom([package], to?.Type),
+            PackageValidation.PackageIsAssignable(packageObj, package),
+            PackageValidation.PackageIsAssignableTo(packages, from?.Type),
+            PackageValidation.PackageIsAssignableFrom(packages, to?.Type),
             PackageValidation.SelfAssignmentNotAllowed(fromId, toId)
         );
 
@@ -320,7 +323,7 @@ public class RequestService(
 
         var requestAssignment = requestAssignmentResult.Value;
 
-        return await CreatePackageRequest(requestAssignment, package, status, ct);
+        return await CreatePackageRequest(requestAssignment, packageObj, status, ct);
     }
 
     /// <inheritdoc/>
@@ -434,14 +437,11 @@ public class RequestService(
         }
     }
 
-    private async Task<Result<RequestDto>> CreatePackageRequest(RequestAssignment assignment, string package, RequestStatus initialStatus = RequestStatus.Pending, CancellationToken ct = default)
+    private async Task<Result<RequestDto>> CreatePackageRequest(RequestAssignment assignment, Package package, RequestStatus initialStatus = RequestStatus.Pending, CancellationToken ct = default)
     {
-        if (!PackageConstants.TryGetByAll(package, out var packageObj))
-        {
-            throw new ArgumentException($"Package '{package}' not found", nameof(package));
-        }
+        ArgumentNullException.ThrowIfNull(package);
 
-        var packageId = packageObj.Id;
+        var packageId = package.Id;
 
         var request = await db.RequestAssignmentPackages
             .Include(r => r.Assignment)

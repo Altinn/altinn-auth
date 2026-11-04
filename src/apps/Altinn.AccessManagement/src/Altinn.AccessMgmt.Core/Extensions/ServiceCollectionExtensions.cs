@@ -67,6 +67,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IMaskinportenSupplierService, MaskinportenSupplierService>();
         services.AddScoped<IPartyService, PartyService>();
         services.AddScoped<IPackageService, PackageService>();
+        services.AddScoped<IPackageLookupService, PackageLookupService>();
         services.AddScoped<IRoleService, RoleService>();
         services.AddScoped<IAssignmentService, AssignmentService>();
         services.AddScoped<IDelegationService, DelegationService>();
