@@ -362,7 +362,14 @@ public partial class ConnectionService(
 
             var dto = new InstancePermissionDto
             {
-                Resource = new ResourceDto { Id = firstInstance.ResourceId, RefId = firstInstance.ResourceRefId, Name = firstInstance.ResourceName },
+                Resource = new ResourceDto
+                {
+                    Id = firstInstance.ResourceId,
+                    RefId = firstInstance.ResourceRefId,
+                    Name = firstInstance.ResourceName,
+                    Delegable = firstInstance.ResourceDelegable,
+                    AccessListMode = firstInstance.ResourceAccessListMode
+                },
                 Instance = new InstanceDto
                 {
                     RefId = firstInstance.InstanceId,
