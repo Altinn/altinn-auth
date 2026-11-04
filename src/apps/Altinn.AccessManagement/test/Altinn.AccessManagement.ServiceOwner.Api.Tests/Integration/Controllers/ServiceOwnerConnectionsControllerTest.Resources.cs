@@ -253,11 +253,15 @@ public partial class ServiceOwnerConnectionsControllerTest
             return assignment;
         }
 
-        private static async Task AssertProblemCode(HttpResponseMessage response, string expectedCode)
+        private static async Task AssertProblemCode(HttpResponseMessage response, string expectedCode, string expectedDetail = null)
         {
             var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>(TestContext.Current.CancellationToken);
             Assert.NotNull(problemDetails);
             Assert.Equal(expectedCode, problemDetails.Extensions["code"].ToString());
+            if (expectedDetail is not null)
+            {
+                Assert.Equal(expectedDetail, problemDetails.Detail);
+            }
         }
 
         /// <summary>
@@ -451,7 +455,8 @@ public partial class ServiceOwnerConnectionsControllerTest
         }
 
         /// <summary>
-        /// A service owner that does not own the resource cannot delegate it.
+        /// A service owner that does not own the resource cannot delegate it, and is told who owns it and which
+        /// organization its token is for.
         /// </summary>
         [Fact]
         public async Task AddResource_AsOtherServiceOwner_Returns403ResourceDelegationNotAuthorized()
@@ -461,7 +466,28 @@ public partial class ServiceOwnerConnectionsControllerTest
             var response = await CreateClient(TestData.BakerJohnsen.Entity.OrganizationIdentifier).PostAsJsonAsync($"{Route}/resources", request, TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-            await AssertProblemCode(response, "AM-00048");
+            await AssertProblemCode(
+                response,
+                "AM-00048",
+                $"Resource '{Resource}' is owned by skd ({TestData.StorMektigTenesteeier.Entity.OrganizationIdentifier}), but the token is for SKD ({TestData.BakerJohnsen.Entity.OrganizationIdentifier})");
+        }
+
+        /// <summary>
+        /// The resource type is checked before ownership: a MaskinportenSchema resource cannot be delegated here
+        /// whoever asks, so a service owner that does not own it gets that answer rather than 403.
+        /// </summary>
+        [Fact]
+        public async Task AddResource_ForMaskinportenSchemaResource_AsOtherServiceOwner_Returns400ResourceNotDelegable()
+        {
+            var request = CreateMaskinportenSchemaRequest();
+
+            var response = await CreateClient(TestData.BakerJohnsen.Entity.OrganizationIdentifier).PostAsJsonAsync($"{Route}/resources", request, TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            await AssertProblemCode(
+                response,
+                "AM-00042",
+                $"Resource '{MaskinportenSchemaResource}' is of type MaskinportenSchema, which cannot be delegated through this API");
         }
 
         /// <summary>
