@@ -203,14 +203,14 @@ namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers
                 return InvalidResourceProblem(resource);
             }
 
-            if (!IsServiceOwnerAuthorizedForResource(resourceObj, out _))
-            {
-                return Problems.ResourceDelegationNotAuthorized.ToActionResult();
-            }
-
             if (IsMaskinportenSchema(resourceObj))
             {
-                return Problems.ResourceNotDelegable.ToActionResult();
+                return MaskinportenSchemaProblem(resourceObj);
+            }
+
+            if (!IsServiceOwnerAuthorizedForResource(resourceObj, out OrganizationNumber? organizationNumber))
+            {
+                return NotResourceOwnerProblem(resourceObj, organizationNumber);
             }
 
             Result<List<RightDto>> result = await connectionService.GetResourceRights(resourceObj.RefId, this.GetLanguageCode(), cancellationToken);
@@ -242,14 +242,14 @@ namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers
                 return InvalidResourceProblem(resourceDelegation.Resource);
             }
 
-            if (!IsServiceOwnerAuthorizedForResource(resourceObj, out OrganizationNumber? organizationNumber))
-            {
-                return Problems.ResourceDelegationNotAuthorized.ToActionResult();
-            }
-
             if (IsMaskinportenSchema(resourceObj))
             {
-                return Problems.ResourceNotDelegable.ToActionResult();
+                return MaskinportenSchemaProblem(resourceObj);
+            }
+
+            if (!IsServiceOwnerAuthorizedForResource(resourceObj, out OrganizationNumber? organizationNumber))
+            {
+                return NotResourceOwnerProblem(resourceObj, organizationNumber);
             }
 
             Guid? fromEntityId = await ResolvePartyId(resourceDelegation.From, cancellationToken);
@@ -296,14 +296,14 @@ namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers
                 return InvalidResourceProblem(resourceDelegation.Resource);
             }
 
-            if (!IsServiceOwnerAuthorizedForResource(resourceObj, out OrganizationNumber? organizationNumber))
-            {
-                return Problems.ResourceDelegationNotAuthorized.ToActionResult();
-            }
-
             if (IsMaskinportenSchema(resourceObj))
             {
-                return Problems.ResourceNotDelegable.ToActionResult();
+                return MaskinportenSchemaProblem(resourceObj);
+            }
+
+            if (!IsServiceOwnerAuthorizedForResource(resourceObj, out OrganizationNumber? organizationNumber))
+            {
+                return NotResourceOwnerProblem(resourceObj, organizationNumber);
             }
 
             Guid? fromEntityId = await ResolvePartyId(resourceDelegation.From, cancellationToken);
@@ -359,6 +359,42 @@ namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers
         private static bool IsMaskinportenSchema(Resource resource)
         {
             return string.Equals(resource.Type?.Name, "MaskinportenSchema", StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// The resource type rules the resource out whoever asks, so it is checked before ownership.
+        /// </summary>
+        private static IActionResult MaskinportenSchemaProblem(Resource resource)
+        {
+            ProblemDetails problem = Problems.ResourceNotDelegable.ToProblemDetails();
+            problem.Detail = $"Resource '{resource.RefId}' is of type MaskinportenSchema, which cannot be delegated through this API";
+            return problem.ToActionResult();
+        }
+
+        /// <summary>
+        /// Names the resource owner and the organization the token is for, so the caller can tell a wrong token from
+        /// a wrong resource. Neither is news to the caller: the owner is public in the Resource Registry.
+        /// </summary>
+        private IActionResult NotResourceOwnerProblem(Resource resource, OrganizationNumber? organizationNumber)
+        {
+            string owner = DescribeOrganization(resource.Provider?.Code, resource.Provider?.RefId);
+            string caller = organizationNumber is null
+                ? "the token does not identify an organization"
+                : $"the token is for {DescribeOrganization(User.FindFirst(AltinnCoreClaimTypes.Org)?.Value, organizationNumber.ToString())}";
+
+            ProblemDetails problem = Problems.ResourceDelegationNotAuthorized.ToProblemDetails();
+            problem.Detail = $"Resource '{resource.RefId}' is owned by {owner}, but {caller}";
+            return problem.ToActionResult();
+        }
+
+        private static string DescribeOrganization(string code, string organizationNumber)
+        {
+            if (string.IsNullOrWhiteSpace(organizationNumber))
+            {
+                return string.IsNullOrWhiteSpace(code) ? "an unknown organization" : code;
+            }
+
+            return string.IsNullOrWhiteSpace(code) ? organizationNumber : $"{code} ({organizationNumber})";
         }
 
         private static IActionResult InvalidResourceProblem(string resource)
