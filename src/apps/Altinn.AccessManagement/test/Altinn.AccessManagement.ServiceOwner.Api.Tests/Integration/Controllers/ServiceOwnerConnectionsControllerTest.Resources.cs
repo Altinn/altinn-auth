@@ -666,6 +666,41 @@ public partial class ServiceOwnerConnectionsControllerTest
         }
 
         /// <summary>
+        /// Revoke does not check the resource registry's Delegable flag, so the service owner can still revoke a
+        /// delegation of a resource that has since been marked as not delegable.
+        /// </summary>
+        [Fact]
+        public async Task RevokeResource_ForNonDelegableResource_DelegatedByServiceOwner_Returns204AndRemovesAssignmentResource()
+        {
+            await Fixture.QueryDb(async db =>
+            {
+                var assignment = new Assignment()
+                {
+                    FromId = TestData.BodilFarmor.Id,
+                    ToId = TestData.Milena.Id,
+                    RoleId = RoleConstants.Rightholder,
+                };
+                db.Assignments.Add(assignment);
+                db.AssignmentResources.Add(new AssignmentResource()
+                {
+                    AssignmentId = assignment.Id,
+                    ResourceId = NonDelegableResourceId,
+                    PolicyPath = "skd/taxreport/delegationpolicy.xml",
+                    PolicyVersion = "1.0",
+                });
+                await db.SaveChangesAsync(new AuditValues(TestData.StorMektigTenesteeier.Id), TestContext.Current.CancellationToken);
+            });
+
+            var request = CreateRequest(Person(TestData.BodilFarmor), Person(TestData.Milena), resource: NonDelegableResource);
+
+            var response = await CreateClient().PostAsJsonAsync($"{Route}/resources/revoke", request, TestContext.Current.CancellationToken);
+
+            var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.NoContent, $"Expected NoContent but got {response.StatusCode}. Response body: {content}");
+            Assert.Null(await GetAssignmentResource(TestData.BodilFarmor.Id, TestData.Milena.Id, NonDelegableResourceId));
+        }
+
+        /// <summary>
         /// Revoking a delegation that does not exist is a no-op.
         /// </summary>
         [Fact]
