@@ -489,6 +489,19 @@ public class TranslationServiceTests : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
+    public async Task TranslateAsync_EntityType_WithEnglish_ReturnsTranslationStoredAsEntityType()
+    {
+        // Arrange - entity type translations are seeded under EntityType
+        var type = new TypeDto { Id = EntityTypeConstants.Organization.Id, Name = "Organisasjon" };
+
+        // Act
+        var result = await _translationService.TranslateAsync(type, "eng");
+
+        // Assert
+        Assert.Equal("Organization", result.Name);
+    }
+
+    [Fact]
     public async Task UpsertTranslationAsync_WithExistingEntry_UpdatesTranslation()
     {
         // Arrange

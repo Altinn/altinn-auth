@@ -250,14 +250,15 @@ public class TranslationService : ITranslationService
     }
 
     /// <summary>
-    /// The type name that translation rows are stored under. Rows of packages, areas and area groups
-    /// are stored under the entity name, also when a DTO is translated.
+    /// The type name that translation rows are stored under. Rows of packages, areas, area groups and
+    /// entity types are stored under the entity name, also when a DTO is translated.
     /// </summary>
     private static string StoredTypeName(string typeName) => typeName switch
     {
         "PackageDto" or "ExtPackage" => "Package",
         "AreaDto" => "Area",
         "AreaGroupDto" => "AreaGroup",
+        "TypeDto" => "EntityType",
         _ => typeName,
     };
 
