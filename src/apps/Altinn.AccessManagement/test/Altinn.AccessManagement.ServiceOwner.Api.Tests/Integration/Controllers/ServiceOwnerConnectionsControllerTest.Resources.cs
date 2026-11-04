@@ -473,15 +473,20 @@ public partial class ServiceOwnerConnectionsControllerTest
         }
 
         /// <summary>
-        /// The resource type is checked before ownership: a MaskinportenSchema resource cannot be delegated here
-        /// whoever asks, so a service owner that does not own it gets that answer rather than 403.
+        /// Every endpoint checks the resource type before ownership: a MaskinportenSchema resource cannot be
+        /// delegated here whoever asks, so a service owner that does not own it gets that answer rather than 403.
         /// </summary>
-        [Fact]
-        public async Task AddResource_ForMaskinportenSchemaResource_AsOtherServiceOwner_Returns400ResourceNotDelegable()
+        [Theory]
+        [InlineData("resources/rights")]
+        [InlineData("resources")]
+        [InlineData("resources/revoke")]
+        public async Task AnyEndpoint_ForMaskinportenSchemaResource_AsOtherServiceOwner_Returns400ResourceNotDelegable(string endpoint)
         {
-            var request = CreateMaskinportenSchemaRequest();
+            var client = CreateClient(TestData.BakerJohnsen.Entity.OrganizationIdentifier);
 
-            var response = await CreateClient(TestData.BakerJohnsen.Entity.OrganizationIdentifier).PostAsJsonAsync($"{Route}/resources", request, TestContext.Current.CancellationToken);
+            var response = endpoint == "resources/rights"
+                ? await client.GetAsync($"{Route}/{endpoint}?resource={MaskinportenSchemaResource}", TestContext.Current.CancellationToken)
+                : await client.PostAsJsonAsync($"{Route}/{endpoint}", CreateMaskinportenSchemaRequest(), TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
             await AssertProblemCode(
