@@ -18,34 +18,3 @@ configMapGenerator:
 
 generatorOptions:
   disableNameSuffixHash: true
-
-patches:
-  - patch: |-
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: authz-api
-      spec:
-        template:
-          spec:
-            containers:
-              - name: authorization
-                env:
-                  - name: Altinn__Cache__Username
-                    valueFrom:
-                      secretKeyRef:
-                        name: authorization-cache-cache-auth
-                        key: username
-                        optional: true
-                volumeMounts:
-                  - name: cache-auth
-                    mountPath: /var/run/secrets/cache
-                    readOnly: true
-            volumes:
-              - name: cache-auth
-                secret:
-                  secretName: authorization-cache-cache-auth
-                  optional: true
-                  items:
-                    - key: password
-                      path: password

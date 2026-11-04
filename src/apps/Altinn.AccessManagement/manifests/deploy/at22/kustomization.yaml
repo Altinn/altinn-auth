@@ -25,22 +25,3 @@ patches:
                   requests:
                     cpu: 50m
                     memory: 384Mi
-                env:
-                  - name: Altinn__Cache__Username
-                    valueFrom:
-                      secretKeyRef:
-                        name: access-management-cache-cache-auth
-                        key: username
-                        optional: true
-                volumeMounts:
-                  - name: cache-auth
-                    mountPath: /var/run/secrets/cache
-                    readOnly: true
-            volumes:
-              - name: cache-auth
-                secret:
-                  secretName: access-management-cache-cache-auth
-                  optional: true
-                  items:
-                    - key: password
-                      path: password
