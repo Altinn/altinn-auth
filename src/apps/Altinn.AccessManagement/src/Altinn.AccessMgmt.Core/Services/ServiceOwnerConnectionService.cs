@@ -1,14 +1,20 @@
-﻿using Altinn.AccessManagement.Core.Errors;
+﻿using Altinn.AccessManagement.Core.Clients.Interfaces;
+using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Models;
+using Altinn.AccessManagement.Core.Models.AccessList;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
+using Altinn.AccessMgmt.Core.Utils.Helper;
 using Altinn.AccessMgmt.Core.Validation;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
+using Altinn.Authorization.Api.Contracts.Authorization;
+using Altinn.Authorization.Api.Contracts.Register;
+using Altinn.Authorization.Api.Contracts.ResourceRegistry;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,7 +24,8 @@ namespace Altinn.AccessMgmt.Core.Services
         AppDbContext dbContext,
         IConnectionService connectionService,
         IContextRetrievalService contextRetrievalService,
-        ISingleRightsService singleRightsService) : IServiceOwnerConnectionService
+        ISingleRightsService singleRightsService,
+        IAccessListsAuthorizationClient accessListsAuthorizationClient) : IServiceOwnerConnectionService
     {
         /// <inheritdoc />
         public async Task<Result<AssignmentPackageDto>> AddPackage(Guid fromId, Guid toId, Guid packageId, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
@@ -207,6 +214,19 @@ namespace Altinn.AccessMgmt.Core.Services
                 return Problems.InvalidRightKey;
             }
 
+            // A resource in access list mode can only be used by organizations on its access list. A delegation from
+            // an organization that is not on it would be stored but give the recipient nothing, so refuse it.
+            if (DelegationCheckHelper.IsAccessListModeEnabledAndApplicable(resourceMetadata.AccessListMode, fromEntity.TypeId))
+            {
+                foreach (RightDto right in availableRights.Where(right => keys.Contains(right.Key, StringComparer.OrdinalIgnoreCase)))
+                {
+                    if (!await IsOnAccessList(fromEntity.Id, resource.RefId, right, cancellationToken))
+                    {
+                        return Problems.FromPartyNotOnAccessList;
+                    }
+                }
+            }
+
             // Look for existing direct rightholder assignment
             Assignment assignment = await dbContext.Assignments
                 .Where(a => a.FromId == fromId)
@@ -343,6 +363,24 @@ namespace Altinn.AccessMgmt.Core.Services
             }
 
             return rights;
+        }
+
+        private async Task<bool> IsOnAccessList(Guid partyUuid, string resource, RightDto right, CancellationToken cancellationToken)
+        {
+            if (right.Action is null)
+            {
+                return false;
+            }
+
+            AccessListAuthorizationRequest request = new()
+            {
+                Subject = PartyUrn.PartyUuid.Create(partyUuid),
+                Resource = ResourceIdUrn.ResourceId.Create(ResourceIdentifier.CreateUnchecked(resource)),
+                Action = ActionUrn.ActionId.Create(ActionIdentifier.Parse(right.Action.Urn())),
+            };
+
+            AccessListAuthorizationResponse response = await accessListsAuthorizationClient.AuthorizePartyForAccessList(request, cancellationToken);
+            return response?.Result == AccessListAuthorizationResult.Authorized;
         }
 
         private async Task<ValidationProblemInstance> RemoveAssignment(Assignment assignment, CancellationToken cancellationToken = default)
