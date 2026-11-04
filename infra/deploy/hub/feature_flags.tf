@@ -66,6 +66,7 @@ locals {
     "AccessManagementUI.EnableSkyra"                                  = { description = "Whether or not to load the Skyra survey SDK and ask for cookie consent." },
     "AccessManagementUI.EnableSingleRightsTabInPoaOverview"           = { description = "Whether or not to show single rights tab in powers of attorney overview." },
     "AccessManagementUI.ShowSettingsPageServiceAnnouncement"          = { description = "Whether or not to show a service announcement on the Settings page." },
+    "AccessManagementUI.ShowRolesRemovedAlert"                        = { description = "Whether or not to replace the content of the role tabs with an alert saying that Altinn 2 roles have been removed." },
   }
 }
 

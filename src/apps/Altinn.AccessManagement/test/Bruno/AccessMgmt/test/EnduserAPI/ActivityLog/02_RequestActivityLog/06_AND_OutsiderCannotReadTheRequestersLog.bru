@@ -1,0 +1,35 @@
+meta {
+  name: 06_AND_OutsiderCannotReadTheRequestersLog
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/request/activitylog?party={{party}}&direction=from
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  direction: from
+}
+
+docs {
+  AND an outsider cannot read the requester's log: 403 with no body.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata();
+
+  bru.setVar("party", td.request.requester.partyUuid);
+
+  await loginAs(td.outsider);
+}
+
+tests {
+  test("AND the outsider is refused with 403", function() {
+    expect(res.status).to.equal(403);
+  });
+}

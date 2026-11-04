@@ -1,0 +1,55 @@
+meta {
+  name: 02_AND_ConsumerAddsTheSupplier
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/maskinporten/suppliers?party={{party}}&supplier={{supplierOrgNo}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  supplier: {{supplierOrgNo}}
+}
+
+docs {
+  AND the consumer adds the supplier: an assignment with the Supplier role. Its id is the
+  itemId of the relation's entries and the parentId of the resource entries.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().maskinporten;
+
+  bru.setVar("party", td.consumer.partyUuid);
+  bru.setVar("supplierOrgNo", td.supplier.orgNo);
+
+  await loginAs(td.consumer.dagligleder);
+}
+
+script:post-response {
+  const body = res.getBody();
+  if (body && body.id) {
+    bru.setVar("al_supplierAssignmentId", body.id);
+  }
+}
+
+tests {
+  const { sameId, supplierRoleId, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().maskinporten;
+
+  test("AND the supplier is added, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the assignment connects the consumer to the supplier with the Supplier role", function() {
+    const body = res.getBody();
+    expect(body.id).to.be.a("string").that.is.not.empty;
+    expect(sameId(body.fromId, td.consumer.partyUuid)).to.equal(true);
+    expect(sameId(body.toId, td.supplier.partyUuid)).to.equal(true);
+    expect(sameId(body.roleId, supplierRoleId)).to.equal(true);
+  });
+}
