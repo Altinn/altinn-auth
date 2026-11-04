@@ -175,4 +175,74 @@ public partial class ConnectionsControllerTest
             Assert.All(result.Rights, r => Assert.Contains(DelegationCheckReasonCode.AccessListValidationFail, r.ReasonCodes));
         }
     }
+
+    /// <summary>
+    /// Tests for <see cref="ConnectionsController.CheckResource(Guid, string, CancellationToken)"/> against a
+    /// resource with <c>AccessListMode = Enabled</c> locally, where the party is on the access list.
+    /// </summary>
+    /// <remarks>
+    /// A class of its own, because the access-list client mock is registered once per fixture and this one
+    /// answers <see cref="AccessListAuthorizationResult.Authorized"/>.
+    /// </remarks>
+    [IntegrationTest]
+    public class DelegationCheckLocalResourceAccessListAuthorized : IClassFixture<ApiFixture>
+    {
+        private static readonly JsonSerializerOptions JsonOpts = new() { PropertyNameCaseInsensitive = true };
+
+        private readonly Mock<IAccessListsAuthorizationClient> _accessLists = new();
+
+        public DelegationCheckLocalResourceAccessListAuthorized(ApiFixture fixture)
+        {
+            Fixture = fixture;
+            _accessLists
+                .Setup(c => c.AuthorizePartyForAccessList(It.IsAny<AccessListAuthorizationRequest>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new AccessListAuthorizationResponse { Result = AccessListAuthorizationResult.Authorized });
+
+            Fixture.ConfigureServices(services =>
+            {
+                services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
+                services.RemoveAll<IAccessListsAuthorizationClient>();
+                services.AddSingleton(_accessLists.Object);
+            });
+            Fixture.EnsureSeedOnce<DelegationCheckLocalResourceAccessListAuthorized>(db =>
+            {
+                db.Resources.Single(r => r.Id == TestData.NavSykepengerDialog.Id).AccessListMode = ResourceAccessListMode.Enabled;
+                db.SaveChanges();
+            });
+        }
+
+        public ApiFixture Fixture { get; }
+
+        /// <summary>
+        /// nav_sykepenger_dialog has access lists enabled locally and Dumbo Adventures is on the list. Malin has
+        /// role and package access to every right, so all of them are granted and the access-list client is asked.
+        /// </summary>
+        [Fact]
+        public async Task CheckResource_WhenLocalResourceAccessListModeEnabledAndPartyAuthorized_Returns200WithAllRightsGranted()
+        {
+            var client = Fixture.Server.CreateClient();
+            var token = TestTokenGenerator.CreateToken(new ClaimsIdentity("mock"), claims =>
+            {
+                claims.Add(new Claim(AltinnCoreClaimTypes.PartyUuid, TestData.MalinEmilie.Id.ToString()));
+                claims.Add(new Claim("scope", AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE));
+            });
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+
+            HttpResponseMessage response = await client.GetAsync(
+                $"{Route}/resources/delegationcheck?party={TestData.DumboAdventures.Id}&resource={TestData.NavSykepengerDialog.RefId}",
+                TestContext.Current.CancellationToken);
+
+            string body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Body: {body}");
+
+            ResourceCheckDto result = JsonSerializer.Deserialize<ResourceCheckDto>(body, JsonOpts);
+            Assert.NotNull(result);
+            Assert.NotEmpty(result.Rights);
+            Assert.All(result.Rights, r => Assert.True(r.Result, $"Right '{r.Right.Name}' should be delegable"));
+            Assert.All(result.Rights, r => Assert.DoesNotContain(DelegationCheckReasonCode.AccessListValidationFail, r.ReasonCodes));
+            _accessLists.Verify(
+                c => c.AuthorizePartyForAccessList(It.IsAny<AccessListAuthorizationRequest>(), It.IsAny<CancellationToken>()),
+                Times.AtLeastOnce());
+        }
+    }
 }

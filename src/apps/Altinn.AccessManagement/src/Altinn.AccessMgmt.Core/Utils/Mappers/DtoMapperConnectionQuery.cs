@@ -253,7 +253,9 @@ public partial class DtoMapper : IDtoMapper
         {
             Id = resource.Id,
             Name = resource.Name,
-            RefId = resource.RefId
+            RefId = resource.RefId,
+            Delegable = resource.Delegable,
+            AccessListMode = resource.AccessListMode
         };
     }
 
