@@ -463,13 +463,13 @@ public partial class ServiceOwnerConnectionsControllerTest
         {
             var request = CreateRequest(Organization(TestData.FredriksonsFabrikk), Organization(TestData.SvendsenAutomobil), await GetAvailableRightKeys());
 
-            var response = await CreateClient(TestData.BakerJohnsen.Entity.OrganizationIdentifier).PostAsJsonAsync($"{Route}/resources", request, TestContext.Current.CancellationToken);
+            var response = await CreateClient(TestData.BakerJohnsen.Entity.OrganizationIdentifier, orgCode: null).PostAsJsonAsync($"{Route}/resources", request, TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
             await AssertProblemCode(
                 response,
                 "AM-00048",
-                $"Resource '{Resource}' is owned by skd ({TestData.StorMektigTenesteeier.Entity.OrganizationIdentifier}), but the token is for SKD ({TestData.BakerJohnsen.Entity.OrganizationIdentifier})");
+                $"Resource '{Resource}' is owned by skd ({TestData.StorMektigTenesteeier.Entity.OrganizationIdentifier}), but the token is for {TestData.BakerJohnsen.Entity.OrganizationIdentifier}");
         }
 
         /// <summary>
