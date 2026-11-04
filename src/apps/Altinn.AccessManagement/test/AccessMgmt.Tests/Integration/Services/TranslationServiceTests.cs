@@ -466,6 +466,29 @@ public class TranslationServiceTests : IClassFixture<EfDatabaseFixture>
     }
 
     [Fact]
+    public async Task TranslateAsync_PackageOnlyInDatabase_ReturnsTranslationStoredAsPackage()
+    {
+        // Arrange - a package that is not in PackageConstants, as if added by script
+        var packageId = Guid.NewGuid();
+        var translationEntry = new TranslationEntry
+        {
+            Id = packageId,
+            Type = "Package",
+            LanguageCode = "eng",
+            FieldName = "Name",
+            Value = "Database only"
+        };
+        await _translationService.UpsertTranslationAsync(translationEntry, SystemEntityConstants.StaticDataIngest, SystemEntityConstants.StaticDataIngest, TestContext.Current.CancellationToken);
+        var package = new PackageDto { Id = packageId, Name = "Kun i databasen" };
+
+        // Act
+        var result = await _translationService.TranslateAsync(package, "eng");
+
+        // Assert
+        Assert.Equal("Database only", result.Name);
+    }
+
+    [Fact]
     public async Task UpsertTranslationAsync_WithExistingEntry_UpdatesTranslation()
     {
         // Arrange
