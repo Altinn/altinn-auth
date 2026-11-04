@@ -687,7 +687,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
     /// <inheritdoc/>
     public async Task<Result<AssignmentDto>> AddAgent(Guid partyUuid, Guid toUuid, ClientDelegationParameterNames parameterNames, CancellationToken cancellationToken = default)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         var existingAssignment = await db.Assignments.AsNoTracking().Where(p => p.FromId == partyUuid && p.ToId == toUuid && p.RoleId == RoleConstants.Agent).FirstOrDefaultAsync(cancellationToken);
         if (existingAssignment is { })
@@ -755,7 +755,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
     /// <inheritdoc/>
     public async Task<ValidationProblemInstance?> RemoveClientFromAgent(Guid partyUuid, Guid fromUuid, Guid toUuid, bool cascade, CancellationToken cancellationToken = default)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         // The client reaches the facilitator through one assignment per role, and each of them carries its own delegation to the agent.
         var existingDelegations = await db.Delegations
@@ -834,7 +834,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
     /// <inheritdoc/>
     public async Task<ValidationProblemInstance?> RemoveAgent(Guid partyUuid, Guid toUuid, bool cascade, CancellationToken cancellationToken = default)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         var existingAssignment = await db.Assignments
             .AsTracking()
@@ -1167,7 +1167,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         ClientDelegationParameterNames parameterNames,
         CancellationToken cancellationToken)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
         var inputs = payload.Values
             .Select((r, idx) =>
             {
@@ -1487,7 +1487,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         ContractsV2.ResourceDelegationBatchInputDto payload,
         CancellationToken cancellationToken)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         // Input resources are resource registry ids matched exactly against Resource.RefId and
         // resolved to internal resource ids in a single lookup.
@@ -1744,7 +1744,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         ClientDelegationParameterNames parameterNames,
         CancellationToken cancellationToken = default)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
         var inputs = payload.Values
             .Select((r, idx) =>
             {
@@ -1979,7 +1979,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         ClientDelegationParameterNames parameterNames,
         CancellationToken cancellationToken = default)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         // Input resources are resource registry ids matched exactly against Resource.RefId and
         // resolved to internal resource ids in a single lookup.
