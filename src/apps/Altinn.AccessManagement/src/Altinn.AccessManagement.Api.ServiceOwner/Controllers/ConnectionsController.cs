@@ -2,6 +2,8 @@
 using Altinn.AccessManagement.Core.Configuration;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Errors;
+using Altinn.AccessManagement.Core.Models.ResourceRegistry;
+using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.Core.Audit;
 using Altinn.AccessMgmt.Core.Extensions;
@@ -30,6 +32,7 @@ namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers
         IEntityService EntityService,
         IPackageService packageService,
         IResourceService resourceService,
+        IContextRetrievalService contextRetrievalService,
         IOptions<ServiceOwnerDelegationSettings> serviceOwnerDelegationSettings
     ) : ControllerBase
     {
@@ -208,6 +211,12 @@ namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers
                 return MaskinportenSchemaProblem(resourceObj);
             }
 
+            ServiceResource registryResource = await contextRetrievalService.GetResource(resourceObj.RefId, cancellationToken);
+            if (registryResource is { Delegable: false })
+            {
+                return NotDelegableProblem(resourceObj);
+            }
+
             if (!IsServiceOwnerAuthorizedForResource(resourceObj, out OrganizationNumber? organizationNumber))
             {
                 return NotResourceOwnerProblem(resourceObj, organizationNumber);
@@ -245,6 +254,12 @@ namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers
             if (IsMaskinportenSchema(resourceObj))
             {
                 return MaskinportenSchemaProblem(resourceObj);
+            }
+
+            ServiceResource registryResource = await contextRetrievalService.GetResource(resourceObj.RefId, cancellationToken);
+            if (registryResource is { Delegable: false })
+            {
+                return NotDelegableProblem(resourceObj);
             }
 
             if (!IsServiceOwnerAuthorizedForResource(resourceObj, out OrganizationNumber? organizationNumber))
@@ -368,6 +383,16 @@ namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers
         {
             ProblemDetails problem = Problems.ResourceNotDelegable.ToProblemDetails();
             problem.Detail = $"Resource '{resource.RefId}' is of type MaskinportenSchema, which cannot be delegated through this API";
+            return problem.ToActionResult();
+        }
+
+        /// <summary>
+        /// The Resource Registry's Delegable flag rules the resource out whoever asks, so it is checked before ownership.
+        /// </summary>
+        private static IActionResult NotDelegableProblem(Resource resource)
+        {
+            ProblemDetails problem = Problems.ResourceNotDelegable.ToProblemDetails();
+            problem.Detail = $"Resource '{resource.RefId}' is marked as not delegable in the Resource Registry";
             return problem.ToActionResult();
         }
 
