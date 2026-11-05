@@ -9,9 +9,9 @@ namespace Altinn.AccessMgmt.PersistenceEF.Constants;
 /// with a fixed unique identifier (GUID), localized names, descriptions, area references, and provider information.
 /// </summary>
 /// <remarks>
-/// These are the packages the static data ingest seeds in every environment, and the way to refer to a
-/// specific package in code. A package can also exist in the database only, so look up a package by the
-/// URN, code or id a client sends with <c>IPackageLookupService</c>, not here.
+/// The packages the static data ingest seeds, for referring to a specific package in code. The database
+/// can hold more packages than these, so look up a package by the URN, code or id a client sends with
+/// <c>IPackageLookupService</c>.
 /// </remarks>
 public static class PackageConstants
 {

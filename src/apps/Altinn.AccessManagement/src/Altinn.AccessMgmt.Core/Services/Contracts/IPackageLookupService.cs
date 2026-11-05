@@ -6,9 +6,8 @@ namespace Altinn.AccessMgmt.Core.Services.Contracts;
 /// Finds access packages by the values clients send: URN, code or id.
 /// </summary>
 /// <remarks>
-/// Reads all packages from the database and caches them for 10 minutes. A package that only exists in the
-/// database, for example added by a script in one environment, is found once the cache has been refreshed.
-/// <see cref="PersistenceEF.Constants.PackageConstants"/> only holds the seeded packages and is not used here.
+/// Reads all packages from the database and caches them for 10 minutes, so a package added to the
+/// database is found within 10 minutes.
 /// </remarks>
 public interface IPackageLookupService
 {

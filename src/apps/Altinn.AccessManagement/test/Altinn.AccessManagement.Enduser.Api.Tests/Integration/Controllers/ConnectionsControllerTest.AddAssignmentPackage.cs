@@ -52,7 +52,7 @@ public partial class ConnectionsControllerTest
                 services.AddSingleton<IUserProfileLookupService, UserProfileLookupServiceMock>();
             });
 
-            // A package that only exists in the database, with a role row that lets a managing director
+            // A package that is not in PackageConstants, with a role row that lets a managing director
             // delegate it. Seeded before the first request, so the cached package list includes it.
             Fixture.EnsureSeedOnce<AddAssignmentPackage>(db =>
             {
@@ -225,7 +225,7 @@ public partial class ConnectionsControllerTest
         }
 
         /// <summary>
-        /// A package that only exists in the database (seeded in the constructor) is added by URN.
+        /// A package that is not in PackageConstants (seeded in the constructor) is added by URN.
         /// Jinx (MD of Kaos) adds it to the Kaos→Josephine connection.
         /// Expects 200 OK, and the package in GetPackages.
         /// </summary>

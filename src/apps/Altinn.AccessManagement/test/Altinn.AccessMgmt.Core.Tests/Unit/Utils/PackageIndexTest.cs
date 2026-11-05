@@ -13,7 +13,7 @@ public class PackageIndexTest
     private static readonly Package Agriculture = PackageConstants.Agriculture.Entity;
     private static readonly Package Accounting = PackageConstants.AccountingAndEconomicReporting.Entity;
 
-    /// <summary>A package that is not defined in <see cref="PackageConstants"/>, as if added by a script.</summary>
+    /// <summary>A package that is not defined in <see cref="PackageConstants"/>.</summary>
     private static readonly Package DatabaseOnly = new()
     {
         Id = Guid.Parse("d8b1c0a2-4128-4000-8000-000000000001"),

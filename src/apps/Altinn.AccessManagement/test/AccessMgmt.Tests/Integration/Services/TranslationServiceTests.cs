@@ -468,7 +468,7 @@ public class TranslationServiceTests : IClassFixture<EfDatabaseFixture>
     [Fact]
     public async Task TranslateAsync_PackageOnlyInDatabase_ReturnsTranslationStoredAsPackage()
     {
-        // Arrange - a package that is not in PackageConstants, as if added by script
+        // Arrange - a package that is not in PackageConstants, so the translation comes from the database
         var packageId = Guid.NewGuid();
         var translationEntry = new TranslationEntry
         {
