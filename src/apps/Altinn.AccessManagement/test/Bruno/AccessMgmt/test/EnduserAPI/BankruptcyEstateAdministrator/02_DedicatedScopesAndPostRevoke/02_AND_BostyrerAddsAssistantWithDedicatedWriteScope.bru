@@ -1,0 +1,54 @@
+meta {
+  name: 02_AND_BostyrerAddsAssistantWithDedicatedWriteScope
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/administrators?party={{party}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+body:json {
+  {
+    "personIdentifier": "{{personIdentifier}}",
+    "lastName": "{{lastName}}"
+  }
+}
+
+docs {
+  AND the bostyrer adds the assistant with a token carrying only
+  altinn:bankruptcyestatedelegations.write instead of the portal scope. Expects 200.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  bru.setVar("party", td.BOSTYRER.partyUuid);
+  bru.setVar("personIdentifier", td.user_LUN_ANALYSE_GÅSTOL.pid);
+  bru.setVar("lastName", td.user_LUN_ANALYSE_GÅSTOL.lastname);
+
+  await helpers.loginAs(td.BOSTYRER, helpers.scopes.bankruptcyEstateWrite);
+}
+
+tests {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  const td = helpers.testdata();
+
+  test("AND the dedicated write scope lets the bostyrer add the assistant, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the assignment goes to the assistant", function() {
+    expect(res.getBody().toId.toLowerCase()).to.equal(td.user_LUN_ANALYSE_GÅSTOL.partyUuid.toLowerCase());
+  });
+}

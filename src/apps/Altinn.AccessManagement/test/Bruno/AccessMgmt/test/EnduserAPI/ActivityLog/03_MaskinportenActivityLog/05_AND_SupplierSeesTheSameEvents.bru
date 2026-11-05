@@ -1,0 +1,51 @@
+meta {
+  name: 05_AND_SupplierSeesTheSameEvents
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/maskinporten/activitylog?party={{party}}&direction=to&from={{from}}&pageSize=50
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  direction: to
+  from: {{from}}
+  pageSize: 50
+}
+
+docs {
+  AND the supplier, through its innehaver, sees the same events in the log of access it
+  has received (`direction=to`).
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().maskinporten;
+
+  bru.setVar("party", td.supplier.partyUuid);
+  bru.setVar("from", td.consumer.partyUuid);
+
+  await loginAs(td.supplier.innehaver);
+}
+
+tests {
+  const { activityTypes, entriesFor } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const body = res.getBody();
+
+  test("AND the supplier reads its log, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the supplier sees the relation and the resource as created", function() {
+    const relation = entriesFor(body, bru.getVar("al_supplierAssignmentId"));
+    const resource = entriesFor(body, bru.getVar("al_supplierResourceItemId"));
+    expect(relation).to.have.lengthOf(1);
+    expect(resource).to.have.lengthOf(1);
+    expect(relation[0].activityTypeId).to.equal(activityTypes.roleAssignmentCreated);
+    expect(resource[0].activityTypeId).to.equal(activityTypes.resourceGranted);
+  });
+}

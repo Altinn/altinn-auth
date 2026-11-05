@@ -76,7 +76,7 @@ internal static class ActivityLogQueryExtensions
             {
                 conjunction = Expression.AndAlso(conjunction, Expression.Equal(
                     Expression.Property(parameter, nameof(ActivityLog.Status)),
-                    Expression.Constant(key.Status, typeof(RequestStatus?))));
+                    Expression.Constant(key.Status, typeof(RequestStatusV2?))));
             }
 
             body = body is null ? conjunction : Expression.OrElse(body, conjunction);
@@ -133,7 +133,7 @@ internal static class ActivityLogQueryExtensions
         return query.Where(t => values.Contains(t.Trigger));
     }
 
-    internal static IQueryable<ActivityLog> StatusContains(this IQueryable<ActivityLog> query, HashSet<RequestStatus> values)
+    internal static IQueryable<ActivityLog> StatusContains(this IQueryable<ActivityLog> query, HashSet<RequestStatusV2> values)
     {
         if (values is null || values.Count == 0)
         {
