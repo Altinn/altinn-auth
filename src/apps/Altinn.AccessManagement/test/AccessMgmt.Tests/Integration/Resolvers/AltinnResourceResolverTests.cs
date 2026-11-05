@@ -1,7 +1,6 @@
 ﻿using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Core.Resolvers;
-using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.TestUtils.Factories;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
@@ -10,7 +9,6 @@ using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.Authorization.Host.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
-using Moq;
 using Npgsql;
 using LocalResource = Altinn.AccessMgmt.PersistenceEF.Models.Resource;
 using LocalResourceType = Altinn.AccessMgmt.PersistenceEF.Models.ResourceType;
@@ -18,7 +16,8 @@ using LocalResourceType = Altinn.AccessMgmt.PersistenceEF.Models.ResourceType;
 namespace Altinn.AccessManagement.Tests.Integration.Resolvers;
 
 /// <summary>
-/// Tests for <see cref="AltinnResourceResolver.ResolveResourceRegistryId"/>, which reads Delegable and Type from the local resource.
+/// Tests for <see cref="AltinnResourceResolver.ResolveResourceRegistryId"/> and <see cref="AltinnResourceResolver.ResolveAppOwnerAndAppId"/>,
+/// which read the resource attributes from the local resource.
 /// </summary>
 [IntegrationTest]
 public class AltinnResourceResolverTests : IAsyncLifetime
@@ -121,16 +120,90 @@ public class AltinnResourceResolverTests : IAsyncLifetime
         }
     }
 
+    [Fact]
+    public async Task ResolveAppOwnerAndAppId_AltinnApp_ReturnsDelegableTypeAndIdentifier()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await SeedResource("app_ttd_resolver-app", "AltinnApp", delegable: true, ct);
+
+        var result = await ResolveApp("ttd", "resolver-app", ct);
+
+        Assert.Equal(3, result.Count);
+        Assert.Contains(result, a => a.Id == BaseUrn.Altinn.Resource.Delegable && a.Value == bool.TrueString);
+        Assert.Contains(result, a => a.Id == BaseUrn.Altinn.Resource.Type && a.Value == nameof(ResourceType.AltinnApp));
+        Assert.Contains(result, a => a.Id == BaseUrn.Altinn.Resource.ResourceRegistryId && a.Value == "app_ttd_resolver-app");
+    }
+
+    [Fact]
+    public async Task ResolveAppOwnerAndAppId_MigratedApp_ReturnsDelegableTypeAndIdentifier()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await SeedResource("app_ttd_a1-3456-1:2", "MigratedApp", delegable: false, ct);
+
+        var result = await ResolveApp("ttd", "a1-3456-1:2", ct);
+
+        Assert.Equal(3, result.Count);
+        Assert.Contains(result, a => a.Id == BaseUrn.Altinn.Resource.Delegable && a.Value == bool.FalseString);
+        Assert.Contains(result, a => a.Id == BaseUrn.Altinn.Resource.Type && a.Value == nameof(ResourceType.MigratedApp));
+        Assert.Contains(result, a => a.Id == BaseUrn.Altinn.Resource.ResourceRegistryId && a.Value == "app_ttd_a1-3456-1:2");
+    }
+
+    /// <summary>
+    /// The resource registry matched org and app case-insensitively, so input casing must not matter. The identifier is
+    /// returned as stored.
+    /// </summary>
+    [Theory]
+    [InlineData("TTD", "Resolver-Mixed-Case")]
+    [InlineData("ttd", "RESOLVER-MIXED-CASE")]
+    [InlineData("Ttd", "resolver-mixed-case")]
+    public async Task ResolveAppOwnerAndAppId_MixedCaseInput_ReturnsResource(string org, string app)
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await SeedResource("app_ttd_resolver-mixed-case", "AltinnApp", delegable: true, ct);
+
+        var result = await ResolveApp(org, app, ct);
+
+        Assert.Contains(result, a => a.Id == BaseUrn.Altinn.Resource.Type && a.Value == nameof(ResourceType.AltinnApp));
+        Assert.Contains(result, a => a.Id == BaseUrn.Altinn.Resource.ResourceRegistryId && a.Value == "app_ttd_resolver-mixed-case");
+    }
+
+    [Fact]
+    public async Task ResolveAppOwnerAndAppId_UnknownApp_ReturnsNoAttributes()
+    {
+        var result = await ResolveApp("ttd", "resolver-unknown-app", TestContext.Current.CancellationToken);
+
+        Assert.Empty(result);
+    }
+
+    /// <summary>
+    /// Only app resources are matched, as the resource registry lookup by app owner and app id did.
+    /// </summary>
+    [Fact]
+    public async Task ResolveAppOwnerAndAppId_ResourceIsNotAnApp_ReturnsNoAttributes()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await SeedResource("app_ttd_resolver-not-an-app", "GenericAccessResource", delegable: true, ct);
+
+        var result = await ResolveApp("ttd", "resolver-not-an-app", ct);
+
+        Assert.Empty(result);
+    }
+
     private async Task<List<AttributeMatch>> Resolve(string resourceId, CancellationToken ct)
     {
         using var scope = CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-
-        // Strict: the resource id leaf must not fall back to the resource registry.
-        var contextRetrievalService = new Mock<IContextRetrievalService>(MockBehavior.Strict);
-        var resolver = new AltinnResourceResolver(contextRetrievalService.Object, db);
+        var resolver = new AltinnResourceResolver(scope.ServiceProvider.GetRequiredService<AppDbContext>());
 
         var result = await resolver.ResolveResourceRegistryId()([new(BaseUrn.Altinn.Resource.ResourceRegistryId, resourceId)], ct);
+        return [.. result];
+    }
+
+    private async Task<List<AttributeMatch>> ResolveApp(string org, string app, CancellationToken ct)
+    {
+        using var scope = CreateScope();
+        var resolver = new AltinnResourceResolver(scope.ServiceProvider.GetRequiredService<AppDbContext>());
+
+        var result = await resolver.ResolveAppOwnerAndAppId()([new(BaseUrn.Altinn.Resource.AppOwner, org), new(BaseUrn.Altinn.Resource.AppId, app)], ct);
         return [.. result];
     }
 
