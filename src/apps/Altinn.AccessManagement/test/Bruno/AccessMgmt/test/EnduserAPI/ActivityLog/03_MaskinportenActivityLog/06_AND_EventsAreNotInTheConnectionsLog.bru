@@ -1,0 +1,48 @@
+meta {
+  name: 06_AND_EventsAreNotInTheConnectionsLog
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/connections/activitylog?party={{party}}&direction=from&to={{to}}&pageSize=100
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  direction: from
+  to: {{to}}
+  pageSize: 100
+}
+
+docs {
+  AND the events are not in the consumer's connections log: the areas are disjoint, and
+  Maskinporten schema events are served only by the Maskinporten area.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().maskinporten;
+
+  bru.setVar("party", td.consumer.partyUuid);
+  bru.setVar("to", td.supplier.partyUuid);
+
+  await loginAs(td.consumer.dagligleder);
+}
+
+tests {
+  const { sameId } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const body = res.getBody();
+  const assignmentId = bru.getVar("al_supplierAssignmentId");
+
+  test("AND the connections log returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND it holds no entry for the supplier relation or its resource", function() {
+    const leaked = body.data.filter(e => sameId(e.itemId, assignmentId) || sameId(e.parentId, assignmentId));
+    expect(leaked).to.have.lengthOf(0);
+  });
+}
