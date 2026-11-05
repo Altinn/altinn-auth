@@ -2,7 +2,6 @@
 using System.Net.Mime;
 using System.Security.Claims;
 using Altinn.AccessManagement.Api.Enduser.Models;
-using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Helpers;
@@ -37,7 +36,6 @@ public class RequestController(
     ConnectionQuery connectionQuery,
     IResourceService resourceService,
     IEntityService entityService,
-    IResourceRegistryClient resourceRegistryClient,
     IPDP Pdp
     ) : ControllerBase
 {
@@ -432,24 +430,9 @@ public class RequestController(
             errorBuilder.Add(ValidationErrors.ResourceNotExists, "/resource", [new("resource", $"Unable to get resource '{resource}'")]);
         }
 
-        if (resourceObj is { })
+        if (resourceObj is { Delegable: false })
         {
-            try
-            {
-                var serviceResource = await resourceRegistryClient.GetResource(resourceObj.RefId, ct);
-
-                if (serviceResource is { Delegable: false })
-                {
-                    errorBuilder.Add(ValidationErrors.ResourceIsNotDelegable, "/resource", [new("resource", $"Resource with reference ID '{resourceObj.RefId}' is not delegable.")]);
-                }
-            }
-            catch (HttpRequestException)
-            {
-                // Registry unreachable: don't gate the user's request on registry availability.
-                // The earlier `resourceObj is not null` check already validated that the resource
-                // is known to us locally. Only fail when the registry positively confirms the
-                // resource is non-delegable (the `Delegable: false` arm above).
-            }
+            errorBuilder.Add(ValidationErrors.ResourceIsNotDelegable, "/resource", [new("resource", $"Resource with reference ID '{resourceObj.RefId}' is not delegable.")]);
         }
 
         if (errorBuilder.TryBuild(out var problem))

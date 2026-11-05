@@ -1,6 +1,5 @@
 ﻿using System.Net.Mime;
 using Altinn.AccessManagement.Api.ServiceOwner.Validation;
-using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Configuration;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Errors;
@@ -30,7 +29,6 @@ public class RequestController(
     IEntityService entityService,
     IResourceService resourceService,
     IAuditAccessor auditAccessor,
-    IResourceRegistryClient resourceRegistryClient,
     IOptions<GeneralSettings> generalSettings
     ) : ControllerBase
 {
@@ -302,21 +300,9 @@ public class RequestController(
             errorBuilder.Add(ValidationErrorDescriptors.RequestedResourceNotFound, paramName, [new(paramName, $"Resource with reference ID '{resourceRef.ReferenceId}' was not found.")]);
         }
 
-        try
+        if (resource is { Delegable: false })
         {
-            var serviceResource = await resourceRegistryClient.GetResource(resourceRef.ReferenceId, ct);
-
-            if (serviceResource is { Delegable: false })
-            {
-                errorBuilder.Add(ValidationErrors.ResourceIsNotDelegable, paramName, [new(paramName, $"Resource with reference ID '{resourceRef.ReferenceId}' is not delegable.")]);
-            }
-        }
-        catch (HttpRequestException)
-        {
-            // Registry unreachable: don't gate the user's request on registry availability.
-            // The earlier resource-lookup arm already validated that the resource is known to
-            // us locally. Only fail when the registry positively confirms the resource is
-            // non-delegable (the `Delegable: false` arm above).
+            errorBuilder.Add(ValidationErrors.ResourceIsNotDelegable, paramName, [new(paramName, $"Resource with reference ID '{resourceRef.ReferenceId}' is not delegable.")]);
         }
 
         if (errorBuilder.TryBuild(out var problem))
