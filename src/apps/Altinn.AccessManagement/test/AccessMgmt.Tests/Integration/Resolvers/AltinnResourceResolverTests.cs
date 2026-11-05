@@ -189,6 +189,51 @@ public class AltinnResourceResolverTests : IAsyncLifetime
         Assert.Empty(result);
     }
 
+    /// <summary>
+    /// Identifiers are unique case-sensitively, so case variants can coexist. The lower-case identifier, which is the one
+    /// Resource Registry builds, wins.
+    /// </summary>
+    [Fact]
+    public async Task ResolveAppOwnerAndAppId_CaseVariantIdentifiers_PrefersLowerCase()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await SeedResource("app_ttd_Resolver-Variant", "AltinnApp", delegable: false, ct);
+        await SeedResource("app_ttd_resolver-variant", "AltinnApp", delegable: true, ct);
+
+        var result = await ResolveApp("TTD", "Resolver-Variant", ct);
+
+        Assert.Contains(result, a => a.Id == BaseUrn.Altinn.Resource.ResourceRegistryId && a.Value == "app_ttd_resolver-variant");
+        Assert.Contains(result, a => a.Id == BaseUrn.Altinn.Resource.Delegable && a.Value == bool.TrueString);
+    }
+
+    /// <summary>
+    /// <see cref="Core.Resolvers.AttributeResolver"/> runs leaves concurrently. Given app owner, app id and resource id, both
+    /// leaves query the same <see cref="AppDbContext"/> in one pass, which must not fault.
+    /// </summary>
+    [Fact]
+    public async Task Resolve_AppAndResourceIdTogether_BothLeavesShareTheContext()
+    {
+        var ct = TestContext.Current.CancellationToken;
+        await SeedResource("app_ttd_resolver-both", "AltinnApp", delegable: true, ct);
+
+        using var scope = CreateScope();
+        var resolver = new AltinnResourceResolver(scope.ServiceProvider.GetRequiredService<AppDbContext>());
+
+        for (var i = 0; i < 20; i++)
+        {
+            var result = await resolver.Resolve(
+                [
+                    new(BaseUrn.Altinn.Resource.AppOwner, "ttd"),
+                    new(BaseUrn.Altinn.Resource.AppId, "resolver-both"),
+                    new(BaseUrn.Altinn.Resource.ResourceRegistryId, "app_ttd_resolver-both"),
+                ],
+                [BaseUrn.Altinn.Resource.Delegable, BaseUrn.Altinn.Resource.Type],
+                ct);
+
+            Assert.Contains(result, a => a.Id == BaseUrn.Altinn.Resource.Delegable && a.Value == bool.TrueString);
+        }
+    }
+
     private async Task<List<AttributeMatch>> Resolve(string resourceId, CancellationToken ct)
     {
         using var scope = CreateScope();
