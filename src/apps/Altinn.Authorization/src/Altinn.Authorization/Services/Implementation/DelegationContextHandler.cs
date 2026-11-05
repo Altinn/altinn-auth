@@ -9,7 +9,7 @@ using Altinn.Platform.Authorization.Services.Interfaces;
 using Altinn.Platform.Profile.Models;
 using Altinn.Platform.Register.Enums;
 using Altinn.Platform.Register.Models;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 
@@ -27,15 +27,15 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         /// <param name="policyInformationRepository">the policy information repository handler</param>
         /// <param name="oedRolesWrapper">the oed roles handler</param>
         /// <param name="profileWrapper">the user profile information handler</param>
-        /// <param name="memoryCache">The cache handler </param>
+        /// <param name="cache">The cache handler</param>
         /// <param name="settings">The app settings</param>
         /// <param name="registerService">Register service</param>
         /// <param name="prp">the policy retrieval point service</param>
         /// <param name="accMgmt">Access Management PIP API wrapper</param>
         /// <param name="featureManager">Feature manager for reading feature flags.</param>
         /// <param name="resourceRegistry">Resource registry client</param>
-        public DelegationContextHandler(IInstanceMetadataRepository policyInformationRepository, IOedRoleAssignmentWrapper oedRolesWrapper, IProfile profileWrapper, IMemoryCache memoryCache, IOptions<GeneralSettings> settings, IRegisterService registerService, IPolicyRetrievalPoint prp, IAccessManagementWrapper accMgmt, IFeatureManager featureManager, IResourceRegistry resourceRegistry)
-            : base(policyInformationRepository, oedRolesWrapper, profileWrapper, memoryCache, settings, registerService, prp, accMgmt, featureManager, resourceRegistry)
+        public DelegationContextHandler(IInstanceMetadataRepository policyInformationRepository, IOedRoleAssignmentWrapper oedRolesWrapper, IProfile profileWrapper, HybridCache cache, IOptions<GeneralSettings> settings, IRegisterService registerService, IPolicyRetrievalPoint prp, IAccessManagementWrapper accMgmt, IFeatureManager featureManager, IResourceRegistry resourceRegistry)
+            : base(policyInformationRepository, oedRolesWrapper, profileWrapper, cache, settings, registerService, prp, accMgmt, featureManager, resourceRegistry)
         {
         }
 

@@ -15,7 +15,7 @@ using Altinn.Platform.Register.Models;
 using Altinn.Platform.Storage.Interface.Models;
 using Altinn.ResourceRegistry.Models;
 using CommunityToolkit.Diagnostics;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 
@@ -32,15 +32,19 @@ namespace Altinn.Platform.Authorization.Services.Implementation
     /// </summary>
     public class ContextHandler : IContextHandler
     {
+        private static readonly string[] ProfileTags = ["profile"];
+        private static readonly string[] RolesTags = ["roles"];
+
         private readonly string _uidUserProfileCacheKeyPrefix = "profile:uid:";
         private readonly string _pidUserProfileCacheKeyPrefix = "profile:pid:";
+        private readonly HybridCacheEntryOptions _roleCacheOptions;
 
 #pragma warning disable SA1401 // Fields should be private
 #pragma warning disable SA1600 // Elements should be documented
         protected readonly IInstanceMetadataRepository _policyInformationRepository;
         protected readonly IOedRoleAssignmentWrapper _oedRolesWrapper;
         protected readonly IProfile _profileWrapper;
-        protected readonly IMemoryCache _memoryCache;
+        protected readonly HybridCache _cache;
         protected readonly GeneralSettings _generalSettings;
         protected readonly IRegisterService _registerService;
         protected readonly IPolicyRetrievalPoint _prp;
@@ -56,7 +60,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         /// <param name="policyInformationRepository">the policy information repository handler</param>
         /// <param name="oedRolesWrapper">service handling oed role retireval</param>
         /// <param name="profileWrapper">the user profile information handler</param>
-        /// <param name="memoryCache">The cache handler </param>
+        /// <param name="cache">The cache handler</param>
         /// <param name="settings">The app settings</param>
         /// <param name="registerService">Register service</param>
         /// <param name="prp">service handling policy retireval</param>
@@ -64,13 +68,14 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         /// <param name="featureManager">Feature manager</param>
         /// <param name="resourceRegistry">Resource registry client</param>
         public ContextHandler(
-            IInstanceMetadataRepository policyInformationRepository, IOedRoleAssignmentWrapper oedRolesWrapper, IProfile profileWrapper, IMemoryCache memoryCache, IOptions<GeneralSettings> settings, IRegisterService registerService, IPolicyRetrievalPoint prp, IAccessManagementWrapper accessManagementWrapper, IFeatureManager featureManager, IResourceRegistry resourceRegistry)
+            IInstanceMetadataRepository policyInformationRepository, IOedRoleAssignmentWrapper oedRolesWrapper, IProfile profileWrapper, HybridCache cache, IOptions<GeneralSettings> settings, IRegisterService registerService, IPolicyRetrievalPoint prp, IAccessManagementWrapper accessManagementWrapper, IFeatureManager featureManager, IResourceRegistry resourceRegistry)
         {
             _policyInformationRepository = policyInformationRepository;
             _oedRolesWrapper = oedRolesWrapper;
             _profileWrapper = profileWrapper;
-            _memoryCache = memoryCache;
+            _cache = cache;
             _generalSettings = settings.Value;
+            _roleCacheOptions = new HybridCacheEntryOptions { Expiration = TimeSpan.FromMinutes(_generalSettings.RoleCacheTimeout) };
             _registerService = registerService;
             _prp = prp;
             _accessManagementWrapper = accessManagementWrapper;
@@ -826,20 +831,14 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         /// <returns>list of OED/Digitalt dodsbo Role Assignments</returns>
         protected async Task<List<OedRoleAssignment>> GetOedRoleAssignments(string from, string to)
         {
-            string cacheKey = GetOedRoleassignmentCacheKey(from, to);
-
-            if (!_memoryCache.TryGetValue(cacheKey, out List<OedRoleAssignment> oedRoles))
-            {
-                oedRoles = await _oedRolesWrapper.GetOedRoleAssignments(from, to);
-
-                var cacheEntryOptions = new MemoryCacheEntryOptions()
-               .SetPriority(CacheItemPriority.High)
-               .SetAbsoluteExpiration(new TimeSpan(0, _generalSettings.RoleCacheTimeout, 0));
-
-                _memoryCache.Set(cacheKey, oedRoles, cacheEntryOptions);
-            }
-
-            return oedRoles;
+            // The factory caches whatever the OED PIP answers for RoleCacheTimeout minutes. The wrapper returns an empty
+            // list when the PIP fails, and that empty list is cached too, as it was before.
+            return await _cache.GetOrCreateAsync(
+                GetOedRoleassignmentCacheKey(from, to),
+                (Wrapper: _oedRolesWrapper, From: from, To: to),
+                static async (state, _) => await state.Wrapper.GetOedRoleAssignments(state.From, state.To),
+                _roleCacheOptions,
+                RolesTags);
         }
 
         /// <summary>
@@ -852,20 +851,22 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         {
             string uidCacheKey = $"{_uidUserProfileCacheKeyPrefix}{userId}";
 
-            if (!_memoryCache.TryGetValue(uidCacheKey, out UserProfile userProfile))
-            {
-                userProfile = await _profileWrapper.GetUserProfile(userId, cancellationToken);
-
-                var cacheEntryOptions = new MemoryCacheEntryOptions()
-               .SetPriority(CacheItemPriority.High)
-               .SetAbsoluteExpiration(new TimeSpan(0, _generalSettings.RoleCacheTimeout, 0));
-
-                _memoryCache.Set(uidCacheKey, userProfile, cacheEntryOptions);
-
-                if (!string.IsNullOrWhiteSpace(userProfile?.Party?.SSN))
+            // The factory caches whatever the profile service answers, null included, for RoleCacheTimeout minutes.
+            bool fetched = false;
+            UserProfile userProfile = await _cache.GetOrCreateAsync(
+                uidCacheKey,
+                async ct =>
                 {
-                    _memoryCache.Set($"{_pidUserProfileCacheKeyPrefix}{userProfile.Party.SSN}", userProfile, cacheEntryOptions);
-                }
+                    fetched = true;
+                    return await _profileWrapper.GetUserProfile(userId, ct);
+                },
+                _roleCacheOptions,
+                ProfileTags,
+                cancellationToken);
+
+            if (fetched && !string.IsNullOrWhiteSpace(userProfile?.Party?.SSN))
+            {
+                await _cache.SetAsync($"{_pidUserProfileCacheKeyPrefix}{userProfile.Party.SSN}", userProfile, _roleCacheOptions, ProfileTags, cancellationToken);
             }
 
             return userProfile;
@@ -881,20 +882,22 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         {
             string pidCacheKey = $"{_pidUserProfileCacheKeyPrefix}{personId}";
 
-            if (!_memoryCache.TryGetValue(pidCacheKey, out UserProfile userProfile))
-            {
-                userProfile = await _profileWrapper.GetUserProfileByPersonId(personId, cancellationToken);
-
-                var cacheEntryOptions = new MemoryCacheEntryOptions()
-               .SetPriority(CacheItemPriority.High)
-               .SetAbsoluteExpiration(new TimeSpan(0, _generalSettings.RoleCacheTimeout, 0));
-
-                _memoryCache.Set(pidCacheKey, userProfile, cacheEntryOptions);
-
-                if (userProfile?.UserId > 0)
+            // The factory caches whatever the profile service answers, null included, for RoleCacheTimeout minutes.
+            bool fetched = false;
+            UserProfile userProfile = await _cache.GetOrCreateAsync(
+                pidCacheKey,
+                async ct =>
                 {
-                    _memoryCache.Set($"{_uidUserProfileCacheKeyPrefix}{userProfile.UserId}", userProfile, cacheEntryOptions);
-                }
+                    fetched = true;
+                    return await _profileWrapper.GetUserProfileByPersonId(personId, ct);
+                },
+                _roleCacheOptions,
+                ProfileTags,
+                cancellationToken);
+
+            if (fetched && userProfile?.UserId > 0)
+            {
+                await _cache.SetAsync($"{_uidUserProfileCacheKeyPrefix}{userProfile.UserId}", userProfile, _roleCacheOptions, ProfileTags, cancellationToken);
             }
 
             return userProfile;
@@ -902,7 +905,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
 
         private string GetOedRoleassignmentCacheKey(string from, string to)
         {
-            return $"oed{from}_{to}";
+            return $"oed-roles:{from}|{to}";
         }
 
         private async Task<string> GetPersonIdForUser(int userId, CancellationToken cancellationToken = default)
@@ -913,19 +916,8 @@ namespace Altinn.Platform.Authorization.Services.Implementation
 
         private async Task<string> GetSSnForParty(int partyId, CancellationToken cancellationToken = default)
         {
-            string cacheKey = $"p:{partyId}";
-
-            if (!_memoryCache.TryGetValue(cacheKey, out Party party))
-            {
-                party = await _registerService.GetParty(partyId, cancellationToken);
-
-                var cacheEntryOptions = new MemoryCacheEntryOptions()
-               .SetPriority(CacheItemPriority.High)
-               .SetAbsoluteExpiration(new TimeSpan(0, _generalSettings.RoleCacheTimeout, 0));
-
-                _memoryCache.Set(cacheKey, party, cacheEntryOptions);
-            }
-
+            // RegisterService caches the party itself.
+            Party party = await _registerService.GetParty(partyId, cancellationToken);
             return party?.SSN;
         }
     }

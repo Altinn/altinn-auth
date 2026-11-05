@@ -27,7 +27,7 @@ using Altinn.Platform.Storage.Interface.Models;
 using Azure.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.FeatureManagement;
 
 namespace Altinn.Platform.Authorization.Controllers
@@ -44,7 +44,7 @@ namespace Altinn.Platform.Authorization.Controllers
         private readonly IContextHandler _contextHandler;
         private readonly IDelegationContextHandler _delegationContextHandler;
         private readonly ILogger _logger;
-        private readonly IMemoryCache _memoryCache;
+        private readonly HybridCache _cache;
         private readonly IEventLog _eventLog;
         private readonly IFeatureManager _featureManager;
         private readonly IAccessManagementWrapper _accessManagement;
@@ -54,6 +54,13 @@ namespace Altinn.Platform.Authorization.Controllers
         private readonly DecisionTelemetry _decisionTelemetry;
 
         private readonly SortedDictionary<string, AuthInfo> _appInstanceInfo = new();
+
+        private static readonly string[] DelegationTags = ["delegations"];
+
+        // The cache is read and written in two steps instead of through the factory of GetOrCreateAsync, like the other
+        // HybridCache readers in this vertical (see AGENTS.md).
+        private static readonly HybridCacheEntryOptions ReadOptions = new() { Flags = HybridCacheEntryFlags.DisableUnderlyingData };
+        private static readonly HybridCacheEntryOptions DelegationCacheOptions = new() { Expiration = TimeSpan.FromMinutes(5) };
 
         /// <summary>
         /// Resolved once per request by <see cref="RecordPdpDecisionMetric"/>, see the comment there.
@@ -78,7 +85,7 @@ namespace Altinn.Platform.Authorization.Controllers
         /// <param name="delegationContextHandler">The delegation context handler</param>
         /// <param name="policyRetrievalPoint">The policy Retrieval point</param>
         /// <param name="logger">the logger</param>
-        /// <param name="memoryCache">memory cache</param>
+        /// <param name="cache">the cache the delegation lists are held in</param>
         /// <param name="eventLog">the authorization event logger</param>
         /// <param name="featureManager">the feature manager</param>
         /// <param name="decisionTelemetry">PDP decision metric recorder</param>
@@ -91,7 +98,7 @@ namespace Altinn.Platform.Authorization.Controllers
             IDelegationContextHandler delegationContextHandler,
             IPolicyRetrievalPoint policyRetrievalPoint,
             ILogger<DecisionController> logger,
-            IMemoryCache memoryCache,
+            HybridCache cache,
             IEventLog eventLog,
             IFeatureManager featureManager,
             DecisionTelemetry decisionTelemetry)
@@ -101,7 +108,7 @@ namespace Altinn.Platform.Authorization.Controllers
             _contextHandler = contextHandler;
             _delegationContextHandler = delegationContextHandler;
             _logger = logger;
-            _memoryCache = memoryCache;
+            _cache = cache;
             _eventLog = eventLog;
             _featureManager = featureManager;
             _accessManagement = accessManagement;
@@ -754,7 +761,7 @@ namespace Altinn.Platform.Authorization.Controllers
                 action(delegation);
             }
 
-            var cacheKey = CreateCacheKey(
+            string cacheKey = "delegations:" + CreateCacheKey(
                 $"s:{delegation.Subject.Id}:{delegation.Subject.Value}",
                 $"p:{delegation.Party.Value}",
                 $"a:{delegation.Resource.FirstOrDefault(r => r.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute)?.Value}/{delegation.Resource.FirstOrDefault(r => r.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute)?.Value}",
@@ -762,14 +769,11 @@ namespace Altinn.Platform.Authorization.Controllers
                 $"ac:{delegation.AccessRestriction}",
                 $"vp:{delegation.ViaPartyOrganizationNumber}");
 
-            if (!_memoryCache.TryGetValue(cacheKey, out IEnumerable<DelegationChangeDto> result))
+            IEnumerable<DelegationChangeDto> result = await _cache.GetOrCreateAsync<IEnumerable<DelegationChangeDto>>(cacheKey, static _ => default, ReadOptions, cancellationToken: cancellationToken);
+            if (result == null)
             {
                 result = await _accessManagement.GetAllDelegationChanges(cancellationToken, actions);
-                var cacheEntryOptions = new MemoryCacheEntryOptions()
-                    .SetPriority(CacheItemPriority.High)
-                    .SetAbsoluteExpiration(new TimeSpan(0, 0, 5, 0));
-
-                _memoryCache.Set(cacheKey, result, cacheEntryOptions);
+                await _cache.SetAsync(cacheKey, result, DelegationCacheOptions, DelegationTags, cancellationToken);
             }
 
             return result;

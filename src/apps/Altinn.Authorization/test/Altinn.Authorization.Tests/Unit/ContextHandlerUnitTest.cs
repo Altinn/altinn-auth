@@ -1,6 +1,7 @@
 ﻿using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.Api.Contracts.Authorization;
+using Altinn.Authorization.Tests.Util;
 using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Constants;
 using Altinn.Platform.Authorization.Models;
@@ -13,7 +14,7 @@ using Altinn.Platform.Authorization.Services.Interfaces;
 using Altinn.Platform.Profile.Models;
 using Altinn.Platform.Register.Enums;
 using Altinn.Platform.Register.Models;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
 using Moq;
@@ -24,12 +25,12 @@ namespace Altinn.Authorization.Tests.Unit;
 /// Unit tests for <see cref="ContextHandler"/> protected methods via a testable subclass.
 /// </summary>
 [UnitTest]
-public class ContextHandlerUnitTest : IDisposable
+public class ContextHandlerUnitTest
 {
     private readonly Mock<IInstanceMetadataRepository> _policyInfoRepoMock = new();
     private readonly Mock<IOedRoleAssignmentWrapper> _oedRolesMock = new();
     private readonly Mock<IProfile> _profileMock = new();
-    private readonly MemoryCache _memoryCache = new(new MemoryCacheOptions());
+    private readonly HybridCache _cache = TestSetupUtil.CreateHybridCache();
     private readonly Mock<IRegisterService> _registerServiceMock = new();
     private readonly Mock<IPolicyRetrievalPoint> _prpMock = new();
     private readonly Mock<IAccessManagementWrapper> _accessMgmtMock = new();
@@ -44,7 +45,7 @@ public class ContextHandlerUnitTest : IDisposable
             _policyInfoRepoMock.Object,
             _oedRolesMock.Object,
             _profileMock.Object,
-            _memoryCache,
+            _cache,
             Options.Create(new GeneralSettings { RoleCacheTimeout = 5, MainUnitCacheTimeout = 5 }),
             _registerServiceMock.Object,
             _prpMock.Object,
@@ -52,8 +53,6 @@ public class ContextHandlerUnitTest : IDisposable
             _featureManagerMock.Object,
             _resourceRegistryMock.Object);
     }
-
-    public void Dispose() => _memoryCache.Dispose();
 
     #region GetResourceAttributeValues
 
@@ -525,10 +524,16 @@ public class ContextHandlerUnitTest : IDisposable
         Assert.Equal(42, result.UserId);
         _profileMock.Verify(p => p.GetUserProfile(42, It.IsAny<CancellationToken>()), Times.Once);
 
-        // Second call should come from cache
+        // Second call should come from cache, as a copy of the cached profile
         var cached = await _sut.TestGetUserProfileByUserId(42, TestContext.Current.CancellationToken);
-        Assert.Same(result, cached);
+        Assert.Equal(result.UserId, cached.UserId);
+        Assert.Equal(result.Party.SSN, cached.Party.SSN);
         _profileMock.Verify(p => p.GetUserProfile(42, It.IsAny<CancellationToken>()), Times.Once);
+
+        // The fetch also stored the profile under the national id, so the lookup by person id makes no call
+        var byPersonId = await _sut.TestGetUserProfileByPersonId("01017012345", TestContext.Current.CancellationToken);
+        Assert.Equal(42, byPersonId.UserId);
+        _profileMock.Verify(p => p.GetUserProfileByPersonId(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -545,10 +550,16 @@ public class ContextHandlerUnitTest : IDisposable
 
         Assert.Equal(42, result.UserId);
 
-        // Second call should come from cache
+        // Second call should come from cache, as a copy of the cached profile
         var cached = await _sut.TestGetUserProfileByPersonId("01017012345", TestContext.Current.CancellationToken);
-        Assert.Same(result, cached);
+        Assert.Equal(result.UserId, cached.UserId);
+        Assert.Equal(result.Party.SSN, cached.Party.SSN);
         _profileMock.Verify(p => p.GetUserProfileByPersonId("01017012345", It.IsAny<CancellationToken>()), Times.Once);
+
+        // The fetch also stored the profile under the user id, so the lookup by user id makes no call
+        var byUserId = await _sut.TestGetUserProfileByUserId(42, TestContext.Current.CancellationToken);
+        Assert.Equal("01017012345", byUserId.Party.SSN);
+        _profileMock.Verify(p => p.GetUserProfile(It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -560,7 +571,34 @@ public class ContextHandlerUnitTest : IDisposable
         var first = await _sut.TestGetOedRoleAssignments("from", "to");
         var second = await _sut.TestGetOedRoleAssignments("from", "to");
 
-        Assert.Same(first, second);
+        Assert.Equal("role1", Assert.Single(first).OedRoleCode);
+        Assert.Equal("role1", Assert.Single(second).OedRoleCode);
+        _oedRolesMock.Verify(o => o.GetOedRoleAssignments("from", "to"), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetUserProfileByUserId_ProfileNotFound_CachesNull()
+    {
+        _profileMock.Setup(p => p.GetUserProfile(43, It.IsAny<CancellationToken>())).ReturnsAsync((UserProfile)null);
+
+        var first = await _sut.TestGetUserProfileByUserId(43, TestContext.Current.CancellationToken);
+        var second = await _sut.TestGetUserProfileByUserId(43, TestContext.Current.CancellationToken);
+
+        Assert.Null(first);
+        Assert.Null(second);
+        _profileMock.Verify(p => p.GetUserProfile(43, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetOedRoleAssignments_NoAssignments_CachesEmptyList()
+    {
+        _oedRolesMock.Setup(o => o.GetOedRoleAssignments("from", "to")).ReturnsAsync(new List<OedRoleAssignment>());
+
+        var first = await _sut.TestGetOedRoleAssignments("from", "to");
+        var second = await _sut.TestGetOedRoleAssignments("from", "to");
+
+        Assert.Empty(first);
+        Assert.Empty(second);
         _oedRolesMock.Verify(o => o.GetOedRoleAssignments("from", "to"), Times.Once);
     }
 
@@ -892,13 +930,13 @@ public class ContextHandlerUnitTest : IDisposable
         var policy = CreatePolicyWithSubjectAttributes(policyHasRoles, policyHasAccessPackages, roleAttributeId);
         _prpMock.Setup(p => p.GetPolicyAsync(It.IsAny<XacmlContextRequest>())).ReturnsAsync(policy);
 
-        var cachingWrapper = new CachingAccessManagementWrapperStub(_memoryCache, pipResponse);
+        var cachingWrapper = new CachingAccessManagementWrapperStub(_cache, pipResponse);
 
         _cachingSut = new TestableContextHandler(
             _policyInfoRepoMock.Object,
             _oedRolesMock.Object,
             _profileMock.Object,
-            _memoryCache,
+            _cache,
             Options.Create(new GeneralSettings { RoleCacheTimeout = 5, MainUnitCacheTimeout = 5 }),
             _registerServiceMock.Object,
             _prpMock.Object,
@@ -1012,14 +1050,14 @@ public class ContextHandlerUnitTest : IDisposable
             IInstanceMetadataRepository policyInformationRepository,
             IOedRoleAssignmentWrapper oedRolesWrapper,
             IProfile profileWrapper,
-            IMemoryCache memoryCache,
+            HybridCache cache,
             IOptions<GeneralSettings> settings,
             IRegisterService registerService,
             IPolicyRetrievalPoint prp,
             IAccessManagementWrapper accessManagementWrapper,
             IFeatureManager featureManager,
             IResourceRegistry resourceRegistry)
-            : base(policyInformationRepository, oedRolesWrapper, profileWrapper, memoryCache, settings, registerService, prp, accessManagementWrapper, featureManager, resourceRegistry)
+            : base(policyInformationRepository, oedRolesWrapper, profileWrapper, cache, settings, registerService, prp, accessManagementWrapper, featureManager, resourceRegistry)
         {
         }
 
@@ -1056,40 +1094,39 @@ public class ContextHandlerUnitTest : IDisposable
 
     /// <summary>
     /// A test double for <see cref="IAccessManagementWrapper"/> that wraps <see cref="GetRolesAndAccessPackages"/>
-    /// with the same <see cref="IMemoryCache"/> logic as the real <see cref="AccessManagementWrapper"/>.
+    /// with the same <see cref="HybridCache"/> key and logic as the real <see cref="AccessManagementWrapper"/>.
     /// Tracks how many times the underlying data source was actually consulted (cache misses).
     /// </summary>
     private sealed class CachingAccessManagementWrapperStub : IAccessManagementWrapper
     {
-        private readonly IMemoryCache _memoryCache;
+        private static readonly HybridCacheEntryOptions ReadOptions = new() { Flags = HybridCacheEntryFlags.DisableUnderlyingData };
+        private static readonly HybridCacheEntryOptions WriteOptions = new() { Expiration = TimeSpan.FromMinutes(5) };
+
+        private readonly HybridCache _cache;
         private readonly PipResponseDto _pipResponse;
         private int _getRolesAndAccessPackagesCallCount;
 
         public int GetRolesAndAccessPackagesCallCount => _getRolesAndAccessPackagesCallCount;
 
-        public CachingAccessManagementWrapperStub(IMemoryCache memoryCache, PipResponseDto pipResponse)
+        public CachingAccessManagementWrapperStub(HybridCache cache, PipResponseDto pipResponse)
         {
-            _memoryCache = memoryCache;
+            _cache = cache;
             _pipResponse = pipResponse;
         }
 
-        public Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, Altinn.Authorization.Enums.AccessRestriction accessRestriction = Altinn.Authorization.Enums.AccessRestriction.None, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default)
+        public async Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, Altinn.Authorization.Enums.AccessRestriction accessRestriction = Altinn.Authorization.Enums.AccessRestriction.None, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default)
         {
-            var cacheKey = $"RolesAndAccPkgs|f:{from}|t:{to}";
+            string cacheKey = AccessManagementWrapper.GetRolesAndAccessPackagesCacheKey(to, from, accessRestriction, viaPartyOrganizationNumber);
 
-            if (!_memoryCache.TryGetValue(cacheKey, out PipResponseDto result))
+            PipResponseDto result = await _cache.GetOrCreateAsync<PipResponseDto>(cacheKey, static _ => default, ReadOptions, cancellationToken: cancellationToken);
+            if (result == null)
             {
                 Interlocked.Increment(ref _getRolesAndAccessPackagesCallCount);
                 result = _pipResponse;
-
-                var cacheEntryOptions = new MemoryCacheEntryOptions()
-                    .SetPriority(CacheItemPriority.High)
-                    .SetAbsoluteExpiration(new TimeSpan(0, 5, 0));
-
-                _memoryCache.Set(cacheKey, result, cacheEntryOptions);
+                await _cache.SetAsync(cacheKey, result, WriteOptions, cancellationToken: cancellationToken);
             }
 
-            return Task.FromResult(result);
+            return result;
         }
 
         public Task<IEnumerable<DelegationChangeDto>> GetAllDelegationChanges(DelegationChangeInputDto input, CancellationToken cancellationToken = default)

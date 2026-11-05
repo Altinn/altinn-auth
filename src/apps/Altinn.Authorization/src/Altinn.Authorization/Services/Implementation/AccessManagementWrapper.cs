@@ -9,7 +9,7 @@ using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Models.AccessManagement;
 using Altinn.Platform.Authorization.Services.Interface;
 using AltinnCore.Authentication.Utils;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Options;
 
 namespace Altinn.Platform.Authorization.Services.Implementation;
@@ -20,22 +20,36 @@ namespace Altinn.Platform.Authorization.Services.Implementation;
 [ExcludeFromCodeCoverage]
 public class AccessManagementWrapper : IAccessManagementWrapper
 {
+    private static readonly string[] RolesTags = ["roles"];
+
+    // The cache is read and written in two steps instead of through the factory of GetOrCreateAsync: the factory
+    // cannot decline to cache its result, and a non-OK or empty response must not be cached.
+    private static readonly HybridCacheEntryOptions ReadOptions = new() { Flags = HybridCacheEntryFlags.DisableUnderlyingData };
+
     private readonly GeneralSettings _generalSettings;
     private readonly AccessManagementClient _client;
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly IMemoryCache _memoryCache;
+    private readonly HybridCache _cache;
+    private readonly HybridCacheEntryOptions _writeOptions;
     private readonly JsonSerializerOptions _serializerOptions = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
 
     /// <summary>
     /// Initializes a new instance of the <see cref="AccessManagementWrapper"/> class.
     /// </summary>
-    public AccessManagementWrapper(IOptions<GeneralSettings> generalSettings, AccessManagementClient client, IHttpContextAccessor httpContextAccessor, IMemoryCache memoryCache)
+    public AccessManagementWrapper(IOptions<GeneralSettings> generalSettings, AccessManagementClient client, IHttpContextAccessor httpContextAccessor, HybridCache cache)
     {
         _client = client;
         _generalSettings = generalSettings.Value;
         _httpContextAccessor = httpContextAccessor;
-        _memoryCache = memoryCache;
+        _cache = cache;
+        _writeOptions = new HybridCacheEntryOptions { Expiration = TimeSpan.FromMinutes(_generalSettings.RoleCacheTimeout) };
     }
+
+    /// <summary>
+    /// Gets the cache key under which <see cref="GetRolesAndAccessPackages"/> holds the answer for the given parties.
+    /// </summary>
+    public static string GetRolesAndAccessPackagesCacheKey(Guid to, Guid from, AccessRestriction accessRestriction, string viaPartyOrganizationNumber)
+        => $"roles:f:{from}|t:{to}|ac:{accessRestriction}|vp:{viaPartyOrganizationNumber}";
 
     /// <inheritdoc/>
     public async Task<IEnumerable<DelegationChangeDto>> GetAllDelegationChanges(DelegationChangeInputDto input, CancellationToken cancellationToken = default)
@@ -119,9 +133,10 @@ public class AccessManagementWrapper : IAccessManagementWrapper
     /// <inheritdoc/>
     public async Task<PipResponseDto> GetRolesAndAccessPackages(Guid to, Guid from, AccessRestriction accessRestriction = AccessRestriction.None, string viaPartyOrganizationNumber = null, CancellationToken cancellationToken = default)
     {
-        var cacheKey = $"RolesAndAccPkgs|f:{from}|t:{to}|ac:{accessRestriction}|vp:{viaPartyOrganizationNumber}";
+        string cacheKey = GetRolesAndAccessPackagesCacheKey(to, from, accessRestriction, viaPartyOrganizationNumber);
 
-        if (!_memoryCache.TryGetValue(cacheKey, out PipResponseDto result))
+        PipResponseDto result = await _cache.GetOrCreateAsync<PipResponseDto>(cacheKey, static _ => default, ReadOptions, cancellationToken: cancellationToken);
+        if (result == null)
         {
             var response = await _client.Client.SendAsync(
                 new(HttpMethod.Get, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), $"policyinformation/roles-and-accesspackages?to={to}&from={from}&accessRestriction={accessRestriction}{ViaPartyQuery(viaPartyOrganizationNumber)}")),
@@ -133,11 +148,7 @@ public class AccessManagementWrapper : IAccessManagementWrapper
 
                 if (result != null)
                 {
-                    var cacheEntryOptions = new MemoryCacheEntryOptions()
-                    .SetPriority(CacheItemPriority.High)
-                    .SetAbsoluteExpiration(new TimeSpan(0, 0, _generalSettings.RoleCacheTimeout, 0));
-
-                    _memoryCache.Set(cacheKey, result, cacheEntryOptions);
+                    await _cache.SetAsync(cacheKey, result, _writeOptions, RolesTags, cancellationToken);
                     return result;
                 }
             }
