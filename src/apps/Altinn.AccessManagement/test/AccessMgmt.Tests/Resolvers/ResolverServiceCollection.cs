@@ -41,7 +41,7 @@ public static class ResolverServiceCollection
     {
         services.AddMemoryCache();
 
-        // AltinnResourceResolver needs a context for its resource id leaf. Unit tests never reach that leaf, and EF opens no connection until a query runs.
+        // AltinnResourceResolver needs a context for its leaves. Unit tests never reach them, and EF opens no connection until a query runs.
         services.AddDbContext<AppDbContext>(options => options.UseNpgsql("Host=localhost;Database=unused"));
         services.AddTransient<IDelegationRequests, DelegationRequestService>();
         services.AddTransient<IAttributeResolver, UrnResolver>();
