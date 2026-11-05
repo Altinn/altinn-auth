@@ -1,0 +1,36 @@
+meta {
+  name: 12_WHEN_PartyIsNotAUuidThenRequestFails
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/administrators?party=not-a-uuid
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: not-a-uuid
+}
+
+docs {
+  WHEN the party query parameter is not a uuid, the authorization handler rejects the
+  request with 403 before model binding.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  await helpers.loginAs(td.BOSTYRER);
+}
+
+tests {
+  test("WHEN the party parameter is not a uuid, the request returns 403", function() {
+    expect(res.status).to.equal(403);
+  });
+}
