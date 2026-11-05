@@ -412,7 +412,7 @@ public class RequestControllerTest
             await Fixture.QueryDb(async db =>
             {
                 var request = await db.RequestAssignmentPackages.FirstOrDefaultAsync(t => t.Id == obj.Id);
-                request.Status = RequestStatus.Approved;
+                request.Status = RequestStatusV2.Approved;
                 db.RequestAssignmentPackages.Update(request);
                 await db.SaveChangesAsync(TestContext.Current.CancellationToken);
             });
@@ -452,7 +452,7 @@ public class RequestControllerTest
             await Fixture.QueryDb(async db =>
             {
                 var request = await db.RequestAssignmentPackages.FirstOrDefaultAsync(t => t.Id == obj.Id);
-                request.Status = RequestStatus.Pending;
+                request.Status = RequestStatusV2.Pending;
                 db.RequestAssignmentPackages.Update(request);
                 await db.SaveChangesAsync(TestContext.Current.CancellationToken);
             });
@@ -671,6 +671,47 @@ public class RequestControllerTest
                 TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.OK, statusResponse.StatusCode);
+        }
+
+        /// <summary>
+        /// The service owner API may be checked exhaustively, so PartialApprove is reported as Approved.
+        /// The create response carries StatusV2 next to Status.
+        /// </summary>
+        [Fact]
+        public async Task GetRequestStatus_ForPartialApproveRequest_ReturnsApproved()
+        {
+            var client = CreateReadWriteClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
+
+            var createResponse = await client.PostAsJsonAsync(
+                Route,
+                new CreateServiceOwnerRequest
+                {
+                    From = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}",
+                    To = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}",
+                    Resource = new RequestReferenceDto { ReferenceId = "test-resource-getstatus-1" },
+                    Package = new RequestReferenceDto(),
+                },
+                TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.Accepted, createResponse.StatusCode);
+            using var created = JsonDocument.Parse(await createResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+            var id = created.RootElement.GetProperty("id").GetGuid();
+            Assert.Equal(created.RootElement.GetProperty("status").GetString(), created.RootElement.GetProperty("statusV2").GetString());
+
+            await Fixture.QueryDb(async db =>
+            {
+                var request = await db.RequestAssignmentResources.SingleAsync(r => r.Id == id, TestContext.Current.CancellationToken);
+                request.Status = RequestStatusV2.PartialApprove;
+                await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+            });
+
+            var statusResponse = await client.GetAsync($"{Route}/{id}/status", TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.OK, statusResponse.StatusCode);
+            Assert.Equal("\"Approved\"", await statusResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+
+            // The service owner API is not deprecated
+            Assert.False(statusResponse.Headers.Contains("Deprecation"));
         }
 
         [Fact]

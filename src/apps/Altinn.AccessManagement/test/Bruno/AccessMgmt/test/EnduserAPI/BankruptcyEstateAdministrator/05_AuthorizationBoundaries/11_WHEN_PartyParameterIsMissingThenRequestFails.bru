@@ -1,0 +1,33 @@
+meta {
+  name: 11_WHEN_PartyParameterIsMissingThenRequestFails
+  type: http
+  seq: 11
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/administrators
+  body: none
+  auth: inherit
+}
+
+docs {
+  WHEN the party query parameter is missing, the request fails with 403. The authorization
+  handler needs the party to ask the PDP and rejects the request before the controller binds
+  its parameters, so only the status is asserted.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  await helpers.loginAs(td.BOSTYRER);
+}
+
+tests {
+  test("WHEN the party parameter is missing, the request returns 403", function() {
+    expect(res.status).to.equal(403);
+  });
+}
