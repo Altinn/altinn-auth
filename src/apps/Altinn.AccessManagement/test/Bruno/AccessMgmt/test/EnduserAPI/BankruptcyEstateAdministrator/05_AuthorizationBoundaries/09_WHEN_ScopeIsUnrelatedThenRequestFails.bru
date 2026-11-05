@@ -1,0 +1,38 @@
+meta {
+  name: 09_WHEN_ScopeIsUnrelatedThenRequestFails
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/estates/any?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+docs {
+  WHEN the bostyrer calls with a token whose scope does not cover bankruptcy estates, the
+  request fails with 403 even though the bostyrer has access to the party.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  bru.setVar("party", td.BOSTYRER.partyUuid);
+
+  await helpers.loginAs(td.BOSTYRER, helpers.scopes.read);
+}
+
+tests {
+  test("WHEN the token scope is unrelated, the request returns 403", function() {
+    expect(res.status).to.equal(403);
+  });
+}

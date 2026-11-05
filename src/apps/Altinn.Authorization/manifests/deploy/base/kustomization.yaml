@@ -5,4 +5,6 @@ resources:
   - 01-identity.yaml
   - 02-deployment.yaml
   - 03-service.yaml
-  - 04-route.yaml
+  - 04-hpa.yaml
+  - 05-route.yaml
+  - 06-linkerd.yaml
