@@ -385,6 +385,7 @@ public class RequestControllerTest
         private static readonly Guid PackageRequestId = Guid.Parse("0196b0d2-0000-7000-8000-000000000009");
         private static readonly Guid DelegationChangedAfterwardsId = Guid.Parse("0196b0d2-0000-7000-8000-000000000010");
         private static readonly Guid HistoryId = Guid.Parse("0196b0d2-0000-7000-8000-000000000011");
+        private static readonly Guid ReadThroughV1Id = Guid.Parse("0196b0d2-0000-7000-8000-000000000012");
 
         public ApproveResourceRequest(ApiFixture fixture)
         {
@@ -411,6 +412,7 @@ public class RequestControllerTest
                 AddResourceRequest(db, AlreadyApprovedId, TestData.KaosMagicDesignAndArts.Id, [roleKeys[0]], RequestStatusV2.Approved);
                 AddResourceRequest(db, DelegationChangedAfterwardsId, TestData.StorMektigTenesteeier.Id, [roleKeys[0]]);
                 AddResourceRequest(db, HistoryId, TestData.LarsBakke.Id, [roleKeys[0], roleKeys[1]]);
+                AddResourceRequest(db, ReadThroughV1Id, TestData.HanSoloEnterprise.Id, [roleKeys[0], roleKeys[1]]);
 
                 var packageAssignment = new RequestAssignment
                 {
@@ -496,6 +498,35 @@ public class RequestControllerTest
                     .ToListAsync(TestContext.Current.CancellationToken);
                 Assert.Contains(outbox, m => m.RefId.Contains(TestData.SvendsenAutomobil.Id.ToString(), StringComparison.OrdinalIgnoreCase));
             });
+        }
+
+        [Fact]
+        public async Task PartialApprove_ReadThroughV1_IsApprovedWithStatusV2PartialApprove()
+        {
+            const string v1Route = "accessmanagement/api/v1/enduser/request";
+            var (roleKeys, _) = GetAppPolicyKeys();
+            await ReadRequest(await Approve(ReadThroughV1Id, [roleKeys[0]]));
+            var client = CreateClient(Fixture, TestData.MalinEmilie.Id);
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+
+            // Getting the request
+            var response = await client.GetAsync($"{v1Route}?party={TestData.DumboAdventures.Id}&id={ReadThroughV1Id}", TestContext.Current.CancellationToken);
+            var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {content}");
+            var request = JsonSerializer.Deserialize<RequestDto>(content, options);
+            Assert.Equal(RequestStatus.Approved, request.Status);
+            Assert.Equal(RequestStatusV2.PartialApprove, request.StatusV2.Value);
+
+            // Listing received requests filtered on Approved, as a v1 client would
+            response = await client.GetAsync(
+                $"{v1Route}/received?party={TestData.DumboAdventures.Id}&from={TestData.HanSoloEnterprise.Id}&status=Approved",
+                TestContext.Current.CancellationToken);
+            content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {content}");
+            using var doc = JsonDocument.Parse(content);
+            var listed = Assert.Single(doc.RootElement.GetProperty("data").EnumerateArray(), item => item.GetProperty("id").GetGuid() == ReadThroughV1Id);
+            Assert.Equal("Approved", listed.GetProperty("status").GetString());
+            Assert.Equal("PartialApprove", listed.GetProperty("statusV2").GetString());
         }
 
         [Fact]
