@@ -7,8 +7,6 @@ using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.Tests.Utils;
 using Altinn.AccessManagement.TestUtils.Mocks;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -32,18 +30,12 @@ namespace Altinn.AccessManagement.Tests.Unit
         /// </summary>
         public PolicyAdministrationPointTest()
         {
-            ServiceCollection services = new ServiceCollection();
-            services.AddMemoryCache();
-            ServiceProvider serviceProvider = services.BuildServiceProvider();
-
-            IMemoryCache memoryCache = serviceProvider.GetService<IMemoryCache>();
-
             _logger = new Mock<ILogger<PolicyAdministrationPoint>>();
             _delegationMetadataRepositoryMock = new DelegationMetadataRepositoryMock();
             _prp = new PolicyFactoryMock(new Mock<ILogger<PolicyRepositoryMock>>().Object);
 
             _pap = new PolicyAdministrationPoint(
-                new PolicyRetrievalPoint(_prp, memoryCache, Options.Create(new CacheConfig { PolicyCacheTimeout = 1 })),
+                new PolicyRetrievalPoint(_prp, HybridCacheUtil.Create(), Options.Create(new CacheConfig { PolicyCacheTimeout = 1 })),
                 _prp,
                 _delegationMetadataRepositoryMock,
                 _logger.Object);
