@@ -12,7 +12,8 @@ namespace Altinn.Authorization.Tests.Unit
     public class PolicyAdministrationPointTest
     {
         private readonly IPolicyAdministrationPoint _pap = new PolicyAdministrationPoint(
-            new PolicyRepositoryMock(new Mock<ILogger<PolicyRepositoryMock>>().Object));
+            new PolicyRepositoryMock(new Mock<ILogger<PolicyRepositoryMock>>().Object),
+            TestSetupUtil.CreateHybridCache());
 
         /// <summary>
         /// Test case: Write to storage a file.

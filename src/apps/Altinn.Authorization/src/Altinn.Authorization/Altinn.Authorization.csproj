@@ -22,6 +22,7 @@
         <PackageReference Include="Azure.Storage.Blobs" />
         <PackageReference Include="IdentityModel" />
         <PackageReference Include="Microsoft.ApplicationInsights.AspNetCore" />
+        <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" />
         <PackageReference Include="Altinn.Platform.Storage.Interface" />
         <PackageReference Include="JWTCookieAuthentication" />
         <PackageReference Include="Microsoft.Azure.Services.AppAuthentication" />

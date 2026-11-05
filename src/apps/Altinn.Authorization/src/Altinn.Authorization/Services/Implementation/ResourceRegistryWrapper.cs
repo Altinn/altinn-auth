@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.CodeAnalysis;
+﻿using System.ComponentModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Text.Json;
 using Altinn.Authorization.ABAC.Xacml;
@@ -12,7 +13,7 @@ using Altinn.Platform.Authorization.Extensions;
 using Altinn.Platform.Authorization.Helpers;
 using Altinn.Platform.Authorization.Services.Interface;
 using Altinn.ResourceRegistry.Models;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Options;
 
 namespace Altinn.Authorization.Services.Implementation
@@ -23,21 +24,36 @@ namespace Altinn.Authorization.Services.Implementation
     [ExcludeFromCodeCoverage]
     public class ResourceRegistryWrapper : IResourceRegistry
     {
+        private static readonly string[] ResourceTags = ["resource"];
+        private static readonly string[] PolicyTags = ["policy"];
+        private static readonly string[] AccessListTags = ["access-list"];
+
+        // The cache is read and written in two steps instead of through the factory of GetOrCreateAsync: the factory
+        // cannot decline to cache its result, and a non-OK response or an empty policy must not be cached.
+        private static readonly HybridCacheEntryOptions ReadOptions = new() { Flags = HybridCacheEntryFlags.DisableUnderlyingData };
+
+        // The parsed policy never leaves this process: XacmlPolicy serializes but cannot be deserialized, so the
+        // distributed tier would hand every other reader a document it cannot read.
+        private static readonly HybridCacheEntryOptions PolicyReadOptions = new() { Flags = HybridCacheEntryFlags.DisableUnderlyingData | HybridCacheEntryFlags.DisableDistributedCache };
+
         private readonly ResourceRegistryClient _resourceRegistry;
         private readonly IAccessTokenGenerator _accessTokenGenerator;
-        private readonly IMemoryCache _memoryCache;
-        private readonly GeneralSettings _generalSettings;
+        private readonly HybridCache _cache;
+        private readonly HybridCacheEntryOptions _writeOptions;
+        private readonly HybridCacheEntryOptions _policyWriteOptions;
         private readonly JsonSerializerOptions _jsonOptions;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ResourceRegistryWrapper"/> class.
         /// </summary>
-        public ResourceRegistryWrapper(ResourceRegistryClient resourceRegistryClient, IAccessTokenGenerator accessTokenGenerator, IMemoryCache memoryCache, IOptions<GeneralSettings> settings)
+        public ResourceRegistryWrapper(ResourceRegistryClient resourceRegistryClient, IAccessTokenGenerator accessTokenGenerator, HybridCache cache, IOptions<GeneralSettings> settings)
         {
             _resourceRegistry = resourceRegistryClient;
-            _generalSettings = settings.Value;
-            _memoryCache = memoryCache;
+            _cache = cache;
             _accessTokenGenerator = accessTokenGenerator;
+            TimeSpan expiration = TimeSpan.FromMinutes(settings.Value.PolicyCacheTimeout);
+            _writeOptions = new HybridCacheEntryOptions { Expiration = expiration };
+            _policyWriteOptions = new HybridCacheEntryOptions { Expiration = expiration, Flags = HybridCacheEntryFlags.DisableDistributedCache };
             _jsonOptions = new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true,
@@ -48,8 +64,9 @@ namespace Altinn.Authorization.Services.Implementation
         /// <inheritdoc/>
         public async Task<ServiceResource> GetResourceAsync(string resourceId, CancellationToken cancellationToken = default)
         {
-            string cacheKey = "r:" + resourceId;
-            if (!_memoryCache.TryGetValue(cacheKey, out ServiceResource resource))
+            string cacheKey = "resource:" + resourceId;
+            ServiceResource resource = await GetCachedAsync<ServiceResource>(cacheKey, ReadOptions, cancellationToken);
+            if (resource == null)
             {
                 string apiurl = $"resource/{resourceId}";
                 HttpResponseMessage response = await _resourceRegistry.Client.GetAsync(apiurl, cancellationToken);
@@ -57,7 +74,7 @@ namespace Altinn.Authorization.Services.Implementation
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
                     resource = await response.Content.ReadFromJsonAsync<ServiceResource>(_jsonOptions, cancellationToken);
-                    PutInCache(cacheKey, _generalSettings.PolicyCacheTimeout, resource);
+                    await _cache.SetAsync(cacheKey, resource, _writeOptions, ResourceTags, cancellationToken);
                 }
             }
 
@@ -67,21 +84,28 @@ namespace Altinn.Authorization.Services.Implementation
         /// <inheritdoc/>
         public async Task<XacmlPolicy> GetResourcePolicyAsync(string resourceId, CancellationToken cancellationToken = default)
         {
-            string cacheKey = "resourcepolicy:" + resourceId;
-            if (!_memoryCache.TryGetValue(cacheKey, out XacmlPolicy policy))
+            string cacheKey = "resource-policy:" + resourceId;
+            CachedResourcePolicy cached = await GetCachedAsync<CachedResourcePolicy>(cacheKey, PolicyReadOptions, cancellationToken);
+            if (cached != null)
             {
-                string apiurl = $"resource/{resourceId}/policy";
-                HttpResponseMessage response = await _resourceRegistry.Client.GetAsync(apiurl, cancellationToken);
+                return cached.Policy;
+            }
 
-                if (response.StatusCode == HttpStatusCode.OK)
+            XacmlPolicy policy = null;
+            string apiurl = $"resource/{resourceId}/policy";
+            HttpResponseMessage response = await _resourceRegistry.Client.GetAsync(apiurl, cancellationToken);
+
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                Stream policyBlob = await response.Content.ReadAsStreamAsync(cancellationToken);
+                using (policyBlob)
                 {
-                    Stream policyBlob = await response.Content.ReadAsStreamAsync(cancellationToken);
-                    using (policyBlob)
-                    {
-                        policy = policyBlob.Length > 0 ? PolicyHelper.ParsePolicy(policyBlob) : null;
-                    }
+                    policy = policyBlob.Length > 0 ? PolicyHelper.ParsePolicy(policyBlob) : null;
+                }
 
-                    PutInCache(cacheKey, _generalSettings.PolicyCacheTimeout, policy);
+                if (policy != null)
+                {
+                    await _cache.SetAsync(cacheKey, new CachedResourcePolicy(policy), _policyWriteOptions, PolicyTags, cancellationToken);
                 }
             }
 
@@ -91,8 +115,9 @@ namespace Altinn.Authorization.Services.Implementation
         /// <inheritdoc/>
         public async Task<IEnumerable<AccessListResourceMembershipWithActionFilterDto>> GetMembershipsForResourceForParty(PartyUrn partyUrn, ResourceIdUrn resourceIdUrn, CancellationToken cancellationToken = default)
         {
-            string cacheKey = $"AccListMemb|{partyUrn}|{resourceIdUrn}";
-            if (!_memoryCache.TryGetValue(cacheKey, out IEnumerable<AccessListResourceMembershipWithActionFilterDto> memberships))
+            string cacheKey = $"access-list:{partyUrn}|{resourceIdUrn}";
+            IEnumerable<AccessListResourceMembershipWithActionFilterDto> memberships = await GetCachedAsync<IEnumerable<AccessListResourceMembershipWithActionFilterDto>>(cacheKey, ReadOptions, cancellationToken);
+            if (memberships == null)
             {
                 string apiurl = $"access-lists/memberships?party={partyUrn}&resource={resourceIdUrn}";
                 string accessToken = _accessTokenGenerator.GenerateAccessToken("platform", "authorization");
@@ -102,7 +127,7 @@ namespace Altinn.Authorization.Services.Implementation
                 {
                     ListObject<AccessListResourceMembershipWithActionFilterDto> result = await response.Content.ReadFromJsonAsync<ListObject<AccessListResourceMembershipWithActionFilterDto>>(_jsonOptions, cancellationToken);
                     memberships = result.Items;
-                    PutInCache(cacheKey, _generalSettings.PolicyCacheTimeout, memberships);
+                    await _cache.SetAsync(cacheKey, memberships, _writeOptions, AccessListTags, cancellationToken);
                 }
             }
 
@@ -112,8 +137,9 @@ namespace Altinn.Authorization.Services.Implementation
         /// <inheritdoc/>
         public async Task<IEnumerable<AccessListInfoDto>> GetMembershipsForParty(PartyUrn.PartyUuid partyUrn, CancellationToken cancellationToken = default)
         {
-            string cacheKey = $"AccListMemb|{partyUrn}";
-            if (!_memoryCache.TryGetValue(cacheKey, out IEnumerable<AccessListInfoDto> memberships))
+            string cacheKey = $"access-list:{partyUrn}";
+            IEnumerable<AccessListInfoDto> memberships = await GetCachedAsync<IEnumerable<AccessListInfoDto>>(cacheKey, ReadOptions, cancellationToken);
+            if (memberships == null)
             {
                 string apiurl = $"access-lists/get-by-member?party={partyUrn}";
                 string accessToken = _accessTokenGenerator.GenerateAccessToken("platform", "authorization");
@@ -122,20 +148,29 @@ namespace Altinn.Authorization.Services.Implementation
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
                     memberships = await response.Content.ReadFromJsonAsync<IEnumerable<AccessListInfoDto>>(_jsonOptions, cancellationToken);
-                    PutInCache(cacheKey, _generalSettings.PolicyCacheTimeout, memberships);
+                    await _cache.SetAsync(cacheKey, memberships, _writeOptions, AccessListTags, cancellationToken);
                 }
             }
 
             return memberships;
         }
 
-        private void PutInCache(string cachekey, int cacheTimeout, object cacheObject)
-        {
-            var cacheEntryOptions = new MemoryCacheEntryOptions()
-               .SetPriority(CacheItemPriority.High)
-               .SetAbsoluteExpiration(new TimeSpan(0, cacheTimeout, 0));
+        private ValueTask<T> GetCachedAsync<T>(string cacheKey, HybridCacheEntryOptions options, CancellationToken cancellationToken)
+            => _cache.GetOrCreateAsync<T>(cacheKey, static _ => default, options, cancellationToken: cancellationToken);
 
-            _memoryCache.Set(cachekey, cacheObject, cacheEntryOptions);
+        /// <summary>
+        /// Holds a parsed resource policy in the local cache. The type is immutable, so HybridCache stores and returns
+        /// the instance itself instead of a serialized copy, and one parse serves every decision on the resource.
+        /// </summary>
+        [ImmutableObject(true)]
+        private sealed class CachedResourcePolicy
+        {
+            public CachedResourcePolicy(XacmlPolicy policy)
+            {
+                Policy = policy;
+            }
+
+            public XacmlPolicy Policy { get; }
         }
     }
 }
