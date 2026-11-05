@@ -1,8 +1,10 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Security.Cryptography;
 using System.Text;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Enums;
+using Altinn.AccessManagement.Core.Helpers.Extensions;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessMgmt.Core.Appsettings;
@@ -12,7 +14,7 @@ using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Hybrid;
 
 namespace Altinn.AccessManagement.Core.Services;
 
@@ -20,10 +22,11 @@ namespace Altinn.AccessManagement.Core.Services;
 public class AuthorizedPartiesServiceEf(
     IContextRetrievalService contextRetrievalService,
     IAuthorizedPartyRepoServiceEf repoService,
-    IMemoryCache memoryCache,
+    HybridCache cache,
     AppLifecycleFeatures lifecycleFeatures) : IAuthorizedPartiesService
 {
-    private static readonly MemoryCacheEntryOptions _cacheEntryOptions = new() { AbsoluteExpirationRelativeToNow = new TimeSpan(0, 5, 0) };
+    private static readonly HybridCacheEntryOptions _cacheEntryOptions = new() { Expiration = TimeSpan.FromMinutes(5) };
+    private static readonly string[] FilterTags = ["resource", "package"];
 
     /// <inheritdoc/>
     public async Task<List<AuthorizedParty>> GetAuthorizedParties(BaseAttribute subjectAttribute, AuthorizedPartiesFilters filter, CancellationToken cancellationToken = default) => subjectAttribute.Type switch
@@ -580,6 +583,37 @@ public class AuthorizedPartiesServiceEf(
         return party;
     }
 
+    /// <summary>
+    /// Rebuilds the filter dictionaries from the cached lists. The cache serializer keeps the entries but not the
+    /// case-insensitive comparer, and the lookups in <see cref="FilterConnections"/> depend on it.
+    /// </summary>
+    internal static void ApplyCachedFilters(AuthorizedPartiesFilters filter, ProviderResourceFilters cached)
+    {
+        filter.ResourceFilter = new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (string resourceId in cached.ResourceIds)
+        {
+            filter.ResourceFilter[resourceId] = resourceId;
+        }
+
+        filter.PackageFilter ??= new SortedDictionary<Guid, Guid>();
+        foreach (Guid packageId in cached.PackageIds)
+        {
+            filter.PackageFilter[packageId] = packageId;
+        }
+
+        filter.RoleFilter ??= new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (string roleCode in cached.RoleCodes)
+        {
+            filter.RoleFilter[roleCode] = roleCode;
+        }
+    }
+
+    /// <summary>
+    /// What the provider and resource filter lookup caches: plain lists, because the cache serializer would drop the
+    /// comparer of a <see cref="SortedDictionary{TKey, TValue}"/>.
+    /// </summary>
+    internal sealed record ProviderResourceFilters(List<string> ResourceIds, List<Guid> PackageIds, List<string> RoleCodes);
+
     private async Task<AuthorizedPartiesFilters> ProcessProviderAndResourceFilters(AuthorizedPartiesFilters filter, CancellationToken cancellationToken)
     {
         // Only build resource filters if providerCode or anyOfResourceIds filters are specified
@@ -595,54 +629,46 @@ public class AuthorizedPartiesServiceEf(
             filter.PackageFilter?.ToList().ForEach(p => cacheBuilder.Append($"{p.Key}:"));
             cacheBuilder.Append("|");
             filter.RoleFilter?.ToList().ForEach(r => cacheBuilder.Append($"{r.Key}:"));
-            string cacheKey = cacheBuilder.ToString();
-            if (!memoryCache.TryGetValue(cacheKey, out (SortedDictionary<string, string> ResourceFilter, SortedDictionary<Guid, Guid>? PackageFilter, SortedDictionary<string, string>? RoleFilter) cachedFilters))
-            {
-                List<Resource> resources = await repoService.GetResources(filter.ProviderCode, filter.AnyOfResourceIds, ct: cancellationToken);
 
-                if (resources.Count == 0)
+            // The resource ids are unbounded query input, and HybridCache rejects keys over 1024 characters (an error log
+            // and no caching), so the key carries a hash of the filter instead of the filter itself.
+            string cacheKey = "authorizedparties:filters:" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(cacheBuilder.ToString())));
+            ProviderResourceFilters? cachedFilters = await cache.GetOrFetchAsync<ProviderResourceFilters>(
+                cacheKey,
+                async ct =>
                 {
-                    // ServiceOwner or Resource filter specified, but no resources found matching.
-                    return filter;
-                }
+                    List<Resource> resources = await repoService.GetResources(filter.ProviderCode, filter.AnyOfResourceIds, ct: ct);
 
-                filter.ResourceFilter = new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-                foreach (var resource in resources)
-                {
-                    filter.ResourceFilter[resource.RefId] = resource.RefId;
-                }
-
-                List<PackageResource> packageResources = await repoService.GetPackageResources(filter.ProviderCode, filter.ResourceFilter.Keys, ct: cancellationToken);
-
-                // Add packageIds from packageResources to filter.PackageFilter
-                filter.PackageFilter ??= new SortedDictionary<Guid, Guid>();
-                foreach (var packageResource in packageResources)
-                {
-                    if (!filter.PackageFilter.ContainsKey(packageResource.PackageId))
+                    if (resources.Count == 0)
                     {
-                        filter.PackageFilter[packageResource.PackageId] = packageResource.PackageId;
+                        // ServiceOwner or Resource filter specified, but no resources found matching. Not cached.
+                        return null;
                     }
-                }
 
-                // Build filter.RoleFilter based on roleResources and packageRoles
-                filter.RoleFilter ??= new SortedDictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                    SortedDictionary<string, string> resourceFilter = new(StringComparer.OrdinalIgnoreCase);
+                    foreach (var resource in resources)
+                    {
+                        resourceFilter[resource.RefId] = resource.RefId;
+                    }
 
-                List<string> roleCodes = await repoService.GetRoleCodesFromRoleResources(filter.ProviderCode, filter.ResourceFilter.Keys, ct: cancellationToken);
-                foreach (var roleCode in roleCodes)
-                {
-                    filter.RoleFilter[roleCode] = roleCode;
-                }
+                    List<PackageResource> packageResources = await repoService.GetPackageResources(filter.ProviderCode, resourceFilter.Keys, ct: ct);
+                    List<string> roleCodes = await repoService.GetRoleCodesFromRoleResources(filter.ProviderCode, resourceFilter.Keys, ct: ct);
 
-                cachedFilters.ResourceFilter = filter.ResourceFilter;
-                cachedFilters.PackageFilter = filter.PackageFilter;
-                cachedFilters.RoleFilter = filter.RoleFilter;
+                    return new ProviderResourceFilters(
+                        [.. resourceFilter.Keys],
+                        [.. packageResources.Select(pr => pr.PackageId).Distinct()],
+                        roleCodes);
+                },
+                _cacheEntryOptions,
+                FilterTags,
+                cancellationToken);
 
-                memoryCache.Set(cacheKey, cachedFilters, _cacheEntryOptions);
+            if (cachedFilters is null)
+            {
+                return filter;
             }
 
-            filter.ResourceFilter = cachedFilters.ResourceFilter;
-            filter.PackageFilter = cachedFilters.PackageFilter;
-            filter.RoleFilter = cachedFilters.RoleFilter;
+            ApplyCachedFilters(filter, cachedFilters);
         }
 
         return filter;
