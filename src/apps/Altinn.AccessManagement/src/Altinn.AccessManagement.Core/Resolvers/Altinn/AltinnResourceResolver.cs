@@ -1,7 +1,6 @@
 ﻿using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Core.Resolvers.Extensions;
-using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,37 +11,50 @@ namespace Altinn.AccessManagement.Core.Resolvers;
 /// </summary>
 public class AltinnResourceResolver : AttributeResolver
 {
-    private readonly IContextRetrievalService _contextRetrievalService;
     private readonly AppDbContext _dbContext;
 
     /// <summary>
     /// ctor
     /// </summary>
-    public AltinnResourceResolver(IContextRetrievalService contextRetrievalService, AppDbContext dbContext) : base(BaseUrn.Altinn.Resource.String())
+    public AltinnResourceResolver(AppDbContext dbContext) : base(BaseUrn.Altinn.Resource.String())
     {
         AddLeaf([BaseUrn.Altinn.Resource.AppOwner, BaseUrn.Altinn.Resource.AppId], [BaseUrn.Altinn.Resource.Delegable, BaseUrn.Altinn.Resource.Type, BaseUrn.Altinn.Resource.ResourceRegistryId], ResolveAppOwnerAndAppId());
         AddLeaf([BaseUrn.Altinn.Resource.ResourceRegistryId], [BaseUrn.Altinn.Resource.Delegable, BaseUrn.Altinn.Resource.Type], ResolveResourceRegistryId());
-        _contextRetrievalService = contextRetrievalService;
         _dbContext = dbContext;
     }
 
     /// <summary>
-    /// Resolves a resource if given <see cref="BaseUrn.Altinn.Resource.AppOwner"/> and <see cref="BaseUrn.Altinn.Resource.AppId"/>
+    /// Resolves a resource if given <see cref="BaseUrn.Altinn.Resource.AppOwner"/> and <see cref="BaseUrn.Altinn.Resource.AppId"/>.
+    /// Resource Registry requires the identifier of an app resource to be <c>app_{org}_{app}</c>, so the local resource
+    /// is found by that identifier, case-insensitively, among resources of type <see cref="ResourceType.AltinnApp"/>
+    /// or <see cref="ResourceType.MigratedApp"/>.
     /// </summary>
     public LeafResolver ResolveAppOwnerAndAppId() => async (attributes, cancellationToken) =>
     {
-        var resource = await _contextRetrievalService.GetResourceFromResourceList(null, attributes.GetRequiredString(BaseUrn.Altinn.Resource.AppOwner), attributes.GetRequiredString(BaseUrn.Altinn.Resource.AppId), null, null);
-        if (resource != null)
+        var org = attributes.GetRequiredString(BaseUrn.Altinn.Resource.AppOwner);
+        var app = attributes.GetRequiredString(BaseUrn.Altinn.Resource.AppId);
+        var resourceId = $"app_{org}_{app}".ToLowerInvariant();
+        var altinnApp = nameof(ResourceType.AltinnApp).ToLowerInvariant();
+        var migratedApp = nameof(ResourceType.MigratedApp).ToLowerInvariant();
+
+        var resource = await _dbContext.Resources
+            .AsNoTracking()
+            .Where(r => r.RefId.ToLower() == resourceId)
+            .Where(r => r.Type.Name.ToLower() == altinnApp || r.Type.Name.ToLower() == migratedApp)
+            .Select(r => new { r.RefId, r.Delegable, TypeName = r.Type.Name })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (resource is null || !TryMapResourceType(resource.TypeName, out var resourceType))
         {
-            return
-            [
-                new(BaseUrn.Altinn.Resource.Delegable, resource.Delegable),
-                new(BaseUrn.Altinn.Resource.Type, resource.ResourceType),
-                new(BaseUrn.Altinn.Resource.ResourceRegistryId, resource.Identifier),
-            ];
+            return [];
         }
 
-        return [];
+        return
+        [
+            new(BaseUrn.Altinn.Resource.Delegable, resource.Delegable),
+            new(BaseUrn.Altinn.Resource.Type, resourceType),
+            new(BaseUrn.Altinn.Resource.ResourceRegistryId, resource.RefId),
+        ];
     };
 
     /// <summary>
