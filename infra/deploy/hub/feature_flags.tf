@@ -2,6 +2,7 @@ locals {
   access_management_feature_flags = {
     "AccessManagement.Enduser.ConnectionsActivityLogApi"                     = { description = "Activity log endpoints under enduser/connections." },
     "AccessManagement.Enduser.RequestActivityLogApi"                         = { description = "Activity log endpoints under enduser/request." },
+    "AccessManagement.Enduser.RequestV2Api"                                  = { description = "v2 request endpoints under enduser/request, where resource requests can name the requested right keys." },
     "AccessManagement.Enduser.MaskinportenActivityLogApi"                    = { description = "Activity log endpoints under enduser/maskinporten." },
     "AccessMgmt.Core.Outbox.RequestPendingNotify"                            = { description = "Specifies if notifications for pending access requests are enabled." },
     "AccessMgmt.Core.Outbox.RequestReviewedNotify"                           = { description = "Specifies if notifications for reviewed access requests are enabled." },

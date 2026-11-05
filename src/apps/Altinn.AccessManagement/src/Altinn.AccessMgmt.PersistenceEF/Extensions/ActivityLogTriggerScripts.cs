@@ -12,7 +12,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Extensions;
 /// <list type="bullet">
 /// <item>Numeric literals map to the API contract enums and must stay in sync:
 /// type 1=Assignment 2=Delegation 3=Request; subtype 1=Package 2=Resource 3=Instance;
-/// trigger 1=Created 2=Updated 3=Deleted; status = <c>RequestStatus</c>.</item>
+/// trigger 1=Created 2=Updated 3=Deleted; status = <c>RequestStatusV2</c>.</item>
 /// <item>Insert triggers read attribution from the <c>audit_*</c> columns stamped by the audit
 /// BEFORE-trigger; update triggers read the <c>app.*</c> GUCs directly (raw-SQL writers do not
 /// refresh the audit columns on UPDATE); delete triggers read the <c>session_audit_context</c>
