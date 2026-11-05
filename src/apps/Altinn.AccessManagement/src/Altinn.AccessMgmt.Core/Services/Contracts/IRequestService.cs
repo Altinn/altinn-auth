@@ -1,4 +1,5 @@
 ﻿using Altinn.AccessMgmt.Core.Models;
+using Altinn.AccessMgmt.Core.Utils.Helper;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 using Altinn.Authorization.ProblemDetails;
 
@@ -44,7 +45,7 @@ public interface IRequestService
     /// Creates a new request
     /// A Request from Kari by NAV to BakerAS for AppResource01.
     /// Will create an Assignment from BakerAS to Kari with an AssignmentResource for AppResource01.
-    /// The right keys being requested must already be validated with <see cref="ValidateResourceRightKeys"/>;
+    /// The right keys being requested must already be validated with <see cref="ValidateResourceRightKeys(string, IEnumerable{string}?, CancellationToken)"/>;
     /// pass null or an empty list when no specific rights are requested.
     /// </summary>
     Task<Result<AccessRequest>> CreateResourceRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, Guid resourceId, IEnumerable<string>? requestedRightKeys, RequestStatusV2 status = RequestStatusV2.Pending, CancellationToken ct = default);
@@ -58,6 +59,28 @@ public interface IRequestService
     /// <param name="rightKeys">The requested right keys</param>
     /// <param name="ct">Cancellation token</param>
     Task<ValidationProblemInstance?> ValidateResourceRightKeys(string resource, IEnumerable<string>? rightKeys, CancellationToken ct = default);
+
+    /// <summary>
+    /// Validates right keys against the policy of the resource, like <see cref="ValidateResourceRightKeys(string, IEnumerable{string}?, CancellationToken)"/>,
+    /// reporting each invalid key at <paramref name="jsonPointer"/> followed by its index, e.g. <c>/rightKeys/0</c>.
+    /// </summary>
+    /// <param name="resource">The resource registry identifier of the resource (its RefId)</param>
+    /// <param name="rightKeys">The right keys to validate</param>
+    /// <param name="jsonPointer">Where the keys are in the request, e.g. <c>/rightKeys</c></param>
+    /// <param name="ct">Cancellation token</param>
+    Task<ValidationProblemInstance?> ValidateResourceRightKeys(string resource, IEnumerable<string>? rightKeys, string jsonPointer, CancellationToken ct = default);
+
+    /// <summary>
+    /// Approves a pending resource request: sets its status and stores the rights that were given.
+    /// The delegation must already have been made; this records the outcome on the request.
+    /// Only the recipient of the request can approve it.
+    /// </summary>
+    /// <param name="partyUuid">The party approving, which must be the recipient of the request</param>
+    /// <param name="requestId">The request to approve</param>
+    /// <param name="status"><see cref="RequestStatusV2.Approved"/> or <see cref="RequestStatusV2.PartialApprove"/>, see <see cref="RequestApproval.DetermineStatus"/></param>
+    /// <param name="approvedRightKeys">The right keys that were delegated</param>
+    /// <param name="ct">Cancellation token</param>
+    Task<Result<AccessRequest>> ApproveResourceRequest(Guid partyUuid, Guid requestId, RequestStatusV2 status, IEnumerable<string> approvedRightKeys, CancellationToken ct = default);
 
     /// <summary>
     /// Creates a new request

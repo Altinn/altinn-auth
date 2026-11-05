@@ -53,6 +53,17 @@ public class RequestRouteIsolationTest : IClassFixture<ApiFixture>
         actions.Should().ContainSingle();
     }
 
+    [Theory]
+    [MemberData(nameof(ControllerRoutes))]
+    public void Controller_HasOneApproveAction(Type controllerType, string expectedRoute)
+    {
+        var actions = GetActions(controllerType)
+            .Where(a => a.HttpMethod == "PUT" && a.RelativePath == $"{expectedRoute}/received/approve")
+            .ToList();
+
+        actions.Should().ContainSingle();
+    }
+
     [Fact]
     public void V1AndV2_ExposeTheSameActions()
     {

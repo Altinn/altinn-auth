@@ -733,7 +733,7 @@ public class DtoMapperTest
     }
 
     [Fact]
-    public void Convert_RequestAssignmentResource_MapsTypeStatusAndRequestedRightKeys()
+    public void Convert_RequestAssignmentResource_MapsTypeStatusAndRightKeys()
     {
         var from = MakeEntity("From");
         var to = MakeEntity("To");
@@ -747,6 +747,7 @@ public class DtoMapperTest
             Status = RequestStatusV2.PartialApprove,
             Assignment = assignment,
             RequestedRightKeys = ["key-read"],
+            ApprovedRightKeys = ["key-read", "key-write"],
             Audit_ChangedBy = changedBy,
         };
 
@@ -756,6 +757,7 @@ public class DtoMapperTest
         model.Status.Should().Be(RequestStatusV2.PartialApprove);
         model.Resource!.Id.Should().Be(request.ResourceId);
         model.RequestedRightKeys.Should().Equal("key-read");
+        model.ApprovedRightKeys.Should().Equal("key-read", "key-write");
         model.By!.Id.Should().Be(by.Id);
         model.LastUpdatedBy!.Id.Should().Be(changedBy);
         model.Package.Should().BeNull();
@@ -771,6 +773,7 @@ public class DtoMapperTest
         LastUpdatedBy = new PartyReferenceDto { Id = Guid.NewGuid() },
         Resource = new RequestReferenceDto { Id = Guid.NewGuid(), ReferenceId = "example-resource" },
         RequestedRightKeys = ["key-read", "key-write"],
+        ApprovedRightKeys = ["key-read"],
         From = new PartyEntityDto { Id = Guid.NewGuid() },
         To = new PartyEntityDto { Id = Guid.NewGuid() },
         By = new PartyEntityDto { Id = Guid.NewGuid() },
@@ -803,14 +806,16 @@ public class DtoMapperTest
     }
 
     [Fact]
-    public void ConvertToV1_CopiesFieldsWithoutRequestedRightKeys()
+    public void ConvertToV1_CopiesFieldsWithoutRightKeys()
     {
         var model = MakeAccessRequest(RequestStatusV2.Pending);
 
         var dto = Altinn.AccessMgmt.Core.Utils.DtoMapper.ConvertToV1(model);
 
-        dto.Should().BeEquivalentTo(model, options => options.Excluding(m => m.Status).Excluding(m => m.RequestedRightKeys));
+        dto.Should().BeEquivalentTo(model, options => options.Excluding(m => m.Status).Excluding(m => m.RequestedRightKeys).Excluding(m => m.ApprovedRightKeys));
         typeof(RequestDto).GetProperty(nameof(AccessRequest.RequestedRightKeys)).Should().BeNull("version 1 does not have the requested rights");
+        typeof(RequestDto).GetProperty(nameof(AccessRequest.ApprovedRightKeys)).Should().BeNull("version 1 does not have the approved rights");
+        typeof(RequestReferenceDto).GetProperty(nameof(AccessRequest.ApprovedRightKeys)).Should().BeNull("version 1 does not have the approved rights");
     }
 
     [Fact]
@@ -837,15 +842,27 @@ public class DtoMapperTest
     }
 
     [Fact]
-    public void ConvertToV2_CopiesFieldsAndPutsRequestedRightKeysInResource()
+    public void ConvertToV2_CopiesFieldsAndPutsRightKeysInResource()
     {
         var model = MakeAccessRequest(RequestStatusV2.PartialApprove);
 
         var v2 = Altinn.AccessMgmt.Core.Utils.DtoMapper.ConvertToV2(model);
 
         v2.Status.Should().Be(NonExhaustiveEnum.Create(RequestStatusV2.PartialApprove));
-        v2.Should().BeEquivalentTo(model, options => options.Excluding(m => m.Status).Excluding(m => m.RequestedRightKeys));
+        v2.Should().BeEquivalentTo(model, options => options.Excluding(m => m.Status).Excluding(m => m.RequestedRightKeys).Excluding(m => m.ApprovedRightKeys));
         v2.Resource.RequestedRightKeys.Should().Equal("key-read", "key-write");
+        v2.Resource.ApprovedRightKeys.Should().Equal("key-read");
+    }
+
+    [Fact]
+    public void ConvertToV2_NotApproved_HasNoApprovedRightKeys()
+    {
+        var model = MakeAccessRequest(RequestStatusV2.Pending);
+        model.ApprovedRightKeys = null;
+
+        var v2 = Altinn.AccessMgmt.Core.Utils.DtoMapper.ConvertToV2(model);
+
+        v2.Resource.ApprovedRightKeys.Should().BeNull();
     }
 
     [Fact]
