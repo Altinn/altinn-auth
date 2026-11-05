@@ -1,9 +1,13 @@
 ﻿using Altinn.AccessManagement.Core.Enums;
 using Altinn.AccessManagement.Core.Models;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
+using Altinn.Authorization.Api.Contracts.AccessManagement.ActivityLog;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
+using Altinn.Authorization.ModelUtils;
+using AccessRequest = Altinn.AccessMgmt.Core.Models.AccessRequest;
 
 namespace Altinn.AccessMgmt.Core.Tests.Unit.Utils.Mappers;
 
@@ -697,7 +701,7 @@ public class DtoMapperTest
         result.Should().HaveCount(2);
     }
 
-    // ── RequestMapper — RequestAssignmentPackage ───────────────────────────────
+    // ── RequestMapper — entity to AccessRequest ─────────────────────────────────
     [Fact]
     public void Convert_RequestAssignmentPackage_MapsTypeAndStatus()
     {
@@ -710,25 +714,26 @@ public class DtoMapperTest
         {
             AssignmentId = Guid.NewGuid(),
             PackageId = Guid.NewGuid(),
-            Status = RequestStatus.Pending,
+            Status = RequestStatusV2.Pending,
             Assignment = assignment,
             Audit_ChangedBy = changedBy,
         };
 
-        var dto = Altinn.AccessMgmt.Core.Utils.DtoMapper.Convert(request);
+        var model = Altinn.AccessMgmt.Core.Utils.DtoMapper.Convert(request);
 
-        dto.Id.Should().Be(request.Id);
-        dto.Type.Should().Be("package");
-        dto.Status.Should().Be(RequestStatus.Pending);
-        dto.From!.Id.Should().Be(from.Id);
-        dto.To!.Id.Should().Be(to.Id);
-        dto.By!.Id.Should().Be(by.Id);
-        dto.LastUpdatedBy!.Id.Should().Be(changedBy);
-        dto.Package!.Id.Should().Be(request.PackageId);
+        model.Id.Should().Be(request.Id);
+        model.Type.Should().Be("package");
+        model.Status.Should().Be(RequestStatusV2.Pending);
+        model.From!.Id.Should().Be(from.Id);
+        model.To!.Id.Should().Be(to.Id);
+        model.By!.Id.Should().Be(by.Id);
+        model.LastUpdatedBy!.Id.Should().Be(changedBy);
+        model.Package!.Id.Should().Be(request.PackageId);
+        model.Resource.Should().BeNull();
     }
 
     [Fact]
-    public void Convert_RequestAssignmentResource_MapsTypeAndStatus()
+    public void Convert_RequestAssignmentResource_MapsTypeStatusAndRequestedRightKeys()
     {
         var from = MakeEntity("From");
         var to = MakeEntity("To");
@@ -739,18 +744,193 @@ public class DtoMapperTest
         {
             AssignmentId = Guid.NewGuid(),
             ResourceId = Guid.NewGuid(),
-            Status = RequestStatus.Approved,
+            Status = RequestStatusV2.PartialApprove,
             Assignment = assignment,
+            RequestedRightKeys = ["key-read"],
             Audit_ChangedBy = changedBy,
         };
 
-        var dto = Altinn.AccessMgmt.Core.Utils.DtoMapper.Convert(request);
+        var model = Altinn.AccessMgmt.Core.Utils.DtoMapper.Convert(request);
 
-        dto.Type.Should().Be("resource");
+        model.Type.Should().Be("resource");
+        model.Status.Should().Be(RequestStatusV2.PartialApprove);
+        model.Resource!.Id.Should().Be(request.ResourceId);
+        model.RequestedRightKeys.Should().Equal("key-read");
+        model.By!.Id.Should().Be(by.Id);
+        model.LastUpdatedBy!.Id.Should().Be(changedBy);
+        model.Package.Should().BeNull();
+    }
+
+    // ── RequestMapper — AccessRequest to v1 and v2 ─────────────────────────────
+    private static AccessRequest MakeAccessRequest(RequestStatusV2 status) => new()
+    {
+        Id = Guid.NewGuid(),
+        Type = "resource",
+        Status = status,
+        LastUpdated = DateTimeOffset.UtcNow,
+        LastUpdatedBy = new PartyReferenceDto { Id = Guid.NewGuid() },
+        Resource = new RequestReferenceDto { Id = Guid.NewGuid(), ReferenceId = "example-resource" },
+        RequestedRightKeys = ["key-read", "key-write"],
+        From = new PartyEntityDto { Id = Guid.NewGuid() },
+        To = new PartyEntityDto { Id = Guid.NewGuid() },
+        By = new PartyEntityDto { Id = Guid.NewGuid() },
+    };
+
+    [Fact]
+    public void ConvertToV1_PartialApprove_StatusIsApprovedAndStatusV2IsPartialApprove()
+    {
+        var dto = Altinn.AccessMgmt.Core.Utils.DtoMapper.ConvertToV1(MakeAccessRequest(RequestStatusV2.PartialApprove));
+
         dto.Status.Should().Be(RequestStatus.Approved);
-        dto.Resource!.Id.Should().Be(request.ResourceId);
-        dto.By!.Id.Should().Be(by.Id);
-        dto.LastUpdatedBy!.Id.Should().Be(changedBy);
+        dto.StatusV2.Should().Be(NonExhaustiveEnum.Create(RequestStatusV2.PartialApprove));
+    }
+
+    [Theory]
+    [InlineData(RequestStatus.None)]
+    [InlineData(RequestStatus.Draft)]
+    [InlineData(RequestStatus.Pending)]
+    [InlineData(RequestStatus.Approved)]
+    [InlineData(RequestStatus.Rejected)]
+    [InlineData(RequestStatus.Withdrawn)]
+    public void ConvertToV1_Version1Status_IsTheSameInStatusAndStatusV2(RequestStatus status)
+    {
+        var statusV2 = Enum.Parse<RequestStatusV2>(status.ToString());
+
+        var dto = Altinn.AccessMgmt.Core.Utils.DtoMapper.ConvertToV1(MakeAccessRequest(statusV2));
+
+        dto.Status.Should().Be(status);
+        dto.StatusV2.Should().Be(NonExhaustiveEnum.Create(statusV2));
+    }
+
+    [Fact]
+    public void ConvertToV1_CopiesFieldsWithoutRequestedRightKeys()
+    {
+        var model = MakeAccessRequest(RequestStatusV2.Pending);
+
+        var dto = Altinn.AccessMgmt.Core.Utils.DtoMapper.ConvertToV1(model);
+
+        dto.Should().BeEquivalentTo(model, options => options.Excluding(m => m.Status).Excluding(m => m.RequestedRightKeys));
+        typeof(RequestDto).GetProperty(nameof(AccessRequest.RequestedRightKeys)).Should().BeNull("version 1 does not have the requested rights");
+    }
+
+    [Fact]
+    public void ConvertToV1Status_EveryStatusV2_HasVersion1Value()
+    {
+        foreach (var status in Enum.GetValues<RequestStatusV2>())
+        {
+            var v1 = Altinn.AccessMgmt.Core.Utils.DtoMapper.ConvertToV1Status(status);
+
+            Enum.IsDefined(v1).Should().BeTrue($"{status} must be mapped to a version 1 status");
+        }
+    }
+
+    [Fact]
+    public void RequestStatus_EveryVersion1Value_HasSameNameAndNumberInStatusV2()
+    {
+        foreach (var status in Enum.GetValues<RequestStatus>())
+        {
+            var statusV2 = (RequestStatusV2)(int)status;
+
+            Enum.IsDefined(statusV2).Should().BeTrue();
+            statusV2.ToString().Should().Be(status.ToString());
+        }
+    }
+
+    [Fact]
+    public void ConvertToV2_CopiesFieldsAndPutsRequestedRightKeysInResource()
+    {
+        var model = MakeAccessRequest(RequestStatusV2.PartialApprove);
+
+        var v2 = Altinn.AccessMgmt.Core.Utils.DtoMapper.ConvertToV2(model);
+
+        v2.Status.Should().Be(NonExhaustiveEnum.Create(RequestStatusV2.PartialApprove));
+        v2.Should().BeEquivalentTo(model, options => options.Excluding(m => m.Status).Excluding(m => m.RequestedRightKeys));
+        v2.Resource.RequestedRightKeys.Should().Equal("key-read", "key-write");
+    }
+
+    [Fact]
+    public void ConvertToV2_PackageRequest_HasNoResource()
+    {
+        var request = new RequestAssignmentPackage
+        {
+            PackageId = Guid.NewGuid(),
+            Status = RequestStatusV2.Pending,
+            Assignment = MakeRequestAssignment(),
+            Audit_ChangedBy = Guid.NewGuid(),
+        };
+
+        var v2 = Altinn.AccessMgmt.Core.Utils.DtoMapper.ConvertToV2(Altinn.AccessMgmt.Core.Utils.DtoMapper.Convert(request));
+
+        v2.Resource.Should().BeNull();
+        v2.Package.Id.Should().Be(request.PackageId);
+    }
+
+    private static RequestAssignment MakeRequestAssignment()
+    {
+        var from = MakeEntity("From");
+        var to = MakeEntity("To");
+        var by = MakeEntity("By");
+        return new RequestAssignment { FromId = from.Id, ToId = to.Id, ById = by.Id, From = from, To = to, By = by };
+    }
+
+    [Fact]
+    public void ConvertFromV1StatusFilter_WithApproved_AddsPartialApprove()
+    {
+        var filter = Altinn.AccessMgmt.Core.Utils.DtoMapper.ConvertFromV1StatusFilter([RequestStatus.Pending, RequestStatus.Approved]);
+
+        filter.Should().BeEquivalentTo([RequestStatusV2.Pending, RequestStatusV2.Approved, RequestStatusV2.PartialApprove]);
+    }
+
+    [Fact]
+    public void ConvertFromV1StatusFilter_WithoutApproved_HasTheSameStatuses()
+    {
+        var filter = Altinn.AccessMgmt.Core.Utils.DtoMapper.ConvertFromV1StatusFilter([RequestStatus.Pending, RequestStatus.Rejected]);
+
+        filter.Should().BeEquivalentTo([RequestStatusV2.Pending, RequestStatusV2.Rejected]);
+    }
+
+    [Fact]
+    public void ConvertFromV1StatusFilter_WithDuplicates_HasNoDuplicates()
+    {
+        var filter = Altinn.AccessMgmt.Core.Utils.DtoMapper.ConvertFromV1StatusFilter([RequestStatus.Approved, RequestStatus.Approved]);
+
+        filter.Should().BeEquivalentTo([RequestStatusV2.Approved, RequestStatusV2.PartialApprove]);
+    }
+
+    // ── DtoMapperActivityLog — Status ───────────────────────────────────────────
+    [Fact]
+    public void Convert_ActivityLog_PartialApprove_KeepsStatusAndResolvesActivityType()
+    {
+        var entry = new ActivityLog
+        {
+            Type = ActivityLogType.Request,
+            Subtype = ActivityLogSubtype.Resource,
+            Trigger = ActivityLogTrigger.Updated,
+            Status = RequestStatusV2.PartialApprove,
+        };
+
+        var dto = Altinn.AccessMgmt.Core.Utils.DtoMapper.Convert(entry);
+
+        dto.Status.Should().Be(NonExhaustiveEnum.Create(RequestStatusV2.PartialApprove));
+        dto.ActivityTypeId.Should().Be(ActivityTypeConstants.RequestResourceUpdatedPartialApprove.Id);
+    }
+
+    [Fact]
+    public void Convert_ActivityLog_WithoutStatus_StatusIsNull()
+    {
+        var entry = new ActivityLog { Type = ActivityLogType.Assignment, Trigger = ActivityLogTrigger.Created };
+
+        var dto = Altinn.AccessMgmt.Core.Utils.DtoMapper.Convert(entry);
+
+        dto.Status.Should().BeNull();
+    }
+
+    [Fact]
+    public void ToActivityTypeDto_PartialApproveEntry_HasPartialApproveStatus()
+    {
+        var dto = Altinn.AccessMgmt.Core.Utils.DtoMapper.ToActivityTypeDto(ActivityTypeConstants.RequestPackageUpdatedPartialApprove);
+
+        dto.Status.Should().Be(NonExhaustiveEnum.Create(RequestStatusV2.PartialApprove));
     }
 
     // ── RequestMapper — ConvertToIdentifiedParty ────────────────────────────────

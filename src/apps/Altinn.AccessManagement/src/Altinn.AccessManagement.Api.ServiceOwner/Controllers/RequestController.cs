@@ -7,6 +7,7 @@ using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.Core.Audit;
 using Altinn.AccessMgmt.Core.Services.Contracts;
+using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
@@ -62,7 +63,7 @@ public class RequestController(
     public async Task<IActionResult> GetRequestStatus([FromRoute] Guid id, CancellationToken ct = default)
     {
         var result = await requestService.GetRequest(id, ct);
-        return result.IsSuccess ? Ok(result.Value.Status) : result.Problem.ToActionResult();
+        return result.IsSuccess ? Ok(DtoMapper.ConvertToV1Status(result.Value.Status)) : result.Problem.ToActionResult();
     }
 
     /// <summary>
@@ -88,12 +89,12 @@ public class RequestController(
 
         if (request.By.Id == auditAccessor.AuditValues.ChangedBy)
         {
-            if (request.Status == RequestStatus.Draft || request.Status == RequestStatus.Pending)
+            if (request.Status == RequestStatusV2.Draft || request.Status == RequestStatusV2.Pending)
             {
-                var res = await requestService.UpdateRequest(request.From.Id, request.Id, RequestStatus.Withdrawn, ct);
+                var res = await requestService.UpdateRequest(request.From.Id, request.Id, RequestStatusV2.Withdrawn, ct);
                 if (res.IsSuccess)
                 {
-                    return Ok(res.Value.Status);
+                    return Ok(DtoMapper.ConvertToV1Status(res.Value.Status));
                 }
 
                 return res.Problem.ToActionResult();
@@ -148,7 +149,7 @@ public class RequestController(
             fromId: fromResult.Entity.Id,
             byId: auditAccessor.AuditValues.ChangedBy,
             roleId: RoleConstants.Rightholder.Id,
-            status: RequestStatus.Draft,
+            status: RequestStatusV2.Draft,
             resourceRef: new RequestReferenceDto() { ReferenceId = data.Resource },
             ct: ct
             );
@@ -209,7 +210,7 @@ public class RequestController(
             fromId: fromResult.Entity.Id,
             byId: auditAccessor.AuditValues.ChangedBy,
             roleId: RoleConstants.Rightholder.Id,
-            status: RequestStatus.Draft,
+            status: RequestStatusV2.Draft,
             package: new RequestReferenceDto() { Id = packageObj!.Id, ReferenceId = packageObj.Urn },
             ct: ct
             );
@@ -268,7 +269,7 @@ public class RequestController(
                 fromId: toResult.Entity.Id,
                 byId: auditAccessor.AuditValues.ChangedBy,
                 roleId: RoleConstants.Rightholder.Id,
-                status: RequestStatus.Draft,
+                status: RequestStatusV2.Draft,
                 resourceRef: input.Resource,
                 ct: ct
             );
@@ -281,7 +282,7 @@ public class RequestController(
                 fromId: toResult.Entity.Id,
                 byId: auditAccessor.AuditValues.ChangedBy,
                 roleId: RoleConstants.Rightholder.Id,
-                status: RequestStatus.Draft,
+                status: RequestStatusV2.Draft,
                 package: input.Package,
                 ct: ct
             );
@@ -293,7 +294,7 @@ public class RequestController(
         return problemDetails;
     }
 
-    private async Task<IActionResult> CreateResourceRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, RequestStatus status, RequestReferenceDto resourceRef, CancellationToken ct = default)
+    private async Task<IActionResult> CreateResourceRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, RequestStatusV2 status, RequestReferenceDto resourceRef, CancellationToken ct = default)
     {
         ValidationErrorBuilder errorBuilder = default;
         var paramName = "resource";
@@ -348,6 +349,7 @@ public class RequestController(
             byId: byId,
             roleId: roleId,
             resourceId: resource.Id,
+            requestedRightKeys: null,
             status: status,
             ct: ct
         );
@@ -357,12 +359,13 @@ public class RequestController(
             return result.Problem.ToActionResult();
         }
 
-        result.Value.Links = BuildLinks(result.Value.Id);
+        var request = DtoMapper.ConvertToV1(result.Value);
+        request.Links = BuildLinks(request.Id);
 
-        return Accepted(result.Value);
+        return Accepted(request);
     }
 
-    private async Task<IActionResult> CreatePackageRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, RequestStatus status, RequestReferenceDto package, CancellationToken ct = default)
+    private async Task<IActionResult> CreatePackageRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, RequestStatusV2 status, RequestReferenceDto package, CancellationToken ct = default)
     {
         ValidationErrorBuilder errorBuilder = default;
 
@@ -397,9 +400,10 @@ public class RequestController(
             return result.Problem.ToActionResult();
         }
 
-        result.Value.Links = BuildLinks(result.Value.Id);
+        var request = DtoMapper.ConvertToV1(result.Value);
+        request.Links = BuildLinks(request.Id);
 
-        return Accepted(result.Value);
+        return Accepted(request);
     }
 
     private delegate void ValidationRule(ref ValidationErrorBuilder errors);

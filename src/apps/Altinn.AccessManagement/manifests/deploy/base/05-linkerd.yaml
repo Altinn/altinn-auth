@@ -34,6 +34,8 @@ spec:
   identities:
     - "authz-api.product-authorization.serviceaccount.identity.linkerd.cluster.local"
     - "authn-api.product-authentication.serviceaccount.identity.linkerd.cluster.local"
+    - "proxy.default.serviceaccount.identity.linkerd.cluster.local"
+    - "altinn-traefik.traefik.serviceaccount.identity.linkerd.cluster.local"
 ---
 apiVersion: policy.linkerd.io/v1alpha1
 kind: NetworkAuthentication
