@@ -1,0 +1,66 @@
+meta {
+  name: 03_WHEN_BostyrerAddsAssistantBySsnAndLastName
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/administrators?party={{party}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+body:json {
+  {
+    "personIdentifier": "{{personIdentifier}}",
+    "lastName": "{{lastName}}"
+  }
+}
+
+docs {
+  WHEN the bostyrer adds the assistant as administrator, identified by SSN and last name.
+
+  Expects 200 with the assignment from the bostyrer to the assistant carrying the bankruptcy
+  estate administrator role.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  bru.setVar("party", td.BOSTYRER.partyUuid);
+  bru.setVar("personIdentifier", td.user_LUN_ANALYSE_GÅSTOL.pid);
+  bru.setVar("lastName", td.user_LUN_ANALYSE_GÅSTOL.lastname);
+
+  await helpers.loginAs(td.BOSTYRER);
+}
+
+script:post-response {
+  if (res.status === 200) {
+    bru.setVar("administratorAssignmentId", res.getBody().id);
+  }
+}
+
+tests {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  const td = helpers.testdata();
+
+  test("WHEN the bostyrer adds the assistant, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the assignment gives the assistant the administrator role from the bostyrer", function() {
+    const body = res.getBody();
+    expect(body.id).to.be.a("string").that.is.not.empty;
+    expect(body.fromId.toLowerCase()).to.equal(td.BOSTYRER.partyUuid.toLowerCase());
+    expect(body.toId.toLowerCase()).to.equal(td.user_LUN_ANALYSE_GÅSTOL.partyUuid.toLowerCase());
+    expect(body.roleId.toLowerCase()).to.equal(helpers.administratorRole.id);
+  });
+}
