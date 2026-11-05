@@ -1,0 +1,17 @@
+meta {
+  name: 04_RevokeAdministratorValidation
+  seq: 4
+}
+
+docs {
+  Scenario: Revoking an administrator validates the user
+
+    When the user is an unknown party uuid the request fails
+    When the user is an organisation the request fails
+    When the user parameter is missing the request fails
+    When the user parameter is not a uuid the request fails
+    When the user is a person who is not an administrator the revoke succeeds without change
+
+    The service checks the user against the connection rules, so its validation errors point
+    at QUERY/to, not at the user parameter.
+}
