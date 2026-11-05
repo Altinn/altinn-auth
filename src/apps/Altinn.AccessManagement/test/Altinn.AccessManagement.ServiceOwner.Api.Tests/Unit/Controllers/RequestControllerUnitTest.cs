@@ -34,7 +34,6 @@ public class RequestControllerUnitTest
             entityService: null!,
             resourceService: null!,
             auditAccessor: auditAccessor,
-            resourceRegistryClient: null!,
             generalSettings: Options.Create(new GeneralSettings()));
     }
 
