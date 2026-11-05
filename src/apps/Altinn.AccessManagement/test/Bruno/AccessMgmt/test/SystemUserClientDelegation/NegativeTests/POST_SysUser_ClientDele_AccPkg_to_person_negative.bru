@@ -54,7 +54,8 @@ const token = await testTokenGenerator.getToken(getTokenParameters);
 }
 
 tests {
-  test("Access package delegation to person from client org returns 500", function() {
-    expect(res.status).to.equal(500);
+  test("Access package delegation to person from client org should give 400 with a disallowed entity type error", function() {
+    expect(res.status).to.equal(400);
+    expect(res.body.validationErrors.map(e => e.code)).to.include('AM.VLD-00008');
   });
 }
