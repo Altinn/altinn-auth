@@ -1,6 +1,5 @@
 ﻿using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Models;
-using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
@@ -183,14 +182,8 @@ namespace Altinn.AccessMgmt.Core.Services
                 return Problems.PartyNotFound;
             }
 
-            // The resource registry Delegable flag decides whether the resource may be delegated at all.
-            ServiceResource resourceMetadata = await contextRetrievalService.GetResource(resource.RefId, cancellationToken);
-            if (resourceMetadata is null)
-            {
-                return Problems.InvalidResource;
-            }
-
-            if (!resourceMetadata.Delegable)
+            // The Delegable flag, imported from the resource registry, decides whether the resource may be delegated at all.
+            if (!resource.Delegable)
             {
                 return Problems.ResourceNotDelegable;
             }
@@ -325,13 +318,18 @@ namespace Altinn.AccessMgmt.Core.Services
         public async Task<Result<List<RightDto>>> GetResourceRights(string resource, string languageCode = "nb", CancellationToken cancellationToken = default)
         {
             // The same Delegable guard as in AddResource, so the lookup does not advertise rights the add endpoint refuses to delegate.
-            ServiceResource resourceMetadata = await contextRetrievalService.GetResource(resource, cancellationToken);
-            if (resourceMetadata is null)
+            bool? delegable = await dbContext.Resources
+                .AsNoTracking()
+                .Where(r => r.RefId == resource)
+                .Select(r => (bool?)r.Delegable)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (delegable is null)
             {
                 return Problems.InvalidResource;
             }
 
-            if (!resourceMetadata.Delegable)
+            if (!delegable.Value)
             {
                 return Problems.ResourceNotDelegable;
             }

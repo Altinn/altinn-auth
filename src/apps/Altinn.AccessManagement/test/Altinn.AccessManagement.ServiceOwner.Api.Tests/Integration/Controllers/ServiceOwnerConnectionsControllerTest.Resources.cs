@@ -696,6 +696,21 @@ public partial class ServiceOwnerConnectionsControllerTest
         }
 
         /// <summary>
+        /// A resource the service owner owns, but which is not delegable, is refused before anything is written.
+        /// </summary>
+        [Fact]
+        public async Task AddResource_ForNonDelegableResource_Returns400ResourceNotDelegable()
+        {
+            var request = CreateRequest(Organization(TestData.FredriksonsFabrikk), Organization(TestData.SvendsenAutomobil), ["some-right-key"], NonDelegableResource);
+
+            var response = await CreateClient().PostAsJsonAsync($"{Route}/resources", request, TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            await AssertProblemCode(response, "AM-00042");
+            Assert.Null(await GetRightholderAssignment(TestData.FredriksonsFabrikk.Id, TestData.SvendsenAutomobil.Id));
+        }
+
+        /// <summary>
         /// A MaskinportenSchema resource cannot be delegated as a rightholder resource.
         /// </summary>
         [Fact]
