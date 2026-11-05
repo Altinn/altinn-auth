@@ -1,0 +1,38 @@
+meta {
+  name: 03_WHEN_UserParameterIsMissingThenRequestFails
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/administrators?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+docs {
+  WHEN the bostyrer revokes without a user query parameter. Model binding rejects the
+  request. Expects 400; only the status is asserted.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  bru.setVar("party", td.BOSTYRER.partyUuid);
+
+  await helpers.loginAs(td.BOSTYRER);
+}
+
+tests {
+  test("WHEN the user parameter is missing, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+}

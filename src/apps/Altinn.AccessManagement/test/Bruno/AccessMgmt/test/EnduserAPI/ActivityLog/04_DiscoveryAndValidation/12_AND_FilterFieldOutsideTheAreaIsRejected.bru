@@ -1,0 +1,44 @@
+meta {
+  name: 12_AND_FilterFieldOutsideTheAreaIsRejected
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/request/activitylog/filter/Via?party={{party}}&direction=from
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  direction: from
+}
+
+docs {
+  AND a filter value lookup on a field the area does not offer (here: Via, in the request area) is rejected with 400.
+
+  The response is a validation problem with the message under `errors.field`.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().connections;
+
+  bru.setVar("party", td.delegator.partyUuid);
+
+  await loginAs(td.delegator);
+}
+
+tests {
+  test("AND the query is rejected with 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("AND the problem names field", function() {
+    const body = res.getBody();
+    expect(body.status).to.equal(400);
+    expect(body.errors).to.have.property("field");
+    expect(body.errors["field"][0]).to.include("is not available in this part of the activity log");
+  });
+}

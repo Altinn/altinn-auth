@@ -279,4 +279,16 @@ public static class ValidationErrors
     /// </summary>
     public static ValidationErrorDescriptor InvalidContinuationToken { get; }
     = _factory.Create(53, $"The continuation token is invalid.");
+
+    /// <summary>
+    /// One or more right keys do not exist in the policy of the resource.
+    /// </summary>
+    public static ValidationErrorDescriptor RightKeyNotFound { get; }
+        = _factory.Create(54, $"One or more right keys do not exist in the resource policy.");
+
+    /// <summary>
+    /// One or more right keys exist in the policy of the resource, but cannot be delegated.
+    /// </summary>
+    public static ValidationErrorDescriptor RightKeyNotDelegable { get; }
+        = _factory.Create(55, $"One or more right keys cannot be delegated.");
 }

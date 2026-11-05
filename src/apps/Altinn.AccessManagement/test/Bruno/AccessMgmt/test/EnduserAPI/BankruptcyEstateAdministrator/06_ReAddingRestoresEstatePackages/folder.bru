@@ -1,0 +1,19 @@
+meta {
+  name: 06_ReAddingRestoresEstatePackages
+  seq: 6
+}
+
+docs {
+  Scenario: Adding an administrator again restores estate packages they removed
+
+    Given the assistant is not an administrator for the bostyrer
+    And the bostyrer adds the assistant
+    When the assistant removes konkursbo-skrivetilgang from themselves on an estate
+    Then the assistant no longer holds that package from the estate
+    When the bostyrer adds the assistant again, with the last name in lower case
+    Then the assistant holds all three estate packages from the estate again
+    And the assistant is revoked as cleanup
+
+    The assistant can drop a package through the ordinary connections API because estate
+    access is a plain rightholder connection. Adding again grants whatever is missing.
+}

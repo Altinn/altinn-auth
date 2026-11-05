@@ -1,0 +1,14 @@
+meta {
+  name: 02_DedicatedScopesAndPostRevoke
+  seq: 2
+}
+
+docs {
+  Scenario: An administrator is managed with the dedicated scopes and revoked through POST
+
+    Given the assistant is not an administrator for the bostyrer
+    And the bostyrer adds the assistant with the dedicated write scope
+    And the bostyrer sees the assistant with the dedicated read scope
+    When the bostyrer revokes the assistant through POST administrators/delete
+    Then the assistant is no longer listed
+}

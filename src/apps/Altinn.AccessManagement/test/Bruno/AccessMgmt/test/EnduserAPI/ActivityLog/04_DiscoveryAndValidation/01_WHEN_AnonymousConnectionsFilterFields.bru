@@ -1,0 +1,29 @@
+meta {
+  name: 01_WHEN_AnonymousConnectionsFilterFields
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/connections/activitylog/filter/fields
+  body: none
+  auth: none
+}
+
+docs {
+  WHEN anyone reads the filter fields of the connections area without a token.
+
+  `GET /accessmanagement/api/v2/enduser/connections/activitylog/filter/fields` is static metadata, anonymous and
+  cached for an hour. The values are the valid `{field}` values for
+  `GET .../activitylog/filter/{field}`.
+}
+
+tests {
+  test("THEN the connections filter fields return 200 without a token", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the connections area offers exactly its own fields", function() {
+    expect(res.getBody()).to.deep.equal(["From","To","Via","By","Role","Package","Resource","Source","ActivityType"]);
+  });
+}
