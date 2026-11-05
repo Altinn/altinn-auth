@@ -1,8 +1,10 @@
-﻿using Altinn.AccessManagement.TestUtils.Fixtures;
+﻿using System.Text.Json;
+using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessMgmt.Core.Appsettings;
 using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Core.Notifications;
+using Altinn.AccessMgmt.Core.Outbox;
 using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
@@ -280,10 +282,16 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
 
         await _requestService.ApproveResourceRequest(OrgFrom.Id, created.Id, RequestStatusV2.PartialApprove, ["key-b"], TestContext.Current.CancellationToken);
 
+        // One message is kept per requester and recipient, and other tests here use the same pair,
+        // so look for this request's resource in the message rather than for the message itself.
         var outbox = await _db.OutboxMessages.AsNoTracking()
             .Where(m => m.Handler == RequestReviewedNotification.Handler)
             .ToListAsync(TestContext.Current.CancellationToken);
-        Assert.Contains(outbox, m => m.RefId.Contains(PersonTo.Id.ToString(), StringComparison.OrdinalIgnoreCase));
+        var resources = outbox
+            .SelectMany(m => JsonSerializer.Deserialize<RequestReviewNotificationMessage>(m.Data).Resources)
+            .Where(r => r.Ref == created.Resource.Id);
+        var resource = Assert.Single(resources);
+        Assert.True(resource.IsApproved);
     }
 
     #endregion
