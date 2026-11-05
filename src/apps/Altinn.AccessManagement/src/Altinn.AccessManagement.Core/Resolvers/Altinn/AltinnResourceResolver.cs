@@ -14,6 +14,12 @@ public class AltinnResourceResolver : AttributeResolver
     private readonly AppDbContext _dbContext;
 
     /// <summary>
+    /// <see cref="AttributeResolver"/> runs leaves concurrently, and both leaves query the same scoped <see cref="AppDbContext"/>,
+    /// which does not support concurrent operations. Queries are serialized through this lock.
+    /// </summary>
+    private readonly SemaphoreSlim _dbLock = new(1, 1);
+
+    /// <summary>
     /// ctor
     /// </summary>
     public AltinnResourceResolver(AppDbContext dbContext) : base(BaseUrn.Altinn.Resource.String())
@@ -27,7 +33,8 @@ public class AltinnResourceResolver : AttributeResolver
     /// Resolves a resource if given <see cref="BaseUrn.Altinn.Resource.AppOwner"/> and <see cref="BaseUrn.Altinn.Resource.AppId"/>.
     /// Resource Registry requires the identifier of an app resource to be <c>app_{org}_{app}</c>, so the local resource
     /// is found by that identifier, case-insensitively, among resources of type <see cref="ResourceType.AltinnApp"/>
-    /// or <see cref="ResourceType.MigratedApp"/>.
+    /// or <see cref="ResourceType.MigratedApp"/>. Resource Registry builds app identifiers in lower case, so if identifiers
+    /// differing only in case exist, the lower-case one is preferred and the rest are ordered by identifier.
     /// </summary>
     public LeafResolver ResolveAppOwnerAndAppId() => async (attributes, cancellationToken) =>
     {
@@ -37,12 +44,16 @@ public class AltinnResourceResolver : AttributeResolver
         var altinnApp = nameof(ResourceType.AltinnApp).ToLowerInvariant();
         var migratedApp = nameof(ResourceType.MigratedApp).ToLowerInvariant();
 
-        var resource = await _dbContext.Resources
-            .AsNoTracking()
-            .Where(r => r.RefId.ToLower() == resourceId)
-            .Where(r => r.Type.Name.ToLower() == altinnApp || r.Type.Name.ToLower() == migratedApp)
-            .Select(r => new { r.RefId, r.Delegable, TypeName = r.Type.Name })
-            .FirstOrDefaultAsync(cancellationToken);
+        var resource = await Query(
+            ct => _dbContext.Resources
+                .AsNoTracking()
+                .Where(r => r.RefId.ToLower() == resourceId)
+                .Where(r => r.Type.Name.ToLower() == altinnApp || r.Type.Name.ToLower() == migratedApp)
+                .OrderBy(r => r.RefId == resourceId ? 0 : 1)
+                .ThenBy(r => r.RefId)
+                .Select(r => new { r.RefId, r.Delegable, TypeName = r.Type.Name })
+                .FirstOrDefaultAsync(ct),
+            cancellationToken);
 
         if (resource is null || !TryMapResourceType(resource.TypeName, out var resourceType))
         {
@@ -64,11 +75,13 @@ public class AltinnResourceResolver : AttributeResolver
     public LeafResolver ResolveResourceRegistryId() => async (attributes, cancellationToken) =>
     {
         var resourceId = attributes.GetRequiredString(BaseUrn.Altinn.Resource.ResourceRegistryId);
-        var resource = await _dbContext.Resources
-            .AsNoTracking()
-            .Where(r => r.RefId == resourceId)
-            .Select(r => new { r.Delegable, TypeName = r.Type.Name })
-            .FirstOrDefaultAsync(cancellationToken);
+        var resource = await Query(
+            ct => _dbContext.Resources
+                .AsNoTracking()
+                .Where(r => r.RefId == resourceId)
+                .Select(r => new { r.Delegable, TypeName = r.Type.Name })
+                .FirstOrDefaultAsync(ct),
+            cancellationToken);
 
         if (resource is null)
         {
@@ -83,6 +96,22 @@ public class AltinnResourceResolver : AttributeResolver
 
         return result;
     };
+
+    /// <summary>
+    /// Runs a query on <see cref="_dbContext"/> while holding <see cref="_dbLock"/>.
+    /// </summary>
+    private async Task<T> Query<T>(Func<CancellationToken, Task<T>> query, CancellationToken cancellationToken)
+    {
+        await _dbLock.WaitAsync(cancellationToken);
+        try
+        {
+            return await query(cancellationToken);
+        }
+        finally
+        {
+            _dbLock.Release();
+        }
+    }
 
     /// <summary>
     /// The import stores the resource registry type by its enum name, so map it back to <see cref="ResourceType"/>.
