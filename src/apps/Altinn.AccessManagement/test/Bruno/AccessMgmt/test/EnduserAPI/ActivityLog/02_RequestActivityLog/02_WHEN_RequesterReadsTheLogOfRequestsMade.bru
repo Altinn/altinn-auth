@@ -1,0 +1,81 @@
+meta {
+  name: 02_WHEN_RequesterReadsTheLogOfRequestsMade
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/request/activitylog?party={{party}}&direction=from&itemId={{al_requestId}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  direction: from
+  itemId: {{al_requestId}}
+}
+
+docs {
+  WHEN the requester reads the log of requests it has made, narrowed to this request.
+
+  `GET /accessmanagement/api/v2/enduser/request/activitylog?party={party}&direction=from`
+
+  The request area of the activity log: access request events involving the party,
+  including their package and resource children and status changes. The query surface
+  is the same as in the connections area; the filter fields are From, To, By, Package,
+  Resource, Source and ActivityType.
+
+  - Token: `altinn:portal/enduser` or `altinn:accessmanagement/enduser:requests.read`,
+    for either direction.
+
+  THEN the draft is recorded as created with status Draft, by the service owner, through
+  the service owner API. The details hold who the request was made for.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().request;
+
+  bru.setVar("party", td.requester.partyUuid);
+
+  await loginAs(td.requester);
+}
+
+tests {
+  const { activityTypes, sameId, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().request;
+  const body = res.getBody();
+
+  test("WHEN the requester reads the log, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the draft is recorded as created, in status Draft", function() {
+    expect(body.data, "expected one entry for the request").to.have.lengthOf(1);
+    const e = body.data[0];
+    expect(e.type).to.equal("Request");
+    expect(e.subtype).to.equal("Package");
+    expect(e.trigger).to.equal("Created");
+    expect(e.status).to.equal("Draft");
+    expect(e.activityTypeId).to.equal(activityTypes.packageRequestDraftCreated);
+  });
+
+  test("THEN the entry is from the requester to the organization, for the package", function() {
+    const e = body.data[0];
+    expect(sameId(e.fromId, td.requester.partyUuid)).to.equal(true);
+    expect(sameId(e.toId, td.organization.partyUuid)).to.equal(true);
+    expect(e.toName).to.equal(td.organization.name);
+    expect(e.packageId).to.be.a("string").that.is.not.empty;
+    expect(e.packageName).to.be.a("string").that.is.not.empty;
+    expect(e.parentId).to.be.a("string").that.is.not.empty;
+  });
+
+  test("THEN the draft was made by the service owner, through the service owner API", function() {
+    const e = body.data[0];
+    expect(e.sourceName).to.equal("ServiceOwnerApi");
+    expect(e.byName).to.be.a("string").that.is.not.empty;
+    expect(e.details).to.be.an("object");
+    expect(e.details.requestedById).to.be.a("string").that.is.not.empty;
+  });
+}
