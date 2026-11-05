@@ -80,13 +80,20 @@ public class AltinnResourceResolverTests : IAsyncLifetime
         Assert.Empty(result);
     }
 
-    [Fact]
-    public async Task ResolveResourceRegistryId_UnmappedTypeName_ReturnsDelegableWithoutType()
+    /// <summary>
+    /// Enum.TryParse accepts numbers and comma-separated flags, such as "8" for AltinnApp, so those must not map to a type.
+    /// </summary>
+    [Theory]
+    [InlineData("resolver_unmapped_type_unknown", "NotAResourceRegistryType")]
+    [InlineData("resolver_unmapped_type_number", "8")]
+    [InlineData("resolver_unmapped_type_negative", "-1")]
+    [InlineData("resolver_unmapped_type_flags", "AltinnApp, Consent")]
+    public async Task ResolveResourceRegistryId_UnmappedTypeName_ReturnsDelegableWithoutType(string refId, string typeName)
     {
         var ct = TestContext.Current.CancellationToken;
-        await SeedResource("resolver_unmapped_type", "NotAResourceRegistryType", delegable: true, ct);
+        await SeedResource(refId, typeName, delegable: true, ct);
 
-        var result = await Resolve("resolver_unmapped_type", ct);
+        var result = await Resolve(refId, ct);
 
         var attribute = Assert.Single(result);
         Assert.Equal(BaseUrn.Altinn.Resource.Delegable, attribute.Id);
