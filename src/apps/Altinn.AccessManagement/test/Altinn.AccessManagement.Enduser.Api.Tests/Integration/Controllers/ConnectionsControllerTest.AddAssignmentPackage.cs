@@ -11,6 +11,7 @@ using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessMgmt.Core.Utils.Models;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
+using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,12 +41,37 @@ public partial class ConnectionsControllerTest
     [IntegrationTest]
     public class AddAssignmentPackage : IClassFixture<ApiFixture>
     {
+        private static readonly Guid DatabaseOnlyPackageId = Guid.Parse("d8b1c0a2-4128-4000-8000-000000000002");
+        private const string DatabaseOnlyPackageUrn = "urn:altinn:accesspackage:database-only-connection";
+
         public AddAssignmentPackage(ApiFixture fixture)
         {
             Fixture = fixture;
             Fixture.ConfigureServices(services =>
             {
                 services.AddSingleton<IUserProfileLookupService, UserProfileLookupServiceMock>();
+            });
+
+            // A package that is not in PackageConstants, with a role row that lets a managing director
+            // delegate it.
+            Fixture.EnsureSeedOnce<AddAssignmentPackage>(db =>
+            {
+                var template = PackageConstants.AccountingAndEconomicReporting.Entity;
+                db.Packages.Add(new Package
+                {
+                    Id = DatabaseOnlyPackageId,
+                    ProviderId = template.ProviderId,
+                    EntityTypeId = template.EntityTypeId,
+                    AreaId = template.AreaId,
+                    Name = "Database only connection",
+                    Description = "Only in the database",
+                    Urn = DatabaseOnlyPackageUrn,
+                    Code = "database-only-connection",
+                    IsAssignable = true,
+                    IsDelegable = true,
+                });
+                db.RolePackages.Add(new RolePackage { RoleId = RoleConstants.ManagingDirector, PackageId = DatabaseOnlyPackageId, HasAccess = true, CanDelegate = true });
+                db.SaveChanges();
             });
         }
 
@@ -196,6 +222,42 @@ public partial class ConnectionsControllerTest
             AssignmentPackageDto result = JsonSerializer.Deserialize<AssignmentPackageDto>(responseContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             Assert.NotNull(result);
             Assert.NotEqual(Guid.Empty, result.PackageId);
+        }
+
+        /// <summary>
+        /// A package that is not in PackageConstants (seeded in the constructor) is added by URN.
+        /// Jinx (MD of Kaos) adds it to the Kaos→Josephine connection.
+        /// Expects 200 OK, and the package in GetPackages.
+        /// </summary>
+        [Fact]
+        public async Task AddAssignmentPackage_PackageOnlyInDatabase_ByPackageUrn_Returns200WithAssignmentPackage()
+        {
+            Assert.DoesNotContain(PackageConstants.AllEntities(), p => p.Entity.Urn == DatabaseOnlyPackageUrn);
+
+            HttpClient client = CreateClient(TestData.JinxArcane.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE);
+            HttpResponseMessage response = await client.PostAsync(
+                $"{Route}/accesspackages?party={TestData.KaosMagicDesignAndArts.Id}&to={TestData.JosephineYvonnesdottir.Id}&package={DatabaseOnlyPackageUrn}",
+                null,
+                TestContext.Current.CancellationToken);
+
+            string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {responseContent}");
+
+            AssignmentPackageDto result = JsonSerializer.Deserialize<AssignmentPackageDto>(responseContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            Assert.NotNull(result);
+            Assert.Equal(DatabaseOnlyPackageId, result.PackageId);
+
+            // Round-trip: verify the package appears in GetPackages
+            HttpClient readClient = CreateClient(TestData.JinxArcane.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
+            HttpResponseMessage getResponse = await readClient.GetAsync(
+                $"{Route}/accesspackages?party={TestData.KaosMagicDesignAndArts.Id}&from={TestData.KaosMagicDesignAndArts.Id}&to={TestData.JosephineYvonnesdottir.Id}",
+                TestContext.Current.CancellationToken);
+
+            string getContent = await getResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.OK, getResponse.StatusCode);
+
+            var packages = JsonSerializer.Deserialize<PaginatedResult<PackagePermissionDto>>(getContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            Assert.Contains(packages.Items, p => p.Package.Id == DatabaseOnlyPackageId);
         }
 
         /// <summary>

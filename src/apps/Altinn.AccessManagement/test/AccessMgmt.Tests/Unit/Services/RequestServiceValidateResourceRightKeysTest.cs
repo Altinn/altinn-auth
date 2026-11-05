@@ -23,8 +23,8 @@ public class RequestServiceValidateResourceRightKeysTest
 
     private readonly PolicyRetrievalPointMock _policyRetrievalPoint = new();
 
-    // The database, settings and feature manager are not used when validating right keys.
-    private RequestService CreateService() => new(db: null, appsettings: null, featureManager: null, policyRetrievalPoint: _policyRetrievalPoint);
+    // The database, settings, feature manager and package lookup are not used when validating right keys.
+    private RequestService CreateService() => new(db: null, appsettings: null, featureManager: null, policyRetrievalPoint: _policyRetrievalPoint, packageLookup: null);
 
     private async Task<(List<string> DelegableKeys, List<string> NonDelegableKeys)> GetPolicyKeys()
     {
@@ -122,7 +122,7 @@ public class RequestServiceValidateResourceRightKeysTest
 
         var policyRetrievalPoint = new Mock<IPolicyRetrievalPoint>();
         policyRetrievalPoint.Setup(p => p.GetPolicyAsync(Resource, It.IsAny<CancellationToken>())).ReturnsAsync(policy);
-        var service = new RequestService(db: null, appsettings: null, featureManager: null, policyRetrievalPoint: policyRetrievalPoint.Object);
+        var service = new RequestService(db: null, appsettings: null, featureManager: null, policyRetrievalPoint: policyRetrievalPoint.Object, packageLookup: null);
 
         var problem = await service.ValidateResourceRightKeys(Resource, [delegableKeys[0]], TestContext.Current.CancellationToken);
 

@@ -261,31 +261,31 @@ public class ValidationRuleClassesTest
     public void PackageIsAssignableTo_OrgWithMainAdminPackage_ReturnsError()
     {
         var toType = new EntityType { Id = EntityTypeConstants.Organization };
-        var urns = new[] { PackageConstants.MainAdministrator.Entity.Urn };
-        Fails(PackageValidation.PackageIsAssignableTo(urns, toType)).Should().BeTrue();
+        var packages = new[] { PackageConstants.MainAdministrator.Entity };
+        Fails(PackageValidation.PackageIsAssignableTo(packages, toType)).Should().BeTrue();
     }
 
     [Fact]
     public void PackageIsAssignableTo_OrgWithNonMainAdminPackage_ReturnsNull()
     {
         var toType = new EntityType { Id = EntityTypeConstants.Organization };
-        var urns = new[] { "urn:altinn:accesspackage:some-other-package" };
-        Passes(PackageValidation.PackageIsAssignableTo(urns, toType)).Should().BeTrue();
+        var packages = new[] { DatabaseOnlyPackage(isAssignable: true) };
+        Passes(PackageValidation.PackageIsAssignableTo(packages, toType)).Should().BeTrue();
     }
 
     [Fact]
     public void PackageIsAssignableTo_PersonWithMainAdminPackage_ReturnsNull()
     {
         var toType = new EntityType { Id = EntityTypeConstants.Person };
-        var urns = new[] { PackageConstants.MainAdministrator.Entity.Urn };
-        Passes(PackageValidation.PackageIsAssignableTo(urns, toType)).Should().BeTrue();
+        var packages = new[] { PackageConstants.MainAdministrator.Entity };
+        Passes(PackageValidation.PackageIsAssignableTo(packages, toType)).Should().BeTrue();
     }
 
     [Fact]
     public void PackageIsAssignableTo_NullAssignedToType_Throws()
     {
-        var urns = new[] { PackageConstants.MainAdministrator.Entity.Urn };
-        Assert.Throws<ArgumentNullException>(() => PackageValidation.PackageIsAssignableTo(urns, null)());
+        var packages = new[] { PackageConstants.MainAdministrator.Entity };
+        Assert.Throws<ArgumentNullException>(() => PackageValidation.PackageIsAssignableTo(packages, null)());
     }
 
     // ── PackageValidation.PackageIsAssignableFrom (internal) ──────────────────
@@ -294,8 +294,8 @@ public class ValidationRuleClassesTest
     {
         // Agriculture is an organization package; from an organization it is assignable.
         var fromType = new EntityType { Id = EntityTypeConstants.Organization, Name = "Organisation" };
-        var urns = new[] { PackageConstants.Agriculture.Entity.Urn };
-        Passes(PackageValidation.PackageIsAssignableFrom(urns, fromType)).Should().BeTrue();
+        var packages = new[] { PackageConstants.Agriculture.Entity };
+        Passes(PackageValidation.PackageIsAssignableFrom(packages, fromType)).Should().BeTrue();
     }
 
     [Fact]
@@ -303,44 +303,72 @@ public class ValidationRuleClassesTest
     {
         // Agriculture belongs to the organization entity type, so it is not assignable from a person.
         var fromType = new EntityType { Id = EntityTypeConstants.Person, Name = "Person" };
-        var urns = new[] { PackageConstants.Agriculture.Entity.Urn };
-        Fails(PackageValidation.PackageIsAssignableFrom(urns, fromType)).Should().BeTrue();
+        var packages = new[] { PackageConstants.Agriculture.Entity };
+        Fails(PackageValidation.PackageIsAssignableFrom(packages, fromType)).Should().BeTrue();
     }
 
     [Fact]
-    public void PackageIsAssignableFrom_UnknownPackage_Ignored_ReturnsNull()
+    public void PackageIsAssignableFrom_DatabaseOnlyPackage_NonMatchingEntityType_ReturnsError()
     {
-        // A urn that does not resolve to a known package is skipped, not reported.
+        // A package that is not in PackageConstants is checked like any other.
         var fromType = new EntityType { Id = EntityTypeConstants.Person, Name = "Person" };
-        var urns = new[] { "urn:altinn:accesspackage:does-not-exist" };
-        Passes(PackageValidation.PackageIsAssignableFrom(urns, fromType)).Should().BeTrue();
+        var packages = new[] { DatabaseOnlyPackage(isAssignable: true) };
+        Fails(PackageValidation.PackageIsAssignableFrom(packages, fromType)).Should().BeTrue();
+    }
+
+    [Fact]
+    public void PackageIsAssignableFrom_NullPackage_Ignored_ReturnsNull()
+    {
+        // A null entry (a package that was not found) is skipped, not reported.
+        var fromType = new EntityType { Id = EntityTypeConstants.Person, Name = "Person" };
+        var packages = new Package[] { null };
+        Passes(PackageValidation.PackageIsAssignableFrom(packages, fromType)).Should().BeTrue();
     }
 
     [Fact]
     public void PackageIsAssignableFrom_NullAssignedFromType_Throws()
     {
-        var urns = new[] { PackageConstants.Agriculture.Entity.Urn };
-        Assert.Throws<ArgumentNullException>(() => PackageValidation.PackageIsAssignableFrom(urns, null)());
+        var packages = new[] { PackageConstants.Agriculture.Entity };
+        Assert.Throws<ArgumentNullException>(() => PackageValidation.PackageIsAssignableFrom(packages, null)());
     }
 
     // ── PackageValidation.PackageIsAssignable (internal) ──────────────────────
     [Fact]
     public void PackageIsAssignable_AssignablePackage_ReturnsNull()
     {
-        Passes(PackageValidation.PackageIsAssignable(PackageConstants.Agriculture.Entity.Urn)).Should().BeTrue();
+        var package = PackageConstants.Agriculture.Entity;
+        Passes(PackageValidation.PackageIsAssignable(package, package.Urn)).Should().BeTrue();
+    }
+
+    [Fact]
+    public void PackageIsAssignable_AssignableDatabaseOnlyPackage_ReturnsNull()
+    {
+        var package = DatabaseOnlyPackage(isAssignable: true);
+        Passes(PackageValidation.PackageIsAssignable(package, package.Urn)).Should().BeTrue();
     }
 
     [Fact]
     public void PackageIsAssignable_NonAssignablePackage_ReturnsError()
     {
-        Fails(PackageValidation.PackageIsAssignable(PackageConstants.AccountantWithSigningRights.Entity.Urn)).Should().BeTrue();
+        var package = PackageConstants.AccountantWithSigningRights.Entity;
+        Fails(PackageValidation.PackageIsAssignable(package, package.Urn)).Should().BeTrue();
     }
 
     [Fact]
     public void PackageIsAssignable_UnknownPackage_ReturnsError()
     {
-        Fails(PackageValidation.PackageIsAssignable("urn:altinn:accesspackage:does-not-exist")).Should().BeTrue();
+        Fails(PackageValidation.PackageIsAssignable(null, "urn:altinn:accesspackage:does-not-exist")).Should().BeTrue();
     }
+
+    /// <summary>An organization package that is not defined in <see cref="PackageConstants"/>.</summary>
+    private static Package DatabaseOnlyPackage(bool isAssignable) => new()
+    {
+        Id = Guid.NewGuid(),
+        Urn = "urn:altinn:accesspackage:database-only",
+        Code = "database-only",
+        EntityTypeId = EntityTypeConstants.Organization,
+        IsAssignable = isAssignable,
+    };
 
     // ── PackageValidation.ResourceIsAssignable (internal) ─────────────────────
     [Fact]

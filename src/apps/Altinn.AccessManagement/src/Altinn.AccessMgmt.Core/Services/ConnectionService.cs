@@ -51,6 +51,7 @@ public partial class ConnectionService(
     IRoleService roleService,
     ITranslationService translationService,
     ISingleRightsService singleRightsService,
+    IPackageLookupService packageLookup,
     AppLifecycleFeatures lifecycleFeatures) : IConnectionService
 {
     public async Task<Result<IEnumerable<ConnectionDto>>> Get(Guid party, Guid? fromId, Guid? toId, bool includeClientDelegations = true, bool includeAgentConnections = true, bool includeAccessPackages = false, bool includeResources = false, bool includeInstances = false, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default)
@@ -538,7 +539,8 @@ public partial class ConnectionService(
 
     public async Task<Result<AssignmentPackageDto>> AddPackage(Guid fromId, Guid toId, string packageUrn, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
     {
-        if (PackageConstants.TryGetByUrn(packageUrn, out var package))
+        var package = await packageLookup.FindByUrn(packageUrn, cancellationToken);
+        if (package is { })
         {
             return await AddPackage(fromId, toId, package.Id, "package", configureConnection, cancellationToken);
         }
@@ -548,9 +550,10 @@ public partial class ConnectionService(
 
     public async Task<ValidationProblemInstance> RemovePackage(Guid fromId, Guid toId, string packageUrn, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
     {
-        if (PackageConstants.TryGetByUrn(packageUrn, out var package))
+        var package = await packageLookup.FindByUrn(packageUrn, cancellationToken);
+        if (package is { })
         {
-            return await RemovePackage(fromId, toId, package, configureConnection, cancellationToken);
+            return await RemovePackage(fromId, toId, package.Id, configureConnection, cancellationToken);
         }
 
         return ValidationComposer.Validate(PackageValidation.PackageExists(package, packageUrn));
@@ -640,10 +643,13 @@ public partial class ConnectionService(
             return check.Problem;
         }
 
+        var checkedPackageIds = check.Value.Select(p => p.Package.Id).ToHashSet();
+        var checkedPackages = await dbContext.Packages.AsNoTracking().Where(p => checkedPackageIds.Contains(p.Id)).ToListAsync(cancellationToken);
+
         problem = ValidationComposer.Validate(
             PackageValidation.AuthorizePackageAssignment(check.Value),
-            PackageValidation.PackageIsAssignableTo(check.Value.Select(p => p.Package.Urn), to.Type, queryParamName),
-            PackageValidation.PackageIsAssignableFrom(check.Value.Select(p => p.Package.Urn), from.Type, queryParamName)
+            PackageValidation.PackageIsAssignableTo(checkedPackages, to.Type, queryParamName),
+            PackageValidation.PackageIsAssignableFrom(checkedPackages, from.Type, queryParamName)
         );
 
         if (problem is { })
@@ -818,15 +824,11 @@ public partial class ConnectionService(
 
     public async Task<Result<IEnumerable<AccessPackageDto.AccessPackageDtoCheck>>> CheckPackage(Guid party, IEnumerable<string> packages, IEnumerable<Guid> packageIds = null, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
     {
-        var packagesFound = packages.Select(p =>
-        {
-            if (PackageConstants.TryGetByUrn(p, out var package))
-            {
-                return package.Entity;
-            }
-
-            return null;
-        }).Where(p => p is { });
+        var packagesByUrn = await packageLookup.FindByUrns(packages, cancellationToken);
+        var packagesFound = packages
+            .Select(p => p is null ? null : packagesByUrn.GetValueOrDefault(p))
+            .Where(p => p is { })
+            .ToList();
 
         var problem = ValidationComposer.Validate(PackageValidation.PackageUrnLookup(packagesFound, packages));
         if (problem is { })

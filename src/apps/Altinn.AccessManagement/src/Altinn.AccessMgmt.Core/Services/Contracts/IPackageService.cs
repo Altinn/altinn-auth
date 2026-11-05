@@ -108,6 +108,14 @@ public interface IPackageService
     Task<PackageDto> GetPackageByUrnValue(string urnValue, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Finds a package by URN, code or id, tried in that order.
+    /// </summary>
+    /// <param name="value">Full URN, ":code", code or id.</param>
+    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+    /// <returns>The package, or <c>null</c> when no package matches.</returns>
+    Task<PackageDto> FindPackage(string value, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Retrieves all resources associated with a specific package.
     /// </summary>
     /// <param name="packageId">The unique identifier of the package.</param>

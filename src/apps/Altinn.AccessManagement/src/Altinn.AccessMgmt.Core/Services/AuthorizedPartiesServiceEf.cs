@@ -421,7 +421,7 @@ public class AuthorizedPartiesServiceEf(
 
                 if (filters.IncludeAccessPackages && connection.Packages != null && connection.Packages.Count > 0)
                 {
-                    party.EnrichWithAccessPackage(connection.Packages.DistinctBy(p => p.Id).Select(p => PackageConstants.TryGetById(p.Id, out var package) ? package.Entity.Code : null).Where(p => p != null));
+                    party.EnrichWithAccessPackage(connection.Packages.DistinctBy(p => p.Id).Select(p => p.Code).Where(code => !string.IsNullOrEmpty(code)));
                 }
 
                 if (filters.IncludeResources && connection.Resources != null && connection.Resources.Count > 0)

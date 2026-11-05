@@ -113,7 +113,8 @@ public class TranslationService : ITranslationService
         else
         {
             // Fall back to database with caching
-            var cacheKey = $"translation_{typeName}_{entityId}_{effectiveLanguageCode}";
+            var storedTypeName = StoredTypeName(typeName);
+            var cacheKey = $"translation_{storedTypeName}_{entityId}_{effectiveLanguageCode}";
 
             _logger.LogTrace("Checking cache for translation key: {CacheKey}", cacheKey);
 
@@ -126,7 +127,7 @@ public class TranslationService : ITranslationService
                     typeName, entityId, effectiveLanguageCode);
 
                 var dbTranslations = await _db.TranslationEntries
-                    .Where(t => t.Type == typeName &&
+                    .Where(t => t.Type == storedTypeName &&
                                 t.Id == entityId &&
                                 t.LanguageCode == effectiveLanguageCode)
                     .ToDictionaryAsync(t => t.FieldName, t => t.Value ?? string.Empty);
@@ -247,6 +248,19 @@ public class TranslationService : ITranslationService
         _cache.Remove(cacheKey);
         _logger.LogDebug("Invalidated cache for key: {CacheKey}", cacheKey);
     }
+
+    /// <summary>
+    /// The type name that translation rows are stored under. Rows of packages, areas, area groups and
+    /// entity types are stored under the entity name, also when a DTO is translated.
+    /// </summary>
+    private static string StoredTypeName(string typeName) => typeName switch
+    {
+        "PackageDto" or "ExtPackage" => "Package",
+        "AreaDto" => "Area",
+        "AreaGroupDto" => "AreaGroup",
+        "TypeDto" => "EntityType",
+        _ => typeName,
+    };
 
     /// <summary>
     /// Attempts to retrieve translations from Constants classes (RoleConstants, PackageConstants, etc.)

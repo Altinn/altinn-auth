@@ -4,6 +4,7 @@ using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessMgmt.Core.Appsettings;
 using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Core.Notifications;
+using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
@@ -19,7 +20,7 @@ using ContractsV2 = Altinn.Authorization.Api.Contracts.AccessManagement.V2;
 namespace Altinn.AccessMgmt.Core.Services;
 
 /// <inheritdoc/>
-public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> appsettings) : IClientDelegationService
+public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> appsettings, IPackageLookupService packageLookup) : IClientDelegationService
 {
     private const int MaxSaveAttempts = 3;
 
@@ -350,9 +351,10 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
             }
         }
 
+        var packagesByUrn = await packageLookup.FindByUrns(packages, cancellationToken);
         foreach (var p in packages)
         {
-            if (PackageConstants.TryGetByUrn(p, out var package))
+            if (p is { } && packagesByUrn.TryGetValue(p, out var package))
             {
                 packageFilter.Add(package.Id);
             }
@@ -445,9 +447,10 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
             }
         }
 
+        var packagesByUrn = await packageLookup.FindByUrns(packages, cancellationToken);
         foreach (var p in packages)
         {
-            if (PackageConstants.TryGetByUrn(p, out var package))
+            if (p is { } && packagesByUrn.TryGetValue(p, out var package))
             {
                 packageFilter.Add(package.Id);
             }
@@ -1168,13 +1171,15 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         CancellationToken cancellationToken)
     {
         ValidationErrorBuilder errorBuilder = default;
+        var packagesByUrn = await packageLookup.FindByUrns(payload.Values.SelectMany(v => v.Packages), cancellationToken);
         var inputs = payload.Values
             .Select((r, idx) =>
             {
                 var roleExist = RoleConstants.TryGetByAll(r.Role, out var role);
                 var pkgs = r.Packages.Select((p, idx) =>
                 {
-                    var packageExist = PackageConstants.TryGetByUrn(p, out var package);
+                    var package = p is null ? null : packagesByUrn.GetValueOrDefault(p);
+                    var packageExist = package is { };
                     return new
                     {
                         PackageExist = packageExist,
@@ -1218,12 +1223,12 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
                     continue;
                 }
 
-                if (!inputPackage.Package.Entity.IsDelegable)
+                if (!inputPackage.Package.IsDelegable)
                 {
                     errorBuilder.Add(
                         ValidationErrors.PackageIsNotDelegable,
                         $"/values[{input.RoleIdx}]/packages[{inputPackage.PackageIdx}]",
-                        [new($"{inputPackage.Package.Entity.Urn}", $"Package is not delegable.")]
+                        [new($"{inputPackage.Package.Urn}", $"Package is not delegable.")]
                     );
                 }
             }
@@ -1392,7 +1397,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
                         errorBuilder.Add(
                             ValidationErrors.UserNotAuthorized,
                             $"/values[{input.RoleIdx}]/packages[{pkg.PackageIdx}]",
-                            [new($"{pkg.Package.Entity.Urn}", $"Can't delegate package from client '{fromId}' as package is ment for '{entityVariant.Entity.Name}' and not '{entities[fromId].Name}'.")]
+                            [new($"{pkg.Package.Urn}", $"Can't delegate package from client '{fromId}' as package is ment for '{entityVariant.Entity.Name}' and not '{entities[fromId].Name}'.")]
                         );
 
                         continue;
@@ -1405,7 +1410,7 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
                     errorBuilder.Add(
                         ValidationErrors.UserNotAuthorized,
                         $"/values[{input.RoleIdx}]/packages[{pkg.PackageIdx}]",
-                        [new($"{pkg.Package.Entity.Urn}", $"Can't delegate package from client '{fromId}' as they haven't been assigned to '{partyId}' through role '{input.Role.Entity.Urn}'.")]
+                        [new($"{pkg.Package.Urn}", $"Can't delegate package from client '{fromId}' as they haven't been assigned to '{partyId}' through role '{input.Role.Entity.Urn}'.")]
                     );
 
                     continue;
@@ -1745,13 +1750,15 @@ public class ClientDelegationService(AppDbContext db, IOptions<CoreAppsettings> 
         CancellationToken cancellationToken = default)
     {
         ValidationErrorBuilder errorBuilder = default;
+        var packagesByUrn = await packageLookup.FindByUrns(payload.Values.SelectMany(v => v.Packages), cancellationToken);
         var inputs = payload.Values
             .Select((r, idx) =>
             {
                 var roleExist = RoleConstants.TryGetByAll(r.Role, out var role);
                 var pkgs = r.Packages.Select((p, idx) =>
                 {
-                    var packageExist = PackageConstants.TryGetByUrn(p, out var package);
+                    var package = p is null ? null : packagesByUrn.GetValueOrDefault(p);
+                    var packageExist = package is { };
                     return new
                     {
                         PackageExist = packageExist,

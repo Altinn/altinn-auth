@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using Altinn.AccessMgmt.PersistenceEF.Models;
+﻿using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Constants;
@@ -9,84 +8,13 @@ namespace Altinn.AccessMgmt.PersistenceEF.Constants;
 /// Each package represents a specific access package in the access management domain,
 /// with a fixed unique identifier (GUID), localized names, descriptions, area references, and provider information.
 /// </summary>
+/// <remarks>
+/// The packages the static data ingest seeds, for referring to a specific package in code. The database
+/// can hold more packages than these, so look up a package by the URN, code or id a client sends with
+/// <c>IPackageLookupService</c>.
+/// </remarks>
 public static class PackageConstants
 {
-    /// <summary>
-    /// Try to get <see cref="Package"/> by any identifier: Urn, Name or Guid.
-    /// </summary>
-    public static bool TryGetByAll(string value, [NotNullWhen(true)] out ConstantDefinition<Package>? result)
-    {
-        if (string.IsNullOrEmpty(value))
-        {
-            result = null;
-            return false;
-        }
-
-        if (TryGetByUrn(value, out result))
-        {
-            return true;
-        }
-
-        if (TryGetByCode(value, out result))
-        {
-            return true;
-        }
-
-        if (Guid.TryParse(value, out var packageGuid) && TryGetById(packageGuid, out result))
-        {
-            return true;
-        }
-
-        return false;
-    }
-
-    /// <summary>
-    /// Try to get <see cref="Package"/> using code.
-    /// </summary>
-    public static bool TryGetByCode(string code, [NotNullWhen(true)] out ConstantDefinition<Package>? result)
-        => ConstantLookup.TryGetByCode(typeof(PackageConstants), code, out result);
-
-    /// <summary>
-    /// Try to get <see cref="Package"/> using Guid.
-    /// </summary>
-    public static bool TryGetById(Guid id, [NotNullWhen(true)] out ConstantDefinition<Package>? result)
-        => ConstantLookup.TryGetById(typeof(PackageConstants), id, out result);
-
-    /// <summary>
-    /// Try to get <see cref="Role"/> by Urn.
-    /// </summary>
-    public static bool TryGetByUrn(string urn, [NotNullWhen(true)] out ConstantDefinition<Package>? result)
-    {
-        if (string.IsNullOrEmpty(urn))
-        {
-            result = null;
-            return false;
-        }
-
-        // Case 1: already a full URN
-        if (ConstantLookup.TryGetByUrn(typeof(PackageConstants), urn, out result))
-        {
-            return true;
-        }
-
-        // Case 2: Suffix only with ':' (e.g. ":jordbruk")
-        if (urn.StartsWith(':') && urn.Split(':').Length == 2)
-        {
-            if (ConstantLookup.TryGetByUrn(typeof(PackageConstants), $"urn:altinn:accesspackage{urn}", out result))
-            {
-                return true;
-            }
-        }
-
-        // Case 3: Suffix only without ':'
-        if (ConstantLookup.TryGetByUrn(typeof(PackageConstants), $"urn:altinn:accesspackage:{urn}", out result))
-        {
-            return true;
-        }
-
-        return false;
-    }
-
     /// <summary>
     /// Get all constants as a read-only collection.
     /// </summary>

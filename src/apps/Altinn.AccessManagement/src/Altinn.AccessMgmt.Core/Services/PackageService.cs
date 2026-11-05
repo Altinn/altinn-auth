@@ -21,16 +21,18 @@ public class PackageService : IPackageService
     public ITranslationService TranslationService { get; set; }
 
     private IMemoryCache _memoryCache;
+    private IPackageLookupService _packageLookup;
     private static readonly MemoryCacheEntryOptions _cacheOptions = new()
     {
         AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
     };
 
-    public PackageService(AppDbContext appDbContext, ITranslationService translationService, IMemoryCache memoryCache)
+    public PackageService(AppDbContext appDbContext, ITranslationService translationService, IMemoryCache memoryCache, IPackageLookupService packageLookup)
     {
         DbContext = appDbContext;
         TranslationService = translationService;
         _memoryCache = memoryCache;
+        _packageLookup = packageLookup;
     }
 
     private const StringComparison Ic = StringComparison.InvariantCultureIgnoreCase;
@@ -270,6 +272,13 @@ public class PackageService : IPackageService
         var resources = await DbContext.PackageResources.AsNoTracking().Where(t => t.PackageId == package.Id).Include(t => t.Resource).Select(t => t.Resource).ToListAsync(cancellationToken);
 
         return DtoMapper.Convert(package, package.Area, resources);
+    }
+
+    /// <inheritdoc/>
+    public async Task<PackageDto> FindPackage(string value, CancellationToken cancellationToken = default)
+    {
+        var package = await _packageLookup.Find(value, cancellationToken);
+        return DtoMapper.Convert(package);
     }
 
     /// <inheritdoc/>

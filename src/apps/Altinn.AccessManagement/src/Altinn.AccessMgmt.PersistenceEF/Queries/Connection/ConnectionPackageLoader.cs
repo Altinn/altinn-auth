@@ -126,11 +126,11 @@ internal class ConnectionPackageLoader(AppDbContext db)
             .Distinct()
             .ToList();
 
-        var packagesRaw = await db.Packages.Where(p => packageIds.Contains(p.Id)).Select(p => new { p.Id, p.Name, p.AreaId, p.Urn }).ToListAsync(ct);
+        var packagesRaw = await db.Packages.Where(p => packageIds.Contains(p.Id)).Select(p => new { p.Id, p.Name, p.AreaId, p.Urn, p.Code }).ToListAsync(ct);
         SortedList<Guid, ConnectionQueryPackage> packages = [];
         foreach (var package in packagesRaw)
         {
-            packages[package.Id] = new() { Id = package.Id, Name = package.Name, AreaId = package.AreaId, Urn = package.Urn };
+            packages[package.Id] = new() { Id = package.Id, Name = package.Name, AreaId = package.AreaId, Urn = package.Urn, Code = package.Code };
         }
 
         foreach (var key in keys)
