@@ -96,7 +96,7 @@ public class PackagesControllerIntegrationTests : IClassFixture<EfDatabaseFixtur
         // Fully qualify: the namespace-less Persistence `PackageService` (six-arg
         // ctor) is in the global namespace, so an unqualified `PackageService(_db)`
         // would bind there.
-        _packageService = new Altinn.AccessMgmt.Core.Services.PackageService(_db, _translationService, memoryCache, new Altinn.AccessMgmt.Core.Services.PackageLookupService(_db, memoryCache));
+        _packageService = new Altinn.AccessMgmt.Core.Services.PackageService(_db, _translationService, memoryCache, new Altinn.AccessMgmt.Core.Services.PackageLookupService(_db));
     }
 
     private PackagesController CreateController(string acceptLanguage = "nb-NO")

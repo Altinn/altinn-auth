@@ -6,17 +6,10 @@ namespace Altinn.AccessMgmt.Core.Services.Contracts;
 /// Finds access packages by the values clients send: URN, code or id.
 /// </summary>
 /// <remarks>
-/// Reads all packages from the database and caches them for 10 minutes, so a package added to the
-/// database is found within 10 minutes.
+/// Reads the packages from the database on every call.
 /// </remarks>
 public interface IPackageLookupService
 {
-    /// <summary>
-    /// Gets all packages, with their entity type.
-    /// </summary>
-    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
-    Task<IReadOnlyList<Package>> GetPackages(CancellationToken cancellationToken = default);
-
     /// <summary>
     /// Finds a package by URN. Accepts the full URN, ":code" or "code", ignoring case.
     /// </summary>

@@ -53,7 +53,7 @@ public partial class ConnectionsControllerTest
             });
 
             // A package that is not in PackageConstants, with a role row that lets a managing director
-            // delegate it. Seeded before the first request, so the cached package list includes it.
+            // delegate it.
             Fixture.EnsureSeedOnce<AddAssignmentPackage>(db =>
             {
                 var template = PackageConstants.AccountingAndEconomicReporting.Entity;

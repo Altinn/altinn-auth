@@ -644,8 +644,7 @@ public partial class ConnectionService(
         }
 
         var checkedPackageIds = check.Value.Select(p => p.Package.Id).ToHashSet();
-        var allPackages = await packageLookup.GetPackages(cancellationToken);
-        var checkedPackages = allPackages.Where(p => checkedPackageIds.Contains(p.Id)).ToList();
+        var checkedPackages = await dbContext.Packages.AsNoTracking().Where(p => checkedPackageIds.Contains(p.Id)).ToListAsync(cancellationToken);
 
         problem = ValidationComposer.Validate(
             PackageValidation.AuthorizePackageAssignment(check.Value),

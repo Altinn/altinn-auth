@@ -207,7 +207,12 @@ public class PackageService : IPackageService
             _memoryCache.Set(cacheKey, areas, _cacheOptions);
         }
 
-        var allPackages = await _packageLookup.GetPackages(cancellationToken);
+        cacheKey = "packageSvcPackages";
+        if (!_memoryCache.TryGetValue(cacheKey, out List<Package> allPackages))
+        {
+            allPackages = await DbContext.Packages.AsNoTracking().Include(t => t.EntityType).ToListAsync(cancellationToken);
+            _memoryCache.Set(cacheKey, allPackages, _cacheOptions);
+        }
 
         var packages = allPackages.Where(p => typeId.HasValue && typeId.Value != Guid.Empty ? p.EntityTypeId == typeId.Value : true);
 

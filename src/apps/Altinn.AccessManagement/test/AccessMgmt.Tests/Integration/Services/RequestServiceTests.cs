@@ -83,7 +83,7 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
             sp.GetRequiredService<IOptions<CoreAppsettings>>(),
             new DisabledFeatureManager(),
             new PolicyRetrievalPointMock(),
-            new PackageLookupService(_db, new MemoryCache(new MemoryCacheOptions())));
+            new PackageLookupService(_db));
     }
 
     /// <inheritdoc />
