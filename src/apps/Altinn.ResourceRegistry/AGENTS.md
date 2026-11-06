@@ -18,6 +18,8 @@ Routes are under `resourceregistry/api/v1/`, except `ResourceV2Controller` at `r
 
 Four source projects: `Altinn.ResourceRegistry` (the host and its controllers for resources, resource owners, access lists and access-list memberships, plus a v2 resource controller), `.Core`, `.Persistence` and `.Integration`. Tests are `Altinn.ResourceRegistry.Tests` and `Altinn.ResourceRegistry.Persistence.Tests`, with shared helpers in `Altinn.ResourceRegistry.TestUtils` and API tests under `test/Bruno`.
 
+`ResourceAccessListMode` is defined once in `src/libs/Altinn.Authorization.Api.Contracts/.../ResourceRegistry/Enums/` and compiled into `.Core` as a linked file, because Access Management and Authorization use the same enum and Access Management stores it by name. Add values there, never rename them. It is linked rather than referenced because that library depends on older versions of packages this vertical uses.
+
 Decisions for this vertical are in [`docs/adr/`](docs/adr/README.md). Read [ADR-0001](docs/adr/0001-resource-timestamps.md), still *Proposed*, before changing how `createdAt` and `updatedAt` are stored or returned.
 
 ## Landmines

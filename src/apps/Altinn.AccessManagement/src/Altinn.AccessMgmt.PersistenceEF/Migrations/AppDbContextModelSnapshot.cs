@@ -2059,6 +2059,13 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("audit_validto");
 
+                    b.Property<string>("AccessListMode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasDefaultValue("Disabled")
+                        .HasColumnName("accesslistmode");
+
                     b.Property<string>("Audit_ChangeOperation")
                         .HasColumnType("text")
                         .HasColumnName("audit_changeoperation");
@@ -2083,6 +2090,12 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("audit_deletedbysystem");
 
+                    b.Property<bool>("Delegable")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("delegable");
+
                     b.Property<string>("Description")
                         .HasColumnType("text")
                         .HasColumnName("description");
@@ -2099,6 +2112,10 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasColumnType("text")
                         .HasColumnName("refid");
 
+                    b.Property<string>("RightDescription")
+                        .HasColumnType("text")
+                        .HasColumnName("rightdescription");
+
                     b.Property<Guid>("TypeId")
                         .HasColumnType("uuid")
                         .HasColumnName("typeid");
@@ -2107,6 +2124,58 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasName("pk_auditresource");
 
                     b.ToTable("auditresource", "dbo_history");
+                });
+
+            modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.Audit.AuditResourceScope", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("Audit_ValidFrom")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("audit_validfrom");
+
+                    b.Property<DateTimeOffset>("Audit_ValidTo")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("audit_validto");
+
+                    b.Property<string>("Audit_ChangeOperation")
+                        .HasColumnType("text")
+                        .HasColumnName("audit_changeoperation");
+
+                    b.Property<Guid?>("Audit_ChangedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_changedby");
+
+                    b.Property<Guid?>("Audit_ChangedBySystem")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_changedbysystem");
+
+                    b.Property<string>("Audit_DeleteOperation")
+                        .HasColumnType("text")
+                        .HasColumnName("audit_deleteoperation");
+
+                    b.Property<Guid?>("Audit_DeletedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_deletedby");
+
+                    b.Property<Guid?>("Audit_DeletedBySystem")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_deletedbysystem");
+
+                    b.Property<Guid>("ResourceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("resourceid");
+
+                    b.Property<string>("Scope")
+                        .HasColumnType("text")
+                        .HasColumnName("scope");
+
+                    b.HasKey("Id", "Audit_ValidFrom", "Audit_ValidTo")
+                        .HasName("pk_auditresourcescope");
+
+                    b.ToTable("auditresourcescope", "dbo_history");
                 });
 
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.Audit.AuditResourceType", b =>
@@ -3655,6 +3724,13 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<string>("AccessListMode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasDefaultValue("Disabled")
+                        .HasColumnName("accesslistmode");
+
                     b.Property<string>("Audit_ChangeOperation")
                         .HasColumnType("text")
                         .HasColumnName("audit_changeoperation");
@@ -3670,6 +3746,12 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.Property<DateTimeOffset>("Audit_ValidFrom")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("audit_validfrom");
+
+                    b.Property<bool>("Delegable")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("delegable");
 
                     b.Property<string>("Description")
                         .IsRequired()
@@ -3690,6 +3772,10 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasColumnType("text")
                         .HasColumnName("refid");
 
+                    b.Property<string>("RightDescription")
+                        .HasColumnType("text")
+                        .HasColumnName("rightdescription");
+
                     b.Property<Guid>("TypeId")
                         .HasColumnType("uuid")
                         .HasColumnName("typeid");
@@ -3708,6 +3794,53 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasDatabaseName("ix_resource_typeid");
 
                     b.ToTable("resource", "dbo");
+
+                    b.HasAnnotation("Altinn:AuditVersion", 3);
+                });
+
+            modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.ResourceScope", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Audit_ChangeOperation")
+                        .HasColumnType("text")
+                        .HasColumnName("audit_changeoperation");
+
+                    b.Property<Guid?>("Audit_ChangedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_changedby");
+
+                    b.Property<Guid?>("Audit_ChangedBySystem")
+                        .HasColumnType("uuid")
+                        .HasColumnName("audit_changedbysystem");
+
+                    b.Property<DateTimeOffset>("Audit_ValidFrom")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("audit_validfrom");
+
+                    b.Property<Guid>("ResourceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("resourceid");
+
+                    b.Property<string>("Scope")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("scope");
+
+                    b.HasKey("Id")
+                        .HasName("pk_resourcescope");
+
+                    b.HasIndex("ResourceId")
+                        .HasDatabaseName("ix_resourcescope_resourceid");
+
+                    b.HasIndex("ResourceId", "Scope")
+                        .IsUnique()
+                        .HasDatabaseName("ix_resourcescope_resourceid_scope");
+
+                    b.ToTable("resourcescope", "dbo");
 
                     b.HasAnnotation("Altinn:AuditVersion", 3);
                 });
@@ -4640,6 +4773,18 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.Navigation("Type");
                 });
 
+            modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.ResourceScope", b =>
+                {
+                    b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.Resource", "Resource")
+                        .WithMany("Scopes")
+                        .HasForeignKey("ResourceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_resourcescope_resource_resourceid");
+
+                    b.Navigation("Resource");
+                });
+
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.Role", b =>
                 {
                     b.HasOne("Altinn.AccessMgmt.PersistenceEF.Models.EntityType", "EntityType")
@@ -4751,6 +4896,11 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
             modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.OutboxMessage", b =>
                 {
                     b.Navigation("OutboxMessageLogs");
+                });
+
+            modelBuilder.Entity("Altinn.AccessMgmt.PersistenceEF.Models.Resource", b =>
+                {
+                    b.Navigation("Scopes");
                 });
 #pragma warning restore 612, 618
         }
