@@ -1,0 +1,91 @@
+# Path rules for .github/workflows/pr-labeler.yml (actions/labeler).
+# Each rule sets the same area/* label that issues use, see docs/adr/0004-issue-and-label-model.md.
+# A PR gets one label per area it touches. Labels are only added, never removed.
+# When a vertical moves in (#4056, #4058, #4369), add its rule here and an owner in CODEOWNERS.
+
+area/access-management:
+  - changed-files:
+      - any-glob-to-any-file: src/apps/Altinn.AccessManagement/**
+
+area/authentication:
+  - changed-files:
+      - any-glob-to-any-file:
+          - src/apps/Altinn.Authentication/**
+          - src/apps/Altinn.Mockporten/**
+
+area/authorization:
+  - changed-files:
+      - any-glob-to-any-file: src/apps/Altinn.Authorization/**
+
+area/register:
+  - changed-files:
+      - any-glob-to-any-file: src/apps/Altinn.Register/**
+
+area/resource-registry:
+  - changed-files:
+      - any-glob-to-any-file: src/apps/Altinn.ResourceRegistry/**
+
+area/packages:
+  - changed-files:
+      - any-glob-to-any-file: src/pkgs/**
+
+area/libs:
+  - changed-files:
+      - any-glob-to-any-file: src/libs/**
+
+area/tools:
+  - changed-files:
+      - any-glob-to-any-file: src/tools/**
+
+# Shared platform only. Infra inside a vertical (src/apps/*/infra) gets that vertical's area.
+# .release-please-manifest.json is left out, so release PRs keep only their vertical.
+area/infra:
+  - changed-files:
+      - any-glob-to-any-file:
+          - infra/**
+          - containers/**
+          - .github/workflows/**
+          - .github/actions/**
+          - .github/scripts/**
+          - release-please-config.json
+          - cliff.toml
+          - SonarQube.Analysis.xml
+
+area/docs:
+  - changed-files:
+      - any-glob-to-any-file:
+          - docs/**
+          - .github/images/**
+          - README.md
+          - CONTRIBUTING.md
+          - SECURITY.md
+
+area/devex:
+  - changed-files:
+      - any-glob-to-any-file:
+          - AGENTS.md
+          - CLAUDE.md
+          - .agents/**
+          - .claude/**
+          - .github/copilot-instructions.md
+          - .github/CODEOWNERS
+          - .github/ISSUE_TEMPLATE/**
+          - .github/labeler.yml
+          - .github/templates/**
+          - eng/**
+          - .justfile
+          - devenv.*
+          - .envrc
+          - docker-compose.yml
+          - .editorconfig
+          - .gitattributes
+          - .gitignore
+          - .coderabbit.yaml
+          - global.json
+          - Altinn.Authorization.slnx
+          - renovate.json
+          - .repo.jsonc
+          - .git-blame-ignore-revs
+          # Build settings shared by all verticals (src/Directory.*.props and friends).
+          - src/*
+          - src/apps/*
