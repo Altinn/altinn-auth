@@ -31,7 +31,7 @@ public class AccessListAuthorization : IAccessListAuthorization
         {
             response.Result = AccessListAuthorizationResult.NotAuthorized;
         }
-        else if (memberships.Any(m => m.ActionFilters == null || m.ActionFilters.Any(actionFilter => actionFilter == request.Action.Value.ValueSpan.ToString())))
+        else if (memberships.Any(m => m.ActionFilters == null || m.ActionFilters.Any(actionFilter => string.Equals(actionFilter, request.Action.Value.ValueSpan.ToString(), StringComparison.OrdinalIgnoreCase))))
         {
             response.Result = AccessListAuthorizationResult.Authorized;
         }

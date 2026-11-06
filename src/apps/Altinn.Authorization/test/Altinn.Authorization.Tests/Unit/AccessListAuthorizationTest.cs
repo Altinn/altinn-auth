@@ -95,6 +95,24 @@ public class AccessListAuthorizationTest
     }
 
     [Fact]
+    public async Task Authorize_MembershipWithMatchingActionFilter_DifferentCase_ReturnsAuthorized()
+    {
+        // Arrange
+        var request = CreateRequest(action: "Read");
+        var membership = CreateMembership(actionFilters: new[] { ActionId });
+        _registryMock
+            .Setup(r => r.GetMembershipsForResourceForParty(It.IsAny<PartyUrn>(), It.IsAny<ResourceIdUrn>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new[] { membership });
+
+        // Act
+        var result = await _sut.Authorize(request, TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        Assert.Equal(AccessListAuthorizationResult.Authorized, result.Value.Result);
+    }
+
+    [Fact]
     public async Task Authorize_MembershipWithNonMatchingActionFilter_ReturnsNotAuthorized()
     {
         // Arrange
@@ -114,13 +132,14 @@ public class AccessListAuthorizationTest
 
     private static readonly System.Text.Json.JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
-    private static AccessListAuthorizationRequest CreateRequest()
+    private static AccessListAuthorizationRequest CreateRequest(string action = null)
     {
+        string actionValue = action ?? ActionId;
         string json = $$"""
             {
               "subject": { "type": "urn:altinn:party:uuid", "value": "{{PartyUuid}}" },
               "resource": { "type": "urn:altinn:resource", "value": "{{ResourceId}}" },
-              "action": { "type": "urn:oasis:names:tc:xacml:1.0:action:action-id", "value": "{{ActionId}}" }
+              "action": { "type": "urn:oasis:names:tc:xacml:1.0:action:action-id", "value": "{{actionValue}}" }
             }
             """;
         return System.Text.Json.JsonSerializer.Deserialize<AccessListAuthorizationRequest>(json, JsonOptions);
