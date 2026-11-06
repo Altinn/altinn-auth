@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Npgsql;
 using NpgsqlTypes;
 using EventId = Altinn.ResourceRegistry.Core.Aggregates.EventId;
+using OptimisticConcurrencyException = Altinn.ResourceRegistry.Core.Aggregates.OptimisticConcurrencyException;
 
 namespace Altinn.ResourceRegistry.Persistence;
 
@@ -269,6 +270,25 @@ internal partial class AccessListsRepository
                             """;
             await using var cmd = _conn.CreateCommand(QUERY);
             cmd.Parameters.AddWithValue("party_id", NpgsqlDbType.Uuid, memberParty);
+            await cmd.PrepareAsync(cancellationToken);
+            var accessLists = await cmd.ExecuteEnumerableAsync(cancellationToken)
+                .Select(CreateAccessListInfo)
+                .ToListAsync(cancellationToken);
+            return accessLists;
+        }
+
+        public async Task<IReadOnlyList<AccessListInfo>> GetAccessListsByResource(string resourceIdentifier, DateTimeOffset connectedBefore, CancellationToken cancellationToken)
+        {
+            const string QUERY = /*strpsql*/"""
+                            SELECT a.aggregate_id, a.identifier, a.resource_owner, a.name, a.description, a.created, a.modified, a.version
+                            FROM resourceregistry.access_list_resource_connections_state AS c
+                            INNER JOIN resourceregistry.access_list_state AS a ON c.aggregate_id = a.aggregate_id
+                            WHERE c.resource_identifier = @resource_identifier
+                            AND c.created <= @connected_before;
+                            """;
+            await using var cmd = _conn.CreateCommand(QUERY);
+            cmd.Parameters.AddWithValue("resource_identifier", NpgsqlDbType.Text, resourceIdentifier);
+            cmd.Parameters.AddWithValue("connected_before", NpgsqlDbType.TimestampTz, connectedBefore);
             await cmd.PrepareAsync(cancellationToken);
             var accessLists = await cmd.ExecuteEnumerableAsync(cancellationToken)
                 .Select(CreateAccessListInfo)

@@ -30,7 +30,16 @@ namespace Altinn.ResourceRegistry.Core
         /// </summary>
         /// <param name="id">The resource identifier to delete</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> for cancelling the async process.</param>
-        Task<ServiceResource> DeleteResource(string id, CancellationToken cancellationToken = default);
+        /// <returns>The deleted resource and when it was deleted, or <see langword="null"/> if the resource does not exist</returns>
+        Task<DeletedResource> DeleteResource(string id, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Gets when a resource was deleted, if the identifier belongs to a deleted resource
+        /// </summary>
+        /// <param name="id">The resource identifier</param>
+        /// <param name="cancellationToken">A <see cref="CancellationToken"/> for cancelling the async process.</param>
+        /// <returns>The time of deletion, or <see langword="null"/> if the resource exists or never existed</returns>
+        Task<DateTimeOffset?> GetResourceDeletedAt(string id, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Updates a service resource in the resource registry if it pass all validation checks

@@ -1,6 +1,4 @@
-﻿using Altinn.ResourceRegistry.Core.Aggregates;
-
-namespace Altinn.ResourceRegistry.Persistence;
+﻿namespace Altinn.ResourceRegistry.Core.Aggregates;
 
 /// <summary>
 /// Exception thrown when an optimistic concurrency exception occurs.
