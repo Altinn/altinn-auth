@@ -89,7 +89,14 @@ public sealed class ConnectionQueryFilter
     public bool EnrichPackageResources { get; init; } = false;
 
     /// <summary>
-    /// Gets or sets a value indicating whether to include or exclude deleted entities. ToDo: Implementation for this in the ConnectionQuery (see issue #3786).
+    /// Gets or sets a value indicating whether to exclude connections to deleted parties.
+    /// Applies to the party on the other side of the query: <c>From</c> for FromOthers and <c>To</c> for ToOthers.
+    /// Only the party's own deletion status is checked, not its main unit's: an active subunit of a deleted main unit is kept
+    /// when the connection is given by the subunit itself. In FromOthers, connections that a subunit inherits from a deleted
+    /// main unit are excluded, since the main unit that gave them is deleted. ToOthers does not apply this rule: a query from an
+    /// active subunit still returns connections inherited from its deleted main unit (see issue #4921).
+    /// Takes precedence over <see cref="IncludeAdosSubunitInheritance"/>: a deleted ADOS entity is always excluded, whether or not
+    /// ADOS subunit inheritance is enabled.
     /// </summary>
     public bool ExcludeDeleted { get; init; } = false;
 
@@ -107,6 +114,13 @@ public sealed class ConnectionQueryFilter
     /// Gets or sets a value indicating whether to include sub-connections.
     /// </summary>
     public bool IncludeSubConnections { get; init; } = true;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether to include connections to the innehaver (owner) of an ENK,
+    /// derived from an auditor or accountant connection to the ENK. Independent of <see cref="IncludeSubConnections"/>,
+    /// since the innehaver is a person and not a subunit.
+    /// </summary>
+    public bool IncludeInnehaverConnections { get; init; } = true;
 
     /// <summary>
     /// Gets or sets a value indicating whether to include connections through main unit
