@@ -1,7 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Net.Mime;
 using Altinn.AccessManagement.Api.Enduser.Controllers.Base;
-using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessMgmt.Core;
@@ -41,7 +40,6 @@ public class RequestController(
     ConnectionQuery connectionQuery,
     IResourceService resourceService,
     IEntityService entityService,
-    IResourceRegistryClient resourceRegistryClient,
     IPDP pdp
     ) : RequestControllerBase<RequestDtoV2, RequestStatusV2>(
     requestService,
@@ -50,7 +48,6 @@ public class RequestController(
     connectionQuery,
     resourceService,
     entityService,
-    resourceRegistryClient,
     pdp
     )
 {

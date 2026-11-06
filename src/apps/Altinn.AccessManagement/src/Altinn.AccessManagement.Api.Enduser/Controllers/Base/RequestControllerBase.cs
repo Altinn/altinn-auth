@@ -2,7 +2,6 @@
 using System.Net.Mime;
 using System.Security.Claims;
 using Altinn.AccessManagement.Api.Enduser.Models;
-using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Helpers;
@@ -48,7 +47,6 @@ public abstract class RequestControllerBase<TRequest, TStatus>(
     ConnectionQuery connectionQuery,
     IResourceService resourceService,
     IEntityService entityService,
-    IResourceRegistryClient resourceRegistryClient,
     IPDP pdp
     ) : ControllerBase
     where TStatus : struct, Enum
@@ -64,8 +62,6 @@ public abstract class RequestControllerBase<TRequest, TStatus>(
     protected IResourceService ResourceService { get; } = resourceService;
 
     protected IEntityService EntityService { get; } = entityService;
-
-    protected IResourceRegistryClient ResourceRegistryClient { get; } = resourceRegistryClient;
 
     protected IPDP PDP { get; } = pdp;
 
@@ -580,7 +576,7 @@ public abstract class RequestControllerBase<TRequest, TStatus>(
 
     /// <summary>
     /// Validation shared by the versioned endpoints for creating a resource request: the parties must be
-    /// connected, and the resource must exist and must not be marked as non-delegable in the resource registry.
+    /// connected, and the resource must exist and must not be marked as non-delegable.
     /// </summary>
     /// <returns>The resource when valid, otherwise the problem to return.</returns>
     protected async Task<(Altinn.AccessMgmt.PersistenceEF.Models.Resource Resource, ValidationProblemInstance Problem)> ValidateResourceRequest(Guid party, Guid to, string resource, CancellationToken ct)
@@ -599,24 +595,10 @@ public abstract class RequestControllerBase<TRequest, TStatus>(
             errorBuilder.Add(ValidationErrors.ResourceNotExists, "/resource", [new("resource", $"Unable to get resource '{resource}'")]);
         }
 
-        if (resourceObj is { })
+        // Delegable is imported from the resource registry to the local resource.
+        if (resourceObj is { Delegable: false })
         {
-            try
-            {
-                var serviceResource = await ResourceRegistryClient.GetResource(resourceObj.RefId, ct);
-
-                if (serviceResource is { Delegable: false })
-                {
-                    errorBuilder.Add(ValidationErrors.ResourceIsNotDelegable, "/resource", [new("resource", $"Resource with reference ID '{resourceObj.RefId}' is not delegable.")]);
-                }
-            }
-            catch (HttpRequestException)
-            {
-                // Registry unreachable: don't gate the user's request on registry availability.
-                // The earlier `resourceObj is not null` check already validated that the resource
-                // is known to us locally. Only fail when the registry positively confirms the
-                // resource is non-delegable (the `Delegable: false` arm above).
-            }
+            errorBuilder.Add(ValidationErrors.ResourceIsNotDelegable, "/resource", [new("resource", $"Resource with reference ID '{resourceObj.RefId}' is not delegable.")]);
         }
 
         errorBuilder.TryBuild(out var problem);

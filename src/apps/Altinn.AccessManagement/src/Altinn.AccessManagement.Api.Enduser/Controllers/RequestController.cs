@@ -4,7 +4,6 @@ using System.Security.Claims;
 using Altinn.AccessManagement.Api.Enduser.Controllers.Base;
 using Altinn.AccessManagement.Api.Enduser.Models;
 using Altinn.AccessManagement.Api.Enduser.Utils;
-using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Helpers;
@@ -48,7 +47,6 @@ public class RequestController(
     ConnectionQuery connectionQuery,
     IResourceService resourceService,
     IEntityService entityService,
-    IResourceRegistryClient resourceRegistryClient,
     IPDP pdp
     ) : RequestControllerBase<RequestDto, RequestStatus>(
     requestService,
@@ -57,7 +55,6 @@ public class RequestController(
     connectionQuery,
     resourceService,
     entityService,
-    resourceRegistryClient,
     pdp
     )
 {

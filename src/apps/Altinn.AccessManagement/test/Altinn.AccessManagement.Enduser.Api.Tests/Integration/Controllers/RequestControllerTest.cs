@@ -13,6 +13,7 @@ using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
+using Altinn.Authorization.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -74,6 +75,7 @@ public class RequestControllerTest
         private static readonly Guid TestResourceId = Guid.Parse("0196b001-0000-7000-8000-000000000002");
         private const string TestResourceRefId = "create-resource-test-1";
         private const string TestMaskinportenSchemaResourceRefId = "create-resource-test-2";
+        private const string TestNonDelegableResourceRefId = "create-resource-test-not-delegable";
 
         public CreateResourceRequest(ApiFixture fixture)
         {
@@ -102,6 +104,17 @@ public class RequestControllerTest
                     RefId = TestMaskinportenSchemaResourceRefId,
                     ProviderId = TestData.ServiceOwnerNAV,
                     TypeId = TestData.MaskinportenSchemaResourceType.Id,
+                });
+
+                db.Resources.Add(new Resource
+                {
+                    Id = Guid.CreateVersion7(),
+                    Name = "CreateResourceTestNotDelegable",
+                    Description = "Test resource that is not delegable",
+                    RefId = TestNonDelegableResourceRefId,
+                    ProviderId = ProviderConstants.ResourceRegistry,
+                    TypeId = TestResourceType.Id,
+                    Delegable = false,
                 });
 
                 db.SaveChanges();
@@ -144,6 +157,24 @@ public class RequestControllerTest
                 TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task CreateRequest_WithNonDelegableResource_Returns400ResourceIsNotDelegable()
+        {
+            // KnutVik er styremedlem i BakerJohnsen (seeded via TestData.Assignments)
+            var client = CreateSystemClient(Fixture, TestData.KnutVik.Id);
+
+            var response = await client.PostAsync(
+                $"{Route}/resource?party={TestData.KnutVik.Id}&to={TestData.BakerJohnsen.Id}&resource={TestNonDelegableResourceRefId}",
+                null,
+                TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+            var problem = await response.Content.ReadFromJsonAsync<AltinnValidationProblemDetails>(TestContext.Current.CancellationToken);
+            Assert.NotNull(problem);
+            Assert.Contains(problem.Errors, e => e.ErrorCode == ValidationErrors.ResourceIsNotDelegable.ErrorCode);
         }
 
         [Fact]
