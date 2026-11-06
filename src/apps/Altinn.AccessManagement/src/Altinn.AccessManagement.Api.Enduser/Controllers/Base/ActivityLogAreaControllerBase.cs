@@ -186,11 +186,16 @@ public abstract class ActivityLogAreaControllerBase(IActivityLogService activity
         return true;
     }
 
+    /// <summary>
+    /// Builds the link to the next page from the current request. Relative on purpose: the
+    /// request's scheme and host are whatever the last proxy hop used, not the public address,
+    /// so an absolute link would expose an internal base URL.
+    /// </summary>
     private string NextLink(int pageSize, int nextPageNo)
     {
         var query = QueryHelpers.ParseQuery(Request.QueryString.Value);
         query["pageSize"] = pageSize.ToString();
         query["pageNo"] = nextPageNo.ToString();
-        return UriHelper.BuildAbsolute(Request.Scheme, Request.Host, Request.PathBase, Request.Path, QueryString.Create(query));
+        return UriHelper.BuildRelative(Request.PathBase, Request.Path, QueryString.Create(query));
     }
 }
