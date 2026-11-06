@@ -4711,12 +4711,12 @@ public static class PackageConstants
     /// Represents the 'Skattegrunnlag - Utvidet tilgang' access package. Test only, for Skatteetaten's proof of concept (#4128).
     /// </summary>
     /// <remarks>
-    /// - <c>Id:</c> 58647f2f-32db-476c-990b-663fc954c48e
+    /// - <c>Id:</c> 01a1b014-d16c-71d9-b145-e7508f7c8279
     /// - <c>URN:</c> urn:altinn:accesspackage:skattegrunnlag-utvidet-tilgang
     /// - <c>Provider:</c> Altinn3
     /// - <c>Description:</c> Denne tilgangspakken gir tilganger til å rapportere tredjepartsopplysninger på vegne av oppgavegiver for de skattegrunnlagsordningene som er listet her. Tilgangspakken gir også utvidede tilganger til å se alle innsendinger og tilbakemeldinger for oppgavegiveren, også når andre har sendt inn.
     /// </remarks>
-    public static ConstantDefinition<Package> TaxBaseExtendedAccess { get; } = new ConstantDefinition<Package>("58647f2f-32db-476c-990b-663fc954c48e")
+    public static ConstantDefinition<Package> TaxBaseExtendedAccess { get; } = new ConstantDefinition<Package>("01a1b014-d16c-71d9-b145-e7508f7c8279")
     {
         Entity = new()
         {
