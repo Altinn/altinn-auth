@@ -10,6 +10,7 @@ using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
+using Microsoft.EntityFrameworkCore;
 
 namespace Altinn.AccessManagement.Api.Internal.Tests.Controllers;
 
@@ -225,7 +226,7 @@ public class SystemUserClientDelegationControllerTest
 
         public ApiFixture Fixture { get; }
 
-        private async Task<HttpResponseMessage> Post(Guid clientId, Guid agentId, string roleIdentifier, string packageUrn)
+        private async Task<HttpResponseMessage> Post(Guid clientId, Guid agentId, string roleIdentifier, string packageUrn, string agentRole = null)
         {
             var client = Fixture.Server.CreateClient();
             var token = TestTokenGenerator.CreateToken(new ClaimsIdentity("mock"), claims =>
@@ -240,7 +241,7 @@ public class SystemUserClientDelegationControllerTest
                 ClientId = clientId,
                 AgentId = agentId,
                 AgentName = "Test agent",
-                AgentRole = RoleConstants.Agent.Entity.Code,
+                AgentRole = agentRole ?? RoleConstants.Agent.Entity.Code,
                 RolePackages = [new() { RoleIdentifier = roleIdentifier, PackageUrn = packageUrn }],
             };
 
@@ -294,6 +295,21 @@ public class SystemUserClientDelegationControllerTest
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             var result = await response.Content.ReadFromJsonAsync<List<CreateDelegationResponseDto>>(TestContext.Current.CancellationToken);
             Assert.Single(result);
+        }
+
+        [Fact]
+        public async Task PostClientDelegation_AgentRoleTheServiceCannotAssign_LeavesNoAgentBehind()
+        {
+            // daglig-leder comes from the Central Coordinating Register, so the service may not create that assignment.
+            // It creates the agent first, and fails only at the agent assignment.
+            var agentId = Guid.CreateVersion7();
+
+            var response = await Post(TestEntities.OrganizationOkernBorettslag.Id, agentId, RoleConstants.Accountant.Entity.Code, PackageConstants.AccountantSalary.Entity.Urn, RoleConstants.ManagingDirector.Entity.Code);
+
+            Assert.False(response.IsSuccessStatusCode);
+            var agentExists = true;
+            await Fixture.QueryDb(async db => agentExists = await db.Entities.AsNoTracking().AnyAsync(e => e.Id == agentId, TestContext.Current.CancellationToken));
+            Assert.False(agentExists);
         }
     }
 

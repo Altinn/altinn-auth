@@ -422,6 +422,11 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
             return result;
         }
 
+        // The helpers below save one row at a time; one transaction keeps a failure part-way from leaving an agent,
+        // an agent assignment or half a delegation behind.
+        var currentTransaction = db.Database.CurrentTransaction is not null;
+        await using var transaction = currentTransaction ? null : await db.Database.BeginTransactionAsync(cancellationToken);
+
         // Find or Create Agent Entity
         var agent = await entityService.GetOrCreateEntity(request.AgentId, request.AgentName, request.AgentId.ToString(), EntityTypeConstants.SystemUser.Entity.Name, EntityVariantConstants.AgentSystem.Entity.Name, cancellationToken) ?? throw new InvalidOperationException($"Could not find or create party '{request.AgentId}' for agent");
 
@@ -445,6 +450,11 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
             }
 
             result.Add(delegation);
+        }
+
+        if (transaction is not null)
+        {
+            await transaction.CommitAsync(cancellationToken);
         }
 
         return result;
