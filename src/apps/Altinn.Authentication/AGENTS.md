@@ -50,6 +50,7 @@ dotnet build src/apps/Altinn.Authentication/src/Altinn.Platform.Authentication/A
 
 - Build Register contract types (`Altinn.Register.Contracts`) via JSON deserialization in tests. A `PartyUser` with `userId` set **must** also set `userIds` (e.g. `"userIds": [ <id> ]`) or its constructor throws at runtime.
 - Mock outbound clients with a mocked `HttpMessageHandler` (see `AccessManagementClientTests`); unit-test pure logic directly (see `AuthenticationHelperTests`).
+- **The Bruno collection in `test/Bruno` is not run in CI, and `bru run` on it crashes before sending anything.** Six request files under `VendorRequest/ClientDelegation/AccessPackages` and `VendorRequest/Systemuser-L2` have text pasted into their `url:` line, and the CLI stops the whole run on a file it cannot parse (seen with 1.26.2 here, and with 4.2.1 in [#4595](https://github.com/Altinn/altinn-auth/pull/4595)). Run single requests from the Bruno app, or repair those files first.
 
 ## Known tech debt
 

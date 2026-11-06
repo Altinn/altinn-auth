@@ -2,30 +2,37 @@
 
 [Bruno](https://www.usebruno.com/) collections live alongside the code and exercise the
 **running** APIs against the shared Altinn test environments (AT / TT02 / YT01). They are
-**not** part of GitHub CI (not wired into `dotnet test` or GitHub Actions). Instead they
-run automatically in **Azure DevOps, as a post-deployment backend smoke test** against the
-deployed environment, and can also be run manually (the Bruno app or the `bru` CLI) for
-exploratory verification. They also double as the **behavioral spec** for the C#
-integration tests: endpoint inventory, request/response shapes, field-level assertions,
-and known-good seed-data IDs.
+**not** part of GitHub CI (not wired into `dotnet test` or GitHub Actions). Instead, two of
+them run in **Azure DevOps as a post-deployment backend smoke test** after each release to
+AT22 and TT02 (see [Running](#running)), and all of them can be run manually (the Bruno app
+or the `bru` CLI) for exploratory verification. They also double as the **behavioral
+spec** for the C# integration tests: endpoint inventory, request/response shapes,
+field-level assertions, and known-good seed-data IDs.
 
 ## Where they live
 
-| Collection | Path |
-|---|---|
-| AccessManagement | `src/apps/Altinn.AccessManagement/test/Bruno/AccessMgmt/` |
-| Authorization | `src/apps/Altinn.Authorization/test/Bruno/Altinn.Authorization/` |
+| Collection | Path | Azure DevOps |
+|---|---|---|
+| AccessManagement | `src/apps/Altinn.AccessManagement/test/Bruno/AccessMgmt/` | `access-management-bruno` (definition 475), `test/` only |
+| Authorization | `src/apps/Altinn.Authorization/test/Bruno/Altinn.Authorization/` | `authorization-bruno` (definition 480), `test/` only |
+| Authentication | `src/apps/Altinn.Authentication/test/Bruno/Altinn.Authentication/` | not run; see its [AGENTS.md](../../src/apps/Altinn.Authentication/AGENTS.md#test-gotchas) |
+| ResourceRegistry | `src/apps/Altinn.ResourceRegistry/test/Bruno/Altinn.ResourceRegistry/` | not run |
+
+`AccessMgmt/shared/Consent/Consent/` has a `bruno.json` of its own, so the Bruno app can also
+open it as a separate collection.
 
 ## Layout (AccessMgmt collection)
 
 - `bruno.json` / `collection.bru`: collection config and collection-level scripts.
 - `environments/`: one `.bru` per Altinn environment (`AT22`, `AT23`, `AT24`, `TT02`,
   `YT01`, `DEV`, `PROD`); selects `baseUrl`, `tokenEnv`, and other per-env variables.
-- `shared/` and `test/`: requests grouped by API area: `Consent`, `Enduser`,
-  `EnduserAPI`, `InternalAPI`, `Lookup`, `Maskinporten`, `PolicyInformationPoint`,
-  `SystemUserClientDelegation`, `AuthorizedParties`, `AppsInstanceDelegation`,
-  `KlientDelegation`, `Virksomhetsdelegering`, … (`old_SBL_Bridge_tests/` is legacy,
-  ignore it).
+- `test/`: the requests Azure DevOps runs, grouped by API area: `EnduserAPI`,
+  `InternalAPI`, `ServiceOwnerAPI`, `AuthorizedParties`, `Consent`, `DelegationRequest`,
+  `SystemUserClientDelegation`, `Maskinporten`, `KlientDelegation`,
+  `Virksomhetsdelegering`, ….
+- `shared/`: requests that no pipeline runs: exploratory requests, and `Prep_*` folders
+  that someone runs by hand to create seed data in an environment (`Enduser`, `Lookup`,
+  `PolicyInformationPoint`, …). `old_SBL_Bridge_tests/` is legacy; ignore it.
 - `TestToolsTokenGenerator.js` + per-area `testdata/*.js`: generate platform / Maskinporten
   tokens and supply seed-data IDs (org / app / party / instance) at request time.
 
@@ -86,12 +93,24 @@ The reference is `test/EnduserAPI/ClientDelegationsV2/` (v2 client delegation):
 
 ## Running
 
-- **Automatically:** in Azure DevOps, as a post-deployment backend smoke test against the
-  deployed environment. They are not part of GitHub CI (`dotnet test` / GitHub Actions).
-- **Manually:** open the collection in the Bruno app, or `bru run` via the CLI; pick an
-  environment and supply secrets via `.env` (see `.env.sample`).
+- **Automatically:** each release to AT22 or TT02 queues the Azure DevOps pipeline for
+  that app, which runs `bru run "test" -r --env <ENV> --sandbox=developer` from the
+  collection root, publishes the JUnit results and posts a summary to Slack. They are not
+  part of GitHub CI (`dotnet test` / GitHub Actions). The pipelines install
+  `@usebruno/cli` without a version, so CI runs the latest release, which may differ
+  from your local `bru`.
+- **Manually:** open the collection in the Bruno app, or run the same `bru run` command
+  from the collection root; pick an environment and supply secrets via `.env` (see
+  `.env.sample`).
 
-`.bru` files must be UTF-8 **without** a BOM. The CLI parses the whole collection before
-it sends a request, so one `.bru` file with a BOM fails the entire run with
-`Expected end of input` at line 1, col 1. `.editorconfig` sets `charset = utf-8` for
-`*.bru`, overriding the repository default `utf-8-bom`.
+Tests under `test/` may depend on seed data that a `shared/.../Prep_*` folder created in
+that environment. Nothing re-creates it, so a request that deletes it breaks those tests
+in every run until someone runs the prep request again
+([#4853](https://github.com/Altinn/altinn-auth/issues/4853)).
+
+The CLI parses the whole collection before it sends a request, so one `.bru` file it
+cannot parse stops the entire run. A UTF-8 BOM fails with `Expected end of input` at
+line 1, col 1 ([#4595](https://github.com/Altinn/altinn-auth/pull/4595)), and any other
+syntax error, such as text pasted into a block, stops it too. `.bru` files must therefore be UTF-8 **without** a BOM,
+which is the `.editorconfig` default for every file type except `*.cs`, `*.csproj`,
+`*.props` and `*.targets`.
