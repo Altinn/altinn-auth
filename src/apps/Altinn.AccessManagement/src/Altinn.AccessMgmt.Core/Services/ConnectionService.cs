@@ -1049,6 +1049,8 @@ public partial class ConnectionService(
         // Map to result
         IEnumerable<RightCheckDto> checkRights = await MapFromInternalToExternalRights(rights, resource, accessListMode, fromParty, rightKeys, isResourceDelegable, isMaskinPortenSchema, cancellationToken);
 
+        resourceDto = await resourceDto.TranslateDeepAsync(translationService, languageCode, true);
+
         // build reult with reason based on roles, packages, resource rights and users delegable
         ResourceCheckDto resourceCheckDto = new ResourceCheckDto
         {
@@ -1113,6 +1115,8 @@ public partial class ConnectionService(
 
         // Map to result
         IEnumerable<RightCheckDto> checkRights = await MapFromInternalToExternalRights(rights, resource, accessListMode, fromParty, rightKeys, isResourceDelegable, isMaskinPortenSchema, cancellationToken);
+
+        resourceDto = await resourceDto.TranslateDeepAsync(translationService, languageCode, true);
 
         // build result with resource, instance and rights
         InstanceCheckDto instanceCheckDto = new InstanceCheckDto
@@ -1696,6 +1700,7 @@ public partial class ConnectionService(
             Id = resourceObj.Id,
             Name = resourceObj.Name,
             Description = resourceObj.Description,
+            RightDescription = resourceObj.RightDescription,
             Provider = providerDto,
             ProviderId = provider.Id,
             RefId = resourceObj.RefId,

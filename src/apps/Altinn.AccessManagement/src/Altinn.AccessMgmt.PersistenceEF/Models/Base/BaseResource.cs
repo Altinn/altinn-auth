@@ -60,6 +60,11 @@ public class BaseResource : BaseAudit, IEntityId
     public string Description { get; set; }
 
     /// <summary>
+    /// Description of the rights the resource grants, shown when delegating it
+    /// </summary>
+    public string? RightDescription { get; set; }
+
+    /// <summary>
     /// Reference identifier
     /// </summary>
     public string RefId { get; set; }

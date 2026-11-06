@@ -29,6 +29,9 @@ public class ResourceSyncServiceTest : IClassFixture<ApiFixture>
     public ResourceSyncServiceTest(ApiFixture fixture)
     {
         Fixture = fixture;
+
+        // These tests cover the sync without the change feed. Set the flag explicitly, so local user secrets cannot turn it on.
+        Fixture.WithDisabledFeatureFlag(AccessMgmtFeatureFlags.HostedServicesResourceRegistrySyncChangeFeed);
         Fixture.ConfigureServices(services =>
         {
             services.RemoveAll<IAltinnResourceRegistry>();
