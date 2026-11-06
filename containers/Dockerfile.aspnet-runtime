@@ -18,3 +18,7 @@ USER dotnet
 
 EXPOSE 8080
 ENV ASPNETCORE_URLS=http://+:8080
+# The Kerberos libraries above make Npgsql's default GssEncryptionMode=Prefer run native
+# Kerberos code on every new physical connection. Our databases use Entra tokens, so never
+# attempt GSS encryption. Npgsql reads PGGSSENCMODE; a connection string setting still wins.
+ENV PGGSSENCMODE=disable
