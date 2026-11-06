@@ -814,13 +814,13 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
         await Repository.DeleteResource(resource.Identifier!);
         Assert.Null(await Repository.GetResource(resource.Identifier!, null));
 
-        resource.Title["en"] = "Recreated";
+        resource.Title!["en"] = "Recreated";
 
         Assert.Equal(HttpStatusCode.Created, (await PostResource(client, resource)).StatusCode);
 
         ServiceResource? recreated = await Repository.GetResource(resource.Identifier!, null);
         Assert.NotNull(recreated);
-        Assert.Equal("Recreated", recreated.Title["en"]);
+        Assert.Equal("Recreated", recreated.Title!["en"]);
         Assert.NotEqual(original.VersionId, recreated.VersionId);
 
         // The recreated resource is live again, so creating it once more is still a conflict.
@@ -927,6 +927,94 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
         Assert.NotNull(await Repository.GetResource(ResourceId, null));
         Assert.Empty(await accessLists.GetMembershipsForPartiesAndResources([oldParty], [ResourceId], default));
         Assert.Single(await accessLists.GetMembershipsForPartiesAndResources([newParty], [ResourceId], default));
+    }
+
+    [Fact]
+    public async Task DeleteResource_RevivedByCreateStartedBeforeDelete_RemovesOldAccessListConnection()
+    {
+        const string ResourceId = "revived_during_delete";
+        Guid oldParty = Guid.NewGuid();
+
+        await Repository.CreateResource(CreateTestResource(ResourceId));
+
+        // Connected well before the deletion, so the test does not depend on the app and database clocks agreeing.
+        TimeProvider.Advance(TimeSpan.FromHours(-1));
+        await ConnectAccessList("revive-old-list", ResourceId, oldParty);
+        TimeProvider.Advance(TimeSpan.FromHours(2));
+
+        // A create that looked for a deleted resource while this one was still live skips its cleanup,
+        // and revives the identifier right after the delete commits.
+        IResourceRegistryRepository repository = Repository;
+        var interleaved = new Mock<IResourceRegistryRepository>();
+        interleaved
+            .Setup(r => r.DeleteResource(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Returns(async (string id, CancellationToken ct) =>
+            {
+                DeletedResource? deleted = await repository.DeleteResource(id, ct);
+                await repository.CreateResource(CreateTestResource(id), ct);
+                return deleted;
+            });
+
+        var service = new ResourceRegistryService(
+            interleaved.Object,
+            Services.GetRequiredService<IPolicyRepository>(),
+            Services.GetRequiredService<IApplications>(),
+            Services.GetRequiredService<IServiceOwnerService>(),
+            AccessListsRepository);
+
+        await service.Delete(ResourceId);
+
+        Assert.NotNull(await Repository.GetResource(ResourceId, null));
+        Assert.Empty(await AccessListsRepository.GetMembershipsForPartiesAndResources([oldParty], [ResourceId], default));
+    }
+
+    [Fact]
+    public async Task DeleteResource_AccessListChangedDuringCleanup_RetriesAndRemovesConnection()
+    {
+        const string ResourceId = "list_changed_during_delete";
+        Guid party = Guid.NewGuid();
+
+        await Repository.CreateResource(CreateTestResource(ResourceId));
+
+        // Connected well before the deletion, so the test does not depend on the app and database clocks agreeing.
+        TimeProvider.Advance(TimeSpan.FromHours(-1));
+        await ConnectAccessList("changed-during-delete", ResourceId, party);
+        TimeProvider.Advance(TimeSpan.FromHours(2));
+
+        // Change the list after the delete has loaded it, so the first save conflicts.
+        IAccessListsRepository accessLists = AccessListsRepository;
+        int loads = 0;
+        var interleaved = new Mock<IAccessListsRepository>();
+        interleaved
+            .Setup(r => r.GetAccessListsByResource(It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))
+            .Returns((string resourceId, DateTimeOffset connectedBefore, CancellationToken ct) => accessLists.GetAccessListsByResource(resourceId, connectedBefore, ct));
+        interleaved
+            .Setup(r => r.LoadAccessList(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Returns(async (Guid id, CancellationToken ct) =>
+            {
+                IAccessListAggregate? loaded = await accessLists.LoadAccessList(id, ct);
+                if (++loads == 1)
+                {
+                    IAccessListAggregate? concurrent = await accessLists.LoadAccessList(id, ct);
+                    concurrent!.AddMembers([Guid.NewGuid()]);
+                    await concurrent.SaveChanges(ct);
+                }
+
+                return loaded;
+            });
+
+        var service = new ResourceRegistryService(
+            Repository,
+            Services.GetRequiredService<IPolicyRepository>(),
+            Services.GetRequiredService<IApplications>(),
+            Services.GetRequiredService<IServiceOwnerService>(),
+            interleaved.Object);
+
+        await service.Delete(ResourceId);
+
+        Assert.Equal(2, loads);
+        Assert.Empty(await accessLists.GetMembershipsForPartiesAndResources([party], [ResourceId], default));
+        Assert.Empty(await accessLists.GetAccessListsByResource(ResourceId, DateTimeOffset.UtcNow.AddYears(1)));
     }
 
     private IAccessListsRepository AccessListsRepository => Services.GetRequiredService<IAccessListsRepository>();

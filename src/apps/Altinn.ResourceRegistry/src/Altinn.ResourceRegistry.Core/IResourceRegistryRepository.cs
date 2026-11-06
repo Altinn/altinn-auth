@@ -30,7 +30,8 @@ namespace Altinn.ResourceRegistry.Core
         /// </summary>
         /// <param name="id">The resource identifier to delete</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> for cancelling the async process.</param>
-        Task<ServiceResource> DeleteResource(string id, CancellationToken cancellationToken = default);
+        /// <returns>The deleted resource and when it was deleted, or <see langword="null"/> if the resource does not exist</returns>
+        Task<DeletedResource> DeleteResource(string id, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Gets when a resource was deleted, if the identifier belongs to a deleted resource

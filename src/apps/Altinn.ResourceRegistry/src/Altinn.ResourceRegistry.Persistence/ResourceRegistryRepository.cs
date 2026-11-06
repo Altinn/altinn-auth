@@ -227,12 +227,12 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
     }
 
     /// <inheritdoc/>
-    public async Task<ServiceResource?> DeleteResource(string id, CancellationToken cancellationToken = default)
+    public async Task<DeletedResource?> DeleteResource(string id, CancellationToken cancellationToken = default)
     {
-        // Deleting a resource removes all its version rows; the latest version is returned. The
-        // resource_identifier row is kept and marked deleted, so the change feed can exclude the
-        // resource (and expose the deletion later if needed). The subjects from its policy are
-        // soft-deleted, so consumers of the updated subjects see them removed.
+        // Deleting a resource removes all its version rows; the latest version is returned with the
+        // time of the deletion. The resource_identifier row is kept and marked deleted, so the change
+        // feed can exclude the resource (and expose the deletion later if needed). The subjects from
+        // its policy are soft-deleted, so consumers of the updated subjects see them removed.
         const string QUERY = /*strpsql*/@"
             WITH del AS (
                 DELETE FROM resourceregistry.resources
@@ -245,6 +245,7 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
                     last_changed = now()
                 WHERE ri.identifier = @identifier
                   AND EXISTS (SELECT 1 FROM del)
+                RETURNING ri.identifier, ri.created, ri.last_changed
             ), subjects AS (
                 UPDATE resourceregistry.resourcesubjects
                 SET deleted = true,
@@ -253,9 +254,9 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
                   AND deleted = false
                   AND EXISTS (SELECT 1 FROM del)
             )
-            SELECT del.identifier, ri.created, del.modified, del.serviceresourcejson, del.version_id
+            SELECT del.identifier, bump.created, del.modified, del.serviceresourcejson, del.version_id, bump.last_changed AS deleted_at
             FROM del
-            JOIN resourceregistry.resource_identifier ri ON ri.identifier = del.identifier
+            JOIN bump ON bump.identifier = del.identifier
             ORDER BY del.version_id DESC
             LIMIT 1
             ";
@@ -266,11 +267,11 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
             pgcom.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, id);
             pgcom.Parameters.AddWithValue("resource_urn", NpgsqlDbType.Text, ResourceUrn(id));
 
-            var serviceResource = await pgcom.ExecuteEnumerableAsync(cancellationToken)
-                .Select(GetServiceResource)
+            return await pgcom.ExecuteEnumerableAsync(cancellationToken)
+                .Select(async (reader, ct) => new DeletedResource(
+                    await GetServiceResource(reader, ct),
+                    await reader.GetFieldValueAsync<DateTimeOffset>("deleted_at", ct)))
                 .SingleOrDefaultAsync(cancellationToken);
-
-            return serviceResource;
         }
         catch (Exception e)
         {

@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using Npgsql;
 using NpgsqlTypes;
 using EventId = Altinn.ResourceRegistry.Core.Aggregates.EventId;
+using OptimisticConcurrencyException = Altinn.ResourceRegistry.Core.Aggregates.OptimisticConcurrencyException;
 
 namespace Altinn.ResourceRegistry.Persistence;
 

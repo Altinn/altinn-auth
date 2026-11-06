@@ -6,6 +6,7 @@ using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.ProblemDetails;
 using Altinn.Platform.Storage.Interface.Models;
 using Altinn.ResourceRegistry.Core.AccessLists;
+using Altinn.ResourceRegistry.Core.Aggregates;
 using Altinn.ResourceRegistry.Core.Constants;
 using Altinn.ResourceRegistry.Core.Exceptions;
 using Altinn.ResourceRegistry.Core.Extensions;
@@ -24,6 +25,8 @@ namespace Altinn.ResourceRegistry.Core.Services
     /// </summary>
     public class ResourceRegistryService : IResourceRegistry
     {
+        private const int MaxConnectionRemovalAttempts = 3;
+
         private readonly IResourceRegistryRepository _repository;
         private readonly IPolicyRepository _policyRepository;
         private readonly IApplications _applicationsClient;
@@ -78,15 +81,15 @@ namespace Altinn.ResourceRegistry.Core.Services
                 throw new AccessManagementUpdateException($"Deleting policy for resource {id} failed");
             }
 
-            await _repository.DeleteResource(id, cancellationToken);
+            DeletedResource deleted = await _repository.DeleteResource(id, cancellationToken);
 
-            // Only remove connections made up to the deletion. The identifier can be created again
-            // before this runs; that removes the older connections itself, and connections made
-            // for the new resource must be kept.
-            DateTimeOffset? deletedAt = await _repository.GetResourceDeletedAt(id, cancellationToken);
-            if (deletedAt.HasValue)
+            // Remove the connections made up to this deletion, even if the identifier has been created
+            // again since: a create that checked for a deleted resource before this deletion revives it
+            // without removing them. Connections made after the deletion were set up for the new
+            // resource and are kept.
+            if (deleted is not null)
             {
-                await RemoveAccessListConnections(id, deletedAt.Value, cancellationToken);
+                await RemoveAccessListConnections(id, deleted.DeletedAt, cancellationToken);
             }
         }
 
@@ -97,17 +100,36 @@ namespace Altinn.ResourceRegistry.Core.Services
             IReadOnlyList<AccessListInfo> accessLists = await _accessListsRepository.GetAccessListsByResource(resourceIdentifier, connectedBefore, cancellationToken);
             foreach (AccessListInfo accessList in accessLists)
             {
-                // Check again on the loaded list: the connection may have been replaced since the lookup.
-                IAccessListAggregate? aggregate = await _accessListsRepository.LoadAccessList(accessList.Id, cancellationToken);
+                await RemoveAccessListConnection(accessList.Id, resourceIdentifier, connectedBefore, cancellationToken);
+            }
+        }
+
+        private async Task RemoveAccessListConnection(Guid accessListId, string resourceIdentifier, DateTimeOffset connectedBefore, CancellationToken cancellationToken)
+        {
+            // Another change to the list, such as a concurrent delete or recreate of the same resource,
+            // makes the save fail. Load the list again and check the connection again before retrying.
+            for (int attempt = 1; ; attempt++)
+            {
+                // Check on the loaded list: the connection may have been replaced or removed since the lookup.
+                IAccessListAggregate aggregate = await _accessListsRepository.LoadAccessList(accessListId, cancellationToken);
                 if (aggregate is null
-                    || !aggregate.TryGetResourceConnections(resourceIdentifier, out AccessListResourceConnection? connection)
+                    || !aggregate.TryGetResourceConnections(resourceIdentifier, out AccessListResourceConnection connection)
                     || connection.Created > connectedBefore)
                 {
-                    continue;
+                    return;
                 }
 
                 aggregate.RemoveResourceConnection(resourceIdentifier);
-                await aggregate.SaveChanges(cancellationToken);
+
+                try
+                {
+                    await aggregate.SaveChanges(cancellationToken);
+                    return;
+                }
+                catch (OptimisticConcurrencyException) when (attempt < MaxConnectionRemovalAttempts)
+                {
+                    // Try again with the list as it is now.
+                }
             }
         }
 
