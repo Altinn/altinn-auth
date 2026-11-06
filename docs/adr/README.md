@@ -15,6 +15,8 @@ This scope clarification was drafted with Codex (GPT-6). Human reader of the rev
 | Cross-cutting: repository conventions, build and CI, dependencies between verticals | `docs/adr/` (this folder) |
 | One vertical: flows, policy evaluation, API contracts, data model | `src/apps/<Vertical>/docs/adr/` (and the equivalent under `src/pkgs`, `src/libs`, `src/tools`) |
 
+Verticals with their own index today: [Altinn.Authorization](../../src/apps/Altinn.Authorization/docs/adr/README.md), [Altinn.AccessManagement](../../src/apps/Altinn.AccessManagement/docs/adr/README.md) and [Altinn.ResourceRegistry](../../src/apps/Altinn.ResourceRegistry/docs/adr/README.md).
+
 Each folder numbers its own ADRs from `0001`. A repository that is moved into this monorepo keeps its ADR numbers; only the folder changes. See [ADR-0001](0001-record-architecture-decisions.md).
 
 ## Rules

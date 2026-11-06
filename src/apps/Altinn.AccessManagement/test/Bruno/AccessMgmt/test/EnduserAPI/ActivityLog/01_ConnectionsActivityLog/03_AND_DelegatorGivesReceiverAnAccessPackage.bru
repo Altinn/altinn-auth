@@ -1,0 +1,57 @@
+meta {
+  name: 03_AND_DelegatorGivesReceiverAnAccessPackage
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&from={{party}}&to={{to}}&package={{package}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{to}}
+  package: {{package}}
+}
+
+docs {
+  AND the delegator gives the receiver an access package on the rightholder connection.
+
+  Expects 200 with the assignment package. Its id is the itemId of the access package
+  entries in the log.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().connections;
+
+  bru.setVar("party", td.delegator.partyUuid);
+  bru.setVar("to", td.receiver.partyUuid);
+  bru.setVar("package", td.package);
+
+  await loginAs(td.delegator);
+}
+
+script:post-response {
+  const body = res.getBody();
+  if (body && body.id) {
+    bru.setVar("al_assignmentPackageId", body.id);
+  }
+}
+
+tests {
+  const { sameId } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+
+  test("AND the access package is given, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the access package sits on the rightholder assignment", function() {
+    const body = res.getBody();
+    expect(body.id).to.be.a("string").that.is.not.empty;
+    expect(sameId(body.assignmentId, bru.getVar("al_assignmentId"))).to.equal(true);
+  });
+}

@@ -184,6 +184,8 @@ namespace Altinn.AccessMgmt.Core.Services
             }
 
             // The resource registry Delegable flag decides whether the resource may be delegated at all.
+            // The service owner ConnectionsController checks this first, to answer before ownership and with a detail;
+            // this guard is defence in depth, so the service does not depend on its caller for it.
             ServiceResource resourceMetadata = await contextRetrievalService.GetResource(resource.RefId, cancellationToken);
             if (resourceMetadata is null)
             {
@@ -325,6 +327,8 @@ namespace Altinn.AccessMgmt.Core.Services
         public async Task<Result<List<RightDto>>> GetResourceRights(string resource, string languageCode = "nb", CancellationToken cancellationToken = default)
         {
             // The same Delegable guard as in AddResource, so the lookup does not advertise rights the add endpoint refuses to delegate.
+            // The service owner ConnectionsController checks this first, to answer before ownership and with a detail;
+            // this guard is defence in depth, so the service does not depend on its caller for it.
             ServiceResource resourceMetadata = await contextRetrievalService.GetResource(resource, cancellationToken);
             if (resourceMetadata is null)
             {

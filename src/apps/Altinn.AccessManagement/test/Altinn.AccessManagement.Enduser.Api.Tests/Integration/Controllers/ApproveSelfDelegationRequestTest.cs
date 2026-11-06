@@ -143,7 +143,7 @@ public class ApproveSelfDelegationRequestTest
                     Id = PendingRequestId,
                     AssignmentId = reqAssignment.Id,
                     ResourceId = SelfDelegationResourceId,
-                    Status = RequestStatus.Pending,
+                    Status = RequestStatusV2.Pending,
                 });
                 db.SaveChanges();
             });
@@ -275,7 +275,7 @@ public class ApproveSelfDelegationRequestTest
                     Id = PendingRequestId,
                     AssignmentId = reqAssignment.Id,
                     ResourceId = SelfDelegationResourceId,
-                    Status = RequestStatus.Pending,
+                    Status = RequestStatusV2.Pending,
                 });
                 db.SaveChanges();
             });

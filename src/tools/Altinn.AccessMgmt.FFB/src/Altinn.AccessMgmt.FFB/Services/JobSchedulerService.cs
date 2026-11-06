@@ -114,6 +114,8 @@ public sealed class JobSchedulerService(
                 JobTypes.HistoryCleanup => FireHistoryCleanup(entry),
                 JobTypes.AssignmentSync => FireAssignmentSync(entry),
                 JobTypes.EntitySync => jobRunner.StartEntitySync(entry.Environment),
+                JobTypes.ActivityLogBackfill => FireActivityLogBackfill(entry),
+                JobTypes.ActivityLogPartitions => FireActivityLogPartitions(entry),
                 _ => LogUnknownJobType(entry),
             };
         }
@@ -129,7 +131,7 @@ public sealed class JobSchedulerService(
         logger.LogError(
             "Schedule '{Id}' has unknown JobType '{JobType}'. Valid values: {ValidTypes}",
             entry.Id, entry.JobType,
-            string.Join(", ", JobTypes.IngestCleanup, JobTypes.HistoryCleanup, JobTypes.AssignmentSync, JobTypes.EntitySync));
+            string.Join(", ", JobTypes.IngestCleanup, JobTypes.HistoryCleanup, JobTypes.AssignmentSync, JobTypes.EntitySync, JobTypes.ActivityLogBackfill, JobTypes.ActivityLogPartitions));
         return null;
     }
 
@@ -161,6 +163,23 @@ public sealed class JobSchedulerService(
         return jobRunner.StartAssignmentSync(entry.Environment, new AssignmentSyncOptions(
             ForceFullScan: opts.ForceFullScan,
             SystemAccountId: systemAccountId));
+    }
+
+    private JobRun FireActivityLogBackfill(JobScheduleEntry entry)
+    {
+        var opts = entry.ActivityLogBackfillOptions ?? new ScheduledActivityLogBackfillOptions();
+        return jobRunner.StartActivityLogBackfill(entry.Environment, new ActivityLogBackfillOptions(
+            Source: opts.Source,
+            BatchSize: opts.BatchSize,
+            DelayMs: opts.DelayMs,
+            MaxBatches: opts.MaxBatches));
+    }
+
+    private JobRun FireActivityLogPartitions(JobScheduleEntry entry)
+    {
+        var opts = entry.ActivityLogPartitionOptions ?? new ScheduledActivityLogPartitionOptions();
+        return jobRunner.StartActivityLogPartitions(entry.Environment, new ActivityLogPartitionOptions(
+            MonthsAhead: opts.MonthsAhead));
     }
 
     private bool TryParseCron(string cron, string scheduleId, out CronExpression result)

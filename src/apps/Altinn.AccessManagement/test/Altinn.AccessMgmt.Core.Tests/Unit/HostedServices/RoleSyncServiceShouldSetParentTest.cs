@@ -47,6 +47,20 @@ public class RoleSyncServiceShouldSetParentTest
     }
 
     [Fact]
+    public void IsEstateAdministrator_EstateAdministratorRole_ReturnsTrue()
+    {
+        var item = Event(RoleConstants.EstateAdministrator.Entity.Code);
+        RoleSyncService.IsEstateAdministrator(item).Should().BeTrue();
+    }
+
+    [Fact]
+    public void IsEstateAdministrator_OtherRole_ReturnsFalse()
+    {
+        var item = Event(RoleConstants.HasAsRegistrationUnitBEDR.Entity.Code);
+        RoleSyncService.IsEstateAdministrator(item).Should().BeFalse();
+    }
+
+    [Fact]
     public void ShouldSetParent_Ados_Enabled_ReturnsTrue()
     {
         var item = Event(RoleConstants.AdministrativeUnitPublicSector.Entity.Code);

@@ -1,5 +1,5 @@
 ﻿using Altinn.AccessManagement.Core.Enums;
-using Altinn.AccessManagement.Core.Models.Rights;
+using Altinn.Authorization.Api.Contracts.Authorization;
 using Altinn.Urn.Json;
 
 namespace Altinn.AccessManagement.Core.Models;

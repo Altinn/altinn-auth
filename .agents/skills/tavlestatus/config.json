@@ -1,0 +1,51 @@
+{
+  "project": {
+    "owner": "Altinn",
+    "number": 196,
+    "url": "https://github.com/orgs/Altinn/projects/196"
+  },
+  "repos": [
+    "Altinn/altinn-auth",
+    "Altinn/altinn-access-management-frontend",
+    "Altinn/altinn-authorization-utils",
+    "Altinn/altinn-register"
+  ],
+  "statuses": {
+    "backlog": ["Backlog"],
+    "ready": ["Ready"],
+    "inProgress": ["In progress"],
+    "inReview": ["In review"],
+    "done": ["Done"]
+  },
+  "wipLimit": null,
+  "thresholds": {
+    "inProgressDays": 14,
+    "inReviewDays": 5,
+    "triageDays": 7,
+    "prWaitingDays": 2,
+    "doneWindowDays": 7,
+    "fieldUsagePercent": 10,
+    "stalePrDays": 30
+  },
+  "fieldsToCheck": ["Priority", "Horizon", "Size", "Sprint", "Target date"],
+  "areaNames": {
+    "access-management": "Tilgangsstyring",
+    "access-management-frontend": "Tilgangsstyring – brukerflate",
+    "authorization": "Autorisasjon (PDP)",
+    "authentication": "Autentisering og systembruker",
+    "consent": "Samtykke",
+    "register": "Register",
+    "resource-registry": "Ressursregister",
+    "auditlog": "Revisjonslogg",
+    "packages": "NuGet-pakker (PEP og ABAC)",
+    "libs": "Felles biblioteker",
+    "tools": "Verktøy",
+    "infra": "Plattform, CI/CD og infrastruktur",
+    "devex": "Utviklermiljø og repo-verktøy",
+    "docs": "Dokumentasjon"
+  },
+  "exclude": {
+    "authorLogins": ["dependabot", "renovate", "github-actions", "altinn-renovate"],
+    "titlePatterns": ["^release(\\(|:)", "^(chore|fix|build)\\(deps(-dev)?\\)", "^chore: release", "^Update dependency ", "^Bump "]
+  }
+}

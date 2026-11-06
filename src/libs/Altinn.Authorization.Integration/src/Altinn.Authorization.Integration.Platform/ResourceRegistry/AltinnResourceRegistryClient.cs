@@ -35,6 +35,19 @@ public interface IAltinnResourceRegistry
     Task<IAsyncEnumerable<PlatformResponse<PageStream<ResourceUpdatedModel>>>> StreamResources(DateTime since = default, string nextPage = null, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Streams resources whose metadata or policy has changed from the Altinn Resource Register in a paginated manner.
+    /// Every page with items links to the next position, so the latest next link can be stored to resume the feed.
+    /// An empty page without a next link means there are no more changes yet.
+    /// </summary>
+    /// <param name="nextPage">Optional. The URL of the next page of changes, if available. Omit to start from the beginning.</param>
+    /// <param name="cancellationToken">Token for canceling the operation.</param>
+    /// <returns>
+    /// An asynchronous stream of paginated <see cref="ResourceChangeModel"/> objects,
+    /// wrapped in a <see cref="PlatformResponse{T}"/>.
+    /// </returns>
+    Task<IAsyncEnumerable<PlatformResponse<PageStream<ResourceChangeModel>>>> StreamResourceChanges(string nextPage = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Retrieves details of a specific resource from the Altinn Resource Register.
     /// </summary>
     /// <param name="id">The unique identifier of the resource.</param>

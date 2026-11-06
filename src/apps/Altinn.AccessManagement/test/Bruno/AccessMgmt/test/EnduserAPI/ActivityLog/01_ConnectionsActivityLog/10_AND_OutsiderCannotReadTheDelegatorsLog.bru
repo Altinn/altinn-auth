@@ -1,0 +1,36 @@
+meta {
+  name: 10_AND_OutsiderCannotReadTheDelegatorsLog
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/connections/activitylog?party={{party}}&direction=from
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  direction: from
+}
+
+docs {
+  AND an outsider cannot read the delegator's log. The outsider has no right to act for
+  the delegator, so the authorization check on the party fails with 403 and no body.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata();
+
+  bru.setVar("party", td.connections.delegator.partyUuid);
+
+  await loginAs(td.outsider);
+}
+
+tests {
+  test("AND the outsider is refused with 403", function() {
+    expect(res.status).to.equal(403);
+  });
+}

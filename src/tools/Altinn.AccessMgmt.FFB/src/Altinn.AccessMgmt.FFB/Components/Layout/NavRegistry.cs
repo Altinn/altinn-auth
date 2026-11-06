@@ -43,6 +43,8 @@ public static class NavRegistry
             "Finn og rydd opp foreldreløse resource-rader basert på et RefId-prefix.", NavGroup.Tool),
         new("/tools/grant-check", Icons.Material.Filled.Key, "Grant Check",
             "Sjekker at DB-rollene har riktige privilegier på alle tabellene i modellen. Kjører GRANT for manglende.", NavGroup.Tool),
+        new("/tools/activitylog", Icons.Material.Filled.EventNote, "Aktivitetslogg",
+            "Bla og filtrer i dbo.activitylog — hendelser for assignments, delegeringer og forespørsler.", NavGroup.Tool),
 
         // ── Jobber ────────────────────────────────────────────────────────────
         new("/jobs/runs", Icons.Material.Filled.PlayCircle, "Kjøringer",
@@ -57,6 +59,8 @@ public static class NavRegistry
             "Slår sammen og rydder utløpte historikkrader (audit_validto IS NOT NULL).", NavGroup.Job),
         new("/jobs/assignment-instance-cleanup", Icons.Material.Filled.SwapHoriz, "Assignment Instance Cleanup",
             "Flytter AssignmentInstance-rader til app-styrte rettighetshaver-forhold. Destruktiv engangsjobb uten forhåndsvisning.", NavGroup.Job),
+        new("/jobs/activitylog-backfill", Icons.Material.Filled.ManageHistory, "Aktivitetslogg Backfill",
+            "Fyller dbo.activitylog med historiske hendelser fra live- og historikktabellene, i strupede batcher. Vedlikeholder også partisjoner.", NavGroup.Job),
         new("/jobs/schedules", Icons.Material.Filled.Schedule, "Planlagte kjøringer",
             "Cron-baserte planer konfigurert i appsettings.json. Kjør manuelt eller se neste tidspunkt.", NavGroup.Job),
     ];

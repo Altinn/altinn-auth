@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Altinn.ResourceRegistry.Tests.Mocks;
 using AltinnCore.Authentication.Constants;
 using Azure.Security.KeyVault.Certificates;

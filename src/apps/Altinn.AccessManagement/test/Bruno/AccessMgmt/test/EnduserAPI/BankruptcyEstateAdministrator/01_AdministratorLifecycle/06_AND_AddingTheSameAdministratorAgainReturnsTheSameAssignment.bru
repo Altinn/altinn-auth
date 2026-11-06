@@ -1,0 +1,51 @@
+meta {
+  name: 06_AND_AddingTheSameAdministratorAgainReturnsTheSameAssignment
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/administrators?party={{party}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+body:json {
+  {
+    "personIdentifier": "{{personIdentifier}}",
+    "lastName": "{{lastName}}"
+  }
+}
+
+docs {
+  AND adding the same assistant again is idempotent: expects 200 with the assignment created
+  in step 03, not a new one.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  bru.setVar("party", td.BOSTYRER.partyUuid);
+  bru.setVar("personIdentifier", td.user_LUN_ANALYSE_GÅSTOL.pid);
+  bru.setVar("lastName", td.user_LUN_ANALYSE_GÅSTOL.lastname);
+
+  await helpers.loginAs(td.BOSTYRER);
+}
+
+tests {
+  test("AND adding the assistant again returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the response is the existing assignment", function() {
+    expect(res.getBody().id).to.equal(bru.getVar("administratorAssignmentId"));
+  });
+}

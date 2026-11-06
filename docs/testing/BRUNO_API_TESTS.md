@@ -66,6 +66,12 @@ The reference is `test/EnduserAPI/ClientDelegationsV2/` (v2 client delegation):
   full problem body: status, `code`, `validationErrors[].code`, and the parameter the
   error points at. Authorization negatives (401/403) assert the status only, since those
   responses carry no problem body.
+- A suite whose seed data exists only in some environments skips itself elsewhere: each
+  step calls a `helpers.js` guard that runs `bru.runner.skipRequest()` unless `tokenEnv` is
+  supported. `test/EnduserAPI/BankruptcyEstateAdministrator/` runs in AT22 and TT02.
+- Leave out negatives that would leave lasting state in the shared environment, such as
+  failed person lookups, which lock the caller out of lookups for an hour. Cover those in
+  unit or integration tests instead.
 
 ## Using them as a spec for C# tests
 
@@ -84,3 +90,8 @@ The reference is `test/EnduserAPI/ClientDelegationsV2/` (v2 client delegation):
   deployed environment. They are not part of GitHub CI (`dotnet test` / GitHub Actions).
 - **Manually:** open the collection in the Bruno app, or `bru run` via the CLI; pick an
   environment and supply secrets via `.env` (see `.env.sample`).
+
+`.bru` files must be UTF-8 **without** a BOM. The CLI parses the whole collection before
+it sends a request, so one `.bru` file with a BOM fails the entire run with
+`Expected end of input` at line 1, col 1. `.editorconfig` sets `charset = utf-8` for
+`*.bru`, overriding the repository default `utf-8-bom`.

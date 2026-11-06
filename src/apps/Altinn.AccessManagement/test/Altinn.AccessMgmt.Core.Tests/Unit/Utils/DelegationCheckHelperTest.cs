@@ -148,13 +148,13 @@ public class DelegationCheckHelperTest
     public void GetFirstAccessorValuesFromPolicy_SingleRoleMatchInSubjectCategory_ReturnsFormattedValue()
     {
         var rule = MakeRule(
-            subject: (AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute, "dagl"));
+            subject: (AltinnXacmlConstants.MatchAttributeIdentifiers.LegacyRoleAttribute, "dagl"));
 
         var result = DelegationCheckHelper.GetFirstAccessorValuesFromPolicy(
             rule, XacmlConstants.MatchAttributeCategory.Subject).ToList();
 
         result.Should().ContainSingle();
-        result[0].Should().Be($"{AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute}:dagl");
+        result[0].Should().Be($"{AltinnXacmlConstants.MatchAttributeIdentifiers.LegacyRoleAttribute}:dagl");
     }
 
     [Fact]
@@ -163,8 +163,8 @@ public class DelegationCheckHelperTest
         // Two matches in a single AllOf → count != 1 → excluded
         var allOf = new XacmlAllOf(
         [
-            MakeXacmlMatch(XacmlConstants.MatchAttributeCategory.Subject, AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute, "dagl"),
-            MakeXacmlMatch(XacmlConstants.MatchAttributeCategory.Subject, AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute, "regn"),
+            MakeXacmlMatch(XacmlConstants.MatchAttributeCategory.Subject, AltinnXacmlConstants.MatchAttributeIdentifiers.LegacyRoleAttribute, "dagl"),
+            MakeXacmlMatch(XacmlConstants.MatchAttributeCategory.Subject, AltinnXacmlConstants.MatchAttributeIdentifiers.LegacyRoleAttribute, "regn"),
         ]);
         var rule = new XacmlRule("r", XacmlEffectType.Permit)
         {
@@ -195,7 +195,7 @@ public class DelegationCheckHelperTest
     public void DecomposePolicy_MatchingResourceAndRoleSubject_ReturnsOneRight()
     {
         var rule = MakeRule(
-            subject: (AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute, "dagl"),
+            subject: (AltinnXacmlConstants.MatchAttributeIdentifiers.LegacyRoleAttribute, "dagl"),
             resources: [(AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute, "my-resource-id")],
             action: ("urn:oasis:names:tc:xacml:1.0:action:action-id", "read"));
         var policy = MakePolicy(rule);
@@ -204,14 +204,30 @@ public class DelegationCheckHelperTest
 
         result.Should().ContainSingle();
         result[0].AccessorUrns.Should().ContainSingle(u =>
-            u == $"{AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute}:dagl");
+            u == $"{AltinnXacmlConstants.MatchAttributeIdentifiers.LegacyRoleAttribute}:dagl");
+    }
+
+    [Fact]
+    public void DecomposePolicy_MatchingResourceAndAltinnRoleSubject_ReturnsOneRight()
+    {
+        var rule = MakeRule(
+            subject: (AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute, "innbygger-konkursbo-administrator"),
+            resources: [(AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute, "my-resource-id")],
+            action: ("urn:oasis:names:tc:xacml:1.0:action:action-id", "read"));
+        var policy = MakePolicy(rule);
+
+        var result = DelegationCheckHelper.DecomposePolicy(policy, "my-resource-id");
+
+        result.Should().ContainSingle();
+        result[0].AccessorUrns.Should().ContainSingle(u =>
+            u == "urn:altinn:role:innbygger-konkursbo-administrator");
     }
 
     [Fact]
     public void DecomposePolicy_NonMatchingResource_ReturnsEmpty()
     {
         var rule = MakeRule(
-            subject: (AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute, "dagl"),
+            subject: (AltinnXacmlConstants.MatchAttributeIdentifiers.LegacyRoleAttribute, "dagl"),
             resources: [(AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute, "other-resource")],
             action: ("urn:oasis:names:tc:xacml:1.0:action:action-id", "read"));
         var policy = MakePolicy(rule);

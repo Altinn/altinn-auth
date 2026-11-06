@@ -1,0 +1,230 @@
+@page "/jobs/activitylog-backfill"
+@inject IJobRunner JobRunner
+@inject IDialogService DialogService
+
+<PageTitle>Aktivitetslogg Backfill</PageTitle>
+
+<MudText Typo="Typo.h4" GutterBottom="true">Aktivitetslogg Backfill</MudText>
+<MudText Typo="Typo.body1" Class="mb-6 mud-text-secondary">
+    Fyller <code>dbo.activitylog</code> med hendelser syntetisert fra live-tabellene og
+    <code>dbo_history</code> for alt som skjedde før trigger-cutoff. Jobben er idempotent og kan
+    stoppes/gjenopptas fritt — fremdrift ligger i <code>dbo.activitylogbackfillprogress</code>.
+    Innsettingen skjer i små batcher med pause mellom, så den kan gå stille i bakgrunnen.
+    «Analyser» teller hva en kjøring ville satt inn — per kilde og hendelsestype — uten å skrive noe.
+</MudText>
+
+@* ── Backfill panel ───────────────────────────────────────────────────────── *@
+<MudPaper Elevation="1" Class="pa-4 mb-6">
+    <MudText Typo="Typo.h6" Class="mb-3">Start backfill</MudText>
+
+    <MudGrid>
+        <MudItem xs="12">
+            <EnvironmentMultiSelect @bind-Selection="_selected" Label="Kjør på miljø:" />
+        </MudItem>
+
+        <MudItem xs="12" md="3">
+            <MudSelect T="string" @bind-Value="_source" Label="Kilde" Variant="Variant.Outlined" Dense="true">
+                <MudSelectItem Value="@("all")">all</MudSelectItem>
+                @foreach (var source in ActivityLogBackfillJob.Sources)
+                {
+                    <MudSelectItem Value="@source">@source</MudSelectItem>
+                }
+            </MudSelect>
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudNumericField T="int" @bind-Value="_batchSize" Label="Batch-størrelse" Variant="Variant.Outlined" Min="100" Max="100000" />
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudNumericField T="int" @bind-Value="_delayMs" Label="Pause mellom batcher (ms)" Variant="Variant.Outlined" Min="0" Max="60000" />
+        </MudItem>
+        <MudItem xs="12" md="3">
+            <MudNumericField T="int" @bind-Value="_maxBatches" Label="Maks batcher (0 = til ferdig)" Variant="Variant.Outlined" Min="0" Max="1000000" />
+        </MudItem>
+
+        <MudItem xs="12">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.PlayArrow"
+                       Disabled="@(!AnySelected)"
+                       OnClick="StartBackfill">
+                Start backfill
+            </MudButton>
+            <MudButton Variant="Variant.Outlined"
+                       Class="ml-2"
+                       StartIcon="@Icons.Material.Filled.QueryStats"
+                       Disabled="@(!AnySelected)"
+                       OnClick="StartAnalyze">
+                Analyser
+            </MudButton>
+            <MudButton Variant="Variant.Outlined"
+                       Class="ml-2"
+                       StartIcon="@Icons.Material.Filled.Schedule"
+                       Disabled="@(!AnySelected)"
+                       OnClick="OpenScheduleDialog">
+                Generer konfig
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@* ── Manual schema panel ──────────────────────────────────────────────────── *@
+<MudPaper Elevation="1" Class="pa-4 mb-6">
+    <MudText Typo="Typo.h6" Class="mb-3">Manuell skjemainstallasjon (test)</MudText>
+    <MudText Typo="Typo.body2" Class="mb-3 mud-text-secondary">
+        Kjører SQL-en fra ActivityLog-migrasjonen manuelt — uten å røre <code>__EFMigrationsHistory</code> —
+        for å teste triggere, analyse og backfill i miljøer som ikke har migreringen ennå. Begge
+        operasjonene nekter å kjøre i miljøer der EF alt har migrert. Rull tilbake før den ekte
+        migreringen kjøres der.
+    </MudText>
+
+    <MudButton Variant="Variant.Filled"
+               Color="Color.Primary"
+               StartIcon="@Icons.Material.Filled.Build"
+               Disabled="@(!AnySelected)"
+               OnClick="StartSchemaInstall">
+        Installer skjema
+    </MudButton>
+    <MudButton Variant="Variant.Outlined"
+               Color="Color.Error"
+               Class="ml-2"
+               StartIcon="@Icons.Material.Filled.DeleteForever"
+               Disabled="@(!AnySelected)"
+               OnClick="ConfirmSchemaRollback">
+        Rull tilbake skjema
+    </MudButton>
+</MudPaper>
+
+@* ── Partition panel ──────────────────────────────────────────────────────── *@
+<MudPaper Elevation="1" Class="pa-4 mb-6">
+    <MudText Typo="Typo.h6" Class="mb-3">Partisjonsvedlikehold</MudText>
+    <MudText Typo="Typo.body2" Class="mb-3 mud-text-secondary">
+        Oppretter manglende månedspartisjoner for <code>dbo.activitylog</code> frem i tid.
+        Kan også planlegges via JobType <code>ActivityLogPartitions</code>.
+    </MudText>
+
+    <MudGrid>
+        <MudItem xs="12" md="3">
+            <MudNumericField T="int" @bind-Value="_monthsAhead" Label="Måneder frem" Variant="Variant.Outlined" Min="1" Max="120" />
+        </MudItem>
+        <MudItem xs="12">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.CalendarMonth"
+                       Disabled="@(!AnySelected)"
+                       OnClick="StartPartitions">
+                Opprett partisjoner
+            </MudButton>
+        </MudItem>
+    </MudGrid>
+</MudPaper>
+
+@* ── Runs ─────────────────────────────────────────────────────────────────── *@
+<JobRunList @ref="_backfillRuns" JobName="@ActivityLogBackfillJob.JobName" MatchByPrefix="true" />
+<JobRunList @ref="_schemaRuns" JobName="@ActivityLogSchemaJob.JobName" MatchByPrefix="true" />
+<JobRunList @ref="_partitionRuns" JobName="@ActivityLogPartitionJob.JobName" />
+
+@code {
+    private Dictionary<string, bool> _selected = new();
+    private string _source = "all";
+    private int _batchSize = 5000;
+    private int _delayMs = 250;
+    private int _maxBatches = 0;
+    private int _monthsAhead = 24;
+    private JobRunList _backfillRuns = default!;
+    private JobRunList _schemaRuns = default!;
+    private JobRunList _partitionRuns = default!;
+
+    private bool AnySelected => _selected.Values.Any(v => v);
+
+    private void StartBackfill()
+    {
+        var opts = new ActivityLogBackfillOptions(Source: _source, BatchSize: _batchSize, DelayMs: _delayMs, MaxBatches: _maxBatches);
+
+        foreach (var env in _selected.Where(kv => kv.Value).Select(kv => kv.Key))
+        {
+            JobRunner.StartActivityLogBackfill(env, opts);
+        }
+
+        _backfillRuns.Refresh();
+    }
+
+    private void StartAnalyze()
+    {
+        foreach (var env in _selected.Where(kv => kv.Value).Select(kv => kv.Key))
+        {
+            JobRunner.StartActivityLogAnalyze(env, _source);
+        }
+
+        _backfillRuns.Refresh();
+    }
+
+    private void StartSchemaInstall()
+    {
+        foreach (var env in _selected.Where(kv => kv.Value).Select(kv => kv.Key))
+        {
+            JobRunner.StartActivityLogSchemaInstall(env);
+        }
+
+        _schemaRuns.Refresh();
+    }
+
+    private async Task ConfirmSchemaRollback()
+    {
+        var environments = _selected.Where(kv => kv.Value).Select(kv => kv.Key).ToList();
+
+        var confirmed = await Confirm.ShowAsync(
+            DialogService,
+            "Rull tilbake aktivitetslogg-skjema",
+            $"Dette sletter dbo.activitylog med ALT innhold, alle triggere og støttefunksjoner i: {string.Join(", ", environments)}. Fortsette?",
+            "Rull tilbake");
+
+        if (confirmed)
+        {
+            foreach (var env in environments)
+            {
+                JobRunner.StartActivityLogSchemaRollback(env);
+            }
+
+            _schemaRuns.Refresh();
+        }
+    }
+
+    private void StartPartitions()
+    {
+        var opts = new ActivityLogPartitionOptions(MonthsAhead: _monthsAhead);
+
+        foreach (var env in _selected.Where(kv => kv.Value).Select(kv => kv.Key))
+        {
+            JobRunner.StartActivityLogPartitions(env, opts);
+        }
+
+        _partitionRuns.Refresh();
+    }
+
+    private async Task OpenScheduleDialog()
+    {
+        var entries = _selected.Where(kv => kv.Value).Select(kv => kv.Key).Select(env => new JobScheduleEntry
+        {
+            Id = $"activitylog-backfill-{env.ToLowerInvariant()}",
+            JobType = JobTypes.ActivityLogBackfill,
+            Environment = env,
+            Cron = "0 1 * * *",
+            Enabled = true,
+            ActivityLogBackfillOptions = new ScheduledActivityLogBackfillOptions
+            {
+                Source = _source,
+                BatchSize = _batchSize,
+                DelayMs = _delayMs,
+                MaxBatches = _maxBatches,
+            },
+        }).ToList();
+
+        var parameters = new DialogParameters<ScheduleConfigDialog>
+        {
+            { x => x.Entries, entries },
+        };
+
+        await DialogService.ShowAsync<ScheduleConfigDialog>("Generer plan-konfig", parameters,
+            new DialogOptions { MaxWidth = MaxWidth.Medium, FullWidth = true });
+    }
+}

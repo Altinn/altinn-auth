@@ -1,0 +1,15 @@
+apiVersion: application.dis.altinn.cloud/v1alpha1
+kind: ApplicationIdentity
+metadata:
+  name: authn-init
+  labels:
+    app.kubernetes.io/name: authentication-pre-deploy
+spec: {}
+---
+apiVersion: application.dis.altinn.cloud/v1alpha1
+kind: ApplicationIdentity
+metadata:
+  name: authn-api
+  labels:
+    app.kubernetes.io/name: authentication-api
+spec: {}
