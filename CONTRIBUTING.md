@@ -63,7 +63,7 @@ This clarification of ADR scope was drafted with Codex (GPT-6). Human reader of 
 
 ## Working with AI assistance
 
-Using an AI assistant is a personal choice. Nobody is required to use one, and nobody is criticised for using or not using one. The rules below are not optional; they are what makes the choice safe for everyone. The reasoning behind them, with sources, is in [docs/ai/working-agreement-rationale.md](docs/ai/working-agreement-rationale.md).
+Using an AI assistant is a personal choice. Nobody is required to use one, and nobody is criticised for using or not using one. The rules below are not optional; they are what makes the choice safe for everyone. The reasoning behind them, with sources, is in [docs/ai/working-agreement-rationale.md](docs/ai/working-agreement-rationale.md). New to it? Start with [docs/ai/README.md](docs/ai/README.md).
 
 1. **You own what you submit.** Whatever produced the code, you understand it and can explain every line in review, in your own words. "The tool wrote it" is not an answer.
 2. **Disclose substantial assistance.** If an assistant generated or substantially rewrote code, tests or documentation, say so in the PR description: what it did and how you verified it. Autocomplete, grammar fixes and answering your questions need no disclosure. If your tool adds a `Co-authored-by` or `Assisted-by` trailer, leave it in. An ADR, security assessment or other decision record written with substantial assistance says so in the document and names the model.
