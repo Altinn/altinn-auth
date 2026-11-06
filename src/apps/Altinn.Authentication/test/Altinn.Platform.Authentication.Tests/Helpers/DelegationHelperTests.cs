@@ -534,6 +534,30 @@ namespace Altinn.Platform.Authentication.Helpers.Tests
         }
 
         [Fact]
+        public async Task UserDelegationCheckForReportee_RightWithNoResource_IsSkipped()
+        {
+            // Arrange
+            var systemRegisterService = new Mock<ISystemRegisterService>();
+            var accessManagementClient = new Mock<IAccessManagementClient>();
+
+            // A System that only uses access packages can register a Right with no resource
+            systemRegisterService
+                .Setup(s => s.GetRightsForRegisteredSystem(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new List<Right> { new() });
+
+            var helper = new DelegationHelper(systemRegisterService.Object, accessManagementClient.Object, NullLogger<DelegationHelper>.Instance);
+
+            // Act
+            var result = await helper.UserDelegationCheckForReportee(Guid.NewGuid(), "sys", [], true);
+
+            // Assert
+            Assert.True(result.CanDelegate);
+            Assert.NotNull(result.RightResponses);
+            Assert.Empty(result.RightResponses);
+            accessManagementClient.Verify(a => a.CheckDelegationAccess(It.IsAny<Guid>(), It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        }
+
+        [Fact]
         public async Task UserDelegationCheckForReportee_RightsNotVerified_ReturnsUnknownRightError()
         {
             // Arrange
@@ -567,7 +591,7 @@ namespace Altinn.Platform.Authentication.Helpers.Tests
             var systemRegisterService = new Mock<ISystemRegisterService>();
             var accessManagementClient = new Mock<IAccessManagementClient>();
 
-            var right = new Right { Action = "read", Resource = new List<AttributePair>() };
+            var right = new Right { Action = "read", Resource = new List<AttributePair> { new() { Id = "urn:altinn:resource", Value = "report" } } };
             systemRegisterService
                 .Setup(s => s.GetRightsForRegisteredSystem(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<Right> { right });
@@ -623,7 +647,7 @@ namespace Altinn.Platform.Authentication.Helpers.Tests
             var systemRegisterService = new Mock<ISystemRegisterService>();
             var accessManagementClient = new Mock<IAccessManagementClient>();
 
-            var right = new Right { Action = "read", Resource = new List<AttributePair>() };
+            var right = new Right { Action = "read", Resource = new List<AttributePair> { new() { Id = "urn:altinn:resource", Value = "report" } } };
             systemRegisterService
                 .Setup(s => s.GetRightsForRegisteredSystem(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<Right> { right });
@@ -703,7 +727,7 @@ namespace Altinn.Platform.Authentication.Helpers.Tests
             var systemRegisterService = new Mock<ISystemRegisterService>();
             var accessManagementClient = new Mock<IAccessManagementClient>();
 
-            var right = new Right { Action = "read", Resource = new List<AttributePair>() };
+            var right = new Right { Action = "read", Resource = new List<AttributePair> { new() { Id = "urn:altinn:resource", Value = "report" } } };
             systemRegisterService
                 .Setup(s => s.GetRightsForRegisteredSystem(It.IsAny<string>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new List<Right> { right });
