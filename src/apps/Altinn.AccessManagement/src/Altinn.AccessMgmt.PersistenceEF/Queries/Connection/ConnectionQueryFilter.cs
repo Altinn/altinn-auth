@@ -91,9 +91,11 @@ public sealed class ConnectionQueryFilter
     /// <summary>
     /// Gets or sets a value indicating whether to exclude connections to deleted parties.
     /// Applies to the party on the other side of the query: <c>From</c> for FromOthers and <c>To</c> for ToOthers.
-    /// A subunit whose main unit is deleted is excluded as well.
-    /// Takes precedence over <see cref="IncludeAdosSubunitInheritance"/>: a deleted ADOS entity, and an active ADOS entity
-    /// under a deleted main unit, are always excluded, whether or not ADOS subunit inheritance is enabled.
+    /// Only the party's own deletion status is checked, not its main unit's: an active subunit of a deleted main unit is kept
+    /// when the connection is given by the subunit itself. Connections that a subunit inherits from a deleted main unit are
+    /// excluded, since the main unit that gave them is deleted.
+    /// Takes precedence over <see cref="IncludeAdosSubunitInheritance"/>: a deleted ADOS entity is always excluded, whether or not
+    /// ADOS subunit inheritance is enabled.
     /// </summary>
     public bool ExcludeDeleted { get; init; } = false;
 

@@ -1242,10 +1242,11 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task GetConnectionsFromOthers_ExcludeDeletedTrue_ExcludesDeletedPartiesAndSubunitsOfDeletedMainUnit(bool withFromFilter)
+    public async Task GetConnectionsFromOthers_ExcludeDeletedTrue_ExcludesDeletedPartiesButKeepsActiveSubunitOfDeletedMainUnit(bool withFromFilter)
     {
         // Without a party filter the subunits are nested in the enricher; with up to 20 party ids they are nested in SQL.
-        // Both paths must give the same result.
+        // Both paths must give the same result. Only the party's own status counts: the active subunit of a deleted main unit
+        // keeps the access it gave directly, but nothing is inherited from the deleted main unit.
         string[] allParties = ["Slettet Hovedenhet", "Slettet Hovedenhet - Avd", "Aktiv Hovedenhet", "Aktiv Hovedenhet - Slettet Avd", "Aktiv Hovedenhet - Aktiv Avd"];
 
         var filter = new ConnectionQueryFilter
@@ -1261,8 +1262,12 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
         var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
         var fromIds = dbResult.Select(r => r.FromId).ToHashSet();
 
-        Assert.DoesNotContain(TestDataSet.GetEntity("Slettet Hovedenhet").Id, fromIds);
-        Assert.DoesNotContain(TestDataSet.GetEntity("Slettet Hovedenhet - Avd").Id, fromIds);
+        var deletedMainUnitId = TestDataSet.GetEntity("Slettet Hovedenhet").Id;
+        var activeSubunitOfDeletedId = TestDataSet.GetEntity("Slettet Hovedenhet - Avd").Id;
+
+        Assert.DoesNotContain(deletedMainUnitId, fromIds);
+        Assert.Contains(dbResult, r => r.FromId == activeSubunitOfDeletedId && r.Reason != ConnectionReason.Hierarchy);
+        Assert.DoesNotContain(dbResult, r => r.FromId == activeSubunitOfDeletedId && r.ViaId == deletedMainUnitId);
         Assert.DoesNotContain(TestDataSet.GetEntity("Aktiv Hovedenhet - Slettet Avd").Id, fromIds);
         Assert.Contains(TestDataSet.GetEntity("Aktiv Hovedenhet").Id, fromIds);
         Assert.Contains(dbResult, r => r.FromId == TestDataSet.GetEntity("Aktiv Hovedenhet - Aktiv Avd").Id && r.Reason == ConnectionReason.Hierarchy);
@@ -1347,10 +1352,10 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
     [InlineData(false, true)]
     [InlineData(true, false)]
     [InlineData(true, true)]
-    public async Task GetConnectionsFromOthers_ExcludeDeletedTrue_ExcludesAdosEntityUnderDeletedMainUnitRegardlessOfAdosInheritance(bool adosSubunitInheritance, bool withFromFilter)
+    public async Task GetConnectionsFromOthers_ExcludeDeletedTrue_KeepsActiveAdosEntityUnderDeletedMainUnitRegardlessOfAdosInheritance(bool adosSubunitInheritance, bool withFromFilter)
     {
-        // ExcludeDeleted on the main unit takes precedence over ADOS subunit inheritance: the active ADOS entity is removed
-        // even when inheritance is disabled and it would otherwise be a top-level party of its own.
+        // Only the party's own status counts: the active ADOS entity keeps the access it gave directly, whether or not
+        // inheritance is enabled, but nothing is inherited from its deleted main unit.
         var query = new ConnectionQuery(_db, adosSubunitInheritanceEnabled: adosSubunitInheritance);
         string[] parties = ["ADOS Slettet Hovedenhet", "ADOS Under Slettet Hovedenhet", "Aktiv Hovedenhet"];
 
@@ -1366,8 +1371,12 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
 
         var dbResult = await query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
 
-        Assert.DoesNotContain(dbResult, r => r.FromId == TestDataSet.GetEntity("ADOS Slettet Hovedenhet").Id);
-        Assert.DoesNotContain(dbResult, r => r.FromId == TestDataSet.GetEntity("ADOS Under Slettet Hovedenhet").Id);
+        var deletedMainUnitId = TestDataSet.GetEntity("ADOS Slettet Hovedenhet").Id;
+        var adosEntityId = TestDataSet.GetEntity("ADOS Under Slettet Hovedenhet").Id;
+
+        Assert.DoesNotContain(dbResult, r => r.FromId == deletedMainUnitId);
+        Assert.Contains(dbResult, r => r.FromId == adosEntityId && r.Reason != ConnectionReason.Hierarchy);
+        Assert.DoesNotContain(dbResult, r => r.FromId == adosEntityId && r.ViaId == deletedMainUnitId);
         Assert.Contains(dbResult, r => r.FromId == TestDataSet.GetEntity("Aktiv Hovedenhet").Id);
     }
 
@@ -1404,8 +1413,9 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
     }
 
     [Fact]
-    public async Task GetConnectionsToOthers_ExcludeDeletedTrue_ExcludesDeletedRecipients()
+    public async Task GetConnectionsToOthers_ExcludeDeletedTrue_ExcludesDeletedRecipientsButKeepsActiveSubunitOfDeletedMainUnit()
     {
+        // Only the recipient's own status counts, not the status of its main unit.
         var filter = new ConnectionQueryFilter
         {
             FromIds = new[] { TestDataSet.GetEntity("Aktiv Hovedenhet").Id },
@@ -1416,7 +1426,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
         var dbResult = await _query.GetConnectionsToOthersAsync(filter, TestContext.Current.CancellationToken);
 
         Assert.DoesNotContain(dbResult, r => r.ToId == TestDataSet.GetEntity("Slettet Hovedenhet").Id);
-        Assert.DoesNotContain(dbResult, r => r.ToId == TestDataSet.GetEntity("Slettet Hovedenhet - Avd").Id);
+        Assert.Contains(dbResult, r => r.ToId == TestDataSet.GetEntity("Slettet Hovedenhet - Avd").Id);
         Assert.Contains(dbResult, r => r.ToId == TestDataSet.GetEntity("Dagny").Id);
     }
 
