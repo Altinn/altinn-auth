@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Xml.Linq;
 using Altinn.AccessManagement.Core.Constants;
+using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.TestUtils;
@@ -10,6 +11,7 @@ using Altinn.AccessManagement.TestUtils.Data;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessMgmt.Core;
+using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
@@ -75,6 +77,14 @@ public partial class ServiceOwnerConnectionsControllerTest
 
         private static readonly Guid TtdResourceId = Guid.Parse("0196b130-0000-7000-8000-000000000006");
 
+        /// <summary>
+        /// Not delegable locally and unknown to the resource registry mock, so only a local read of Delegable refuses it
+        /// as not delegable; a registry lookup would answer InvalidResource.
+        /// </summary>
+        private const string LocalOnlyNonDelegableResource = "skd_local_only_not_delegable";
+
+        private static readonly Guid LocalOnlyNonDelegableResourceId = Guid.Parse("0196b130-0000-7000-8000-000000000007");
+
         public AddRevokeResources(ApiFixture fixture)
         {
             Fixture = fixture;
@@ -107,6 +117,16 @@ public partial class ServiceOwnerConnectionsControllerTest
                     Name = "Skattemelding uten delegeringsadgang",
                     Description = "Resource owned by the test service owner with delegable false in the resource registry",
                     RefId = NonDelegableResource,
+                    TypeId = resource.TypeId,
+                    ProviderId = SkatteetatenProviderId,
+                    Delegable = false,
+                });
+                db.Resources.Add(new Resource()
+                {
+                    Id = LocalOnlyNonDelegableResourceId,
+                    Name = "Lokal ressurs uten delegeringsadgang",
+                    Description = "Resource owned by the test service owner, not delegable and unknown to the resource registry mock",
+                    RefId = LocalOnlyNonDelegableResource,
                     TypeId = resource.TypeId,
                     ProviderId = SkatteetatenProviderId,
                     Delegable = false,
@@ -795,6 +815,56 @@ public partial class ServiceOwnerConnectionsControllerTest
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
             await AssertProblemCode(response, "AM-00042");
+            Assert.Null(await GetRightholderAssignment(TestData.FredriksonsFabrikk.Id, TestData.SvendsenAutomobil.Id));
+        }
+
+        /// <summary>
+        /// Calls the service directly, so the controller's own Resource Registry check does not answer first:
+        /// the service refuses the resource because the local resource is not delegable.
+        /// </summary>
+        [Fact]
+        public async Task Service_GetResourceRights_ForNonDelegableLocalResource_ReturnsResourceNotDelegable()
+        {
+            using var scope = Fixture.Server.Services.CreateScope();
+            var service = scope.ServiceProvider.GetRequiredService<IServiceOwnerConnectionService>();
+
+            var result = await service.GetResourceRights(LocalOnlyNonDelegableResource, cancellationToken: TestContext.Current.CancellationToken);
+
+            Assert.True(result.IsProblem);
+            Assert.Equal(Problems.ResourceNotDelegable.ErrorCode, result.Problem.ErrorCode);
+        }
+
+        /// <summary>
+        /// Calls the service directly, so the controller's own Resource Registry check does not answer first:
+        /// the service refuses the resource because the local resource is not delegable, before anything is written.
+        /// </summary>
+        [Fact]
+        public async Task Service_AddResource_ForNonDelegableLocalResource_ReturnsResourceNotDelegable()
+        {
+            using var scope = Fixture.Server.Services.CreateScope();
+            var service = scope.ServiceProvider.GetRequiredService<IServiceOwnerConnectionService>();
+
+            Resource resource = null;
+            await Fixture.QueryDb(async db =>
+            {
+                resource = await db.Resources.AsNoTracking().Include(r => r.Type).SingleAsync(r => r.Id == LocalOnlyNonDelegableResourceId, TestContext.Current.CancellationToken);
+            });
+
+            var result = await service.AddResource(
+                TestData.FredriksonsFabrikk.Id,
+                TestData.SvendsenAutomobil.Id,
+                resource,
+                ["some-right-key"],
+                TestData.StorMektigTenesteeier.Id,
+                options =>
+                {
+                    options.AllowedWriteFromEntityTypes = [EntityTypeConstants.Organization, EntityTypeConstants.Person];
+                    options.AllowedWriteToEntityTypes = [EntityTypeConstants.Organization, EntityTypeConstants.Person];
+                },
+                TestContext.Current.CancellationToken);
+
+            Assert.True(result.IsProblem);
+            Assert.Equal(Problems.ResourceNotDelegable.ErrorCode, result.Problem.ErrorCode);
             Assert.Null(await GetRightholderAssignment(TestData.FredriksonsFabrikk.Id, TestData.SvendsenAutomobil.Id));
         }
 
