@@ -44,6 +44,7 @@ public partial class DtoMapper : IDtoMapper
             Status = request.Status,
             Resource = new RequestReferenceDto() { Id = request.ResourceId, ReferenceId = request.Resource?.RefId },
             RequestedRightKeys = request.RequestedRightKeys,
+            ApprovedRightKeys = request.ApprovedRightKeys,
         };
     }
 
@@ -71,7 +72,7 @@ public partial class DtoMapper : IDtoMapper
 
     /// <summary>
     /// Maps a request to the version 2 response, where the status is the full, non-exhaustive status
-    /// and the requested rights are part of the resource.
+    /// and the requested and approved rights are part of the resource.
     /// </summary>
     public static RequestDtoV2 ConvertToV2(AccessRequest request)
     {
@@ -87,6 +88,7 @@ public partial class DtoMapper : IDtoMapper
                 Id = request.Resource.Id,
                 ReferenceId = request.Resource.ReferenceId,
                 RequestedRightKeys = request.RequestedRightKeys,
+                ApprovedRightKeys = request.ApprovedRightKeys,
             },
             Package = request.Package,
             From = request.From,

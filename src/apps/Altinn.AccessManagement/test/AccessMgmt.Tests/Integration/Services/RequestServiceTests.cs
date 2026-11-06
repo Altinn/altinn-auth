@@ -1,7 +1,10 @@
-﻿using Altinn.AccessManagement.TestUtils.Fixtures;
+﻿using System.Text.Json;
+using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessMgmt.Core.Appsettings;
+using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Core.Notifications;
+using Altinn.AccessMgmt.Core.Outbox;
 using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
@@ -194,6 +197,101 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
 
         Assert.Equal(["key-a"], Assert.Single(sent.Value, r => r.Id == created.Id).RequestedRightKeys);
         Assert.Equal(["key-a"], Assert.Single(received.Value, r => r.Id == created.Id).RequestedRightKeys);
+    }
+
+    #endregion
+
+    #region ApproveResourceRequest — status and approved right keys
+
+    // The delegation is made by the caller; the service records the outcome on the request.
+    private async Task<AccessRequest> CreatePendingResourceRequest(IEnumerable<string>? requestedRightKeys)
+    {
+        var resource = await SeedUniqueResource();
+        return (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, requestedRightKeys, RequestStatusV2.Pending, TestContext.Current.CancellationToken)).Value;
+    }
+
+    [Fact]
+    public async Task ApproveResourceRequest_StoresStatusAndApprovedRightKeys()
+    {
+        var created = await CreatePendingResourceRequest(["key-a", "key-b"]);
+
+        var result = await _requestService.ApproveResourceRequest(OrgFrom.Id, created.Id, RequestStatusV2.PartialApprove, ["key-b", "key-c", "key-b"], TestContext.Current.CancellationToken);
+        var stored = await _db.RequestAssignmentResources.AsNoTracking().SingleAsync(r => r.Id == created.Id, TestContext.Current.CancellationToken);
+
+        Assert.False(result.IsProblem);
+        Assert.Equal(RequestStatusV2.PartialApprove, result.Value.Status);
+        Assert.Equal(["key-b", "key-c"], result.Value.ApprovedRightKeys);
+        Assert.Equal(["key-a", "key-b"], result.Value.RequestedRightKeys);
+        Assert.Equal(RequestStatusV2.PartialApprove, stored.Status);
+        Assert.Equal(["key-b", "key-c"], stored.ApprovedRightKeys);
+    }
+
+    [Fact]
+    public async Task ApproveResourceRequest_ByRequester_ReturnsProblemAndLeavesRequestPending()
+    {
+        var created = await CreatePendingResourceRequest(["key-a"]);
+
+        var result = await _requestService.ApproveResourceRequest(PersonTo.Id, created.Id, RequestStatusV2.Approved, ["key-a"], TestContext.Current.CancellationToken);
+        var stored = await _db.RequestAssignmentResources.AsNoTracking().SingleAsync(r => r.Id == created.Id, TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsProblem);
+        Assert.Equal(RequestStatusV2.Pending, stored.Status);
+        Assert.Null(stored.ApprovedRightKeys);
+    }
+
+    [Fact]
+    public async Task ApproveResourceRequest_AlreadyPartlyApproved_ReturnsProblem()
+    {
+        var created = await CreatePendingResourceRequest(["key-a"]);
+        await _requestService.ApproveResourceRequest(OrgFrom.Id, created.Id, RequestStatusV2.PartialApprove, ["key-b"], TestContext.Current.CancellationToken);
+
+        var again = await _requestService.ApproveResourceRequest(OrgFrom.Id, created.Id, RequestStatusV2.Approved, ["key-a"], TestContext.Current.CancellationToken);
+        var rejected = await _requestService.UpdateRequest(OrgFrom.Id, created.Id, RequestStatusV2.Rejected, TestContext.Current.CancellationToken);
+        var stored = await _db.RequestAssignmentResources.AsNoTracking().SingleAsync(r => r.Id == created.Id, TestContext.Current.CancellationToken);
+
+        Assert.True(again.IsProblem);
+        Assert.True(rejected.IsProblem);
+        Assert.Equal(RequestStatusV2.PartialApprove, stored.Status);
+        Assert.Equal(["key-b"], stored.ApprovedRightKeys);
+    }
+
+    [Fact]
+    public async Task ApproveResourceRequest_PackageRequest_ReturnsProblem()
+    {
+        var created = (await _requestService.CreatePackageRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, PackageConstants.Fishing.Id, RequestStatusV2.Pending, TestContext.Current.CancellationToken)).Value;
+
+        var result = await _requestService.ApproveResourceRequest(OrgFrom.Id, created.Id, RequestStatusV2.Approved, ["key-a"], TestContext.Current.CancellationToken);
+
+        Assert.True(result.IsProblem);
+    }
+
+    [Theory]
+    [InlineData(RequestStatusV2.Pending)]
+    [InlineData(RequestStatusV2.Rejected)]
+    [InlineData(RequestStatusV2.Withdrawn)]
+    public async Task ApproveResourceRequest_WithStatusThatIsNotApproval_Throws(RequestStatusV2 status)
+    {
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() =>
+            _requestService.ApproveResourceRequest(OrgFrom.Id, Guid.NewGuid(), status, ["key-a"], TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task ApproveResourceRequest_PartialApprove_WritesReviewedNotification()
+    {
+        var created = await CreatePendingResourceRequest(["key-a"]);
+
+        await _requestService.ApproveResourceRequest(OrgFrom.Id, created.Id, RequestStatusV2.PartialApprove, ["key-b"], TestContext.Current.CancellationToken);
+
+        // One message is kept per requester and recipient, and other tests here use the same pair,
+        // so look for this request's resource in the message rather than for the message itself.
+        var outbox = await _db.OutboxMessages.AsNoTracking()
+            .Where(m => m.Handler == RequestReviewedNotification.Handler)
+            .ToListAsync(TestContext.Current.CancellationToken);
+        var resources = outbox
+            .SelectMany(m => JsonSerializer.Deserialize<RequestReviewNotificationMessage>(m.Data).Resources)
+            .Where(r => r.Ref == created.Resource.Id);
+        var resource = Assert.Single(resources);
+        Assert.True(resource.IsApproved);
     }
 
     #endregion
