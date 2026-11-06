@@ -68,6 +68,7 @@ locals {
     "AccessManagementUI.ShowSettingsPageServiceAnnouncement"          = { description = "Whether or not to show a service announcement on the Settings page." },
     "AccessManagementUI.ShowRolesRemovedAlert"                        = { description = "Whether or not to replace the content of the role tabs with an alert saying that Altinn 2 roles have been removed." },
     "AccessManagementUI.ShowSystemUsersAsRightHolders"                = { description = "Whether or not to show system users as users in Users, Poa overview and client administration lists." },
+    "AccessManagementUI.EnableBankruptcyEstateAdministration"         = { description = "Whether or not to show the bankruptcy estate administration page and menu items." },
   }
 }
 
