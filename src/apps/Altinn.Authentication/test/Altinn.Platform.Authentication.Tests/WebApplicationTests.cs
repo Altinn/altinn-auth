@@ -2,6 +2,7 @@
 using System;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Altinn.Platform.Authentication.Clients.Interfaces;
 using Altinn.Platform.Authentication.Services.Interfaces;
 using Altinn.Platform.Authentication.Tests.Mocks;
 using Altinn.Platform.Authentication.Tests.RepositoryDataAccess;
@@ -108,6 +109,9 @@ public abstract class WebApplicationTests
             builder.ConfigureServices(services =>
             {
                 services.AddSingleton<IProfile, ProfileMock>();
+
+                // Audit writes are awaited, so the host must never reach for a real storage queue in tests.
+                services.AddSingleton<IEventsQueueClient, EventsQueueClientMock>();
                 ConfigureServices(services);
             });
         });

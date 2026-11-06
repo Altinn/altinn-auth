@@ -77,7 +77,7 @@ namespace Altinn.Platform.Authentication.Controllers
             SetCookies(result.Cookies);
 
             string? tokenCookie = Request.Cookies.TryGetValue(_generalSettings.JwtCookieName, out var tc) ? tc : null;
-            _eventLog.CreateAuthenticationEventAsync(_featureManager, tokenCookie, AuthenticationEventType.Logout, HttpContext.Connection.RemoteIpAddress);
+            await _eventLog.CreateAuthenticationEventAsync(_featureManager, tokenCookie, AuthenticationEventType.Logout, HttpContext.Connection.RemoteIpAddress);
 
             if (result.RedirectUri is not null)
             {
@@ -139,12 +139,12 @@ namespace Altinn.Platform.Authentication.Controllers
         [AllowAnonymous]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [HttpGet("frontchannel_logout")]
-        public ActionResult FrontchannelLogout()
+        public async Task<ActionResult> FrontchannelLogout()
         {
             CookieOptions opt = new CookieOptions() { Domain = _generalSettings.HostName, Secure = true, HttpOnly = true };
             Response.Cookies.Delete(_generalSettings.JwtCookieName, opt);
             string tokenCookie = Request.Cookies[_generalSettings.JwtCookieName];
-            _eventLog.CreateAuthenticationEventAsync(_featureManager, tokenCookie, AuthenticationEventType.Logout, HttpContext.Connection.RemoteIpAddress);
+            await _eventLog.CreateAuthenticationEventAsync(_featureManager, tokenCookie, AuthenticationEventType.Logout, HttpContext.Connection.RemoteIpAddress);
             return Ok();
         }
 
