@@ -1,0 +1,38 @@
+meta {
+  name: 05_WHEN_TheScopeIsInsufficientThenRequestFails
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/systemuser/request/package?organization={{organization}}&package={{package}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  organization: {{organization}}
+  package: {{package}}
+}
+
+docs {
+  WHEN an eligible system user calls with the end user requests scope instead of the system
+  user requests scope, the request fails with 403. Authentication succeeds, authorization
+  does not.
+}
+
+script:pre-request {
+  const { testdata, loginAsSystemUser, scopes } = require("./test/DelegationRequest/SystemUserPackageRequest/helpers.js");
+  const td = testdata();
+
+  bru.setVar("organization", td.recipient.orgno);
+  bru.setVar("package", td.package);
+
+  await loginAsSystemUser(td.publicSectorConsumer.systemUser, td.publicSectorConsumer.orgno, td.publicSectorConsumer.orgno, scopes.sluttbrukerdelegationrequestwrite);
+}
+
+tests {
+  test("WHEN the token scope is insufficient, the request returns 403", function() {
+    expect(res.status).to.equal(403);
+  });
+}

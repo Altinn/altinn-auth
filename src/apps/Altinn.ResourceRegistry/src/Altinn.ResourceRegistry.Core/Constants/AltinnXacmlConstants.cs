@@ -1,4 +1,4 @@
-namespace Altinn.ResourceRegistry.Core.Constants
+﻿namespace Altinn.ResourceRegistry.Core.Constants
 {
     /// <summary>
     /// Altinn specific XACML constants used for urn identifiers and attributes
@@ -74,7 +74,12 @@ namespace Altinn.ResourceRegistry.Core.Constants
             /// <summary>
             /// Role Code attribute match indentifier 
             /// </summary>
-            public const string RoleAttribute = "urn:altinn:rolecode";
+            public const string LegacyRoleAttribute = "urn:altinn:rolecode";
+
+            /// <summary>
+            /// Role attribute match identifier
+            /// </summary>
+            public const string RoleAttribute = "urn:altinn:role";
 
             /// <summary>
             /// Resource registry attribute match indentifier 

@@ -1,9 +1,12 @@
 # Code Coverage
 
+**TL;DR:** Collect coverage locally with the PowerShell helpers below. The scheduled
+CI coverage run has been removed; below-target assemblies remain warnings.
+
 The repo uses `dotnet-coverage` to produce Cobertura reports and a small
 PowerShell wrapper to parse them and report per-assembly coverage against
 targets. **Assemblies below their target are surfaced as warnings; coverage
-never fails the build** — it is reported, not gated, in CI and locally alike.
+never fails the build** — the local helpers report it without gating.
 
 ## Files
 
@@ -80,24 +83,21 @@ Outputs land in `TestResults/`:
 - `*.cobertura.xml`: one per test project
 - `*.coverage.log`: captured test stdout (last N lines are echoed on failure)
 
-## How CI runs it (single pass)
+## CI coverage
 
-CI does **not** run `run-coverage.ps1`. It runs the suite once under
-`dotnet-coverage collect --settings eng/testing/coverage.settings` **on the nightly
-analyze run only**, then invokes `check-coverage-thresholds.ps1` on the resulting
-Cobertura file (report-only: below-target assemblies are surfaced as warnings, they do
-not fail the build). PR runs execute the tests directly, without coverage instrumentation
-— coverage is informational, so it does not need to run on every PR. The exact steps live in
-[`.github/workflows/tpl-vertical-ci.yml`](../../.github/workflows/tpl-vertical-ci.yml).
+The scheduled analysis workflow has been removed. Current
+[CI](../../.github/workflows/ci.yml) runs tests without collecting coverage or
+invoking the coverage-report scripts. Use the local helpers above to collect
+coverage and report per-assembly targets.
 
 ## What is excluded from the denominator
 
-Both coverage systems exclude the same non-product code so a floor reflects
-coverage of real logic:
+The local coverage settings and retained SonarCloud configuration exclude
+non-product code so targets reflect coverage of real logic:
 
 - **SonarCloud** via `sonar.coverage.exclusions` in
   [`SonarQube.Analysis.xml`](../../SonarQube.Analysis.xml).
-- **CI floors** via [`eng/testing/coverage.settings`](../../eng/testing/coverage.settings),
+- **Local coverage** via [`eng/testing/coverage.settings`](../../eng/testing/coverage.settings),
   passed to `dotnet-coverage collect --settings`.
 
 Excluded in both: test/mock assemblies, generated code (`*.g.cs`,

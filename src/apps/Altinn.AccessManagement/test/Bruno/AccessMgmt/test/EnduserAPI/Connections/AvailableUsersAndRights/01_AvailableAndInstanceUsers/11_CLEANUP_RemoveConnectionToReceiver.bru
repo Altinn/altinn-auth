@@ -1,0 +1,38 @@
+meta {
+  name: 11_CLEANUP_RemoveConnectionToReceiver
+  type: http
+  seq: 11
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{party}}&from={{party}}&to={{to}}&cascade=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{to}}
+  cascade: true
+}
+
+docs {
+  CLEANUP: the delegator removes the rightholder connection to the receiver.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/Connections/AvailableUsersAndRights/helpers.js");
+  const td = testdata();
+
+  bru.setVar("party", td.delegator.partyUuid);
+  bru.setVar("to", td.receiver.partyUuid);
+
+  await loginAs(td.delegator);
+}
+
+tests {
+  test("CLEANUP the connection is removed with 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

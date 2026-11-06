@@ -52,6 +52,29 @@ public sealed class ConditionalScope(
     public static Func<IHttpContextAccessor, bool> FromOthers => QueryParamEquals("party", "to");
 
     /// <summary>
+    /// Builds a predicate that returns true when the query parameter exists and equals one of
+    /// the given values (case-insensitive).
+    /// </summary>
+    public static Func<IHttpContextAccessor, bool> QueryParamIs(string queryParam, params string[] values)
+    {
+        return accessor =>
+        {
+            var ctx = accessor.HttpContext;
+            if (ctx is null)
+            {
+                return false;
+            }
+
+            if (!ctx.Request.Query.TryGetValue(queryParam, out var value))
+            {
+                return false;
+            }
+
+            return values.Any(v => string.Equals(value.ToString(), v, StringComparison.OrdinalIgnoreCase));
+        };
+    }
+
+    /// <summary>
     /// Builds a predicate that returns true when both query parameters exist and are equal (case-insensitive).
     /// </summary>
     public static Func<IHttpContextAccessor, bool> QueryParamEquals(string queryParamA, string queryParamB)

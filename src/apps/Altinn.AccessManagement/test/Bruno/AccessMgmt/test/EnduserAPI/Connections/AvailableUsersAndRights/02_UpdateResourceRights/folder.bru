@@ -1,0 +1,20 @@
+meta {
+  name: 02_UpdateResourceRights
+  seq: 2
+}
+
+docs {
+  Scenario: The delegator replaces the rights delegated on a single resource
+
+    Given the delegator has no connection to the receiver
+    And the delegator makes the receiver a rightholder
+    And the delegator checks which rights on the resource can be delegated
+    When the delegator sets read and write on the resource for the receiver
+    Then the receiver holds read and write as direct rights
+    When the delegator narrows the rights to read
+    Then the receiver holds only read
+    And a right key the delegator cannot delegate is rejected
+    And an unknown resource is rejected
+    When the delegator removes the resource delegation
+    And the delegator removes the connection to the receiver
+}

@@ -1,0 +1,15 @@
+meta {
+  name: 01_RequestAndReject
+  seq: 1
+}
+
+docs {
+  Scenario: A public sector system user requests a package and the organisation rejects it
+
+    Given the recipient has no pending request from the system user
+    When the system user requests the package from the recipient by organisation number
+    Then the request is pending with the system user as sender
+    And the recipient sees the request among its received requests
+    When the recipient rejects the request
+    Then the request is no longer pending for the recipient
+}

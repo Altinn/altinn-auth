@@ -1,5 +1,5 @@
 ﻿using System.Text.Json;
-using Altinn.AccessManagement.Core.Models.Rights;
+using Altinn.Authorization.Api.Contracts.Authorization;
 
 namespace Altinn.AccessManagement.Tests.Unit.Models.Urn
 {

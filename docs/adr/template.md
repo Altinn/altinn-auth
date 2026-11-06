@@ -16,6 +16,10 @@ What is the situation/problem? What forces are at play (technical, organisationa
 
 What did we decide to do? State it in active voice: "We will …".
 
+### Alternatives considered
+
+The options that were weighed and why each lost. Only the ones that were actually discussed; say so if none were.
+
 ## Consequences
 
 What becomes easier, harder, or riskier as a result? What must be kept/changed because of this? Any follow-ups or new debt.

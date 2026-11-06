@@ -1,0 +1,78 @@
+meta {
+  name: 07_THEN_ReceiverIsListedAsInstanceUser
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources/instances/users?party={{party}}&resource={{resource}}&instance={{instance}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  resource: {{resource}}
+  instance: {{instance}}
+}
+
+docs {
+  THEN the receiver is listed as a user of the app instance.
+
+  `GET /accessmanagement/api/v1/enduser/connections/resources/instances/users?party={party}&resource={resource}&instance={instance}`
+
+  Returns the distinct parties the selected party has delegated the given instance to,
+  as simplified parties (id, name, type, variant, organizationIdentifier, isDeleted,
+  deletedAt). Only delegations from the selected party through the rightholder role are
+  included.
+
+  - Query: `party` (required), the uuid of the party that owns the instance;
+    `resource` (required), the resource reference id of the app, for example
+    `app_ttd_bruno-instans-delegering-app`; `instance` (required), the instance URN
+    `urn:altinn:instance-id:{partyId}/{instanceGuid}`. Correspondence and dialog URNs
+    (`urn:altinn:correspondence-id:`, `urn:altinn:dialog-id:`) are accepted as well.
+  - Token: personal token with `altinn:portal/enduser` or
+    `altinn:accessmanagement/enduser:connections:toothers.write`, and the user must be
+    allowed to delegate app instances (`altinn_instance_delegation`, write) for the party.
+  - Responses: 200 with a paginated list, empty when nobody has access to the instance;
+    400 AM.VLD-00007 when the instance is not a URN; 400 AM-00027 when the resource is
+    unknown; 403 when the user cannot act for the party.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/Connections/AvailableUsersAndRights/helpers.js");
+  const td = testdata();
+
+  bru.setVar("party", td.delegator.partyUuid);
+  bru.setVar("resource", td.app.appId);
+  bru.setVar("instance", td.app.instanceUrn);
+
+  await loginAs(td.delegator);
+}
+
+tests {
+  const { testdata } = require("./test/EnduserAPI/Connections/AvailableUsersAndRights/helpers.js");
+  const td = testdata();
+
+  test("THEN the instance users request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the receiver is listed once as a person with access to the instance", function() {
+    const body = res.getBody();
+    expect(body.data).to.be.an("array");
+    const matches = body.data.filter(p => p.id.toLowerCase() === td.receiver.partyUuid.toLowerCase());
+    expect(matches.length, "expected the receiver exactly once").to.equal(1);
+    const receiver = matches[0];
+    expect(receiver.type).to.equal("Person");
+    expect(receiver.variant).to.equal("Person");
+    expect(receiver.name).to.include(td.receiver.lastname);
+    expect(receiver.organizationIdentifier).to.equal(null);
+    expect(receiver.isDeleted).to.equal(false);
+  });
+
+  test("THEN the delegator is not listed as a user of its own instance", function() {
+    const self = res.getBody().data.find(p => p.id.toLowerCase() === td.delegator.partyUuid.toLowerCase());
+    expect(self).to.be.undefined;
+  });
+}

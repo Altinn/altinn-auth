@@ -1,0 +1,52 @@
+{
+  "repos": [
+    "Altinn/altinn-auth",
+    "Altinn/altinn-access-management-frontend",
+    "Altinn/altinn-authorization-utils",
+    "Altinn/altinn-register"
+  ],
+  "org": "Altinn",
+  "teams": ["team-access-management", "team-access-info", "team-authorization"],
+  "project": { "owner": "Altinn", "number": 196 },
+  "statuses": {
+    "inProgress": ["In progress"],
+    "inReview": ["In review"]
+  },
+  "windowDays": 7,
+  "trendWeeks": 4,
+  "waitingDays": 3,
+  "waitingMaxAgeDays": 180,
+  "bugLabels": ["kind/bug"],
+  "areaOrder": [
+    "access-management",
+    "access-management-frontend",
+    "authorization",
+    "authentication",
+    "consent",
+    "register",
+    "resource-registry",
+    "auditlog",
+    "packages",
+    "libs",
+    "tools",
+    "infra",
+    "devex",
+    "docs"
+  ],
+  "areaNames": {
+    "access-management": "Tilgangsstyring",
+    "access-management-frontend": "Tilgangsstyring – brukerflate",
+    "authorization": "Autorisasjon (PDP)",
+    "authentication": "Autentisering og systembruker",
+    "consent": "Samtykke",
+    "register": "Register",
+    "resource-registry": "Ressursregister",
+    "auditlog": "Revisjonslogg",
+    "packages": "NuGet-pakker (PEP og ABAC)",
+    "libs": "Felles biblioteker",
+    "tools": "Verktøy",
+    "infra": "Plattform, CI/CD og infrastruktur",
+    "devex": "Utviklermiljø og repo-verktøy",
+    "docs": "Dokumentasjon"
+  }
+}

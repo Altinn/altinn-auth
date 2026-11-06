@@ -1,0 +1,42 @@
+meta {
+	name: 02_WHEN_SystemUserRequestsPackageByOrganisationNumber
+	type: http
+	seq: 2
+}
+
+post {
+	url: {{baseUrl}}/accessmanagement/api/v1/systemuser/request/package?organization={{organization}}&package={{package}}
+	body: none
+	auth: inherit
+}
+
+params:query {
+	organization: {{organization}}
+	package: {{package}}
+}
+
+docs {
+	WHEN the system user requests the package from the recipient.
+}
+
+script:pre-request {
+	const { testdata, loginAsSystemUser } = require("./test/DelegationRequest/SystemUserPackageRequest/helpers.js");
+	const td = testdata();
+
+	bru.setVar("organization", td.recipient.orgno);
+	bru.setVar("package", td.package);
+
+	await loginAsSystemUser(td.publicSectorConsumer.systemUser, td.publicSectorConsumer.orgno, td.publicSectorConsumer.orgno);
+}
+
+script:post-response {
+	if (res.status === 200) {
+		bru.setVar("otherWithdrawRequestId", res.getBody().id);
+	}
+}
+
+tests {
+	test("WHEN the system user requests the package, the request returns 200", function() {
+		expect(res.status).to.equal(200);
+	});
+}

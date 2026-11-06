@@ -3771,40 +3771,6 @@ public static class PackageConstants
     };
 
     /// <summary>
-    /// Represents the 'Konkursbo administrator' access package.
-    /// </summary>
-    /// <remarks>
-    /// - <c>Id:</c> 0195efb8-7c80-7e9c-95c1-48937e23960a
-    /// - <c>URN:</c> urn:altinn:accesspackage:konkursbo-tilgangsstyrer
-    /// - <c>Provider:</c> Altinn3
-    /// - <c>Description:</c> Gir bruker mulighet til å administrere konkursbo
-    /// </remarks>
-    public static ConstantDefinition<Package> KonkursboAdministrator { get; } = new ConstantDefinition<Package>("0195efb8-7c80-7e9c-95c1-48937e23960a")
-    {
-        Entity = new()
-        {
-            Name = "Konkursbo administrator",
-            Description = "Gir bruker mulighet til å administrere konkursbo",
-            Urn = "urn:altinn:accesspackage:konkursbo-tilgangsstyrer",
-            Code = "konkursbo-tilgangsstyrer",
-            IsDelegable = false,
-            IsAvailableForServiceOwners = false,
-            IsAssignable = true,
-            EntityTypeId = EntityTypeConstants.Organization,
-            ProviderId = ProviderConstants.Altinn3,
-            AreaId = AreaConstants.ManageAccess,
-        },
-        EN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Bankruptcy estate administrator"),
-            KeyValuePair.Create("Description", "Provides the user with the ability to administer bankruptcy estates")
-        ),
-        NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Konkursbu administrator"),
-            KeyValuePair.Create("Description", "Gir brukar moglegheit til å administrere konkursbu")
-        ),
-    };
-
-    /// <summary>
     /// Represents the 'Hovedadministrator' access package.
     /// </summary>
     /// <remarks>

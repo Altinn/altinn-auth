@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -20,6 +20,15 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\apps\Altinn.AccessManagement\src\Altinn.AccessMgmt.PersistenceEF\Altinn.AccessMgmt.PersistenceEF.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <EmbeddedResource Include="Jobs\SchemaScripts\activitylog-schema-install.sql">
+      <LogicalName>Altinn.AccessMgmt.FFB.Jobs.SchemaScripts.activitylog-schema-install.sql</LogicalName>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Jobs\SchemaScripts\activitylog-schema-rollback.sql">
+      <LogicalName>Altinn.AccessMgmt.FFB.Jobs.SchemaScripts.activitylog-schema-rollback.sql</LogicalName>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>

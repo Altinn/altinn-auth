@@ -1,0 +1,55 @@
+meta {
+  name: 05_GIVEN_DelegatorChecksDelegableInstanceRights
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources/instances/delegationcheck?party={{party}}&resource={{resource}}&instance={{instance}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  resource: {{resource}}
+  instance: {{instance}}
+}
+
+docs {
+  GIVEN the delegator checks which rights on the app instance can be delegated.
+
+  The keys of the rights with result true are captured and sent as the right keys of the
+  instance delegation in the next step.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/Connections/AvailableUsersAndRights/helpers.js");
+  const td = testdata();
+
+  bru.setVar("party", td.delegator.partyUuid);
+  bru.setVar("resource", td.app.appId);
+  bru.setVar("instance", td.app.instanceUrn);
+
+  await loginAs(td.delegator);
+}
+
+script:post-response {
+  const body = res.getBody();
+  if (body && Array.isArray(body.rights)) {
+    const keys = body.rights.filter(r => r.result).map(r => r.right.key);
+    bru.setVar("aur_instanceRightKeys", JSON.stringify(keys));
+  }
+}
+
+tests {
+  test("GIVEN the delegation check returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("GIVEN the delegator can delegate the read right on the instance", function() {
+    const read = res.getBody().rights.find(r => r.right.action.value === "read");
+    expect(read, "expected a read right").to.not.be.undefined;
+    expect(read.result).to.equal(true);
+  });
+}

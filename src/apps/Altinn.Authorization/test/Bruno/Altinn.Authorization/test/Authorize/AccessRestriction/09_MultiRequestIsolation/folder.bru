@@ -1,0 +1,15 @@
+meta {
+	name: 09_MultiRequestIsolation
+	seq: 9
+}
+
+auth {
+	mode: inherit
+}
+
+docs {
+	GIVEN the system user (Fiken) has a client delegation from client USENSUELL UVIRKSOM TIGER AS
+		via the accounting firm ULASTELIG RETTFERDIG TIGER AS
+	WHEN one multi-request contains sibling requests with different access-restriction values
+	THEN each result is evaluated with its own access-restriction only, and a rejected sibling does not affect the others
+}

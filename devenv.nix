@@ -37,6 +37,9 @@ in
     pkgs.just
     pkgs.powershell
     pkgs.nodejs
+    pkgs.oha
+    pkgs.kustomize
+    pkgs.git-cliff
   ];
 
   languages.dotnet.enable = true;

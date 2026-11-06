@@ -3,6 +3,7 @@ using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Authorization.Tests.Fixtures;
 using Altinn.Authorization.Tests.Util;
 using Altinn.Platform.Authorization.Clients.Interfaces;
+using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Models.EventLog;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
@@ -153,7 +154,8 @@ namespace Altinn.Authorization.Tests.Integration
         }
 
         /// <summary>
-        /// A non-default access restriction (ClientDelegation) requires the admin scope. A caller without the admin
+        /// A non-default access restriction (ClientDelegation) requires the admin scope while the
+        /// AccessRestrictionOpenForAllScopes feature flag is disabled. A caller without the admin
         /// scope must get Indeterminate with a processing-error status for that request.
         /// </summary>
         [Fact]
@@ -167,6 +169,56 @@ namespace Altinn.Authorization.Tests.Integration
 
             // Act
             XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(_client, httpRequestMessage);
+
+            // Assert
+            AssertionUtil.AssertEqual(expected, contextResponse);
+        }
+
+        /// <summary>
+        /// With the AccessRestrictionOpenForAllScopes feature flag enabled, a caller with only the authorize scope
+        /// can use ClientDelegation. The access-restriction and via-party must be propagated and give Permit.
+        /// </summary>
+        [Fact]
+        public async Task PDPExternal_Decision_OpenForAllScopes_ClientDelegationWithoutAdminScope_ReturnsPermit()
+        {
+            await AssertOpenForAllScopesDecision("AltinnResourceRegistry0106", TestSetupUtil.CreateXacmlRequestExternal);
+        }
+
+        /// <summary>
+        /// With the AccessRestrictionOpenForAllScopes feature flag enabled, a caller with only the authorize scope
+        /// can use DirectAndHierarchy on the authorize endpoint.
+        /// </summary>
+        [Fact]
+        public async Task PDPExternal_Decision_OpenForAllScopes_DirectAndHierarchyWithoutAdminScope_ReturnsPermit()
+        {
+            await AssertOpenForAllScopesDecision("AltinnResourceRegistry0108", TestSetupUtil.CreateXacmlRequestExternal);
+        }
+
+        /// <summary>
+        /// With the AccessRestrictionOpenForAllScopes feature flag enabled, the access-restriction attribute is also
+        /// supported on the internal decision endpoint, whose callers do not have the admin scope.
+        /// </summary>
+        [Fact]
+        public async Task PDP_Decision_OpenForAllScopes_DirectAndHierarchy_ReturnsPermit()
+        {
+            await AssertOpenForAllScopesDecision("AltinnResourceRegistry0108", TestSetupUtil.CreateJsonProfileXacmlRequest);
+        }
+
+        private async Task AssertOpenForAllScopesDecision(string testCase, Func<string, HttpRequestMessage> createRequest)
+        {
+            Mock<IFeatureManager> openFeatureManager = new Mock<IFeatureManager>();
+            openFeatureManager
+                .Setup(m => m.IsEnabledAsync(FeatureFlags.AccessRestrictionOpenForAllScopes, It.IsAny<CancellationToken>()))
+                .Returns(Task.FromResult(true));
+            HttpClient client = GetTestClient(featureManager: openFeatureManager.Object);
+
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:authorization/authorize");
+            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
+            HttpRequestMessage httpRequestMessage = createRequest(testCase);
+            XacmlJsonResponse expected = TestSetupUtil.ReadExpectedJsonProfileResponse(testCase);
+
+            // Act
+            XacmlJsonResponse contextResponse = await TestSetupUtil.GetXacmlJsonProfileContextResponseAsync(client, httpRequestMessage);
 
             // Assert
             AssertionUtil.AssertEqual(expected, contextResponse);

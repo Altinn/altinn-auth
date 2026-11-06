@@ -27,6 +27,7 @@ using Microsoft.AspNetCore.Mvc.ApiExplorer;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
+using Microsoft.FeatureManagement;
 using Microsoft.OpenApi;
 using Swashbuckle.AspNetCore.Filters;
 
@@ -54,6 +55,7 @@ internal static class ResourceRegistryHost
 
         MapPostgreSqlConfiguration(builder);
         services.AddMemoryCache();
+        services.AddFeatureManagement();
 
         services.Configure<KeyVaultSettings>(config.GetSection("kvSetting"));
         services.AddResourceRegistryCoreServices();
@@ -68,6 +70,7 @@ internal static class ResourceRegistryHost
         services.AddSingleton<IPublicSigningKeyProvider, PublicSigningKeyProvider>();
         services.Configure<PlatformSettings>(config.GetSection("PlatformSettings"));
         services.Configure<ResourceRegistrySettings>(config.GetSection("ResourceRegistrySettings"));
+        services.Configure<SamarbeidsportalenSettings>(config.GetSection("SamarbeidsportalenSettings"));
         services.Configure<OidcProviderSettings>(config.GetSection("OidcProviders"));
         services.Configure<ActionTranslationsOptions>(config.GetSection("ActionConfig"));
         services.Configure<PostgreSQLSettings>(config.GetSection("PostgreSQLSettings"));
@@ -101,6 +104,7 @@ internal static class ResourceRegistryHost
 
         services.AddUrnSwaggerSupport();
         services.AddHttpClient<IOrgListClient, OrgListClient>();
+        services.AddHttpClient<ISamarbeidsportalenClient, SamarbeidsportalenClient>();
         services.AddHttpClient<IApplications, ApplicationsClient>();
         services.AddAltinnRegisterClient();
 

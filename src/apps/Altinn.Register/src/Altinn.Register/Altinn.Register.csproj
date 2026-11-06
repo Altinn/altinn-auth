@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <!-- Placeholder until the Register moves in with https://github.com/Altinn/altinn-auth/issues/4056. -->
 

@@ -1,4 +1,4 @@
-using Altinn.Authorization.Tests.MockServices;
+﻿using Altinn.Authorization.Tests.MockServices;
 using Microsoft.Extensions.Logging;
 using Moq;
 

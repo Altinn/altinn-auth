@@ -1,0 +1,14 @@
+meta {
+	name: 07_InvalidAccessRestrictionValue
+	seq: 7
+}
+
+auth {
+	mode: inherit
+}
+
+docs {
+	GIVEN an admin-scoped caller
+	WHEN the request sets access-restriction to an unknown value
+	THEN the decision is Indeterminate with status syntax-error
+}

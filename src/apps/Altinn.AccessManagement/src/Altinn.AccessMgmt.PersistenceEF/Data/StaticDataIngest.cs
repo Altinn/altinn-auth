@@ -202,9 +202,26 @@ public static partial class StaticDataIngest
             cancellationToken
         );
 
+        /* ActivityType */
+        await AutoIngest(
+            dbContext,
+            ActivityTypeConstants.AllEntities(),
+            (activityType, seed) =>
+            {
+                activityType.Type = seed.Entity.Type;
+                activityType.Subtype = seed.Entity.Subtype;
+                activityType.Trigger = seed.Entity.Trigger;
+                activityType.Status = seed.Entity.Status;
+                activityType.Name = seed.Entity.Name;
+                activityType.Description = seed.Entity.Description;
+            },
+            cancellationToken
+        );
+
         await IngestRoleMap(dbContext, cancellationToken);
         await IngestRolePackage(dbContext, cancellationToken);
         await IngestEntityVariantRole(dbContext, cancellationToken);
+        await RemoveObsoletePackages(dbContext, cancellationToken);
     }
 
     internal static async Task AutoIngest<T>(

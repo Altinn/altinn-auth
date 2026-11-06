@@ -1,4 +1,4 @@
-using System.Buffers;
+﻿using System.Buffers;
 using System.Net;
 using Altinn.AccessMgmt.Core.Utils.Helper;
 using Altinn.Authorization.ABAC.Constants;
@@ -152,7 +152,7 @@ namespace Altinn.ResourceRegistry.Core.Services
         /// <inheritdoc/>
         public async Task UpdateResourceSubjectsFromResourcePolicy(ServiceResource serviceResource, CancellationToken cancellationToken = default)
         {
-            XacmlPolicy? policy = await GetXacmlPolicy(serviceResource.Identifier, cancellationToken);
+            XacmlPolicy policy = await GetXacmlPolicy(serviceResource.Identifier, cancellationToken);
             if (policy == null)
             {
                 throw new InvalidOperationException($"Policy not found for resource {serviceResource.Identifier}");
@@ -166,7 +166,7 @@ namespace Altinn.ResourceRegistry.Core.Services
         /// <inheritdoc/>
         public async Task UpdateResourceSubjectsFromAppPolicy(string org, string app, CancellationToken cancellationToken = default)
         {
-            Stream? policyContent = await _policyRepository.GetAppPolicyAsync(org, app, cancellationToken);
+            Stream policyContent = await _policyRepository.GetAppPolicyAsync(org, app, cancellationToken);
             if (policyContent == null)
             {
                 throw new InvalidOperationException($"Policy not found for app {org}/{app}");
@@ -468,9 +468,9 @@ namespace Altinn.ResourceRegistry.Core.Services
             return rights;
         }
 
-        private async Task<XacmlPolicy?> GetXacmlPolicy(string resourceIdentifer, CancellationToken cancellationToken)
+        private async Task<XacmlPolicy> GetXacmlPolicy(string resourceIdentifer, CancellationToken cancellationToken)
         {
-            Stream? policyContent = null;
+            Stream policyContent = null;
             if (resourceIdentifer.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX))
             {
                 string[] idParts = resourceIdentifer.Split('_', 3);

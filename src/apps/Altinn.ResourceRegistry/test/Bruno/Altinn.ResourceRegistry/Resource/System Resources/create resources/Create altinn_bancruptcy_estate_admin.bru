@@ -1,0 +1,79 @@
+meta {
+	name: Create altinn_bancruptcy_estate_admin
+	type: http
+	seq: 6
+}
+
+post {
+	url: {{baseUrl}}/resourceregistry/api/v1/resource
+	body: json
+	auth: inherit
+}
+
+body:json {
+	{
+		"identifier": "altinn_bankruptcy_estate_admin",
+		"title": {
+			"en": "Bankruptcy estate administrator",
+			"nb": "Konkursbo administrator",
+			"nn": "Konkursbo administrator"
+		},
+		"description": {
+			"en": "Allows the trustee in bankruptcy to manage all current and future bankruptcy estates.",
+			"nb": "Gir mulighet til å administrere alle nåværende og fremtidige konkursbo for bostyrer.",
+			"nn": "Gir moglegheit til å administrere alle noverande og framtidige konkursbu for bustyrar."
+		},
+		"rightDescription": {
+			"en": "Users who receive this resource get access to all user interfaces for bankruptcy estate administration, and can manage access information on behalf of the bankruptcy estates assigned to the delegating party. With this access, the user also gets Main Administrator and Bankruptcy Estate Read and Write Access for all assigned bankruptcy estates. The user can therefore delegate all roles the estate administrator holds for their assigned bankruptcy estates.",
+			"nb": "Bruker som mottar denne ressursen vil få tilgang til alle brukergrensesnitt for konkursbo administrasjon og kan behandle tilgangsinformasjon på vegne av delegerende parts tilordnede konkursbo. Sammen med tilgangen får brukeren Hovedadministrator, Konkursbo lese- og skrivetilgang for alle tilordnede konkursbo og kan dermed delegere alle roller bostyrer har for sine tilordnede konkursbo.",
+			"nn": "Brukar som får denne ressursen, får tilgang til alle brukargrensesnitt for konkursbuadministrasjon og kan behandle tilgangsinformasjon på vegner av konkursbua som er tilordna den delegerande parten. Saman med tilgangen får brukaren Hovudadministrator og Konkursbu lese- og skrivetilgang for alle tilordna konkursbu, og kan dermed delegere alle rollene bostyraren har for sine tilordna konkursbu."
+		},
+		"homepage": "https://altinn.no",
+		"status": "Active",
+		"contactPoints": [],
+		"isPartOf": "",
+		"resourceReferences": [],
+		"delegable": false,
+		"visible": false,
+		"hasCompetentAuthority": {
+			"organization": "991825827",
+			"orgcode": "DIGDIR"
+		},
+		"keywords": [],
+		"accessListMode": "Disabled",
+		"selfIdentifiedUserEnabled": false,
+		"enterpriseUserEnabled": false,
+		"resourceType": "SystemResource",
+		"availableForType": [
+				"PrivatePerson"
+			],
+			"authorizationReference": [
+				{
+					"id": "urn:altinn:resource",
+					"value": "altinn_bankruptcy_estate_admin"
+				}
+			],
+			"isOneTimeConsent": false
+	}
+}
+
+script:pre-request {
+	const sharedtestdata = require(`./Testdata/sharedtestdata.js`);
+	
+	var getTokenParameters = {
+		auth_orgNo: sharedtestdata.serviceOwners.digdir.orgno,
+		auth_org: sharedtestdata.serviceOwners.digdir.org,
+		auth_tokenType: sharedtestdata.authTokenType.enterprise,
+		auth_scopes: sharedtestdata.auth_scopes.resourceregistryAdmin
+	}
+	const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+	const token = await testTokenGenerator.getToken(getTokenParameters);
+	
+	bru.setVar("bearerToken",  token);
+}
+
+settings {
+	encodeUrl: true
+	timeout: 0
+	forwardAuthorizationHeader: false
+}

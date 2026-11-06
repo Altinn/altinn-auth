@@ -1,0 +1,16 @@
+meta {
+	name: 04_ClientDelegation_ExcludesKeyRole
+	seq: 4
+}
+
+auth {
+	mode: inherit
+}
+
+docs {
+	GIVEN the managing director (DAGL) of the accounting firm ULASTELIG RETTFERDIG TIGER AS
+		AND the accounting firm holds the accountant (REGN) role for HUMAN TOPP KATT BIL (ENK)
+	WHEN the DAGL is authorized for the accountant resource on behalf of the ENK
+	THEN no access-restriction permits through keyrole inheritance,
+		while ClientDelegation via the accounting firm does not (only client delegations count)
+}

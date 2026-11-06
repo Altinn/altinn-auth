@@ -1,0 +1,38 @@
+meta {
+  name: 04_WHEN_ConsumerIsNotPublicSectorThenRequestFails
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/systemuser/request/package?organization={{organization}}&package={{package}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  organization: {{organization}}
+  package: {{package}}
+}
+
+docs {
+  WHEN the system user belongs to an organisation that is not KOMM, FYLK or STAT.
+
+  Expects 403. Only system users owned by public sector organisations may send requests.
+}
+
+script:pre-request {
+  const { testdata, loginAsSystemUser } = require("./test/DelegationRequest/SystemUserPackageRequest/helpers.js");
+  const td = testdata();
+
+  bru.setVar("organization", td.recipient.orgno);
+  bru.setVar("package", td.package);
+
+  await loginAsSystemUser(td.privateConsumer.systemUser, td.privateConsumer.orgno, td.privateConsumer.orgno);
+}
+
+tests {
+  test("WHEN the consumer is not a public sector organisation, the request returns 403", function() {
+    expect(res.status).to.equal(403);
+  });
+}

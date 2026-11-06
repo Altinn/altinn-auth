@@ -37,8 +37,7 @@ public class DbFixture
     {
         private int _dbCounter = 0;
         private readonly AsyncLock _dbLock = new();
-        private readonly PostgreSqlContainer _dbContainer = new PostgreSqlBuilder()
-            .WithImage("docker.io/postgres:16.1-alpine")
+        private readonly PostgreSqlContainer _dbContainer = new PostgreSqlBuilder("docker.io/postgres:16.1-alpine")
             .WithCleanUp(true)
             .Build();
 

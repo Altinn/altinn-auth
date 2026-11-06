@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Models;
@@ -19,6 +20,7 @@ public static class ResourceDelegationCheckRoleQuery
         Guid toId,
         bool toIsMainAdminForFrom = false,
         bool includeAdosSubunitInheritance = false,
+        bool excludeAltinn2Roles = false,
         CancellationToken ct = default)
     {
         var rows = await dbContext.Database
@@ -27,7 +29,9 @@ public static class ResourceDelegationCheckRoleQuery
                 new NpgsqlParameter("fromId", fromId),
                 new NpgsqlParameter("toId", toId),
                 new NpgsqlParameter("isMainAdmin", NpgsqlDbType.Boolean) { Value = toIsMainAdminForFrom },
-                new NpgsqlParameter("includeAdos", NpgsqlDbType.Boolean) { Value = includeAdosSubunitInheritance }
+                new NpgsqlParameter("includeAdos", NpgsqlDbType.Boolean) { Value = includeAdosSubunitInheritance },
+                new NpgsqlParameter("excludeA2", NpgsqlDbType.Boolean) { Value = excludeAltinn2Roles },
+                new NpgsqlParameter("a2ProviderId", NpgsqlDbType.Uuid) { Value = ProviderConstants.Altinn2.Id }
             )
             .AsNoTracking()
             .ToListAsync(ct);
@@ -81,6 +85,7 @@ public static class ResourceDelegationCheckRoleQuery
                 false AS isdelegable -- Roles does not have delegable property, only packages
             FROM dbo.role r
             WHERE r.isavailableforserviceowners = true      -- Unsure if this is sufficient filter for relevant roles
+                AND NOT (@excludeA2 AND r.providerid = @a2ProviderId)
         ),
         mainAdminRoles AS (
             -- Get all roles for main administrator
@@ -95,6 +100,7 @@ public static class ResourceDelegationCheckRoleQuery
                 JOIN dbo.role ar ON rm.hasroleid = ar.id
             WHERE ar.code = 'hovedadministrator'
                 AND @isMainAdmin = true
+                AND NOT (@excludeA2 AND r.providerid = @a2ProviderId)
         ),
         userRoles AS (
             -- Get direct assignment roles to user/party
