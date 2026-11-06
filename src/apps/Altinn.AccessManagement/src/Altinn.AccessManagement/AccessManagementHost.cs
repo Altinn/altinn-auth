@@ -19,6 +19,7 @@ using Altinn.AccessMgmt.Core.Authorization;
 using Altinn.AccessMgmt.Core.Extensions;
 using Altinn.AccessMgmt.Core.Notifications;
 using Altinn.AccessMgmt.Core.Outbox;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.Authorization.Api.Contracts.Register;
 using Altinn.Authorization.Host.Database;
@@ -324,6 +325,10 @@ internal static partial class AccessManagementHost
     private static void ConfigureAppsettings(this WebApplicationBuilder builder)
     {
         var config = builder.Configuration;
+
+        // Before anything reads the constants: some cache lookups on first use.
+        ConstantLookup.IsProd = builder.Services.GetAltinnServiceDescriptor().Environment.IsProd;
+
         builder.Services.Configure<AccessManagementAppsettings>(builder.Configuration.Bind);
         builder.Services.Configure<GeneralSettings>(config.GetSection("GeneralSettings"));
         builder.Services.Configure<PlatformSettings>(config.GetSection("PlatformSettings"));
