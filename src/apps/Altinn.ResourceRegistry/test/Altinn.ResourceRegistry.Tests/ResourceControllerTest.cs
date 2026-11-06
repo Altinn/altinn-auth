@@ -6,6 +6,9 @@ using Altinn.ResourceRegistry.Tests.Utils;
 using Microsoft.AspNetCore.Mvc;
 using Altinn.ResourceRegistry.Core.Enums;
 using Altinn.ResourceRegistry.Core.Models;
+using Altinn.ResourceRegistry.Core.ServiceOwners;
+using Altinn.ResourceRegistry.Core.Services;
+using Altinn.ResourceRegistry.Core.Services.Interfaces;
 using Altinn.ResourceRegistry.Models;
 using System.Net.Http.Json;
 using Altinn.ResourceRegistry.Controllers;
@@ -13,7 +16,8 @@ using Altinn.ResourceRegistry.TestUtils;
 using Microsoft.Extensions.DependencyInjection;
 using Altinn.ResourceRegistry.Core;
 using Altinn.ResourceRegistry.Tests.Mocks;
-using Altinn.ResourceRegistry.Core.Services.Interfaces;
+using Microsoft.Extensions.Caching.Hybrid;
+using Moq;
 
 namespace Altinn.ResourceRegistry.Tests
 {
@@ -204,6 +208,71 @@ namespace Altinn.ResourceRegistry.Tests
 
             Assert.NotNull(resource);
             Assert.Equal(142, resource.Count);
+        }
+
+        [Fact]
+        public async Task GetResourceList_SecondCall_IsServedFromCache()
+        {
+            // Arrange
+            var cancellationToken = CancellationToken.None;
+
+            var repository = new Mock<IResourceRegistryRepository>();
+            repository.Setup(r => r.Search(It.IsAny<ResourceSearch>(), It.IsAny<bool>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<ServiceResource> { new ServiceResource { Identifier = "test_resource" } });
+
+            var serviceOwners = new Mock<IServiceOwnerService>();
+            serviceOwners.Setup(s => s.GetServiceOwners(It.IsAny<CancellationToken>())).ReturnsAsync(ServiceOwnerLookup.Empty);
+
+            var service = new ResourceRegistryService(repository.Object, Mock.Of<IPolicyRepository>(), Mock.Of<IApplications>(), serviceOwners.Object, CreateHybridCache());
+
+            // Act – two identical calls. includeApps:false isolates the cached inner list.
+            var first = await service.GetResourceList(includeApps: false, includeExpired: false, includeMigratedApps: false, cancellationToken: cancellationToken);
+            var second = await service.GetResourceList(includeApps: false, includeExpired: false, includeMigratedApps: false, cancellationToken: cancellationToken);
+
+            // Assert – repository was hit once; second call came from the cache.
+            repository.Verify(r => r.Search(It.IsAny<ResourceSearch>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Once);
+
+            Assert.Single(first);
+            Assert.Single(second);
+        }
+
+        [Fact]
+        public async Task GetResourceList_AfterUpdate_InvalidatesCache()
+        {
+            // Arrange
+            var cancellationToken = CancellationToken.None;
+            const string resourceId = "test_resource";
+
+            var repository = new Mock<IResourceRegistryRepository>();
+            repository.Setup(r => r.Search(It.IsAny<ResourceSearch>(), It.IsAny<bool>(), It.IsAny<CancellationToken>())).ReturnsAsync(new List<ServiceResource> { new ServiceResource { Identifier = resourceId } });
+            repository.Setup(r => r.UpdateResource(It.IsAny<ServiceResource>(), It.IsAny<CancellationToken>())).ReturnsAsync(new ServiceResource { Identifier = resourceId });
+
+            var serviceOwners = new Mock<IServiceOwnerService>();
+            serviceOwners.Setup(s => s.GetServiceOwners(It.IsAny<CancellationToken>())).ReturnsAsync(ServiceOwnerLookup.Empty);
+
+            var service = new ResourceRegistryService(repository.Object, Mock.Of<IPolicyRepository>(), Mock.Of<IApplications>(), serviceOwners.Object, CreateHybridCache());
+
+            // Act
+            var first = await service.GetResourceList(includeApps: false, includeExpired: false, includeMigratedApps: false, cancellationToken: cancellationToken);
+            var second = await service.GetResourceList(includeApps: false, includeExpired: false, includeMigratedApps: false, cancellationToken: cancellationToken);
+
+            await service.UpdateResource(new ServiceResource { Identifier = resourceId }, cancellationToken);
+
+            var third = await service.GetResourceList(includeApps: false, includeExpired: false, includeMigratedApps: false, cancellationToken: cancellationToken);
+
+            // Assert
+            repository.Verify(r => r.Search(It.IsAny<ResourceSearch>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()), Times.Exactly(2));
+            repository.Verify(r => r.UpdateResource(It.IsAny<ServiceResource>(), It.IsAny<CancellationToken>()), Times.Once);
+
+            Assert.Single(first);
+            Assert.Single(second);
+            Assert.Single(third);
+        }
+
+        private static HybridCache CreateHybridCache()
+        {
+            var services = new ServiceCollection();
+            services.AddHybridCache();
+            return services.BuildServiceProvider().GetRequiredService<HybridCache>();
         }
 
         [Fact]
