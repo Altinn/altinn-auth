@@ -1612,7 +1612,7 @@ public static partial class StaticDataIngest
             .AsTracking()
             .ToDictionaryAsync(t => (t.RoleId, t.PackageId, t.EntityVariantId), cancellationToken);
 
-        foreach (var d in data)
+        foreach (var d in data.Where(d => PackageConstants.IsAvailable(d.PackageId)))
         {
             if (existing.TryGetValue((d.RoleId, d.PackageId, d.EntityVariantId), out var obj))
             {

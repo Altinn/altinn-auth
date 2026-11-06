@@ -53,6 +53,12 @@ public static class PackageConstants
         => ConstantLookup.TryGetById(typeof(PackageConstants), id, out result);
 
     /// <summary>
+    /// Whether the <see cref="Package"/> with this id is available in this environment.
+    /// </summary>
+    public static bool IsAvailable(Guid id)
+        => ConstantLookup.IsAvailable<Package>(typeof(PackageConstants), id);
+
+    /// <summary>
     /// Try to get <see cref="Role"/> by Urn.
     /// </summary>
     public static bool TryGetByUrn(string urn, [NotNullWhen(true)] out ConstantDefinition<Package>? result)
