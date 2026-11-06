@@ -27,13 +27,13 @@ public class AccessListAuthorization : IAccessListAuthorization
         AccessListAuthorizationResponse response = AccessListAuthorizationResponse.From(request);
         IEnumerable<AccessListResourceMembershipWithActionFilterDto> memberships = await _client.GetMembershipsForResourceForParty(request.Subject.Value, request.Resource.Value, cancellationToken);
 
-        string action = request.Action.Value.ValueSpan.ToString();
+        string action = null;
 
         if (memberships == null || !memberships.Any())
         {
             response.Result = AccessListAuthorizationResult.NotAuthorized;
         }
-        else if (memberships.Any(m => m.ActionFilters == null || m.ActionFilters.Any(actionFilter => string.Equals(actionFilter, action, StringComparison.OrdinalIgnoreCase))))
+        else if (memberships.Any(m => m.ActionFilters == null || m.ActionFilters.Any(actionFilter => string.Equals(actionFilter, action ??= request.Action.Value.ValueSpan.ToString(), StringComparison.OrdinalIgnoreCase))))
         {
             response.Result = AccessListAuthorizationResult.Authorized;
         }

@@ -153,7 +153,53 @@ public class AccessListAuthorizationTest
         Assert.Equal(AccessListAuthorizationResult.Authorized, result.Value.Result);
     }
 
+    [Fact]
+    public async Task Authorize_ActionOmitted_EmptyMemberships_ReturnsNotAuthorized()
+    {
+        // Arrange
+        var request = CreateRequestWithoutAction();
+        _registryMock
+            .Setup(r => r.GetMembershipsForResourceForParty(It.IsAny<PartyUrn>(), It.IsAny<ResourceIdUrn>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Array.Empty<AccessListResourceMembershipWithActionFilterDto>());
+
+        // Act
+        var result = await _sut.Authorize(request, TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        Assert.Equal(AccessListAuthorizationResult.NotAuthorized, result.Value.Result);
+    }
+
+    [Fact]
+    public async Task Authorize_ActionOmitted_MembershipWithNullActionFilters_ReturnsAuthorized()
+    {
+        // Arrange
+        var request = CreateRequestWithoutAction();
+        var membership = CreateMembership(actionFilters: null);
+        _registryMock
+            .Setup(r => r.GetMembershipsForResourceForParty(It.IsAny<PartyUrn>(), It.IsAny<ResourceIdUrn>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new[] { membership });
+
+        // Act
+        var result = await _sut.Authorize(request, TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        Assert.Equal(AccessListAuthorizationResult.Authorized, result.Value.Result);
+    }
+
     private static readonly System.Text.Json.JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
+
+    private static AccessListAuthorizationRequest CreateRequestWithoutAction()
+    {
+        string json = $$"""
+            {
+              "subject": { "type": "urn:altinn:party:uuid", "value": "{{PartyUuid}}" },
+              "resource": { "type": "urn:altinn:resource", "value": "{{ResourceId}}" }
+            }
+            """;
+        return System.Text.Json.JsonSerializer.Deserialize<AccessListAuthorizationRequest>(json, JsonOptions);
+    }
 
     private static AccessListAuthorizationRequest CreateRequest(string action = null)
     {
