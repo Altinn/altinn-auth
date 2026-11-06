@@ -221,4 +221,8 @@ public static class Problems
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
     public static ProblemDescriptor ConcurrentPersistenceConflict { get; }
     = _factory.Create(52, HttpStatusCode.Conflict, "The same data was changed by another request at the same time. Try again.");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor FromPartyNotOnAccessList { get; }
+    = _factory.Create(53, HttpStatusCode.BadRequest, "The resource uses an access list, and the party delegating is not on it for the requested rights. Add the party to the access list before delegating.");
 }
