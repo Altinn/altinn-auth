@@ -44,6 +44,20 @@ public sealed class ConstantLookupIsProdTest : IDisposable
     }
 
     [Fact]
+    public void TaxBaseExtendedAccess_IsLeftOutInProdOnly()
+    {
+        const string urn = "urn:altinn:accesspackage:skattegrunnlag-utvidet-tilgang";
+
+        ConstantLookup.IsProd = false;
+        Assert.True(PackageConstants.TryGetByUrn(urn, out var package));
+        Assert.Equal(PackageConstants.TaxBaseExtendedAccess, package);
+
+        ConstantLookup.IsProd = true;
+        Assert.False(PackageConstants.TryGetByUrn(urn, out _));
+        Assert.False(PackageConstants.IsAvailable(PackageConstants.TaxBaseExtendedAccess.Id));
+    }
+
+    [Fact]
     public void IsAvailable_WithIdThatIsNotAConstant_ReturnsTrue()
     {
         ConstantLookup.IsProd = true;

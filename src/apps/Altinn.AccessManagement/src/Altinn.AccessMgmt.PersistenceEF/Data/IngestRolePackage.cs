@@ -260,6 +260,21 @@ public static partial class StaticDataIngest
             new RolePackage() { RoleId = roleNufRepr, PackageId = PackageConstants.TaxBase.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roleHadm, PackageId = PackageConstants.TaxBase.Id, EntityVariantId = null, CanDelegate = true, HasAccess = false },
 
+            // Test only, left out in production with the package.
+            new RolePackage() { RoleId = roleDagl, PackageId = PackageConstants.TaxBaseExtendedAccess.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roleLede, PackageId = PackageConstants.TaxBaseExtendedAccess.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roleInnh, PackageId = PackageConstants.TaxBaseExtendedAccess.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roleDtso, PackageId = PackageConstants.TaxBaseExtendedAccess.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roleDtpr, PackageId = PackageConstants.TaxBaseExtendedAccess.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roleKomp, PackageId = PackageConstants.TaxBaseExtendedAccess.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roleBest, PackageId = PackageConstants.TaxBaseExtendedAccess.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roleBobe, PackageId = PackageConstants.TaxBaseExtendedAccess.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roleKnuf, PackageId = PackageConstants.TaxBaseExtendedAccess.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roleFfor, PackageId = PackageConstants.TaxBaseExtendedAccess.Id, EntityVariantId = EntityVariantConstants.NUF.Id, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roleFfor, PackageId = PackageConstants.TaxBaseExtendedAccess.Id, EntityVariantId = EntityVariantConstants.VPFO.Id, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roleNufRepr, PackageId = PackageConstants.TaxBaseExtendedAccess.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
+            new RolePackage() { RoleId = roleHadm, PackageId = PackageConstants.TaxBaseExtendedAccess.Id, EntityVariantId = null, CanDelegate = true, HasAccess = false },
+
             new RolePackage() { RoleId = roleDagl, PackageId = PackageConstants.ValueAddedTax.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roleLede, PackageId = PackageConstants.ValueAddedTax.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
             new RolePackage() { RoleId = roleInnh, PackageId = PackageConstants.ValueAddedTax.Id, EntityVariantId = null, CanDelegate = true, HasAccess = true },
