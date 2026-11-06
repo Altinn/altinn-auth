@@ -52,6 +52,7 @@ Code sits in verticals. A vertical always has its own `.slnx`, `src/` and `conf.
 | `docs/testing` | How the test suite is organised, fixtures, mocks, naming |
 | `docs/adr` | Architecture decision records, cross-cutting; each vertical keeps its own in its `docs/adr/` |
 | `docs/ai` | The [data policy](docs/ai/data-policy.md) for AI tools, and the background for the working agreement |
+| `docs/process` | [How we work](docs/process/how-we-work.md): the iteration, roles, flow and rituals decided in [ADR-0005](docs/adr/0005-planning-and-flow.md); each role's [board view](docs/process/board-views.md); the [board set-up](docs/process/board-setup.md) the process needs |
 | `eng/testing` | Coverage scripts, thresholds, the test-category guard |
 | `infra` | Infrastructure as code |
 | `.agents/skills` | [Task skills](.agents/skills/README.md); `.claude/skills` points here |
