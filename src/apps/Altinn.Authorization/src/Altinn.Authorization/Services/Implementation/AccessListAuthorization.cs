@@ -7,7 +7,7 @@ using Altinn.Platform.Authorization.Services.Interface;
 namespace Altinn.Platform.Authorization.Services.Implementation;
 
 /// <summary>
-/// The service used to map internal delegation change to delegation change events and push them to the event queue.
+/// Service for authorizing a request against the access list memberships of a party for a resource, including any action filters.
 /// </summary>
 public class AccessListAuthorization : IAccessListAuthorization
 {
@@ -27,11 +27,13 @@ public class AccessListAuthorization : IAccessListAuthorization
         AccessListAuthorizationResponse response = AccessListAuthorizationResponse.From(request);
         IEnumerable<AccessListResourceMembershipWithActionFilterDto> memberships = await _client.GetMembershipsForResourceForParty(request.Subject.Value, request.Resource.Value, cancellationToken);
 
+        string action = request.Action.Value.ValueSpan.ToString();
+
         if (memberships == null || !memberships.Any())
         {
             response.Result = AccessListAuthorizationResult.NotAuthorized;
         }
-        else if (memberships.Any(m => m.ActionFilters == null || m.ActionFilters.Any(actionFilter => actionFilter == request.Action.Value.ValueSpan.ToString())))
+        else if (memberships.Any(m => m.ActionFilters == null || m.ActionFilters.Any(actionFilter => string.Equals(actionFilter, action, StringComparison.OrdinalIgnoreCase))))
         {
             response.Result = AccessListAuthorizationResult.Authorized;
         }
