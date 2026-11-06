@@ -42,10 +42,13 @@ public class MyControllerTest : IClassFixture<ApiFixture>
             services.AddSingleton<IFoo, FooMock>();
         });
 
-        _client = fixture.CreateTestClient(c =>
+        var token = TestTokenGenerator.CreateToken(new ClaimsIdentity("mock"), claims =>
+            claims.Add(new Claim(AltinnCoreClaimTypes.PartyUuid, TestEntities.PersonPaula.Id.ToString())));
+
+        _client = fixture.BuildConfiguration(c =>
         {
             c.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", TestTokens.ForUser(1337));
+                new AuthenticationHeaderValue("Bearer", token);
         });
     }
 }
@@ -54,36 +57,42 @@ public class MyControllerTest : IClassFixture<ApiFixture>
 ### One-shot seeding
 
 ```csharp
-fixture.EnsureSeedOnce<MyControllerTest>(async db =>
+fixture.EnsureSeedOnce<MyControllerTest>(db =>
 {
-    db.Parties.Add(new Party { ... });
-    await db.SaveChangesAsync();
+    db.Assignments.Add(new Assignment { FromId = ..., ToId = ..., RoleId = ... });
+    db.SaveChanges();
 });
 ```
 
 The callback runs exactly once per fixture lifetime even when the fixture is
-shared across classes via `ICollectionFixture<ApiFixture>`.
+shared across classes via `ICollectionFixture<ApiFixture>`. It takes
+`Action<AppDbContext>`, so keep it synchronous: an `async` lambda compiles to
+`async void` and the seed may not have finished when the test runs.
 
 #### Seed-data contract
 
 `ApiFixture` is **not** an empty database — it provisions a baseline set of
 entities, parties and assignments (see `TestDataSeeds` / `TestEntities` /
-`TestData` in `Altinn.AccessManagement.TestUtils`). Your test code should:
+`TestData` in `Altinn.AccessManagement.TestUtils`), on top of the production
+static data (packages, roles, areas, entity types) that `StaticDataIngest`
+adds during migration. Your test code should:
 
 - **Assert against owned data, not global counts.** Use scoped assertions
   (`Assert.Contains` / `Assert.Empty` on a filtered set), never "exactly N rows
   in the table" — the baseline and other classes' `EnsureSeedOnce` data coexist
   in a shared DB.
 - **Use disjoint IDs.** When seeding your own rows, use IDs that cannot collide
-  with the baseline or another class sharing the fixture; a primary-key clash
-  surfaces as a seed-time failure, not a clean assertion error.
+  with the baseline or another class sharing the fixture. `EnsureSeedOnce`
+  marks an added row whose key already exists as unchanged, so a clash does
+  not fail: your row is silently dropped and the test runs against the
+  existing one.
 - **Reuse the named baseline actors** (`TestData.MalinEmilie`,
   `TestData.JinxArcane`, `TestEntities.MainUnitKarlstad`, …) rather than
   inventing parties, so the register/profile/roles mocks already resolve them.
 
 ### Why you configure in the constructor only
 
-Once `CreateClient()` / `CreateTestClient()` is called, the underlying
+Once `BuildConfiguration()` or `Server.CreateClient()` is called, the underlying
 `IHost` is built and frozen. Any `ConfigureServices` registered after that
 point is **silently ignored**. If you need a different configuration for a
 subset of tests, put those tests in a dedicated class with its own fixture.
