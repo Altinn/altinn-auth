@@ -41,7 +41,6 @@ public class SystemUserController : ControllerBase
     private readonly ISystemUserService _systemUserService;
     private readonly GeneralSettings _generalSettings;
     private readonly IRequestSystemUser _requestSystemUser;
-    private readonly IFeatureManager _featureManager;
     private readonly IMapper _mapper;
 
     /// <summary>
@@ -59,13 +58,11 @@ public class SystemUserController : ControllerBase
         ISystemUserService systemUserService,
         IRequestSystemUser requestSystemUser,
         IOptions<GeneralSettings> generalSettings,
-        IFeatureManager featureManager,
         IMapper mapper)
     {
         _systemUserService = systemUserService;
         _generalSettings = generalSettings.Value;
         _requestSystemUser = requestSystemUser;
-        _featureManager = featureManager;
         _mapper = mapper;
     }
 
@@ -648,7 +645,7 @@ public class SystemUserController : ControllerBase
     [HttpGet("agent/{party}/clients")]
     public async Task<ActionResult<List<Customer>>> GetClientsForFacilitator([FromQuery] Guid facilitator, [FromQuery] List<string> packages = null, CancellationToken cancellationToken = default)
     {
-        var result = await _systemUserService.GetClientsForFacilitator(facilitator, packages, _featureManager, cancellationToken);
+        var result = await _systemUserService.GetClientsForFacilitator(facilitator, packages, cancellationToken);
 
         if (result.IsSuccess)
         {

@@ -18,7 +18,6 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.FeatureManagement;
 using Moq;
 using Moq.Protected;
 using Xunit;
@@ -128,7 +127,7 @@ namespace Altinn.Platform.Authentication.Tests.Clients
         }
 
         [Fact]
-        public async Task RevokeClientFromAgentSystemUser_FlagOff_UsesV1RouteAndFromToParams()
+        public async Task RevokeClientFromAgentSystemUser_UsesV2RouteAndClientAgentParams()
         {
             // Arrange
             HttpRequestMessage? captured = null;
@@ -141,111 +140,89 @@ namespace Altinn.Platform.Authentication.Tests.Clients
             // Assert
             Assert.NotNull(captured);
             string url = captured!.RequestUri!.ToString();
-            Assert.Contains("/accessmanagement/api/v1/enduser/clientdelegations/agents/clients", url);
-            Assert.Contains($"from={client}", url);
-            Assert.Contains($"to={systemuser}", url);
-        }
-
-        [Fact]
-        public async Task RevokeClientFromAgentSystemUser_FlagOn_UsesV2RouteAndClientAgentParams()
-        {
-            // Arrange
-            HttpRequestMessage? captured = null;
-            var sut = CreateClient(CreateHttpClient(HttpStatusCode.OK, string.Empty, capture: r => captured = r), clientDelegationV2: true);
-            Guid provider = Guid.NewGuid(), client = Guid.NewGuid(), systemuser = Guid.NewGuid();
-
-            // Act
-            await sut.RevokeClientFromAgentSystemUser(provider, client, systemuser, CancellationToken.None);
-
-            // Assert
-            Assert.NotNull(captured);
-            string url = captured!.RequestUri!.ToString();
             Assert.Contains("/accessmanagement/api/v2/enduser/clientdelegations/agents/clients", url);
             Assert.Contains($"client={client}", url);
             Assert.Contains($"agent={systemuser}", url);
             Assert.DoesNotContain("/api/v1/", url);
+            Assert.DoesNotContain("from=", url);
+            Assert.DoesNotContain("to=", url);
         }
 
-        [Theory]
-        [InlineData(false, "v1", "to")]
-        [InlineData(true, "v2", "agent")]
-        public async Task RevokeSystemUserAsAgent_UsesVersionedRouteAndAgentParam(bool useV2, string version, string agentParam)
+        [Fact]
+        public async Task RevokeSystemUserAsAgent_UsesV2RouteAndAgentParam()
         {
             HttpRequestMessage? captured = null;
-            var client = CreateClient(CreateHttpClient(HttpStatusCode.OK, string.Empty, capture: r => captured = r), clientDelegationV2: useV2);
+            var client = CreateClient(CreateHttpClient(HttpStatusCode.OK, string.Empty, capture: r => captured = r));
             Guid party = Guid.NewGuid(), systemUser = Guid.NewGuid();
 
             await client.RevokeSystemUserAsAgent(party, systemUser, cascade: true, CancellationToken.None);
 
             string url = captured!.RequestUri!.ToString();
-            Assert.Contains($"/accessmanagement/api/{version}/enduser/clientdelegations/agents?", url);
-            Assert.Contains($"{agentParam}={systemUser}", url);
+            Assert.Contains("/accessmanagement/api/v2/enduser/clientdelegations/agents?", url);
+            Assert.Contains($"agent={systemUser}", url);
+            Assert.DoesNotContain("to=", url);
         }
 
-        [Theory]
-        [InlineData(false, "v1", "to")]
-        [InlineData(true, "v2", "agent")]
-        public async Task DeleteSystemUserAssignment_UsesVersionedRouteAndAgentParam(bool useV2, string version, string agentParam)
+        [Fact]
+        public async Task DeleteSystemUserAssignment_UsesV2RouteAndAgentParam()
         {
             HttpRequestMessage? captured = null;
-            var client = CreateClient(CreateHttpClient(HttpStatusCode.OK, string.Empty, capture: r => captured = r), clientDelegationV2: useV2);
+            var client = CreateClient(CreateHttpClient(HttpStatusCode.OK, string.Empty, capture: r => captured = r));
             Guid facilitator = Guid.NewGuid(), systemUser = Guid.NewGuid();
 
             await client.DeleteSystemUserAssignment(facilitator, systemUser, CancellationToken.None);
 
             string url = captured!.RequestUri!.ToString();
-            Assert.Contains($"/accessmanagement/api/{version}/enduser/clientdelegations/agents?", url);
-            Assert.Contains($"{agentParam}={systemUser}", url);
+            Assert.Contains("/accessmanagement/api/v2/enduser/clientdelegations/agents?", url);
+            Assert.Contains($"agent={systemUser}", url);
+            Assert.DoesNotContain("to=", url);
         }
 
-        [Theory]
-        [InlineData(false, "v1", "to")]
-        [InlineData(true, "v2", "agent")]
-        public async Task GetClientDelegationsForAgent_UsesVersionedRouteAndAgentParam(bool useV2, string version, string agentParam)
+        [Fact]
+        public async Task GetClientDelegationsForAgent_UsesV2RouteAndAgentParam()
         {
             HttpRequestMessage? captured = null;
-            var client = CreateClient(CreateHttpClient(HttpStatusCode.OK, "{\"data\":[]}", capture: r => captured = r), clientDelegationV2: useV2);
+            var client = CreateClient(CreateHttpClient(HttpStatusCode.OK, "{\"data\":[]}", capture: r => captured = r));
             Guid provider = Guid.NewGuid(), systemUser = Guid.NewGuid();
 
             await client.GetClientDelegationsForAgent(systemUser, provider, CancellationToken.None);
 
             string url = captured!.RequestUri!.ToString();
-            Assert.Contains($"/accessmanagement/api/{version}/enduser/clientdelegations/agents/accesspackages?", url);
+            Assert.Contains("/accessmanagement/api/v2/enduser/clientdelegations/agents/accesspackages?", url);
             Assert.Contains($"party={provider}", url);
-            Assert.Contains($"{agentParam}={systemUser}", url);
+            Assert.Contains($"agent={systemUser}", url);
+            Assert.DoesNotContain("to=", url);
         }
 
-        [Theory]
-        [InlineData(false, "v1", "from", "to")]
-        [InlineData(true, "v2", "client", "agent")]
-        public async Task DelegateCustomerToAgentSystemUser_RenamesFromAndToParams(bool useV2, string version, string clientParam, string agentParam)
+        [Fact]
+        public async Task DelegateCustomerToAgentSystemUser_UsesV2RouteAndClientAgentParams()
         {
             HttpRequestMessage? captured = null;
-            var client = CreateClient(CreateHttpClient(HttpStatusCode.OK, "[]", capture: r => captured = r), clientDelegationV2: useV2);
+            var client = CreateClient(CreateHttpClient(HttpStatusCode.OK, "[]", capture: r => captured = r));
             Guid provider = Guid.NewGuid(), agentClient = Guid.NewGuid(), systemUser = Guid.NewGuid();
 
             await client.DelegateCustomerToAgentSystemUser(systemUser, new DelegationBatchInputDto(), provider, agentClient, CancellationToken.None);
 
             string url = captured!.RequestUri!.ToString();
-            Assert.Contains($"/accessmanagement/api/{version}/enduser/clientdelegations/agents/accesspackages?", url);
+            Assert.Contains("/accessmanagement/api/v2/enduser/clientdelegations/agents/accesspackages?", url);
             Assert.Contains($"party={provider}", url);
-            Assert.Contains($"{clientParam}={agentClient}", url);
-            Assert.Contains($"{agentParam}={systemUser}", url);
+            Assert.Contains($"client={agentClient}", url);
+            Assert.Contains($"agent={systemUser}", url);
+            Assert.DoesNotContain("from=", url);
+            Assert.DoesNotContain("to=", url);
         }
 
-        [Theory]
-        [InlineData(false, "v1")]
-        [InlineData(true, "v2")]
-        public async Task GetClientsForFacilitator_MatchAny_UsesVersionedEnduserRoute(bool useV2, string version)
+        [Fact]
+        public async Task GetClientsForFacilitator_MatchAny_UsesV2EnduserRouteWithoutMatchParam()
         {
             HttpRequestMessage? captured = null;
-            var client = CreateClient(CreateHttpClient(HttpStatusCode.OK, "{\"data\":[]}", capture: r => captured = r), clientDelegationV2: useV2);
+            var client = CreateClient(CreateHttpClient(HttpStatusCode.OK, "{\"data\":[]}", capture: r => captured = r));
             Guid facilitator = Guid.NewGuid();
 
             await client.GetClientsForFacilitator(facilitator, ["urn:altinn:accesspackage:skattnaering"], matchAllPackages: false, CancellationToken.None);
 
             string url = captured!.RequestUri!.ToString();
-            Assert.Contains($"/accessmanagement/api/{version}/enduser/clientdelegations/clients?", url);
+            Assert.Contains("/accessmanagement/api/v2/enduser/clientdelegations/clients?", url);
             Assert.Contains($"party={facilitator}", url);
             Assert.Contains("packages=urn:altinn:accesspackage:skattnaering", url);
 
@@ -259,10 +236,10 @@ namespace Altinn.Platform.Authentication.Tests.Clients
         }
 
         [Fact]
-        public async Task GetClientsForFacilitator_MatchAllByDefault_FlagOn_UsesV2EndpointWithMatchAll()
+        public async Task GetClientsForFacilitator_MatchAllByDefault_UsesV2EndpointWithMatchAll()
         {
             HttpRequestMessage? captured = null;
-            var client = CreateClient(CreateHttpClient(HttpStatusCode.OK, "{\"data\":[]}", capture: r => captured = r), clientDelegationV2: true);
+            var client = CreateClient(CreateHttpClient(HttpStatusCode.OK, "{\"data\":[]}", capture: r => captured = r));
             Guid facilitator = Guid.NewGuid();
 
             // matchAllPackages defaults to true.
@@ -273,24 +250,6 @@ namespace Altinn.Platform.Authentication.Tests.Clients
             Assert.Contains("packages=skatt", url);
             Assert.Contains("packages=lonn", url);
             Assert.Contains("match=all", url);
-        }
-
-        [Fact]
-        public async Task GetClientsForFacilitator_MatchAllByDefault_FlagOff_UsesV1EnduserWithoutMatchParam()
-        {
-            HttpRequestMessage? captured = null;
-            var client = CreateClient(CreateHttpClient(HttpStatusCode.OK, "{\"data\":[]}", capture: r => captured = r), clientDelegationV2: false);
-            Guid facilitator = Guid.NewGuid();
-
-            // match=all is v2-only, so on v1 this method uses the enduser endpoint with no match parameter
-            // (OR). Callers needing AND on v1 use GetClientsForFacilitatorFromInternalApi instead - see
-            // SystemUserService.GetClientsForFacilitator, which routes to the internal API when v2 is off.
-            await client.GetClientsForFacilitator(facilitator, ["skatt", "lonn"], cancellationToken: CancellationToken.None);
-
-            string url = captured!.RequestUri!.ToString();
-            Assert.Contains("/accessmanagement/api/v1/enduser/clientdelegations/clients?", url);
-            Assert.DoesNotContain("internal/systemuserclientdelegation", url);
-            Assert.DoesNotContain("match=all", url);
         }
 
         [Theory]
@@ -304,7 +263,7 @@ namespace Altinn.Platform.Authentication.Tests.Clients
         }
 
         [Fact]
-        public async Task GetClientsForFacilitator_FlagOn_ParsesV2PayloadIncludingNewResourcesField()
+        public async Task GetClientsForFacilitator_ParsesV2PayloadIncludingNewResourcesField()
         {
             // v2 ClientDto adds a 'resources' array per access entry that the authentication DTO does not
             // model. This verifies the extra field is ignored and the consumed fields still deserialize.
@@ -326,7 +285,7 @@ namespace Altinn.Platform.Authentication.Tests.Clients
               ]
             }
             """;
-            var client = CreateClient(CreateHttpClient(HttpStatusCode.OK, body), clientDelegationV2: true);
+            var client = CreateClient(CreateHttpClient(HttpStatusCode.OK, body));
 
             var result = await client.GetClientsForFacilitator(Guid.NewGuid(), [], cancellationToken: CancellationToken.None);
 
@@ -335,47 +294,6 @@ namespace Altinn.Platform.Authentication.Tests.Clients
             Assert.Equal(clientId, single.Client.Id);
             var access = Assert.Single(single.Access);
             Assert.Equal("urn:altinn:accesspackage:skattnaering", Assert.Single(access.Packages).Urn);
-        }
-
-        [Fact]
-        public async Task GetClientsForFacilitatorFromInternalApi_UsesInternalRoute_AndMapsResponse()
-        {
-            // The temporary internal route filters with AND. It always targets api/v1/internal and is not
-            // affected by the client-delegation v2 feature flag.
-            Guid facilitator = Guid.NewGuid();
-            Guid clientId = Guid.NewGuid();
-            HttpRequestMessage? captured = null;
-            string body = $$"""
-            [
-              {
-                "party": { "id": "{{clientId}}", "name": "Acme AS", "organizationNumber": "310000000", "unitType": "AS", "isDeleted": true },
-                "access": [ { "role": "regnskapsforer", "packages": [ "regnskapsforer-lonn", "regnskapsforer-med-signeringsrettighet" ] } ]
-              }
-            ]
-            """;
-            var client = CreateClient(CreateHttpClient(HttpStatusCode.OK, body, capture: r => captured = r));
-
-            var result = await client.GetClientsForFacilitatorFromInternalApi(facilitator, ["regnskapsforer-lonn", "regnskapsforer-med-signeringsrettighet"], CancellationToken.None);
-
-            // Route
-            string url = captured!.RequestUri!.ToString();
-            Assert.Contains($"/accessmanagement/api/v1/internal/systemuserclientdelegation/clients?party={facilitator}", url);
-            Assert.Contains("packages=regnskapsforer-lonn", url);
-            Assert.Contains("packages=regnskapsforer-med-signeringsrettighet", url);
-            Assert.DoesNotContain("enduser/clientdelegations", url);
-
-            // Mapping of the internal (party/role/packages-as-strings) shape onto ClientDelegationDto
-            Assert.False(result.IsProblem);
-            var single = Assert.Single(result.Value);
-            Assert.Equal(clientId, single.Client.Id);
-            Assert.Equal("Acme AS", single.Client.Name);
-            Assert.Equal("310000000", single.Client.OrganizationIdentifier);
-            Assert.Equal("AS", single.Client.Variant);
-            Assert.True(single.Client.IsDeleted);
-            var access = Assert.Single(single.Access);
-            Assert.Equal("regnskapsforer", access.Role.Urn);
-            Assert.Equal(2, access.Packages.Length);
-            Assert.Contains(access.Packages, p => p.Urn == "regnskapsforer-lonn");
         }
 
         private static HttpClient CreateHttpClient(HttpStatusCode statusCode, string responseBody, string mediaType = "application/json", Action<HttpRequestMessage>? capture = null)
@@ -396,7 +314,7 @@ namespace Altinn.Platform.Authentication.Tests.Clients
             return new HttpClient(handlerMock.Object);
         }
 
-        private AccessManagementClient CreateClient(HttpClient httpClient, bool clientDelegationV2 = false, string apiEndpoint = "http://localhost:5117/accessmanagement/api/v1/")
+        private AccessManagementClient CreateClient(HttpClient httpClient, string apiEndpoint = "http://localhost:5117/accessmanagement/api/v1/")
         {
             DefaultHttpContext httpContext = new();
             httpContext.Request.Headers.Authorization = "Bearer unittest-token";
@@ -414,11 +332,6 @@ namespace Altinn.Platform.Authentication.Tests.Clients
                 JwtCookieName = "AltinnStudioRuntime"
             });
 
-            Mock<IFeatureManager> featureManagerMock = new();
-            featureManagerMock
-                .Setup(f => f.IsEnabledAsync(AccessManagementFeatureFlags.ClientDelegationApiV2))
-                .ReturnsAsync(clientDelegationV2);
-
             return new AccessManagementClient(
                 httpClient,
                 _loggerMock.Object,
@@ -426,8 +339,7 @@ namespace Altinn.Platform.Authentication.Tests.Clients
                 accessManagementSettings,
                 platformSettings,
                 new Mock<IWebHostEnvironment>().Object,
-                new Mock<IAccessTokenGenerator>().Object,
-                featureManagerMock.Object);
+                new Mock<IAccessTokenGenerator>().Object);
         }
 
         private void VerifyErrorLogged(params string[] expectedFragments)
