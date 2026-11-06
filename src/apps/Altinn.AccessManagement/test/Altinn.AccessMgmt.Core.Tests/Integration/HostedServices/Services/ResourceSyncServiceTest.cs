@@ -6,7 +6,7 @@ using Altinn.AccessMgmt.Core.HostedServices.Leases;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
-using Altinn.AccessMgmt.PersistenceEF.Models.Enums;
+using Altinn.Authorization.Api.Contracts.ResourceRegistry.Enums;
 using Altinn.Authorization.Host.Lease;
 using Altinn.Authorization.Integration.Platform;
 using Altinn.Authorization.Integration.Platform.ResourceRegistry;

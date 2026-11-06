@@ -3,7 +3,7 @@ using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.Core.HostedServices.Contracts;
 using Altinn.AccessMgmt.Core.HostedServices.Leases;
 using Altinn.AccessMgmt.PersistenceEF.Models;
-using Altinn.AccessMgmt.PersistenceEF.Models.Enums;
+using Altinn.Authorization.Api.Contracts.ResourceRegistry.Enums;
 using Altinn.Authorization.Integration.Platform;
 using Altinn.Authorization.Integration.Platform.ResourceRegistry;
 using Microsoft.EntityFrameworkCore;

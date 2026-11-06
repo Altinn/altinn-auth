@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
-using Altinn.AccessManagement.Core.Enums.ResourceRegistry;
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.AccessList;
@@ -31,6 +30,7 @@ using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 using Altinn.Authorization.Api.Contracts.Authorization;
 using Altinn.Authorization.Api.Contracts.Register;
 using Altinn.Authorization.Api.Contracts.ResourceRegistry;
+using Altinn.Authorization.Api.Contracts.ResourceRegistry.Enums;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
