@@ -73,8 +73,7 @@ syncroot_dirs=("${APPS_ROOT}"/*/syncroot/)
 
 for syncroot_dir in "${syncroot_dirs[@]}"; do
   app_dir="${syncroot_dir%syncroot/}"
-  # Parsed as YAML because conf.json starts with a BOM, which yq's JSON parser rejects.
-  deployed="$(yq -p yaml -o yaml '.dis.deploy // false' "${app_dir}conf.json")"
+  deployed="$(yq -p json -o yaml '.dis.deploy // false' "${app_dir}conf.json")"
 
   for env in "${SYNCROOT_ENVIRONMENTS[@]}"; do
     if ! [ -f "${syncroot_dir}${env}/kustomization.yaml" ]; then
