@@ -1,0 +1,40 @@
+meta {
+  name: 03_AND_ConsumerDelegatesTheResource
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/maskinporten/suppliers/resources?party={{party}}&supplier={{supplierOrgNo}}&resource={{resource}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  supplier: {{supplierOrgNo}}
+  resource: {{resource}}
+}
+
+docs {
+  AND the consumer delegates the Maskinporten scope resource to the supplier. Expects 200
+  with `true`.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().maskinporten;
+
+  bru.setVar("party", td.consumer.partyUuid);
+  bru.setVar("supplierOrgNo", td.supplier.orgNo);
+  bru.setVar("resource", td.resource);
+
+  await loginAs(td.consumer.dagligleder);
+}
+
+tests {
+  test("AND the resource is delegated, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+    expect(res.getBody()).to.equal(true);
+  });
+}

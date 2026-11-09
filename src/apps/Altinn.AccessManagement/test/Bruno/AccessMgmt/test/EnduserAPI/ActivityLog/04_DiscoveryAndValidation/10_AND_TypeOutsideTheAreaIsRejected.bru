@@ -1,0 +1,45 @@
+meta {
+  name: 10_AND_TypeOutsideTheAreaIsRejected
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/connections/activitylog?party={{party}}&direction=from&type=Request
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  direction: from
+  type: Request
+}
+
+docs {
+  AND a main record type the area does not serve (here: Request, in the connections area) is rejected with 400.
+
+  The response is a validation problem with the message under `errors.Type`.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().connections;
+
+  bru.setVar("party", td.delegator.partyUuid);
+
+  await loginAs(td.delegator);
+}
+
+tests {
+  test("AND the query is rejected with 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("AND the problem names Type", function() {
+    const body = res.getBody();
+    expect(body.status).to.equal(400);
+    expect(body.errors).to.have.property("Type");
+    expect(body.errors["Type"][0]).to.include("None of the requested types are available");
+  });
+}

@@ -1,0 +1,40 @@
+meta {
+  name: 08_WHEN_ReadScopeOnlyIsUsedToRevokeThenRequestFails
+  type: http
+  seq: 8
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/administrators?party={{party}}&user={{user}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  user: {{user}}
+}
+
+docs {
+  WHEN the bostyrer revokes an administrator with a token carrying only the dedicated read
+  scope, the request fails with 403.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  bru.setVar("party", td.BOSTYRER.partyUuid);
+  bru.setVar("user", td.user_LUN_ANALYSE_GÅSTOL.partyUuid);
+
+  await helpers.loginAs(td.BOSTYRER, helpers.scopes.bankruptcyEstateRead);
+}
+
+tests {
+  test("WHEN only the read scope is used to revoke, the request returns 403", function() {
+    expect(res.status).to.equal(403);
+  });
+}

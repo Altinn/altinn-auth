@@ -19,6 +19,7 @@ spec:
     spec:
       serviceAccountName: authz-api
       securityContext:
+        runAsNonRoot: true
         runAsUser: 1000
         runAsGroup: 3000
 
@@ -28,6 +29,9 @@ spec:
           imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
           resources:
             requests:
               cpu: 750m
@@ -55,14 +59,17 @@ spec:
                 configMapKeyRef:
                   name: clusterinfo
                   key: trusted_proxies
-
+            - name: Altinn__Cache__Username
+              valueFrom:
+                secretKeyRef:
+                  name: authorization-cache-auth
+                  key: username
+                  optional: true
           ports:
             - name: http
               containerPort: 8080
               protocol: TCP
-
           readinessProbe:
-            # an http probe
             httpGet:
               path: /health/
               port: 8080
@@ -70,34 +77,45 @@ spec:
             periodSeconds: 10
             timeoutSeconds: 10
           livenessProbe:
-              # an http probe
-              httpGet:
-                path: /health/
-                port: 8080
-              failureThreshold: 3
-              periodSeconds: 10
-              timeoutSeconds: 10
+            httpGet:
+              path: /health/
+              port: 8080
+            failureThreshold: 3
+            periodSeconds: 10
+            timeoutSeconds: 10
           startupProbe:
-              # an http probe
-              httpGet:
-                path: /health/
-                port: 8080
-              failureThreshold: 30
-              periodSeconds: 10
-              timeoutSeconds: 10
-
-          # TODO: probably don't need this
+            httpGet:
+              path: /health/
+              port: 8080
+            failureThreshold: 30
+            periodSeconds: 10
+            timeoutSeconds: 10
           volumeMounts:
+            - name: tmp
+              mountPath: /tmp
             - name: altinn-appsettings
               mountPath: "/altinn-appsettings"
             - name: accesstoken
               mountPath: "/accesstoken"
+            - name: cache-auth
+              mountPath: /var/run/secrets/cache
+              readOnly: true
 
-      # TODO: probably don't need this
       volumes:
+        - name: tmp
+          emptyDir:
+            medium: Memory
         - name: altinn-appsettings
           secret:
             secretName: altinn-appsettings-secret
         - name: accesstoken
           secret:
             secretName: accesstoken
+        # Written by dis-cache-operator for the Cache resource; optional so the pod starts where no Cache exists yet.
+        - name: cache-auth
+          secret:
+            secretName: authorization-cache-auth
+            optional: true
+            items:
+              - key: password
+                path: password

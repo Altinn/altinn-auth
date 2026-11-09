@@ -1,0 +1,49 @@
+meta {
+  name: 03_WHEN_OnlyUserUuidIsGivenThenRequestFails
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/administrators?party={{party}}&user={{user}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  user: {{user}}
+}
+
+docs {
+  WHEN the bostyrer passes the assistant as a `user` query parameter and sends no body.
+
+  The add endpoint identifies the administrator only through SSN or username and last name,
+  and ignores `user`, so this is the same as giving no person. Expects 400.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  bru.setVar("party", td.BOSTYRER.partyUuid);
+  bru.setVar("user", td.user_LUN_ANALYSE_GÅSTOL.partyUuid);
+
+  await helpers.loginAs(td.BOSTYRER);
+}
+
+tests {
+  test("WHEN only the user uuid is given, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN the error body reports a validation error on /PersonIdentifier", function() {
+    const body = res.getBody();
+    expect(body.code).to.equal("STD-00000");
+    expect(body.validationErrors).to.be.an("array").that.is.not.empty;
+    expect(body.validationErrors.flatMap(e => e.paths)).to.include("/PersonIdentifier");
+  });
+}
