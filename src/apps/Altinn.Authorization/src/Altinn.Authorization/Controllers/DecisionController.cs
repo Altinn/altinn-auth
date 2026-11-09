@@ -8,6 +8,7 @@ using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Authorization.Api.Contracts.Authorization;
 using Altinn.Authorization.Api.Contracts.Register;
 using Altinn.Authorization.Api.Contracts.ResourceRegistry;
+using Altinn.Authorization.Api.Contracts.ResourceRegistry.Enums;
 using Altinn.Authorization.Enums;
 using Altinn.Authorization.Models.ResourceRegistry;
 using Altinn.Authorization.ProblemDetails;

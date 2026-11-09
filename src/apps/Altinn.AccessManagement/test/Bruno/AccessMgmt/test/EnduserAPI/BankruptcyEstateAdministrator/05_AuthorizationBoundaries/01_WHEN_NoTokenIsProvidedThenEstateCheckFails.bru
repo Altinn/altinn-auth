@@ -1,0 +1,36 @@
+meta {
+  name: 01_WHEN_NoTokenIsProvidedThenEstateCheckFails
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/estates/any?party={{party}}
+  body: none
+  auth: none
+}
+
+params:query {
+  party: {{party}}
+}
+
+docs {
+  WHEN no token is provided, the estate check fails with 401. The request is sent without a
+  bearer token on purpose.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  bru.setVar("party", td.BOSTYRER.partyUuid);
+}
+
+tests {
+  test("WHEN no token is provided, the request returns 401", function() {
+    expect(res.status).to.equal(401);
+  });
+}

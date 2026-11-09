@@ -2,6 +2,7 @@ locals {
   access_management_feature_flags = {
     "AccessManagement.Enduser.ConnectionsActivityLogApi"                     = { description = "Activity log endpoints under enduser/connections." },
     "AccessManagement.Enduser.RequestActivityLogApi"                         = { description = "Activity log endpoints under enduser/request." },
+    "AccessManagement.Enduser.RequestV2Api"                                  = { description = "v2 request endpoints under enduser/request, where resource requests can name the requested right keys." },
     "AccessManagement.Enduser.MaskinportenActivityLogApi"                    = { description = "Activity log endpoints under enduser/maskinporten." },
     "AccessMgmt.Core.Outbox.RequestPendingNotify"                            = { description = "Specifies if notifications for pending access requests are enabled." },
     "AccessMgmt.Core.Outbox.RequestReviewedNotify"                           = { description = "Specifies if notifications for reviewed access requests are enabled." },
@@ -53,6 +54,7 @@ locals {
     "AccessManagement.Subunit.AdosInheritance"                               = { description = "Specifies if ADOS administrative units should be treated as subunits that inherit mainunit access (equal to BEDR/AAFY) in ConnectionQuery and AuthorizedParties. Reversible; defaults to false." },
     "AccessManagement.Roles.DisableAltinn2"                                  = { description = "Specifies if Altinn 2 roles should be excluded from ConnectionQuery, AuthorizedParties, PIP and resource delegation checks. Read-side only and reversible; defaults to false." },
     "AccessMgmt.Core.HostedServices.ResourceRegistrySync.ChangeFeed"         = { description = "Specifies if we should use the new change feed to process all resources before we start to process the permission or do as before only process the permission and update resources with changed permissions." },
+    "AccessManagement.Cache.Distributed"                                     = { description = "Reserved for the Valkey tier of the shared HybridCache (the Cache resource in the app namespace). No code reads it until the cache call sites land (#4745, #4746); enabling it has no effect before that. Changing it needs a restart." },
   }
 
   access_management_feature_flags_ui = {
@@ -65,6 +67,9 @@ locals {
     "AccessManagementUI.EnableSkyra"                                  = { description = "Whether or not to load the Skyra survey SDK and ask for cookie consent." },
     "AccessManagementUI.EnableSingleRightsTabInPoaOverview"           = { description = "Whether or not to show single rights tab in powers of attorney overview." },
     "AccessManagementUI.ShowSettingsPageServiceAnnouncement"          = { description = "Whether or not to show a service announcement on the Settings page." },
+    "AccessManagementUI.ShowRolesRemovedAlert"                        = { description = "Whether or not to replace the content of the role tabs with an alert saying that Altinn 2 roles have been removed." },
+    "AccessManagementUI.ShowSystemUsersAsRightHolders"                = { description = "Whether or not to show system users as users in Users, Poa overview and client administration lists." },
+    "AccessManagementUI.EnableBankruptcyEstateAdministration"         = { description = "Whether or not to show the bankruptcy estate administration page and menu items." },
   }
 }
 
