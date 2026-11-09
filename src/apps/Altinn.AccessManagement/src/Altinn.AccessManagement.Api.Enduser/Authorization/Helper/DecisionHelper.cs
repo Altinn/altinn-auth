@@ -209,7 +209,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Authorization.Helper
                         // obligation lets the service owner allow system users anyway.
                         XacmlJsonAttributeAssignment attributeMinLvAuthSystemUser = isSystemUser ? GetObligation(PolicyObligationMinAuthnLevelSystemUser, obligationList) : null;
                         if (attributeMinLvAuthSystemUser == null
-                            || (Convert.ToInt32(attributeMinLvAuthSystemUser.Value) > SystemUserAuthenticationLevel
+                            || (Convert.ToInt32(attributeMinLvAuthSystemUser.Value) > SystemUserAuthenticationLevel))
                         {
                             return false;
                         }
