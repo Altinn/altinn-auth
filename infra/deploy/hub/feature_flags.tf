@@ -2,6 +2,7 @@ locals {
   access_management_feature_flags = {
     "AccessManagement.Enduser.ConnectionsActivityLogApi"                     = { description = "Activity log endpoints under enduser/connections." },
     "AccessManagement.Enduser.RequestActivityLogApi"                         = { description = "Activity log endpoints under enduser/request." },
+    "AccessManagement.Enduser.RequestV2Api"                                  = { description = "v2 request endpoints under enduser/request, where resource requests can name the requested right keys." },
     "AccessManagement.Enduser.MaskinportenActivityLogApi"                    = { description = "Activity log endpoints under enduser/maskinporten." },
     "AccessMgmt.Core.Outbox.RequestPendingNotify"                            = { description = "Specifies if notifications for pending access requests are enabled." },
     "AccessMgmt.Core.Outbox.RequestReviewedNotify"                           = { description = "Specifies if notifications for reviewed access requests are enabled." },
@@ -67,6 +68,8 @@ locals {
     "AccessManagementUI.EnableSingleRightsTabInPoaOverview"           = { description = "Whether or not to show single rights tab in powers of attorney overview." },
     "AccessManagementUI.ShowSettingsPageServiceAnnouncement"          = { description = "Whether or not to show a service announcement on the Settings page." },
     "AccessManagementUI.ShowRolesRemovedAlert"                        = { description = "Whether or not to replace the content of the role tabs with an alert saying that Altinn 2 roles have been removed." },
+    "AccessManagementUI.ShowSystemUsersAsRightHolders"                = { description = "Whether or not to show system users as users in Users, Poa overview and client administration lists." },
+    "AccessManagementUI.EnableBankruptcyEstateAdministration"         = { description = "Whether or not to show the bankruptcy estate administration page and menu items." },
   }
 }
 
