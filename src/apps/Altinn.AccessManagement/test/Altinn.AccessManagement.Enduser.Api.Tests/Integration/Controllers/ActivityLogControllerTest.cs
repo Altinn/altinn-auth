@@ -40,6 +40,8 @@ public class ActivityLogControllerTest : IClassFixture<ApiFixture>
 
     private const string RequestRoute = "accessmanagement/api/v2/enduser/request/activitylog";
 
+    private const string PlatformHostname = "test.altinn.cloud";
+
     private static readonly Guid Verdiq = TestEntities.OrganizationVerdiqAS.Id;
     private static readonly Guid Nordis = TestEntities.OrganizationNordisAS.Id;
     private static readonly Guid Paula = TestEntities.PersonPaula.Id;
@@ -53,6 +55,7 @@ public class ActivityLogControllerTest : IClassFixture<ApiFixture>
         Fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.EnableEnduserConnectionsActivityLogApi);
         Fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.EnableEnduserMaskinportenActivityLogApi);
         Fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.EnableEnduserRequestActivityLogApi);
+        Fixture.WithInMemoryAppsettings(dict => dict["GeneralSettings:Hostname"] = PlatformHostname);
         Fixture.EnsureSeedOnce<ActivityLogControllerTest>(db =>
         {
             db.Assignments.AddRange(
@@ -185,12 +188,12 @@ public class ActivityLogControllerTest : IClassFixture<ApiFixture>
     }
 
     /// <summary>
-    /// The next link must be relative (path and query only). The service sits behind proxies
-    /// and does not know its public base address, so a link built from the request's scheme
-    /// and host would expose the internal base URL (#4663).
+    /// The next link must be absolute with the configured platform hostname as authority,
+    /// not the request's host: behind the proxy chain that host has surfaced an internal
+    /// address (#4663).
     /// </summary>
     [Fact]
-    public async Task Connections_WithMorePages_NextLinkIsRelative()
+    public async Task Connections_WithMorePages_NextLinkUsesPlatformHostname()
     {
         var client = CreateClient(Verdiq, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
 
@@ -205,8 +208,8 @@ public class ActivityLogControllerTest : IClassFixture<ApiFixture>
 
         var next = result.Links.Next;
         Assert.NotNull(next);
-        Assert.StartsWith($"/{ConnectionsRoute}?", next);
-        Assert.True(Uri.TryCreate(next, UriKind.Relative, out _), $"Expected a relative URL but got {next}");
+        Assert.StartsWith($"https://platform.{PlatformHostname}/{ConnectionsRoute}?", next);
+        Assert.True(Uri.TryCreate(next, UriKind.Absolute, out _), $"Expected an absolute URL but got {next}");
         Assert.Contains("pageSize=1", next);
         Assert.Contains("pageNo=1", next);
     }

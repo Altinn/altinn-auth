@@ -1,10 +1,12 @@
 ﻿using Altinn.AccessManagement.Api.Enduser.Controllers.Base;
+using Altinn.AccessManagement.Core.Configuration;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement.Mvc;
 
 namespace Altinn.AccessManagement.Api.Enduser.Controllers.V2;
@@ -21,7 +23,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers.V2;
 [FeatureGate(AccessMgmtFeatureFlags.EnableEnduserMaskinportenActivityLogApi)]
 [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_MASKINPORTEN_BIDIRECTIONAL_READ)]
 [Authorize(Policy = AuthzConstants.POLICY_MASKINPORTEN_DELEGATION_ENDUSER_READ)]
-public class MaskinportenActivityLogController(IActivityLogService activityLogService)
-    : ActivityLogAreaControllerBase(activityLogService, ActivityLogAreas.Maskinporten)
+public class MaskinportenActivityLogController(IActivityLogService activityLogService, IOptions<GeneralSettings> generalSettings)
+    : ActivityLogAreaControllerBase(activityLogService, generalSettings, ActivityLogAreas.Maskinporten)
 {
 }
