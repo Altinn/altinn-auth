@@ -26,9 +26,10 @@ public static class ActivityLogPartitionMaintenance
     /// <summary>
     /// Statement timeout in seconds. Once granted, the lock on the default partition is held while
     /// attaching a partition scans it, and <c>lock_timeout</c> does not cover that. The default
-    /// partition is normally empty, so the scan is instant; if rows have piled up there, the call
-    /// fails with <c>query_canceled</c> (57014) and rolls back rather than block reads for longer.
-    /// Those rows have to be moved out by hand anyway before the months can get partitions.
+    /// partition is normally empty, so the scan is instant; if it runs long (most likely because
+    /// rows have piled up there), the call fails with <c>query_canceled</c> (57014) and rolls back
+    /// rather than block reads for longer. Repeated timeouts stop replenishment, which the warning
+    /// the init run logs is there to surface.
     /// </summary>
     public const int StatementTimeoutSeconds = 30;
 

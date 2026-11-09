@@ -93,7 +93,7 @@ async Task EnsureActivityLogPartitions(AppDbContext dbContext, CancellationToken
     }
     catch (Npgsql.PostgresException ex) when (ex.SqlState is Npgsql.PostgresErrorCodes.LockNotAvailable or Npgsql.PostgresErrorCodes.QueryCanceled && !cancellationToken.IsCancellationRequested)
     {
-        logger.LogWarning(ex, "Activity log partition maintenance timed out ({SqlState}) and rolled back; the next deploy tries again. A timeout while scanning means rows have piled up in dbo.activitylog_default.", ex.SqlState);
+        logger.LogWarning(ex, "Activity log partition maintenance timed out ({SqlState}) and rolled back; the next deploy tries again. If this repeats, check dbo.activitylog_default for rows and for long-running queries on dbo.activitylog.", ex.SqlState);
         return;
     }
 
