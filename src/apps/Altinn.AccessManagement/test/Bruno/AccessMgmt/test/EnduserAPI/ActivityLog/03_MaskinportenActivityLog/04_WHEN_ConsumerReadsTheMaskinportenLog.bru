@@ -1,0 +1,89 @@
+meta {
+  name: 04_WHEN_ConsumerReadsTheMaskinportenLog
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/maskinporten/activitylog?party={{party}}&direction=from&to={{to}}&pageSize=50
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  direction: from
+  to: {{to}}
+  pageSize: 50
+}
+
+docs {
+  WHEN the consumer reads the Maskinporten log of access it has given to the supplier.
+
+  `GET /accessmanagement/api/v2/enduser/maskinporten/activitylog?party={party}&direction=from`
+
+  The Maskinporten area of the activity log: assignment and resource events carrying the
+  Supplier role, which every other area hides. The filter fields are From, To, By,
+  Resource, Source and ActivityType.
+
+  - Token: `altinn:portal/enduser`, or `enduser:maskinportensuppliers.read` for
+    `direction=from` and `enduser:maskinportenconsumers.read` for `direction=to`.
+    The user must also have read access to `altinn_maskinporten_scope_delegation` for
+    the party, which a private person acting for itself does not.
+
+  THEN the supplier relation and the resource are recorded as created, by the consumer's
+  daglig leder.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().maskinporten;
+
+  bru.setVar("party", td.consumer.partyUuid);
+  bru.setVar("to", td.supplier.partyUuid);
+
+  await loginAs(td.consumer.dagligleder);
+}
+
+tests {
+  const { activityTypes, entriesFor, isNewestFirst, sameId, supplierRoleId, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().maskinporten;
+  const body = res.getBody();
+  const assignmentId = bru.getVar("al_supplierAssignmentId");
+
+  test("WHEN the consumer reads the log, the request returns 200 newest first", function() {
+    expect(res.status).to.equal(200);
+    expect(isNewestFirst(body.data)).to.equal(true);
+  });
+
+  test("THEN every entry carries the Supplier role", function() {
+    expect(body.data.length).to.be.greaterThan(0);
+    body.data.forEach(e => expect(sameId(e.roleId, supplierRoleId), "roleId").to.equal(true));
+  });
+
+  test("THEN the supplier relation is recorded as created", function() {
+    const entries = entriesFor(body, assignmentId);
+    expect(entries).to.have.lengthOf(1);
+    const e = entries[0];
+    expect(e.type).to.equal("Assignment");
+    expect(e.subtype).to.equal(null);
+    expect(e.trigger).to.equal("Created");
+    expect(e.activityTypeId).to.equal(activityTypes.roleAssignmentCreated);
+    expect(e.fromName).to.equal(td.consumer.name);
+    expect(e.toName).to.equal(td.supplier.name);
+    expect(sameId(e.byId, td.consumer.dagligleder.partyUuid), "byId").to.equal(true);
+    expect(e.sourceName).to.equal("EnduserApi");
+  });
+
+  test("THEN the resource is recorded as created under the supplier relation", function() {
+    const entries = body.data.filter(e => sameId(e.parentId, assignmentId));
+    expect(entries).to.have.lengthOf(1);
+    const e = entries[0];
+    expect(e.subtype).to.equal("Resource");
+    expect(e.trigger).to.equal("Created");
+    expect(e.activityTypeId).to.equal(activityTypes.resourceGranted);
+    expect(e.resourceId).to.be.a("string").that.is.not.empty;
+    expect(e.resourceName).to.be.a("string").that.is.not.empty;
+    bru.setVar("al_supplierResourceItemId", e.itemId);
+  });
+}

@@ -224,5 +224,12 @@ dotnet_diagnostic.SA1600.severity = none
 # SA1316: Tuple element naming convention - test code uses camelCase
 dotnet_diagnostic.SA1316.severity = none
 
+# Shared with the resource registry, which links this file into its own build. Its StyleCop
+# version asks for a file header, which the rest of the repository does not use.
+[src/libs/Altinn.Authorization.Api.Contracts/src/Altinn.Authorization.Api.Contracts/ResourceRegistry/Enums/ResourceAccessListMode.cs]
+
+# SA1633: File should have header
+dotnet_diagnostic.SA1633.severity = none
+
 [*.md]
 end_of_line = lf
