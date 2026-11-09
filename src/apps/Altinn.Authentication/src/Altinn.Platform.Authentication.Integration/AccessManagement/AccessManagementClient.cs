@@ -49,7 +49,9 @@ public class AccessManagementClient : IAccessManagementClient
     private readonly IAccessTokenGenerator _accessTokenGenerator;
 
     /// <summary>
-    /// Base path
+    /// Absolute base URL for the Access Management v2 client-delegation endpoints
+    /// (<c>accessmanagement/api/v2/enduser/clientdelegations</c>), derived from the configured v1 endpoint
+    /// in the constructor.
     /// </summary>
     private readonly string _clientDelegationsBaseUrl;
 

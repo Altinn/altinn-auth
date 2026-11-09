@@ -6164,6 +6164,43 @@
           ]
         }
       ]
+    },
+    {
+      "client": {
+        "id": "7a1c0f5e-8a0e-4c6b-9d9f-2f0a3c1e5b11",
+        "name": "DELVIS DEKKET TIGER AS",
+        "type": "Organisasjon",
+        "variant": "AS",
+        "parent": null,
+        "children": null,
+        "partyid": 51473999,
+        "userId": null,
+        "username": null,
+        "organizationIdentifier": "312999001",
+        "personIdentifier": null,
+        "dateOfBirth": null,
+        "dateOfDeath": null,
+        "isDeleted": false,
+        "deletedAt": null
+      },
+      "access": [
+        {
+          "role": {
+            "id": "f76b997a-9bd8-4f7b-899f-fcd85d35669f",
+            "code": "revisor",
+            "urn": "urn:altinn:external-role:ccr:revisor",
+            "legacyurn ": "urn:altinn:rolecode:revi",
+            "children": null
+          },
+          "packages": [
+            {
+              "id": "2e0d3443-1971-46db-97a4-6cbcd66f05f9",
+              "urn": "urn:altinn:accesspackage:skatt-naering",
+              "areaId": "f9b06605-7131-493b-b201-5f644ec693d8"
+            }
+          ]
+        }
+      ]
     }
   ]
 }

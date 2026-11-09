@@ -960,7 +960,11 @@ namespace Altinn.Platform.Authentication.Services
             bool[] outerValidationSet = new bool[packages.Count];
             List<string> packageUrns = [.. packages.Select(p => p.Urn!)];
 
-            Result<List<ClientDelegationDto>> clients = await _accessManagementClient.GetClientsForFacilitator(provider, packageUrns, cancellationToken: cancellationToken);
+            // Match ANY of the requested packages so a client that holds some of them is returned and the
+            // per-package check below reports AgentSystemUser_ClientMissingAccessPackages, as before the
+            // v2 migration. With match=all Access Management filters that client out, and the caller would
+            // get the less precise AgentSystemUser_ClientNotFound.
+            Result<List<ClientDelegationDto>> clients = await _accessManagementClient.GetClientsForFacilitator(provider, packageUrns, matchAllPackages: false, cancellationToken: cancellationToken);
             if (clients.IsProblem)
             {
                 return clients.Problem;

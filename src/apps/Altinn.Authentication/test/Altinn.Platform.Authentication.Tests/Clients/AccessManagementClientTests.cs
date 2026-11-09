@@ -172,9 +172,12 @@ namespace Altinn.Platform.Authentication.Tests.Clients
 
             await client.DeleteSystemUserAssignment(facilitator, systemUser, CancellationToken.None);
 
-            string url = captured!.RequestUri!.ToString();
+            Assert.Equal(HttpMethod.Delete, captured!.Method);
+            string url = captured.RequestUri!.ToString();
             Assert.Contains("/accessmanagement/api/v2/enduser/clientdelegations/agents?", url);
+            Assert.Contains($"party={facilitator}", url);
             Assert.Contains($"agent={systemUser}", url);
+            Assert.Contains("cascade=true", url);
             Assert.DoesNotContain("to=", url);
         }
 
