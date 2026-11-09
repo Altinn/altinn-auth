@@ -1,0 +1,37 @@
+meta {
+  name: 12_AND_ToOthersScopeReadsTheAccessGiven
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/connections/activitylog?party={{party}}&direction=from&pageSize=1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  direction: from
+  pageSize: 1
+}
+
+docs {
+  AND a token with only `altinn:accessmanagement/enduser:connections:toothers.read`
+  reads the access the party has given (`direction=from`).
+}
+
+script:pre-request {
+  const { loginAs, scopes, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().connections;
+
+  bru.setVar("party", td.delegator.partyUuid);
+
+  await loginAs(td.delegator, scopes.enduserSystemToOthersRead);
+}
+
+tests {
+  test("AND the to-others scope reads direction=from with 200", function() {
+    expect(res.status).to.equal(200);
+  });
+}

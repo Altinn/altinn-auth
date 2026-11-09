@@ -1066,25 +1066,6 @@ namespace Altinn.AccessManagement.Core.Helpers
             });
         }
 
-        /// <summary>
-        /// Checks if AccessList feature is enabled and applicable for the given right, resource, and fromParty. The AccessListMode feature is currently enabled only for orgs.
-        /// </summary>
-        /// <param name="right">The right to be delegated</param>
-        /// <param name="resource">The resource we are making delegations for</param>
-        /// <param name="fromParty">The party we are making delegations on behalf of</param>
-        /// <returns>True if Access List authorization mode is enabled and applicable</returns>
-        public static bool IsAccessListModeEnabledAndApplicable(Right right, ServiceResource resource, Party fromParty)
-        {
-            if (right.CanDelegate.HasValue && right.CanDelegate.Value
-                && resource.AccessListMode == Enums.ResourceRegistry.ResourceAccessListMode.Enabled
-                && fromParty.PartyTypeName == PartyType.Organisation)
-            {
-                return true;
-            }
-
-            return false;
-        }
-
         public static (UuidType Type, Guid Uuid) GetUserUuidFromUserProfile(MinimalParty party)
         {
             UuidType type = UuidType.NotSpecified;

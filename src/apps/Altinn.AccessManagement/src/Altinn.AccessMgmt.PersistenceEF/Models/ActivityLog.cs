@@ -38,7 +38,7 @@ public class ActivityLog
     /// <summary>
     /// The (new) request status for request entries, otherwise <see langword="null"/>.
     /// </summary>
-    public RequestStatus? Status { get; set; }
+    public RequestStatusV2? Status { get; set; }
 
     /// <summary>
     /// When the event happened. For created entries this is the audit valid-from of the row

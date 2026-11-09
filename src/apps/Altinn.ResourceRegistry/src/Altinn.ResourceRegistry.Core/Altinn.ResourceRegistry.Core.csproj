@@ -19,6 +19,11 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!--
+      Shared with Access Management, which stores the value. Linked rather than referenced because
+      Altinn.Authorization.Api.Contracts depends on older versions of packages this vertical uses.
+    -->
+    <Compile Include="..\..\..\..\libs\Altinn.Authorization.Api.Contracts\src\Altinn.Authorization.Api.Contracts\ResourceRegistry\Enums\ResourceAccessListMode.cs" Link="Enums\ResourceAccessListMode.cs" />
     <ProjectReference Include="..\..\..\..\libs\Altinn.Authorization.Xacml\src\Altinn.Authorization.Xacml\Altinn.Authorization.Xacml.csproj" />
   </ItemGroup>
 

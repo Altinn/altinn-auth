@@ -5,6 +5,7 @@
     "syncroot": "resource-registry/syncroot"
   },
   "deps": [
+    "lib:Altinn.Authorization.Api.Contracts",
     "lib:Altinn.Authorization.Xacml",
     "pkg:Altinn.Authorization.ABAC"
   ],
