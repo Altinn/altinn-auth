@@ -136,6 +136,13 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
                 errors.Add(ContractErrors.InvalidPackage, $"/rolePackages[{i}]/packageUrn", [new($"{rolePackage.PackageUrn}", "Package does not exist.")]);
             }
 
+            // RoleIdentifier is not nullable-annotated, so an explicit null passes model binding.
+            if (string.IsNullOrEmpty(rolePackage.RoleIdentifier))
+            {
+                errors.Add(ContractErrors.Required, $"/rolePackages[{i}]/roleIdentifier");
+                continue;
+            }
+
             if (client is null)
             {
                 continue;
@@ -431,18 +438,18 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
         var agent = await entityService.GetOrCreateEntity(request.AgentId, request.AgentName, request.AgentId.ToString(), EntityTypeConstants.SystemUser.Entity.Name, EntityVariantConstants.AgentSystem.Entity.Name, cancellationToken) ?? throw new InvalidOperationException($"Could not find or create party '{request.AgentId}' for agent");
 
         // Find or Create Agent Assignment
-        var agentAssignment = await GetOrCreateAssignment(facilitator, agent, agentRole) ?? throw new InvalidOperationException($"Could not find or create assignment '{facilitator.Name}' - {agentRole.Code} - {agent.Name}");
+        var agentAssignment = await GetOrCreateAssignment(facilitator, agent, agentRole, cancellationToken: cancellationToken) ?? throw new InvalidOperationException($"Could not find or create assignment '{facilitator.Name}' - {agentRole.Code} - {agent.Name}");
 
         foreach (var packages in packagesToDelegate.GroupBy(t => t.ClientAssignment.Id))
         {
             // Find or Create Delegation
             var clientAssignment = packages.First().ClientAssignment;
-            var delegation = await GetOrCreateDelegation(clientAssignment, agentAssignment, facilitator) ?? throw new InvalidOperationException($"Could not find or create delegation '{clientAssignment.Id}' - {facilitator.Name} - {agentAssignment.Id}");
+            var delegation = await GetOrCreateDelegation(clientAssignment, agentAssignment, facilitator, cancellationToken: cancellationToken) ?? throw new InvalidOperationException($"Could not find or create delegation '{clientAssignment.Id}' - {facilitator.Name} - {agentAssignment.Id}");
 
             foreach (var (_, package, clientPackage) in packages)
             {
                 // Find or Create DelegationPackage
-                var delegationPackage = await GetOrCreateDelegationPackage(delegation.Id, package.Id, clientPackage.AssignmentPackageId, clientPackage.RolePackageId);
+                var delegationPackage = await GetOrCreateDelegationPackage(delegation.Id, package.Id, clientPackage.AssignmentPackageId, clientPackage.RolePackageId, cancellationToken: cancellationToken);
                 if (delegationPackage == null)
                 {
                     throw new InvalidOperationException("Unable to add package to delegation");
@@ -570,7 +577,7 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
 
     private async Task<Assignment> GetOrCreateAssignment(Entity from, Entity to, Role role, AuditValues audit = null, CancellationToken cancellationToken = default)
     {
-        var clientAssignment = await assignmentService.GetAssignment(from.Id, to.Id, role.Id);
+        var clientAssignment = await assignmentService.GetAssignment(from.Id, to.Id, role.Id, cancellationToken);
 
         if (clientAssignment != null)
         {
@@ -578,7 +585,7 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
         }
         else
         {
-            var roleProvider = await db.Providers.AsNoTracking().FirstOrDefaultAsync(t => t.Id == role.ProviderId);
+            var roleProvider = await db.Providers.AsNoTracking().FirstOrDefaultAsync(t => t.Id == role.ProviderId, cancellationToken);
 
             // Get system from token
             if (roleProvider.Code != "sys-altinn3")
