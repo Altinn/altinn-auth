@@ -291,4 +291,16 @@ public static class ValidationErrors
     /// </summary>
     public static ValidationErrorDescriptor RightKeyNotDelegable { get; }
         = _factory.Create(55, $"One or more right keys cannot be delegated.");
+
+    /// <summary>
+    /// One or more right keys can be delegated, but not by the authenticated user on behalf of the party.
+    /// </summary>
+    public static ValidationErrorDescriptor RightKeyNotDelegableByUser { get; }
+        = _factory.Create(56, $"One or more right keys cannot be delegated by the authenticated user.");
+
+    /// <summary>
+    /// Right keys were given for a request that is not a resource request.
+    /// </summary>
+    public static ValidationErrorDescriptor RightKeysNotAllowedForRequestType { get; }
+        = _factory.Create(57, $"Right keys can only be given for resource requests.");
 }

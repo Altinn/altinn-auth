@@ -1999,6 +1999,10 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasColumnType("text")
                         .HasColumnName("action");
 
+                    b.PrimitiveCollection<List<string>>("ApprovedRightKeys")
+                        .HasColumnType("text[]")
+                        .HasColumnName("approvedrightkeys");
+
                     b.Property<Guid>("AssignmentId")
                         .HasColumnType("uuid")
                         .HasColumnName("assignmentid");
@@ -3663,6 +3667,10 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.Property<string>("Action")
                         .HasColumnType("text")
                         .HasColumnName("action");
+
+                    b.PrimitiveCollection<List<string>>("ApprovedRightKeys")
+                        .HasColumnType("text[]")
+                        .HasColumnName("approvedrightkeys");
 
                     b.Property<Guid>("AssignmentId")
                         .HasColumnType("uuid")

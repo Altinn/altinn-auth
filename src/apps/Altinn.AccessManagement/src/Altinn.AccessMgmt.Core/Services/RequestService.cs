@@ -171,7 +171,7 @@ public class RequestService(
         switch (requestResult.Value.Type)
         {
             case "resource":
-                return await UpdateResourceRequestStatus(requestId, status, ct);
+                return await UpdateResourceRequestStatus(requestId, status, approvedRightKeys: null, ct);
             case "package":
                 return await UpdatePackageRequestStatus(requestId, status, ct);
         }
@@ -179,6 +179,39 @@ public class RequestService(
         errorBuilder.Add(ValidationErrors.RequestNotFound);
         errorBuilder.TryBuild(out var problems);
         return problems;
+    }
+
+    /// <inheritdoc/>
+    public async Task<Result<AccessRequest>> ApproveResourceRequest(Guid partyUuid, Guid requestId, RequestStatusV2 status, IEnumerable<string> approvedRightKeys, CancellationToken ct = default)
+    {
+        if (status is not (RequestStatusV2.Approved or RequestStatusV2.PartialApprove))
+        {
+            throw new ArgumentOutOfRangeException(nameof(status), status, "A request can only be approved with the status Approved or PartialApprove.");
+        }
+
+        ArgumentNullException.ThrowIfNull(approvedRightKeys);
+
+        var requestResult = await GetRequest(requestId, ct);
+        if (requestResult.IsProblem)
+        {
+            return requestResult.Problem;
+        }
+
+        if (requestResult.Value.Type != "resource")
+        {
+            ValidationErrorBuilder errorBuilder = default;
+            errorBuilder.Add(ValidationErrors.RequestNotFound);
+            errorBuilder.TryBuild(out var problems);
+            return problems;
+        }
+
+        var verify = VerifyRequestStatusUpdate(request: requestResult.Value, partyUuid, status);
+        if (verify.IsProblem)
+        {
+            return verify.Problem;
+        }
+
+        return await UpdateResourceRequestStatus(requestId, status, NormalizeRightKeys(approvedRightKeys), ct);
     }
 
     /// <inheritdoc/>
@@ -215,7 +248,11 @@ public class RequestService(
     }
 
     /// <inheritdoc/>
-    public async Task<ValidationProblemInstance?> ValidateResourceRightKeys(string resource, IEnumerable<string>? rightKeys, CancellationToken ct = default)
+    public Task<ValidationProblemInstance?> ValidateResourceRightKeys(string resource, IEnumerable<string>? rightKeys, CancellationToken ct = default)
+        => ValidateResourceRightKeys(resource, rightKeys, "/requestedRightKeys", ct);
+
+    /// <inheritdoc/>
+    public async Task<ValidationProblemInstance?> ValidateResourceRightKeys(string resource, IEnumerable<string>? rightKeys, string jsonPointer, CancellationToken ct = default)
     {
         var requestedKeys = rightKeys?.ToList() ?? [];
         if (requestedKeys.Count == 0)
@@ -239,11 +276,11 @@ public class RequestService(
             var key = requestedKeys[i];
             if (key is null || !policyKeys.Contains(key))
             {
-                errors.Add(ValidationErrors.RightKeyNotFound, $"/requestedRightKeys/{i}", [new("rightKey", $"Right key '{key}' does not exist in the policy for resource '{resource}'.")]);
+                errors.Add(ValidationErrors.RightKeyNotFound, $"{jsonPointer}/{i}", [new("rightKey", $"Right key '{key}' does not exist in the policy for resource '{resource}'.")]);
             }
             else if (!delegableKeys.Contains(key))
             {
-                errors.Add(ValidationErrors.RightKeyNotDelegable, $"/requestedRightKeys/{i}", [new("rightKey", $"Right key '{key}' cannot be delegated for resource '{resource}'.")]);
+                errors.Add(ValidationErrors.RightKeyNotDelegable, $"{jsonPointer}/{i}", [new("rightKey", $"Right key '{key}' cannot be delegated for resource '{resource}'.")]);
             }
         }
 
@@ -609,6 +646,7 @@ public class RequestService(
                 break;
 
             case RequestStatusV2.Approved:
+            case RequestStatusV2.PartialApprove:
             case RequestStatusV2.Rejected:
                 if (request.To.Id != partyUuid)
                 {
@@ -688,8 +726,9 @@ public class RequestService(
             );
         }
 
+        var isReviewed = status is RequestStatusV2.Approved or RequestStatusV2.PartialApprove or RequestStatusV2.Rejected;
         var notifyRequester = !await IsSystemUser(request.Assignment.FromId, ct);
-        if (notifyRequester && (status == RequestStatusV2.Approved || status == RequestStatusV2.Rejected))
+        if (notifyRequester && isReviewed)
         {
             await UpsertReviewedOutboxMessage(request, ct);
         }
@@ -741,14 +780,18 @@ public class RequestService(
                 request.Assignment.FromId,
                 null,
                 request.PackageId,
-                status == RequestStatusV2.Approved,
+                status is RequestStatusV2.Approved or RequestStatusV2.PartialApprove,
                 appsettings?.Value?.Request?.NotifyRequestApprovedInSeconds ?? (60 * 15),
                 ct
             );
         }
     }
 
-    private async Task<Result<AccessRequest>> UpdateResourceRequestStatus(Guid id, RequestStatusV2 status, CancellationToken ct = default)
+    /// <summary>
+    /// Sets the status of a resource request. <paramref name="approvedRightKeys"/> is stored with the status
+    /// when given, so the status and the rights given are saved together.
+    /// </summary>
+    private async Task<Result<AccessRequest>> UpdateResourceRequestStatus(Guid id, RequestStatusV2 status, List<string>? approvedRightKeys, CancellationToken ct = default)
     {
         ValidationErrorBuilder errorBuilder = default;
 
@@ -770,6 +813,11 @@ public class RequestService(
         }
 
         request.Status = status;
+        if (approvedRightKeys is not null)
+        {
+            request.ApprovedRightKeys = approvedRightKeys;
+        }
+
         if (status == RequestStatusV2.Withdrawn)
         {
             await RequestPendingNotification.RemoveValue(
@@ -782,8 +830,9 @@ public class RequestService(
             );
         }
 
+        var isReviewed = status is RequestStatusV2.Approved or RequestStatusV2.PartialApprove or RequestStatusV2.Rejected;
         var notifyRequester = !await IsSystemUser(request.Assignment.FromId, ct);
-        if (notifyRequester && (status == RequestStatusV2.Approved || status == RequestStatusV2.Rejected))
+        if (notifyRequester && isReviewed)
         {
             await UpsertReviewedOutboxMessage(request, ct);
         }
@@ -835,7 +884,7 @@ public class RequestService(
                 request.Assignment.FromId,
                 request.ResourceId,
                 null,
-                status == RequestStatusV2.Approved,
+                status is RequestStatusV2.Approved or RequestStatusV2.PartialApprove,
                 appsettings?.Value?.Request?.NotifyRequestApprovedInSeconds ?? (60 * 15),
                 ct
             );
