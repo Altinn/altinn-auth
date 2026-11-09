@@ -24,11 +24,19 @@ public static class ActivityLogPartitionMaintenance
     public const int LockTimeoutSeconds = 5;
 
     /// <summary>
-    /// Command timeout in seconds, for the scan of the default partition that attaching a
-    /// partition does once it holds the lock. The default partition is normally empty, so the
-    /// scan is instant; the bound only matters when rows have piled up there.
+    /// Statement timeout in seconds. Once granted, the lock on the default partition is held while
+    /// attaching a partition scans it, and <c>lock_timeout</c> does not cover that. The default
+    /// partition is normally empty, so the scan is instant; if rows have piled up there, the call
+    /// fails with <c>query_canceled</c> (57014) and rolls back rather than block reads for longer.
+    /// Those rows have to be moved out by hand anyway before the months can get partitions.
     /// </summary>
-    public const int CommandTimeoutSeconds = 300;
+    public const int StatementTimeoutSeconds = 30;
+
+    /// <summary>
+    /// Client-side command timeout in seconds: a backstop above the server-side timeouts, so the
+    /// server's own error surfaces first.
+    /// </summary>
+    public const int CommandTimeoutSeconds = StatementTimeoutSeconds + 30;
 
     /// <summary>
     /// Calls <c>dbo.activitylog_ensure_month_partitions</c>, which creates any missing monthly
@@ -36,8 +44,9 @@ public static class ActivityLogPartitionMaintenance
     /// partitions exist it creates nothing.
     /// </summary>
     /// <remarks>
-    /// Runs in its own transaction, or in the caller's when one is active; the lock timeout is set
-    /// with <c>SET LOCAL</c>, so in the caller's transaction it lasts until that one ends.
+    /// Runs in its own transaction, or in the caller's when one is active. The timeouts are set
+    /// with <c>SET LOCAL</c>, so in the caller's transaction they last until that one ends, and so
+    /// does the lock on the default partition: callers should commit promptly.
     /// </remarks>
     /// <returns>
     /// How many partitions were created, and how many months were skipped because the default
@@ -49,7 +58,9 @@ public static class ActivityLogPartitionMaintenance
             ? await dbContext.Database.BeginTransactionAsync(cancellationToken)
             : null;
 
-        await dbContext.Database.ExecuteSqlRawAsync($"SET LOCAL lock_timeout = '{LockTimeoutSeconds}s'", cancellationToken);
+        await dbContext.Database.ExecuteSqlRawAsync(
+            $"SET LOCAL lock_timeout = '{LockTimeoutSeconds}s'; SET LOCAL statement_timeout = '{StatementTimeoutSeconds}s'",
+            cancellationToken);
 
         ActivityLogPartitionResult result;
         await using (var command = dbContext.Database.GetDbConnection().CreateCommand())
