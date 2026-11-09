@@ -1,0 +1,111 @@
+meta {
+  name: 04_WHEN_DelegatorReadsTheLogOfAccessGiven
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/connections/activitylog?party={{party}}&direction=from&to={{to}}&pageSize=50
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  direction: from
+  to: {{to}}
+  pageSize: 50
+}
+
+docs {
+  WHEN the delegator reads the log of access it has given to the receiver.
+
+  `GET /accessmanagement/api/v2/enduser/connections/activitylog?party={party}&direction=from&to={to}`
+
+  The connections area of the activity log: assignment and delegation events involving
+  the party, newest first. Entries are written by database triggers, so they are there
+  as soon as the change is committed. Names (from, to, role, package, by) are snapshots
+  taken when the event happened.
+
+  - Query: `party` and `direction` are required. `direction=from` anchors the party
+    as the giver of access, `direction=to` as the receiver. Every other field
+    (`to`, `typeId`, `itemId`, `parentId`, `after`, `before`, ...) is a
+    repeatable filter; values within one parameter are OR'ed, parameters are AND'ed.
+    `pageSize` defaults to 100 and is clamped to 1-1000, `pageNo` is zero-based.
+  - Token: `altinn:portal/enduser`, or `enduser:connections:toothers.read` for
+    `direction=from` and `enduser:connections:fromothers.read` for `direction=to`.
+  - Responses: 200 with `{ links: { next }, data: [ActivityLogDto] }`; 400 for filters
+    outside the area; 401 without a token; 403 when the user cannot act for the party,
+    lacks the scope for the direction, or omits the direction.
+
+  THEN this run's role assignment and access package are recorded as created, by the
+  delegator, through the enduser API, with the activity type from the catalog.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().connections;
+
+  bru.setVar("party", td.delegator.partyUuid);
+  bru.setVar("to", td.receiver.partyUuid);
+
+  await loginAs(td.delegator);
+}
+
+tests {
+  const { activityTypes, entriesFor, isNewestFirst, rightholderRoleId, sameId, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().connections;
+  const body = res.getBody();
+
+  test("WHEN the delegator reads the log, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+    expect(body.data).to.be.an("array");
+  });
+
+  test("THEN every entry is anchored on the delegator and filtered to the receiver", function() {
+    expect(body.data.length).to.be.greaterThan(0);
+    body.data.forEach(e => {
+      expect(sameId(e.fromId, td.delegator.partyUuid), "fromId").to.equal(true);
+      expect(sameId(e.toId, td.receiver.partyUuid), "toId").to.equal(true);
+    });
+  });
+
+  test("THEN the entries are ordered newest first", function() {
+    expect(isNewestFirst(body.data)).to.equal(true);
+  });
+
+  test("THEN the role assignment is recorded as created, with name snapshots", function() {
+    const entries = entriesFor(body, bru.getVar("al_assignmentId"));
+    expect(entries, "expected one entry for the assignment").to.have.lengthOf(1);
+    const e = entries[0];
+    expect(e.type).to.equal("Assignment");
+    expect(e.subtype).to.equal(null);
+    expect(e.trigger).to.equal("Created");
+    expect(e.status).to.equal(null);
+    expect(e.activityTypeId).to.equal(activityTypes.roleAssignmentCreated);
+    expect(e.parentId).to.equal(null);
+    expect(sameId(e.roleId, rightholderRoleId)).to.equal(true);
+    expect(e.roleName).to.be.a("string").that.is.not.empty;
+    expect(e.fromName).to.include(td.delegator.lastname);
+    expect(e.toName).to.include(td.receiver.lastname);
+    expect(e.fromType).to.equal("Person");
+    expect(e.toType).to.equal("Person");
+    expect(sameId(e.byId, td.delegator.partyUuid), "byId").to.equal(true);
+    expect(e.sourceName).to.equal("EnduserApi");
+    expect(e.operationId).to.be.a("string").that.is.not.empty;
+  });
+
+  test("THEN the access package is recorded as created under the role assignment", function() {
+    const entries = entriesFor(body, bru.getVar("al_assignmentPackageId"));
+    expect(entries, "expected one entry for the assignment package").to.have.lengthOf(1);
+    const e = entries[0];
+    expect(e.type).to.equal("Assignment");
+    expect(e.subtype).to.equal("Package");
+    expect(e.trigger).to.equal("Created");
+    expect(e.activityTypeId).to.equal(activityTypes.packageGranted);
+    expect(sameId(e.parentId, bru.getVar("al_assignmentId"))).to.equal(true);
+    expect(e.packageId).to.be.a("string").that.is.not.empty;
+    expect(e.packageName).to.be.a("string").that.is.not.empty;
+    expect(sameId(e.byId, td.delegator.partyUuid), "byId").to.equal(true);
+  });
+}

@@ -114,7 +114,8 @@ public class TranslationService : ITranslationService
         else
         {
             // Fall back to database with caching
-            var cacheKey = $"translation:{typeName}:{entityId}:{effectiveLanguageCode}";
+            var storedTypeName = GetStoredTypeName(typeName);
+            var cacheKey = $"translation:{storedTypeName}:{entityId}:{effectiveLanguageCode}";
 
             _logger.LogTrace("Checking cache for translation key: {CacheKey}", cacheKey);
 
@@ -125,7 +126,7 @@ public class TranslationService : ITranslationService
                     typeName, entityId, effectiveLanguageCode);
 
                 var dbTranslations = await _db.TranslationEntries
-                    .Where(t => t.Type == typeName &&
+                    .Where(t => t.Type == storedTypeName &&
                                 t.Id == entityId &&
                                 t.LanguageCode == effectiveLanguageCode)
                     .ToDictionaryAsync(t => t.FieldName, t => t.Value ?? string.Empty);
@@ -246,6 +247,16 @@ public class TranslationService : ITranslationService
         await _cache.RemoveAsync(cacheKey, cancellationToken);
         _logger.LogDebug("Invalidated cache for key: {CacheKey}", cacheKey);
     }
+
+    /// <summary>
+    /// Maps a DTO type name to the entity type name its translations are stored under,
+    /// so that for example a ResourceDto finds the translations the resource import writes for Resource.
+    /// </summary>
+    private static string GetStoredTypeName(string typeName) => typeName switch
+    {
+        "ResourceDto" => nameof(Models.Resource),
+        _ => typeName
+    };
 
     /// <summary>
     /// Attempts to retrieve translations from Constants classes (RoleConstants, PackageConstants, etc.)

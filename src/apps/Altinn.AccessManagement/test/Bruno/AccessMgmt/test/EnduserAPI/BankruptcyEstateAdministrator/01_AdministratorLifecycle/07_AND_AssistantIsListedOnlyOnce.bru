@@ -1,0 +1,53 @@
+meta {
+  name: 07_AND_AssistantIsListedOnlyOnce
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/administrators?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+docs {
+  AND the repeated add did not duplicate anything: the assistant appears exactly once, and
+  no estate appears twice in the assistant's estate access.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  bru.setVar("party", td.BOSTYRER.partyUuid);
+
+  await helpers.loginAs(td.BOSTYRER);
+}
+
+tests {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  const td = helpers.testdata();
+
+  test("AND the administrators can be listed, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the assistant is listed exactly once", function() {
+    const id = td.user_LUN_ANALYSE_GÅSTOL.partyUuid.toLowerCase();
+    const entries = res.getBody().data.filter(e => e.administrator.id.toLowerCase() === id);
+    expect(entries).to.have.lengthOf(1);
+  });
+
+  test("AND every estate appears once in the assistant's estate access", function() {
+    const entry = helpers.findAdministrator(res.getBody(), td.user_LUN_ANALYSE_GÅSTOL.partyUuid);
+    const estateIds = entry.estateaccess.map(a => a.estate.id);
+    expect(new Set(estateIds).size).to.equal(estateIds.length);
+  });
+}
