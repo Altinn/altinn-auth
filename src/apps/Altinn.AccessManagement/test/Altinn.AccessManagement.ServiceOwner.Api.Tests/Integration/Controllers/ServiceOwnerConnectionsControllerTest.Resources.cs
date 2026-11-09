@@ -841,7 +841,7 @@ public partial class ServiceOwnerConnectionsControllerTest
         }
 
         /// <summary>
-        /// Calls the service directly, so the controller's own Resource Registry check does not answer first:
+        /// Calls the service directly, so the controller's own check of the local resource's Delegable value does not answer first:
         /// the service refuses the resource because the local resource is not delegable.
         /// </summary>
         [Fact]
@@ -857,7 +857,7 @@ public partial class ServiceOwnerConnectionsControllerTest
         }
 
         /// <summary>
-        /// Calls the service directly, so the controller's own Resource Registry check does not answer first:
+        /// Calls the service directly, so the controller's own check of the local resource's Delegable value does not answer first:
         /// the service refuses the resource because the local resource is not delegable, before anything is written.
         /// </summary>
         [Fact]
