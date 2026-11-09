@@ -687,6 +687,14 @@ namespace Altinn.Common.PEP.Helpers
                 return true;
             }
 
+            // A logged in system user always has authentication level 3 (#3281). The token does not
+            // necessarily carry an authlevel claim, so the fixed level is checked against the general
+            // requirement without needing the system user obligation.
+            if (IsSystemUser(user) && Convert.ToInt32(minAuthenticationLevel) <= SystemUserAuthenticationLevel)
+            {
+                return true;
+            }
+
             if (user.Claims.FirstOrDefault(c => c.Type.Equals("urn:altinn:org")) != null)
             {
                 XacmlJsonAttributeAssignment attributeMinLvAuthOrg = GetObligation(PolicyObligationMinAuthnLevelOrg, obligationList);
@@ -701,17 +709,14 @@ namespace Altinn.Common.PEP.Helpers
                 }
             }
 
-            // A logged in system user always has authentication level 3. Like the org obligation, the system user
-            // obligation can only relax the general requirement, never tighten it. When the policy has the system
-            // user obligation, the fixed level is also checked against the general requirement, since the token
-            // does not necessarily carry an authlevel claim.
+            // The general requirement is above the fixed system user level. The system user
+            // obligation lets the service owner allow system users anyway.
             if (IsSystemUser(user))
             {
                 XacmlJsonAttributeAssignment attributeMinLvAuthSystemUser = GetObligation(PolicyObligationMinAuthnLevelSystemUser, obligationList);
                 if (attributeMinLvAuthSystemUser != null)
                 {
                     if (Convert.ToInt32(attributeMinLvAuthSystemUser.Value) <= SystemUserAuthenticationLevel
-                        || Convert.ToInt32(attributeMinLvAuth.Value) <= SystemUserAuthenticationLevel)
                     {
                         return true;
                     }
