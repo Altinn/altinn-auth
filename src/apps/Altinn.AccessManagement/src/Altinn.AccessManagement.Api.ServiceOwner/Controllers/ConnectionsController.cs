@@ -256,8 +256,7 @@ namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers
                 return MaskinportenSchemaProblem(resourceObj);
             }
 
-            ServiceResource registryResource = await contextRetrievalService.GetResource(resourceObj.RefId, cancellationToken);
-            if (registryResource is { Delegable: false })
+            if (resourceObj is { Delegable: false })
             {
                 return NotDelegableProblem(resourceObj);
             }
