@@ -1,4 +1,5 @@
 ﻿name: "Terraform: Shared"
+run-name: "${{ inputs.environment }}"
 
 on:
   workflow_dispatch:
@@ -23,71 +24,10 @@ permissions:
 
 jobs:
   hub:
-    name: Hub
+    name: ${{ inputs.environment }}
     secrets: inherit
-    if: inputs.environment == 'hub'
-    uses: ./.github/workflows/_cd-infra-template.yml
+    uses: ./.github/workflows/terraform-template.yml
     with:
-      environment: prod
-      tf_state: hub.tfstate
-      working_dir: infra/deploy/hub
-
-  at22:
-    name: Spoke at22
-    secrets: inherit
-    if: inputs.environment == 'at22'
-    uses: ./.github/workflows/_cd-infra-template.yml
-    with:
-      environment: at22
-      tf_state: spoke.tfstate
-      working_dir: infra/deploy/spoke
-
-  at23:
-    name: Spoke at23
-    secrets: inherit
-    if: inputs.environment == 'at23'
-    uses: ./.github/workflows/_cd-infra-template.yml
-    with:
-      environment: at23
-      tf_state: spoke.tfstate
-      working_dir: infra/deploy/spoke
-
-  at24:
-    name: Spoke at24
-    secrets: inherit
-    if: inputs.environment == 'at24'
-    uses: ./.github/workflows/_cd-infra-template.yml
-    with:
-      environment: at24
-      tf_state: spoke.tfstate
-      working_dir: infra/deploy/spoke
-
-  yt01:
-    name: Spoke yt01
-    secrets: inherit
-    if: inputs.environment == 'yt01'
-    uses: ./.github/workflows/_cd-infra-template.yml
-    with:
-      environment: yt01
-      tf_state: spoke.tfstate
-      working_dir: infra/deploy/spoke
-
-  tt02:
-    name: Spoke tt02
-    secrets: inherit
-    if: inputs.environment == 'tt02'
-    uses: ./.github/workflows/_cd-infra-template.yml
-    with:
-      environment: tt02
-      tf_state: spoke.tfstate
-      working_dir: infra/deploy/spoke
-
-  prod:
-    name: Spoke prod
-    secrets: inherit
-    if: inputs.environment == 'prod'
-    uses: ./.github/workflows/_cd-infra-template.yml
-    with:
-      environment: prod
-      tf_state: spoke.tfstate
-      working_dir: infra/deploy/spoke
+      environment: ${{ inputs.environment == 'hub' && 'prod' || inputs.environment }}
+      tf_state: ${{ inputs.environment == 'hub' && 'hub' || 'spoke' }}.tfstate
+      working_dir: infra/deploy/${{ inputs.environment == 'hub' && 'hub' || 'spoke' }}

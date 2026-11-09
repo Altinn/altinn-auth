@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <xacml:Policy PolicyId="urn:altinn:policyid:1" Version="1.0" RuleCombiningAlgId="urn:oasis:names:tc:xacml:3.0:policy-combining-algorithm:deny-overrides" xmlns:xacml="urn:oasis:names:tc:xacml:3.0:core:schema:wd-17">
 	<xacml:Description>Delegation policy containing all delegated rights/actions from urn:altinn:organization:uuid:b537c953-03c4-4822-b028-c15182adc356 to urn:altinn:organization:uuid:00000000-0000-0000-0001-000000000016, for the resource; app_ttd_am-devtest-instancedelegation</xacml:Description>
 	<xacml:Target />

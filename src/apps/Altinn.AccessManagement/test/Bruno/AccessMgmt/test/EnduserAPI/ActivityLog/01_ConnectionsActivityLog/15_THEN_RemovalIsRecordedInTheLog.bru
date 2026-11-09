@@ -1,0 +1,60 @@
+meta {
+  name: 15_THEN_RemovalIsRecordedInTheLog
+  type: http
+  seq: 15
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/connections/activitylog?party={{party}}&direction=from&to={{to}}&trigger=Deleted&pageSize=50
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  direction: from
+  to: {{to}}
+  trigger: Deleted
+  pageSize: 50
+}
+
+docs {
+  THEN the removal is recorded: the role assignment and the access package of this run
+  each have a Deleted entry, with the names still resolved although the rows are gone.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().connections;
+
+  bru.setVar("party", td.delegator.partyUuid);
+  bru.setVar("to", td.receiver.partyUuid);
+
+  await loginAs(td.delegator);
+}
+
+tests {
+  const { activityTypes, entriesFor, sameId, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().connections;
+  const body = res.getBody();
+
+  test("THEN the log returns 200 with only Deleted entries", function() {
+    expect(res.status).to.equal(200);
+    body.data.forEach(e => expect(e.trigger).to.equal("Deleted"));
+  });
+
+  test("THEN the role assignment is recorded as removed", function() {
+    const entries = entriesFor(body, bru.getVar("al_assignmentId"));
+    expect(entries).to.have.lengthOf(1);
+    expect(entries[0].activityTypeId).to.equal(activityTypes.roleAssignmentDeleted);
+    expect(entries[0].toName).to.include(td.receiver.lastname);
+    expect(sameId(entries[0].byId, td.delegator.partyUuid)).to.equal(true);
+  });
+
+  test("THEN the access package is recorded as removed, with its name", function() {
+    const entries = entriesFor(body, bru.getVar("al_assignmentPackageId"));
+    expect(entries).to.have.lengthOf(1);
+    expect(entries[0].activityTypeId).to.equal(activityTypes.packageRemoved);
+    expect(entries[0].packageName).to.be.a("string").that.is.not.empty;
+  });
+}

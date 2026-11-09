@@ -1,0 +1,26 @@
+meta {
+  name: 05_AuthorizationBoundaries
+  seq: 5
+}
+
+docs {
+  Scenario: The API rejects callers without the required authorization
+
+    When no token is provided the estate check fails
+    When no token is provided adding an administrator fails
+    When another person reads the bostyrer's administrators the request fails
+    When another person adds an administrator for the bostyrer the request fails
+    When another person revokes an administrator for the bostyrer the request fails
+    When only the write scope is used to read the request fails
+    When only the read scope is used to add the request fails
+    When only the read scope is used to revoke the request fails
+    When the token scope is unrelated the request fails
+    And the dedicated read scope grants access to the estate check
+    When the party parameter is missing the request fails
+    When the party parameter is not a uuid the request fails
+    When the party is unknown the request fails
+    When the party is one of the bostyrer's estates the request fails
+
+    Authorization runs before the body is read, so none of the add requests here look up a
+    person. 401 and 403 responses carry no problem body, so only the status is asserted.
+}

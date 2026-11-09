@@ -303,6 +303,7 @@ module.exports =
         "nonBrlEsekClient": {
             "name": "SKEPTISK LILLA HEST BORETTSLAG",
             "orgno": "311115057",
+            "unitType": "AS",
             "partyId": 51409777,
             "partyUuid": "02f2e6c8-b67e-4ee7-b98d-8c6541eb0bfa",
             "dagligleder": {

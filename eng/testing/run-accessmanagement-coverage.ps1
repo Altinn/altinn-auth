@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env pwsh
+#!/usr/bin/env pwsh
 # Wrapper script to run AccessManagement coverage with Podman configuration
 
 $env:DOCKER_HOST = ''

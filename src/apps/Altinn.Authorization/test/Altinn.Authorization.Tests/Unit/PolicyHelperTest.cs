@@ -151,7 +151,7 @@ public class PolicyHelperTest
                         new XacmlMatch(
                             new Uri(XacmlConstants.AttributeMatchFunction.StringEqual),
                             new XacmlAttributeValue(new Uri(XacmlConstants.DataTypes.XMLString), "REGNA"),
-                            new XacmlAttributeDesignator(new Uri(XacmlConstants.MatchAttributeCategory.Subject), new Uri(AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute), new Uri(XacmlConstants.DataTypes.XMLString), false))
+                            new XacmlAttributeDesignator(new Uri(XacmlConstants.MatchAttributeCategory.Subject), new Uri(AltinnXacmlConstants.MatchAttributeIdentifiers.LegacyRoleAttribute), new Uri(XacmlConstants.DataTypes.XMLString), false))
                     })
                 })
             })
@@ -163,6 +163,44 @@ public class PolicyHelperTest
 
         Assert.Single(roles);
         Assert.Contains("REGNA", roles);
+    }
+
+    [Fact]
+    public void GetRolesWithAccess_PolicyWithRolePrefix_ReturnsBankruptcyEstateAdministratorRole()
+    {
+        var policy = CreatePermitPolicyWithSubjectMatches(
+            CreateSubjectMatch(AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute, "innbygger-konkursbo-administrator"));
+
+        var roles = PolicyHelper.GetRolesWithAccess(policy);
+
+        Assert.Single(roles);
+        Assert.Contains("innbygger-konkursbo-administrator", roles);
+    }
+
+    [Fact]
+    public void GetRolesWithAccess_PolicyWithLegacyAndNewRolePrefixes_ReturnsRolesFromBoth()
+    {
+        var policy = CreatePermitPolicyWithSubjectMatches(
+            CreateSubjectMatch(AltinnXacmlConstants.MatchAttributeIdentifiers.LegacyRoleAttribute, "DAGL"),
+            CreateSubjectMatch(AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute, "innbygger-konkursbo-administrator"));
+
+        var roles = PolicyHelper.GetRolesWithAccess(policy);
+
+        Assert.Equal(2, roles.Count);
+        Assert.Contains("DAGL", roles);
+        Assert.Contains("innbygger-konkursbo-administrator", roles);
+    }
+
+    [Fact]
+    public void GetRolesWithAccess_PolicyWithRolePrefixInDenyRule_ReturnsEmpty()
+    {
+        var policy = CreatePolicyWithSubjectMatches(
+            XacmlEffectType.Deny,
+            CreateSubjectMatch(AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute, "innbygger-konkursbo-administrator"));
+
+        var roles = PolicyHelper.GetRolesWithAccess(policy);
+
+        Assert.Empty(roles);
     }
 
     [Fact]
@@ -182,6 +220,34 @@ public class PolicyHelperTest
         var roles = PolicyHelper.GetRolesWithAccess(policy);
 
         Assert.Empty(roles);
+    }
+
+    // --- GetResourcePoliciesFromXacmlPolicy ---
+    [Theory]
+    [InlineData(AltinnXacmlConstants.MatchAttributeIdentifiers.LegacyRoleAttribute, "DAGL")]
+    [InlineData(AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute, "innbygger-konkursbo-administrator")]
+    public void GetResourcePoliciesFromXacmlPolicy_RoleSubject_ReturnsRoleGrant(string roleAttributeId, string roleCode)
+    {
+        var policy = new XacmlPolicy(
+            new Uri("urn:policy:1"), new Uri(XacmlConstants.CombiningAlgorithms.PolicyDenyOverrides),
+            new XacmlTarget(new List<XacmlAnyOf>()));
+
+        policy.Rules.Add(new XacmlRule("rule1", XacmlEffectType.Permit)
+        {
+            Target = new XacmlTarget(new List<XacmlAnyOf>
+            {
+                new XacmlAnyOf(new List<XacmlAllOf> { new XacmlAllOf(new List<XacmlMatch> { CreateSubjectMatch(roleAttributeId, roleCode) }) }),
+                new XacmlAnyOf(new List<XacmlAllOf> { new XacmlAllOf(new List<XacmlMatch> { CreateMatch(XacmlConstants.MatchAttributeCategory.Resource, AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistry, "bankruptcy_estate_resource") }) }),
+                new XacmlAnyOf(new List<XacmlAllOf> { new XacmlAllOf(new List<XacmlMatch> { CreateMatch(XacmlConstants.MatchAttributeCategory.Action, XacmlConstants.MatchAttributeIdentifiers.ActionId, "read") }) })
+            })
+        });
+
+        var resourcePolicies = PolicyHelper.GetResourcePoliciesFromXacmlPolicy(policy, "nb");
+
+        var resourcePolicy = Assert.Single(resourcePolicies);
+        var action = Assert.Single(resourcePolicy.Actions);
+        var roleGrant = Assert.Single(action.RoleGrants);
+        Assert.Equal(roleCode, roleGrant.RoleTypeCode);
     }
 
     // --- BuildDelegationPolicy ---
@@ -249,7 +315,42 @@ public class PolicyHelperTest
         Assert.Equal(0, result);
     }
 
-    // Helper
+    // Helpers
+    private static XacmlMatch CreateSubjectMatch(string attributeId, string value)
+    {
+        return CreateMatch(XacmlConstants.MatchAttributeCategory.Subject, attributeId, value);
+    }
+
+    private static XacmlMatch CreateMatch(string category, string attributeId, string value)
+    {
+        return new XacmlMatch(
+            new Uri(XacmlConstants.AttributeMatchFunction.StringEqual),
+            new XacmlAttributeValue(new Uri(XacmlConstants.DataTypes.XMLString), value),
+            new XacmlAttributeDesignator(new Uri(category), new Uri(attributeId), new Uri(XacmlConstants.DataTypes.XMLString), false));
+    }
+
+    private static XacmlPolicy CreatePermitPolicyWithSubjectMatches(params XacmlMatch[] matches)
+    {
+        return CreatePolicyWithSubjectMatches(XacmlEffectType.Permit, matches);
+    }
+
+    private static XacmlPolicy CreatePolicyWithSubjectMatches(XacmlEffectType effect, params XacmlMatch[] matches)
+    {
+        var policy = new XacmlPolicy(
+            new Uri("urn:policy:1"), new Uri(XacmlConstants.CombiningAlgorithms.PolicyDenyOverrides),
+            new XacmlTarget(new List<XacmlAnyOf>()));
+
+        // Each match goes in its own AllOf, as policies list alternative subjects
+        var allOfs = matches.Select(match => new XacmlAllOf(new List<XacmlMatch> { match })).ToList();
+
+        policy.Rules.Add(new XacmlRule("rule1", effect)
+        {
+            Target = new XacmlTarget(new List<XacmlAnyOf> { new XacmlAnyOf(allOfs) })
+        });
+
+        return policy;
+    }
+
     private static XacmlContextRequest CreateContextRequestWithResource(params (string attributeId, string value)[] attributes)
     {
         var contextAttributes = new XacmlContextAttributes(new Uri(XacmlConstants.MatchAttributeCategory.Resource));

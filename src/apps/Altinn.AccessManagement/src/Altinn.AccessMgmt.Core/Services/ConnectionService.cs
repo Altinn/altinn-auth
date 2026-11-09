@@ -1,13 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
-using Altinn.AccessManagement.Core.Enums.ResourceRegistry;
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.AccessList;
 using Altinn.AccessManagement.Core.Models.Party;
-using Altinn.AccessManagement.Core.Models.Register;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
-using Altinn.AccessManagement.Core.Models.Rights;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessMgmt.Core.Appsettings;
 using Altinn.AccessMgmt.Core.Constants.Translation;
@@ -30,6 +27,10 @@ using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
+using Altinn.Authorization.Api.Contracts.Authorization;
+using Altinn.Authorization.Api.Contracts.Register;
+using Altinn.Authorization.Api.Contracts.ResourceRegistry;
+using Altinn.Authorization.Api.Contracts.ResourceRegistry.Enums;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -944,6 +945,7 @@ public partial class ConnectionService(
             toId: toId.Value,
             toIsMainAdminForFrom,
             includeAdosSubunitInheritance: lifecycleFeatures.AdosSubunitInheritance,
+            excludeAltinn2Roles: lifecycleFeatures.DisableAltinn2Roles,
             ct: cancellationToken
         );
 
@@ -1047,6 +1049,8 @@ public partial class ConnectionService(
         // Map to result
         IEnumerable<RightCheckDto> checkRights = await MapFromInternalToExternalRights(rights, resource, accessListMode, fromParty, rightKeys, isResourceDelegable, isMaskinPortenSchema, cancellationToken);
 
+        resourceDto = await resourceDto.TranslateDeepAsync(translationService, languageCode, true);
+
         // build reult with reason based on roles, packages, resource rights and users delegable
         ResourceCheckDto resourceCheckDto = new ResourceCheckDto
         {
@@ -1111,6 +1115,8 @@ public partial class ConnectionService(
 
         // Map to result
         IEnumerable<RightCheckDto> checkRights = await MapFromInternalToExternalRights(rights, resource, accessListMode, fromParty, rightKeys, isResourceDelegable, isMaskinPortenSchema, cancellationToken);
+
+        resourceDto = await resourceDto.TranslateDeepAsync(translationService, languageCode, true);
 
         // build result with resource, instance and rights
         InstanceCheckDto instanceCheckDto = new InstanceCheckDto
@@ -1694,6 +1700,7 @@ public partial class ConnectionService(
             Id = resourceObj.Id,
             Name = resourceObj.Name,
             Description = resourceObj.Description,
+            RightDescription = resourceObj.RightDescription,
             Provider = providerDto,
             ProviderId = provider.Id,
             RefId = resourceObj.RefId,

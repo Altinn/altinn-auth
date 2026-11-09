@@ -44,7 +44,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Authorization.Helper
             request.Action = new List<XacmlJsonCategory>();
             request.Resource = new List<XacmlJsonCategory>();
 
-            string party = queryParams.FirstOrDefault(p => p.Key == ParamParty).Value.FirstOrDefault();
+            string party = queryParams[ParamParty].FirstOrDefault();
 
             request.AccessSubject.Add(CreateSubjectCategory(context.User.Claims));
             request.Action.Add(CreateActionCategory(requirement.ActionType));

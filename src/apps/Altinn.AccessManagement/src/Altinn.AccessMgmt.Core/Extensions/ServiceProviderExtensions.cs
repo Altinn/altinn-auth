@@ -27,5 +27,6 @@ public static class ServiceProviderExtensions
         var lifecycleFeatures = scope.ServiceProvider.GetRequiredService<AppLifecycleFeatures>();
 
         lifecycleFeatures.AdosSubunitInheritance = await featureManager.IsEnabledAsync(AccessMgmtFeatureFlags.AdosSubunitInheritance);
+        lifecycleFeatures.DisableAltinn2Roles = await featureManager.IsEnabledAsync(AccessMgmtFeatureFlags.DisableAltinn2Roles);
     }
 }

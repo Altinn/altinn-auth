@@ -48,6 +48,23 @@ namespace Altinn.ResourceRegistry.Utils
         }
 
         /// <summary>
+        /// Creates an error model for scopes whose prefix is not owned by the resource owner,
+        /// according to the prefix list in Samarbeidsportalen
+        /// </summary>
+        /// <param name="invalidScopes">the scopes with prefixes the resource owner does not own</param>
+        /// <returns>A complete error model, with the scopes under the <c>InvalidPrefix</c> key</returns>
+        public static ValidationProblemDetails CreateErrorResponseInvalidPrefix(IReadOnlyList<string> invalidScopes)
+        {
+            ValidationProblemDetails error = new ValidationProblemDetails(new Dictionary<string, string[]> { { "InvalidPrefix", invalidScopes.ToArray() } })
+            {
+                Title = "Invalid scope prefix",
+                Detail = "The resource owner does not own the prefix of the listed Maskinporten scopes",
+            };
+
+            return error;
+        }
+
+        /// <summary>
         /// Returns a list of Maskinporten scopes from a ServiceResource
         /// </summary>
         /// <param name="serviceResource">The ServiceResource to fetch scopes from</param>

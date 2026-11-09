@@ -1,0 +1,6 @@
+﻿<Project>
+
+  <!-- The version is set here, like src/pkgs/Directory.Build.targets does for the shared packages. -->
+  <Import Project="Version.props" />
+
+</Project>

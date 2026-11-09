@@ -97,7 +97,7 @@ subset of tests, put those tests in a dedicated class with its own fixture.
 **Database:** None — the Authorization app uses mocks for its data stores.
 
 Pre-registers the full common mock graph for Authorization (PolicyRetrievalPoint,
-PolicyRepository, DelegationMetadataRepository, signing key provider, events
+PolicyRepository, the Access Management client, signing key provider, events
 queue, etc.) so test classes don't have to duplicate that wiring.
 
 ```csharp

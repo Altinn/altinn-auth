@@ -1,7 +1,8 @@
 ﻿using System.Text.Json;
-using Altinn.AccessManagement.Models;
 using Altinn.AccessManagement.Tests.Util;
 using Altinn.AccessManagement.Tests.Utils;
+using Altinn.Authorization.Api.Contracts.AccessManagement;
+using Altinn.Authorization.Api.Contracts.AccessManagement.Apps;
 using Altinn.Authorization.ProblemDetails;
 
 namespace Altinn.AccessManagement.Tests.Data;

@@ -29,22 +29,24 @@ const WORD_BUDGET = 1000;
 // App verticals that do not have an AGENTS.md yet. Remove a name when its file lands;
 // the list must be empty when #4078 is closed.
 const PRESENCE_EXEMPT = new Set([
-  "src/apps/Altinn.AccessManagement", // #4078
-  "src/apps/Altinn.Authorization", // #4078
   "src/apps/Altinn.Register", // placeholder until #4056 brings the real Register
-  "src/apps/Altinn.ResourceRegistry", // #4078, retrofit after the import in #4196
 ]);
 
 const errors = [];
 const warnings = [];
 
-const tracked = (...patterns) =>
-  execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard", "--", ...patterns], {
-    encoding: "utf8",
-    maxBuffer: 16 * 1024 * 1024,
-  })
-    .split("\n")
-    .filter(Boolean);
+// git repeats a path when several patterns match it, and once per stage while a merge
+// conflict is unresolved, so the list is deduplicated before anything counts it.
+const tracked = (...patterns) => [
+  ...new Set(
+    execFileSync("git", ["ls-files", "--cached", "--others", "--exclude-standard", "--", ...patterns], {
+      encoding: "utf8",
+      maxBuffer: 16 * 1024 * 1024,
+    })
+      .split("\n")
+      .filter(Boolean),
+  ),
+];
 
 const read = (file) => fs.readFileSync(file, "utf8");
 const countWords = (text) => text.split(/\s+/u).filter(Boolean).length;

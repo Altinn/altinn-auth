@@ -1,4 +1,4 @@
-﻿module.exports = {
+module.exports = {
   env: "at22",
   app: {
     app_id: "app_ttd_bruno-instans-delegering-app",

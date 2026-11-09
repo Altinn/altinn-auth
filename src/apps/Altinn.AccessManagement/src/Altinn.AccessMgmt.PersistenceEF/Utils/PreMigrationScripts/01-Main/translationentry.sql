@@ -1,4 +1,4 @@
-﻿create table dbo.translationentry
+create table dbo.translationentry
 (
     id           uuid not null,
     type         text not null,

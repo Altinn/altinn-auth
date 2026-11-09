@@ -1,0 +1,15 @@
+meta {
+	name: 01_DirectAndHierarchy_ExcludesClientDelegation
+	seq: 1
+}
+
+auth {
+	mode: inherit
+}
+
+docs {
+	GIVEN the system user (Fiken) has a client delegation of an accountant package from client USENSUELL UVIRKSOM TIGER AS
+		via the accounting firm ULASTELIG RETTFERDIG TIGER AS
+	WHEN the system user is authorized for the client resource on behalf of the client
+	THEN no access-restriction permits, while DirectAndHierarchy does not
+}

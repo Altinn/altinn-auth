@@ -20,13 +20,6 @@ data "azurerm_resource_group" "hub" {
   provider = azurerm.hub
 }
 
-// Auth issue when looking up app conf
-# data "azurerm_app_configuration" "app_configuration" {
-#   name                = "appconf${var.hub_suffix}"
-#   resource_group_name = data.azurerm_resource_group.hub.name
-#   provider            = azurerm.hub
-# }
-
 resource "azurerm_app_configuration_feature" "configuration" {
   configuration_store_id = local.configuration_store_id
   key                    = each.value.name

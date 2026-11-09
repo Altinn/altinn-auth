@@ -1,4 +1,4 @@
-﻿# top-most EditorConfig file
+# top-most EditorConfig file
 root = true
 
 # For all files
@@ -6,15 +6,14 @@ root = true
 insert_final_newline = true
 end_of_line = lf
 tab_width = 2
-charset = utf-8-bom
-
-[*.{nix,tf,tfvars,sh}]
 charset = utf-8
 
 [*.{props,targets,csproj}]
+charset = utf-8-bom
 tab_width = 4
 
 [*.cs]
+charset = utf-8-bom
 tab_width = 4
 
 # VSTHRD200: Use "Async" suffix for async methods
@@ -225,6 +224,12 @@ dotnet_diagnostic.SA1600.severity = none
 # SA1316: Tuple element naming convention - test code uses camelCase
 dotnet_diagnostic.SA1316.severity = none
 
+# Shared with the resource registry, which links this file into its own build. Its StyleCop
+# version asks for a file header, which the rest of the repository does not use.
+[src/libs/Altinn.Authorization.Api.Contracts/src/Altinn.Authorization.Api.Contracts/ResourceRegistry/Enums/ResourceAccessListMode.cs]
+
+# SA1633: File should have header
+dotnet_diagnostic.SA1633.severity = none
+
 [*.md]
-charset = utf-8
 end_of_line = lf

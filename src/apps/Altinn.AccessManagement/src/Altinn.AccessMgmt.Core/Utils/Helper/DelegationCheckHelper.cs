@@ -1,11 +1,11 @@
 ﻿using System.Text;
 using Altinn.AccessManagement.Core.Constants;
-using Altinn.AccessManagement.Core.Enums.ResourceRegistry;
 using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
+using Altinn.Authorization.Api.Contracts.ResourceRegistry.Enums;
 
 namespace Altinn.AccessMgmt.Core.Utils.Helper
 {
@@ -338,7 +338,11 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
             List<string> result = [];
             foreach (string urn in accessUrns)
             {
-                if (urn.StartsWith(AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute))
+                if (urn.StartsWith(AltinnXacmlConstants.MatchAttributeIdentifiers.LegacyRoleAttribute))
+                {
+                    result.Add(urn);
+                }
+                else if (urn.StartsWith($"{AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute}:"))
                 {
                     result.Add(urn);
                 }
