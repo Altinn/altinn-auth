@@ -201,6 +201,8 @@ public partial class DtoMapper : IDtoMapper
             Type = Convert(resource.Type),
             ProviderId = resource.ProviderId,
             Provider = Convert(resource.Provider),
-            RefId = resource.RefId
+            RefId = resource.RefId,
+            Delegable = resource.Delegable,
+            AccessListMode = resource.AccessListMode
         };
 }
