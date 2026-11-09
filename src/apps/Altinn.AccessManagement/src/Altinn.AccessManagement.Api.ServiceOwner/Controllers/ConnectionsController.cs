@@ -2,7 +2,6 @@
 using Altinn.AccessManagement.Core.Configuration;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Errors;
-using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.Core.Audit;
@@ -32,7 +31,6 @@ namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers
         IEntityService EntityService,
         IPackageService packageService,
         IResourceService resourceService,
-        IContextRetrievalService contextRetrievalService,
         IOptions<ServiceOwnerDelegationSettings> serviceOwnerDelegationSettings
     ) : ControllerBase
     {
@@ -211,8 +209,7 @@ namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers
                 return MaskinportenSchemaProblem(resourceObj);
             }
 
-            ServiceResource registryResource = await contextRetrievalService.GetResource(resourceObj.RefId, cancellationToken);
-            if (registryResource is { Delegable: false })
+            if (resourceObj is { Delegable: false })
             {
                 return NotDelegableProblem(resourceObj);
             }
@@ -386,7 +383,7 @@ namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers
         }
 
         /// <summary>
-        /// The Resource Registry's Delegable flag rules the resource out whoever asks, so it is checked before ownership.
+        /// The Delegable flag, imported from the Resource Registry, rules the resource out whoever asks, so it is checked before ownership.
         /// </summary>
         private static IActionResult NotDelegableProblem(Resource resource)
         {
