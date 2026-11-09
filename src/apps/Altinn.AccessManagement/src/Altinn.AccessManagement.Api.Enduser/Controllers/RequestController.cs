@@ -77,6 +77,34 @@ public class RequestController(
         => status == null || status.Length == 0 ? DefaultStatusFilter : DtoMapper.ConvertFromV1StatusFilter(status);
 
     /// <summary>
+    /// Approve a pending request, giving what was requested: the package, the rights requested for the resource,
+    /// or, when no specific rights were requested, every right the user can delegate for the resource.
+    /// </summary>
+    /// <param name="party">The party approving, which must be the recipient of the request</param>
+    /// <param name="id">The request to approve</param>
+    /// <param name="rightKeys">Ignored. Kept so existing clients that send a body keep working; use version 2 to select rights.</param>
+    /// <param name="ct">Cancellation token</param>
+    [HttpPut("received/approve")]
+    [FeatureGate(RequirementType.Any, AccessMgmtFeatureFlags.EnableRequestAssignmentResource, AccessMgmtFeatureFlags.EnableRequestAssignmentPackage)]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+    [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_REQUESTS_WRITE)]
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<RequestDto>> ApproveRequest(
+        [FromQuery][Required] Guid party,
+        [FromQuery][Required] Guid id,
+        [FromBody] string[]? rightKeys,
+        CancellationToken ct = default
+        )
+    {
+        return await ApproveRequestCore(party, id, selectedRightKeys: null, ct);
+    }
+
+    /// <summary>
     /// Create request on behalf of a party
     /// </summary>
     [HttpPost("resource")]

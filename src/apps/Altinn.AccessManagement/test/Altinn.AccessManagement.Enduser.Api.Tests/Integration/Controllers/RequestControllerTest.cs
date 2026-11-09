@@ -4,9 +4,12 @@ using System.Security.Claims;
 using System.Text.Json;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Errors;
+using Altinn.AccessManagement.Core.Repositories.Interfaces;
+using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.TestUtils;
 using Altinn.AccessManagement.TestUtils.Data;
 using Altinn.AccessManagement.TestUtils.Fixtures;
+using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.Core.Notifications;
 using Altinn.AccessMgmt.Core.Services.Contracts;
@@ -15,6 +18,7 @@ using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using static Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers.RequestApprovalTestData;
 
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers;
 
@@ -939,6 +943,98 @@ public class RequestControllerTest
             Assert.True(
                 (int)response.StatusCode >= 400 || response.IsSuccessStatusCode,
                 $"Expected a client-error, server-error or success status, got {response.StatusCode}");
+        }
+    }
+
+    /// <summary>
+    /// Version 1 approves exactly what was requested: the requested rights when the request names them,
+    /// otherwise every right the user can delegate. A body is ignored, and the request is never PartialApprove.
+    /// See <see cref="RequestApprovalTestData"/> for the setup.
+    /// </summary>
+    [IntegrationTest]
+    public class ApproveResourceRequestWithRightKeysTest : IClassFixture<ApiFixture>
+    {
+        private static readonly Guid RequestedRightsId = Guid.Parse("0196b0d3-0000-7000-8000-000000000001");
+        private static readonly Guid RequestedRightsWithBodyId = Guid.Parse("0196b0d3-0000-7000-8000-000000000002");
+        private static readonly Guid WholeResourceId = Guid.Parse("0196b0d3-0000-7000-8000-000000000003");
+
+        public ApproveResourceRequestWithRightKeysTest(ApiFixture fixture)
+        {
+            Fixture = fixture;
+            Fixture.ConfigureServices(services =>
+            {
+                services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
+                services.AddSingleton<IPolicyFactory, PolicyFactoryMock>();
+            });
+            EnableFeatureFlags(fixture);
+            Fixture.EnsureSeedOnce<ApproveResourceRequestWithRightKeysTest>(db =>
+            {
+                var (roleKeys, _) = GetAppPolicyKeys();
+                AddResourceRequest(db, RequestedRightsId, TestData.BakerJohnsen.Id, [roleKeys[0]]);
+                AddResourceRequest(db, RequestedRightsWithBodyId, TestData.SvendsenAutomobil.Id, [roleKeys[0]]);
+                AddResourceRequest(db, WholeResourceId, TestData.FredriksonsFabrikk.Id, null);
+            });
+        }
+
+        public ApiFixture Fixture { get; }
+
+        private static string ApproveUrl(Guid id) => $"{Route}/received/approve?party={TestData.DumboAdventures.Id}&id={id}";
+
+        private static async Task<(RequestDto Request, JsonDocument Json)> ReadRequest(HttpResponseMessage response)
+        {
+            var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {content}");
+            var request = JsonSerializer.Deserialize<RequestDto>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            return (request, JsonDocument.Parse(content));
+        }
+
+        [Fact]
+        public async Task WithRequestedRights_GivesOnlyThose_AndIsApproved()
+        {
+            var (roleKeys, _) = GetAppPolicyKeys();
+            var client = CreateSystemClient(Fixture, TestData.MalinEmilie.Id);
+
+            var response = await client.PutAsync(ApproveUrl(RequestedRightsId), null, TestContext.Current.CancellationToken);
+
+            var (request, json) = await ReadRequest(response);
+            using (json)
+            {
+                Assert.Equal(RequestStatus.Approved, request.Status);
+                Assert.Equal(RequestStatusV2.Approved, request.StatusV2.Value);
+                Assert.False(json.RootElement.GetProperty("resource").TryGetProperty("approvedRightKeys", out _));
+            }
+
+            Assert.Equal([roleKeys[0]], GetDelegatedRightKeys(Fixture, TestData.BakerJohnsen));
+        }
+
+        [Fact]
+        public async Task WithBody_IgnoresBody_AndGivesRequestedRights()
+        {
+            var (roleKeys, _) = GetAppPolicyKeys();
+            var client = CreateSystemClient(Fixture, TestData.MalinEmilie.Id);
+
+            var response = await client.PutAsJsonAsync(ApproveUrl(RequestedRightsWithBodyId), new[] { roleKeys[1] }, TestContext.Current.CancellationToken);
+
+            var (request, json) = await ReadRequest(response);
+            json.Dispose();
+            Assert.Equal(RequestStatusV2.Approved, request.StatusV2.Value);
+            Assert.Equal([roleKeys[0]], GetDelegatedRightKeys(Fixture, TestData.SvendsenAutomobil));
+        }
+
+        [Fact]
+        public async Task ForWholeResource_GivesEveryRightTheUserCanDelegate_AndIsApproved()
+        {
+            var (roleKeys, orgOnlyKeys) = GetAppPolicyKeys();
+            var client = CreateSystemClient(Fixture, TestData.MalinEmilie.Id);
+
+            var response = await client.PutAsync(ApproveUrl(WholeResourceId), null, TestContext.Current.CancellationToken);
+
+            var (request, json) = await ReadRequest(response);
+            json.Dispose();
+            Assert.Equal(RequestStatusV2.Approved, request.StatusV2.Value);
+            var delegated = GetDelegatedRightKeys(Fixture, TestData.FredriksonsFabrikk);
+            Assert.Subset(roleKeys.ToHashSet(), delegated);
+            Assert.DoesNotContain(delegated, orgOnlyKeys.Contains);
         }
     }
 
