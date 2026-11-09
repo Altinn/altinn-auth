@@ -1,10 +1,14 @@
-﻿using System.Net;
+﻿using System.Collections.Concurrent;
+using System.Net;
+using System.Reflection;
+using System.Runtime.ExceptionServices;
 using System.Security.Claims;
 using System.Text.Json;
 using Altinn.AccessManagement.Api.Enduser.Controllers;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Models.AccessList;
+using Altinn.AccessManagement.Core.Services;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.TestUtils;
 using Altinn.AccessManagement.TestUtils.Data;
@@ -44,6 +48,8 @@ public partial class ConnectionsControllerTest
     /// Mocks:
     /// - <see cref="PolicyRetrievalPointMock"/> for XACML policies
     /// - <see cref="IAccessListsAuthorizationClient"/> answering <see cref="AccessListAuthorizationResult.NotAuthorized"/>
+    /// - <see cref="IContextRetrievalService"/> wrapped by <see cref="CallRecorder"/>, to show that the checks never call
+    ///   <see cref="IContextRetrievalService.GetResource"/> while the policy is still read through it
     /// </para>
     /// <para>
     /// Actors:
@@ -57,19 +63,30 @@ public partial class ConnectionsControllerTest
 
         private static readonly JsonSerializerOptions JsonOpts = new() { PropertyNameCaseInsensitive = true };
 
+        // The host is built once per fixture from the first constructor's services, so the mock and the
+        // recorded calls are shared by every test in this class.
+        private static readonly Mock<IAccessListsAuthorizationClient> AccessLists = new();
+
+        private static readonly ConcurrentQueue<string> ContextRetrievalCalls = new();
+
+        static DelegationCheckLocalResource()
+        {
+            AccessLists
+                .Setup(c => c.AuthorizePartyForAccessList(It.IsAny<AccessListAuthorizationRequest>(), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new AccessListAuthorizationResponse { Result = AccessListAuthorizationResult.NotAuthorized });
+        }
+
         public DelegationCheckLocalResource(ApiFixture fixture)
         {
             Fixture = fixture;
             Fixture.ConfigureServices(services =>
             {
                 services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
-
-                var accessLists = new Mock<IAccessListsAuthorizationClient>();
-                accessLists
-                    .Setup(c => c.AuthorizePartyForAccessList(It.IsAny<AccessListAuthorizationRequest>(), It.IsAny<CancellationToken>()))
-                    .ReturnsAsync(new AccessListAuthorizationResponse { Result = AccessListAuthorizationResult.NotAuthorized });
                 services.RemoveAll<IAccessListsAuthorizationClient>();
-                services.AddSingleton(accessLists.Object);
+                services.AddSingleton(AccessLists.Object);
+                services.RemoveAll<IContextRetrievalService>();
+                services.AddSingleton(sp => CallRecorder.Wrap<IContextRetrievalService>(
+                    ActivatorUtilities.CreateInstance<ContextRetrievalService>(sp), ContextRetrievalCalls));
             });
             Fixture.EnsureSeedOnce<DelegationCheckLocalResource>(db =>
             {
@@ -101,6 +118,19 @@ public partial class ConnectionsControllerTest
             return client;
         }
 
+        private static void AssertResourceNotFetchedFromRegistry()
+        {
+            Assert.Contains(nameof(IContextRetrievalService.GetResourcePolicyV2), ContextRetrievalCalls);
+            Assert.DoesNotContain(nameof(IContextRetrievalService.GetResource), ContextRetrievalCalls);
+        }
+
+        private static void VerifyAccessListAskedFor(string resourceRefId) =>
+            AccessLists.Verify(
+                c => c.AuthorizePartyForAccessList(
+                    It.Is<AccessListAuthorizationRequest>(r => IsDumboAdventuresAndResource(r, resourceRefId)),
+                    It.IsAny<CancellationToken>()),
+                Times.AtLeastOnce());
+
         private async Task<T> GetOk<T>(string url)
         {
             HttpClient client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE);
@@ -127,6 +157,7 @@ public partial class ConnectionsControllerTest
             Assert.NotEmpty(result.Rights);
             Assert.All(result.Rights, r => Assert.False(r.Result, $"Right '{r.Right.Name}' must not be delegable"));
             Assert.All(result.Rights, r => Assert.Contains(DelegationCheckReasonCode.ResourceNotDelegable, r.ReasonCodes));
+            AssertResourceNotFetchedFromRegistry();
         }
 
         /// <summary>
@@ -143,6 +174,7 @@ public partial class ConnectionsControllerTest
             Assert.All(result.Rights, r => Assert.False(r.Result, $"Right '{r.Right.Name}' must not be delegable"));
             Assert.All(result.Rights, r => Assert.Contains(DelegationCheckReasonCode.AccessListValidationFail, r.ReasonCodes));
             Assert.All(result.Rights, r => Assert.DoesNotContain(DelegationCheckReasonCode.ResourceNotDelegable, r.ReasonCodes));
+            VerifyAccessListAskedFor(TestData.NavSykepengerSykmelding.RefId);
         }
 
         /// <summary>
@@ -158,6 +190,7 @@ public partial class ConnectionsControllerTest
             Assert.NotEmpty(result.Rights);
             Assert.All(result.Rights, r => Assert.False(r.Result, $"Right '{r.Right.Name}' must not be delegable"));
             Assert.All(result.Rights, r => Assert.Contains(DelegationCheckReasonCode.ResourceNotDelegable, r.ReasonCodes));
+            AssertResourceNotFetchedFromRegistry();
         }
 
         /// <summary>
@@ -173,6 +206,7 @@ public partial class ConnectionsControllerTest
             Assert.NotEmpty(result.Rights);
             Assert.All(result.Rights, r => Assert.False(r.Result, $"Right '{r.Right.Name}' must not be delegable"));
             Assert.All(result.Rights, r => Assert.Contains(DelegationCheckReasonCode.AccessListValidationFail, r.ReasonCodes));
+            VerifyAccessListAskedFor(TestData.MattilsynetBakeryService.RefId);
         }
     }
 
@@ -241,8 +275,54 @@ public partial class ConnectionsControllerTest
             Assert.All(result.Rights, r => Assert.True(r.Result, $"Right '{r.Right.Name}' should be delegable"));
             Assert.All(result.Rights, r => Assert.DoesNotContain(DelegationCheckReasonCode.AccessListValidationFail, r.ReasonCodes));
             _accessLists.Verify(
-                c => c.AuthorizePartyForAccessList(It.IsAny<AccessListAuthorizationRequest>(), It.IsAny<CancellationToken>()),
+                c => c.AuthorizePartyForAccessList(
+                    It.Is<AccessListAuthorizationRequest>(r => IsDumboAdventuresAndResource(r, TestData.NavSykepengerDialog.RefId)),
+                    It.IsAny<CancellationToken>()),
                 Times.AtLeastOnce());
+        }
+    }
+
+    /// <summary>
+    /// True when an access-list request asks for Dumbo Adventures (the party, not Malin) and the given resource.
+    /// </summary>
+    private static bool IsDumboAdventuresAndResource(AccessListAuthorizationRequest request, string resourceRefId) =>
+        request.Subject.Value.IsPartyUuid(out Guid partyUuid) && partyUuid == TestData.DumboAdventures.Id
+        && request.Resource.Value.IsResourceId(out var resourceId) && resourceId.ToString() == resourceRefId;
+
+    /// <summary>
+    /// Forwards every call to the wrapped service and records the method name.
+    /// </summary>
+    public class CallRecorder : DispatchProxy
+    {
+        private object _inner;
+        private ConcurrentQueue<string> _calls;
+
+        /// <summary>
+        /// Wraps <paramref name="inner"/> so that each call on the returned <typeparamref name="T"/> is recorded in <paramref name="calls"/>.
+        /// </summary>
+        public static T Wrap<T>(T inner, ConcurrentQueue<string> calls)
+            where T : class
+        {
+            T proxy = Create<T, CallRecorder>();
+            var recorder = (CallRecorder)(object)proxy;
+            recorder._inner = inner;
+            recorder._calls = calls;
+            return proxy;
+        }
+
+        /// <inheritdoc/>
+        protected override object Invoke(MethodInfo targetMethod, object[] args)
+        {
+            _calls.Enqueue(targetMethod.Name);
+            try
+            {
+                return targetMethod.Invoke(_inner, args);
+            }
+            catch (TargetInvocationException ex) when (ex.InnerException is not null)
+            {
+                ExceptionDispatchInfo.Capture(ex.InnerException).Throw();
+                throw;
+            }
         }
     }
 }
