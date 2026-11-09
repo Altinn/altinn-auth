@@ -16,7 +16,9 @@ using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
+using Altinn.Authorization.Api.Contracts.Authorization;
 using Altinn.Authorization.Api.Contracts.Register;
+using Altinn.Authorization.Api.Contracts.ResourceRegistry;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -793,13 +795,13 @@ public partial class ServiceOwnerConnectionsControllerTest
         public async Task AddResource_FromOrganizationNotOnAccessList_Returns400FromPartyNotOnAccessList()
         {
             List<string> rightKeys = await GetAvailableRightKeys(TtdResource, orgCode: "ttd");
-            var request = CreateRequest(Organization(TestData.FredriksonsFabrikk), Organization(TestData.RegnskapNorge), rightKeys, TtdResource);
+            var request = CreateRequest(Organization(TestData.SvendsenAutomobil), Organization(TestData.MittRegnskap), rightKeys, TtdResource);
 
             var response = await CreateClient(orgCode: "ttd").PostAsJsonAsync($"{Route}/resources", request, TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
             await AssertProblemCode(response, "AM-00053");
-            Assert.Null(await GetRightholderAssignment(TestData.FredriksonsFabrikk.Id, TestData.RegnskapNorge.Id));
+            Assert.Null(await GetRightholderAssignment(TestData.SvendsenAutomobil.Id, TestData.MittRegnskap.Id));
         }
 
         /// <summary>
@@ -863,13 +865,18 @@ public partial class ServiceOwnerConnectionsControllerTest
         }
 
         /// <summary>
-        /// Access lists with Baker Johnsen as the only member, for every resource and action.
+        /// The access list of ttd_inntektsopplysninger, with Baker Johnsen as the only member, for the two actions
+        /// in the resource policy. Like Resource Registry, it matches the plain action id, such as "read".
         /// </summary>
         private sealed class AccessListWithBakerJohnsenMock : IAccessListsAuthorizationClient
         {
+            private static readonly string[] Actions = ["read", "requestconsent"];
+
             public Task<AccessListAuthorizationResponse> AuthorizePartyForAccessList(AccessListAuthorizationRequest request, CancellationToken cancellationToken = default)
             {
-                bool isMember = request.Subject.Value.IsPartyUuid(out Guid partyUuid) && partyUuid == TestData.BakerJohnsen.Id;
+                bool isMember = request.Subject.Value.IsPartyUuid(out Guid partyUuid) && partyUuid == TestData.BakerJohnsen.Id
+                    && request.Resource.Value.IsResourceId(out ResourceIdentifier resource) && resource.ToString() == TtdResource
+                    && request.Action.Value.IsActionId(out ActionIdentifier action) && Actions.Contains(action.ToString());
                 return Task.FromResult(new AccessListAuthorizationResponse
                 {
                     Result = isMember ? AccessListAuthorizationResult.Authorized : AccessListAuthorizationResult.NotAuthorized,

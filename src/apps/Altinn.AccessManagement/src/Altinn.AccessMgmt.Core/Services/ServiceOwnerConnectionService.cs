@@ -218,8 +218,10 @@ namespace Altinn.AccessMgmt.Core.Services
             // an organization that is not on it would be stored but give the recipient nothing, so refuse it.
             if (DelegationCheckHelper.IsAccessListModeEnabledAndApplicable(resourceMetadata.AccessListMode, fromEntity.TypeId))
             {
-                foreach (RightDto right in availableRights.Where(right => keys.Contains(right.Key, StringComparer.OrdinalIgnoreCase)))
+                foreach (string key in keys)
                 {
+                    // The same right the policy writer picks for the key (SingleRightsService.GenerateRules).
+                    RightDto right = availableRights.First(right => right.Key.Equals(key, StringComparison.InvariantCultureIgnoreCase));
                     if (!await IsOnAccessList(fromEntity.Id, resource.RefId, right, cancellationToken))
                     {
                         return Problems.FromPartyNotOnAccessList;
@@ -376,7 +378,7 @@ namespace Altinn.AccessMgmt.Core.Services
             {
                 Subject = PartyUrn.PartyUuid.Create(partyUuid),
                 Resource = ResourceIdUrn.ResourceId.Create(ResourceIdentifier.CreateUnchecked(resource)),
-                Action = ActionUrn.ActionId.Create(ActionIdentifier.Parse(right.Action.Urn())),
+                Action = ActionUrn.ActionId.Create(ActionIdentifier.CreateUnchecked(right.Action.Value)),
             };
 
             AccessListAuthorizationResponse response = await accessListsAuthorizationClient.AuthorizePartyForAccessList(request, cancellationToken);
