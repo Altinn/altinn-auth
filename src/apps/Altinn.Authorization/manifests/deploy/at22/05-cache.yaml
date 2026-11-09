@@ -1,7 +1,7 @@
 apiVersion: cache.dis.altinn.cloud/v1alpha1
 kind: Cache
 metadata:
-  name: authorization-cache
+  name: authorization
   namespace: product-authorization
 spec:
   size: small

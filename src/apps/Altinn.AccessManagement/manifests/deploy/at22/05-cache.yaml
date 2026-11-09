@@ -1,7 +1,7 @@
 apiVersion: cache.dis.altinn.cloud/v1alpha1
 kind: Cache
 metadata:
-  name: access-management-cache
+  name: access-management
   namespace: product-access-management
 spec:
   size: small

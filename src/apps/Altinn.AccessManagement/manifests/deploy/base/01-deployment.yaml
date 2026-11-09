@@ -62,7 +62,7 @@ spec:
             - name: Altinn__Cache__Username
               valueFrom:
                 secretKeyRef:
-                  name: access-management-cache-cache-auth
+                  name: access-management-cache-auth
                   key: username
                   optional: true
           ports:
@@ -114,7 +114,7 @@ spec:
         # Written by dis-cache-operator for the Cache resource; optional so the pod starts where no Cache exists yet.
         - name: cache-auth
           secret:
-            secretName: access-management-cache-cache-auth
+            secretName: access-management-cache-auth
             optional: true
             items:
               - key: password
