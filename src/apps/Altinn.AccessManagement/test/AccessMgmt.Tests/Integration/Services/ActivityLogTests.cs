@@ -1,6 +1,7 @@
 ﻿using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
+using Altinn.AccessMgmt.PersistenceEF.Data;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries;
@@ -597,5 +598,25 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
         var connections = await service.GetConnectionsActivityLog(
             from.Id, direction: null, new ActivityLogQueryFilter(), 100, 0, TestContext.Current.CancellationToken);
         Assert.Contains(connections.Items, e => e.ItemId == assignment.Id);
+    }
+
+    [Fact]
+    public async Task EnsureMonthPartitions_CreatesPartitionsAheadAndIsIdempotent()
+    {
+        // Further ahead than the migration's 24-month buffer, so the call has months to create.
+        const int monthsAhead = ActivityLogPartitionMaintenance.DefaultMonthsAhead + 6;
+
+        var first = await ActivityLogPartitionMaintenance.EnsureMonthPartitions(_db, monthsAhead, TestContext.Current.CancellationToken);
+        Assert.Equal(0, first.Skipped);
+
+        var horizon = DateTime.UtcNow.AddMonths(monthsAhead);
+        var partition = $"dbo.activitylog_p{horizon:yyyyMM}";
+        var exists = await _db.Database
+            .SqlQuery<bool>($"SELECT to_regclass({partition}) IS NOT NULL AS \"Value\"")
+            .SingleAsync(TestContext.Current.CancellationToken);
+        Assert.True(exists, $"{partition} should exist after the call");
+
+        var second = await ActivityLogPartitionMaintenance.EnsureMonthPartitions(_db, monthsAhead, TestContext.Current.CancellationToken);
+        Assert.Equal(new ActivityLogPartitionResult(0, 0), second);
     }
 }

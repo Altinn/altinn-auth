@@ -73,9 +73,31 @@ async Task Init()
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await dbContext.Database.MigrateAsync(cts.Token);
     await Altinn.AccessMgmt.PersistenceEF.Data.StaticDataIngest.IngestAll(dbContext);
+    await EnsureActivityLogPartitions(dbContext, cts.Token);
 
     var registerImport = scope.ServiceProvider.GetRequiredService<RegisterHostedService>();
     await registerImport.EnsureDbIsIngestWithRegisterData(cts.Token);
+}
+
+// Tops up the activity log's monthly partitions on every deploy. A skipped month does not fail
+// the deploy: its writes still land in the default partition, and the rows there must be moved
+// out by hand before the partition can be created.
+async Task EnsureActivityLogPartitions(AppDbContext dbContext, CancellationToken cancellationToken)
+{
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    var result = await Altinn.AccessMgmt.PersistenceEF.Data.ActivityLogPartitionMaintenance.EnsureMonthPartitions(dbContext, cancellationToken: cancellationToken);
+
+    if (result.Skipped > 0)
+    {
+        logger.LogWarning(
+            "Activity log partition maintenance: {Created} partition(s) created, {Skipped} month(s) still have no partition because the default partition holds rows in their range.",
+            result.Created,
+            result.Skipped);
+    }
+    else
+    {
+        logger.LogInformation("Activity log partition maintenance: {Created} partition(s) created.", result.Created);
+    }
 }
 
 /// <summary>
