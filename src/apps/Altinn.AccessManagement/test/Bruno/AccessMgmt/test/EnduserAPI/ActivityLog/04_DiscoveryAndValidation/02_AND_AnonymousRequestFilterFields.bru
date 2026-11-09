@@ -1,0 +1,29 @@
+meta {
+  name: 02_AND_AnonymousRequestFilterFields
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/request/activitylog/filter/fields
+  body: none
+  auth: none
+}
+
+docs {
+  AND anyone reads the filter fields of the request area without a token.
+
+  `GET /accessmanagement/api/v2/enduser/request/activitylog/filter/fields` is static metadata, anonymous and
+  cached for an hour. The values are the valid `{field}` values for
+  `GET .../activitylog/filter/{field}`.
+}
+
+tests {
+  test("THEN the request filter fields return 200 without a token", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the request area offers exactly its own fields", function() {
+    expect(res.getBody()).to.deep.equal(["From","To","By","Package","Resource","Source","ActivityType"]);
+  });
+}

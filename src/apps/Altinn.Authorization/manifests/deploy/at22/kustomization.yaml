@@ -8,6 +8,7 @@ labels:
     includeTemplates: true
 resources:
   - ../base
+  - 05-cache.yaml
 
 configMapGenerator:
   - name: environment
