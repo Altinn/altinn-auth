@@ -517,7 +517,7 @@ public partial class ServiceOwnerConnectionsControllerTest
         }
 
         /// <summary>
-        /// The rights lookup and the add endpoint check the resource registry's Delegable flag before ownership, so a
+        /// The rights lookup and the add endpoint check the Delegable flag before ownership, so a
         /// service owner that does not own a non-delegable resource gets that answer rather than 403.
         /// </summary>
         [Theory]
@@ -536,6 +536,28 @@ public partial class ServiceOwnerConnectionsControllerTest
                 response,
                 "AM-00042",
                 $"Resource '{NonDelegableResource}' is marked as not delegable in the Resource Registry");
+        }
+
+        /// <summary>
+        /// The Delegable flag is read from the local resource, so a resource the resource registry does not know is
+        /// still refused when it is not delegable locally, and before ownership.
+        /// </summary>
+        [Theory]
+        [InlineData("resources/rights")]
+        [InlineData("resources")]
+        public async Task RightsAndAdd_ForLocallyNonDelegableResource_AsOtherServiceOwner_Returns400ResourceNotDelegable(string endpoint)
+        {
+            var client = CreateClient(TestData.BakerJohnsen.Entity.OrganizationIdentifier);
+
+            var response = endpoint == "resources/rights"
+                ? await client.GetAsync($"{Route}/{endpoint}?resource={LocalOnlyNonDelegableResource}", TestContext.Current.CancellationToken)
+                : await client.PostAsJsonAsync($"{Route}/{endpoint}", CreateRequest(Organization(TestData.FredriksonsFabrikk), Organization(TestData.RegnskapNorge), ["read"], LocalOnlyNonDelegableResource), TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            await AssertProblemCode(
+                response,
+                "AM-00042",
+                $"Resource '{LocalOnlyNonDelegableResource}' is marked as not delegable in the Resource Registry");
         }
 
         /// <summary>
@@ -791,7 +813,7 @@ public partial class ServiceOwnerConnectionsControllerTest
         }
 
         /// <summary>
-        /// A resource the service owner owns, but which the resource registry marks as not delegable, is refused by
+        /// A resource the service owner owns, but which is marked as not delegable, is refused by
         /// the rights lookup as well, so it does not advertise rights that the add endpoint refuses to delegate.
         /// </summary>
         [Fact]
