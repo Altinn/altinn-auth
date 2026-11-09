@@ -16,6 +16,13 @@ public static class ActivityLogPartitionMaintenance
     public const int DefaultMonthsAhead = 24;
 
     /// <summary>
+    /// Command timeout in seconds. Attaching a partition waits for a SHARE UPDATE EXCLUSIVE lock on
+    /// <c>dbo.activitylog</c> and scans the default partition, which can outlast the driver's
+    /// 30-second default; the bound still keeps a stuck lock from holding a deploy indefinitely.
+    /// </summary>
+    public const int CommandTimeoutSeconds = 300;
+
+    /// <summary>
     /// Calls <c>dbo.activitylog_ensure_month_partitions</c>, which creates any missing monthly
     /// partitions up to <paramref name="monthsAhead"/> months from now. Idempotent: once the
     /// partitions exist it creates nothing.
@@ -34,6 +41,7 @@ public static class ActivityLogPartitionMaintenance
             await using var command = connection.CreateCommand();
             command.CommandText = "SELECT created, skipped FROM dbo.activitylog_ensure_month_partitions(@monthsAhead)";
             command.Transaction = dbContext.Database.CurrentTransaction?.GetDbTransaction();
+            command.CommandTimeout = CommandTimeoutSeconds;
 
             var parameter = command.CreateParameter();
             parameter.ParameterName = "monthsAhead";

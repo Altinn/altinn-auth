@@ -606,11 +606,17 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
         // Further ahead than the migration's 24-month buffer, so the call has months to create.
         const int monthsAhead = ActivityLogPartitionMaintenance.DefaultMonthsAhead + 6;
 
+        // One transaction, so now() — and with it the horizon — is the same for every statement
+        // even if the test runs across a month boundary. Partition DDL is transactional, so the
+        // rollback at dispose leaves the shared database as it was.
+        await using var transaction = await _db.Database.BeginTransactionAsync(TestContext.Current.CancellationToken);
+
         var first = await ActivityLogPartitionMaintenance.EnsureMonthPartitions(_db, monthsAhead, TestContext.Current.CancellationToken);
         Assert.Equal(0, first.Skipped);
 
-        var horizon = DateTime.UtcNow.AddMonths(monthsAhead);
-        var partition = $"dbo.activitylog_p{horizon:yyyyMM}";
+        var partition = await _db.Database
+            .SqlQuery<string>($"SELECT 'dbo.activitylog_p' || to_char(now() + make_interval(months => {monthsAhead}), 'YYYYMM') AS \"Value\"")
+            .SingleAsync(TestContext.Current.CancellationToken);
         var exists = await _db.Database
             .SqlQuery<bool>($"SELECT to_regclass({partition}) IS NOT NULL AS \"Value\"")
             .SingleAsync(TestContext.Current.CancellationToken);
