@@ -606,23 +606,76 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
         // Further ahead than the migration's 24-month buffer, so the call has months to create.
         const int monthsAhead = ActivityLogPartitionMaintenance.DefaultMonthsAhead + 6;
 
+        string partition;
+
         // One transaction, so now() — and with it the horizon — is the same for every statement
         // even if the test runs across a month boundary. Partition DDL is transactional, so the
-        // rollback at dispose leaves the shared database as it was.
+        // rollback leaves the shared database as it was.
+        await using (var transaction = await _db.Database.BeginTransactionAsync(TestContext.Current.CancellationToken))
+        {
+            partition = await PartitionName(monthsAhead);
+            Assert.False(await PartitionExists(partition), $"{partition} should not exist before the call");
+            var missing = await MissingMonthPartitions(monthsAhead);
+            Assert.True(missing > 0);
+
+            var first = await ActivityLogPartitionMaintenance.EnsureMonthPartitions(_db, monthsAhead, TestContext.Current.CancellationToken);
+            Assert.Equal(new ActivityLogPartitionResult(missing, 0), first);
+            Assert.True(await PartitionExists(partition), $"{partition} should exist after the call");
+
+            var second = await ActivityLogPartitionMaintenance.EnsureMonthPartitions(_db, monthsAhead, TestContext.Current.CancellationToken);
+            Assert.Equal(new ActivityLogPartitionResult(0, 0), second);
+
+            await transaction.RollbackAsync(TestContext.Current.CancellationToken);
+        }
+
+        // The call ran in the caller's transaction, so nothing it created survives the rollback.
+        Assert.False(await PartitionExists(partition), $"{partition} should be gone after the rollback");
+    }
+
+    [Fact]
+    public async Task EnsureMonthPartitions_SkipsMonthWithRowsInDefaultPartition()
+    {
+        const int monthsAhead = ActivityLogPartitionMaintenance.DefaultMonthsAhead + 6;
+        const int blockedMonth = ActivityLogPartitionMaintenance.DefaultMonthsAhead + 4;
+
         await using var transaction = await _db.Database.BeginTransactionAsync(TestContext.Current.CancellationToken);
 
-        var first = await ActivityLogPartitionMaintenance.EnsureMonthPartitions(_db, monthsAhead, TestContext.Current.CancellationToken);
-        Assert.Equal(0, first.Skipped);
+        var partition = await PartitionName(blockedMonth);
+        Assert.False(await PartitionExists(partition), $"{partition} should not exist before the call");
 
-        var partition = await _db.Database
-            .SqlQuery<string>($"SELECT 'dbo.activitylog_p' || to_char(now() + make_interval(months => {monthsAhead}), 'YYYYMM') AS \"Value\"")
+        // With no partition for that month yet, the row is routed to the default partition.
+        var when = await _db.Database
+            .SqlQuery<DateTimeOffset>($"SELECT date_trunc('month', now() + make_interval(months => {blockedMonth})) + interval '1 day' AS \"Value\"")
             .SingleAsync(TestContext.Current.CancellationToken);
-        var exists = await _db.Database
-            .SqlQuery<bool>($"SELECT to_regclass({partition}) IS NOT NULL AS \"Value\"")
-            .SingleAsync(TestContext.Current.CancellationToken);
-        Assert.True(exists, $"{partition} should exist after the call");
+        _db.ActivityLogs.Add(new ActivityLog
+        {
+            Type = ActivityLogType.Assignment,
+            Trigger = ActivityLogTrigger.Created,
+            When = when,
+            ItemId = Guid.CreateVersion7(),
+        });
+        await _db.SaveChangesAsync(Seeder, TestContext.Current.CancellationToken);
 
-        var second = await ActivityLogPartitionMaintenance.EnsureMonthPartitions(_db, monthsAhead, TestContext.Current.CancellationToken);
-        Assert.Equal(new ActivityLogPartitionResult(0, 0), second);
+        var result = await ActivityLogPartitionMaintenance.EnsureMonthPartitions(_db, monthsAhead, TestContext.Current.CancellationToken);
+
+        Assert.Equal(1, result.Skipped);
+        Assert.False(await PartitionExists(partition), $"{partition} should still be missing");
     }
+
+    private Task<string> PartitionName(int monthsAhead) => _db.Database
+        .SqlQuery<string>($"SELECT 'dbo.activitylog_p' || to_char(now() + make_interval(months => {monthsAhead}), 'YYYYMM') AS \"Value\"")
+        .SingleAsync(TestContext.Current.CancellationToken);
+
+    private Task<bool> PartitionExists(string partition) => _db.Database
+        .SqlQuery<bool>($"SELECT to_regclass({partition}) IS NOT NULL AS \"Value\"")
+        .SingleAsync(TestContext.Current.CancellationToken);
+
+    /// <summary>Months from now up to the horizon that have no partition, as the function counts them.</summary>
+    private Task<int> MissingMonthPartitions(int monthsAhead) => _db.Database
+        .SqlQuery<int>($"""
+            SELECT count(*)::int AS "Value"
+            FROM generate_series(date_trunc('month', now()), now() + make_interval(months => {monthsAhead}), interval '1 month') AS month
+            WHERE to_regclass('dbo.activitylog_p' || to_char(month, 'YYYYMM')) IS NULL
+            """)
+        .SingleAsync(TestContext.Current.CancellationToken);
 }

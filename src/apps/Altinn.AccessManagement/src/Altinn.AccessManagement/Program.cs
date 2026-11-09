@@ -81,11 +81,21 @@ async Task Init()
 
 // Tops up the activity log's monthly partitions on every deploy. A skipped month does not fail
 // the deploy: its writes still land in the default partition, and the rows there must be moved
-// out by hand before the partition can be created.
+// out by hand before the partition can be created. Nor does a lock timeout: the buffer runs
+// months ahead, so the next deploy can just try again.
 async Task EnsureActivityLogPartitions(AppDbContext dbContext, CancellationToken cancellationToken)
 {
     var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-    var result = await Altinn.AccessMgmt.PersistenceEF.Data.ActivityLogPartitionMaintenance.EnsureMonthPartitions(dbContext, cancellationToken: cancellationToken);
+    Altinn.AccessMgmt.PersistenceEF.Data.ActivityLogPartitionResult result;
+    try
+    {
+        result = await Altinn.AccessMgmt.PersistenceEF.Data.ActivityLogPartitionMaintenance.EnsureMonthPartitions(dbContext, cancellationToken: cancellationToken);
+    }
+    catch (Npgsql.PostgresException ex) when (ex.SqlState == Npgsql.PostgresErrorCodes.LockNotAvailable)
+    {
+        logger.LogWarning(ex, "Activity log partition maintenance gave up waiting for a lock on dbo.activitylog; the next deploy tries again.");
+        return;
+    }
 
     if (result.Skipped > 0)
     {
