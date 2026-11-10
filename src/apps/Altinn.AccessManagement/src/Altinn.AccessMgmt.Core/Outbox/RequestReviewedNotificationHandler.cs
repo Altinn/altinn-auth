@@ -24,6 +24,7 @@ public class RequestReviewedNotificationHandler(
     IFeatureManager featureManager,
     IEntityService entityService) : IOutboxHandler
 {
+    /// <inheritdoc />
     public async Task<OutboxStatus> Handle(OutboxMessage message, CancellationToken cancellationToken)
     {
         if (await featureManager.IsDisabledAsync(AccessMgmtFeatureFlags.OutboxRequestReviewedNotify, cancellationToken))
@@ -82,6 +83,16 @@ public class RequestReviewedNotificationHandler(
         return OutboxStatus.Completed;
     }
 
+    /// <summary>
+    /// Reads the outbox message and looks up the recipient, the reviewer and the names of the reviewed items.
+    /// </summary>
+    /// <param name="message">The outbox message to read.</param>
+    /// <param name="cancellationToken">A token to cancel the database lookups.</param>
+    /// <returns>
+    /// The recipient and reviewer entities, the reviewed items with packages listed before resources,
+    /// and an idempotency id for the notification order.
+    /// </returns>
+    /// <exception cref="InvalidOperationException">The message is empty, or the recipient or reviewer does not exist.</exception>
     private async Task<(
         Entity Recipient,
         Entity Reviewer,
@@ -120,6 +131,7 @@ public class RequestReviewedNotificationHandler(
             $"auth_resource_request_review_{entityRecipient.Id}_{entityReviewer.Id}_{message.CreatedAt.Ticks}"
         );
 
+        // Looks up the reviewed resources and pairs each with the outcome stored in the message.
         async Task<IEnumerable<ReviewedItem>> GetResources(RequestReviewNotificationMessage content, CancellationToken cancellationToken)
         {
             if (content.Resources is { } && content.Resources.Any())
@@ -139,6 +151,7 @@ public class RequestReviewedNotificationHandler(
             return [];
         }
 
+        // Looks up the reviewed packages and pairs each with the outcome stored in the message.
         async Task<IEnumerable<ReviewedItem>> GetPackages(RequestReviewNotificationMessage content, CancellationToken cancellationToken)
         {
             if (content.Packages is { } && content.Packages.Any())
@@ -159,6 +172,13 @@ public class RequestReviewedNotificationHandler(
         }
     }
 
+    /// <summary>
+    /// Creates the email recipient for the notification order, as either a person or an organisation.
+    /// </summary>
+    /// <param name="recipient">The person or organisation that receives the notification.</param>
+    /// <param name="emailBody">The HTML body built by <see cref="BuildEmailBody"/>.</param>
+    /// <returns>The recipient, with the subject and body of the email.</returns>
+    /// <exception cref="InvalidOperationException">The recipient is neither a person nor an organisation.</exception>
     private static NotificationRecipientExt CreateRecipient(Entity recipient, string emailBody)
     {
         ArgumentNullException.ThrowIfNull(recipient);
@@ -228,6 +248,7 @@ public class RequestReviewedNotificationHandler(
         emailContent.AppendLine(@"<em>Denne meldingen er automatisk generert. Svar til denne adressen vil ikke bli behandlet.</em>");
         return emailContent.ToString();
 
+        // Writes the opening line. An organisation reviewer is named with its org number.
         static void AddEmailIngress(StringBuilder emailContent, Entity reviewer)
         {
             if (reviewer.TypeId == EntityTypeConstants.Organization)
@@ -249,6 +270,7 @@ public class RequestReviewedNotificationHandler(
             }
         }
 
+        // Writes one heading and its items with their outcome. A type with no items gets no heading.
         static void AddSection(StringBuilder emailContent, string heading, IEnumerable<ReviewedItem> items)
         {
             if (!items.Any())

@@ -772,6 +772,7 @@ public class RequestService(
             );
         }
 
+        // Queues the reviewed notification, with the outcome of this review.
         async Task UpsertReviewedOutboxMessage(RequestAssignmentPackage request, CancellationToken ct)
         {
             await RequestReviewedNotification.Upsert(
@@ -876,6 +877,7 @@ public class RequestService(
             );
         }
 
+        // Queues the reviewed notification, with the outcome of this review.
         async Task UpsertReviewedOutboxMessage(RequestAssignmentResource request, CancellationToken ct)
         {
             await RequestReviewedNotification.Upsert(

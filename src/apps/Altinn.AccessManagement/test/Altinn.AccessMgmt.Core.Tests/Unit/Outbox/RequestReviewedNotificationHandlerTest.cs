@@ -192,6 +192,9 @@ public class RequestReviewedNotificationHandlerTest
 
     private static string Normalize(string text) => text.ReplaceLineEndings("\n");
 
+    /// <summary>
+    /// Counts the non-overlapping occurrences of <paramref name="value"/> in <paramref name="text"/>, case-sensitively.
+    /// </summary>
     private static int CountOccurrences(string text, string value)
     {
         var count = 0;
