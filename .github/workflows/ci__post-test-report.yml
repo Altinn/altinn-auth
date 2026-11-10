@@ -36,9 +36,13 @@ jobs:
         if: failure()
         env:
           GH_TOKEN: ${{ github.token }}
-          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
+          # The commit the reporter created its check runs on: the head of the PR whose branch matches the run, else
+          # the first PR's head, else the run's head_sha (getCheckRunContext in v3.2.0).
+          HEAD_SHA=$(jq -r '.workflow_run as $r
+            | ([$r.pull_requests[]? | select(.head.ref == $r.head_branch) | .head.sha][0])
+              // $r.pull_requests[0].head.sha // $r.head_sha' "$GITHUB_EVENT_PATH")
           gh api "repos/$GITHUB_REPOSITORY/commits/$HEAD_SHA/check-runs?status=in_progress&per_page=100" --paginate \
             --jq '.check_runs[] | select(.app.slug == "github-actions" and (.name | endswith(": Tests"))) | .id' |
           while read -r id; do
