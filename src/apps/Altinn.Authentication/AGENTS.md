@@ -50,6 +50,7 @@ dotnet build src/apps/Altinn.Authentication/src/Altinn.Platform.Authentication/A
 
 - Build Register contract types (`Altinn.Register.Contracts`) via JSON deserialization in tests. A `PartyUser` with `userId` set **must** also set `userIds` (e.g. `"userIds": [ <id> ]`) or its constructor throws at runtime.
 - Mock outbound clients with a mocked `HttpMessageHandler` (see `AccessManagementClientTests`); unit-test pure logic directly (see `AuthenticationHelperTests`).
+- **Every `WebApplicationTests` test builds its own host** through `WebApplicationFixture.CreateServer`, and these hosts live until the fixture is disposed. The fixture's factory sets `DOTNET_USE_POLLING_FILE_WATCHER` in its static constructor so that the hosts don't watch their config files. Without it, Linux runs out of inotify instances (128 per user on `ubuntu-26.04` runners) and the remaining test classes fail in `InitializeAsync` ([#4935](https://github.com/Altinn/altinn-auth/issues/4935)). Keep it, and build new hosts through that factory.
 
 ## Known tech debt
 
