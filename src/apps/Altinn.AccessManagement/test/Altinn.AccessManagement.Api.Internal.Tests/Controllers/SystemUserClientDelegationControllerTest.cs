@@ -226,7 +226,7 @@ public class SystemUserClientDelegationControllerTest
 
         public ApiFixture Fixture { get; }
 
-        private async Task<HttpResponseMessage> Post(Guid clientId, Guid agentId, string roleIdentifier, string packageUrn, string agentRole = null)
+        private async Task<HttpResponseMessage> Post(Guid clientId, Guid agentId, string roleIdentifier, string packageUrn, string agentRole = null, Action<CreateSystemDelegationRequestDto> change = null)
         {
             var client = Fixture.Server.CreateClient();
             var token = TestTokenGenerator.CreateToken(new ClaimsIdentity("mock"), claims =>
@@ -244,6 +244,7 @@ public class SystemUserClientDelegationControllerTest
                 AgentRole = agentRole ?? RoleConstants.Agent.Entity.Code,
                 RolePackages = [new() { RoleIdentifier = roleIdentifier, PackageUrn = packageUrn }],
             };
+            change?.Invoke(request);
 
             return await client.PostAsJsonAsync($"{Route}?party={TestEntities.OrganizationVerdiqAS.Id}", request, TestContext.Current.CancellationToken);
         }
@@ -293,6 +294,30 @@ public class SystemUserClientDelegationControllerTest
             var response = await Post(TestEntities.OrganizationOkernBorettslag.Id, TestEntities.SystemUserClient.Id, null, PackageConstants.AccountantSalary.Entity.Urn);
 
             Assert.Equal([Altinn.AccessManagement.Core.Errors.ValidationErrors.Required.ErrorCode.ToString()], await ValidationErrorCodes(response));
+        }
+
+        [Fact]
+        public async Task PostClientDelegation_NullRolePackages_Returns400Required()
+        {
+            var response = await Post(TestEntities.OrganizationOkernBorettslag.Id, TestEntities.SystemUserClient.Id, RoleConstants.Accountant.Entity.Code, PackageConstants.AccountantSalary.Entity.Urn, change: r => r.RolePackages = null);
+
+            Assert.Equal([Altinn.AccessManagement.Core.Errors.ValidationErrors.Required.ErrorCode.ToString()], await ValidationErrorCodes(response));
+        }
+
+        [Fact]
+        public async Task PostClientDelegation_NullPackageUrn_Returns400Required()
+        {
+            var response = await Post(TestEntities.OrganizationOkernBorettslag.Id, TestEntities.SystemUserClient.Id, RoleConstants.Accountant.Entity.Code, null);
+
+            Assert.Equal([Altinn.AccessManagement.Core.Errors.ValidationErrors.Required.ErrorCode.ToString()], await ValidationErrorCodes(response));
+        }
+
+        [Fact]
+        public async Task PostClientDelegation_UnknownRoleIdentifier_Returns400RoleNotExists()
+        {
+            var response = await Post(TestEntities.OrganizationOkernBorettslag.Id, TestEntities.SystemUserClient.Id, "xyz12345", PackageConstants.AccountantSalary.Entity.Urn);
+
+            Assert.Equal(["AM.VLD-00007"], await ValidationErrorCodes(response));
         }
 
         [Fact]

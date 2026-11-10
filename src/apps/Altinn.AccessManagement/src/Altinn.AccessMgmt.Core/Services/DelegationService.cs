@@ -135,18 +135,33 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
             errors.Add(ContractErrors.InvalidRole, "/agentRole", [new($"{request.AgentRole}", "role cannot be assigned to the agent.")]);
         }
 
-        var clientAssignments = new Dictionary<string, (Assignment Assignment, IEnumerable<AssignmentOrRolePackageAccess> Packages)>();
-        var packagesToDelegate = new List<(Assignment ClientAssignment, PackageDto Package, AssignmentOrRolePackageAccess ClientPackage)>();
-        for (var i = 0; i < request.RolePackages.Count; i++)
+        // The contracts project has no nullable annotations, so explicit nulls pass model binding and are checked here.
+        // RolePackages defaults to [], but an explicit null overrides the default.
+        var rolePackages = request.RolePackages ?? [];
+        if (rolePackages.Count == 0)
         {
-            var rolePackage = request.RolePackages[i];
-            var package = await packageService.GetPackageByUrnValue(rolePackage.PackageUrn, cancellationToken);
-            if (package is null)
+            errors.Add(ContractErrors.Required, "/rolePackages");
+        }
+
+        var clientAssignments = new Dictionary<string, (RoleDto Role, Assignment Assignment, IEnumerable<AssignmentOrRolePackageAccess> Packages)>();
+        var packagesToDelegate = new List<(Assignment ClientAssignment, PackageDto Package, AssignmentOrRolePackageAccess ClientPackage)>();
+        for (var i = 0; i < rolePackages.Count; i++)
+        {
+            var rolePackage = rolePackages[i];
+            PackageDto package = null;
+            if (string.IsNullOrEmpty(rolePackage.PackageUrn))
             {
-                errors.Add(ContractErrors.InvalidPackage, $"/rolePackages[{i}]/packageUrn", [new($"{rolePackage.PackageUrn}", "Package does not exist.")]);
+                errors.Add(ContractErrors.Required, $"/rolePackages[{i}]/packageUrn");
+            }
+            else
+            {
+                package = await packageService.GetPackageByUrnValue(rolePackage.PackageUrn, cancellationToken);
+                if (package is null)
+                {
+                    errors.Add(ContractErrors.InvalidPackage, $"/rolePackages[{i}]/packageUrn", [new($"{rolePackage.PackageUrn}", "Package does not exist.")]);
+                }
             }
 
-            // RoleIdentifier is not nullable-annotated, so an explicit null passes model binding.
             if (string.IsNullOrEmpty(rolePackage.RoleIdentifier))
             {
                 errors.Add(ContractErrors.Required, $"/rolePackages[{i}]/roleIdentifier");
@@ -163,8 +178,14 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
                 var clientRole = (await roleService.GetByCode(rolePackage.RoleIdentifier, cancellationToken)).FirstOrDefault();
                 var assignment = clientRole is null ? null : await assignmentService.GetAssignment(client.Id, facilitator.Id, clientRole.Id, cancellationToken);
                 var packages = assignment is null ? [] : await assignmentService.GetPackagesForAssignment(assignment.Id, cancellationToken);
-                clientAssignment = (assignment, packages);
+                clientAssignment = (clientRole, assignment, packages);
                 clientAssignments.Add(rolePackage.RoleIdentifier, clientAssignment);
+            }
+
+            if (clientAssignment.Role is null)
+            {
+                errors.Add(ContractErrors.RoleNotExists, $"/rolePackages[{i}]/roleIdentifier", [new($"{rolePackage.RoleIdentifier}", "role does not exist.")]);
+                continue;
             }
 
             if (clientAssignment.Assignment is null)
