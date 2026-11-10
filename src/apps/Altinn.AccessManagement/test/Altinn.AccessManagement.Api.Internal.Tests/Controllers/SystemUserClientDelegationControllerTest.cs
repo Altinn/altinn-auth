@@ -306,18 +306,25 @@ public class SystemUserClientDelegationControllerTest
         }
 
         [Fact]
-        public async Task PostClientDelegation_AgentRoleTheServiceCannotAssign_LeavesNoAgentBehind()
+        public async Task PostClientDelegation_AgentRoleTheServiceCannotAssign_Returns400InvalidRoleAndLeavesNoAgentBehind()
         {
             // daglig-leder comes from the Central Coordinating Register, so the service may not create that assignment.
-            // It creates the agent first, and fails only at the agent assignment.
             var agentId = Guid.CreateVersion7();
 
             var response = await Post(TestEntities.OrganizationOkernBorettslag.Id, agentId, RoleConstants.Accountant.Entity.Code, PackageConstants.AccountantSalary.Entity.Urn, RoleConstants.ManagingDirector.Entity.Code);
 
-            Assert.False(response.IsSuccessStatusCode);
+            Assert.Equal(["AM.VLD-00029"], await ValidationErrorCodes(response));
             var agentExists = true;
             await Fixture.QueryDb(async db => agentExists = await db.Entities.AsNoTracking().AnyAsync(e => e.Id == agentId, TestContext.Current.CancellationToken));
             Assert.False(agentExists);
+        }
+
+        [Fact]
+        public async Task PostClientDelegation_UnknownAgentRole_Returns400RoleNotExists()
+        {
+            var response = await Post(TestEntities.OrganizationOkernBorettslag.Id, TestEntities.SystemUserClient.Id, RoleConstants.Accountant.Entity.Code, PackageConstants.AccountantSalary.Entity.Urn, "xyz12345");
+
+            Assert.Equal(["AM.VLD-00007"], await ValidationErrorCodes(response));
         }
     }
 

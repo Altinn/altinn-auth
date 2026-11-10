@@ -106,9 +106,6 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
         // Find Facilitator
         var facilitator = await entityService.GetEntity(facilitatorPartyId, cancellationToken) ?? throw new KeyNotFoundException($"Party not found '{facilitatorPartyId}' for facilitator");
 
-        // Find Agent Role
-        var agentRole = await db.Roles.AsNoTracking().FirstOrDefaultAsync(t => t.Code == request.AgentRole, cancellationToken) ?? throw new KeyNotFoundException($"Role not found '{request.AgentRole}'");
-
         // Validate the whole request before writing anything, so an invalid request leaves no agent, assignment or delegation behind.
         // The errors carry ids and codes only, not party names.
         ValidationErrorBuilder errors = default;
@@ -123,6 +120,19 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
         if (existingAgent is not null && (existingAgent.TypeId != EntityTypeConstants.SystemUser.Id || existingAgent.VariantId != EntityVariantConstants.AgentSystem.Id))
         {
             errors.Add(ContractErrors.DisallowedEntityType, "/agentId", [new($"{request.AgentId}", "entity is not an agent system user.")]);
+        }
+
+        // Only Altinn 3 roles can be assigned to the agent here; GetOrCreateAssignment throws for any other role
+        // unless the assignment already exists.
+        var agentRole = await db.Roles.AsNoTracking().FirstOrDefaultAsync(t => t.Code == request.AgentRole, cancellationToken);
+        if (agentRole is null)
+        {
+            errors.Add(ContractErrors.RoleNotExists, "/agentRole", [new($"{request.AgentRole}", "role does not exist.")]);
+        }
+        else if (agentRole.ProviderId != ProviderConstants.Altinn3.Id
+            && (existingAgent is null || await assignmentService.GetAssignment(facilitator.Id, existingAgent.Id, agentRole.Id, cancellationToken) is null))
+        {
+            errors.Add(ContractErrors.InvalidRole, "/agentRole", [new($"{request.AgentRole}", "role cannot be assigned to the agent.")]);
         }
 
         var clientAssignments = new Dictionary<string, (Assignment Assignment, IEnumerable<AssignmentOrRolePackageAccess> Packages)>();
