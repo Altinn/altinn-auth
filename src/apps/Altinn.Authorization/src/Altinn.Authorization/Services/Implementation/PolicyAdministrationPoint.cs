@@ -15,16 +15,19 @@ namespace Altinn.Platform.Authorization.Services.Implementation
     {
         private readonly IPolicyRepository _policyRepository;
         private readonly HybridCache _cache;
+        private readonly ILogger<PolicyAdministrationPoint> _logger;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PolicyAdministrationPoint"/> class.
         /// </summary>
         /// <param name="policyRepository">The policy repository (blob storage)</param>
         /// <param name="cache">The cache <see cref="PolicyRetrievalPoint"/> serves policies from</param>
-        public PolicyAdministrationPoint(IPolicyRepository policyRepository, HybridCache cache)
+        /// <param name="logger">The logger</param>
+        public PolicyAdministrationPoint(IPolicyRepository policyRepository, HybridCache cache, ILogger<PolicyAdministrationPoint> logger)
         {
             _policyRepository = policyRepository;
             _cache = cache;
+            _logger = logger;
         }
 
         /// <inheritdoc/>
@@ -43,7 +46,16 @@ namespace Altinn.Platform.Authorization.Services.Implementation
             {
                 // PolicyRetrievalPoint may hold the previous policy for PolicyCacheTimeout minutes. Removing the entry
                 // clears this process, and the shared tier once one is configured; other pods keep their copy until it expires.
-                await _cache.RemoveAsync(PolicyRetrievalPoint.GetCacheKey(filePath));
+                // The policy is stored at this point, so a cache failure must not turn the result into an error.
+                // RemoveAsync can pass on errors from the distributed tier.
+                try
+                {
+                    await _cache.RemoveAsync(PolicyRetrievalPoint.GetCacheKey(filePath));
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Could not remove the cached policy for {Org}/{App} after storing a new one", org, app);
+                }
             }
 
             return stored;

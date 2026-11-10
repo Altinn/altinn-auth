@@ -17,12 +17,9 @@ namespace Altinn.Platform.Authorization.Services.Implementation
     {
         private static readonly string[] CacheTags = ["policy"];
 
-        // The cache is read and written in two steps instead of through the factory of GetOrCreateAsync: the factory
-        // cannot decline to cache its result, and an empty or unparseable document must not be cached.
-        private static readonly HybridCacheEntryOptions ReadOptions = new() { Flags = HybridCacheEntryFlags.DisableUnderlyingData };
-
         private readonly IPolicyRepository _repository;
         private readonly HybridCache _cache;
+        private readonly HybridCacheEntryOptions _readOptions;
         private readonly HybridCacheEntryOptions _writeOptions;
         private readonly IResourceRegistry _resourceRegistry;
 
@@ -37,7 +34,13 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         {
             _repository = policyRepository;
             _cache = cache;
-            _writeOptions = new HybridCacheEntryOptions { Expiration = TimeSpan.FromMinutes(settings.Value.PolicyCacheTimeout) };
+            TimeSpan expiration = TimeSpan.FromMinutes(settings.Value.PolicyCacheTimeout);
+
+            // The cache is read and written in two steps instead of through the factory of GetOrCreateAsync: the factory
+            // cannot decline to cache its result, and an empty or unparseable document must not be cached. The read
+            // options carry the expiration too, since a hit from the distributed tier takes its local lifetime from them.
+            _readOptions = new HybridCacheEntryOptions { Expiration = expiration, Flags = HybridCacheEntryFlags.DisableUnderlyingData };
+            _writeOptions = new HybridCacheEntryOptions { Expiration = expiration };
             _resourceRegistry = resourceRegistry;
         }
 
@@ -76,7 +79,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         private async Task<XacmlPolicy> GetPolicyInternalAsync(string policyPath, string version = "", CancellationToken cancellationToken = default)
         {
             string cacheKey = GetCacheKey(policyPath, version);
-            byte[] cachedDocument = await _cache.GetOrCreateAsync<byte[]>(cacheKey, static _ => default, ReadOptions, cancellationToken: cancellationToken);
+            byte[] cachedDocument = await _cache.GetOrCreateAsync<byte[]>(cacheKey, static _ => default, _readOptions, cancellationToken: cancellationToken);
             if (cachedDocument != null)
             {
                 return ParsePolicyDocument(cachedDocument);
