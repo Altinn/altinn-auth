@@ -163,7 +163,7 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
                         !filter.IncludeSubConnections || !delayFromFilter)
                 : _baseQueryBuilder.ToOthers(db, filter);
 
-            var result = baseQuery.Select(ToDtoEmpty).ToList();
+            var result = (await baseQuery.ToListAsync(ct)).ConvertAll(ToDtoEmpty);
             if (filter.IncludePackages || filter.EnrichPackageResources)
             {
                 try
