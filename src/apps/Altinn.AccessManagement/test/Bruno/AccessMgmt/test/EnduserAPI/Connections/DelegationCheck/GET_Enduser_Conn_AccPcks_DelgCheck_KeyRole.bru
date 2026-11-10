@@ -51,7 +51,8 @@ tests {
     assert.isNotEmpty(data, "Expected data in response body to NOT be empty array");
     
     // 146 since konkursbo-tilgangsstyrer became a role instead of a package (#4418).
-    const expectedNumPackages = 146;
+    // 147 with the test-only package skattegrunnlag-utvidet-tilgang, which production does not have.
+    const expectedNumPackages = 147;
     assert.lengthOf(data, expectedNumPackages, `Expected response data to contain all ${expectedNumPackages} available packages`);
     
   });
