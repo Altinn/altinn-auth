@@ -156,11 +156,12 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
             }
 
             var baseQuery = direction == ConnectionQueryDirection.FromOthers
-                ? _baseQueryBuilder.FromOthers(
+                ? await _baseQueryBuilder.FromOthersAsync(
                         db,
                         filter,
                         filter.IncludeSubConnections && !delayChildNesting,
-                        !filter.IncludeSubConnections || !delayFromFilter)
+                        !filter.IncludeSubConnections || !delayFromFilter,
+                        ct)
                 : _baseQueryBuilder.ToOthers(db, filter);
 
             var result = (await baseQuery.ToListAsync(ct)).ConvertAll(ToDtoEmpty);
