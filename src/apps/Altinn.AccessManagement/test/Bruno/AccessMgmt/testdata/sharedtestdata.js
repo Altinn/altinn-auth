@@ -49,5 +49,6 @@ module.exports =
             "orgno": "974761076"
         }
     },
-    "expectedDaglAccessPackageCount": 133
+    // Includes the test-only package skattegrunnlag-utvidet-tilgang, which production does not have
+    "expectedDaglAccessPackageCount": 134
 };
