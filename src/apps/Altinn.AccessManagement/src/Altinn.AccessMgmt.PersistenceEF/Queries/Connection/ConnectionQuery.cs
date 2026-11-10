@@ -164,7 +164,12 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
                         ct)
                 : _baseQueryBuilder.ToOthers(db, filter);
 
-            var result = (await baseQuery.ToListAsync(ct)).ConvertAll(ToDtoEmpty);
+            var result = new List<ConnectionQueryExtendedRecord>();
+            await foreach (var record in baseQuery.AsAsyncEnumerable().WithCancellation(ct))
+            {
+                result.Add(ToDtoEmpty(record));
+            }
+
             if (filter.IncludePackages || filter.EnrichPackageResources)
             {
                 try
