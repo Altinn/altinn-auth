@@ -172,26 +172,19 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
 
             if (filter.IncludePackages || filter.EnrichPackageResources)
             {
-                try
+                var packageLoader = new ConnectionPackageLoader(db);
+                var pkgs = await packageLoader.LoadPackagesByKeyAsync(result, filter, ct);
+                if (filter.EnrichPackageResources)
                 {
-                    var packageLoader = new ConnectionPackageLoader(db);
-                    var pkgs = await packageLoader.LoadPackagesByKeyAsync(result, filter, ct);
-                    if (filter.EnrichPackageResources)
-                    {
-                        await packageLoader.EnrichPackageResourcesAsync(pkgs, filter, ct);
-                    }
-
-                    result = Attach(result, pkgs, p => p.Id, (dto, list) => dto.Packages = list);
-
-                    // Remove connections where no packages were found if filtering on specific packages
-                    if (filter.PackageIds != null)
-                    {
-                        result.RemoveAll(t => t.Packages.Count == 0);
-                    }
+                    await packageLoader.EnrichPackageResourcesAsync(pkgs, filter, ct);
                 }
-                catch (Exception ex) when (ex is not OperationCanceledException)
+
+                result = Attach(result, pkgs, p => p.Id, (dto, list) => dto.Packages = list);
+
+                // Remove connections where no packages were found if filtering on specific packages
+                if (filter.PackageIds != null)
                 {
-                    throw new InvalidOperationException("Failed to include packages", ex);
+                    result.RemoveAll(t => t.Packages.Count == 0);
                 }
             }
 
@@ -200,45 +193,31 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
                 var resourceLoader = new ConnectionResourceLoader(db);
                 var rightholderAssignments = ConnectionResourceLoader.GetRightholderAssignments(result, filter);
 
-                try
+                if (filter.IncludeResources)
                 {
-                    if (filter.IncludeResources)
+                    var rightholderAssignmentIds = rightholderAssignments.Select(a => (Guid)a.AssignmentId).Distinct().ToHashSet();
+                    if (rightholderAssignmentIds.Count > 0)
                     {
-                        var rightholderAssignmentIds = rightholderAssignments.Select(a => (Guid)a.AssignmentId).Distinct().ToHashSet();
-                        if (rightholderAssignmentIds.Count > 0)
-                        {
-                            result = await resourceLoader.LoadResourcesByKeyAsync(result, rightholderAssignmentIds, filter, ct);
-                        }
+                        result = await resourceLoader.LoadResourcesByKeyAsync(result, rightholderAssignmentIds, filter, ct);
+                    }
 
-                        if (filter.IncludeDelegation && filter.IncludeDelegationResources)
+                    if (filter.IncludeDelegation && filter.IncludeDelegationResources)
+                    {
+                        var delegationIds = result.Where(r => r.DelegationId.HasValue).Select(r => (Guid)r.DelegationId!).Distinct().ToHashSet();
+                        if (delegationIds.Count > 0)
                         {
-                            var delegationIds = result.Where(r => r.DelegationId.HasValue).Select(r => (Guid)r.DelegationId!).Distinct().ToHashSet();
-                            if (delegationIds.Count > 0)
-                            {
-                                result = await resourceLoader.LoadDelegationResourcesByKeyAsync(result, delegationIds, filter, ct);
-                            }
+                            result = await resourceLoader.LoadDelegationResourcesByKeyAsync(result, delegationIds, filter, ct);
                         }
                     }
                 }
-                catch (Exception ex) when (ex is not OperationCanceledException)
-                {
-                    throw new InvalidOperationException("Failed to include resources", ex);
-                }
 
-                try
+                if (filter.IncludeInstances)
                 {
-                    if (filter.IncludeInstances)
+                    var rightholderAssignmentIds = rightholderAssignments.Where(a => a.Reason != ConnectionReason.Hierarchy && !a.IsMainUnitAccess).Select(a => (Guid)a.AssignmentId).Distinct().ToHashSet();
+                    if (rightholderAssignmentIds.Count > 0)
                     {
-                        var rightholderAssignmentIds = rightholderAssignments.Where(a => a.Reason != ConnectionReason.Hierarchy && !a.IsMainUnitAccess).Select(a => (Guid)a.AssignmentId).Distinct().ToHashSet();
-                        if (rightholderAssignmentIds.Count > 0)
-                        {
-                            result = await resourceLoader.LoadInstancesByKeyAsync(result, rightholderAssignmentIds, filter, ct);
-                        }
+                        result = await resourceLoader.LoadInstancesByKeyAsync(result, rightholderAssignmentIds, filter, ct);
                     }
-                }
-                catch (Exception ex) when (ex is not OperationCanceledException)
-                {
-                    throw new InvalidOperationException("Failed to include instances", ex);
                 }
             }
 
@@ -257,6 +236,7 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {
+            // Cancellation is not a failure: let it through unwrapped so the caller can tell an abandoned request from a server error.
             throw new InvalidOperationException($"Failed to get connections with filter: {JsonSerializer.Serialize(filter)}", ex);
         }
     }
