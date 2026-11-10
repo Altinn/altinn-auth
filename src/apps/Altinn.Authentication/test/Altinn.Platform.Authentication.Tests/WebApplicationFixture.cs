@@ -53,6 +53,20 @@ public class WebApplicationFixture
 
     private class WebApplicationFactory : WebApplicationFactory<Program>
     {
+        /// <summary>
+        /// Makes every test host poll its configuration files instead of watching them.
+        /// </summary>
+        /// <remarks>
+        /// <see cref="CreateServer"/> builds a new host for each test, and these hosts stay alive
+        /// until the fixture is disposed. Each one would hold inotify instances for its
+        /// <c>reloadOnChange</c> config files, and <c>ubuntu-26.04</c> runners allow only 128 per
+        /// user (#4935). This must run before the first host is built.
+        /// </remarks>
+        static WebApplicationFactory()
+        {
+            Environment.SetEnvironmentVariable("DOTNET_USE_POLLING_FILE_WATCHER", "true");
+        }
+
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
             builder.ConfigureAppConfiguration(config =>
