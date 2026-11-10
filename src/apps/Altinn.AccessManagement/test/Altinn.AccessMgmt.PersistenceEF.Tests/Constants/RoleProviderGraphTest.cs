@@ -23,10 +23,10 @@ public class RoleProviderGraphTest
             .Select(role => $"{role.Entity.Code} -> ProviderId {role.Entity.ProviderId}")
             .ToList();
 
-        Assert.True(
-            unresolved.Count == 0,
-            $"{unresolved.Count} role(s) reference a provider that is not in ProviderConstants:"
-            + $"{Environment.NewLine}{string.Join(Environment.NewLine, unresolved)}");
+        var message = $"{unresolved.Count} role(s) reference a provider that is not in ProviderConstants:"
+            + $"{Environment.NewLine}{string.Join(Environment.NewLine, unresolved)}";
+
+        Assert.True(unresolved.Count == 0, message);
     }
 
     [Fact]
@@ -37,9 +37,9 @@ public class RoleProviderGraphTest
             .Select(provider => $"{provider.Entity.Code} -> TypeId {provider.Entity.TypeId}")
             .ToList();
 
-        Assert.True(
-            unresolved.Count == 0,
-            $"{unresolved.Count} provider(s) reference a type that is not in ProviderTypeConstants:"
-            + $"{Environment.NewLine}{string.Join(Environment.NewLine, unresolved)}");
+        var message = $"{unresolved.Count} provider(s) reference a type that is not in ProviderTypeConstants:"
+            + $"{Environment.NewLine}{string.Join(Environment.NewLine, unresolved)}";
+
+        Assert.True(unresolved.Count == 0, message);
     }
 }

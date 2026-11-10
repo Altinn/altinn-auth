@@ -84,7 +84,7 @@ public partial class ConnectionsControllerTest
             var result = JsonSerializer.Deserialize<PaginatedResult<RolePermissionDto>>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             Assert.NotNull(result);
 
-            var stale = Assert.Single(result.Items.Where(r => r.Role.Id == StaleRoleId));
+            var stale = Assert.Single(result.Items, r => r.Role.Id == StaleRoleId);
             Assert.Equal("Retired role", stale.Role.Name);
             Assert.Equal("retired-role", stale.Role.Code);
 
