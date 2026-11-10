@@ -183,7 +183,7 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
                         result.RemoveAll(t => t.Packages.Count == 0);
                     }
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (ex is not OperationCanceledException)
                 {
                     throw new InvalidOperationException("Failed to include packages", ex);
                 }
@@ -214,7 +214,7 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
                         }
                     }
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (ex is not OperationCanceledException)
                 {
                     throw new InvalidOperationException("Failed to include resources", ex);
                 }
@@ -230,7 +230,7 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
                         }
                     }
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (ex is not OperationCanceledException)
                 {
                     throw new InvalidOperationException("Failed to include instances", ex);
                 }
@@ -249,7 +249,7 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
 
             return result;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
             throw new InvalidOperationException($"Failed to get connections with filter: {JsonSerializer.Serialize(filter)}", ex);
         }
