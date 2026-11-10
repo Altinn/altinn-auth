@@ -11,7 +11,7 @@ public class ValidationComposerTest
     private static RuleExpression Pass() => () => null;
 
     private static RuleExpression Fail() => () =>
-        (ref ValidationErrorBuilder errors) =>
+        (ref ValidationProblemBuilder errors) =>
             errors.Add(ValidationErrors.InvalidPartyUrn, "QUERY/test");
 
     // ── ValidationComposer.Validate ──────────────────────────────────────────
