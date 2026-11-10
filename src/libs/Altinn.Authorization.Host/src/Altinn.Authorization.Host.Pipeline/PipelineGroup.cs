@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.Host.Pipeline;
+﻿namespace Altinn.Authorization.Host.Pipeline;
 
 /// <summary>
 /// Represents a group of related pipelines with shared configuration.

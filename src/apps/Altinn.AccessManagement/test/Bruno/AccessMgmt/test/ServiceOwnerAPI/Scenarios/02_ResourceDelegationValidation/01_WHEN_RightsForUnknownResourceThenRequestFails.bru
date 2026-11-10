@@ -1,0 +1,48 @@
+meta {
+  name: 01_WHEN_RightsForUnknownResourceThenRequestFails
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/connections/resources/rights?resource={{unknownResource}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  resource: {{unknownResource}}
+}
+
+docs {
+  WHEN the rights for a resource that does not exist are looked up the request fails
+  with 400 AM-00027, and the problem body names the resource.
+}
+
+script:pre-request {
+  const { td, loginAsServiceOwner, scopes, serviceOwners } = require("./test/ServiceOwnerAPI/Scenarios/helpers.js");
+  const data = td();
+
+  bru.setVar("grantorPid", data.resourceDelegation.grantor.pid);
+  bru.setVar("recipientPid", data.resourceDelegation.recipient.pid);
+  bru.setVar("resource", data.resourceDelegation.resource);
+  bru.setVar("unknownResource", data.resourceDelegation.unknownResource);
+
+  await loginAsServiceOwner(serviceOwners.digdir, scopes.resourceDelegationWrite);
+}
+
+tests {
+  const { td } = require("./test/ServiceOwnerAPI/Scenarios/helpers.js");
+
+  test("WHEN the rights for an unknown resource are looked up, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN the problem body carries AM-00027", function() {
+    const body = res.getBody();
+    expect(body.status).to.equal(400);
+    expect(body.code).to.equal("AM-00027");
+    expect(body.detail).to.equal("The resource is invalid");
+    expect(body.resource).to.equal(td().resourceDelegation.unknownResource);
+  });
+}

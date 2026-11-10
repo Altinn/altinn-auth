@@ -1,4 +1,4 @@
-namespace Altinn.AccessManagement.Core;
+﻿namespace Altinn.AccessManagement.Core;
 
 /// <summary>
 /// Represents a situation where a user has performed too many failed lookup requests.

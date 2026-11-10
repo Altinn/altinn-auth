@@ -1,4 +1,4 @@
-using Altinn.Platform.Storage.Interface.Models;
+﻿using Altinn.Platform.Storage.Interface.Models;
 
 namespace Altinn.Platform.Authorization.Repositories.Interface
 {

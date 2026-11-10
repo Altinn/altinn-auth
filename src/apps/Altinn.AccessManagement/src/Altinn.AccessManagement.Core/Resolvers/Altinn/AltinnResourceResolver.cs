@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.Core.Resolvers.Extensions;
+﻿using Altinn.AccessManagement.Core.Resolvers.Extensions;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 
 namespace Altinn.AccessManagement.Core.Resolvers;

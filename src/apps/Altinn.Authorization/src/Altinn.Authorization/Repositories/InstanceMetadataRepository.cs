@@ -1,4 +1,4 @@
-using System.Diagnostics.CodeAnalysis;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Exceptions;

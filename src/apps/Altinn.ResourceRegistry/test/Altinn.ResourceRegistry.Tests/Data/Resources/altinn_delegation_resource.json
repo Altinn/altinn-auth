@@ -1,0 +1,72 @@
+{
+  "identifier": "altinn_delegation_resource",
+  "version": "1",
+  "title": {
+    "en": "Text in english",
+    "nb": "ABCtest",
+    "nn": "tekst i nynorsk"
+  },
+  "description": {
+    "en": "ABCtest",
+    "nb": "ABCtest",
+    "nn": "ABCtest"
+  },
+  "rightDescription": {
+    "en": "ABCtest",
+    "nb": "ABCtest",
+    "nn": "ABCtest"
+  },
+  "homepage": "https://www.vg.no",
+  "status": "UnderDevelopment",
+  "spatial": [],
+  "contactPoints": [
+    {
+      "category": "ABCtest",
+      "email": "",
+      "telephone": "",
+      "contactPage": ""
+    }
+  ],
+  "produces": [],
+  "resourceReferences": [
+    {
+      "referenceSource": "Altinn2",
+      "reference": "3225",
+      "referenceType": "ServiceCode"
+    },
+    {
+      "referenceSource": "Altinn2",
+      "reference": "1596",
+      "referenceType": "ServiceEditionCode"
+    }
+  ],
+  "delegable": true,
+  "visible": true,
+  "hasCompetentAuthority": {
+    "name": {
+      "en": "Test Ministry",
+      "nb": "Testdepartementet",
+      "nn": "Testdepartementet"
+    },
+    "organization": "",
+    "orgcode": "ttd"
+  },
+  "keywords": [],
+  "accessListMode": "Disabled",
+  "selfIdentifiedUserEnabled": false,
+  "enterpriseUserEnabled": true,
+  "resourceType": "GenericAccessResource",
+  "availableForType": [
+    "LegalEntityEnterprise",
+    "Company",
+    "PrivatePerson",
+    "BankruptcyEstate",
+    "SelfRegisteredUser"
+  ],
+  "authorizationReference": [
+    {
+      "id": "urn:altinn:resource",
+      "value": "altinn_delegation_resource"
+    }
+  ]
+}

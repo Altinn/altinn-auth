@@ -1,0 +1,404 @@
+﻿using System;
+using System.Collections.Generic;
+using Altinn.Authentication.Core.Problems;
+using Altinn.Platform.Authentication.Core.Models;
+using Altinn.Platform.Authentication.Core.SystemRegister.Models;
+using Altinn.Platform.Authentication.Helpers;
+using Xunit;
+using static System.Net.WebRequestMethods;
+
+namespace Altinn.Platform.Authentication.Tests
+{
+    public class AuthenticationHelperTests
+    {
+        [Fact]
+        public void HasDuplicateRights_NoDuplicates_ReturnsFalse()
+        {
+            // Arrange
+            var rights = new List<Right>
+                {
+                    new Right
+                    {
+                        Action = "Read",
+                        Resource = new List<AttributePair>
+                        {
+                            new AttributePair { Id = "urn:altinn:resource", Value = "value1" }
+                        }
+                    },
+                    new Right
+                    {
+                        Action = "Write",
+                        Resource = new List<AttributePair>
+                        {
+                            new AttributePair { Id = "urn:altinn:resource", Value = "value2" }
+                        }
+                    }
+                };
+
+            // Act
+            bool result = AuthenticationHelper.HasDuplicateRights(rights);
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void HasDuplicateRights_SameRights_DifferentActions_ReturnsFalse()
+        {
+            // Arrange
+            var rights = new List<Right>
+                {
+                    new Right
+                    {
+                        Action = "Read",
+                        Resource = new List<AttributePair>
+                        {
+                            new AttributePair { Id = "urn:altinn:resource", Value = "value1" }
+                        }
+                    },
+                    new Right
+                    {
+                        Action = "Write",
+                        Resource = new List<AttributePair>
+                        {
+                            new AttributePair { Id = "urn:altinn:resource", Value = "value1" }
+                        }
+                    }
+                };
+
+            // Act
+            bool result = AuthenticationHelper.HasDuplicateRights(rights);
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void HasDuplicateRights_WithDuplicates_ReturnsTrue()
+        {
+            // Arrange
+            var rights = new List<Right>
+                {
+                    new Right
+                    {
+                        Action = "Read",
+                        Resource = new List<AttributePair>
+                        {
+                            new AttributePair { Id = "urn:altinn:resource", Value = "value1" }
+                        }
+                    },
+                    new Right
+                    {
+                        Action = "Read",
+                        Resource = new List<AttributePair>
+                        {
+                            new AttributePair { Id = "urn:altinn:resource", Value = "value1" }
+                        }
+                    }
+                };
+
+            // Act
+            bool result = AuthenticationHelper.HasDuplicateRights(rights);
+
+            // Assert
+            Assert.True(result);
+        }
+
+        [Fact]
+        public void HasDuplicateRights_EmptyList_ReturnsFalse()
+        {
+            // Arrange
+            var rights = new List<Right>();
+
+            // Act
+            bool result = AuthenticationHelper.HasDuplicateRights(rights);
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void HasDuplicateRights_SingleRight_ReturnsFalse()
+        {
+            // Arrange
+            var rights = new List<Right>
+                {
+                    new Right
+                    {
+                        Action = "Read",
+                        Resource = new List<AttributePair>
+                        {
+                            new AttributePair { Id = "urn:altinn:resource", Value = "value1" }
+                        }
+                    }
+                };
+
+            // Act
+            bool result = AuthenticationHelper.HasDuplicateRights(rights);
+
+            // Assert
+            Assert.False(result);
+        }
+
+        [Fact]
+        public void ValidateRedirectUrl_ValidUrlWithoutQuery_ReturnsTrue()
+        {
+            // Arrange
+            List<Uri> allowedRedirectUrls = new List<Uri>
+                    {
+                        new Uri("https://example.com/callback")
+                    };
+            string redirectURL = "https://example.com/callback";
+
+            // Act
+            var result = AuthenticationHelper.ValidateRedirectUrl(redirectURL, allowedRedirectUrls);
+
+            // Assert
+            Assert.True(result.Value);
+        }
+
+        [Fact]
+        public void ValidateRedirectUrl_ValidUrlWithQuery_ReturnsTrue()
+        {
+            // Arrange
+            List<Uri> allowedRedirectUrls = new List<Uri>
+                    {
+                        new Uri("https://example.com/callback")
+                    };
+            string redirectURL = "https://example.com/callback?param=value";
+
+            // Act
+            var result = AuthenticationHelper.ValidateRedirectUrl(redirectURL, allowedRedirectUrls);
+
+            // Assert
+            Assert.True(result.Value);
+        }
+
+        [Fact]
+        public void ValidateAbsoluteRedirectUrl_ValidUrlWithQueryInRegister_ReturnsTrue()
+        {
+            // Arrange
+            List<Uri> allowedRedirectUrls = new List<Uri>
+                    {
+                        new Uri("https://example.com/callback"),
+                        new Uri("https://www.cloud-booking.net/_/misc/integration.htm?integration=Altinn3&action=authCallback"),
+                        new Uri("https://test.cloud-booking.net/_/misc/integration.htm?integration=Altinn3&action=authCallback")
+                    };
+            string redirectURL = "https://test.cloud-booking.net/_/misc/integration.htm?integration=Altinn3&action=authCallback";
+
+            // Act
+            var result = AuthenticationHelper.ValidateRedirectUrl(redirectURL, allowedRedirectUrls);
+
+            // Assert
+            Assert.True(result.Value);
+        }
+
+        [Fact]
+        public void ValidateRedirectUrl_ValidUrlWithQueryInRegister_ReturnsTrue()
+        {
+            // Arrange
+            List<Uri> allowedRedirectUrls = new List<Uri>
+                    {
+                        new Uri("https://example.com/callback"),
+                        new Uri("https://www.cloud-booking.net/_/misc/integration.htm?integration=Altinn3&action=authCallback"),
+                        new Uri("https://test.cloud-booking.net/_/misc/integration.htm?integration=Altinn3&action=authCallback")
+                    };
+            string redirectURL = "https://test.cloud-booking.net/_/misc/integration.htm";
+
+            // Act
+            var result = AuthenticationHelper.ValidateRedirectUrl(redirectURL, allowedRedirectUrls);
+
+            // Assert
+            Assert.True(result.Value);
+        }
+
+        [Fact]
+        public void ValidateRedirectUrlWithDiffQuery_ValidUrlWithQueryInRegister_ReturnsTrue()
+        {
+            // Arrange
+            List<Uri> allowedRedirectUrls = new List<Uri>
+                    {
+                        new Uri("https://example.com/callback"),
+                        new Uri("https://www.cloud-booking.net/_/misc/integration.htm?integration=Altinn3&action=authCallback"),
+                        new Uri("https://test.cloud-booking.net/_/misc/integration.htm?integration=Altinn3&action=authCallback")
+                    };
+            string redirectURL = "https://test.cloud-booking.net/_/misc/integration.htm?test=anyqueryparam";
+
+            // Act
+            var result = AuthenticationHelper.ValidateRedirectUrl(redirectURL, allowedRedirectUrls);
+
+            // Assert
+            Assert.True(result.Value);
+        }
+
+        [Fact]
+        public void ValidateRedirectUrlWithDiffPath_ValidUrlWithQueryInRegister_ReturnsFalse()
+        {
+            // Arrange
+            List<Uri> allowedRedirectUrls = new List<Uri>
+                    {
+                        new Uri("https://example.com/callback"),
+                        new Uri("https://www.cloud-booking.net/_/misc/integration.htm?integration=Altinn3&action=authCallback"),
+                        new Uri("https://test.cloud-booking.net/_/misc/integration.htm?integration=Altinn3&action=authCallback")
+                    };
+            string redirectURL = "https://test.cloud-booking.net/_/misc/ichangedthepath.htm?test=anyqueryparam";
+
+            // Act
+            var result = AuthenticationHelper.ValidateRedirectUrl(redirectURL, allowedRedirectUrls);
+
+            // Assert
+            Assert.False(result.Value);
+        }
+
+        [Fact]
+        public void ValidateRedirectUrl_InvalidUrl_ReturnsProblem()
+        {
+            // Arrange
+            List<Uri> allowedRedirectUrls = new List<Uri>
+                    {
+                        new Uri("https://example.com/callback")
+                    };
+            string redirectURL = "https://invalid.com/callback";
+
+            // Act
+            var result = AuthenticationHelper.ValidateRedirectUrl(redirectURL, allowedRedirectUrls);
+
+            // Assert
+            Assert.False(result.Value);
+            Assert.Equal(Problem.RedirectUriNotFound, result.Problem);
+        }
+
+        [Fact]
+        public void ValidateRedirectUrl_ValidUrlWithFragment_ReturnsTrue()
+        {
+            // Arrange
+            List<Uri> allowedRedirectUrls = new List<Uri>
+                {
+                    new Uri("https://example.com/callback")
+                };
+            string redirectURL = "https://example.com/callback#section";
+
+            // Act
+            var result = AuthenticationHelper.ValidateRedirectUrl(redirectURL, allowedRedirectUrls);
+
+            // Assert
+            Assert.True(result.Value);
+        }
+
+        [Fact]
+        public void ValidateRedirectUrl_ValidUrlWithDifferentPath_ReturnsFalse()
+        {
+            // Arrange
+            List<Uri> allowedRedirectUrls = new List<Uri>
+                {
+                    new Uri("https://example.com/callback")
+                };
+            string redirectURL = "https://example.com/callback/path";
+
+            // Act
+            var result = AuthenticationHelper.ValidateRedirectUrl(redirectURL, allowedRedirectUrls);
+
+            // Assert
+            Assert.False(result.Value);
+        }
+
+        [Fact]
+        public void ValidateRedirectUrl_ValidUrlWithPort_ReturnsTrue()
+        {
+            // Arrange
+            List<Uri> allowedRedirectUrls = new List<Uri>
+                {
+                    new Uri("https://example.com:8080/callback")
+                };
+            string redirectURL = "https://example.com:8080/callback";
+
+            // Act
+            var result = AuthenticationHelper.ValidateRedirectUrl(redirectURL, allowedRedirectUrls);
+
+            // Assert
+            Assert.True(result.Value);
+        }
+
+        [Fact]
+        public void ValidateRedirectUrl_NullAllowedRedirectUrls_ReturnsProblem()
+        {
+            // Arrange
+            List<Uri> allowedRedirectUrls = null!; // deliberately null: testing guard clause
+            string redirectURL = "https://example.com/callback";
+
+            // Act
+            var result = AuthenticationHelper.ValidateRedirectUrl(redirectURL, allowedRedirectUrls);
+
+            // Assert
+            Assert.False(result.Value);
+            Assert.Equal(Problem.NoRedirectUrisFoundOnSystem, result.Problem);
+        }
+
+        [Fact]
+        public void ValidateRedirectUrl_EmptyAllowedRedirectUrls_ReturnsProblem()
+        {
+            // Arrange
+            List<Uri> allowedRedirectUrls = new List<Uri>();
+            string redirectURL = "https://example.com/callback";
+
+            // Act
+            var result = AuthenticationHelper.ValidateRedirectUrl(redirectURL, allowedRedirectUrls);
+
+            // Assert
+            Assert.False(result.Value);
+            Assert.Equal(Problem.NoRedirectUrisFoundOnSystem, result.Problem);
+        }
+
+        [Theory]
+        [InlineData("validId", false)]
+        [InlineData("id with space", true)]
+        [InlineData("idWithTrailingSpace ", true)]
+        [InlineData(" idWithLeadingSpace", true)]
+        [InlineData("id\tWithTab", false)] // Only space character is checked
+        [InlineData("idWithMultiple  Spaces", true)]
+        [InlineData("", false)]
+        public void HasSpaceInId_ReturnsExpectedResult(string input, bool expected)
+        {
+            var result = AuthenticationHelper.HasSpaceInId(input);
+            Assert.Equal(expected, result);
+        }
+
+        [Theory]
+        [InlineData(null)]
+        [InlineData("")]
+        [InlineData("   ")]
+        public void TryParseAcrValues_NoValueRequested_IsValidAndEmpty(string? input)
+        {
+            bool ok = AuthenticationHelper.TryParseAcrValues(input, out string[] values);
+
+            Assert.True(ok);
+            Assert.Empty(values);
+        }
+
+        [Theory]
+        [InlineData("idporten-loa-high", new[] { "idporten-loa-high" })]
+        [InlineData("idporten-loa-substantial", new[] { "idporten-loa-substantial" })]
+        [InlineData("selfregistered-email idporten-loa-substantial", new[] { "selfregistered-email", "idporten-loa-substantial" })]
+        [InlineData("  idporten-loa-high   ", new[] { "idporten-loa-high" })]
+        public void TryParseAcrValues_AllowedValues_ParsesAndValidates(string input, string[] expected)
+        {
+            bool ok = AuthenticationHelper.TryParseAcrValues(input, out string[] values);
+
+            Assert.True(ok);
+            Assert.Equal(expected, values);
+        }
+
+        [Theory]
+        [InlineData("idporten-loa-extreme")]
+        [InlineData("level4")]
+        [InlineData("idporten-loa-high something-bogus")]
+        [InlineData("'; drop table sessions;--")]
+        public void TryParseAcrValues_DisallowedValue_ReturnsFalseAndEmpty(string input)
+        {
+            bool ok = AuthenticationHelper.TryParseAcrValues(input, out string[] values);
+
+            Assert.False(ok);
+            Assert.Empty(values);
+        }
+    }
+}

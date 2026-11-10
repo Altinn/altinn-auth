@@ -18,6 +18,9 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers;
 
+/// <summary>
+/// Tests adding rightholders through the connections controller.
+/// </summary>
 public partial class ConnectionsControllerTest
 {
     /// <summary>
@@ -152,7 +155,7 @@ public partial class ConnectionsControllerTest
             HttpResponseMessage response = await client.PostAsync($"{Route}?party={TestData.HanSoloEnterprise.Id}", content, TestContext.Current.CancellationToken);
 
             string responseContent = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-            
+
             Assert.True(response.StatusCode == HttpStatusCode.BadRequest, $"Expected BadRequest but got {response.StatusCode}. Response body: {responseContent}");
             AltinnValidationProblemDetails result = JsonSerializer.Deserialize<AltinnValidationProblemDetails>(responseContent, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 

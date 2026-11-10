@@ -1,4 +1,4 @@
-namespace Altinn.AccessManagement.Integration.Services.Interfaces;
+﻿namespace Altinn.AccessManagement.Integration.Services.Interfaces;
 
 /// <summary>
 /// Provides a platform authorization access token that can be used by HTTP clients for authorization for SBL Bridge

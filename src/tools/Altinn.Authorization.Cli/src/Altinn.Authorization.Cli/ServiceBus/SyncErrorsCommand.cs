@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -33,7 +33,7 @@ public partial class SyncErrorsCommand(CancellationToken cancellationToken)
     });
 
     /// <inheritdoc/>
-    protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
+    public override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
     {
         using var mongo = await ErrorDbHelper.GetClient(cancellationToken);
         var sb = ServiceBusHandle.Create(settings.ConnectionString);
@@ -81,7 +81,6 @@ public partial class SyncErrorsCommand(CancellationToken cancellationToken)
                     Task? dlqErrorActive = null;
                     Task? extractErrorDlq = null;
                     Task? deleteMissing = null;
-
                     {
                         if (queue.Normal is { DeadLetterMessageCount: > 0 } normalQueue)
                         {

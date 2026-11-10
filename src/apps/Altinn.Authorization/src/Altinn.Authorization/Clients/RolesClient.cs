@@ -1,4 +1,4 @@
-using System.Net.Http.Headers;
+﻿using System.Net.Http.Headers;
 using Altinn.Platform.Authorization.Configuration;
 using Microsoft.Extensions.Options;
 

@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using Altinn.AccessManagement.Core.Models;
 
 namespace Altinn.AccessManagement.Core.Resolvers;

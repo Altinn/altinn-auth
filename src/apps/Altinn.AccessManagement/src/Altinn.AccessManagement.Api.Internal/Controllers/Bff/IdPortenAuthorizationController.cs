@@ -1,4 +1,4 @@
-using System.Net.Mime;
+﻿using System.Net.Mime;
 using Altinn.AccessManagement.Api.Internal.Utils;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Models.IdPortenAuthorization;

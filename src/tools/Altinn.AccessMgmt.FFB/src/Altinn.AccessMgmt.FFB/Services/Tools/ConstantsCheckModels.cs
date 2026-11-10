@@ -1,4 +1,4 @@
-using Altinn.AccessMgmt.PersistenceEF.Contexts;
+﻿using Altinn.AccessMgmt.PersistenceEF.Contexts;
 
 namespace Altinn.AccessMgmt.FFB.Services.Tools;
 

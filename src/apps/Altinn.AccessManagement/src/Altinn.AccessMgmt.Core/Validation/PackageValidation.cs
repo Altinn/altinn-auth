@@ -80,7 +80,7 @@ public static class PackageValidation
                         }
                     }
                 }
-            }            
+            }
         }
 
         if (notAssignablePackages.Any())

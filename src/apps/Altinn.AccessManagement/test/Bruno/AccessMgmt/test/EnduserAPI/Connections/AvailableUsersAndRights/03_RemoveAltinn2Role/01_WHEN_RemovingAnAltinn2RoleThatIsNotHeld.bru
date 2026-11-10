@@ -1,0 +1,58 @@
+meta {
+  name: 01_WHEN_RemovingAnAltinn2RoleThatIsNotHeld
+  type: http
+  seq: 1
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/roles?party={{party}}&from={{party}}&to={{to}}&rolecode=a0212
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{to}}
+  rolecode: a0212
+}
+
+docs {
+  WHEN the delegator removes an Altinn 2 role the receiver does not hold.
+
+  `DELETE /accessmanagement/api/v1/enduser/connections/roles?party={party}&from={from}&to={to}&rolecode={code}`
+
+  Removes a role assignment from `from` to `to` that was imported from Altinn 2. Only
+  roles provided by Altinn 2 can be removed this way; Altinn 3 roles (rightholder, agent)
+  and roles from the Central Coordinating Register (daglig leder and the like) are
+  rejected. When the role is not assigned the call changes nothing and still returns 204,
+  so it is safe to repeat.
+
+  - Query: `party` (required), the uuid of the acting party, which must be `from` (giver
+    side, to others) or `to` (receiver side, from others); `from` and `to` (required),
+    the uuids of the two parties; `rolecode` (required), the Altinn 3 code of the role,
+    for example `a0212` (Primary industry and foodstuff), case insensitive.
+  - Token: personal token with `altinn:portal/enduser`, or
+    `altinn:accessmanagement/enduser:connections:toothers.write` when party is `from` and
+    `...:fromothers.write` when party is `to`; the user must have write access to access
+    management (`altinn_access_management`) for the party.
+  - Responses: 204 with no body; 400 AM-00039 for an unknown role code; 400 AM-00040 when
+    the role cannot be revoked here (not an Altinn 2 role, or held only through another
+    connection); 403 when the user cannot act for the party.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/Connections/AvailableUsersAndRights/helpers.js");
+  const td = testdata();
+
+  bru.setVar("party", td.delegator.partyUuid);
+  bru.setVar("to", td.receiver.partyUuid);
+
+  await loginAs(td.delegator);
+}
+
+tests {
+  test("THEN removing a role that is not held returns 204 with no body", function() {
+    expect(res.status).to.equal(204);
+  });
+}

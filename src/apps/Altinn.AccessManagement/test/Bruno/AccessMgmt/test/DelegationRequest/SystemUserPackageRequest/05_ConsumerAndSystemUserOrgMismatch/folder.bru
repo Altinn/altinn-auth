@@ -1,0 +1,16 @@
+meta {
+	name: 05_ConsumerAndSystemUserOrgMismatch
+	seq: 5
+}
+
+docs {
+	Scenario: The consumer must be the organisation that owns the system user
+
+		Given a system user token where the consumer claim is a KOMM, FYLK or STAT organisation
+		And systemuser_org is a different organisation
+		When the system user requests a package, the request fails with 403
+		When the system user lists its sent requests, the request fails with 403
+		When the system user withdraws a request, the request fails with 403
+
+	No step creates state, so the scenario needs no cleanup.
+}

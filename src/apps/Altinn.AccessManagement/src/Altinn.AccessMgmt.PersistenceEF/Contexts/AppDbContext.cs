@@ -40,7 +40,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
 
     public DbSet<Entity> Entities => Set<Entity>();
 
+#pragma warning disable CS0612 // EntityLookup is obsolete, but its table is still part of the model
     public DbSet<EntityLookup> EntityLookups => Set<EntityLookup>();
+#pragma warning restore CS0612
 
     public DbSet<EntityType> EntityTypes => Set<EntityType>();
 
@@ -61,6 +63,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<ProviderType> ProviderTypes => Set<ProviderType>();
 
     public DbSet<Resource> Resources => Set<Resource>();
+
+    public DbSet<ResourceScope> ResourceScopes => Set<ResourceScope>();
 
     public DbSet<ResourceType> ResourceTypes => Set<ResourceType>();
 
@@ -83,6 +87,12 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<A2ClientRole> A2ClientRole => Set<A2ClientRole>();
 
     public DbSet<RightImportProgress> RightImportProgress => Set<RightImportProgress>();
+
+    public DbSet<ActivityLog> ActivityLogs => Set<ActivityLog>();
+
+    public DbSet<ActivityLogBackfillProgress> ActivityLogBackfillProgress => Set<ActivityLogBackfillProgress>();
+
+    public DbSet<ActivityType> ActivityTypes => Set<ActivityType>();
 
     #endregion
 
@@ -123,6 +133,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<AuditProviderType> AuditProviderTypes => Set<AuditProviderType>();
 
     public DbSet<AuditResource> AuditResources => Set<AuditResource>();
+
+    public DbSet<AuditResourceScope> AuditResourceScopes => Set<AuditResourceScope>();
 
     public DbSet<AuditResourceType> AuditResourceTypes => Set<AuditResourceType>();
 
@@ -188,6 +200,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.ApplyConfiguration<AuditProvider>(new AuditProviderConfiguration());
         modelBuilder.ApplyConfiguration<AuditProviderType>(new AuditProviderTypeConfiguration());
         modelBuilder.ApplyConfiguration<AuditResource>(new AuditResourceConfiguration());
+        modelBuilder.ApplyConfiguration<AuditResourceScope>(new AuditResourceScopeConfiguration());
         modelBuilder.ApplyConfiguration<AuditResourceType>(new AuditResourceTypeConfiguration());
         modelBuilder.ApplyConfiguration<AuditRole>(new AuditRoleConfiguration());
         modelBuilder.ApplyConfiguration<AuditRoleMap>(new AuditRoleMapConfiguration());
@@ -196,6 +209,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.ApplyConfiguration<AuditRequestAssignment>(new AuditRequestAssignmentConfiguration());
         modelBuilder.ApplyConfiguration<AuditRequestAssignmentPackage>(new AuditRequestAssignmentPackageConfiguration());
         modelBuilder.ApplyConfiguration<AuditRequestAssignmentResource>(new AuditRequestAssignmentResourceConfiguration());
+        modelBuilder.ApplyConfiguration<AuditActivityType>(new AuditActivityTypeConfiguration());
     }
 
     private static void ApplyConfiguration(ModelBuilder modelBuilder)
@@ -212,7 +226,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.ApplyConfiguration<DelegationPackage>(new DelegationPackageConfiguration());
         modelBuilder.ApplyConfiguration<DelegationResource>(new DelegationResourceConfiguration());
         modelBuilder.ApplyConfiguration<Entity>(new EntityConfiguration());
+#pragma warning disable CS0612 // EntityLookup is obsolete, but its table is still part of the model
         modelBuilder.ApplyConfiguration<EntityLookup>(new EntityLookupConfiguration());
+#pragma warning restore CS0612
         modelBuilder.ApplyConfiguration<EntityType>(new EntityTypeConfiguration());
         modelBuilder.ApplyConfiguration<EntityVariant>(new EntityVariantConfiguration());
         modelBuilder.ApplyConfiguration<EntityVariantRole>(new EntityVariantRoleConfiguration());
@@ -222,6 +238,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.ApplyConfiguration<ProviderType>(new ProviderTypeConfiguration());
         modelBuilder.ApplyConfiguration<ResourceType>(new ResourceTypeConfiguration());
         modelBuilder.ApplyConfiguration<Resource>(new ResourceConfiguration());
+        modelBuilder.ApplyConfiguration<ResourceScope>(new ResourceScopeConfiguration());
         modelBuilder.ApplyConfiguration<Role>(new RoleConfiguration());
         modelBuilder.ApplyConfiguration<RoleMap>(new RoleMapConfiguration());
         modelBuilder.ApplyConfiguration<RolePackage>(new RolePackageConfiguration());
@@ -233,6 +250,9 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         modelBuilder.ApplyConfiguration<A2ClientRole>(new A2ClientRoleConfiguration());
         modelBuilder.ApplyConfiguration<RightImportProgress>(new RightImportProgressConfiguration());
         modelBuilder.ApplyConfiguration<InstanceSourceType>(new InstanceSourceTypeConfiguration());
+        modelBuilder.ApplyConfiguration<ActivityLog>(new ActivityLogConfiguration());
+        modelBuilder.ApplyConfiguration<ActivityLogBackfillProgress>(new ActivityLogBackfillProgressConfiguration());
+        modelBuilder.ApplyConfiguration<ActivityType>(new ActivityTypeConfiguration());
     }
 
     #region Extensions

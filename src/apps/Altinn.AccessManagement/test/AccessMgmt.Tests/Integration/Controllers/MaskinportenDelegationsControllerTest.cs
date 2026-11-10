@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using Altinn.AccessManagement.Core.Models;
@@ -145,6 +145,23 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers
 
             List<string> scopes = item.GetProperty("scopes").EnumerateArray().Select(x => x.GetString()).ToList();
             Assert.Equal(new[] { Scope }, scopes);
+        }
+
+        [Fact]
+        public async Task GetSwaggerJson_V1Doc_MarksDelegationSchemeIdDeprecated()
+        {
+            HttpResponseMessage response = await _client.GetAsync("/swagger/v1/swagger.json", TestContext.Current.CancellationToken);
+            string content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+            using JsonDocument doc = JsonDocument.Parse(content);
+            JsonElement schemaProperty = doc.RootElement.GetProperty("components").GetProperty("schemas")
+                .EnumerateObject()
+                .Select(schema => schema.Value.TryGetProperty("properties", out JsonElement properties) && properties.TryGetProperty("delegation_scheme_Id", out JsonElement property) ? property : default)
+                .Single(property => property.ValueKind == JsonValueKind.Object);
+
+            Assert.True(schemaProperty.GetProperty("deprecated").GetBoolean());
         }
 
         private static AuthenticationHeaderValue AdminBearer()

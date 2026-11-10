@@ -1,5 +1,6 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Reflection;
+using Altinn.AccessMgmt.FFB.Config;
 using Altinn.AccessMgmt.FFB.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
@@ -484,7 +485,9 @@ public sealed class ConstantsCheckService(IEnvironmentDbContextFactory dbFactory
 
     private async Task<CheckResult> CheckPackagesAsync(string environment, CancellationToken ct)
     {
-        var constants = PackageConstants.AllEntities().ToList();
+        // Test only packages are expected only in known test environments: the fix for a missing package inserts it.
+        var isTestEnvironment = TestEnvironments.Contains(environment);
+        var constants = PackageConstants.AllEntities().Where(c => !c.TestOnly || isTestEnvironment).ToList();
         using var db = dbFactory.CreateContext(environment);
         var dbRows = await db.Packages.AsNoTracking().ToListAsync(ct);
         var dbById = dbRows.ToDictionary(r => r.Id);

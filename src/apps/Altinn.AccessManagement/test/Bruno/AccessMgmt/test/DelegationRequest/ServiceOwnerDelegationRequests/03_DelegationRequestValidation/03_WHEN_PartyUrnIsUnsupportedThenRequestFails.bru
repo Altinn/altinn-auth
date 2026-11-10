@@ -1,0 +1,60 @@
+meta {
+  name: 03_WHEN_PartyUrnIsUnsupportedThenRequestFails
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/delegationrequests
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "from": "urn:altinn:party:uuid:{{grantorUuid}}",
+    "to": "urn:altinn:person:identifier-no:{{requesterPid}}",
+    "resource": {
+      "referenceId": "{{requestResource}}"
+    }
+  }
+}
+
+docs {
+  WHEN `from` is given as a party UUID URN, which the endpoint does not accept, the
+  request fails with 400 and validation error AMSO.VLD-00001 on `connection/from`.
+}
+
+script:pre-request {
+  const { td, loginAsServiceOwner, scopes } = require("./test/DelegationRequest/ServiceOwnerDelegationRequests/helpers.js");
+  const data = td();
+
+  bru.setVar("grantorPid", data.delegationRequest.grantor.pid);
+  bru.setVar("requesterPid", data.delegationRequest.requester.pid);
+  bru.setVar("requestResource", data.delegationRequest.resource);
+  bru.setVar("requestPackage", data.delegationRequest.package);
+  bru.setVar("grantorUuid", data.delegationRequest.grantor.partyuuid);
+
+  await loginAsServiceOwner(data.serviceOwners.ttd, scopes.delegationRequestsWrite);
+}
+
+tests {
+  test("WHEN the party URN is unsupported, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN AMSO.VLD-00001 points at connection/from", function() {
+    const body = res.getBody();
+    expect(body.code).to.equal("STD-00000");
+    expect(body.validationErrors).to.have.lengthOf(1);
+    const error = body.validationErrors[0];
+    expect(error.code).to.equal("AMSO.VLD-00001");
+    expect(error.detail).to.equal("Invalid URN");
+    expect(error.paths).to.deep.equal(["connection/from"]);
+  });
+}

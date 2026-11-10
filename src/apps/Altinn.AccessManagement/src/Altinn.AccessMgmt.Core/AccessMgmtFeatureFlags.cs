@@ -21,6 +21,15 @@ public static class AccessMgmtFeatureFlags
     public const string HostedServicesResourceRegistrySync = $"AccessMgmt.Core.HostedServices.ResourceRegistrySync";
 
     /// <summary>
+    /// Specifies if the resource registry sync should read resource metadata from the resource change feed
+    /// (<c>resource/changes</c>) before syncing subject relations from <c>resource/updated</c>. Subject relations
+    /// are then only linked to resources the change feed has synced, instead of fetching each resource again.
+    /// Requires <see cref="HostedServicesResourceRegistrySync"/>, and a resource registry where every page of the
+    /// change feed with items has a next link.
+    /// </summary>
+    public const string HostedServicesResourceRegistrySyncChangeFeed = $"AccessMgmt.Core.HostedServices.ResourceRegistrySync.ChangeFeed";
+
+    /// <summary>
     /// Represents the handler for proessing pending outbox messages.
     /// </summary>
     public const string HostedServicesOutboxHandler = $"AccessMgmt.Core.HostedServices.Outbox.Handler";
@@ -110,6 +119,17 @@ public static class AccessMgmtFeatureFlags
     public const string EnableRequestAssignmentPackage = "AccessMgmt.Controller.RequestAssignment.Package";
 
     /// <summary>
+    /// Enables system users (from-party) to send access requests to organizations. Trial feature;
+    /// access to the endpoint is granted by the <c>altinn:accessmanagement/systemuser:requests.write</c> Maskinporten scope.
+    /// </summary>
+    public const string EnableSystemUserRequests = "AccessMgmt.Controller.RequestAssignment.SystemUserRequests";
+
+    /// <summary>
+    /// Enables the resource delegation endpoints in the serviceowner connections API.
+    /// </summary>
+    public const string EnableServiceOwnerResourceDelegation = "AccessMgmt.Controller.ServiceOwner.ResourceDelegation";
+
+    /// <summary>
     /// Represents the configuration key used to disable cache invalidation for Altinn 2 cache.
     /// </summary>
     /// <remarks>Set this key in the application's configuration to prevent automatic invalidation of the
@@ -135,4 +155,34 @@ public static class AccessMgmtFeatureFlags
     /// so the behavior is fully reversible without clearing stored parent references.
     /// </summary>
     public const string AdosSubunitInheritance = "AccessManagement.Subunit.AdosInheritance";
+
+    /// <summary>
+    /// Excludes all Altinn 2 roles (roles provided by <c>ProviderConstants.Altinn2</c>) from connections,
+    /// authorized parties, the policy information point and resource delegation checks.
+    /// Read-side only; stored assignments are kept, so the behavior is fully reversible.
+    /// </summary>
+    public const string DisableAltinn2Roles = "AccessManagement.Roles.DisableAltinn2";
+
+    /// <summary>
+    /// Enables the activity log endpoints under enduser/connections (assignment and
+    /// delegation events).
+    /// </summary>
+    public const string EnableEnduserConnectionsActivityLogApi = "AccessManagement.Enduser.ConnectionsActivityLogApi";
+
+    /// <summary>
+    /// Enables the activity log endpoints under enduser/request (access request events).
+    /// </summary>
+    public const string EnableEnduserRequestActivityLogApi = "AccessManagement.Enduser.RequestActivityLogApi";
+
+    /// <summary>
+    /// Enables the v2 request endpoints under enduser/request, where resource requests
+    /// can name the rights (right keys) being requested.
+    /// </summary>
+    public const string EnableEnduserRequestV2Api = "AccessManagement.Enduser.RequestV2Api";
+
+    /// <summary>
+    /// Enables the activity log endpoints under enduser/maskinporten (Maskinporten schema
+    /// delegation events — the Supplier-role slice of the log).
+    /// </summary>
+    public const string EnableEnduserMaskinportenActivityLogApi = "AccessManagement.Enduser.MaskinportenActivityLogApi";
 }

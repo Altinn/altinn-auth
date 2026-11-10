@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.Core.Repositories.Interfaces;
+﻿using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.Tests.Moqdata;

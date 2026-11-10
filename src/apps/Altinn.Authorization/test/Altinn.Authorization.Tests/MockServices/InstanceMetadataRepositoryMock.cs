@@ -1,4 +1,4 @@
-using Altinn.Authorization.Tests.Integration;
+﻿using Altinn.Authorization.Tests.Integration;
 
 using Altinn.Platform.Authorization.Repositories.Interface;
 using Altinn.Platform.Storage.Interface.Models;

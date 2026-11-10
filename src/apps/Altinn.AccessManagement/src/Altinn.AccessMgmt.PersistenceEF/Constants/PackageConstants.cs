@@ -53,6 +53,12 @@ public static class PackageConstants
         => ConstantLookup.TryGetById(typeof(PackageConstants), id, out result);
 
     /// <summary>
+    /// Whether the <see cref="Package"/> with this id is available in this environment.
+    /// </summary>
+    public static bool IsAvailable(Guid id)
+        => ConstantLookup.IsAvailable<Package>(typeof(PackageConstants), id);
+
+    /// <summary>
     /// Try to get <see cref="Role"/> by Urn.
     /// </summary>
     public static bool TryGetByUrn(string urn, [NotNullWhen(true)] out ConstantDefinition<Package>? result)
@@ -1041,11 +1047,11 @@ public static class PackageConstants
     };
 
     /// <summary>
-    /// Represents the 'Mine sider hos kommunen' access package.
+    /// Represents the 'Kommunale tjenester' access package.
     /// </summary>
     /// <remarks>
     /// - <c>Id:</c> 600bf1be-61f6-423c-9a13-df93ee3214a5
-    /// - <c>URN:</c> urn:altinn:accesspackage:mine-sider-kommune
+    /// - <c>URN:</c> urn:altinn:accesspackage:kommunale-tjenester
     /// - <c>Provider:</c> Altinn3
     /// - <c>Description:</c> Denne fullmakten gir generell tilgang til tjenester av typen “mine sider” tjenester hos kommuner. Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmakten gir.
     /// </remarks>
@@ -1053,10 +1059,10 @@ public static class PackageConstants
     {
         Entity = new()
         {
-            Name = "Mine sider hos kommunen",
+            Name = "Kommunale tjenester",
             Description = "Denne fullmakten gir generell tilgang til tjenester av typen “mine sider” tjenester hos kommuner. Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmakten gir.",
-            Urn = "urn:altinn:accesspackage:mine-sider-kommune",
-            Code = "mine-sider-kommune",
+            Urn = "urn:altinn:accesspackage:kommunale-tjenester",
+            Code = "kommunale-tjenester",
             IsDelegable = true,
             IsAvailableForServiceOwners = true,
             IsAssignable = true,
@@ -1065,11 +1071,11 @@ public static class PackageConstants
             AreaId = AreaConstants.BusinessAffairs,
         },
         EN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "My pages at the municipality"),
+            KeyValuePair.Create("Name", "Municipal services"),
             KeyValuePair.Create("Description", "This authorization provides general access to \"my page\" type services at municipalities. In the event of regulatory changes or the introduction of new digital services, there may be changes in the access that the authorization provides.")
         ),
         NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Mine sider hos kommunen"),
+            KeyValuePair.Create("Name", "Kommunale tenester"),
             KeyValuePair.Create("Description", "Denne fullmakta gir generell tilgang til tenester av typen «mine side» tenester hos kommunar. Ved regelverksendringar eller innføring av nye digitale tenester kan det bli endringar i tilgangar som fullmakta gir.")
         ),
     };
@@ -3771,40 +3777,6 @@ public static class PackageConstants
     };
 
     /// <summary>
-    /// Represents the 'Konkursbo administrator' access package.
-    /// </summary>
-    /// <remarks>
-    /// - <c>Id:</c> 0195efb8-7c80-7e9c-95c1-48937e23960a
-    /// - <c>URN:</c> urn:altinn:accesspackage:konkursbo-tilgangsstyrer
-    /// - <c>Provider:</c> Altinn3
-    /// - <c>Description:</c> Gir bruker mulighet til å administrere konkursbo
-    /// </remarks>
-    public static ConstantDefinition<Package> KonkursboAdministrator { get; } = new ConstantDefinition<Package>("0195efb8-7c80-7e9c-95c1-48937e23960a")
-    {
-        Entity = new()
-        {
-            Name = "Konkursbo administrator",
-            Description = "Gir bruker mulighet til å administrere konkursbo",
-            Urn = "urn:altinn:accesspackage:konkursbo-tilgangsstyrer",
-            Code = "konkursbo-tilgangsstyrer",
-            IsDelegable = false,
-            IsAvailableForServiceOwners = false,
-            IsAssignable = true,
-            EntityTypeId = EntityTypeConstants.Organization,
-            ProviderId = ProviderConstants.Altinn3,
-            AreaId = AreaConstants.ManageAccess,
-        },
-        EN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Bankruptcy estate administrator"),
-            KeyValuePair.Create("Description", "Provides the user with the ability to administer bankruptcy estates")
-        ),
-        NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Konkursbu administrator"),
-            KeyValuePair.Create("Description", "Gir brukar moglegheit til å administrere konkursbu")
-        ),
-    };
-
-    /// <summary>
     /// Represents the 'Hovedadministrator' access package.
     /// </summary>
     /// <remarks>
@@ -4733,6 +4705,41 @@ public static class PackageConstants
             KeyValuePair.Create("Name", "Skattegrunnlag"),
             KeyValuePair.Create("Description", "Denne tilgangspakken gir fullmakter til tenester knytt til innhenting av skattegrunnlag. Ved regelverksendringar eller innføring av nye digitale tenester kan det bli endringar i tilgangar som fullmakta gir.")
         ),
+    };
+
+    /// <summary>
+    /// Represents the 'Skattegrunnlag - Utvidet tilgang' access package. Test only, for Skatteetaten's proof of concept (#4128).
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 01a1b014-d16c-71d9-b145-e7508f7c8279
+    /// - <c>URN:</c> urn:altinn:accesspackage:skattegrunnlag-utvidet-tilgang
+    /// - <c>Provider:</c> Altinn3
+    /// - <c>Description:</c> Denne tilgangspakken gir tilganger til å rapportere tredjepartsopplysninger på vegne av oppgavegiver for de skattegrunnlagsordningene som er listet her. Tilgangspakken gir også utvidede tilganger til å se alle innsendinger og tilbakemeldinger for oppgavegiveren, også når andre har sendt inn.
+    /// </remarks>
+    public static ConstantDefinition<Package> TaxBaseExtendedAccess { get; } = new ConstantDefinition<Package>("01a1b014-d16c-71d9-b145-e7508f7c8279")
+    {
+        Entity = new()
+        {
+            Name = "Skattegrunnlag - Utvidet tilgang",
+            Description = "Denne tilgangspakken gir tilganger til å rapportere tredjepartsopplysninger på vegne av oppgavegiver for de skattegrunnlagsordningene som er listet her. Tilgangspakken gir også utvidede tilganger til å se alle innsendinger og tilbakemeldinger for oppgavegiveren, også når andre har sendt inn.",
+            Urn = "urn:altinn:accesspackage:skattegrunnlag-utvidet-tilgang",
+            Code = "skattegrunnlag-utvidet-tilgang",
+            IsDelegable = true,
+            IsAvailableForServiceOwners = true,
+            IsAssignable = true,
+            EntityTypeId = EntityTypeConstants.Organization,
+            ProviderId = ProviderConstants.Altinn3,
+            AreaId = AreaConstants.TaxFeesAccountingAndCustoms,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Tax base - Extended access"),
+            KeyValuePair.Create("Description", "This access package provides access to report third-party information on behalf of the reporting entity for the tax base schemes listed here. The access package also provides extended access to see all submissions and feedback for the reporting entity, also when others have submitted them.")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Skattegrunnlag - Utvida tilgang"),
+            KeyValuePair.Create("Description", "Denne tilgangspakken gir tilgangar til å rapportere tredjepartsopplysningar på vegner av oppgåvegivar for dei skattegrunnlagsordningane som er lista her. Tilgangspakken gir også utvida tilgangar til å sjå alle innsendingar og tilbakemeldingar for oppgåvegivaren, også når andre har sendt inn.")
+        ),
+        TestOnly = true,
     };
 
     /// <summary>
@@ -7167,7 +7174,7 @@ public static class PackageConstants
             Name = "Namsmannen - Tvangsfullbyrdelse, herunder behandling i forliksrådet",
             Code = "vergemal-namsmannen-tvangsfullbyrdelse-forliksradet",
             Description = "Gjelder representasjon i saker om tvangsfullbyrdelse etter tvangsfullbyrdelsesloven, herunder eventuell behandling i forliksrådet av slike saker og oppfølging av saken hos innkrevingsmyndigheten.",
-            Urn = "urn:altinn:accesspackage:namsmannen-tvangsfullbyrdelse-forliksradet",
+            Urn = "urn:altinn:accesspackage:vergemal-namsmannen-tvangsfullbyrdelse-forliksradet",
             IsDelegable = false,
             IsAssignable = false,
             IsAvailableForServiceOwners = true,

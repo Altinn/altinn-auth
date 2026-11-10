@@ -1,0 +1,89 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+# CodeRabbit configuration. Tuned to behave like GitHub Copilot's PR review:
+# concise, comment-only (never blocks), focused on real defects over nitpicks.
+language: "en-US"
+early_access: false
+tone_instructions: "Concise senior .NET reviewer. Comment only on correctness, security, concurrency, performance and API contract issues. Skip style nits that dotnet format already enforces. No praise."
+
+reviews:
+  profile: "chill"
+  request_changes_workflow: false
+  high_level_summary: true
+  high_level_summary_in_walkthrough: true
+  review_status: true
+  commit_status: true
+  collapse_walkthrough: true
+  changed_files_summary: false
+  sequence_diagrams: false
+  estimate_code_review_effort: false
+  assess_linked_issues: true
+  related_issues: false
+  related_prs: false
+  suggested_labels: false
+  suggested_reviewers: false
+  poem: false
+  abort_on_close: true
+  finishing_touches:
+    docstrings:
+      enabled: false
+  auto_review:
+    enabled: true
+    auto_incremental_review: true
+    drafts: false
+    base_branches: [".*"]
+    ignore_title_keywords: ["release:", "release(", "wip"]
+  path_filters:
+    - "!**/*.slnx"
+    - "!**/packages.lock.json"
+    - "!**/Migrations/*.Designer.cs"
+    - "!**/*ModelSnapshot.cs"
+    - "!**/*.verified.*"
+  path_instructions:
+    - path: "src/**/test/**/*.cs"
+      instructions: "Every test must be marked [UnitTest] or [IntegrationTest] (xUnit v3 verticals). Exception: src/apps/Altinn.ResourceRegistry uses xUnit v2 without categories."
+    - path: "src/apps/Altinn.Register/**"
+      instructions: "Placeholder vertical. Do not suggest tidying or restructuring."
+    - path: "src/apps/Altinn.ResourceRegistry/**"
+      instructions: "Intentional build island. Do not suggest aligning it with other verticals."
+    - path: "**/*.bru"
+      instructions: "Bruno files must be UTF-8 without BOM, LF line endings and two-space indentation."
+    - path: "**/infra/**/*.tf"
+      instructions: "Check that new feature toggles in app code are also added here."
+  tools:
+    github-checks:
+      enabled: true
+    markdownlint:
+      enabled: true
+    yamllint:
+      enabled: true
+    actionlint:
+      enabled: true
+    gitleaks:
+      enabled: true
+    checkov:
+      enabled: true
+    shellcheck:
+      enabled: true
+    hadolint:
+      enabled: true
+    semgrep:
+      enabled: true
+    languagetool:
+      enabled: false
+
+knowledge_base:
+  learnings:
+    scope: local
+  issues:
+    scope: local
+  pull_requests:
+    scope: local
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - "AGENTS.md"
+      - "CONTRIBUTING.md"
+      - ".github/copilot-instructions.md"
+
+chat:
+  auto_reply: true

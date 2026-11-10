@@ -1,9 +1,8 @@
 ﻿using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
-using Altinn.AccessManagement.Controllers;
+using Altinn.AccessManagement.Api.Internal.Controllers.PolicyInformation;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
-using Altinn.AccessManagement.Models;
 using Altinn.AccessManagement.Tests.Fixtures;
 using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.Tests.Utils;
@@ -45,7 +44,7 @@ public class PolicyInformationPointControllerTest : IClassFixture<AccessMgmtApiF
     }
 
     /// <summary>
-    /// Sets up test scenarios for <see cref="PolicyInformationPointController.GetAllDelegationChanges(Core.Models.DelegationChangeInput, System.Threading.CancellationToken)"></see>
+    /// Sets up test scenarios for <see cref="PolicyInformationPointController.GetAllDelegationChanges(DelegationChangeInputDto, System.Threading.CancellationToken)"></see>
     /// </summary>
     public static TheoryData<string> Scenarios() => new()
     {
@@ -56,7 +55,7 @@ public class PolicyInformationPointControllerTest : IClassFixture<AccessMgmtApiF
     };
 
     /// <summary>
-    /// Sets up test scenarios for accesspackage delegations to system users, to test <see cref="PolicyInformationPointController.GetAccessPackages(Guid, Guid, CancellationToken)"></see>
+    /// Sets up test scenarios for access package delegations to system users, to test <see cref="PolicyInformationPointController.GetRolesAndAccessPackages"></see>
     /// </summary>
     public static TheoryData<string, string, string, List<AccessPackageUrn>> SystemUserAccessPackageScenarios() => new()
     {
@@ -82,27 +81,51 @@ public class PolicyInformationPointControllerTest : IClassFixture<AccessMgmtApiF
         // Assert
         Assert.Equal(HttpStatusCode.OK, actualResponse.StatusCode);
 
-        List<DelegationChangeExternal> actualDelegationChanges = JsonSerializer.Deserialize<List<DelegationChangeExternal>>(await actualResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), options);
+        List<DelegationChangeDto> actualDelegationChanges = JsonSerializer.Deserialize<List<DelegationChangeDto>>(await actualResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), options);
         AssertionUtil.AssertEqual(GetExpected(scenario), actualDelegationChanges);
     }
 
-    /* ToDo: Add Integration tests on database container
     /// <summary>
-    /// Test case: Tests getting all access packages av given to-party has for a given from-party
+    /// Test case: Undefined integer value for AccessRestriction
+    /// Expected: Model validation rejects the request with 400 BadRequest instead of a server error
+    /// </summary>
+    [Fact]
+    public async Task GetDelegationChanges_UndefinedAccessRestriction_Returns400BadRequest()
+    {
+        string body = """
+            {
+              "subject": { "id": "urn:altinn:userid", "value": "20000490" },
+              "party": { "id": "urn:altinn:partyid", "value": "50004221" },
+              "resource": [ { "id": "urn:altinn:resource", "value": "jks_audi_etron_gt" } ],
+              "AccessRestriction": 99
+            }
+            """;
+        StringContent content = new StringContent(body, System.Text.Encoding.UTF8, "application/json");
+
+        // Act
+        HttpResponseMessage actualResponse = await _client.PostAsync($"accessmanagement/api/v1/policyinformation/getdelegationchanges", content, TestContext.Current.CancellationToken);
+
+        // Assert
+        Assert.Equal(HttpStatusCode.BadRequest, actualResponse.StatusCode);
+    }
+
+    /* ToDo: Seed the system user client delegation data used by SystemUserAccessPackageScenarios, then enable this test
+    /// <summary>
+    /// Test case: Tests getting all access packages a given to-party has for a given from-party
     /// Expected: Returns collection of access packages
     /// </summary>
     [Theory]
     [MemberData(nameof(SystemUserAccessPackageScenarios))]
-    public async Task GetAccessPackages_ValidResponse(string scenario, string from, string to, List<AccessPackageUrn> expected)
+    public async Task GetRolesAndAccessPackages_ValidResponse(string scenario, string from, string to, List<AccessPackageUrn> expected)
     {
         // Act
-        HttpResponseMessage actualResponse = await _client.GetAsync($"accessmanagement/api/v1/policyinformation/accesspackages?from={from}&to={to}");
+        HttpResponseMessage actualResponse = await _client.GetAsync($"accessmanagement/api/v1/policyinformation/roles-and-accesspackages?from={from}&to={to}", TestContext.Current.CancellationToken);
 
         // Assert
         Assert.Equal(HttpStatusCode.OK, actualResponse.StatusCode);
 
-        List<AccessPackageUrn> actualAccessPackages = await actualResponse.Content.ReadFromJsonAsync<List<AccessPackageUrn>>(options);
-        AssertionUtil.AssertCollections(expected, actualAccessPackages, AssertionUtil.AssertAccessPackageUrn);
+        PipResponseDto actualPipResponse = await actualResponse.Content.ReadFromJsonAsync<PipResponseDto>(options, TestContext.Current.CancellationToken);
+        AssertionUtil.AssertCollections(expected, actualPipResponse.AccessPackages, AssertionUtil.AssertAccessPackageUrn);
     }
     */
 
@@ -114,9 +137,9 @@ public class PolicyInformationPointControllerTest : IClassFixture<AccessMgmtApiF
         return content;
     }
 
-    private List<DelegationChangeExternal> GetExpected(string scenario)
+    private List<DelegationChangeDto> GetExpected(string scenario)
     {
         string expectedContent = File.ReadAllText($"Data/PolicyInformationPoint/Expected/{scenario}.json");
-        return (List<DelegationChangeExternal>)JsonSerializer.Deserialize(expectedContent, typeof(List<DelegationChangeExternal>), options);
+        return (List<DelegationChangeDto>)JsonSerializer.Deserialize(expectedContent, typeof(List<DelegationChangeDto>), options);
     }
 }

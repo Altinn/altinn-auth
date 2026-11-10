@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.Integration.Platform.SblBridge;
+﻿namespace Altinn.Authorization.Integration.Platform.SblBridge;
 
 /// <summary>
 /// Configuration options for Altinn Sbl Bridge Options.

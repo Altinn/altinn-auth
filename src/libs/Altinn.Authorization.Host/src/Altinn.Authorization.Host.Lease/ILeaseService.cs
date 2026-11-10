@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.Host.Lease;
+﻿namespace Altinn.Authorization.Host.Lease;
 
 /// <summary>
 /// Defines the contract for managing leases in a system.

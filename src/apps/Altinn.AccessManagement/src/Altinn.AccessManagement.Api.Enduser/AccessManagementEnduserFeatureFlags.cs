@@ -1,4 +1,4 @@
-namespace Altinn.AccessManagement.Api.Enduser;
+﻿namespace Altinn.AccessManagement.Api.Enduser;
 
 /// <summary>
 /// Defines feature flags for the Access Management Enduser module.

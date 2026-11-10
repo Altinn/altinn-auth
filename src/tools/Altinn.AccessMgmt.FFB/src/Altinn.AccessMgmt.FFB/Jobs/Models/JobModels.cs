@@ -1,4 +1,4 @@
-namespace Altinn.AccessMgmt.FFB.Jobs.Models;
+﻿namespace Altinn.AccessMgmt.FFB.Jobs.Models;
 
 public enum JobStatus
 {

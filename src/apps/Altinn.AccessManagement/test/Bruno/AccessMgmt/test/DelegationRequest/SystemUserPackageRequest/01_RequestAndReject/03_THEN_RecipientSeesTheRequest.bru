@@ -1,0 +1,44 @@
+meta {
+  name: 03_THEN_RecipientSeesTheRequest
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/request/received?party={{party}}&from={{systemUser}}&status=Pending&type=package
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{systemUser}}
+  status: Pending
+  type: package
+}
+
+docs {
+  THEN the recipient organisation sees the pending request from the system user among its
+  received requests.
+}
+
+script:pre-request {
+  const { testdata, loginAs } = require("./test/DelegationRequest/SystemUserPackageRequest/helpers.js");
+  const td = testdata();
+
+  bru.setVar("party", td.recipient.partyUuid);
+  bru.setVar("systemUser", td.publicSectorConsumer.systemUser.partyUuid);
+
+  await loginAs(td.recipient.dagligleder);
+}
+
+tests {
+  test("THEN the received requests can be listed, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the request from the system user is listed", function() {
+    const ids = res.getBody().data.map(r => r.id);
+    expect(ids).to.include(bru.getVar("rejectRequestId"));
+  });
+}

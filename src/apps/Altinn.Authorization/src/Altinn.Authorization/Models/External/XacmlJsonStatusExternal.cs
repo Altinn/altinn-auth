@@ -1,4 +1,4 @@
-namespace Altinn.Platform.Authorization.Models.External
+﻿namespace Altinn.Platform.Authorization.Models.External
 {
     /// <summary>
     /// XACML Json object for status.

@@ -1,0 +1,54 @@
+meta {
+  name: 12_AND_ConsentEventsCanBeFilteredByRequest
+  type: http
+  seq: 12
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enterprise/consentrequests/events?consentRequestId={{consentRequestId}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  consentRequestId: {{consentRequestId}}
+}
+
+docs {
+  AND the consent events can be filtered by request id.
+
+  GET /accessmanagement/api/v1/enterprise/consentrequests/events?consentRequestId=:id
+
+  Same endpoint as scenario 04; see there for every parameter. With consentRequestId only
+  that request's status changes are returned.
+
+  Events younger than five minutes are held back, so the Created and Accepted events of
+  this run are not visible yet. The step asserts the page shape and that anything
+  returned belongs to the request; it does not assert that the list is empty.
+}
+
+script:pre-request {
+  const { loginAsEnterprise, scopes, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  await loginAsEnterprise(td.enterprise, scopes.consentRequestsRead);
+}
+
+tests {
+  test("WHEN the events are filtered by request id, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN a page is returned with a data array and a links object", function() {
+    const body = res.getBody();
+    expect(body).to.have.property("links");
+    expect(body.data).to.be.an("array");
+  });
+
+  test("THEN every returned event belongs to the request", function() {
+    const id = bru.getVar("consentRequestId");
+    res.getBody().data.forEach(e => {
+      expect(e.consentRequestId).to.equal(id);
+    });
+  });
+}

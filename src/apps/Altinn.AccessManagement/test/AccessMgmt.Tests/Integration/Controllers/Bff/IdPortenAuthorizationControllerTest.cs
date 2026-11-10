@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text.Json;
@@ -46,9 +46,9 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Bff
 
             HttpResponseMessage response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
             string responseText = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
-            
+
             List<IdPortenAuthorization> authorizations = await response.Content.ReadFromJsonAsync<List<IdPortenAuthorization>>(cancellationToken: TestContext.Current.CancellationToken);
-            
+
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             Assert.NotNull(authorizations);
             Assert.Single(authorizations);

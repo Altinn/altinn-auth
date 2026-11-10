@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Text.Json;
 using Altinn.AccessMgmt.Core.Outbox;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;

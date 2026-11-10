@@ -1,0 +1,132 @@
+meta {
+  name: 02_WHEN_EnterpriseCreatesConsentRequest
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enterprise/consentrequests
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "id": "{{consentRequestId}}",
+    "from": "{{consentFrom}}",
+    "to": "{{consentTo}}",
+    "validTo": "{{consentValidTo}}",
+    "consentRights": [
+      {
+        "action": ["{{consentAction}}"],
+        "resource": [
+          {
+            "type": "urn:altinn:resource",
+            "value": "{{consentResource}}"
+          }
+        ],
+        "metadata": {
+          "inntektsaar": "{{consentMetadataValue}}"
+        }
+      }
+    ],
+    "requestMessage": {
+      "en": "Consent request from the Bruno consent scenarios",
+      "nb": "Samtykkeforespørsel fra Bruno-scenarioene for samtykke"
+    },
+    "redirectUrl": "https://altinn.no",
+    "portalViewMode": "show"
+  }
+}
+
+docs {
+  WHEN the enterprise creates a consent request for the person.
+
+  POST /accessmanagement/api/v1/enterprise/consentrequests
+
+  Creates a consent request from an enterprise (the to party) to a person or organization
+  (the from party). The caller chooses the request id, which makes the call safe to retry.
+
+  - Token: Maskinporten token with scope altinn:consentrequests.write. The consumer claim
+    decides who the enterprise is. "to" must be that enterprise, unless the token also
+    carries altinn:consentrequests.org (used by Digdir for eBevis).
+  - The enterprise must be permitted the requestconsent action on every resource in
+    consentRights, by the resource policy.
+  - Body:
+    - id: new uuid chosen by the caller.
+    - from: urn:altinn:person:identifier-no:... or urn:altinn:organization:identifier-no:...
+    - to: urn:altinn:organization:identifier-no:... of the enterprise.
+    - validTo: must be in the future.
+    - consentRights: one entry per resource. Each has action (for example consent),
+      exactly one resource of type urn:altinn:resource pointing at a resource of type
+      Consent, and metadata with every key the resource declares.
+    - requestMessage (optional): text per language shown to the person.
+    - redirectUrl: absolute http, https or app scheme URL the portal returns to.
+    - portalViewMode (optional): hide (default) or show. Only "show" requests are counted
+      by the portal count endpoint.
+    - requiredDelegator (optional): the only person allowed to answer.
+
+  Typical response: 201 Created with a Location header pointing at
+  GET /enterprise/consentrequests/:id, and the request with status Created, one Created
+  event performed by the enterprise, and viewUri, the portal page where the person
+  answers.
+}
+
+script:pre-request {
+  const { loginAsEnterprise, prepareConsentRequest, scopes, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  prepareConsentRequest("consentRequestId");
+
+  await loginAsEnterprise(td.enterprise, scopes.consentRequestsWrite);
+}
+
+tests {
+  const { testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+  const id = bru.getVar("consentRequestId");
+
+  test("WHEN the consent request is created, the request returns 201", function() {
+    expect(res.status).to.equal(201);
+  });
+
+  test("THEN the Location header points at the new request", function() {
+    const location = res.getHeader("location");
+    expect(location).to.be.a("string");
+    expect(location.toLowerCase()).to.match(new RegExp(`/accessmanagement/api/v1/enterprise/consentrequests/${id}$`));
+  });
+
+  test("THEN the request is returned with external identifiers and status Created", function() {
+    const body = res.getBody();
+    expect(body.id).to.equal(id);
+    expect(body.from).to.equal(`urn:altinn:person:identifier-no:${td.consentingPerson.pid}`);
+    expect(body.to).to.equal(`urn:altinn:organization:identifier-no:${td.enterprise.orgno}`);
+    expect(body.status).to.equal("Created");
+    expect(body.consented).to.be.null;
+    expect(body.handledBy).to.be.null;
+    expect(body.requiredDelegator).to.be.null;
+    expect(body.redirectUrl).to.equal("https://altinn.no");
+    expect(body.portalViewMode).to.equal("Show");
+    expect(new Date(body.validTo).getTime()).to.be.closeTo(new Date(bru.getVar("consentValidTo")).getTime(), 1000);
+    expect(body.requestMessage).to.have.property("en");
+    expect(body.viewUri).to.include(`/accessmanagement/ui/consent/request?id=${id}`);
+  });
+
+  test("THEN the consent right echoes resource, action and metadata", function() {
+    const rights = res.getBody().consentRights;
+    expect(rights).to.be.an("array").with.lengthOf(1);
+    expect(rights[0].action).to.deep.equal([td.consentResource.action]);
+    expect(rights[0].resource).to.have.lengthOf(1);
+    expect(rights[0].resource[0].type).to.equal("urn:altinn:resource");
+    expect(rights[0].resource[0].value).to.equal(td.consentResource.id);
+    expect(rights[0].metadata).to.deep.equal({ [td.consentResource.metadataKey]: td.consentResource.metadataValue });
+  });
+
+  test("THEN one Created event is recorded, performed by the enterprise", function() {
+    const events = res.getBody().consentRequestEvents;
+    expect(events).to.be.an("array").with.lengthOf(1);
+    expect(events[0].eventType).to.equal("Created");
+    expect(events[0].consentRequestID).to.equal(id);
+    expect(events[0].performedBy).to.equal(`urn:altinn:organization:identifier-no:${td.enterprise.orgno}`);
+  });
+}

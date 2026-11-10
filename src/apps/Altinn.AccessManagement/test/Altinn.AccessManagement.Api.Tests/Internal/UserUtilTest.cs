@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Altinn.AccessManagement.Api.Internal.Utils;
 
 // See: overhaul part-2 step 19

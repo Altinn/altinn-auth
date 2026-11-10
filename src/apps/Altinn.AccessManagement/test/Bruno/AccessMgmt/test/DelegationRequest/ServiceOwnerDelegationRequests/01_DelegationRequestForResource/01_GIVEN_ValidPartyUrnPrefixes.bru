@@ -1,0 +1,33 @@
+meta {
+  name: 01_GIVEN_ValidPartyUrnPrefixes
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/delegationrequests/_meta/urns/party
+  body: none
+  auth: none
+}
+
+docs {
+  GIVEN the valid party URN prefixes for delegation requests.
+
+  GET /accessmanagement/api/v1/serviceowner/delegationrequests/_meta/urns/party
+
+  Anonymous: needs no token. Returns 200 with the URN prefixes `from` and `to` accept.
+  The request endpoints reject any other prefix with 400 AMSO.VLD-00001.
+}
+
+tests {
+  test("GIVEN the URN prefixes are looked up, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the person and organization identifier prefixes are listed", function() {
+    expect(res.getBody()).to.have.members([
+      "urn:altinn:person:identifier-no",
+      "urn:altinn:organization:identifier-no",
+    ]);
+  });
+}

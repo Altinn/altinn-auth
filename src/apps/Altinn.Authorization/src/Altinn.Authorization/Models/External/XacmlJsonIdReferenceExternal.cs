@@ -1,4 +1,4 @@
-namespace Altinn.Platform.Authorization.Models.External
+﻿namespace Altinn.Platform.Authorization.Models.External
 {
     /// <summary>
     /// A JSON object for policy refernces.

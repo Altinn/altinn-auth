@@ -1,4 +1,4 @@
-var builder = DistributedApplication.CreateBuilder(args);
+﻿var builder = DistributedApplication.CreateBuilder(args);
 
 builder.AddProject<Projects.Altinn_AccessManagement_Api_ServiceOwner>("altinn-accessmanagement-api-serviceowner");
 builder.AddProject<Projects.Altinn_AccessManagement_Api_Enduser>("altinn-accessmanagement-api-enduser");

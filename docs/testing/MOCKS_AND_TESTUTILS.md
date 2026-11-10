@@ -27,7 +27,6 @@ have been removed.
 | `PolicyRepositoryMock` | `IPolicyRepository` |
 | `PolicyRetrievalPointMock` | `IPolicyRetrievalPoint` |
 | `PolicyFactoryMock` | `IPolicyFactory` |
-| `DelegationChangeEventQueueMock` | `IDelegationChangeEventQueue` |
 | `ResourceRegistryClientMock` | `IResourceRegistryClient` |
 | `ProfileClientMock` | `IProfile` |
 | `AltinnRolesClientMock` | `IAltinnRolesClient` |

@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using Altinn.AccessMgmt.FFB.Jobs.Models;
 
 namespace Altinn.AccessMgmt.FFB.Jobs;

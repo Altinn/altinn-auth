@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.Host.Lease.Tests;
+﻿namespace Altinn.Authorization.Host.Lease.Tests;
 
 /// <summary>
 /// Abstract base class for lease-related fanout tests.

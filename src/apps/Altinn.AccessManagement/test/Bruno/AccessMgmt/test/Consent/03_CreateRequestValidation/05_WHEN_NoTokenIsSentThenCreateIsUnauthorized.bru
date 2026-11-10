@@ -1,0 +1,56 @@
+meta {
+  name: 05_WHEN_NoTokenIsSentThenCreateIsUnauthorized
+  type: http
+  seq: 5
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enterprise/consentrequests
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "id": "{{consentRequestId}}",
+    "from": "{{consentFrom}}",
+    "to": "{{consentTo}}",
+    "validTo": "{{consentValidTo}}",
+    "consentRights": [
+      {
+        "action": ["{{consentAction}}"],
+        "resource": [
+          {
+            "type": "urn:altinn:resource",
+            "value": "{{consentResource}}"
+          }
+        ],
+        "metadata": {
+          "inntektsaar": "{{consentMetadataValue}}"
+        }
+      }
+    ],
+    "redirectUrl": "https://altinn.no",
+    "portalViewMode": "show"
+  }
+}
+
+docs {
+  WHEN no token is sent, the create is unauthorized.
+
+  POST /accessmanagement/api/v1/enterprise/consentrequests
+
+  The request is sent without an Authorization header. Expects 401.
+}
+
+script:pre-request {
+  const { prepareConsentRequest } = require("./test/Consent/helpers.js");
+
+  prepareConsentRequest("consentRequestId");
+}
+
+tests {
+  test("WHEN no token is sent, the request returns 401", function() {
+    expect(res.status).to.equal(401);
+  });
+}

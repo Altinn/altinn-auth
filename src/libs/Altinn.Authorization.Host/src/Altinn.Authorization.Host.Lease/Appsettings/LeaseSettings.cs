@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.Host.Lease.Appsettings;
+﻿namespace Altinn.Authorization.Host.Lease.Appsettings;
 
 /// <summary>
 /// Represents the lease settings used for distributed locking in Altinn authorization.

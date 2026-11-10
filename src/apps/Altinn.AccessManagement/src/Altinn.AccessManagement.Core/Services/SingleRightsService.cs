@@ -1,13 +1,13 @@
-using Altinn.AccessManagement.Core.Constants;
+﻿using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Enums;
 using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessManagement.Core.Helpers.Extensions;
 using Altinn.AccessManagement.Core.Models;
-using Altinn.AccessManagement.Core.Models.Rights;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Enums;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
+using Altinn.Authorization.Api.Contracts.Authorization;
 using Altinn.Urn;
 using Altinn.Urn.Json;
 

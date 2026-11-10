@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.Host.Lease;
+﻿namespace Altinn.Authorization.Host.Lease;
 
 /// <summary>
 /// Represents configuration options for managing leases in the Altinn system.

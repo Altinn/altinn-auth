@@ -1,0 +1,29 @@
+meta {
+  name: SystemUserPackageRequest
+  seq: 10
+}
+
+auth {
+  mode: inherit
+}
+
+docs {
+  Feature: System users send access package requests to organisations
+
+    A system user owned by a public sector organisation (KOMM, FYLK or STAT) can ask an
+    organisation, identified by organisation number, for an access package through
+    POST /accessmanagement/api/v1/systemuser/request/package. The token is a system user
+    token carrying the scope altinn:accessmanagement/systemuser:requests.write; the consumer
+    claim identifies the organisation that owns the system user.
+
+    A system user can never receive requests, and system users owned by any other kind of
+    organisation are rejected.
+
+  Personas and seed data live in testdata/<tokenEnv>.js next to this file:
+    - publicSectorConsumer: KOMM/FYLK/STAT organisation that owns systemUser
+    - privateConsumer: organisation of another type that owns privateSystemUser
+    - recipient: organisation receiving the request, with its dagligleder
+    - package: an access package the recipient can grant
+
+  Requires the EnableSystemUserRequests feature flag in the target environment.
+}

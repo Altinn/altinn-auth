@@ -1,0 +1,47 @@
+meta {
+  name: 03_WHEN_OrganisationIsUnknownThenRequestFails
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/systemuser/request/package?organization={{organization}}&package={{package}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  organization: {{organization}}
+  package: {{package}}
+}
+
+docs {
+  WHEN the organisation number is valid but no organisation has it.
+
+  Expects 400 with error code STD-00000 and validation error AM.VLD-00006 whose paths point
+  at the organization query parameter.
+}
+
+script:pre-request {
+  const { testdata, loginAsSystemUser } = require("./test/DelegationRequest/SystemUserPackageRequest/helpers.js");
+  const td = testdata();
+
+  bru.setVar("organization", td.unknownOrgNo);
+  bru.setVar("package", td.package);
+
+  await loginAsSystemUser(td.publicSectorConsumer.systemUser, td.publicSectorConsumer.orgno, td.publicSectorConsumer.orgno);
+}
+
+tests {
+  test("WHEN the organisation is unknown, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN validation error AM.VLD-00006 points at the organization parameter", function() {
+    const body = res.getBody();
+    expect(body.code).to.equal("STD-00000");
+    const err = body.validationErrors.find(e => e.code === "AM.VLD-00006");
+    expect(err, "expected validation error AM.VLD-00006").to.not.be.undefined;
+    expect(JSON.stringify(err.paths)).to.include("organization");
+  });
+}

@@ -201,4 +201,24 @@ public static class Problems
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
     public static ProblemDescriptor IdPortenAuthorizationInternalServerError { get; }
     = _factory.Create(47, HttpStatusCode.InternalServerError, "An internal server error occurred while processing the IdPorten authorization request");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor ResourceDelegationNotAuthorized { get; }
+    = _factory.Create(48, HttpStatusCode.Forbidden, "Service owner is not authorized to delegate this resource");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor ResourceNotRevocableFromAssignment { get; }
+    = _factory.Create(49, HttpStatusCode.BadRequest, "The resource is not delegated by the entity trying to revoke so it is denied");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor ResourceDelegationChangedByOther { get; }
+    = _factory.Create(50, HttpStatusCode.BadRequest, "The resource is already delegated between these parties by someone other than the service owner. The delegation can only be changed by the party itself.");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor SystemUserRequestNotAllowed { get; }
+    = _factory.Create(51, HttpStatusCode.Forbidden, "This access request is not allowed for the given parties.");
+
+    /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
+    public static ProblemDescriptor ConcurrentPersistenceConflict { get; }
+    = _factory.Create(52, HttpStatusCode.Conflict, "The same data was changed by another request at the same time. Try again.");
 }

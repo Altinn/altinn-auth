@@ -1,4 +1,4 @@
-﻿# Test Naming Convention
+# Test Naming Convention
 
 ## Standard
 

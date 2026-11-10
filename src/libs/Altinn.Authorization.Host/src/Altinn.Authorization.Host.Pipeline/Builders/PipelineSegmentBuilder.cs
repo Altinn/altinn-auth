@@ -1,4 +1,4 @@
-using Altinn.Authorization.Host.Pipeline.Services;
+﻿using Altinn.Authorization.Host.Pipeline.Services;
 
 namespace Altinn.Authorization.Host.Pipeline.Builders;
 

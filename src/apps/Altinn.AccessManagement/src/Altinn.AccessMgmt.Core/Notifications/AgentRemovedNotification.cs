@@ -1,4 +1,4 @@
-using Altinn.AccessMgmt.Core.Outbox;
+﻿using Altinn.AccessMgmt.Core.Outbox;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;

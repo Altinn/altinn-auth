@@ -1,4 +1,4 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 using Altinn.AccessManagement.Core.Models.Party;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.Authorization.Api.Contracts.Register;

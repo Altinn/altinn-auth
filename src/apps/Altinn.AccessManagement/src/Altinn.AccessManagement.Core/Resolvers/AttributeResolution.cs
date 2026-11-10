@@ -1,4 +1,4 @@
-namespace Altinn.AccessManagement.Core.Resolvers;
+﻿namespace Altinn.AccessManagement.Core.Resolvers;
 
 /// <summary>
 /// A data container that encapsulates the needed parameters in order to run a resolver.

@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using Altinn.AccessManagement.Enums;
 
 namespace Altinn.AccessManagement.Core.Models

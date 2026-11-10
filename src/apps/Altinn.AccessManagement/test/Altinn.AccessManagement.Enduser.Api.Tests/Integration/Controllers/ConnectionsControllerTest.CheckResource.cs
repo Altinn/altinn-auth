@@ -16,6 +16,9 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers;
 
+/// <summary>
+/// Tests resource access checks through the connections controller.
+/// </summary>
 public partial class ConnectionsControllerTest
 {
     /// <summary>

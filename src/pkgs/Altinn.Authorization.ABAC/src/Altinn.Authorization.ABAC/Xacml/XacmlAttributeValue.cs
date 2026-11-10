@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using System.Xml.Linq;
 using Altinn.Authorization.ABAC.Utils;
 

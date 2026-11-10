@@ -1,4 +1,4 @@
-namespace Altinn.Platform.Authorization.Models.External
+﻿namespace Altinn.Platform.Authorization.Models.External
 {
     /// <summary>
     /// JSON object for request references.

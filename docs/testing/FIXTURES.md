@@ -1,5 +1,11 @@
 # Fixtures
 
+**TL;DR**
+
+- Access Management fixtures provision PostgreSQL test databases.
+- Authorization uses a mock-backed API fixture and requires no database container.
+
+
 A *fixture* is the xUnit-managed object whose lifetime spans one test class
 (`IClassFixture<T>`) or one collection (`ICollectionFixture<T>`). Integration
 tests use fixtures to host a `WebApplicationFactory<Program>` and to provision
@@ -91,7 +97,7 @@ subset of tests, put those tests in a dedicated class with its own fixture.
 **Database:** None — the Authorization app uses mocks for its data stores.
 
 Pre-registers the full common mock graph for Authorization (PolicyRetrievalPoint,
-PolicyRepository, DelegationMetadataRepository, signing key provider, events
+PolicyRepository, the Access Management client, signing key provider, events
 queue, etc.) so test classes don't have to duplicate that wiring.
 
 ```csharp
@@ -171,19 +177,16 @@ PostgreSQL container is needed.
 When no Docker / Podman socket is reachable, `PostgresTestEngine` records a
 `SkipReason` instead of throwing — a skip raised from a fixture's
 `InitializeAsync` surfaces as a fixture-init *failure*, not a skip, in xUnit v3.
-Fixtures convert that reason to a per-test skip: `AuthorizationDbFixture` exposes
-`SkipReason` and its tests call `Assert.SkipWhen(...)`. `ApiFixture` /
-`EFPostgresFactory` still surface a missing runtime as a failure (converting its
-many test classes to the per-test-skip pattern is tracked separately); in CI a
-runtime is always present.
+`ApiFixture` / `EFPostgresFactory` surface a missing runtime as a failure
+(converting their test classes to a per-test-skip pattern is tracked separately);
+in CI a runtime is always present.
 
 ## Other fixtures
 
-- **`AuthorizationDbFixture`** (`Altinn.Authorization.Tests`) — provides a
-  PostgreSQL database with the Authorization `delegation` schema for the
-  delegation-metadata repository tests. Backed by the shared `PostgresTestEngine`
-  (the EF Core migrations are applied once into a template; each test class gets a
-  clone). (`AuthorizationApiFixture` itself is mock-backed and needs no container.)
+- **`AuthorizationApiFixture`** (`Altinn.Authorization.Tests`) — boots the
+  Authorization API with mocked repositories and external clients. Delegation
+  metadata comes through the Access Management client mock; no PostgreSQL
+  container is required.
 - **`PlatformFixture`** (`Altinn.Authorization.Integration.Tests`) — wires up the
   platform-integration clients against the **live** platform; its tests
   `Assert.Skip(...)` when credentials/config are missing, so they don't run in a

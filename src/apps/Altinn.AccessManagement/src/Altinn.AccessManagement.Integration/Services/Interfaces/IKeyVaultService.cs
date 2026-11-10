@@ -1,4 +1,4 @@
-namespace Altinn.AccessManagement.Integration.Services.Interfaces;
+﻿namespace Altinn.AccessManagement.Integration.Services.Interfaces;
 
 /// <summary>
 /// Interface for interacting with key vault

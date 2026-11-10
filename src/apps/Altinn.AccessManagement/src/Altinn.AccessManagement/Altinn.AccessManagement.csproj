@@ -2,10 +2,11 @@
 
     <PropertyGroup>
         <IsAppProject>true</IsAppProject>
-        <ContainerName>altinn-accessmanagement</ContainerName>
+        <ContainerName>access-management</ContainerName>
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Altinn.Authorization.ModelUtils.Swashbuckle" />
         <PackageReference Include="Altinn.Authorization.ProblemDetails" />
         <PackageReference Include="Altinn.Authorization.ServiceDefaults" />
         <PackageReference Include="Altinn.Common.AccessToken" />
@@ -19,7 +20,6 @@
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
           <PrivateAssets>all</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="Microsoft.Extensions.Configuration.AzureKeyVault" />
         <PackageReference Include="Microsoft.Extensions.Logging.ApplicationInsights" />
         <PackageReference Include="Microsoft.FeatureManagement.AspNetCore" />
         <PackageReference Include="Microsoft.IdentityModel.Logging" />
@@ -34,6 +34,7 @@
 
     <ItemGroup>
         <ProjectReference Include="..\..\..\..\libs\Altinn.Authorization.Api.Contracts\src\Altinn.Authorization.Api.Contracts\Altinn.Authorization.Api.Contracts.csproj" />
+        <ProjectReference Include="..\Altinn.AccessManagement.Api.Apps\Altinn.AccessManagement.Api.Apps.csproj" />
         <ProjectReference Include="..\Altinn.AccessManagement.Api.Enduser\Altinn.AccessManagement.Api.Enduser.csproj" />
         <ProjectReference Include="..\..\..\..\libs\Altinn.Authorization.Host\src\Altinn.Authorization.Host.Database\Altinn.Authorization.Host.Database.csproj" />
         <ProjectReference Include="..\Altinn.AccessManagement.Api.Enterprise\Altinn.AccessManagement.Api.Enterprise.csproj" />

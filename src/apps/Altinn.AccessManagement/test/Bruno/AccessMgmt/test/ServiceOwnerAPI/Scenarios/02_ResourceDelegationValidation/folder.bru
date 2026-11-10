@@ -1,0 +1,17 @@
+meta {
+  name: 02_ResourceDelegationValidation
+  seq: 2
+}
+
+docs {
+  Scenario: The resource delegation endpoints reject invalid input and foreign resources
+
+    When the rights for an unknown resource are looked up the request fails
+    When a right is delegated without right keys the request fails
+    When an unknown resource is delegated the request fails
+    When another service owner revokes a delegation on the resource the request is forbidden
+    When the token lacks the resource delegation scope the request is forbidden
+
+  None of the steps writes anything: every request is rejected before a delegation is
+  created or removed, so the scenario needs no reset or cleanup.
+}

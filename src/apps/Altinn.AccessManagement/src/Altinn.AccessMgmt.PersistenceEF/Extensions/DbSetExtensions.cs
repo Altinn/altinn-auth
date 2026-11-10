@@ -235,7 +235,7 @@ public static class DbSetExtensions
     /// </summary>
     public static async Task<int> SaveChangesWithOutboxRetry(
         this DbContext db,
-        Func<Task> reUpsert,
+        Func<Task> retryUpsert,
         CancellationToken ct = default)
     {
         try
@@ -250,7 +250,7 @@ public static class DbSetExtensions
                 entry.State = EntityState.Detached;
             }
 
-            await reUpsert();
+            await retryUpsert();
             return await db.SaveChangesAsync(ct);
         }
     }

@@ -1,0 +1,64 @@
+meta {
+  name: 05_THEN_ReceiverHoldsReadAndWrite
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources/rights?party={{party}}&from={{party}}&to={{to}}&resource={{resource}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{to}}
+  resource: {{resource}}
+}
+
+docs {
+  THEN the receiver holds read and write on the resource as direct rights from the
+  delegator through the rightholder role.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/Connections/AvailableUsersAndRights/helpers.js");
+  const td = testdata();
+
+  bru.setVar("party", td.delegator.partyUuid);
+  bru.setVar("to", td.receiver.partyUuid);
+  bru.setVar("resource", td.resource.refId);
+
+  await loginAs(td.delegator);
+}
+
+tests {
+  const { testdata } = require("./test/EnduserAPI/Connections/AvailableUsersAndRights/helpers.js");
+  const td = testdata();
+
+  test("THEN the rights request returns 200 for the resource", function() {
+    expect(res.status).to.equal(200);
+    expect(res.getBody().resource.refId).to.equal(td.resource.refId);
+  });
+
+  test("THEN read and write are the direct rights, and there are no indirect rights", function() {
+    const body = res.getBody();
+    expect(body.indirectRights).to.be.an("array").that.is.empty;
+    const actions = body.directRights.map(d => d.right.action.value);
+    expect(actions).to.have.members(["read", "write"]);
+    const keys = body.directRights.map(d => d.right.key);
+    expect(keys).to.have.members([bru.getVar("aur_readKey"), bru.getVar("aur_writeKey")]);
+  });
+
+  test("THEN every direct right is held directly from the delegator as rightholder", function() {
+    for (const d of res.getBody().directRights) {
+      expect(d.reason.items.map(i => i.name)).to.include("direct");
+      expect(d.right.resource[0].value).to.equal(td.resource.refId);
+      const perm = d.permissions[0];
+      expect(perm.from.id.toLowerCase()).to.equal(td.delegator.partyUuid.toLowerCase());
+      expect(perm.to.id.toLowerCase()).to.equal(td.receiver.partyUuid.toLowerCase());
+      expect(perm.role.code).to.equal("rettighetshaver");
+    }
+  });
+}

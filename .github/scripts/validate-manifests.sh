@@ -2,49 +2,102 @@
 # Renders every kustomize overlay this repo publishes and checks that each syncroot
 # overlay selects the environment it is named for.
 #
-# Everything is validated in full, not just one environment: the app manifests
-# artifact carries a single tag that every environment reads, so a push made for one
-# environment ships every other environment's overlay along with it.
+# Everything is validated in full, not just one environment: the pull request workflow
+# runs this with no target environment, and an overlay that is only rendered when
+# someone dispatches its environment breaks long after the change that broke it.
 set -euo pipefail
 shopt -s nullglob
 
 APPS_ROOT="${APPS_ROOT:-./src/apps}"
-SYNCROOT_DIR="${SYNCROOT_WORKDIR:-./flux/syncroot}"
+
+# The two stages inside the manifests artifact, in the order Flux applies them.
+OPT_STAGES=(pre-deploy)
+STAGES=(pre-deploy deploy)
+SYNCROOT_ENVIRONMENTS=(at22 at23 at24 tt02 yt01 prod)
+ERRORS=0
 
 fail() {
   echo "::error::$*"
-  exit 1
+  ERRORS=$((ERRORS + 1))
 }
 
-# Every app that ships a deploy/ directory is validated, not just the one currently
+success() {
+  echo "$*"
+}
+
+# Renders every overlay in a stage directory. base/ is the shared foundation, not an
+# overlay, so it is only rendered through the overlays that reference it.
+render_overlays() {
+  local stage_dir="$1"
+
+  [ -f "${stage_dir}base/kustomization.yaml" ] || fail "Missing ${stage_dir}base/kustomization.yaml"
+
+  local overlay
+  for overlay in "${stage_dir}"*/; do
+    if [ "$(basename "${overlay}")" = "base" ]; then
+      continue
+    fi
+
+    if [[ ! -f "${overlay}kustomization.yaml" ]]; then
+      fail "Missing ${overlay}kustomization.yaml"
+      continue
+    fi
+    
+    if kustomize build "${overlay}" > /dev/null; then
+      success "Rendered ${overlay}"
+    else
+      fail "${overlay} failed to render"
+    fi
+  done
+}
+
+# Every app that ships a manifests/ directory is validated, not just the one currently
 # published: an app whose overlays never render is a deploy that breaks the day it is
 # wired into the syncroot, long after the change that broke it was merged.
-app_dirs=("${APPS_ROOT}"/*/deploy/)
-[ ${#app_dirs[@]} -gt 0 ] || fail "No app deploy directories under ${APPS_ROOT}/*/deploy/"
+manifest_dirs=("${APPS_ROOT}"/*/manifests/)
+[ ${#manifest_dirs[@]} -gt 0 ] || fail "No app manifest directories under ${APPS_ROOT}/*/manifests/"
 
-for app_dir in "${app_dirs[@]}"; do
-  [ -f "${app_dir}base/kustomization.yaml" ] || fail "Missing ${app_dir}base/kustomization.yaml"
+for manifest_dir in "${manifest_dirs[@]}"; do
+  for stage in "${STAGES[@]}"; do
+    if [[ ! " ${OPT_STAGES[@]} " =~ " ${stage} " && ! -d "${manifest_dir}${stage}" ]]; then
+      fail "Missing ${manifest_dir}${stage}/"
+    fi
 
-  app_overlays=("${app_dir}"environments/*/)
-  [ ${#app_overlays[@]} -gt 0 ] || fail "No overlays under ${app_dir}environments/"
-
-  for overlay in "${app_overlays[@]}"; do
-    [ -f "${overlay}kustomization.yaml" ] || fail "Missing ${overlay}kustomization.yaml"
-    kustomize build "${overlay}" > /dev/null
-    echo "Renders: ${overlay}"
+    if [[ -d "${manifest_dir}${stage}/" ]]; then
+      render_overlays "${manifest_dir}${stage}/"
+    fi
   done
 done
 
-for dir in "${SYNCROOT_DIR}"/*/; do
-  env="$(basename "${dir}")"
-  if [ "${env}" = "base" ]; then
-    continue
-  fi
-  [ -f "${dir}kustomization.yaml" ] || fail "Missing ${dir}kustomization.yaml"
-  rendered="$(kustomize build "${dir}")"
-  # base hardcodes a path and every overlay is expected to patch it. An overlay that
-  # forgets renders another environment's manifests, which fails silently in-cluster.
-  grep -qE "^ *path: \./environments/${env}\$" <<< "${rendered}" \
-    || fail "${dir} does not select ./environments/${env}"
-  echo "Selects ./environments/${env}: ${dir}"
+syncroot_dirs=("${APPS_ROOT}"/*/syncroot/)
+
+for syncroot_dir in "${syncroot_dirs[@]}"; do
+  for env in "${SYNCROOT_ENVIRONMENTS[@]}"; do
+    if ! [ -f "${syncroot_dir}${env}/kustomization.yaml" ]; then
+      fail "Missing ${syncroot_dir}${env}/kustomization.yaml"
+      continue
+    fi
+  done
+
+  for dir in "${syncroot_dir}"*/; do
+    env="$(basename "${dir}")"
+    if [ "${env}" = "base" ]; then
+      continue
+    fi
+    if ! [ -f "${dir}kustomization.yaml" ]; then
+      fail "Missing ${dir}kustomization.yaml"
+      continue
+    fi
+    
+    rendered="$(kustomize build "${dir}")"
+    # Each environment overlay must select its own OCI artifact tag.
+    if ! grep -qE "^ *tag: ${env}\$" <<< "${rendered}"; then
+      fail "${dir} does not pin the OCIRepository to tag ${env}"
+      continue
+    fi
+  done
 done
+
+if [ "${ERRORS}" -ne 0 ]; then
+  exit 1
+fi

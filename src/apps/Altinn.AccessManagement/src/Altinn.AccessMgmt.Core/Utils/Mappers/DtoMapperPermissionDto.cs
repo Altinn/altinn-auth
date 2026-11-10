@@ -36,7 +36,7 @@ public partial class DtoMapper : IDtoMapper
                 return AccessReasonFlag.KeyRole;
             default:
                 return AccessReasonFlag.None;
-        }        
+        }
     }
 
     public static PermissionDto ConvertToPermission(ConnectionQueryExtendedRecord connection)

@@ -1,0 +1,38 @@
+meta {
+  name: 04_WHEN_SystemUserWithdrawsTheRequest
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{baseUrl}}/accessmanagement/api/v1/systemuser/request/sent/withdraw?id={{withdrawRequestId}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  id: {{withdrawRequestId}}
+}
+
+docs {
+  WHEN the system user withdraws the request it sent.
+
+  Expects 200 with the request in status Withdrawn. This also cleans up the scenario.
+}
+
+script:pre-request {
+  const { testdata, loginAsSystemUser } = require("./test/DelegationRequest/SystemUserPackageRequest/helpers.js");
+  const td = testdata();
+
+  await loginAsSystemUser(td.publicSectorConsumer.systemUser, td.publicSectorConsumer.orgno, td.publicSectorConsumer.orgno);
+}
+
+tests {
+  test("WHEN the system user withdraws the request, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the request is withdrawn", function() {
+    expect(res.getBody().status).to.equal("Withdrawn");
+  });
+}

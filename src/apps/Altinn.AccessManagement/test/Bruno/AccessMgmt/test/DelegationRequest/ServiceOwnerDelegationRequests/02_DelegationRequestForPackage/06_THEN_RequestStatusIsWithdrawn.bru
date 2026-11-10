@@ -1,0 +1,34 @@
+meta {
+  name: 06_THEN_RequestStatusIsWithdrawn
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/delegationrequests/{{so_packageRequestId}}/status
+  body: none
+  auth: inherit
+}
+
+docs {
+  THEN the request status is Withdrawn.
+}
+
+script:pre-request {
+  const { td, loginAsServiceOwner, scopes } = require("./test/DelegationRequest/ServiceOwnerDelegationRequests/helpers.js");
+  const data = td();
+
+  bru.setVar("grantorPid", data.delegationRequest.grantor.pid);
+  bru.setVar("requesterPid", data.delegationRequest.requester.pid);
+  bru.setVar("requestResource", data.delegationRequest.resource);
+  bru.setVar("requestPackage", data.delegationRequest.package);
+
+  await loginAsServiceOwner(data.serviceOwners.ttd, scopes.delegationRequestsRead);
+}
+
+tests {
+  test("THEN the status request returns 200 with Withdrawn", function() {
+    expect(res.status).to.equal(200);
+    expect(res.getBody()).to.equal("Withdrawn");
+  });
+}

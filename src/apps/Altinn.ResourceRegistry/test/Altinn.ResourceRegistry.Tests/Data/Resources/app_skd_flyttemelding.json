@@ -1,0 +1,24 @@
+{
+  "identifier": "app_skd_flyttemelding",
+  "description": null,
+  "title": {
+    "nb": "Flyttemelding"
+  },
+  "hasCompetentAuthority": {
+    "organization": "991825827",
+    "orgcode": "digdir"
+  },
+  "contactpoint": [
+    {
+      "phone": "1231324",
+      "email": "online@digdir.no"
+    }
+  ],
+  "isPartOf": null,
+  "hasPart": null,
+  "homepage": null,
+  "status": null,
+  "thematicArea": null,
+  "type": [],
+  "sector": []
+}

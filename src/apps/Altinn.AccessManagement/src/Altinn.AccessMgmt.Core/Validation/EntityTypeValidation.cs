@@ -1,4 +1,4 @@
-using Altinn.AccessManagement.Core.Errors;
+﻿using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.Authorization.ProblemDetails;
 

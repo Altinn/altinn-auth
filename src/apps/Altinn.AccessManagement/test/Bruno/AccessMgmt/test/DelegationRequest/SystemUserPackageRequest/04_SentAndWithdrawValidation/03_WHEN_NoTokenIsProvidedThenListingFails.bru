@@ -1,0 +1,21 @@
+meta {
+  name: 03_WHEN_NoTokenIsProvidedThenListingFails
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/systemuser/request/sent
+  body: none
+  auth: none
+}
+
+docs {
+  WHEN no token is provided, listing sent requests fails with 401.
+}
+
+tests {
+  test("WHEN no token is provided, the request returns 401", function() {
+    expect(res.status).to.equal(401);
+  });
+}

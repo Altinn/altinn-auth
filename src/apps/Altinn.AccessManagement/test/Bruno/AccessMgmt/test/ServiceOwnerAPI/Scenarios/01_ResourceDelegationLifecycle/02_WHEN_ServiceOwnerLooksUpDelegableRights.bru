@@ -1,0 +1,70 @@
+meta {
+  name: 02_WHEN_ServiceOwnerLooksUpDelegableRights
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/connections/resources/rights?resource={{resource}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  resource: {{resource}}
+}
+
+docs {
+  WHEN the service owner looks up the rights it can delegate on the resource.
+
+  GET /accessmanagement/api/v1/serviceowner/connections/resources/rights?resource=<id>
+
+  Scope `altinn:serviceowner/delegations:resource.write`. Returns 200 with one entry per
+  right in the resource policy: `key` is the opaque right key the delegate endpoint
+  takes, `name` is the display name, `resource` the resource attributes and `action`
+  the XACML action. 400 AM-00027 for an unknown resource, 403 AM-00048 when the token's
+  organization does not own the resource.
+
+  The read right's key is captured for the delegation step.
+}
+
+script:pre-request {
+  const { td, loginAsServiceOwner, scopes, serviceOwners } = require("./test/ServiceOwnerAPI/Scenarios/helpers.js");
+  const data = td();
+
+  bru.setVar("grantorPid", data.resourceDelegation.grantor.pid);
+  bru.setVar("recipientPid", data.resourceDelegation.recipient.pid);
+  bru.setVar("resource", data.resourceDelegation.resource);
+
+  await loginAsServiceOwner(serviceOwners.digdir, scopes.resourceDelegationWrite);
+}
+
+script:post-response {
+  const rights = res.getBody();
+  const read = Array.isArray(rights) ? rights.find(r => r.action && r.action.value === "read") : undefined;
+  if (read) {
+    bru.setVar("so_readRightKey", read.key);
+  }
+}
+
+tests {
+  const { td } = require("./test/ServiceOwnerAPI/Scenarios/helpers.js");
+  const resource = td().resourceDelegation.resource;
+
+  test("WHEN the rights are looked up, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the read and write rights are listed with keys for the resource", function() {
+    const rights = res.getBody();
+    expect(rights).to.be.an("array").that.is.not.empty;
+    const actions = rights.map(r => r.action.value);
+    expect(actions).to.include.members(["read", "write"]);
+    for (const right of rights) {
+      expect(right.key).to.be.a("string").that.is.not.empty;
+      expect(right.name).to.be.a("string").that.is.not.empty;
+      expect(right.action.type).to.equal("urn:oasis:names:tc:xacml:1.0:action:action-id");
+      expect(right.resource).to.deep.include({ type: "urn:altinn:resource", value: resource });
+    }
+  });
+}

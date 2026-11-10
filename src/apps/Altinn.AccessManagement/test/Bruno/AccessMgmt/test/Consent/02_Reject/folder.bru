@@ -1,0 +1,17 @@
+meta {
+  name: 02_Reject
+  seq: 2
+}
+
+docs {
+  Scenario: A person rejects a consent request
+
+    Given the enterprise has created a consent request for the person
+    When the person rejects the request
+    Then the enterprise reads the request with status Rejected
+    And the rejected request can no longer be accepted
+    And the rejected request cannot be revoked
+    And the Maskinporten lookup reports the consent as not accepted
+
+  The request cannot be deleted. Rejecting it leaves it in a final state.
+}

@@ -1,4 +1,4 @@
-namespace Altinn.AccessManagement.Integration.Configuration
+﻿namespace Altinn.AccessManagement.Integration.Configuration
 {
     /// <summary>
     /// Configuration settings for the Maskinporten client used to integrate with the ID-porten authorizations API
@@ -9,7 +9,7 @@ namespace Altinn.AccessManagement.Integration.Configuration
         /// Id-Porten API base url
         /// </summary>
         public string IdPortenApiEndpoint { get; set; } = string.Empty;
-            
+
         /// <summary>
         /// The Maskinporten environment. Valid values are test or prod
         /// </summary>

@@ -1,4 +1,4 @@
-#nullable enable
+﻿#nullable enable
 using Altinn.AccessManagement.Api.ServiceOwner.Models;
 using Altinn.AccessManagement.Api.ServiceOwner.Utilities;
 using Altinn.AccessManagement.Core.Constants;
@@ -118,7 +118,9 @@ namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers
             {
                 SupplierOrg = delegation.CoveredByOrganizationNumber,
                 ConsumerOrg = delegation.OfferedByOrganizationNumber,
+#pragma warning disable CS0618 // Deprecated in the contract, but still returned until it is removed
                 DelegationSchemeId = delegationSchemeId,
+#pragma warning restore CS0618
                 Scopes = scopes,
                 Created = delegation.Created,
                 ResourceId = delegation.ResourceId,

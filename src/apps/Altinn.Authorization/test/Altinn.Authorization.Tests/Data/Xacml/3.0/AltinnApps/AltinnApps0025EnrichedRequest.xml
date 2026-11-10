@@ -8,10 +8,14 @@
       <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">skd</AttributeValue>
     </Attribute>
     <Attribute IncludeInResult="false" AttributeId="urn:altinn:rolecode">
-      <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">REGNA</AttributeValue>
-      <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">DAGL</AttributeValue>
-	  <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">apiadm</AttributeValue>
-	</Attribute>    
+      <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">regna</AttributeValue>
+    </Attribute>
+    <Attribute IncludeInResult="false" AttributeId="urn:altinn:rolecode">
+      <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">dagl</AttributeValue>
+    </Attribute>
+    <Attribute IncludeInResult="false" AttributeId="urn:altinn:rolecode">
+      <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">apiadm</AttributeValue>
+    </Attribute>
   </Attributes>
   <Attributes Category="urn:oasis:names:tc:xacml:3.0:attribute-category:resource">
     <Attribute IncludeInResult="false" AttributeId="urn:altinn:app">

@@ -1,0 +1,54 @@
+meta {
+  name: 03_AND_CreatingSameRequestAgainReturnsSameDraft
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/delegationrequests
+  body: json
+  auth: inherit
+}
+
+headers {
+  Content-Type: application/json
+  Accept: application/json
+}
+
+body:json {
+  {
+    "from": "urn:altinn:person:identifier-no:{{grantorPid}}",
+    "to": "urn:altinn:person:identifier-no:{{requesterPid}}",
+    "package": {
+      "referenceId": "{{requestPackage}}"
+    }
+  }
+}
+
+docs {
+  AND creating the same request again returns the same draft: 202 with the same id.
+}
+
+script:pre-request {
+  const { td, loginAsServiceOwner, scopes } = require("./test/DelegationRequest/ServiceOwnerDelegationRequests/helpers.js");
+  const data = td();
+
+  bru.setVar("grantorPid", data.delegationRequest.grantor.pid);
+  bru.setVar("requesterPid", data.delegationRequest.requester.pid);
+  bru.setVar("requestResource", data.delegationRequest.resource);
+  bru.setVar("requestPackage", data.delegationRequest.package);
+
+  await loginAsServiceOwner(data.serviceOwners.ttd, scopes.delegationRequestsWrite);
+}
+
+tests {
+  test("AND the repeated create returns 202", function() {
+    expect(res.status).to.equal(202);
+  });
+
+  test("AND it returns the same draft", function() {
+    const body = res.getBody();
+    expect(body.id).to.equal(bru.getVar("so_packageRequestId"));
+    expect(body.status).to.equal("Draft");
+  });
+}

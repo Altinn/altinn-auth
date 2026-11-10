@@ -1,4 +1,4 @@
-using Altinn.Authorization.Integration.Platform.Notification.Models;
+﻿using Altinn.Authorization.Integration.Platform.Notification.Models;
 using Microsoft.Extensions.Options;
 
 namespace Altinn.Authorization.Integration.Platform.Notification;

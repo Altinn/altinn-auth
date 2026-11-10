@@ -1,4 +1,4 @@
-using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
+﻿using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 
 // See: overhaul part-2 step 21
 namespace Altinn.AccessManagement.Tests.Unit.Queries;

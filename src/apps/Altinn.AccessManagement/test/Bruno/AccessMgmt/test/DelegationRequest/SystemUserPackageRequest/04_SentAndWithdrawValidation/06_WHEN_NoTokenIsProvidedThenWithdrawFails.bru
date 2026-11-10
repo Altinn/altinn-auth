@@ -1,0 +1,29 @@
+meta {
+  name: 06_WHEN_NoTokenIsProvidedThenWithdrawFails
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{baseUrl}}/accessmanagement/api/v1/systemuser/request/sent/withdraw?id={{unknownRequestId}}
+  body: none
+  auth: none
+}
+
+params:query {
+  id: {{unknownRequestId}}
+}
+
+docs {
+  WHEN no token is provided, withdrawing fails with 401.
+}
+
+script:pre-request {
+  bru.setVar("unknownRequestId", require("uuid").v4());
+}
+
+tests {
+  test("WHEN no token is provided, the request returns 401", function() {
+    expect(res.status).to.equal(401);
+  });
+}

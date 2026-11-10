@@ -1,0 +1,50 @@
+meta {
+  name: 04_AND_RejectedRequestCannotBeAccepted
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/bff/consentrequests/:requestId/accept
+  body: json
+  auth: inherit
+}
+
+params:path {
+  requestId: {{rejectRequestId}}
+}
+
+body:json {
+  {
+    "language": "nb"
+  }
+}
+
+docs {
+  AND the rejected request can no longer be accepted.
+
+  POST /accessmanagement/api/v1/bff/consentrequests/:requestId/accept
+
+  See scenario 01 step 08 for the endpoint. Only a request in status Created can be
+  accepted; a rejected request answers 400 with problem code AM-00002.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  await loginAs(td.consentingPerson);
+}
+
+tests {
+  test("WHEN the person tries to accept the rejected request, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN the problem is AM-00002, wrong status to be consented", function() {
+    const body = res.getBody();
+    expect(body.status).to.equal(400);
+    expect(body.code).to.equal("AM-00002");
+    expect(body.detail).to.equal("Consent have wrong status to be consented");
+  });
+}

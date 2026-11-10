@@ -1,0 +1,53 @@
+meta {
+  name: 03_THEN_EnterpriseReadsRequestAsRejected
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enterprise/consentrequests/:consentRequestId
+  body: none
+  auth: inherit
+}
+
+params:path {
+  consentRequestId: {{rejectRequestId}}
+}
+
+docs {
+  THEN the enterprise reads the request with status Rejected.
+
+  GET /accessmanagement/api/v1/enterprise/consentrequests/:consentRequestId
+
+  See scenario 01 step 04 for the endpoint. After a rejection the enterprise sees status
+  Rejected, no consented timestamp and a Rejected event performed by the person.
+}
+
+script:pre-request {
+  const { loginAsEnterprise, scopes, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  await loginAsEnterprise(td.enterprise, scopes.consentRequestsRead);
+}
+
+tests {
+  const { testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  test("WHEN the enterprise reads the rejected request, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the request has status Rejected and is not consented", function() {
+    const body = res.getBody();
+    expect(body.id).to.equal(bru.getVar("rejectRequestId"));
+    expect(body.status).to.equal("Rejected");
+    expect(body.consented).to.be.null;
+  });
+
+  test("THEN the Rejected event names the person by national identity number", function() {
+    const events = res.getBody().consentRequestEvents;
+    expect(events.map(e => e.eventType)).to.deep.equal(["Created", "Rejected"]);
+    expect(events[1].performedBy).to.equal(`urn:altinn:person:identifier-no:${td.consentingPerson.pid}`);
+  });
+}

@@ -1,0 +1,56 @@
+meta {
+  name: 02_WHEN_SystemUserRequestsPackageByOrganisationNumber
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/systemuser/request/package?organization={{organization}}&package={{package}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  organization: {{organization}}
+  package: {{package}}
+}
+
+docs {
+  WHEN a system user owned by a KOMM, FYLK or STAT organisation requests the package from the
+  recipient, identified by organisation number.
+
+  Expects 200 with a pending request whose sender is the system user and whose recipient is
+  the organisation.
+}
+
+script:pre-request {
+  const { testdata, loginAsSystemUser } = require("./test/DelegationRequest/SystemUserPackageRequest/helpers.js");
+  const td = testdata();
+
+  bru.setVar("organization", td.recipient.orgno);
+  bru.setVar("package", td.package);
+
+  await loginAsSystemUser(td.publicSectorConsumer.systemUser, td.publicSectorConsumer.orgno, td.publicSectorConsumer.orgno);
+}
+
+script:post-response {
+  if (res.status === 200) {
+    bru.setVar("rejectRequestId", res.getBody().id);
+  }
+}
+
+tests {
+  const { testdata } = require("./test/DelegationRequest/SystemUserPackageRequest/helpers.js");
+  const td = testdata();
+
+  test("WHEN the system user requests the package, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the request is pending with the system user as sender", function() {
+    const body = res.getBody();
+    expect(body.status).to.equal("Pending");
+    expect(body.from.id.toLowerCase()).to.equal(td.publicSectorConsumer.systemUser.partyUuid.toLowerCase());
+    expect(body.to.id.toLowerCase()).to.equal(td.recipient.partyUuid.toLowerCase());
+  });
+}

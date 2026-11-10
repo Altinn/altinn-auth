@@ -1,4 +1,4 @@
-namespace Altinn.Platform.Authorization.Helpers.Extensions
+﻿namespace Altinn.Platform.Authorization.Helpers.Extensions
 {
     /// <summary>
     /// Extensions to facilitate sanitization of string values

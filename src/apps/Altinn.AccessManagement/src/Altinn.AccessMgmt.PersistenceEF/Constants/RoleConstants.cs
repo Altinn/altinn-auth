@@ -76,6 +76,17 @@ public static class RoleConstants
     public static IReadOnlyCollection<TranslationEntry> AllTranslations()
         => ConstantLookup.AllTranslations<Role>(typeof(RoleConstants));
 
+    /// <summary>
+    /// Ids of all roles provided by <see cref="ProviderConstants.Altinn2"/>.
+    /// </summary>
+    public static IReadOnlySet<Guid> Altinn2RoleIds => _altinn2RoleIds.Value;
+
+    private static readonly Lazy<HashSet<Guid>> _altinn2RoleIds = new(() =>
+        AllEntities()
+            .Where(r => r.Entity.ProviderId == ProviderConstants.Altinn2.Id)
+            .Select(r => r.Id)
+            .ToHashSet());
+
     #region Altinn 3 Roles
 
     /// <summary>
@@ -178,6 +189,40 @@ public static class RoleConstants
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Agent"),
             KeyValuePair.Create("Description", "Gjev høve til å motta delegerte fullmakter for verksemda")
+        ),
+    };
+
+    /// <summary>
+    /// Represents the 'Konkursbo administrator' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> e8f2e3bc-41e8-4ea6-87d3-3308934d471d
+    /// - <c>URN:</c> urn:altinn:role:innbygger-konkursbo-administrator
+    /// - <c>Provider:</c> Altinn3
+    /// - <c>Code:</c> innbygger-konkursbo-administrator
+    /// - <c>Description:</c> Gir mulighet til å administrere alle konkursbo for en gitt bostyrer
+    /// </remarks>
+    public static ConstantDefinition<Role> BankruptcyEstateAdministrator { get; } = new ConstantDefinition<Role>("e8f2e3bc-41e8-4ea6-87d3-3308934d471d")
+    {
+        Entity = new()
+        {
+            Name = "Konkursbo administrator",
+            Code = "innbygger-konkursbo-administrator",
+            Description = "Gir mulighet til å administrere alle nåværende og fremtidige konkursbo for bostyrer. Mottaker får automatisk Hovedadministrator, Konkursbo lese- og skrivetilgang.",
+            Urn = "urn:altinn:role:innbygger-konkursbo-administrator",
+            IsKeyRole = false,
+            IsAssignable = true,
+            IsAvailableForServiceOwners = false,
+            EntityTypeId = EntityTypeConstants.Person,
+            ProviderId = ProviderConstants.Altinn3,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Bankruptcy estate administrator"),
+            KeyValuePair.Create("Description", "Allows the trustee in bankruptcy to manage all current and future bankruptcy estates. The recipient is automatically granted Main Administrator and Bankruptcy Estate read and write access.")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Konkursbo administrator"),
+            KeyValuePair.Create("Description", "Gir moglegheit til å administrere alle noverande og framtidige konkursbu for bustyrar. Mottakaren får automatisk Hovudadministrator, Konkursbu lese- og skrivetilgang.")
         ),
     };
 
@@ -4654,9 +4699,9 @@ public static class RoleConstants
     /// </summary>
     /// <remarks>
     /// - <c>Id:</c> 5f73b031-8b5b-45d8-a682-e9a7e75a7691
-    /// - <c>URN:</c> urn:altinn:rolecode:BOBES
+    /// - <c>URN:</c> urn:altinn:rolecode:bobes
     /// - <c>Provider:</c> Altinn2
-    /// - <c>Code:</c> BOBES
+    /// - <c>Code:</c> bobes
     /// - <c>Description:</c> Utvidet lesetilgang og innsendingsrett for tjenesten Konkursbehandling
     /// </remarks>
     public static ConstantDefinition<Role> BankruptcyWrite { get; } = new ConstantDefinition<Role>("5f73b031-8b5b-45d8-a682-e9a7e75a7691")
@@ -4679,6 +4724,39 @@ public static class RoleConstants
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Konkursbu skrivetilgang"),
             KeyValuePair.Create("Description", "Tilgang til å skrive informasjon i tenesta Konkursbehandling")
+        )
+    };
+
+    /// <summary>
+    /// Represents the 'Eksplisitt tjenestedelegering' role.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 1225bc46-4b03-4b63-b6e8-58926b29a97b
+    /// - <c>URN:</c> urn:altinn:rolecode:ektj
+    /// - <c>Provider:</c> Altinn2
+    /// - <c>Code:</c> ektj
+    /// - <c>Description:</c> Ikke-delegerbar rolle for tjenester som kun skal delegeres enkeltvis
+    /// </remarks>
+    public static ConstantDefinition<Role> ExplicitServiceDelegation { get; } = new ConstantDefinition<Role>("1225bc46-4b03-4b63-b6e8-58926b29a97b")
+    {
+        Entity = new()
+        {
+            EntityTypeId = EntityTypeConstants.Organization,
+            ProviderId = ProviderConstants.Altinn2,
+            Name = "Eksplisitt tjenestedelegering",
+            Code = "ektj",
+            Description = "Ikke-delegerbar rolle for tjenester som kun skal delegeres enkeltvis",
+            Urn = "urn:altinn:rolecode:ektj",
+            IsKeyRole = false,
+            IsAvailableForServiceOwners = true,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Explicit service delegation"),
+            KeyValuePair.Create("Description", "Non-delegable role for services to be delegated as single rights")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Eksplisitt tenestedelegering"),
+            KeyValuePair.Create("Description", "Ikkje-delegerbar rolle for tenester som kun skal delegerast enkeltvis")
         )
     };
 

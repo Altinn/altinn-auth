@@ -1,0 +1,15 @@
+meta {
+	name: 08_NoneEqualsOmitted
+	seq: 8
+}
+
+auth {
+	mode: inherit
+}
+
+docs {
+	Backward compatibility.
+	GIVEN the system user (Fiken) has a client delegation (permits without access-restriction, see 01/01)
+	WHEN the request explicitly sets access-restriction None with only the altinn:authorization/authorize scope
+	THEN the decision is Permit, identical to omitting the attribute, and no admin scope is required
+}

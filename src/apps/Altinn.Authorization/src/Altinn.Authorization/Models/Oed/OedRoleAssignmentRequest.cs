@@ -1,4 +1,4 @@
-namespace Altinn.Platform.Authorization.Models
+﻿namespace Altinn.Platform.Authorization.Models
 {
     /// <summary>
     /// Model for requesting OED/Digitalt dødsbo role assignments between two persons

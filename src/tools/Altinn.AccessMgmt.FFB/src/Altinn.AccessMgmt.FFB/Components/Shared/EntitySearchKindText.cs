@@ -1,4 +1,4 @@
-using Altinn.AccessMgmt.FFB.Services.PageData;
+﻿using Altinn.AccessMgmt.FFB.Services.PageData;
 
 namespace Altinn.AccessMgmt.FFB.Components.Shared;
 

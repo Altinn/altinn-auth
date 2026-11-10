@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.Host.Pipeline.Builders;
+﻿namespace Altinn.Authorization.Host.Pipeline.Builders;
 
 internal class PipelineSinkBuilder(PipelineGroup descriptor) : ISinkBuilder
 {

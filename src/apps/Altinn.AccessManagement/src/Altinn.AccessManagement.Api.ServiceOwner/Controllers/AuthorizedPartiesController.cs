@@ -133,7 +133,7 @@ public class AuthorizedPartiesController(
             }
 
             List<AuthorizedParty> authorizedParties = await authorizedPartiesService.GetAuthorizedParties(subjectAttribute, filters, cancellationToken);
-            
+
             return DtoMapper.ConvertToAuthorizedPartiesDto(authorizedParties).ToList();
         }
         catch (ArgumentException ex)

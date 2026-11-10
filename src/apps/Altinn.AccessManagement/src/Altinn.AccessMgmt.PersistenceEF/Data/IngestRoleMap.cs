@@ -449,6 +449,9 @@ public static partial class StaticDataIngest
             new RoleMap() { HasRoleId = roleRepr, GetRoleId = roleUTOMR },
             new RoleMap() { HasRoleId = roleSam,  GetRoleId = roleUTOMR },
 
+            // We add a konkursbo-admin as a role actual to bostyrer gets for himself so it has to be connected to priv role for all that has a bobe connection to anyone it does nothing.
+            new RoleMap() { HasRoleId = RoleConstants.PrivatePerson.Id, GetRoleId = RoleConstants.BankruptcyEstateAdministrator.Id },
+
             // Add delegable role mapping for Hovedadministrator
             new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.ManagingDirector.Id },
             new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.ConfidentialInformation.Id },
@@ -471,7 +474,8 @@ public static partial class StaticDataIngest
             new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.PrimaryIndustryAndFoodstuff.Id },
             new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.AlgeaTestData.Id },
             new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.TransportPermitGuarantee.Id },
-            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.AuditorCertifier.Id }
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.AuditorCertifier.Id },
+            new RoleMap() { HasRoleId = RoleConstants.MainAdministrator.Id, GetRoleId = RoleConstants.ExplicitServiceDelegation.Id }
         };
 
         // The table only ever holds this seed set, so a single query for the existing

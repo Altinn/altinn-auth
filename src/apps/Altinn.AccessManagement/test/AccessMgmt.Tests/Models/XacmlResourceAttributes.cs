@@ -1,4 +1,4 @@
-namespace Altinn.AccessManagement.Tests.Models;
+﻿namespace Altinn.AccessManagement.Tests.Models;
 
 /// <summary>
 /// TT

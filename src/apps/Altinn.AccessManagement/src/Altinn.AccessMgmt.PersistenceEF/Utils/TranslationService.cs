@@ -88,12 +88,14 @@ public class TranslationService : ITranslationService
         // Constants only provide translations for English (eng) and Norwegian Nynorsk (nno)
         if (effectiveLanguageCode == "nob")
         {
-            _logger.LogTrace("Language code is 'nob' (base language), returning original {TypeName} with ID {EntityId}",
+            _logger.LogTrace(
+                "Language code is 'nob' (base language), returning original {TypeName} with ID {EntityId}",
                 typeName, entityId);
             return (true, source); // Return original, it's already in Norwegian Bokmål
         }
 
-        _logger.LogDebug("Attempting to translate {TypeName} with ID {EntityId} to language {LanguageCode}",
+        _logger.LogDebug(
+            "Attempting to translate {TypeName} with ID {EntityId} to language {LanguageCode}",
             typeName, entityId, effectiveLanguageCode);
 
         // Try to get translations from Constants first (for eng and nno only)
@@ -103,14 +105,16 @@ public class TranslationService : ITranslationService
 
         if (constantTranslations != null && constantTranslations.Any())
         {
-            _logger.LogDebug("Found {Count} constant translations for {TypeName} with ID {EntityId} in language {LanguageCode}",
+            _logger.LogDebug(
+                "Found {Count} constant translations for {TypeName} with ID {EntityId} in language {LanguageCode}",
                 constantTranslations.Count, typeName, entityId, effectiveLanguageCode);
             transMap = constantTranslations;
         }
         else
         {
             // Fall back to database with caching
-            var cacheKey = $"translation_{typeName}_{entityId}_{effectiveLanguageCode}";
+            var storedTypeName = GetStoredTypeName(typeName);
+            var cacheKey = $"translation_{storedTypeName}_{entityId}_{effectiveLanguageCode}";
 
             _logger.LogTrace("Checking cache for translation key: {CacheKey}", cacheKey);
 
@@ -118,23 +122,26 @@ public class TranslationService : ITranslationService
             {
                 entry.AbsoluteExpirationRelativeToNow = CacheDuration;
 
-                _logger.LogDebug("Cache miss for {TypeName} with ID {EntityId}, querying database for language {LanguageCode}",
+                _logger.LogDebug(
+                    "Cache miss for {TypeName} with ID {EntityId}, querying database for language {LanguageCode}",
                     typeName, entityId, effectiveLanguageCode);
 
                 var dbTranslations = await _db.TranslationEntries
-                    .Where(t => t.Type == typeName &&
+                    .Where(t => t.Type == storedTypeName &&
                                 t.Id == entityId &&
                                 t.LanguageCode == effectiveLanguageCode)
                     .ToDictionaryAsync(t => t.FieldName, t => t.Value ?? string.Empty);
 
                 if (dbTranslations.Any())
                 {
-                    _logger.LogDebug("Found {Count} database translations for {TypeName} with ID {EntityId} in language {LanguageCode}",
+                    _logger.LogDebug(
+                        "Found {Count} database translations for {TypeName} with ID {EntityId} in language {LanguageCode}",
                         dbTranslations.Count, typeName, entityId, effectiveLanguageCode);
                 }
                 else
                 {
-                    _logger.LogInformation("No database translations found for {TypeName} with ID {EntityId} in language {LanguageCode}",
+                    _logger.LogInformation(
+                        "No database translations found for {TypeName} with ID {EntityId} in language {LanguageCode}",
                         typeName, entityId, effectiveLanguageCode);
                 }
 
@@ -144,7 +151,8 @@ public class TranslationService : ITranslationService
 
         if (transMap == null || !transMap.Any())
         {
-            _logger.LogWarning("No translations available for {TypeName} with ID {EntityId} in language {LanguageCode}",
+            _logger.LogWarning(
+                "No translations available for {TypeName} with ID {EntityId} in language {LanguageCode}",
                 typeName, entityId, effectiveLanguageCode);
             return (false, source);
         }
@@ -159,19 +167,22 @@ public class TranslationService : ITranslationService
             {
                 prop.SetValue(source, val);
                 translatedFields++;
-                _logger.LogTrace("Translated field {FieldName} for {TypeName} with ID {EntityId}",
+                _logger.LogTrace(
+                    "Translated field {FieldName} for {TypeName} with ID {EntityId}",
                     prop.Name, typeName, entityId);
             }
         }
 
         if (translatedFields > 0)
         {
-            _logger.LogDebug("Successfully translated {TranslatedFields} fields for {TypeName} with ID {EntityId} to language {LanguageCode}",
+            _logger.LogDebug(
+                "Successfully translated {TranslatedFields} fields for {TypeName} with ID {EntityId} to language {LanguageCode}",
                 translatedFields, typeName, entityId, effectiveLanguageCode);
         }
         else
         {
-            _logger.LogWarning("No fields were translated for {TypeName} with ID {EntityId} in language {LanguageCode} (found {TranslationCount} translations but none matched writable string properties)",
+            _logger.LogWarning(
+                "No fields were translated for {TypeName} with ID {EntityId} in language {LanguageCode} (found {TranslationCount} translations but none matched writable string properties)",
                 typeName, entityId, effectiveLanguageCode, transMap.Count);
         }
 
@@ -196,7 +207,8 @@ public class TranslationService : ITranslationService
     /// <inheritdoc />
     public async Task UpsertTranslationAsync(TranslationEntry translationEntry, Guid changedBy, Guid changedBySystem, CancellationToken cancellationToken = default)
     {
-        _logger.LogDebug("Upserting translation for {Type} with ID {Id}, field {FieldName} in language {LanguageCode}",
+        _logger.LogDebug(
+            "Upserting translation for {Type} with ID {Id}, field {FieldName} in language {LanguageCode}",
             translationEntry.Type, translationEntry.Id, translationEntry.FieldName, translationEntry.LanguageCode);
 
         var entry = await _db.TranslationEntries.SingleOrDefaultAsync(
@@ -208,13 +220,15 @@ public class TranslationService : ITranslationService
 
         if (entry == null)
         {
-            _logger.LogInformation("Creating new translation entry for {Type} with ID {Id}, field {FieldName} in language {LanguageCode}",
+            _logger.LogInformation(
+                "Creating new translation entry for {Type} with ID {Id}, field {FieldName} in language {LanguageCode}",
                 translationEntry.Type, translationEntry.Id, translationEntry.FieldName, translationEntry.LanguageCode);
             _db.Add(translationEntry);
         }
         else
         {
-            _logger.LogDebug("Updating existing translation entry for {Type} with ID {Id}, field {FieldName} in language {LanguageCode}",
+            _logger.LogDebug(
+                "Updating existing translation entry for {Type} with ID {Id}, field {FieldName} in language {LanguageCode}",
                 translationEntry.Type, translationEntry.Id, translationEntry.FieldName, translationEntry.LanguageCode);
             entry.Value = translationEntry.Value;
             _db.Update(entry);
@@ -234,6 +248,16 @@ public class TranslationService : ITranslationService
         _cache.Remove(cacheKey);
         _logger.LogDebug("Invalidated cache for key: {CacheKey}", cacheKey);
     }
+
+    /// <summary>
+    /// Maps a DTO type name to the entity type name its translations are stored under,
+    /// so that for example a ResourceDto finds the translations the resource import writes for Resource.
+    /// </summary>
+    private static string GetStoredTypeName(string typeName) => typeName switch
+    {
+        "ResourceDto" => nameof(Models.Resource),
+        _ => typeName
+    };
 
     /// <summary>
     /// Attempts to retrieve translations from Constants classes (RoleConstants, PackageConstants, etc.)
@@ -259,7 +283,8 @@ public class TranslationService : ITranslationService
                 return null;
             }
 
-            _logger.LogTrace("Attempting to get constant translations from {ConstantsType} for {TypeName} with ID {EntityId} in language {LanguageCode}",
+            _logger.LogTrace(
+                "Attempting to get constant translations from {ConstantsType} for {TypeName} with ID {EntityId} in language {LanguageCode}",
                 constantsType.Name, typeName, entityId, languageCode);
 
             // Get all translations from the Constants class
@@ -284,13 +309,15 @@ public class TranslationService : ITranslationService
 
             if (relevantTranslations.Any())
             {
-                _logger.LogDebug("Found {Count} constant translations for {TypeName} with ID {EntityId} in language {LanguageCode}",
+                _logger.LogDebug(
+                    "Found {Count} constant translations for {TypeName} with ID {EntityId} in language {LanguageCode}",
                     relevantTranslations.Count, typeName, entityId, languageCode);
                 return relevantTranslations;
             }
             else
             {
-                _logger.LogTrace("No constant translations found for {TypeName} with ID {EntityId} in language {LanguageCode}",
+                _logger.LogTrace(
+                    "No constant translations found for {TypeName} with ID {EntityId} in language {LanguageCode}",
                     typeName, entityId, languageCode);
                 return null;
             }

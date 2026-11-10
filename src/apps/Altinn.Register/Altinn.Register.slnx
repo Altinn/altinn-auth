@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Altinn.Register/Altinn.Register.csproj" />
+  </Folder>
+</Solution>

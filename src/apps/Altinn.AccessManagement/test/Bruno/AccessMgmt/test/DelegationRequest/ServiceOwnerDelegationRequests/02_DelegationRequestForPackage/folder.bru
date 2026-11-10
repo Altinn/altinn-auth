@@ -1,0 +1,18 @@
+meta {
+  name: 02_DelegationRequestForPackage
+  seq: 2
+}
+
+docs {
+  Scenario: A service owner asks a person to grant another person a package
+
+    Given the valid party URN prefixes for delegation requests
+    When the service owner creates a delegation request for the package
+    And creating the same request again returns the same draft
+    Then the request status is Draft
+    When the service owner withdraws the request
+    Then the request status is Withdrawn
+
+  Requests cannot be deleted, so the scenario withdraws what it created. A draft left
+  behind by a crashed run is picked up again by the create step and withdrawn.
+}

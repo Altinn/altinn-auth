@@ -12,4 +12,10 @@ public sealed class AppLifecycleFeatures
     /// (equal to BEDR/AAFY). Resolved from the <c>AccessManagement.Subunit.AdosInheritance</c> feature flag.
     /// </summary>
     public bool AdosSubunitInheritance { get; set; }
+
+    /// <summary>
+    /// Whether Altinn 2 roles should be excluded from all read and authorization paths.
+    /// Resolved from the <c>AccessManagement.Roles.DisableAltinn2</c> feature flag.
+    /// </summary>
+    public bool DisableAltinn2Roles { get; set; }
 }

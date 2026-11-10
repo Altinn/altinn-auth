@@ -1,0 +1,57 @@
+{
+  "identifier": "ske-innrapportering-boligsameie",
+  "version": "7",
+  "title": {
+    "en": "Jointly owned property – third-party data reporting",
+    "nb": "Boligsameie – rapportering av tredjepartsopplysninger",
+    "nn": "Bustadsameige – rapportering av tredjepartsopplysningar"
+  },
+  "description": {
+    "en": "This form is used to report third-party information to the Tax Administration. Jointly owned properties with 9 or more residential units must submit information about the jointly owned property’s share of joint income, expenses, wealth, and debt. Usually the jointly owned property’s board or manager submits the information.",
+    "nb": "Skjemaet brukes til å rapportere tredjepartsopplysninger til Skatteetaten. Sameier med 9 eller flere boligseksjoner skal levere opplysninger om sameiers andel av felles inntekter, utgifter, formue og gjeld. Det er vanligvis sameiets styre eller forretningsfører som leverer opplysningene.",
+    "nn": "Skjemaet skal brukast til å rapportere tredjepartsopplysningar til Skatteetaten. Sameiger med ni eller fleire bustadseksjonar skal levere opplysningar om sameigaren sin andel av felles inntekter, utgifter, formue og gjeld. Det er vanlegvis styret i sameiget eller forretningsføraren som leverer opplysningane."
+  },
+  "rightDescription": {
+    "en": "Users can report information using a keyboard-based form, by uploading attachments, and/or using a machine-to-machine solution. Users can also read feedback on the submission.",
+    "nb": "Brukeren får tilgang til å rapportere opplysninger i tasteskjema, vedleggsopplasting og/eller maskin til maskin-løsning. Brukeren får også tilgang til å lese tilbakemeldinger på leveransen.",
+    "nn": "Brukaren får tilgang til å bruke tasteskjema, vedleggsopplasting  og/eller maskin til maskin til å rapportere tredjepartsopplysningar i tillegg til å lese tilbakemeldingar på leveransen."
+  },
+  "status": "Completed",
+  "contactPoints": [
+    {
+      "category": "Innrapportering",
+      "email": "",
+      "telephone": "",
+      "contactPage": "www.skatteetaten.no"
+    }
+  ],
+  "delegable": true,
+  "visible": true,
+  "hasCompetentAuthority": {
+    "name": {
+      "en": "Norwegian Tax Administration",
+      "nb": "Skatteetaten",
+      "nn": "Skatteetaten"
+    },
+    "organization": "974761076",
+    "orgcode": "skd"
+  },
+  "keywords": [
+    {
+      "word": "Boligsameie",
+      "language": "nb"
+    },
+    {
+      "word": "innrapportering",
+      "language": "nb"
+    }
+  ],
+  "accessListMode": "Disabled",
+  "selfIdentifiedUserEnabled": false,
+  "enterpriseUserEnabled": true,
+  "resourceType": "GenericAccessResource",
+  "availableForType": [
+    "LegalEntityEnterprise"
+  ],
+  "isOneTimeConsent": false
+}

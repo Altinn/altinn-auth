@@ -1,0 +1,47 @@
+meta {
+  name: 03_THEN_SystemUserSeesTheSentRequest
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/systemuser/request/sent?organization={{organization}}&status=Pending&type=package
+  body: none
+  auth: inherit
+}
+
+params:query {
+  organization: {{organization}}
+  status: Pending
+  type: package
+}
+
+docs {
+  THEN the system user sees the pending request among its sent requests, filtered on the
+  recipient's organisation number.
+}
+
+script:pre-request {
+  const { testdata, loginAsSystemUser } = require("./test/DelegationRequest/SystemUserPackageRequest/helpers.js");
+  const td = testdata();
+
+  bru.setVar("organization", td.recipient.orgno);
+
+  await loginAsSystemUser(td.publicSectorConsumer.systemUser, td.publicSectorConsumer.orgno, td.publicSectorConsumer.orgno);
+}
+
+tests {
+  const { testdata } = require("./test/DelegationRequest/SystemUserPackageRequest/helpers.js");
+  const td = testdata();
+
+  test("THEN the sent requests can be listed, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the request to the recipient is listed with the system user as sender", function() {
+    const request = res.getBody().data.find(r => r.id === bru.getVar("withdrawRequestId"));
+    expect(request).to.not.be.undefined;
+    expect(request.from.id.toLowerCase()).to.equal(td.publicSectorConsumer.systemUser.partyUuid.toLowerCase());
+    expect(request.to.id.toLowerCase()).to.equal(td.recipient.partyUuid.toLowerCase());
+  });
+}

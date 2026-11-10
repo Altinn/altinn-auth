@@ -1,4 +1,4 @@
-using Altinn.AccessMgmt.Core.Notifications;
+﻿using Altinn.AccessMgmt.Core.Notifications;
 
 namespace Altinn.AccessMgmt.Core.Appsettings;
 
@@ -16,7 +16,9 @@ public class CoreAppsettings
         }
     }
 
+#pragma warning disable CS0618 // RequestOptions is read by RequestService until it moves to NotificationsOptions
     public RequestOptions Request { get; set; } = new();
+#pragma warning restore CS0618
 
     public NotificationsOptions Notifications { get; set; } = new();
 

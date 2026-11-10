@@ -1,5 +1,11 @@
 # Test Projects
 
+**TL;DR**
+
+- Use the inventory below to choose a test project and its required fixtures.
+- Authorization tests use mocks and require no database container.
+
+
 All test projects live under `src/**/test/`. They target **`net10.0`** and use
 **xUnit v3** with Microsoft Testing Platform (MTP). Common test infrastructure
 (fixtures, mocks, certificates) is published from a single shared library —
@@ -26,7 +32,7 @@ Grouped by the production vertical they cover.
 
 | Test project | Covers | Fixture | Needs container |
 |---|---|---|---|
-| `Altinn.Authorization.Tests` | Authorization controllers (`Decision`/`Authorize`, `PolicyController`, `Parties`, …) and helpers. | `AuthorizationApiFixture` (mock-backed); `AuthorizationDbFixture` (Testcontainers Postgres) for the delegation-metadata repository tests | Partial |
+| `Altinn.Authorization.Tests` | Authorization controllers (`Decision`/`Authorize`, `PolicyController`, `Parties`, …) and helpers. | `AuthorizationApiFixture` (mock-backed) | ❌ |
 
 ### `lib: Integration`
 

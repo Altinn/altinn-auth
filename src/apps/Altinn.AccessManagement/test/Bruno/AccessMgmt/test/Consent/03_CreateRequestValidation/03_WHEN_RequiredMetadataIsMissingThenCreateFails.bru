@@ -1,0 +1,70 @@
+meta {
+  name: 03_WHEN_RequiredMetadataIsMissingThenCreateFails
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enterprise/consentrequests
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "id": "{{consentRequestId}}",
+    "from": "{{consentFrom}}",
+    "to": "{{consentTo}}",
+    "validTo": "{{consentValidTo}}",
+    "consentRights": [
+      {
+        "action": ["{{consentAction}}"],
+        "resource": [
+          {
+            "type": "urn:altinn:resource",
+            "value": "{{consentResource}}"
+          }
+        ]
+      }
+    ],
+    "redirectUrl": "https://altinn.no",
+    "portalViewMode": "show"
+  }
+}
+
+docs {
+  WHEN required resource metadata is missing, the create fails with a problem.
+
+  POST /accessmanagement/api/v1/enterprise/consentrequests
+
+  A consent resource can declare metadata keys that fill placeholders in the consent
+  text; samtykke-performance-test declares inntektsaar. Leaving out a declared key gives
+  400 with problem code AM-00008 and the missing key in the key extension field. Unknown
+  keys give AM-00006 and empty values AM-00007.
+}
+
+script:pre-request {
+  const { loginAsEnterprise, prepareConsentRequest, scopes, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  prepareConsentRequest("consentRequestId");
+
+  await loginAsEnterprise(td.enterprise, scopes.consentRequestsWrite);
+}
+
+tests {
+  const { testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  test("WHEN required metadata is missing, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN the problem is AM-00008 and names the missing key", function() {
+    const body = res.getBody();
+    expect(body.status).to.equal(400);
+    expect(body.code).to.equal("AM-00008");
+    expect(body.detail).to.equal("Missing metadata");
+    expect(body.key).to.equal(td.consentResource.metadataKey);
+  });
+}

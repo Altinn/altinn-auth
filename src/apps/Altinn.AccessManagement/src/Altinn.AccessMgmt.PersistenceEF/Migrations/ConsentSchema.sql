@@ -1,4 +1,4 @@
-﻿-- Baseline DDL for the consent schema: the enum types, the consentrequest /
+-- Baseline DDL for the consent schema: the enum types, the consentrequest /
 -- consentright / consentevent / context / metadata / resourceattribute tables,
 -- their primary keys and indexes, and the grants to platform_authorization.
 -- Generated from 'pg_dump --schema-only --schema=consent' of the established
@@ -34,7 +34,9 @@ CREATE TABLE IF NOT EXISTS consent.consentevent (
     consentrequestid uuid NOT NULL,
     eventtype consent.event_type NOT NULL,
     created timestamp with time zone DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    performedbyparty uuid NOT NULL
+    performedbyparty uuid NOT NULL,
+    topartyuuid uuid,
+    handledbypartyuuid uuid
 );
 
 CREATE TABLE IF NOT EXISTS consent.consentrequest (

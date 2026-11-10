@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using Altinn.Authorization.ABAC;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 

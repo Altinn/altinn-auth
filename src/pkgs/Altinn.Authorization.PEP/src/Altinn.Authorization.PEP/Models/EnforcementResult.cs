@@ -1,4 +1,4 @@
-namespace Altinn.Common.PEP.Models
+﻿namespace Altinn.Common.PEP.Models
 {
     /// <summary>
     /// Represents the result of an authorization enforcement

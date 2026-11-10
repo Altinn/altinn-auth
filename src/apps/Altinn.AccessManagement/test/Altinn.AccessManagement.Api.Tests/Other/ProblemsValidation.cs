@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.Authorization.ProblemDetails;

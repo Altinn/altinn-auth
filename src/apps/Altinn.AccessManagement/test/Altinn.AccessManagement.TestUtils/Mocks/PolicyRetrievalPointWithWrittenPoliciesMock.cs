@@ -1,4 +1,4 @@
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Xml;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.Authorization.ABAC.Utils;

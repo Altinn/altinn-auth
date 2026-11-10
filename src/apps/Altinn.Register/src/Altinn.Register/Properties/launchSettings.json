@@ -1,4 +1,4 @@
-{
+﻿{
   "profiles": {
     "Altinn.Register": {
       "commandName": "Project",
@@ -6,7 +6,7 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
-      "applicationUrl": "https://localhost:65503;http://localhost:65504"
+      "applicationUrl": "https://localhost:55175;http://localhost:55176"
     }
   }
 }

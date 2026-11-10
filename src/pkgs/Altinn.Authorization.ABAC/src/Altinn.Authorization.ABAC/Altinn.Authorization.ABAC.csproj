@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <PropertyGroup>
         <!-- NuGet package properties -->
@@ -8,15 +8,6 @@
             Attribute Based Access Control library for .Net Core implementing XACML 3.0 xml and JSON Profile.
             See details at https://docs.altinn.studio.
         </Description>
-    </PropertyGroup>
-
-    <PropertyGroup Label="Deterministic build and SourceLink">
-        <Deterministic>true</Deterministic>
-        <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
-        <PublishRepositoryUrl>true</PublishRepositoryUrl>
-        <EmbedUntrackedSources>true</EmbedUntrackedSources>
-        <IncludeSymbols>true</IncludeSymbols>
-        <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     </PropertyGroup>
 
     <ItemGroup>

@@ -1,0 +1,56 @@
+{
+  "identifier": "eformidling-dpo-meldingsutveksling",
+  "version": "1.0.1",
+  "title": {
+    "en": "Meldingsutveksling DPO for Integrasjonpunkt",
+    "nb": "Meldingsutveksling DPO for Integrasjonpunkt",
+    "nn": "Meldingsutveksling DPO for Integrasjonpunkt"
+  },
+  "description": {
+    "en": "eFormidlings meldingstjeneste som benyttes av Integrasjonspunktet",
+    "nb": "eFormidlings meldingstjeneste som benyttes av Integrasjonspunktet",
+    "nn": "eFormidlings meldingstjeneste som benyttes av Integrasjonspunktet"
+  },
+  "homepage": "https://docs.digdir.no/docs/eFormidling/Utvikling/Meldingstjenester/eformidlings_meldingstjeneste",
+  "status": "Completed",
+  "contactPoints": [
+    {
+      "category": "Utvikler",
+      "email": "randi.eggum@digdir.no",
+      "telephone": "",
+      "contactPage": ""
+    },
+    {
+      "category": "Optimus Prime",
+      "email": "daniel.fylling@digdir.no",
+      "telephone": "",
+      "contactPage": ""
+    },
+    {
+      "category": "Produktteamleiar",
+      "email": " johannes.molland@digdir.no",
+      "telephone": "",
+      "contactPage": ""
+    }
+  ],
+  "delegable": false,
+  "visible": true,
+  "hasCompetentAuthority": {
+    "name": {
+      "en": "Norwegian Digitalisation Agency",
+      "nb": "Digitaliseringsdirektoratet",
+      "nn": "Digitaliseringsdirektoratet"
+    },
+    "organization": "991825827",
+    "orgcode": "digdir"
+  },
+  "accessListMode": "Disabled",
+  "selfIdentifiedUserEnabled": false,
+  "enterpriseUserEnabled": false,
+  "resourceType": "BrokerService",
+  "availableForType": [
+    "LegalEntityEnterprise",
+    "Company"
+  ],
+  "isOneTimeConsent": false
+}

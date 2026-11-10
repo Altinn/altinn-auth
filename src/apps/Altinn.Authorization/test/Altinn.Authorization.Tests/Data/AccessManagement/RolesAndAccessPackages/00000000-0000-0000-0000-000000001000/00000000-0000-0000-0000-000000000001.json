@@ -1,0 +1,8 @@
+{
+  "roles": [
+    "urn:altinn:rolecode:regna",
+    "urn:altinn:rolecode:dagl",
+    "urn:altinn:rolecode:apiadm"
+  ],
+  "accessPackages": []
+}

@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.Tests.MockServices;

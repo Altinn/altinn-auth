@@ -1,4 +1,4 @@
-using Altinn.Authorization.Enums;
+﻿using Altinn.Authorization.Enums;
 using Altinn.Authorization.Models.ResourceRegistry;
 using Altinn.Authorization.ProblemDetails;
 using Altinn.Platform.Authorization.Models;

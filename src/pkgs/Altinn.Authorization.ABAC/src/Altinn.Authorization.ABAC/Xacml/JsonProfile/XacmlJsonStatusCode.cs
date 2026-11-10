@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.ABAC.Xacml.JsonProfile
+﻿namespace Altinn.Authorization.ABAC.Xacml.JsonProfile
 {
     /// <summary>
     /// A XACML Json object for status Code.

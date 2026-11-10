@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Altinn.AccessManagement.Api.Enterprise.Controllers;
 using Altinn.AccessManagement.Core.Configuration;
 using Altinn.AccessManagement.Core.Errors;
@@ -62,7 +62,7 @@ public class ConsentControllerTest
     {
         var controller = CreateController(new Mock<IConsent>().Object, UserWithoutConsumer());
 
-        var result = await controller.GetConsentEvents();
+        var result = await controller.GetConsentEvents(cancellationToken: TestContext.Current.CancellationToken);
 
         Assert.IsType<UnauthorizedResult>(result);
     }
@@ -72,7 +72,7 @@ public class ConsentControllerTest
     {
         var controller = CreateController(new Mock<IConsent>().Object, UserWithConsumer());
 
-        var result = await controller.GetConsentEvents(continuationToken: "!!!not-base64!!!");
+        var result = await controller.GetConsentEvents(continuationToken: "!!!not-base64!!!", cancellationToken: TestContext.Current.CancellationToken);
 
         (await ExecutedStatus(result)).Should().Be(400);
     }
@@ -82,7 +82,7 @@ public class ConsentControllerTest
     {
         var controller = CreateController(new Mock<IConsent>().Object, UserWithConsumer());
 
-        var result = await controller.GetConsentEvents(eventTypes: new[] { "not-a-real-event" });
+        var result = await controller.GetConsentEvents(eventTypes: new[] { "not-a-real-event" }, cancellationToken: TestContext.Current.CancellationToken);
 
         (await ExecutedStatus(result)).Should().Be(400);
     }
@@ -97,7 +97,7 @@ public class ConsentControllerTest
 
         var controller = CreateController(consent.Object, UserWithConsumer());
 
-        var result = await controller.GetConsentEvents();
+        var result = await controller.GetConsentEvents(cancellationToken: TestContext.Current.CancellationToken);
 
         (await ExecutedStatus(result)).Should().Be((int)Problems.ConsentNotFound.StatusCode);
     }

@@ -1,4 +1,4 @@
-using System.ComponentModel;
+﻿using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
 using Altinn.Authorization.Cli.Utils;
 using Spectre.Console;
@@ -10,7 +10,7 @@ namespace Altinn.Authorization.Cli.Identity;
 public class HashCommand(CancellationToken cancellationToken)
     : BaseCommand<HashCommand.Settings>(cancellationToken)
 {
-    protected override async Task<int> ExecuteAsync(
+    public override async Task<int> ExecuteAsync(
         CommandContext context,
         Settings settings,
         CancellationToken cancellationToken)

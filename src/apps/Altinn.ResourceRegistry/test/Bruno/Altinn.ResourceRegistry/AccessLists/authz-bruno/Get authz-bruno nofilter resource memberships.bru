@@ -1,0 +1,24 @@
+meta {
+  name: Get authz-bruno nofilter resource memberships
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/resourceregistry/api/v1/access-lists/memberships?party=urn:altinn:organization:identifier-no:313776735&resource=urn:altinn:resource:devtest_gar_bruno_accesslist
+  body: none
+  auth: bearer
+}
+
+params:query {
+  party: urn:altinn:organization:identifier-no:313776735
+  resource: urn:altinn:resource:devtest_gar_bruno_accesslist
+}
+
+auth:bearer {
+  token: 
+}
+
+vars:pre-request {
+  auth_tokenType: Enterprise
+}

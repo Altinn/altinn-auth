@@ -8,7 +8,6 @@ using Altinn.Authorization.Tests.Integration;
 using Altinn.Authorization.Tests.Unit;
 using Altinn.Platform.Authorization.Models.EventLog;
 using Altinn.Platform.Storage.Interface.Models;
-using Authorization.Platform.Authorization.Models;
 using Newtonsoft.Json;
 
 namespace Altinn.Authorization.Tests.Util
@@ -177,21 +176,6 @@ namespace Altinn.Authorization.Tests.Util
             return instance;
         }
 
-        public static List<Role> GetRoles(int userId, int resourcePartyId)
-        {
-            string rolesPath = GetRolesPath(userId, resourcePartyId);
-
-            List<Role> roles = new List<Role>();
-
-            if (File.Exists(rolesPath))
-            {
-                string content = File.ReadAllText(rolesPath);
-                roles = (List<Role>)JsonConvert.DeserializeObject(content, typeof(List<Role>));
-            }
-
-            return roles;
-        }
-
         public static void DeleteAppBlobData(string org, string app)
         {
             string blobPath = Path.Combine(GetDataBlobPath(), $"{org}/{app}");
@@ -236,12 +220,6 @@ namespace Altinn.Authorization.Tests.Util
         {
             string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(AltinnApps_DecisionTests).Assembly.Location).LocalPath);
             return Path.Combine(unitTestFolder, "..", "..", "..", "Data", "Applications");
-        }
-
-        private static string GetRolesPath(int coveredByUserId, int offeredByPartyId)
-        {
-            string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(ContextHandlerTest).Assembly.Location).LocalPath);
-            return Path.Combine(unitTestFolder, "..", "..", "..", "Data", "Roles", $"User_{coveredByUserId}", $"party_{offeredByPartyId}", "roles.json");
         }
 
         public static AuthorizationEvent GetAuthorizationEvent(string testCase)

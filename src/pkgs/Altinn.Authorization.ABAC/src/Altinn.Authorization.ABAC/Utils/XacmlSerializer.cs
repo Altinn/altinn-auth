@@ -1,4 +1,4 @@
-using System.Xml;
+﻿using System.Xml;
 using System.Xml.Linq;
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;

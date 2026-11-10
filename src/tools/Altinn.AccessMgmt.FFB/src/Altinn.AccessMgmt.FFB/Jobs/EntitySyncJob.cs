@@ -103,7 +103,7 @@ public static class EntitySyncJob
         lines.AppendLine($"-- Resync {partyUuids.Count} party(ies) in Register");
         lines.AppendLine($"-- Runs against Register database");
         lines.AppendLine();
-        
+
         foreach (var id in partyUuids)
         {
             lines.AppendLine(GenerateResyncStatement(id));

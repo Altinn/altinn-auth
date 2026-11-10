@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.ABAC.Constants
+﻿namespace Altinn.Authorization.ABAC.Constants
 {
     /// <summary>
     /// Constants for XACML 3.0 Constants.

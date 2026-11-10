@@ -1,4 +1,4 @@
-namespace Altinn.Platform.Authorization.Models.External
+﻿namespace Altinn.Platform.Authorization.Models.External
 {
     /// <summary>
     /// The JSON object root needed to be able to parse the request.

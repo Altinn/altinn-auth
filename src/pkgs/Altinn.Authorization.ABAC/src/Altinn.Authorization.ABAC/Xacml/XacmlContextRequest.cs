@@ -1,4 +1,4 @@
-using System.Collections.ObjectModel;
+﻿using System.Collections.ObjectModel;
 using Altinn.Authorization.ABAC.Constants;
 
 namespace Altinn.Authorization.ABAC.Xacml

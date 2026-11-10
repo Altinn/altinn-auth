@@ -1,4 +1,4 @@
-namespace Altinn.AccessMgmt.FFB.Services.Tools;
+﻿namespace Altinn.AccessMgmt.FFB.Services.Tools;
 
 /// <summary>
 /// Result of a grant check for a single environment.

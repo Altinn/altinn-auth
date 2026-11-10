@@ -62,8 +62,10 @@ public static class ServiceCollectionExtensions
         services.AddScoped(sp => new ConnectionQuery(
             sp.GetRequiredService<AppDbContext>(),
             sp.GetRequiredService<ILogger<ConnectionQuery>>(),
-            sp.GetRequiredService<AppLifecycleFeatures>().AdosSubunitInheritance));
+            sp.GetRequiredService<AppLifecycleFeatures>().AdosSubunitInheritance,
+            sp.GetRequiredService<AppLifecycleFeatures>().DisableAltinn2Roles));
         services.AddScoped<IConnectionService, ConnectionService>();
+        services.AddScoped<IBankruptcyEstateDelegationService, BankruptcyEstateDelegationService>();
         services.AddScoped<IMaskinportenSupplierService, MaskinportenSupplierService>();
         services.AddScoped<IPartyService, PartyService>();
         services.AddScoped<IPackageService, PackageService>();
@@ -82,6 +84,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IAuthorizedPartiesService, AuthorizedPartiesServiceEf>();
         services.AddScoped<IServiceOwnerConnectionService, ServiceOwnerConnectionService>();
         services.AddScoped<IConsentDelegationCheckService, ConsentDelegationCheckService>();
+        services.AddScoped<IActivityLogService, ActivityLogService>();
 
         services.AddScoped<IAuthorizationScopeProvider, DefaultAuthorizationScopeProvider>();
         services.AddScoped<IAuthorizationHandler, ScopeConditionAuthorizationHandler>();

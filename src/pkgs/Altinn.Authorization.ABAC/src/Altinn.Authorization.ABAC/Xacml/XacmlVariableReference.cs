@@ -1,4 +1,4 @@
-namespace Altinn.Authorization.ABAC.Xacml
+﻿namespace Altinn.Authorization.ABAC.Xacml
 {
     /// <summary>
     /// 5.24 Element <VariableReference/>

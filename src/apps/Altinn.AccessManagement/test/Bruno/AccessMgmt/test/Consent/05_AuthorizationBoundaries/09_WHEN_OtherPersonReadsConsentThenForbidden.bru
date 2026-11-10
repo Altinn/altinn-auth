@@ -1,0 +1,37 @@
+meta {
+  name: 09_WHEN_OtherPersonReadsConsentThenForbidden
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/bff/consents/:consentId/
+  body: none
+  auth: inherit
+}
+
+params:path {
+  consentId: {{boundaryRequestId}}
+}
+
+docs {
+  WHEN another person reads the consent, the request is forbidden.
+
+  GET /accessmanagement/api/v1/bff/consents/:consentId/
+
+  The caller needs read access to access management for the from party. Without it the
+  endpoint answers 403 with no body.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/Consent/helpers.js");
+  const td = testdata();
+
+  await loginAs(td.otherPerson);
+}
+
+tests {
+  test("WHEN another person reads the consent, the request returns 403", function() {
+    expect(res.status).to.equal(403);
+  });
+}

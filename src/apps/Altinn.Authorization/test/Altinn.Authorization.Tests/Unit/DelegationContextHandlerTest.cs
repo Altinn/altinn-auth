@@ -22,7 +22,6 @@ public class DelegationContextHandlerTest : IDisposable
     private static readonly Uri StringDataType = new("http://www.w3.org/2001/XMLSchema#string");
 
     private readonly Mock<IInstanceMetadataRepository> _policyInfoRepoMock = new();
-    private readonly Mock<IRoles> _rolesMock = new();
     private readonly Mock<IOedRoleAssignmentWrapper> _oedRolesMock = new();
     private readonly Mock<IProfile> _profileMock = new();
     private readonly IMemoryCache _memoryCache = new MemoryCache(new MemoryCacheOptions());
@@ -38,7 +37,7 @@ public class DelegationContextHandlerTest : IDisposable
     {
         var settings = Options.Create(new GeneralSettings { RoleCacheTimeout = 5, MainUnitCacheTimeout = 5 });
         _sut = new DelegationContextHandler(
-            _policyInfoRepoMock.Object, _rolesMock.Object, _oedRolesMock.Object,
+            _policyInfoRepoMock.Object, _oedRolesMock.Object,
             _profileMock.Object, _memoryCache, settings, _registerServiceMock.Object,
             _prpMock.Object, _accMgmtMock.Object, _featureManagerMock.Object, _resourceRegistryMock.Object);
     }

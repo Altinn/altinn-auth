@@ -1,0 +1,21 @@
+meta {
+  name: Get authz-bruno access list members
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/resourceregistry/api/v1/access-lists/{{resourceOwner}}/{{listIdentifier}}/members
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: 
+}
+
+vars:pre-request {
+  auth_tokenType: Enterprise
+  resourceOwner: ttd
+  listIdentifier: authz-bruno
+}

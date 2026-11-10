@@ -1,4 +1,4 @@
-using Altinn.Authorization.ABAC.Utils;
+﻿using Altinn.Authorization.ABAC.Utils;
 
 namespace Altinn.Authorization.ABAC.Xacml
 {

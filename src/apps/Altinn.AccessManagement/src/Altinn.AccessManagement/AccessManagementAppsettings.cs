@@ -1,4 +1,4 @@
-using Altinn.AccessMgmt.Core.Appsettings;
+﻿using Altinn.AccessMgmt.Core.Appsettings;
 using Altinn.Authorization.Host.Database.Appsettings;
 using Altinn.Authorization.Host.Lease.Appsettings;
 using Altinn.Authorization.Integration.Platform.Appsettings;

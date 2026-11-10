@@ -1,4 +1,4 @@
-using Altinn.AccessMgmt.PersistenceEF.Extensions;
+﻿using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Audit;

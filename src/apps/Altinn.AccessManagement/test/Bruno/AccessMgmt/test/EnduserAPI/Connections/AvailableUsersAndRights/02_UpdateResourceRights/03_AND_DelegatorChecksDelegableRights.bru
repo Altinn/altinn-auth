@@ -1,0 +1,64 @@
+meta {
+  name: 03_AND_DelegatorChecksDelegableRights
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources/delegationcheck?party={{party}}&resource={{resource}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  resource: {{resource}}
+}
+
+docs {
+  AND the delegator checks which rights on the resource can be delegated.
+
+  The right keys the update endpoint expects are opaque hashes, so a client reads them
+  from this delegation check. The read and write keys are captured for the next steps.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/Connections/AvailableUsersAndRights/helpers.js");
+  const td = testdata();
+
+  bru.setVar("party", td.delegator.partyUuid);
+  bru.setVar("resource", td.resource.refId);
+
+  await loginAs(td.delegator);
+}
+
+script:post-response {
+  const body = res.getBody();
+  if (body && Array.isArray(body.rights)) {
+    const byAction = action => body.rights.find(r => r.right.action.value === action);
+    const read = byAction("read");
+    const write = byAction("write");
+    if (read) { bru.setVar("aur_readKey", read.right.key); }
+    if (write) { bru.setVar("aur_writeKey", write.right.key); }
+  }
+}
+
+tests {
+  const { testdata } = require("./test/EnduserAPI/Connections/AvailableUsersAndRights/helpers.js");
+  const td = testdata();
+
+  test("AND the delegation check returns 200 for the resource", function() {
+    expect(res.status).to.equal(200);
+    expect(res.getBody().resource.refId).to.equal(td.resource.refId);
+  });
+
+  test("AND the delegator can delegate both read and write", function() {
+    const rights = res.getBody().rights;
+    for (const action of ["read", "write"]) {
+      const right = rights.find(r => r.right.action.value === action);
+      expect(right, `expected a ${action} right`).to.not.be.undefined;
+      expect(right.result).to.equal(true);
+      expect(right.right.key).to.be.a("string").that.is.not.empty;
+    }
+  });
+}

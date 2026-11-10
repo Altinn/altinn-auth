@@ -1,4 +1,4 @@
-using Altinn.Authorization.ABAC.Constants;
+﻿using Altinn.Authorization.ABAC.Constants;
 using Altinn.Platform.Authorization.Constants;
 using Altinn.Platform.Authorization.Models;
 
@@ -30,61 +30,6 @@ namespace Altinn.Authorization.Tests.Data
             }
 
             return rule;
-        }
-
-        public static RequestToDelete GetRequestToDeleteModel(int lastChangedByUserId, int offeredByPartyId, string org, string app, List<string> ruleIds = null, int? coveredByPartyId = null, int? coveredByUserId = null)
-        {
-            AttributeMatch coveredBy = new AttributeMatch();
-            if (coveredByUserId == null)
-            {
-                coveredBy.Id = AltinnXacmlConstants.MatchAttributeIdentifiers.PartyAttribute;
-                coveredBy.Value = coveredByPartyId.ToString();
-            }
-            else
-            {
-                coveredBy.Id = AltinnXacmlConstants.MatchAttributeIdentifiers.UserAttribute;
-                coveredBy.Value = coveredByUserId.ToString();
-            }
-
-            RequestToDelete requestToDelete = new RequestToDelete
-            {
-                DeletedByUserId = lastChangedByUserId,
-                PolicyMatch = new PolicyMatch
-                {
-                    CoveredBy = new List<AttributeMatch> { coveredBy },
-                    OfferedByPartyId = offeredByPartyId,
-                    Resource = new List<AttributeMatch> { new AttributeMatch { Id = AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute, Value = org }, new AttributeMatch { Id = AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute, Value = app } }
-                },
-
-                RuleIds = ruleIds
-            };
-
-            return requestToDelete;
-        }
-
-        public static DelegationChange GetDelegationChange(string altinnAppId, int offeredByPartyId, int? coveredByUserId = null, int? coveredByPartyId = null, int performedByUserId = 20001336, DelegationChangeType changeType = DelegationChangeType.Grant, int changeId = 1337, params Action<DelegationChange>[] mutations)
-        {
-            string coveredBy = coveredByPartyId != null ? $"p{coveredByPartyId}" : $"u{coveredByUserId}";
-            var change = new DelegationChange
-            {
-                DelegationChangeId = changeId,
-                DelegationChangeType = changeType,
-                AltinnAppId = altinnAppId,
-                OfferedByPartyId = offeredByPartyId,
-                CoveredByPartyId = coveredByPartyId,
-                CoveredByUserId = coveredByUserId,
-                PerformedByUserId = performedByUserId,
-                BlobStoragePolicyPath = $"{altinnAppId}/{offeredByPartyId}/{coveredBy}/delegationpolicy.xml",
-                BlobStorageVersionId = "CorrectLeaseId",
-                Created = DateTime.Now
-            };
-
-            foreach (var mutation in mutations)
-            {
-                mutation(change);
-            }
-
-            return change;
         }
 
         public static ResourceAction GetResourceActionModel(string action, IEnumerable<string> roles)

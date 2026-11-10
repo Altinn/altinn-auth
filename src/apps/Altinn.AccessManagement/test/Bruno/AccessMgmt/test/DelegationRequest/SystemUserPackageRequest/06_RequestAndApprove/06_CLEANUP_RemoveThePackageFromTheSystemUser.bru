@@ -1,0 +1,39 @@
+meta {
+	name: 06_CLEANUP_RemoveThePackageFromTheSystemUser
+	type: http
+	seq: 6
+}
+
+delete {
+	url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{party}}&from={{party}}&to={{systemUser}}&package={{package}}
+	body: none
+	auth: inherit
+}
+
+params:query {
+	party: {{party}}
+	from: {{party}}
+	to: {{systemUser}}
+	package: {{package}}
+}
+
+docs {
+	CLEANUP: the recipient removes the package from the system user, so the scenario can be rerun.
+}
+
+script:pre-request {
+	const { testdata, loginAs } = require("./test/DelegationRequest/SystemUserPackageRequest/helpers.js");
+	const td = testdata();
+
+	bru.setVar("party", td.recipient.partyUuid);
+	bru.setVar("systemUser", td.publicSectorConsumer.systemUser.partyUuid);
+	bru.setVar("package", td.package);
+
+	await loginAs(td.recipient.dagligleder);
+}
+
+tests {
+	test("CLEANUP the package is removed, the request returns 204", function() {
+		expect(res.status).to.equal(204);
+	});
+}

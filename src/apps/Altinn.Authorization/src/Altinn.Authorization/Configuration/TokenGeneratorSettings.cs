@@ -1,4 +1,4 @@
-namespace Altinn.Platform.Authorization.Configuration;
+﻿namespace Altinn.Platform.Authorization.Configuration;
 
 /// <summary>
 /// Represents a set of configuration options needed for using the Altinn Platform Token Generator.

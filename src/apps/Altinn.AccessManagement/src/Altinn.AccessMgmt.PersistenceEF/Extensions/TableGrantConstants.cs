@@ -1,4 +1,4 @@
-namespace Altinn.AccessMgmt.PersistenceEF.Extensions;
+﻿namespace Altinn.AccessMgmt.PersistenceEF.Extensions;
 
 /// <summary>
 /// Database roles and table privileges that every application table must grant.

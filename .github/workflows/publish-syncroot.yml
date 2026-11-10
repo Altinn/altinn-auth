@@ -1,0 +1,59 @@
+name: "Publish Syncroot"
+run-name: Publish syncroot for ${{ inputs.vertical }} to ${{ inputs.environment }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      vertical:
+        description: App
+        type: choice
+        required: true
+        options:
+          - Altinn.AccessManagement
+          - Altinn.Authorization
+          - Altinn.Authentication
+          - Altinn.ResourceRegistry
+
+      environment:
+        description: "Environment"
+        type: choice
+        required: true
+        options:
+          - at22
+          - at23
+          - at24
+          - yt01
+          # - tt02
+          # - prod
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: publish-flux-artifacts-${{ inputs.vertical }}-${{ inputs.environment }}
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  publish-app-syncroot:
+    name: Publish Syncroot Artifact
+    runs-on: ubuntu-latest
+    steps:
+      - name: Init
+        uses: $/.github/actions/init
+      - name: Extract app config
+        env:
+          VERTICAL: ${{ inputs.vertical }}
+        run: |
+          repoctl ci export-vertical "app:$VERTICAL"
+
+      - name: Build and push syncroot artifact
+        uses: Altinn/altinn-platform/actions/flux/build-push-image@3535bba3d301df5778ce420f7adf10edd748cc3f # main
+        with:
+          image_name: ${{ env.VERTICAL_SHORT_SLUG }}/syncroot
+          tag: ${{ inputs.environment }}
+          workdir: ${{ env.VERTICAL_DIR }}/syncroot
+          azure_subscription_id: ${{ secrets.DIS_SYNCROOT_AZURE_SUBSCRIPTION_ID }}
+          azure_app_id: ${{ secrets.DIS_SYNCROOT_AZURE_CLIENT_ID }}
+          azure_tenant_id: ${{ secrets.DIS_SYNCROOT_AZURE_TENANT_ID }}

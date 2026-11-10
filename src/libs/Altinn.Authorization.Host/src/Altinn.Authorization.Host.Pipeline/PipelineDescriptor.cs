@@ -1,4 +1,4 @@
-using Altinn.Authorization.Host.Pipeline.Builders;
+﻿using Altinn.Authorization.Host.Pipeline.Builders;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Altinn.Authorization.Host.Pipeline;
