@@ -780,7 +780,7 @@ public class RequestService(
                 request.Assignment.FromId,
                 null,
                 request.PackageId,
-                status is RequestStatusV2.Approved or RequestStatusV2.PartialApprove,
+                status,
                 appsettings?.Value?.Request?.NotifyRequestApprovedInSeconds ?? (60 * 15),
                 ct
             );
@@ -884,7 +884,7 @@ public class RequestService(
                 request.Assignment.FromId,
                 request.ResourceId,
                 null,
-                status is RequestStatusV2.Approved or RequestStatusV2.PartialApprove,
+                status,
                 appsettings?.Value?.Request?.NotifyRequestApprovedInSeconds ?? (60 * 15),
                 ct
             );
