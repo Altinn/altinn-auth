@@ -25,6 +25,26 @@ jobs:
           path: '**/*.trx'
           reporter: dotnet-trx
           list-tests: failed
-          max-annotations: 50
+          # v3.2.0 sends one more annotation than this, and GitHub rejects more than 50 (fixed upstream in 30b4bef).
+          max-annotations: 49
           fail-on-empty: false
           use-actions-summary: false
+
+      # The reporter creates each check run in progress, then updates it. When the update fails (the Checks API
+      # sometimes answers 404 right after the create), the check run would stay in progress for good (#4975).
+      - name: Complete check runs left in progress
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/commits/$HEAD_SHA/check-runs?status=in_progress&per_page=100" --paginate \
+            --jq '.check_runs[] | select(.app.slug == "github-actions" and (.name | endswith(": Tests"))) | .id' |
+          while read -r id; do
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/check-runs/$id" --silent \
+              -f status=completed -f conclusion=neutral \
+              -f 'output[title]=Test results not published' \
+              -f "output[summary]=The test reporter failed before it published these results: $RUN_URL. Re-run that workflow to publish them."
+            echo "Completed check run $id as neutral"
+          done
