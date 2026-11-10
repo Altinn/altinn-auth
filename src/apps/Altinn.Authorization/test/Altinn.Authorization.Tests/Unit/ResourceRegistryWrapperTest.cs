@@ -197,9 +197,6 @@ namespace Altinn.Authorization.Tests.Unit
             </xacml:Policy>
             """;
 
-        /// <summary>
-        /// Answers each request with the next queued response and records the requests it saw.
-        /// </summary>
         private static HybridCache CreateHybridCache(IDistributedCache distributedCache)
         {
             ServiceCollection services = new ServiceCollection();
@@ -246,6 +243,9 @@ namespace Altinn.Authorization.Tests.Unit
             public Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions options, CancellationToken token = default) => _inner.SetAsync(key, value, options, token);
         }
 
+        /// <summary>
+        /// Answers each request with the next queued response and records the requests it saw.
+        /// </summary>
         private sealed class QueuedHandler : HttpMessageHandler
         {
             private readonly Queue<HttpResponseMessage> _responses = new Queue<HttpResponseMessage>();
