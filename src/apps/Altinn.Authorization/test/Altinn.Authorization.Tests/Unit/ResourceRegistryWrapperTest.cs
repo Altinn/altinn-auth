@@ -3,6 +3,7 @@ using System.Text;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.Api.Contracts.Register;
 using Altinn.Authorization.Api.Contracts.ResourceRegistry;
+using Altinn.Authorization.Api.Contracts.ResourceRegistry.Enums;
 using Altinn.Authorization.Models.ResourceRegistry;
 using Altinn.Authorization.Services.Implementation;
 using Altinn.Authorization.Tests.Util;
@@ -10,6 +11,10 @@ using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Platform.Authorization.Clients;
 using Altinn.Platform.Authorization.Configuration;
 using Altinn.ResourceRegistry.Models;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Moq;
 
@@ -25,16 +30,7 @@ namespace Altinn.Authorization.Tests.Unit
 
         public ResourceRegistryWrapperTest()
         {
-            HttpClient client = new HttpClient(_handler);
-            ResourceRegistryClient registryClient = new ResourceRegistryClient(
-                client,
-                Options.Create(new PlatformSettings { ApiResourceRegistryEndpoint = "https://platform.example.com/resourceregistry/api/v1/" }));
-
-            _wrapper = new ResourceRegistryWrapper(
-                registryClient,
-                Mock.Of<IAccessTokenGenerator>(g => g.GenerateAccessToken("platform", "authorization") == "token"),
-                TestSetupUtil.CreateHybridCache(),
-                Options.Create(new GeneralSettings { PolicyCacheTimeout = 1 }));
+            _wrapper = CreateWrapper(TestSetupUtil.CreateHybridCache());
         }
 
         /// <summary>
@@ -103,7 +99,7 @@ namespace Altinn.Authorization.Tests.Unit
 
         /// <summary>
         /// Test case: Get the same resource twice.
-        /// Expected: The registry is called once and the second read returns a copy of the cached resource.
+        /// Expected: The registry is called once and the second read returns the cached instance, not a deserialized copy.
         /// </summary>
         [Fact]
         public async Task GetResourceAsync_SameResourceRequestedTwice_ReturnsResourceAndCallsRegistryOnce()
@@ -117,7 +113,30 @@ namespace Altinn.Authorization.Tests.Unit
 
             // Assert
             first.Identifier.Should().Be(RESOURCE);
-            second.Should().NotBeSameAs(first).And.BeEquivalentTo(first);
+            second.Should().BeSameAs(first);
+            _handler.Requests.Should().HaveCount(1);
+        }
+
+        /// <summary>
+        /// Test case: One instance caches a resource, and a second instance that shares the distributed tier reads it.
+        /// Expected: The second read comes from the distributed tier, so the registry is called once.
+        /// </summary>
+        [Fact]
+        public async Task GetResourceAsync_CachedByAnotherInstance_ReadsDistributedTier()
+        {
+            // Arrange
+            IDistributedCache shared = new SharedDistributedCache();
+            ResourceRegistryWrapper other = CreateWrapper(CreateHybridCache(shared));
+            ResourceRegistryWrapper wrapper = CreateWrapper(CreateHybridCache(shared));
+            _handler.Enqueue(HttpStatusCode.OK, """{"identifier":"ttd-accesslist-resource","title":{"nb":"Tilgangsliste"},"resourceType":"GenericAccessResource","accessListMode":"Enabled"}""");
+
+            // Act
+            ServiceResource first = await other.GetResourceAsync(RESOURCE, TestContext.Current.CancellationToken);
+            ServiceResource second = await wrapper.GetResourceAsync(RESOURCE, TestContext.Current.CancellationToken);
+
+            // Assert
+            second.Should().BeEquivalentTo(first);
+            second.AccessListMode.Should().Be(ResourceAccessListMode.Enabled);
             _handler.Requests.Should().HaveCount(1);
         }
 
@@ -181,6 +200,52 @@ namespace Altinn.Authorization.Tests.Unit
         /// <summary>
         /// Answers each request with the next queued response and records the requests it saw.
         /// </summary>
+        private static HybridCache CreateHybridCache(IDistributedCache distributedCache)
+        {
+            ServiceCollection services = new ServiceCollection();
+            services.AddSingleton(distributedCache);
+            services.AddHybridCache();
+            return services.BuildServiceProvider().GetRequiredService<HybridCache>();
+        }
+
+        private ResourceRegistryWrapper CreateWrapper(HybridCache cache)
+        {
+            ResourceRegistryClient registryClient = new ResourceRegistryClient(
+                new HttpClient(_handler),
+                Options.Create(new PlatformSettings { ApiResourceRegistryEndpoint = "https://platform.example.com/resourceregistry/api/v1/" }));
+
+            return new ResourceRegistryWrapper(
+                registryClient,
+                Mock.Of<IAccessTokenGenerator>(g => g.GenerateAccessToken("platform", "authorization") == "token"),
+                cache,
+                Options.Create(new GeneralSettings { PolicyCacheTimeout = 1 }));
+        }
+
+        /// <summary>
+        /// A distributed cache two HybridCache instances can share. HybridCache ignores a MemoryDistributedCache as its
+        /// distributed tier, so the test wraps one.
+        /// </summary>
+        private sealed class SharedDistributedCache : IDistributedCache
+        {
+            private readonly MemoryDistributedCache _inner = new MemoryDistributedCache(Options.Create(new MemoryDistributedCacheOptions()));
+
+            public byte[] Get(string key) => _inner.Get(key);
+
+            public Task<byte[]> GetAsync(string key, CancellationToken token = default) => _inner.GetAsync(key, token);
+
+            public void Refresh(string key) => _inner.Refresh(key);
+
+            public Task RefreshAsync(string key, CancellationToken token = default) => _inner.RefreshAsync(key, token);
+
+            public void Remove(string key) => _inner.Remove(key);
+
+            public Task RemoveAsync(string key, CancellationToken token = default) => _inner.RemoveAsync(key, token);
+
+            public void Set(string key, byte[] value, DistributedCacheEntryOptions options) => _inner.Set(key, value, options);
+
+            public Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions options, CancellationToken token = default) => _inner.SetAsync(key, value, options, token);
+        }
+
         private sealed class QueuedHandler : HttpMessageHandler
         {
             private readonly Queue<HttpResponseMessage> _responses = new Queue<HttpResponseMessage>();

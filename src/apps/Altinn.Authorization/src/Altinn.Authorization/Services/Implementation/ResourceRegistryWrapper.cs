@@ -66,17 +66,20 @@ namespace Altinn.Authorization.Services.Implementation
         public async Task<ServiceResource> GetResourceAsync(string resourceId, CancellationToken cancellationToken = default)
         {
             string cacheKey = "resource:" + resourceId;
-            ServiceResource resource = await GetCachedAsync<ServiceResource>(cacheKey, _readOptions, cancellationToken);
-            if (resource == null)
+            CachedResource cached = await GetCachedAsync<CachedResource>(cacheKey, _readOptions, cancellationToken);
+            if (cached != null)
             {
-                string apiurl = $"resource/{resourceId}";
-                HttpResponseMessage response = await _resourceRegistry.Client.GetAsync(apiurl, cancellationToken);
+                return cached.Resource;
+            }
 
-                if (response.StatusCode == HttpStatusCode.OK)
-                {
-                    resource = await response.Content.ReadFromJsonAsync<ServiceResource>(_jsonOptions, cancellationToken);
-                    await _cache.SetAsync(cacheKey, resource, _writeOptions, ResourceTags, cancellationToken);
-                }
+            ServiceResource resource = null;
+            string apiurl = $"resource/{resourceId}";
+            HttpResponseMessage response = await _resourceRegistry.Client.GetAsync(apiurl, cancellationToken);
+
+            if (response.StatusCode == HttpStatusCode.OK)
+            {
+                resource = await response.Content.ReadFromJsonAsync<ServiceResource>(_jsonOptions, cancellationToken);
+                await _cache.SetAsync(cacheKey, new CachedResource(resource), _writeOptions, ResourceTags, cancellationToken);
             }
 
             return resource;
@@ -158,6 +161,22 @@ namespace Altinn.Authorization.Services.Implementation
 
         private ValueTask<T> GetCachedAsync<T>(string cacheKey, HybridCacheEntryOptions options, CancellationToken cancellationToken)
             => _cache.GetOrCreateAsync<T>(cacheKey, static _ => default, options, cancellationToken: cancellationToken);
+
+        /// <summary>
+        /// Holds a resource in the cache. The type is marked immutable, so a local hit returns the instance itself instead
+        /// of deserializing a copy; a decision reads the resource twice. Callers must not change the returned resource,
+        /// as with IMemoryCache before. Unlike the policy, the resource is plain JSON and may use the distributed tier.
+        /// </summary>
+        [ImmutableObject(true)]
+        private sealed class CachedResource
+        {
+            public CachedResource(ServiceResource resource)
+            {
+                Resource = resource;
+            }
+
+            public ServiceResource Resource { get; }
+        }
 
         /// <summary>
         /// Holds a parsed resource policy in the local cache. The type is immutable, so HybridCache stores and returns

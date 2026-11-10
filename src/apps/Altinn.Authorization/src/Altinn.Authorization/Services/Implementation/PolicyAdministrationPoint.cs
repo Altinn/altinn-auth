@@ -54,7 +54,8 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "Could not remove the cached policy for {Org}/{App} after storing a new one", org, app);
+                    // org and app come from the query string, so they stay out of the log entry.
+                    _logger.LogWarning(ex, "Could not remove the cached policy after storing a new one");
                 }
             }
 
