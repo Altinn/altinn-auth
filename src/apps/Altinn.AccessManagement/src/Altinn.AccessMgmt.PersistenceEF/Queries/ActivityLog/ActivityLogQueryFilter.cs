@@ -45,7 +45,7 @@ public sealed record ActivityLogQueryFilter
     /// <summary>
     /// Gets the collection of request statuses.
     /// </summary>
-    public IReadOnlyCollection<RequestStatus> Statuses { get; init; }
+    public IReadOnlyCollection<RequestStatusV2> Statuses { get; init; }
 
     /// <summary>
     /// Gets the collection of acting entity identifiers.

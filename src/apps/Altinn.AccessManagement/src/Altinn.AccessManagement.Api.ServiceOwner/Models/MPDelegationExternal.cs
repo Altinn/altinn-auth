@@ -26,6 +26,11 @@ namespace Altinn.AccessManagement.Api.ServiceOwner.Models
         /// Gets or sets the id of the DelegationScheme that is delegated
         /// </summary>
         /// <value>The id of the delegation scheme.</value>
+        /// <remarks>
+        /// Deprecated and will be removed in a later version. It is still read from Resource Registry
+        /// until then; Access Management does not store it.
+        /// </remarks>
+        [Obsolete("DelegationSchemeId is deprecated and will be removed in a later version.")]
         [JsonPropertyName("delegation_scheme_Id")]
         public Guid? DelegationSchemeId { get; set; }
 

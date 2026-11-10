@@ -1,6 +1,7 @@
 ﻿using Altinn.AccessManagement.Api.ServiceOwner.Controllers;
 using Altinn.AccessManagement.Core.Configuration;
 using Altinn.AccessManagement.Core.Errors;
+using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
@@ -37,9 +38,9 @@ public class RequestControllerUnitTest
             generalSettings: Options.Create(new GeneralSettings()));
     }
 
-    private static RequestDto MakeRequest(Guid byId, Guid fromId, RequestStatus status)
+    private static AccessRequest MakeRequest(Guid byId, Guid fromId, RequestStatusV2 status)
     {
-        return new RequestDto
+        return new AccessRequest
         {
             Id = Guid.NewGuid(),
             Type = "package",
@@ -61,14 +62,14 @@ public class RequestControllerUnitTest
     public async Task WithdrawRequest_ByMatchesAndDraft_UpdatesToWithdrawnAndReturnsOk()
     {
         var caller = Guid.NewGuid();
-        var request = MakeRequest(byId: caller, fromId: Guid.NewGuid(), status: RequestStatus.Draft);
-        var updated = new RequestDto { Id = request.Id, Status = RequestStatus.Withdrawn };
+        var request = MakeRequest(byId: caller, fromId: Guid.NewGuid(), status: RequestStatusV2.Draft);
+        var updated = new AccessRequest { Id = request.Id, Status = RequestStatusV2.Withdrawn };
 
         var requestService = new Mock<IRequestService>(MockBehavior.Strict);
         requestService.Setup(s => s.GetRequest(request.Id, It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult<Result<RequestDto>>(request));
-        requestService.Setup(s => s.UpdateRequest(request.From.Id, request.Id, RequestStatus.Withdrawn, It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult<Result<RequestDto>>(updated));
+            .Returns(Task.FromResult<Result<AccessRequest>>(request));
+        requestService.Setup(s => s.UpdateRequest(request.From.Id, request.Id, RequestStatusV2.Withdrawn, It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult<Result<AccessRequest>>(updated));
 
         var controller = CreateController(requestService.Object, AuditAccessorFor(caller).Object);
 
@@ -83,14 +84,14 @@ public class RequestControllerUnitTest
     public async Task WithdrawRequest_ByMatchesAndPending_UpdatesToWithdrawnAndReturnsOk()
     {
         var caller = Guid.NewGuid();
-        var request = MakeRequest(byId: caller, fromId: Guid.NewGuid(), status: RequestStatus.Pending);
-        var updated = new RequestDto { Id = request.Id, Status = RequestStatus.Withdrawn };
+        var request = MakeRequest(byId: caller, fromId: Guid.NewGuid(), status: RequestStatusV2.Pending);
+        var updated = new AccessRequest { Id = request.Id, Status = RequestStatusV2.Withdrawn };
 
         var requestService = new Mock<IRequestService>(MockBehavior.Strict);
         requestService.Setup(s => s.GetRequest(request.Id, It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult<Result<RequestDto>>(request));
-        requestService.Setup(s => s.UpdateRequest(request.From.Id, request.Id, RequestStatus.Withdrawn, It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult<Result<RequestDto>>(updated));
+            .Returns(Task.FromResult<Result<AccessRequest>>(request));
+        requestService.Setup(s => s.UpdateRequest(request.From.Id, request.Id, RequestStatusV2.Withdrawn, It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult<Result<AccessRequest>>(updated));
 
         var controller = CreateController(requestService.Object, AuditAccessorFor(caller).Object);
 
@@ -104,11 +105,11 @@ public class RequestControllerUnitTest
     public async Task WithdrawRequest_ByMatchesAndApproved_ReturnsProblemActionResult()
     {
         var caller = Guid.NewGuid();
-        var request = MakeRequest(byId: caller, fromId: Guid.NewGuid(), status: RequestStatus.Approved);
+        var request = MakeRequest(byId: caller, fromId: Guid.NewGuid(), status: RequestStatusV2.Approved);
 
         var requestService = new Mock<IRequestService>(MockBehavior.Strict);
         requestService.Setup(s => s.GetRequest(request.Id, It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult<Result<RequestDto>>(request));
+            .Returns(Task.FromResult<Result<AccessRequest>>(request));
 
         var controller = CreateController(requestService.Object, AuditAccessorFor(caller).Object);
 
@@ -116,7 +117,7 @@ public class RequestControllerUnitTest
 
         Assert.NotNull(result);
         Assert.Contains("Problem", result.GetType().Name);
-        requestService.Verify(s => s.UpdateRequest(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<RequestStatus>(), It.IsAny<CancellationToken>()), Times.Never);
+        requestService.Verify(s => s.UpdateRequest(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<RequestStatusV2>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -124,25 +125,25 @@ public class RequestControllerUnitTest
     {
         var caller = Guid.NewGuid();
         var otherUser = Guid.NewGuid();
-        var request = MakeRequest(byId: otherUser, fromId: Guid.NewGuid(), status: RequestStatus.Draft);
+        var request = MakeRequest(byId: otherUser, fromId: Guid.NewGuid(), status: RequestStatusV2.Draft);
 
         var requestService = new Mock<IRequestService>(MockBehavior.Strict);
         requestService.Setup(s => s.GetRequest(request.Id, It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult<Result<RequestDto>>(request));
+            .Returns(Task.FromResult<Result<AccessRequest>>(request));
 
         var controller = CreateController(requestService.Object, AuditAccessorFor(caller).Object);
 
         var result = await controller.WithdrawRequest(request.Id, TestContext.Current.CancellationToken);
 
         Assert.IsType<ForbidResult>(result);
-        requestService.Verify(s => s.UpdateRequest(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<RequestStatus>(), It.IsAny<CancellationToken>()), Times.Never);
+        requestService.Verify(s => s.UpdateRequest(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<RequestStatusV2>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task WithdrawRequest_GetRequestReturnsProblem_ReturnsProblemActionResult()
     {
         var requestId = Guid.NewGuid();
-        Result<RequestDto> notFound = Problems.RequestNotFound.Create([]);
+        Result<AccessRequest> notFound = Problems.RequestNotFound.Create([]);
 
         var requestService = new Mock<IRequestService>(MockBehavior.Strict);
         requestService.Setup(s => s.GetRequest(requestId, It.IsAny<CancellationToken>()))
@@ -154,20 +155,20 @@ public class RequestControllerUnitTest
 
         Assert.NotNull(result);
         Assert.Contains("Problem", result.GetType().Name);
-        requestService.Verify(s => s.UpdateRequest(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<RequestStatus>(), It.IsAny<CancellationToken>()), Times.Never);
+        requestService.Verify(s => s.UpdateRequest(It.IsAny<Guid>(), It.IsAny<Guid>(), It.IsAny<RequestStatusV2>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task WithdrawRequest_UpdateRequestReturnsProblem_ReturnsProblemActionResult()
     {
         var caller = Guid.NewGuid();
-        var request = MakeRequest(byId: caller, fromId: Guid.NewGuid(), status: RequestStatus.Draft);
-        Result<RequestDto> failure = Problems.RequestNotFound.Create([]);
+        var request = MakeRequest(byId: caller, fromId: Guid.NewGuid(), status: RequestStatusV2.Draft);
+        Result<AccessRequest> failure = Problems.RequestNotFound.Create([]);
 
         var requestService = new Mock<IRequestService>(MockBehavior.Strict);
         requestService.Setup(s => s.GetRequest(request.Id, It.IsAny<CancellationToken>()))
-            .Returns(Task.FromResult<Result<RequestDto>>(request));
-        requestService.Setup(s => s.UpdateRequest(request.From.Id, request.Id, RequestStatus.Withdrawn, It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult<Result<AccessRequest>>(request));
+        requestService.Setup(s => s.UpdateRequest(request.From.Id, request.Id, RequestStatusV2.Withdrawn, It.IsAny<CancellationToken>()))
             .Returns(Task.FromResult(failure));
 
         var controller = CreateController(requestService.Object, AuditAccessorFor(caller).Object);

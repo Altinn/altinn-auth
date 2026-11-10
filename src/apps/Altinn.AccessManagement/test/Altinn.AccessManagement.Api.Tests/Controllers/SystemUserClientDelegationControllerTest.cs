@@ -17,7 +17,7 @@ public class SystemUserClientDelegationControllerTest
 {
     private static ProblemInstance MakeProblem() =>
         ValidationComposer.Validate(() =>
-            (ref ValidationErrorBuilder errors) =>
+            (ref ValidationProblemBuilder errors) =>
                 errors.Add(ValidationErrors.InvalidPartyUrn, "QUERY/test"));
 
     private static readonly Guid Party = Guid.NewGuid();

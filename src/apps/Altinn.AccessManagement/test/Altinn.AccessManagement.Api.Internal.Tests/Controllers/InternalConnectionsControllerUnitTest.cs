@@ -28,7 +28,7 @@ public class InternalConnectionsControllerUnitTest
 
     private static ValidationProblemInstance MakeValidationProblem() =>
         ValidationComposer.Validate(() =>
-            (ref ValidationErrorBuilder errors) =>
+            (ref ValidationProblemBuilder errors) =>
                 errors.Add(ValidationErrors.InvalidPartyUrn, "QUERY/test"));
 
     #region GetConnections

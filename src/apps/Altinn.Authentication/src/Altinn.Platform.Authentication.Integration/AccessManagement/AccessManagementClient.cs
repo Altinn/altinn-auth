@@ -1029,8 +1029,9 @@ public class AccessManagementClient : IAccessManagementClient
             string responseContent = await response.Content.ReadAsStringAsync();
             ProblemDetails problemDetails = JsonSerializer.Deserialize<ProblemDetails>(responseContent, _serializerOptions)!;
 
+            // ProblemDetails 6.0 puts the descriptor text in title; older responses carried it in detail.
             string? validationErrors = string.Empty;
-            if (problemDetails.Detail == "One or more validation errors occurred.")
+            if (problemDetails.Detail == "One or more validation errors occurred." || problemDetails.Title == "One or more validation errors occurred.")
             {
                 AltinnValidationProblemDetails validationProblems = JsonSerializer.Deserialize<AltinnValidationProblemDetails>(responseContent, _serializerOptions)!;
                 validationErrors = JsonSerializer.Serialize(validationProblems, _serializerOptions);
@@ -1040,7 +1041,7 @@ public class AccessManagementClient : IAccessManagementClient
 
             var problemExtensionData = ProblemExtensionData.Create(new[]
             {
-                new KeyValuePair<string, string>("Problem Detail: ", problemDetails.Detail!),
+                new KeyValuePair<string, string>("Problem Detail: ", problemDetails.Detail ?? problemDetails.Title ?? string.Empty),
                 new KeyValuePair<string, string>("ValidationErrors: ", validationErrors!)
             });
 

@@ -4,6 +4,9 @@
     "manifest": "resource-registry/manifest",
     "syncroot": "resource-registry/syncroot"
   },
+  "deps": [
+    "lib:Altinn.Authorization.Api.Contracts"
+  ],
   "sonarcloud": {
     "projectKey": "Altinn_altinn-resource-registry"
   }

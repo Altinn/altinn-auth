@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
-using Altinn.AccessManagement.Core.Enums.ResourceRegistry;
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.AccessList;
@@ -31,6 +30,7 @@ using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 using Altinn.Authorization.Api.Contracts.Authorization;
 using Altinn.Authorization.Api.Contracts.Register;
 using Altinn.Authorization.Api.Contracts.ResourceRegistry;
+using Altinn.Authorization.Api.Contracts.ResourceRegistry.Enums;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -1049,6 +1049,8 @@ public partial class ConnectionService(
         // Map to result
         IEnumerable<RightCheckDto> checkRights = await MapFromInternalToExternalRights(rights, resource, accessListMode, fromParty, rightKeys, isResourceDelegable, isMaskinPortenSchema, cancellationToken);
 
+        resourceDto = await resourceDto.TranslateDeepAsync(translationService, languageCode, true);
+
         // build reult with reason based on roles, packages, resource rights and users delegable
         ResourceCheckDto resourceCheckDto = new ResourceCheckDto
         {
@@ -1113,6 +1115,8 @@ public partial class ConnectionService(
 
         // Map to result
         IEnumerable<RightCheckDto> checkRights = await MapFromInternalToExternalRights(rights, resource, accessListMode, fromParty, rightKeys, isResourceDelegable, isMaskinPortenSchema, cancellationToken);
+
+        resourceDto = await resourceDto.TranslateDeepAsync(translationService, languageCode, true);
 
         // build result with resource, instance and rights
         InstanceCheckDto instanceCheckDto = new InstanceCheckDto
@@ -1696,6 +1700,7 @@ public partial class ConnectionService(
             Id = resourceObj.Id,
             Name = resourceObj.Name,
             Description = resourceObj.Description,
+            RightDescription = resourceObj.RightDescription,
             Provider = providerDto,
             ProviderId = provider.Id,
             RefId = resourceObj.RefId,
@@ -1734,9 +1739,9 @@ public partial class ConnectionService(
         return policy;
     }
 
-    private static ValidationErrorBuilder CheckFromAndToIsNotNull(Entity from, Entity to)
+    private static ValidationProblemBuilder CheckFromAndToIsNotNull(Entity from, Entity to)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
         if (from is null)
         {
             errorBuilder.Add(ValidationErrors.EntityNotExists, "$QUERY/from");
@@ -1750,9 +1755,9 @@ public partial class ConnectionService(
         return errorBuilder;
     }
 
-    private static ValidationErrorBuilder CheckFromAndToIsValidConnectingOldSIToEmailSI(Entity from, Entity to)
+    private static ValidationProblemBuilder CheckFromAndToIsValidConnectingOldSIToEmailSI(Entity from, Entity to)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         // Guaranteed non-null here: TryBuild above returned false, so both from/to passed their null guards. Check that the variants are correct for a self-registration connection: from should be SI and to should be SI_EMAIL
         if (from!.VariantId != EntityVariantConstants.SI)
@@ -1768,9 +1773,9 @@ public partial class ConnectionService(
         return errorBuilder;
     }
 
-    private static ValidationErrorBuilder CheckFromAndToIsValidRegisterSelfIdentifiedRoleToUser(Entity from, Entity to)
+    private static ValidationProblemBuilder CheckFromAndToIsValidRegisterSelfIdentifiedRoleToUser(Entity from, Entity to)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         // If from and to are the same this is only for the sub variants EMAIL and EDU
         if (from!.VariantId != EntityVariantConstants.SI_EDU && from.VariantId != EntityVariantConstants.SI_EMAIL)
@@ -1785,7 +1790,7 @@ public partial class ConnectionService(
     public async Task<Result<AssignmentDto>> AddSelfRegisteredUserRole(Guid fromId, Guid toId, CancellationToken cancellationToken = default)
     {
         var (from, to) = await GetFromAndToEntities(fromId, toId, cancellationToken);
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         errorBuilder = CheckFromAndToIsNotNull(from, to);
 
