@@ -148,6 +148,12 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
         for (var i = 0; i < rolePackages.Count; i++)
         {
             var rolePackage = rolePackages[i];
+            if (rolePackage is null)
+            {
+                errors.Add(ContractErrors.Required, $"/rolePackages[{i}]");
+                continue;
+            }
+
             PackageDto package = null;
             if (string.IsNullOrEmpty(rolePackage.PackageUrn))
             {

@@ -305,6 +305,14 @@ public class SystemUserClientDelegationControllerTest
         }
 
         [Fact]
+        public async Task PostClientDelegation_NullRolePackage_Returns400Required()
+        {
+            var response = await Post(TestEntities.OrganizationOkernBorettslag.Id, TestEntities.SystemUserClient.Id, RoleConstants.Accountant.Entity.Code, PackageConstants.AccountantSalary.Entity.Urn, change: r => r.RolePackages = [null]);
+
+            Assert.Equal([Altinn.AccessManagement.Core.Errors.ValidationErrors.Required.ErrorCode.ToString()], await ValidationErrorCodes(response));
+        }
+
+        [Fact]
         public async Task PostClientDelegation_NullPackageUrn_Returns400Required()
         {
             var response = await Post(TestEntities.OrganizationOkernBorettslag.Id, TestEntities.SystemUserClient.Id, RoleConstants.Accountant.Entity.Code, null);
