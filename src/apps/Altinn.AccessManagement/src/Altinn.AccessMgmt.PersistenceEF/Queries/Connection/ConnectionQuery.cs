@@ -164,6 +164,12 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
                 : _baseQueryBuilder.ToOthers(db, filter);
 
             var result = baseQuery.Select(ToDtoEmpty).ToList();
+            if (filter.ExcludeDeleted)
+            {
+                // Before packages and resources are loaded, so no work is spent on connections that are dropped
+                result = await RemoveDeletedPartiesAsync(result, direction, ct);
+            }
+
             if (filter.IncludePackages || filter.EnrichPackageResources)
             {
                 try
@@ -253,6 +259,46 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
         {
             throw new InvalidOperationException($"Failed to get connections with filter: {JsonSerializer.Serialize(filter)}", ex);
         }
+    }
+
+    /// <summary>
+    /// Removes connections to deleted parties, <see cref="ConnectionQueryFilter.ExcludeDeleted"/>.
+    /// The party is <c>From</c> for FromOthers and <c>To</c> for ToOthers. Only the deletion status of the party itself is checked,
+    /// never the status of its main unit. For FromOthers, a subunit connection inherited from a main unit is also removed when
+    /// that main unit is deleted, because the connection is the main unit's: this gives the same result whether subunits are
+    /// nested in SQL or in the enricher.
+    /// Only the parties already found through the connections are looked up, by primary key, so the cost follows the size of
+    /// the result and not the number of deleted entities.
+    /// </summary>
+    private async Task<List<ConnectionQueryExtendedRecord>> RemoveDeletedPartiesAsync(List<ConnectionQueryExtendedRecord> result, ConnectionQueryDirection direction, CancellationToken ct)
+    {
+        if (result.Count == 0)
+        {
+            return result;
+        }
+
+        bool fromOthers = direction == ConnectionQueryDirection.FromOthers;
+        Func<ConnectionQueryExtendedRecord, Guid> partyId = fromOthers ? r => r.FromId : r => r.ToId;
+        Func<ConnectionQueryExtendedRecord, bool> inheritedFromMainUnit = r => fromOthers && r.IsMainUnitAccess && r.ViaId.HasValue;
+
+        var entityIds = result.Select(partyId).ToHashSet();
+        entityIds.UnionWith(result.Where(inheritedFromMainUnit).Select(r => r.ViaId!.Value));
+
+        var deletedEntityIds = await db.Entities
+            .AsNoTracking()
+            .Where(e => entityIds.Contains(e.Id))
+            .Where(e => e.IsDeleted)
+            .Select(e => e.Id)
+            .ToListAsync(ct);
+
+        if (deletedEntityIds.Count == 0)
+        {
+            return result;
+        }
+
+        var deletedSet = deletedEntityIds.ToHashSet();
+        result.RemoveAll(r => deletedSet.Contains(partyId(r)) || (inheritedFromMainUnit(r) && deletedSet.Contains(r.ViaId!.Value)));
+        return result;
     }
 
     private static List<ConnectionQueryExtendedRecord> Attach<T>(IEnumerable<ConnectionQueryExtendedRecord> results, ConnectionIndex<T> index, Func<T, Guid> idSelector, Action<ConnectionQueryExtendedRecord, List<T>> assign)
