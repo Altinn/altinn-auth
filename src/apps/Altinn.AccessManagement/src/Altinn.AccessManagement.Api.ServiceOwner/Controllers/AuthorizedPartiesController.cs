@@ -40,8 +40,8 @@ public class AuthorizedPartiesController(
     /// <param name="includeResources">Optional (Default: True): Whether authorized resources should be included in the result set.</param>
     /// <param name="includeInstances">Optional (Default: True): Whether authorized instances should be included in the result set.</param>
     /// <param name="includePartiesViaKeyRoles">Optional (Default: True): Whether authorized parties via organizations the user has a key role for, should be included in the result set.</param>
-    /// <param name="includeSubParties">Optional (Default: True): Whether sub-parties of authorized parties should be included in the result set.</param>
-    /// <param name="includeInactiveParties">Optional (Default: True): Whether inactive authorized parties should be included in the result set.</param>
+    /// <param name="includeSubParties">Optional (Default: True): Whether subunits of authorized parties should be included in the result set. With false, subunits are left out, also where the subject has access to the subunit directly.</param>
+    /// <param name="includeInactiveParties">Optional (Default: True): Whether deleted authorized parties should be included in the result set. With false, deleted parties and subunits of a deleted main unit are left out.</param>
     /// <param name="orgCode">Optional: Filter for only returning authorized parties where the subject has access to any resource owned by a specific service owner identified by the org code.</param>
     /// <param name="anyOfResourceIds">Optional: Filter for only returning authorized parties where the subject has access to any of the provided resource ids. Invalid resource ids are ignored.</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>

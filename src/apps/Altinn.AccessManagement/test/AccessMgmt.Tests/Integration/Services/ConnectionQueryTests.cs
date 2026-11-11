@@ -1157,15 +1157,267 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
             IncludeKeyRole = true,
             IncludeDelegation = true,
             IncludeSubConnections = false,
+            IncludeInnehaverConnections = false,
             EnrichEntities = true,
         };
 
         var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
 
-        // Baker Johnsen should appear but without sub-entities (Oslo, Bergen, Kristiansand)
-        // When IncludeSubConnections=false, child nesting is skipped AND Innehaver connections are skipped
+        // Baker Johnsen should appear but without sub-entities (Oslo, Bergen, Kristiansand).
+        // Innehaver connections are also tagged Hierarchy, so they are switched off here too.
         var hierarchyResults = dbResult.Where(r => r.Reason == ConnectionReason.Hierarchy).ToList();
         Assert.Empty(hierarchyResults);
+    }
+
+    [Fact]
+    public async Task GetConnectionsFromOthers_IncludeSubConnectionsFalse_KeepsInnehaverConnections()
+    {
+        var personId = TestDataSet.GetEntity("Petter").Id;
+        var oleId = TestDataSet.GetEntity("Ole ENK Innehaver").Id;
+        string[] bakerSubunits = ["Baker Johnsen - Oslo", "Baker Johnsen - Bergen", "Baker Johnsen - Kristiansand"];
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { personId },
+            IncludeKeyRole = true,
+            IncludeDelegation = true,
+            IncludeSubConnections = false,
+            EnrichEntities = true,
+        };
+
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        // The innehaver is a person, not a subunit, so it must survive when subunits are switched off
+        Assert.Contains(dbResult, r => r.FromId == oleId && r.Reason == ConnectionReason.Hierarchy);
+        Assert.DoesNotContain(dbResult, r => bakerSubunits.Select(n => TestDataSet.GetEntity(n).Id).Contains(r.FromId));
+    }
+
+    [Fact]
+    public async Task GetConnectionsFromOthers_IncludeInnehaverConnectionsFalse_NoInnehaver()
+    {
+        var personId = TestDataSet.GetEntity("Petter").Id;
+        var oleId = TestDataSet.GetEntity("Ole ENK Innehaver").Id;
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { personId },
+            IncludeKeyRole = true,
+            IncludeDelegation = true,
+            IncludeSubConnections = true,
+            IncludeInnehaverConnections = false,
+            EnrichEntities = true,
+        };
+
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        Assert.DoesNotContain(dbResult, r => r.FromId == oleId);
+        Assert.Contains(dbResult, r => r.FromId == TestDataSet.GetEntity("Baker Johnsen - Oslo").Id);
+    }
+
+    #endregion
+
+    #region ExcludeDeleted
+
+    [Fact]
+    public async Task GetConnectionsFromOthers_ExcludeDeletedFalse_IncludesDeletedParties()
+    {
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { TestDataSet.GetEntity("Dagny").Id },
+            IncludeKeyRole = true,
+            IncludeDelegation = true,
+            ExcludeDeleted = false,
+            EnrichEntities = true,
+        };
+
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+        var fromIds = dbResult.Select(r => r.FromId).ToHashSet();
+
+        Assert.Contains(TestDataSet.GetEntity("Slettet Hovedenhet").Id, fromIds);
+        Assert.Contains(TestDataSet.GetEntity("Slettet Hovedenhet - Avd").Id, fromIds);
+        Assert.Contains(TestDataSet.GetEntity("Aktiv Hovedenhet - Slettet Avd").Id, fromIds);
+        Assert.Contains(TestDataSet.GetEntity("Aktiv Hovedenhet - Aktiv Avd").Id, fromIds);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task GetConnectionsFromOthers_ExcludeDeletedTrue_ExcludesDeletedPartiesAndSubunitsOfDeletedMainUnit(bool withFromFilter)
+    {
+        // Without a party filter the subunits are nested in the enricher; with up to 20 party ids they are nested in SQL.
+        // Both paths must give the same result.
+        string[] allParties = ["Slettet Hovedenhet", "Slettet Hovedenhet - Avd", "Aktiv Hovedenhet", "Aktiv Hovedenhet - Slettet Avd", "Aktiv Hovedenhet - Aktiv Avd"];
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { TestDataSet.GetEntity("Dagny").Id },
+            FromIds = withFromFilter ? allParties.Select(n => TestDataSet.GetEntity(n).Id).ToArray() : null,
+            IncludeKeyRole = true,
+            IncludeDelegation = true,
+            ExcludeDeleted = true,
+            EnrichEntities = true,
+        };
+
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+        var fromIds = dbResult.Select(r => r.FromId).ToHashSet();
+
+        Assert.DoesNotContain(TestDataSet.GetEntity("Slettet Hovedenhet").Id, fromIds);
+        Assert.DoesNotContain(TestDataSet.GetEntity("Slettet Hovedenhet - Avd").Id, fromIds);
+        Assert.DoesNotContain(TestDataSet.GetEntity("Aktiv Hovedenhet - Slettet Avd").Id, fromIds);
+        Assert.Contains(TestDataSet.GetEntity("Aktiv Hovedenhet").Id, fromIds);
+        Assert.Contains(dbResult, r => r.FromId == TestDataSet.GetEntity("Aktiv Hovedenhet - Aktiv Avd").Id && r.Reason == ConnectionReason.Hierarchy);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task GetConnectionsFromOthers_ExcludeDeletedFalse_IncludesDeletedAdosSubunit(bool adosSubunitInheritance)
+    {
+        var query = new ConnectionQuery(_db, adosSubunitInheritanceEnabled: adosSubunitInheritance);
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { TestDataSet.GetEntity("AdosPer").Id },
+            IncludeKeyRole = true,
+            IncludeDelegation = true,
+            ExcludeDeleted = false,
+            EnrichEntities = true,
+        };
+
+        var dbResult = await query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        Assert.Contains(dbResult, r => r.FromId == TestDataSet.GetEntity("ADOS Subunit Slettet").Id);
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task GetConnectionsFromOthers_ExcludeDeletedTrue_ExcludesDeletedAdosSubunitRegardlessOfAdosInheritance(bool adosSubunitInheritance, bool withFromFilter)
+    {
+        // ExcludeDeleted takes precedence over ADOS subunit inheritance: the deleted ADOS subunit must be left out
+        // both as a direct party and as an inherited subunit, in the SQL and the enricher nesting paths.
+        var query = new ConnectionQuery(_db, adosSubunitInheritanceEnabled: adosSubunitInheritance);
+        string[] adosParties = ["ADOS Mainunit", "ADOS Subunit", "ADOS Subunit Slettet"];
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { TestDataSet.GetEntity("AdosPer").Id },
+            FromIds = withFromFilter ? adosParties.Select(n => TestDataSet.GetEntity(n).Id).ToArray() : null,
+            IncludeKeyRole = true,
+            IncludeDelegation = true,
+            ExcludeDeleted = true,
+            EnrichEntities = true,
+        };
+
+        var dbResult = await query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        Assert.DoesNotContain(dbResult, r => r.FromId == TestDataSet.GetEntity("ADOS Subunit Slettet").Id);
+        Assert.Contains(dbResult, r => r.FromId == TestDataSet.GetEntity("ADOS Mainunit").Id);
+        if (adosSubunitInheritance)
+        {
+            Assert.Contains(dbResult, r => r.FromId == TestDataSet.GetEntity("ADOS Subunit").Id && r.Reason == ConnectionReason.Hierarchy);
+        }
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task GetConnectionsFromOthers_ExcludeDeletedFalse_IncludesAdosEntityUnderDeletedMainUnit(bool adosSubunitInheritance)
+    {
+        var query = new ConnectionQuery(_db, adosSubunitInheritanceEnabled: adosSubunitInheritance);
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { TestDataSet.GetEntity("Dagny").Id },
+            IncludeKeyRole = true,
+            IncludeDelegation = true,
+            ExcludeDeleted = false,
+            EnrichEntities = true,
+        };
+
+        var dbResult = await query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        Assert.Contains(dbResult, r => r.FromId == TestDataSet.GetEntity("ADOS Under Slettet Hovedenhet").Id);
+    }
+
+    [Theory]
+    [InlineData(false, false)]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(true, true)]
+    public async Task GetConnectionsFromOthers_ExcludeDeletedTrue_ExcludesAdosEntityUnderDeletedMainUnitRegardlessOfAdosInheritance(bool adosSubunitInheritance, bool withFromFilter)
+    {
+        // ExcludeDeleted on the main unit takes precedence over ADOS subunit inheritance: the active ADOS entity is removed
+        // even when inheritance is disabled and it would otherwise be a top-level party of its own.
+        var query = new ConnectionQuery(_db, adosSubunitInheritanceEnabled: adosSubunitInheritance);
+        string[] parties = ["ADOS Slettet Hovedenhet", "ADOS Under Slettet Hovedenhet", "Aktiv Hovedenhet"];
+
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { TestDataSet.GetEntity("Dagny").Id },
+            FromIds = withFromFilter ? parties.Select(n => TestDataSet.GetEntity(n).Id).ToArray() : null,
+            IncludeKeyRole = true,
+            IncludeDelegation = true,
+            ExcludeDeleted = true,
+            EnrichEntities = true,
+        };
+
+        var dbResult = await query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        Assert.DoesNotContain(dbResult, r => r.FromId == TestDataSet.GetEntity("ADOS Slettet Hovedenhet").Id);
+        Assert.DoesNotContain(dbResult, r => r.FromId == TestDataSet.GetEntity("ADOS Under Slettet Hovedenhet").Id);
+        Assert.Contains(dbResult, r => r.FromId == TestDataSet.GetEntity("Aktiv Hovedenhet").Id);
+    }
+
+    [Fact]
+    public async Task GetConnectionsFromOthers_ExcludeDeletedTrue_ExcludesDeletedOrgForPetter()
+    {
+        var filter = new ConnectionQueryFilter
+        {
+            ToIds = new[] { TestDataSet.GetEntity("Petter").Id },
+            ExcludeDeleted = true,
+            EnrichEntities = false,
+        };
+
+        var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        Assert.DoesNotContain(dbResult, r => r.FromId == TestDataSet.GetEntity("Deleted Org").Id);
+        Assert.Contains(dbResult, r => r.FromId == TestDataSet.GetEntity("Regnskaperne").Id);
+    }
+
+    [Fact]
+    public async Task GetConnectionsToOthers_ExcludeDeletedFalse_IncludesDeletedRecipients()
+    {
+        var filter = new ConnectionQueryFilter
+        {
+            FromIds = new[] { TestDataSet.GetEntity("Aktiv Hovedenhet").Id },
+            ExcludeDeleted = false,
+            EnrichEntities = false,
+        };
+
+        var dbResult = await _query.GetConnectionsToOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        Assert.Contains(dbResult, r => r.ToId == TestDataSet.GetEntity("Slettet Hovedenhet").Id);
+        Assert.Contains(dbResult, r => r.ToId == TestDataSet.GetEntity("Slettet Hovedenhet - Avd").Id);
+    }
+
+    [Fact]
+    public async Task GetConnectionsToOthers_ExcludeDeletedTrue_ExcludesDeletedRecipients()
+    {
+        var filter = new ConnectionQueryFilter
+        {
+            FromIds = new[] { TestDataSet.GetEntity("Aktiv Hovedenhet").Id },
+            ExcludeDeleted = true,
+            EnrichEntities = false,
+        };
+
+        var dbResult = await _query.GetConnectionsToOthersAsync(filter, TestContext.Current.CancellationToken);
+
+        Assert.DoesNotContain(dbResult, r => r.ToId == TestDataSet.GetEntity("Slettet Hovedenhet").Id);
+        Assert.DoesNotContain(dbResult, r => r.ToId == TestDataSet.GetEntity("Slettet Hovedenhet - Avd").Id);
+        Assert.Contains(dbResult, r => r.ToId == TestDataSet.GetEntity("Dagny").Id);
     }
 
     #endregion
@@ -1288,7 +1540,8 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
             IncludeResources = flags[3],
             EnrichEntities = flags[4],
             EnrichPackageResources = flags[5],
-            ExcludeDeleted = flags[6]
+            ExcludeDeleted = flags[6],
+            IncludeInnehaverConnections = flags[7]
         };
 
         // Every flag combination must produce a valid query that runs against the database
@@ -1301,14 +1554,14 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
     public static IEnumerable<object[]> GetFilterCombinations()
     {
         var combinations = new List<object[]>();
-        var total = 1 << 7;
+        var total = 1 << 8;
 
         foreach (var useSingle in new[] { true, false })
         {
             for (int i = 0; i < total; i++)
             {
-                var flags = new bool[7];
-                for (int j = 0; j < 7; j++)
+                var flags = new bool[8];
+                for (int j = 0; j < 8; j++)
                 {
                     flags[j] = (i & (1 << j)) != 0;
                 }
@@ -1389,6 +1642,23 @@ internal static class TestDataSet
         new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000050"), Name = "ADOS Mainunit", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.ORGL, OrganizationIdentifier = "ORG-ADOS-01", ParentId = null, RefId = "ORG-ADOS-01" },
         new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000051"), Name = "ADOS Subunit", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.ADOS, OrganizationIdentifier = "ORG-ADOS-01-01", ParentId = Guid.Parse("0195efb8-7c80-7a01-8001-000000000050"), RefId = "ORG-ADOS-01-01" },
         new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000052"), Name = "AdosPer", TypeId = EntityTypeConstants.Person, VariantId = EntityVariantConstants.Person, PersonIdentifier = "11018412345", RefId = "11018412345", DateOfBirth = DateOnly.Parse("1984-01-11") },
+
+        // Deleted ADOS subunit, for verifying that ExcludeDeleted takes precedence over ADOS subunit inheritance.
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000054"), Name = "ADOS Subunit Slettet", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.ADOS, OrganizationIdentifier = "ORG-ADOS-01-02", ParentId = Guid.Parse("0195efb8-7c80-7a01-8001-000000000050"), RefId = "ORG-ADOS-01-02", IsDeleted = true, DeletedAt = DateTimeOffset.UtcNow.AddDays(-30) },
+
+        // Deleted main unit with an active ADOS entity, for verifying that ExcludeDeleted on the main unit also removes the ADOS entity
+        // whether or not ADOS subunit inheritance is enabled. Dagny has access to both (see Assignments below).
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000056"), Name = "ADOS Slettet Hovedenhet", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.ORGL, OrganizationIdentifier = "ORG-ADOS-02", ParentId = null, RefId = "ORG-ADOS-02", IsDeleted = true, DeletedAt = DateTimeOffset.UtcNow.AddDays(-30) },
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000057"), Name = "ADOS Under Slettet Hovedenhet", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.ADOS, OrganizationIdentifier = "ORG-ADOS-02-01", ParentId = Guid.Parse("0195efb8-7c80-7a01-8001-000000000056"), RefId = "ORG-ADOS-02-01" },
+
+        // ExcludeDeleted test entities: a deleted main unit with an active subunit, and an active main unit with one deleted and one active subunit.
+        // Dagny has access to all of them (see Assignments below).
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000060"), Name = "Slettet Hovedenhet", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.AS, OrganizationIdentifier = "ORG-DEL-02", ParentId = null, RefId = "ORG-DEL-02", IsDeleted = true, DeletedAt = DateTimeOffset.UtcNow.AddDays(-30) },
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000061"), Name = "Slettet Hovedenhet - Avd", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.BEDR, OrganizationIdentifier = "ORG-DEL-02-01", ParentId = Guid.Parse("0195efb8-7c80-7a01-8001-000000000060"), RefId = "ORG-DEL-02-01" },
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000062"), Name = "Aktiv Hovedenhet", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.AS, OrganizationIdentifier = "ORG-ACT-01", ParentId = null, RefId = "ORG-ACT-01" },
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000063"), Name = "Aktiv Hovedenhet - Slettet Avd", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.BEDR, OrganizationIdentifier = "ORG-ACT-01-01", ParentId = Guid.Parse("0195efb8-7c80-7a01-8001-000000000062"), RefId = "ORG-ACT-01-01", IsDeleted = true, DeletedAt = DateTimeOffset.UtcNow.AddDays(-30) },
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000064"), Name = "Aktiv Hovedenhet - Aktiv Avd", TypeId = EntityTypeConstants.Organization, VariantId = EntityVariantConstants.BEDR, OrganizationIdentifier = "ORG-ACT-01-02", ParentId = Guid.Parse("0195efb8-7c80-7a01-8001-000000000062"), RefId = "ORG-ACT-01-02" },
+        new Entity() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000065"), Name = "Dagny", TypeId = EntityTypeConstants.Person, VariantId = EntityVariantConstants.Person, PersonIdentifier = "12018412345", RefId = "12018412345", DateOfBirth = DateOnly.Parse("1984-01-12") },
     };
 
 #pragma warning disable SA1401 // Fields should be private
@@ -1436,6 +1706,17 @@ internal static class TestDataSet
         // ADOS subunit test assignment: AdosPer is Managing Director (DAGL) of the ADOS Mainunit.
         // The ADOS Subunit inherits this access via ParentId only when ADOS subunit inheritance is enabled.
         new Assignment() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000053"), FromId = Entities.First(t => t.Name == "ADOS Mainunit").Id, ToId = Entities.First(t => t.Name == "AdosPer").Id, RoleId = RoleConstants.ManagingDirector }, // Daglig leder
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000055"), FromId = Entities.First(t => t.Name == "ADOS Subunit Slettet").Id, ToId = Entities.First(t => t.Name == "AdosPer").Id, RoleId = RoleConstants.Rightholder }, // Direct access to deleted ADOS subunit
+
+        // ExcludeDeleted test assignments
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000058"), FromId = Entities.First(t => t.Name == "ADOS Slettet Hovedenhet").Id, ToId = Entities.First(t => t.Name == "Dagny").Id, RoleId = RoleConstants.ManagingDirector }, // Daglig leder in deleted main unit with an ADOS entity
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000059"), FromId = Entities.First(t => t.Name == "ADOS Under Slettet Hovedenhet").Id, ToId = Entities.First(t => t.Name == "Dagny").Id, RoleId = RoleConstants.Rightholder }, // Direct access to active ADOS entity under deleted main unit
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000066"), FromId = Entities.First(t => t.Name == "Slettet Hovedenhet").Id, ToId = Entities.First(t => t.Name == "Dagny").Id, RoleId = RoleConstants.ManagingDirector }, // Daglig leder in deleted main unit
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000067"), FromId = Entities.First(t => t.Name == "Aktiv Hovedenhet").Id, ToId = Entities.First(t => t.Name == "Dagny").Id, RoleId = RoleConstants.ManagingDirector }, // Daglig leder in active main unit
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000068"), FromId = Entities.First(t => t.Name == "Slettet Hovedenhet - Avd").Id, ToId = Entities.First(t => t.Name == "Dagny").Id, RoleId = RoleConstants.Rightholder }, // Direct access to active subunit of deleted main unit
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-000000000069"), FromId = Entities.First(t => t.Name == "Aktiv Hovedenhet - Slettet Avd").Id, ToId = Entities.First(t => t.Name == "Dagny").Id, RoleId = RoleConstants.Rightholder }, // Direct access to deleted subunit
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-00000000006a"), FromId = Entities.First(t => t.Name == "Aktiv Hovedenhet").Id, ToId = Entities.First(t => t.Name == "Slettet Hovedenhet").Id, RoleId = RoleConstants.Accountant }, // Deleted recipient (ToOthers)
+        new Assignment() { Id = Guid.Parse("0195efb8-7c80-7a01-8001-00000000006b"), FromId = Entities.First(t => t.Name == "Aktiv Hovedenhet").Id, ToId = Entities.First(t => t.Name == "Slettet Hovedenhet - Avd").Id, RoleId = RoleConstants.Auditor }, // Recipient that is a subunit of a deleted main unit (ToOthers)
     };
 
     internal static Assignment GetAssignment(string fromName, string toName, Guid roleId)
