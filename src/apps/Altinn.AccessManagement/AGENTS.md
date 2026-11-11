@@ -45,6 +45,7 @@ _More belongs here._ This is the section that pays for itself, and it can only c
 - `test/AccessMgmt.Tests` is by far the largest test project; the API-specific projects cover their own surface.
 - `test/Bruno` holds API tests and `test/K6` load tests; neither runs as part of `dotnet test`. Save `.bru` files without a BOM: the Bruno CLI cannot parse one that has a BOM, and a single such file stops the whole post-deployment run in Azure DevOps.
 - **That run executes every folder under `test/Bruno/AccessMgmt/test`, in whichever environment it targets, TT02 included.** A suite for routes behind a feature flag that is off somewhere needs a guard: `ActivityLog/folder.bru` skips its requests on TT02 with `bru.runner.skipRequest()`. Also don't commit what the Bruno app saves into `environments/*.bru` after a local run: `bru.setEnvVar` values such as request ids land there.
+- **A change to response bodies updates the Bruno assertions in the same PR.** That covers DTOs, error descriptors and package bumps such as ServiceDefaults or ProblemDetails. No GitHub workflow runs Bruno, so CI stays green and the post-deployment run is the first to fail. Grep `test/Bruno` for the fields that changed. The ProblemDetails 6.0.0 upgrade moved the descriptor text from `detail` to `title` and broke 44 tests after merge ([#4979](https://github.com/Altinn/altinn-auth/pull/4979)).
 - Every test needs `[UnitTest]` or `[IntegrationTest]` or the run fails. See the root file.
 
 ## Known tech debt
