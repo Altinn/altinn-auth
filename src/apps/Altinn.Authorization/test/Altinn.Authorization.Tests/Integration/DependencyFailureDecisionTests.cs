@@ -104,6 +104,13 @@ public class DependencyFailureDecisionTests : IClassFixture<AuthorizationApiFixt
             {
                 AssertIndeterminateWithProcessingError(decision.Response[i]);
             }
+
+            // The attributes the client asked to get back are what ties a result to its request. They are the
+            // same for a request whose lookup failed as for the decision it would otherwise have got.
+            Assert.NotNull(decision.Response[i].Category);
+            Assert.Equal(
+                Newtonsoft.Json.JsonConvert.SerializeObject(expected.Response[i].Category),
+                Newtonsoft.Json.JsonConvert.SerializeObject(decision.Response[i].Category));
         }
     }
 
@@ -124,6 +131,10 @@ public class DependencyFailureDecisionTests : IClassFixture<AuthorizationApiFixt
         AssertIndeterminateWithProcessingError(Assert.Single(decision.Response));
     }
 
+    /// <summary>
+    /// Asserts the answer a failed lookup must give: no decision, a status that says it was a technical failure,
+    /// and none of the obligations of a Permit.
+    /// </summary>
     private static void AssertIndeterminateWithProcessingError(XacmlJsonResult result)
     {
         Assert.Equal(nameof(XacmlContextDecision.Indeterminate), result.Decision);
@@ -131,18 +142,29 @@ public class DependencyFailureDecisionTests : IClassFixture<AuthorizationApiFixt
         Assert.Null(result.Obligations);
     }
 
+    /// <summary>
+    /// Reads the XACML JSON response of a decision.
+    /// </summary>
     private static async Task<XacmlJsonResponse> ReadDecision(HttpResponseMessage response)
     {
         string content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
         return Newtonsoft.Json.JsonConvert.DeserializeObject<XacmlJsonResponse>(content);
     }
 
+    /// <summary>
+    /// Replaces Access Management with one that fails the delegation lookup, and answers everything else.
+    /// </summary>
     private static void UseFailingDelegationLookup(IServiceCollection services)
     {
         services.AddSingleton<AccessManagementWrapperMock>();
         services.AddSingleton<IAccessManagementWrapper>(sp => new FailingDelegationLookup(sp.GetRequiredService<AccessManagementWrapperMock>()));
     }
 
+    /// <summary>
+    /// Builds a host with the failing service, and a client that is authorized for the external endpoint.
+    /// </summary>
+    /// <param name="configureServices">Registers the service that fails</param>
+    /// <param name="logRequestOnError">Whether the feature flag for audit-logging a failed request is on</param>
     private HttpClient CreateClient(Action<IServiceCollection> configureServices, bool logRequestOnError = false)
     {
         Mock<IFeatureManager> featureManager = new();

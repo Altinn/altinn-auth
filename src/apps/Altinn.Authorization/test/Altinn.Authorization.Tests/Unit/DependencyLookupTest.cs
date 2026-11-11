@@ -58,6 +58,9 @@ public sealed class DependencyLookupTest : IDisposable
 
     private readonly MemoryCache _memoryCache = new(new MemoryCacheOptions());
 
+    /// <summary>
+    /// Every lookup, combined with every way the service behind it can fail.
+    /// </summary>
     public static TheoryData<string, string> FailedLookups()
     {
         TheoryData<string, string> data = [];
@@ -157,6 +160,10 @@ public sealed class DependencyLookupTest : IDisposable
         Assert.IsType<DependencyFailedException>(ex);
     }
 
+    /// <summary>
+    /// Runs the named lookup through its real wrapper, with the handler in place of the service.
+    /// </summary>
+    /// <returns>What the lookup returned</returns>
     private async Task<object> Invoke(string lookup, StubHandler handler)
     {
         CancellationToken ct = TestContext.Current.CancellationToken;
@@ -258,6 +265,9 @@ public sealed class DependencyLookupTest : IDisposable
     {
         public int Calls { get; private set; }
 
+        /// <summary>
+        /// Answers with the next scripted outcome.
+        /// </summary>
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
             string outcome = outcomes[Math.Min(Calls, outcomes.Length - 1)];
