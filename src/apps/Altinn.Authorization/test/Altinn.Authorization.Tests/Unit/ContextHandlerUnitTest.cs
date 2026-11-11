@@ -3,6 +3,8 @@ using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.Api.Contracts.Authorization;
 using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Constants;
+using Altinn.Platform.Authorization.Exceptions;
+using Altinn.Platform.Authorization.Helpers;
 using Altinn.Platform.Authorization.Models;
 using Altinn.Platform.Authorization.Models.AccessManagement;
 using Altinn.Platform.Authorization.Models.Oed;
@@ -529,6 +531,36 @@ public class ContextHandlerUnitTest : IDisposable
         var cached = await _sut.TestGetUserProfileByUserId(42, TestContext.Current.CancellationToken);
         Assert.Same(result, cached);
         _profileMock.Verify(p => p.GetUserProfile(42, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task GetUserProfileByUserId_FailedLookup_IsNotCached()
+    {
+        var profile = new UserProfile { UserId = 42, Party = new Party { PartyId = 100 } };
+        _profileMock.SetupSequence(p => p.GetUserProfile(42, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new DependencyFailedException(DependencyCall.Profile, System.Net.HttpStatusCode.ServiceUnavailable))
+            .ReturnsAsync(profile);
+
+        await Assert.ThrowsAsync<DependencyFailedException>(() => _sut.TestGetUserProfileByUserId(42, TestContext.Current.CancellationToken));
+        var result = await _sut.TestGetUserProfileByUserId(42, TestContext.Current.CancellationToken);
+
+        Assert.Same(profile, result);
+        _profileMock.Verify(p => p.GetUserProfile(42, It.IsAny<CancellationToken>()), Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task GetOedRoleAssignments_FailedLookup_IsNotCached()
+    {
+        var roles = new List<OedRoleAssignment> { new() { From = "01017012345", To = "02027012345" } };
+        _oedRolesMock.SetupSequence(o => o.GetOedRoleAssignments("01017012345", "02027012345"))
+            .ThrowsAsync(new DependencyFailedException(DependencyCall.OedAuthz, System.Net.HttpStatusCode.ServiceUnavailable))
+            .ReturnsAsync(roles);
+
+        await Assert.ThrowsAsync<DependencyFailedException>(() => _sut.TestGetOedRoleAssignments("01017012345", "02027012345"));
+        var result = await _sut.TestGetOedRoleAssignments("01017012345", "02027012345");
+
+        Assert.Same(roles, result);
+        _oedRolesMock.Verify(o => o.GetOedRoleAssignments("01017012345", "02027012345"), Times.Exactly(2));
     }
 
     [Fact]

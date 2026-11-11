@@ -28,6 +28,8 @@ The XACML roles map onto files, and knowing that mapping is most of what it take
 
 Outbound calls to other services go through wrappers in `Services/Implementation` (`AccessManagementWrapper`, `ProfileWrapper`, `OedRoleAssignmentWrapper`), not directly from controllers.
 
+A lookup on the decision path is sent with `DependencyCall.SendAsync` (`Helpers/DependencyCall.cs`). It throws `DependencyFailedException` when the service fails, which the decision answers as Indeterminate with `processing-error`. 400 and 404 are answers, not failures, and are left to the wrapper. Never turn a failed lookup into an empty result: an empty result reads as "no access", and can end up in a cache ([#4951](https://github.com/Altinn/altinn-auth/issues/4951)).
+
 Deployment overlays live in `manifests/deploy/<environment>` and must match the paths selected by `syncroot/<environment>`, including `tt02` and `prod`. Production's Maskinporten client ID and signing key must come from external configuration. Validate overlays with `bash .github/scripts/validate-manifests.sh`.
 
 Decisions for this vertical are in [`docs/adr/`](docs/adr/README.md). Read [ADR-0001](docs/adr/0001-access-management-as-pip.md) before changing what the PDP fetches from Access Management, its cache, or what it trusts in the answer, and [ADR-0002](docs/adr/0002-audit-events-through-a-queue.md) before changing which decisions are audit-logged or how.

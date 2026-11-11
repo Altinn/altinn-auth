@@ -7,6 +7,7 @@ using Altinn.ApiClients.Maskinporten.Interfaces;
 using Altinn.ApiClients.Maskinporten.Models;
 using Altinn.Platform.Authorization.Clients;
 using Altinn.Platform.Authorization.Configuration;
+using Altinn.Platform.Authorization.Helpers;
 using Altinn.Platform.Authorization.Models;
 using Altinn.Platform.Authorization.Models.Oed;
 using Altinn.Platform.Authorization.Services.Interface;
@@ -58,7 +59,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
 
                 StringContent requestBody = new StringContent(JsonSerializer.Serialize(oedRoleAssignmentRequest), Encoding.UTF8, "application/json");
 
-                HttpResponseMessage response = await _oedAuthz.Client.PostAsync("api/v1/pip", requestBody);
+                HttpResponseMessage response = await DependencyCall.SendAsync(DependencyCall.OedAuthz, () => _oedAuthz.Client.PostAsync("api/v1/pip", requestBody));
                 string responseContent = await response.Content.ReadAsStringAsync();
                 if (response.StatusCode == HttpStatusCode.OK)
                 {

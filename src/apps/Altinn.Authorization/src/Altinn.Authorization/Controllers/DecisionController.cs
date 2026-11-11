@@ -15,6 +15,7 @@ using Altinn.Authorization.ProblemDetails;
 using Altinn.Platform.Authenticaiton.Extensions;
 using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Constants;
+using Altinn.Platform.Authorization.Exceptions;
 using Altinn.Platform.Authorization.Helpers;
 using Altinn.Platform.Authorization.ModelBinding;
 using Altinn.Platform.Authorization.Models;
@@ -363,6 +364,53 @@ namespace Altinn.Platform.Authorization.Controllers
 
         private async Task<XacmlContextResponse> Authorize(XacmlContextRequest decisionRequest, bool isExernalRequest, bool logEvent = true, CancellationToken cancellationToken = default)
         {
+            try
+            {
+                return await Evaluate(decisionRequest, isExernalRequest, logEvent, cancellationToken);
+            }
+            catch (DependencyFailedException ex)
+            {
+                // A lookup the decision depends on failed, so the PDP cannot tell whether the subject has access.
+                // That is Indeterminate, never "no access". It is answered for this request alone, so that the
+                // other requests of a multi-request still get their own decision.
+                _logger.LogError(ex, "// DecisionController // Authorize // Lookup against {Dependency} failed", ex.Dependency);
+
+                XacmlContextResponse response = new XacmlContextResponse(new XacmlContextResult(XacmlContextDecision.Indeterminate)
+                {
+                    Status = new XacmlContextStatus(XacmlContextStatusCode.ProcessingError)
+                    {
+                        StatusMessage = $"The decision could not be made because the lookup against '{ex.Dependency}' failed."
+                    }
+                });
+
+                await LogRequestOnError(decisionRequest, response, logEvent, cancellationToken);
+                return response;
+            }
+        }
+
+        /// <summary>
+        /// Writes the audit event of a request that ended in an error, under the same feature flags as the requests
+        /// the endpoints catch: one flag for a single request and one for the requests of a multi-request.
+        /// </summary>
+        private async Task LogRequestOnError(XacmlContextRequest decisionRequest, XacmlContextResponse response, bool isSingleRequest, CancellationToken cancellationToken)
+        {
+            try
+            {
+                string featureFlag = isSingleRequest ? FeatureFlags.DecisionRequestLogRequestOnError : FeatureFlags.DecisionRequestLogRequestOnErrorMultiRequest;
+                if (await _featureManager.IsEnabledAsync(featureFlag, cancellationToken))
+                {
+                    await _eventLog.CreateAuthorizationEvent(_featureManager, decisionRequest, HttpContext, response, cancellationToken);
+                }
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                // The audit event must not replace the answer the caller is waiting for.
+                _logger.LogWarning(ex, "// DecisionController // LogRequestOnError // Failed to write the authorization event");
+            }
+        }
+
+        private async Task<XacmlContextResponse> Evaluate(XacmlContextRequest decisionRequest, bool isExernalRequest, bool logEvent, CancellationToken cancellationToken)
+        {
             // The access restriction mode is specified per request via the urn:altinn:authorization:access-restriction
             // resource attribute, so it is resolved from the parsed request rather than a call-wide parameter.
             // Validated before enrichment so untrusted mode/via-party values never reach policy retrieval or the
@@ -430,8 +478,9 @@ namespace Altinn.Platform.Authorization.Controllers
                 {
                     delegationContextResponse = await AuthorizeUsingDelegations(decisionRequest, policy, accessRestriction, cancellationToken);
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (ex is not DependencyFailedException)
                 {
+                    // A failed lookup is let through: without the delegations the PDP cannot say that there is no access.
                     _logger.LogError(ex, "// DecisionController // Authorize // Delegation // Unexpected Exception");
                 }
             }
