@@ -7,7 +7,6 @@ using Altinn.AccessMgmt.PersistenceEF.Queries;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.FeatureManagement;
 
 namespace Altinn.AccessManagement.Tests.Integration.Services;
@@ -80,7 +79,7 @@ public class ConnectionQueryAltinn2RolesTests : IClassFixture<EfDatabaseFixture>
     [Fact]
     public async Task GetConnectionsFromOthers_DirectA2Assignment_ToggleOff_IncludesA2Role()
     {
-        var query = new ConnectionQuery(_db, NullLogger<ConnectionQuery>.Instance, excludeAltinn2Roles: false);
+        var query = new ConnectionQuery(_db, excludeAltinn2Roles: false);
 
         var result = await query.GetConnectionsFromOthersAsync(FromOthersFilter(A2OnlyPersonId), TestContext.Current.CancellationToken);
 
@@ -90,7 +89,7 @@ public class ConnectionQueryAltinn2RolesTests : IClassFixture<EfDatabaseFixture>
     [Fact]
     public async Task GetConnectionsFromOthers_DirectA2Assignment_ToggleOn_ExcludesPartyEntirely()
     {
-        var query = new ConnectionQuery(_db, NullLogger<ConnectionQuery>.Instance, excludeAltinn2Roles: true);
+        var query = new ConnectionQuery(_db, excludeAltinn2Roles: true);
 
         var result = await query.GetConnectionsFromOthersAsync(FromOthersFilter(A2OnlyPersonId), TestContext.Current.CancellationToken);
 
@@ -103,7 +102,7 @@ public class ConnectionQueryAltinn2RolesTests : IClassFixture<EfDatabaseFixture>
     [InlineData(true)]
     public async Task GetConnectionsFromOthers_MixedRoles_KeepsPartyWithOnlyNonA2RolesWhenToggleOn(bool excludeAltinn2Roles)
     {
-        var query = new ConnectionQuery(_db, NullLogger<ConnectionQuery>.Instance, excludeAltinn2Roles: excludeAltinn2Roles);
+        var query = new ConnectionQuery(_db, excludeAltinn2Roles: excludeAltinn2Roles);
 
         var result = await query.GetConnectionsFromOthersAsync(FromOthersFilter(MixedPersonId), TestContext.Current.CancellationToken);
 
@@ -142,7 +141,7 @@ public class ConnectionQueryAltinn2RolesTests : IClassFixture<EfDatabaseFixture>
     }
 
     private AuthorizedPartyRepoServiceEf CreateAuthorizedPartyRepo(bool excludeAltinn2Roles) =>
-        new(_db, new ConnectionQuery(_db, NullLogger<ConnectionQuery>.Instance, excludeAltinn2Roles: excludeAltinn2Roles), new DisabledFeatureManager());
+        new(_db, new ConnectionQuery(_db, excludeAltinn2Roles: excludeAltinn2Roles), new DisabledFeatureManager());
 
     private sealed class DisabledFeatureManager : IFeatureManager
     {
@@ -160,7 +159,7 @@ public class ConnectionQueryAltinn2RolesTests : IClassFixture<EfDatabaseFixture>
     [Fact]
     public async Task GetConnectionsFromOthers_RoleMap_ToggleOff_IncludesRoleMapA2Roles()
     {
-        var query = new ConnectionQuery(_db, NullLogger<ConnectionQuery>.Instance, excludeAltinn2Roles: false);
+        var query = new ConnectionQuery(_db, excludeAltinn2Roles: false);
 
         var result = await query.GetConnectionsFromOthersAsync(FromOthersFilter(DaglPersonId), TestContext.Current.CancellationToken);
 
@@ -171,7 +170,7 @@ public class ConnectionQueryAltinn2RolesTests : IClassFixture<EfDatabaseFixture>
     [Fact]
     public async Task GetConnectionsFromOthers_RoleMap_ToggleOn_KeepsDaglButExcludesA2Roles()
     {
-        var query = new ConnectionQuery(_db, NullLogger<ConnectionQuery>.Instance, excludeAltinn2Roles: true);
+        var query = new ConnectionQuery(_db, excludeAltinn2Roles: true);
 
         var result = await query.GetConnectionsFromOthersAsync(FromOthersFilter(DaglPersonId), TestContext.Current.CancellationToken);
 
@@ -185,7 +184,7 @@ public class ConnectionQueryAltinn2RolesTests : IClassFixture<EfDatabaseFixture>
     [InlineData(true)]
     public async Task GetConnectionsToOthers_ExcludesA2RolesOnlyWhenToggleOn(bool excludeAltinn2Roles)
     {
-        var query = new ConnectionQuery(_db, NullLogger<ConnectionQuery>.Instance, excludeAltinn2Roles: excludeAltinn2Roles);
+        var query = new ConnectionQuery(_db, excludeAltinn2Roles: excludeAltinn2Roles);
         var filter = new ConnectionQueryFilter
         {
             FromIds = [A2OrgId],
@@ -206,7 +205,7 @@ public class ConnectionQueryAltinn2RolesTests : IClassFixture<EfDatabaseFixture>
     [InlineData(true)]
     public async Task GetConnectionsToOthers_RoleMap_ExcludedOnlyWhenToggleOn(bool excludeAltinn2Roles)
     {
-        var query = new ConnectionQuery(_db, NullLogger<ConnectionQuery>.Instance, excludeAltinn2Roles: excludeAltinn2Roles);
+        var query = new ConnectionQuery(_db, excludeAltinn2Roles: excludeAltinn2Roles);
         var filter = new ConnectionQueryFilter
         {
             FromIds = [DaglOrgId],
@@ -228,7 +227,7 @@ public class ConnectionQueryAltinn2RolesTests : IClassFixture<EfDatabaseFixture>
     [InlineData(true)]
     public async Task HasConnection_A2Assignment_OnlyWhenToggleOff(bool excludeAltinn2Roles)
     {
-        var query = new ConnectionQuery(_db, NullLogger<ConnectionQuery>.Instance, excludeAltinn2Roles: excludeAltinn2Roles);
+        var query = new ConnectionQuery(_db, excludeAltinn2Roles: excludeAltinn2Roles);
 
         var (direct, _) = await query.HasConnection(A2OrgId, A2OnlyPersonId, [ConnectionReason.Assignment]);
         var (hierarchy, _) = await query.HasConnection(A2OrgSubunitId, A2OnlyPersonId, [ConnectionReason.Hierarchy]);
@@ -240,7 +239,7 @@ public class ConnectionQueryAltinn2RolesTests : IClassFixture<EfDatabaseFixture>
     [Fact]
     public async Task HasConnection_NonA2Assignment_ToggleOn_ReturnsTrue()
     {
-        var query = new ConnectionQuery(_db, NullLogger<ConnectionQuery>.Instance, excludeAltinn2Roles: true);
+        var query = new ConnectionQuery(_db, excludeAltinn2Roles: true);
 
         var (result, reason) = await query.HasConnection(DaglOrgId, DaglPersonId, [ConnectionReason.Assignment]);
 

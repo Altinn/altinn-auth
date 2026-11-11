@@ -28,7 +28,7 @@ public sealed class ConnectionQueryService(IEnvironmentDbContextFactory dbFactor
         CancellationToken ct = default)
     {
         using var db = dbFactory.CreateContext(environment);
-        var query = new ConnectionQuery(db, logger, adosSubunitInheritanceEnabled: true);
+        var query = new ConnectionQuery(db, adosSubunitInheritanceEnabled: true, logger: logger);
 
         return direction == ConnectionQueryDirection.FromOthers
             ? await query.GetConnectionsFromOthersAsync(filter, ct: ct)
