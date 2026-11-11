@@ -1,7 +1,7 @@
-﻿using Altinn.AccessMgmt.Core.Models;
+﻿using Altinn.AccessManagement.Core.Errors;
+using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
-using Altinn.AccessMgmt.Core.Utils.Models;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
@@ -9,7 +9,6 @@ using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
-using ContractErrors = Altinn.AccessManagement.Core.Errors.ValidationErrors;
 
 namespace Altinn.AccessMgmt.Core.Services;
 
@@ -113,13 +112,13 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
         var client = await entityService.GetEntity(request.ClientId, cancellationToken);
         if (client is null)
         {
-            errors.Add(ContractErrors.EntityNotExists, "/clientId", [new($"{request.ClientId}", "entity do not exist.")]);
+            errors.Add(ValidationErrors.EntityNotExists, "/clientId", [new($"{request.ClientId}", "entity do not exist.")]);
         }
 
         var existingAgent = await entityService.GetEntity(request.AgentId, cancellationToken);
         if (existingAgent is not null && (existingAgent.TypeId != EntityTypeConstants.SystemUser.Id || existingAgent.VariantId != EntityVariantConstants.AgentSystem.Id))
         {
-            errors.Add(ContractErrors.DisallowedEntityType, "/agentId", [new($"{request.AgentId}", "entity is not an agent system user.")]);
+            errors.Add(ValidationErrors.DisallowedEntityType, "/agentId", [new($"{request.AgentId}", "entity is not an agent system user.")]);
         }
 
         // Only Altinn 3 roles can be assigned to the agent here; GetOrCreateAssignment throws for any other role
@@ -127,12 +126,12 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
         var agentRole = await db.Roles.AsNoTracking().FirstOrDefaultAsync(t => t.Code == request.AgentRole, cancellationToken);
         if (agentRole is null)
         {
-            errors.Add(ContractErrors.RoleNotExists, "/agentRole", [new($"{request.AgentRole}", "role does not exist.")]);
+            errors.Add(ValidationErrors.RoleNotExists, "/agentRole", [new($"{request.AgentRole}", "role does not exist.")]);
         }
         else if (agentRole.ProviderId != ProviderConstants.Altinn3.Id
             && (existingAgent is null || await assignmentService.GetAssignment(facilitator.Id, existingAgent.Id, agentRole.Id, cancellationToken) is null))
         {
-            errors.Add(ContractErrors.InvalidRole, "/agentRole", [new($"{request.AgentRole}", "role cannot be assigned to the agent.")]);
+            errors.Add(ValidationErrors.InvalidRole, "/agentRole", [new($"{request.AgentRole}", "role cannot be assigned to the agent.")]);
         }
 
         // The contracts project has no nullable annotations, so explicit nulls pass model binding and are checked here.
@@ -140,7 +139,7 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
         var rolePackages = request.RolePackages ?? [];
         if (rolePackages.Count == 0)
         {
-            errors.Add(ContractErrors.Required, "/rolePackages");
+            errors.Add(ValidationErrors.Required, "/rolePackages");
         }
 
         var clientAssignments = new Dictionary<string, (RoleDto Role, Assignment Assignment, IEnumerable<AssignmentOrRolePackageAccess> Packages)>();
@@ -150,27 +149,27 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
             var rolePackage = rolePackages[i];
             if (rolePackage is null)
             {
-                errors.Add(ContractErrors.Required, $"/rolePackages[{i}]");
+                errors.Add(ValidationErrors.Required, $"/rolePackages[{i}]");
                 continue;
             }
 
             PackageDto package = null;
             if (string.IsNullOrEmpty(rolePackage.PackageUrn))
             {
-                errors.Add(ContractErrors.Required, $"/rolePackages[{i}]/packageUrn");
+                errors.Add(ValidationErrors.Required, $"/rolePackages[{i}]/packageUrn");
             }
             else
             {
                 package = await packageService.GetPackageByUrnValue(rolePackage.PackageUrn, cancellationToken);
                 if (package is null)
                 {
-                    errors.Add(ContractErrors.InvalidPackage, $"/rolePackages[{i}]/packageUrn", [new($"{rolePackage.PackageUrn}", "Package does not exist.")]);
+                    errors.Add(ValidationErrors.InvalidPackage, $"/rolePackages[{i}]/packageUrn", [new($"{rolePackage.PackageUrn}", "Package does not exist.")]);
                 }
             }
 
             if (string.IsNullOrEmpty(rolePackage.RoleIdentifier))
             {
-                errors.Add(ContractErrors.Required, $"/rolePackages[{i}]/roleIdentifier");
+                errors.Add(ValidationErrors.Required, $"/rolePackages[{i}]/roleIdentifier");
                 continue;
             }
 
@@ -190,13 +189,13 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
 
             if (clientAssignment.Role is null)
             {
-                errors.Add(ContractErrors.RoleNotExists, $"/rolePackages[{i}]/roleIdentifier", [new($"{rolePackage.RoleIdentifier}", "role does not exist.")]);
+                errors.Add(ValidationErrors.RoleNotExists, $"/rolePackages[{i}]/roleIdentifier", [new($"{rolePackage.RoleIdentifier}", "role does not exist.")]);
                 continue;
             }
 
             if (clientAssignment.Assignment is null)
             {
-                errors.Add(ContractErrors.MissingAssignment, $"/rolePackages[{i}]/roleIdentifier", [new($"{rolePackage.RoleIdentifier}", $"Role is not assigned to '{facilitator.Id}' from '{client.Id}'.")]);
+                errors.Add(ValidationErrors.MissingAssignment, $"/rolePackages[{i}]/roleIdentifier", [new($"{rolePackage.RoleIdentifier}", $"Role is not assigned to '{facilitator.Id}' from '{client.Id}'.")]);
                 continue;
             }
 
@@ -209,7 +208,7 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
             var clientPackage = clientAssignment.Packages.FirstOrDefault(t => t.PackageId == package.Id);
             if (clientPackage is null)
             {
-                errors.Add(ContractErrors.InvalidPackage, $"/rolePackages[{i}]/packageUrn", [new($"{package.Urn}", $"Package is not available through the role assignment to '{facilitator.Id}' from '{client.Id}'.")]);
+                errors.Add(ValidationErrors.InvalidPackage, $"/rolePackages[{i}]/packageUrn", [new($"{package.Urn}", $"Package is not available through the role assignment to '{facilitator.Id}' from '{client.Id}'.")]);
                 continue;
             }
 
