@@ -1,0 +1,47 @@
+meta {
+	name: 04_THEN_ApproverSeesTheRequestedRights
+	type: http
+	seq: 4
+}
+
+get {
+	url: {{baseUrl}}/accessmanagement/api/v2/enduser/request?party={{party}}&id={{rk_requestId}}
+	body: none
+	auth: inherit
+}
+
+params:query {
+	party: {{party}}
+	id: {{rk_requestId}}
+}
+
+docs {
+	THEN the approver sees the requested rights when reading the request through v2.
+
+	GET /accessmanagement/api/v2/enduser/request?party=<approver>&id=<request>
+
+	`party` must be the sender or the recipient of the request, otherwise 403.
+}
+
+script:pre-request {
+	const { testdata, loginAs, requireVar } = require("./test/DelegationRequest/ResourceRequestRightKeysV2/helpers.js");
+	const td = testdata();
+
+	requireVar("rk_requestId", "creating the request");
+	bru.setVar("party", td.approver.partyUuid);
+
+	await loginAs(td.approver);
+}
+
+tests {
+	test("THEN the request can be read through v2, the request returns 200", function() {
+		expect(res.status).to.equal(200);
+	});
+
+	test("THEN the request is pending with the two requested rights", function() {
+		const body = res.getBody();
+		expect(body.id).to.equal(bru.getVar("rk_requestId"));
+		expect(body.status).to.equal("Pending");
+		expect(body.resource.requestedRightKeys).to.have.members([bru.getVar("rk_keyA"), bru.getVar("rk_keyB")]);
+	});
+}

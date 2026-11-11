@@ -1,0 +1,59 @@
+meta {
+	name: 01_GIVEN_NoPendingRequestAndNoDelegation
+	type: http
+	seq: 1
+}
+
+get {
+	url: {{baseUrl}}/accessmanagement/api/v2/enduser/request/received?party={{party}}&from={{from}}&status=Pending&type=resource
+	body: none
+	auth: inherit
+}
+
+params:query {
+	party: {{party}}
+	from: {{from}}
+	status: Pending
+	type: resource
+}
+
+docs {
+	GIVEN the approver has no pending request from the requester for the resource, and has
+	not delegated the resource to the requester.
+
+	GET /accessmanagement/api/v2/enduser/request/received?party=<approver>&from=<requester>&status=Pending&type=resource
+
+	Idempotent reset: the post-response script rejects the pending requests for the resource
+	and removes the resource delegation from the approver to the requester, so leftovers from
+	earlier or crashed runs never break the scenario. Creating a request while one is pending
+	would return the old request, with its old right keys.
+
+	A 404 here means the feature flag AccessManagement.Enduser.RequestV2Api is off in the
+	target environment.
+}
+
+script:pre-request {
+	const { testdata, loginAs, clearScenarioVars } = require("./test/DelegationRequest/ResourceRequestRightKeysV2/helpers.js");
+	const td = testdata();
+
+	clearScenarioVars();
+	bru.setVar("party", td.approver.partyUuid);
+	bru.setVar("from", td.requester.partyUuid);
+
+	await loginAs(td.approver);
+}
+
+script:post-response {
+	const axios = require("axios");
+	const { testdata, resetPair } = require("./test/DelegationRequest/ResourceRequestRightKeysV2/helpers.js");
+
+	if (res.status === 200) {
+		await resetPair(axios, testdata(), res.getBody().data);
+	}
+}
+
+tests {
+	test("GIVEN the received requests can be listed through v2, the request returns 200", function() {
+		expect(res.status).to.equal(200);
+	});
+}

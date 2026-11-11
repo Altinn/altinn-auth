@@ -1,0 +1,41 @@
+meta {
+	name: 06_CLEANUP_ApproverRejectsTheRequest
+	type: http
+	seq: 6
+}
+
+put {
+	url: {{baseUrl}}/accessmanagement/api/v2/enduser/request/received/reject?party={{party}}&id={{rk_requestId}}
+	body: none
+	auth: inherit
+}
+
+params:query {
+	party: {{party}}
+	id: {{rk_requestId}}
+}
+
+docs {
+	CLEANUP the approver rejects the request, so the scenario can be rerun.
+
+	PUT /accessmanagement/api/v2/enduser/request/received/reject?party=<approver>&id=<request>
+
+	Returns 200 with the request in status Rejected.
+}
+
+script:pre-request {
+	const { testdata, loginAs, requireVar } = require("./test/DelegationRequest/ResourceRequestRightKeysV2/helpers.js");
+	const td = testdata();
+
+	requireVar("rk_requestId", "03");
+	bru.setVar("party", td.approver.partyUuid);
+
+	await loginAs(td.approver);
+}
+
+tests {
+	test("CLEANUP the request is rejected, the request returns 200", function() {
+		expect(res.status).to.equal(200);
+		expect(res.getBody().status).to.equal("Rejected");
+	});
+}

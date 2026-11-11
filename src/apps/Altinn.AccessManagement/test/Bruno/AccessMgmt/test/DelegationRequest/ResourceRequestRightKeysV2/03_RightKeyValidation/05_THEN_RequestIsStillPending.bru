@@ -1,0 +1,44 @@
+meta {
+	name: 05_THEN_RequestIsStillPending
+	type: http
+	seq: 5
+}
+
+get {
+	url: {{baseUrl}}/accessmanagement/api/v2/enduser/request?party={{party}}&id={{rk_requestId}}
+	body: none
+	auth: inherit
+}
+
+params:query {
+	party: {{party}}
+	id: {{rk_requestId}}
+}
+
+docs {
+	THEN the request is still pending, with nothing approved.
+
+	GET /accessmanagement/api/v2/enduser/request?party=<approver>&id=<request>
+}
+
+script:pre-request {
+	const { testdata, loginAs, requireVar } = require("./test/DelegationRequest/ResourceRequestRightKeysV2/helpers.js");
+	const td = testdata();
+
+	requireVar("rk_requestId", "creating the request");
+	bru.setVar("party", td.approver.partyUuid);
+
+	await loginAs(td.approver);
+}
+
+tests {
+	test("THEN the request can be read through v2, the request returns 200", function() {
+		expect(res.status).to.equal(200);
+	});
+
+	test("THEN the request is pending, with no approved rights", function() {
+		const body = res.getBody();
+		expect(body.status).to.equal("Pending");
+		expect(body.resource).to.not.have.property("approvedRightKeys");
+	});
+}

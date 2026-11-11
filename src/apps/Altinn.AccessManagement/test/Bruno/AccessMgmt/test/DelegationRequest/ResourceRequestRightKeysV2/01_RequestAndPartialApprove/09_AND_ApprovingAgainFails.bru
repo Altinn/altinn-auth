@@ -1,0 +1,56 @@
+meta {
+	name: 09_AND_ApprovingAgainFails
+	type: http
+	seq: 9
+}
+
+put {
+	url: {{baseUrl}}/accessmanagement/api/v2/enduser/request/received/approve?party={{party}}&id={{rk_requestId}}
+	body: none
+	auth: inherit
+}
+
+params:query {
+	party: {{party}}
+	id: {{rk_requestId}}
+}
+
+headers {
+	Content-Type: application/json
+	Accept: application/json
+}
+
+docs {
+	AND approving the request again fails, since only a pending request can be approved.
+
+	PUT /accessmanagement/api/v2/enduser/request/received/approve?party=<approver>&id=<request>
+
+	Returns 400 with AM.VLD-00036 on the `id` query parameter. The status is checked before
+	anything is delegated, so a request that cannot be approved never gives access.
+}
+
+script:pre-request {
+	const { testdata, loginAs, requireVar } = require("./test/DelegationRequest/ResourceRequestRightKeysV2/helpers.js");
+	const td = testdata();
+
+	requireVar("rk_requestId", "creating the request");
+	bru.setVar("party", td.approver.partyUuid);
+
+	await loginAs(td.approver);
+}
+
+tests {
+	test("AND approving again returns 400", function() {
+		expect(res.status).to.equal(400);
+	});
+
+	test("THEN AM.VLD-00036 says the request cannot be approved in its status", function() {
+		const body = res.getBody();
+		expect(body.status).to.equal(400);
+		expect(body.code).to.equal("STD-00000");
+		expect(body.validationErrors).to.be.an("array").that.is.not.empty;
+		const error = body.validationErrors.find(e => e.code === "AM.VLD-00036");
+		expect(error, "validation error AM.VLD-00036").to.exist;
+		expect(error.paths.some(p => p.endsWith("id")), "path ending in id").to.equal(true);
+	});
+}

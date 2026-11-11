@@ -1,0 +1,43 @@
+meta {
+	name: 10_CLEANUP_ApproverRemovesTheDelegation
+	type: http
+	seq: 10
+}
+
+delete {
+	url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources?party={{party}}&from={{party}}&to={{to}}&resource={{resource}}
+	body: none
+	auth: inherit
+}
+
+params:query {
+	party: {{party}}
+	from: {{party}}
+	to: {{to}}
+	resource: {{resource}}
+}
+
+docs {
+	CLEANUP the approver removes the resource delegation the approval created, so the scenario
+	can be rerun. The request keeps its status and approved right keys: the delegation is not
+	synchronised back to the request.
+
+	DELETE /accessmanagement/api/v1/enduser/connections/resources?party=<approver>&from=<approver>&to=<requester>&resource=<id>
+}
+
+script:pre-request {
+	const { testdata, loginAs } = require("./test/DelegationRequest/ResourceRequestRightKeysV2/helpers.js");
+	const td = testdata();
+
+	bru.setVar("party", td.approver.partyUuid);
+	bru.setVar("to", td.requester.partyUuid);
+	bru.setVar("resource", td.resource);
+
+	await loginAs(td.approver);
+}
+
+tests {
+	test("CLEANUP the resource delegation is removed, the request returns 204", function() {
+		expect(res.status).to.equal(204);
+	});
+}

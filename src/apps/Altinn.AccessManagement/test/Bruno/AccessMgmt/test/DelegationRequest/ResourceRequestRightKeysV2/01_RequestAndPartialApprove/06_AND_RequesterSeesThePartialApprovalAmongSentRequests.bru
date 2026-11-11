@@ -1,0 +1,51 @@
+meta {
+	name: 06_AND_RequesterSeesThePartialApprovalAmongSentRequests
+	type: http
+	seq: 6
+}
+
+get {
+	url: {{baseUrl}}/accessmanagement/api/v2/enduser/request/sent?party={{party}}&to={{to}}&status=PartialApprove&type=resource
+	body: none
+	auth: inherit
+}
+
+params:query {
+	party: {{party}}
+	to: {{to}}
+	status: PartialApprove
+	type: resource
+}
+
+docs {
+	AND the requester sees the request among its sent requests, filtered on PartialApprove.
+
+	GET /accessmanagement/api/v2/enduser/request/sent?party=<requester>&to=<approver>&status=PartialApprove&type=resource
+
+	Returns 200 with a page of v2 requests in `data`. In v2 the status filter takes every
+	status, PartialApprove included. Without a filter, every status is returned.
+}
+
+script:pre-request {
+	const { testdata, loginAs, requireVar } = require("./test/DelegationRequest/ResourceRequestRightKeysV2/helpers.js");
+	const td = testdata();
+
+	requireVar("rk_requestId", "03");
+	bru.setVar("party", td.requester.partyUuid);
+	bru.setVar("to", td.approver.partyUuid);
+
+	await loginAs(td.requester.innehaver);
+}
+
+tests {
+	test("AND the sent requests can be listed through v2, the request returns 200", function() {
+		expect(res.status).to.equal(200);
+	});
+
+	test("AND the partially approved request is listed with the approved right", function() {
+		const listed = res.getBody().data.find(r => r.id === bru.getVar("rk_requestId"));
+		expect(listed, "the request in the sent list").to.exist;
+		expect(listed.status).to.equal("PartialApprove");
+		expect(listed.resource.approvedRightKeys).to.deep.equal([bru.getVar("rk_keyA")]);
+	});
+}

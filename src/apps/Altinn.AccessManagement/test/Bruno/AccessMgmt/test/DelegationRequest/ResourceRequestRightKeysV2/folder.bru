@@ -1,0 +1,72 @@
+meta {
+	name: ResourceRequestRightKeysV2
+	seq: 11
+}
+
+auth {
+	mode: inherit
+}
+
+script:pre-request {
+	// The v2 request routes are behind the feature flag AccessManagement.Enduser.RequestV2Api.
+	// Add an environment here once the flag is on there and its seed data is verified.
+	const enabledIn = ["at22"];
+	if (!enabledIn.includes(bru.getEnvVar("tokenEnv"))) {
+		bru.runner.skipRequest();
+	}
+}
+
+docs {
+	# Resource requests with selected rights (right keys), API version 2
+
+	BDD scenarios for the version 2 end user request endpoints under
+	`/accessmanagement/api/v2/enduser/request`, where a resource request can name the rights it
+	asks for and the approver can choose which rights to give (#4604, #4605). They double as
+	usage documentation: every request carries a `docs` block with what the endpoint does, the
+	parameters it takes and the response it returns.
+
+	Each subfolder is one scenario. The files inside are the scenario steps, named
+	`NN_GIVEN|WHEN|THEN|AND|CLEANUP_...` and ordered by `seq`. A scenario starts from a known
+	state, removes what it created, and can run standalone or repeatedly.
+
+	## Endpoints
+
+	- `POST v2/enduser/request/resource`: create a resource request, optionally with
+		`{ "requestedRightKeys": [...] }`.
+	- `PUT v2/enduser/request/received/approve`: approve, optionally with
+		`{ "rightKeys": [...] }` selecting the rights to give. The status becomes Approved or
+		PartialApprove.
+	- `GET v2/enduser/request`, `sent` and `received`: the v2 request, with `status` as a
+		non-exhaustive string and the keys in `resource.requestedRightKeys` and
+		`resource.approvedRightKeys`.
+	- Version 1 of the same endpoints reports PartialApprove as `status` Approved with
+		`statusV2` PartialApprove, leaves the right keys out, and sends a `Deprecation` header and
+		a `successor-version` link to version 2.
+
+	Right keys are opaque hashes from the resource policy. The scenarios look them up through
+	`GET v1/enduser/connections/resources/delegationcheck` instead of hard-coding them.
+
+	## Feature flags
+
+	`AccessManagement.Enduser.RequestV2Api` and `AccessMgmt.Controller.RequestAssignment.Resource`
+	must be on in the target environment. With the first off, every v2 call returns 404.
+	The Azure DevOps post-deployment run executes the whole `test` folder in every environment,
+	so this folder's pre-request script skips every request outside the environments listed in
+	`enabledIn`. TT02 has seed data, but stays out of the list until the flag is on there.
+
+	## Tokens and fixtures
+
+	Personas live in `testdata/delegationrequest-scenarios/<tokenEnv>.js` under
+	`resourceRequestRightKeysV2`, and come from the `be-om-tilgang` fixtures:
+
+	- `requester`: an organisation asking for access, acting through its innehaver.
+	- `approver`: a private person, connected to the requester, asked to grant access.
+	- `resource`: a ttd resource on which the approver can delegate at least two rights.
+
+	Every step mints a personal token with the scope `altinn:portal/enduser` through
+	`helpers.js`. Requests cannot be deleted, so each scenario rejects stale pending requests
+	in its GIVEN step and removes the delegation it created in its CLEANUP step.
+
+	The v1 suite in `Resource_DelegationRequest` uses the same pair and resource; the GIVEN
+	steps reset what it leaves behind.
+}

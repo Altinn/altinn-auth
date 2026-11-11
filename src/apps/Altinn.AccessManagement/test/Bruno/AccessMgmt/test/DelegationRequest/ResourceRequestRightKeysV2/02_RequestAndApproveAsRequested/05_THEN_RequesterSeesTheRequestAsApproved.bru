@@ -1,0 +1,44 @@
+meta {
+	name: 05_THEN_RequesterSeesTheRequestAsApproved
+	type: http
+	seq: 5
+}
+
+get {
+	url: {{baseUrl}}/accessmanagement/api/v2/enduser/request?party={{party}}&id={{rk_requestId}}
+	body: none
+	auth: inherit
+}
+
+params:query {
+	party: {{party}}
+	id: {{rk_requestId}}
+}
+
+docs {
+	THEN the requester sees the request as Approved, with the approved right, through v2.
+
+	GET /accessmanagement/api/v2/enduser/request?party=<requester>&id=<request>
+}
+
+script:pre-request {
+	const { testdata, loginAs, requireVar } = require("./test/DelegationRequest/ResourceRequestRightKeysV2/helpers.js");
+	const td = testdata();
+
+	requireVar("rk_requestId", "creating the request");
+	bru.setVar("party", td.requester.partyUuid);
+
+	await loginAs(td.requester.innehaver);
+}
+
+tests {
+	test("THEN the request can be read through v2, the request returns 200", function() {
+		expect(res.status).to.equal(200);
+	});
+
+	test("THEN the request is Approved with the approved right", function() {
+		const body = res.getBody();
+		expect(body.status).to.equal("Approved");
+		expect(body.resource.approvedRightKeys).to.deep.equal([bru.getVar("rk_keyA")]);
+	});
+}

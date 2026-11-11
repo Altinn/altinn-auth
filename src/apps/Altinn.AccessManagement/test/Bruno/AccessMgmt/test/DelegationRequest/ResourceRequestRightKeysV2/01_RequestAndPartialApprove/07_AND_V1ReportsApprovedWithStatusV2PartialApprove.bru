@@ -1,0 +1,61 @@
+meta {
+	name: 07_AND_V1ReportsApprovedWithStatusV2PartialApprove
+	type: http
+	seq: 7
+}
+
+get {
+	url: {{baseUrl}}/accessmanagement/api/v1/enduser/request?party={{party}}&id={{rk_requestId}}
+	body: none
+	auth: inherit
+}
+
+params:query {
+	party: {{party}}
+	id: {{rk_requestId}}
+}
+
+docs {
+	AND version 1 reports the request as Approved, with the real status in statusV2.
+
+	GET /accessmanagement/api/v1/enduser/request?party=<requester>&id=<request>
+
+	Version 1 clients only know the statuses of version 1, so PartialApprove is reported as
+	`status` Approved, and `statusV2` carries PartialApprove. The right keys are left out of
+	version 1. Every v1 request endpoint is deprecated: the response carries a `Deprecation`
+	header (RFC 9745) and a `Link` header with `rel="successor-version"` pointing at v2.
+}
+
+script:pre-request {
+	const { testdata, loginAs, requireVar } = require("./test/DelegationRequest/ResourceRequestRightKeysV2/helpers.js");
+	const td = testdata();
+
+	requireVar("rk_requestId", "creating the request");
+	bru.setVar("party", td.requester.partyUuid);
+
+	await loginAs(td.requester.innehaver);
+}
+
+tests {
+	test("AND the request can be read through v1, the request returns 200", function() {
+		expect(res.status).to.equal(200);
+	});
+
+	test("AND v1 reports status Approved with statusV2 PartialApprove", function() {
+		const body = res.getBody();
+		expect(body.id).to.equal(bru.getVar("rk_requestId"));
+		expect(body.status).to.equal("Approved");
+		expect(body.statusV2).to.equal("PartialApprove");
+	});
+
+	test("AND v1 leaves the right keys out", function() {
+		const resource = res.getBody().resource;
+		expect(resource).to.not.have.property("requestedRightKeys");
+		expect(resource).to.not.have.property("approvedRightKeys");
+	});
+
+	test("AND v1 is marked deprecated with v2 as its successor", function() {
+		expect(res.getHeader("deprecation")).to.match(/^@\d+$/);
+		expect(res.getHeader("link")).to.contain("</accessmanagement/api/v2/enduser/request>; rel=\"successor-version\"");
+	});
+}
