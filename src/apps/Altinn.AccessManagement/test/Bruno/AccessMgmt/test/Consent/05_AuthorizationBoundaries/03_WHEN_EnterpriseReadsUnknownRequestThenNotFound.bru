@@ -41,6 +41,6 @@ tests {
     const body = res.getBody();
     expect(body.status).to.equal(404);
     expect(body.code).to.equal("AM-00001");
-    expect(body.detail).to.equal("Consent not found");
+    expect(body.title).to.equal("Consent not found");
   });
 }

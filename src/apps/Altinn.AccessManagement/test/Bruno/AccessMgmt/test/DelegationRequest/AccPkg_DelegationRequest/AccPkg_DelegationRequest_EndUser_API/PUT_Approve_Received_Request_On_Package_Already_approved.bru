@@ -45,11 +45,11 @@ tests {
       expect(res.status).to.equal(400);
       expect(data).to.have.property("validationErrors");
       const validationError = data.validationErrors[0];
-      expect(validationError).to.have.property("detail", "Request does not support this status update.");
+      expect(validationError).to.have.property("title", "Request does not support this status update.");
       expect(validationError).to.have.property("paths");
       expect(validationError.paths).to.be.an("array").with.length.greaterThan(0);
-      expect(validationError.paths[0]).to.equal("$QUERY/party");
-      expect(validationError).to.have.property("party", "Changing request status from Approved to Approved is not allowed.");
+      expect(validationError.paths[0]).to.equal("$QUERY/id");
+      expect(validationError).to.have.property("id", "Unable to approve request with status 'Approved'.");
       
     });
 }

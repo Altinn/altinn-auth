@@ -1,4 +1,5 @@
-﻿using Altinn.AccessManagement.TestUtils.Fixtures;
+﻿using System.Data.Common;
+using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
@@ -7,6 +8,7 @@ using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Logging.Abstractions;
 using DelegationPackage = Altinn.AccessMgmt.PersistenceEF.Models.DelegationPackage;
 using DelegationResource = Altinn.AccessMgmt.PersistenceEF.Models.DelegationResource;
@@ -1268,6 +1270,104 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
 
         // AppControlledRightholder role should be included when explicitly requested
         Assert.Contains(dbResult, r => r.FromId == skrikId && r.RoleId == RoleConstants.AppControlledRightholder.Id);
+    }
+
+    #endregion
+
+    #region Cancellation
+
+    [Theory]
+    [InlineData(ConnectionQueryDirection.FromOthers, false)]
+    [InlineData(ConnectionQueryDirection.FromOthers, true)]
+    [InlineData(ConnectionQueryDirection.ToOthers, true)]
+    public async Task GetConnectionsAsync_RunsEveryCommandAsync(ConnectionQueryDirection direction, bool withPartyFilter)
+    {
+        var interceptor = new CommandModeInterceptor();
+        await using var db = CreateDbContext(interceptor);
+        var query = new ConnectionQuery(db, NullLogger<ConnectionQuery>.Instance);
+
+        await query.GetConnectionsAsync(CreateFullFilter(direction, withPartyFilter), direction, TestContext.Current.CancellationToken);
+
+        // A synchronous command blocks a thread and cannot observe the request token,
+        // so an abandoned request would keep its thread and database connection.
+        Assert.True(interceptor.AsyncCommands > 0);
+        Assert.Equal(0, interceptor.SyncCommands);
+    }
+
+    [Theory]
+    [InlineData(ConnectionQueryDirection.FromOthers, false)]
+    [InlineData(ConnectionQueryDirection.FromOthers, true)]
+    [InlineData(ConnectionQueryDirection.ToOthers, true)]
+    public async Task GetConnectionsAsync_CancelledToken_ThrowsOperationCanceledException(ConnectionQueryDirection direction, bool withPartyFilter)
+    {
+        var interceptor = new CommandModeInterceptor();
+        await using var db = CreateDbContext(interceptor);
+        var query = new ConnectionQuery(db, NullLogger<ConnectionQuery>.Instance);
+        var cancelled = new CancellationToken(canceled: true);
+
+        // Cancellation must reach the caller as cancellation, not as the InvalidOperationException that wraps real failures.
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            () => query.GetConnectionsAsync(CreateFullFilter(direction, withPartyFilter), direction, cancelled));
+
+        Assert.Equal(0, interceptor.SyncCommands);
+        Assert.Equal(0, interceptor.AsyncCommands);
+    }
+
+    private AppDbContext CreateDbContext(CommandModeInterceptor interceptor)
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseNpgsql(_fixture.Db.Admin.ToString())
+            .AddInterceptors(interceptor)
+            .Options;
+
+        return new AppDbContext(options);
+    }
+
+    private static ConnectionQueryFilter CreateFullFilter(ConnectionQueryDirection direction, bool withPartyFilter)
+    {
+        var petter = new[] { TestDataSet.GetEntity("Petter").Id };
+        var baker = new[] { TestDataSet.GetEntity("Baker Johnsen").Id };
+
+        // Everything switched on, so the base query, the party-filter lookups and every loader run.
+        return new ConnectionQueryFilter
+        {
+            FromIds = direction == ConnectionQueryDirection.ToOthers || withPartyFilter ? baker : null,
+            ToIds = direction == ConnectionQueryDirection.FromOthers ? petter : null,
+            IncludeKeyRole = true,
+            IncludeDelegation = true,
+            IncludeMainUnitConnections = true,
+            IncludeSubConnections = true,
+            IncludePackages = true,
+            IncludeResources = true,
+            IncludeDelegationResources = true,
+            IncludeInstances = true,
+            EnrichEntities = true,
+            EnrichPackageResources = true,
+        };
+    }
+
+    /// <summary>
+    /// Counts how commands are executed, and observes the token on asynchronous commands
+    /// the way the driver does once a query is running.
+    /// </summary>
+    private sealed class CommandModeInterceptor : DbCommandInterceptor
+    {
+        public int SyncCommands { get; private set; }
+
+        public int AsyncCommands { get; private set; }
+
+        public override InterceptionResult<DbDataReader> ReaderExecuting(DbCommand command, CommandEventData eventData, InterceptionResult<DbDataReader> result)
+        {
+            SyncCommands++;
+            return base.ReaderExecuting(command, eventData, result);
+        }
+
+        public override ValueTask<InterceptionResult<DbDataReader>> ReaderExecutingAsync(DbCommand command, CommandEventData eventData, InterceptionResult<DbDataReader> result, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            AsyncCommands++;
+            return base.ReaderExecutingAsync(command, eventData, result, cancellationToken);
+        }
     }
 
     #endregion
