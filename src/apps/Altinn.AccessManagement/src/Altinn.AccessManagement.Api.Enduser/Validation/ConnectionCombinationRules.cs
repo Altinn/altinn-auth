@@ -28,7 +28,7 @@ internal static class ConnectionCombinationRules
 
         if (partyId != fromId)
         {
-            return (ref ValidationErrorBuilder errors) =>
+            return (ref ValidationProblemBuilder errors) =>
                 errors.Add(ValidationErrors.InvalidQueryParameter, "QUERY/from", [new("from", ValidationErrorMessageTexts.PartyMustMatchFrom)]);
         }
 
@@ -57,7 +57,7 @@ internal static class ConnectionCombinationRules
             return null;
         }
 
-        return (ref ValidationErrorBuilder errors) =>
+        return (ref ValidationProblemBuilder errors) =>
         {
             if (fromValid)
             {
@@ -96,7 +96,7 @@ internal static class ConnectionCombinationRules
             return null;
         }
 
-        return (ref ValidationErrorBuilder errors) =>
+        return (ref ValidationProblemBuilder errors) =>
         {
             errors.Add(ValidationErrors.InvalidQueryParameter, "QUERY/from", [new("from", ValidationErrorMessageTexts.FromOrToMustMatchParty)]);
             errors.Add(ValidationErrors.InvalidQueryParameter, "QUERY/to", [new("to", ValidationErrorMessageTexts.FromOrToMustMatchParty)]);
@@ -121,7 +121,7 @@ internal static class ConnectionCombinationRules
 
         if (fromId == toId)
         {
-            return (ref ValidationErrorBuilder errors) =>
+            return (ref ValidationProblemBuilder errors) =>
             {
                 errors.Add(ValidationErrors.InvalidQueryParameter, "QUERY/from", [new("from", ValidationErrorMessageTexts.SelfDelegationNotAllowed)]);
                 errors.Add(ValidationErrors.InvalidQueryParameter, "QUERY/to", [new("to", ValidationErrorMessageTexts.SelfDelegationNotAllowed)]);
@@ -145,7 +145,7 @@ internal static class ConnectionCombinationRules
 
         if (idProvided && urnProvided)
         {
-            return (ref ValidationErrorBuilder errors) =>
+            return (ref ValidationProblemBuilder errors) =>
             {
                 errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{idName}", [new(idName, ValidationErrorMessageTexts.ProvideEitherPackageRef)]);
                 errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{urnName}", [new(urnName, ValidationErrorMessageTexts.ProvideEitherPackageRef)]);
@@ -154,11 +154,11 @@ internal static class ConnectionCombinationRules
 
         if (packageId.HasValue && packageId.Value == Guid.Empty)
         {
-            return (ref ValidationErrorBuilder errors) =>
+            return (ref ValidationProblemBuilder errors) =>
                 errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{idName}", [new(idName, ValidationErrorMessageTexts.PackageIdMustNotBeEmpty)]);
         }
 
-        return (ref ValidationErrorBuilder errors) =>
+        return (ref ValidationProblemBuilder errors) =>
         {
             errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{idName}", [new(idName, ValidationErrorMessageTexts.RequireOnePackageRef)]);
             errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{urnName}", [new(urnName, ValidationErrorMessageTexts.RequireOnePackageRef)]);

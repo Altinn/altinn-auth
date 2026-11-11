@@ -137,7 +137,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
 
         if (!onlyRemoveA2Packages || assignment.Audit_ChangedBySystem == SystemEntityConstants.Altinn2RoleImportSystem.Id)
         {
-            ValidationErrorBuilder errors = await CheckCascadingAssignmentRevoke(assignment.Id, cancellationToken);
+            ValidationProblemBuilder errors = await CheckCascadingAssignmentRevoke(assignment.Id, cancellationToken);
 
             // if no existing dependencies remove assignment
             if (errors.IsEmpty)
@@ -476,7 +476,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
     /// <inheritdoc/>
     public async Task<ProblemInstance> DeleteAssignment(Guid fromEntityId, Guid toEntityId, string roleCode, bool cascade = false, CancellationToken cancellationToken = default)
     {
-        ValidationErrorBuilder errors = default;
+        ValidationProblemBuilder errors = default;
         ValidationProblemInstance errorResult = default;
 
         var fromEntity = await db.Entities.FirstOrDefaultAsync(t => t.Id == fromEntityId, cancellationToken);
@@ -545,9 +545,9 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
     /// <param name="assignmentId">The id of the assignment to delete</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>dependencies on the assignment taht will be revoked together with the assignment if it is removed</returns>
-    public async Task<ValidationErrorBuilder> CheckCascadingAssignmentRevoke(Guid assignmentId, CancellationToken cancellationToken)
+    public async Task<ValidationProblemBuilder> CheckCascadingAssignmentRevoke(Guid assignmentId, CancellationToken cancellationToken)
     {
-        ValidationErrorBuilder errors = default;
+        ValidationProblemBuilder errors = default;
 
         var packages = await db.AssignmentPackages.AsNoTracking()
                     .Where(t => t.AssignmentId == assignmentId)
@@ -595,7 +595,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
     /// <inheritdoc/>
     public async Task<ProblemInstance> DeleteAssignment(Guid assignmentId, bool cascade = false, AuditValues audit = null, CancellationToken cancellationToken = default)
     {
-        ValidationErrorBuilder errors = default;
+        ValidationProblemBuilder errors = default;
         ValidationProblemInstance errorResult = default;
 
         var existingAssignment = await GetAssignment(assignmentId, cancellationToken: cancellationToken);
@@ -649,7 +649,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
     /// <inheritdoc/>
     public async Task<Result<Assignment>> GetOrCreateAssignment(Guid fromEntityId, Guid toEntityId, string roleCode, CancellationToken cancellationToken = default)
     {
-        ValidationErrorBuilder errors = default;
+        ValidationProblemBuilder errors = default;
 
         var fromEntity = await db.Entities.SingleAsync(t => t.Id == fromEntityId, cancellationToken);
         var toEntity = await db.Entities.SingleAsync(t => t.Id == toEntityId, cancellationToken);
@@ -894,7 +894,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
         return db.SaveChanges(audit);
     }
 
-    private static void ValidatePartyIsNotNull(Guid id, Entity entity, ref ValidationErrorBuilder errors, string param)
+    private static void ValidatePartyIsNotNull(Guid id, Entity entity, ref ValidationProblemBuilder errors, string param)
     {
         if (entity is null)
         {
@@ -902,7 +902,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
         }
     }
 
-    private static void ValidatePartyIsOrg(Entity entity, ref ValidationErrorBuilder errors, string param)
+    private static void ValidatePartyIsOrg(Entity entity, ref ValidationProblemBuilder errors, string param)
     {
         if (entity is not null && !entity.Type.Name.Equals("Organisasjon", StringComparison.InvariantCultureIgnoreCase))
         {

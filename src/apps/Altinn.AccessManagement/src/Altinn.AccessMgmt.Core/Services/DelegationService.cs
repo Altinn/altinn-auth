@@ -108,7 +108,7 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
 
         // Validate the whole request before writing anything, so an invalid request leaves no agent, assignment or delegation behind.
         // The errors carry ids and codes only, not party names.
-        ValidationErrorBuilder errors = default;
+        ValidationProblemBuilder errors = default;
 
         var client = await entityService.GetEntity(request.ClientId, cancellationToken);
         if (client is null)
@@ -439,7 +439,7 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
     /// <inheritdoc/>
     public async Task<ProblemInstance> DeleteDelegation(Guid delegationId, CancellationToken cancellationToken)
     {
-        ValidationErrorBuilder errors = default;
+        ValidationProblemBuilder errors = default;
 
         var existingDelegation = await GetDelegation(delegationId, cancellationToken: cancellationToken);
         if (existingDelegation == null)
