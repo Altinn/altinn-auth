@@ -31,6 +31,11 @@ public class ResourceDto
     public string Description { get; set; }
 
     /// <summary>
+    /// Description of the rights the resource grants
+    /// </summary>
+    public string? RightDescription { get; set; }
+
+    /// <summary>
     /// Reference identifier
     /// </summary>
     public string RefId { get; set; }

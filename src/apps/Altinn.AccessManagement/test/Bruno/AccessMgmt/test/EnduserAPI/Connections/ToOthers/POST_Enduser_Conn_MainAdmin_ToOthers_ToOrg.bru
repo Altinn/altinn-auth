@@ -54,7 +54,7 @@ tests {
     
     expect(res.status).to.equal(400);
     
-    assert.equal(data.title, "Bad Request");
+    assert.equal(data.statusDescription, "Bad Request");
     assert.equal(data.status, 400);
     assert.include(data.validationErrors[0].Packages, "urn:altinn:accesspackage:hovedadministrator are not assignable to the given entitytype in input.");
     

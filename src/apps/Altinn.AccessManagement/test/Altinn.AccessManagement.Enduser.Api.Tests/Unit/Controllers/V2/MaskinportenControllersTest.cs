@@ -32,7 +32,7 @@ public class MaskinportenConsumersControllerTest
 
     private static ValidationProblemInstance MakeValidationProblem() =>
         ValidationComposer.Validate(() =>
-            (ref ValidationErrorBuilder errors) =>
+            (ref ValidationProblemBuilder errors) =>
                 errors.Add(ValidationErrors.InvalidPartyUrn, "QUERY/test"));
 
     #region GetConsumers
@@ -277,7 +277,7 @@ public class MaskinportenSuppliersControllerTest
 
     private static ValidationProblemInstance MakeValidationProblem() =>
         ValidationComposer.Validate(() =>
-            (ref ValidationErrorBuilder errors) =>
+            (ref ValidationProblemBuilder errors) =>
                 errors.Add(ValidationErrors.InvalidPartyUrn, "QUERY/test"));
 
     #region AddSupplier

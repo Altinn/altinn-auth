@@ -284,38 +284,62 @@ public static class ValidationErrors
     = _factory.Create(53, $"The continuation token is invalid.");
 
     /// <summary>
+    /// Gets a validation error descriptor for when one or more right keys do not exist in the resource policy.
+    /// </summary>
+    public static ValidationErrorDescriptor RightKeyNotFound { get; }
+        = _factory.Create(54, $"One or more right keys do not exist in the resource policy.");
+
+    /// <summary>
+    /// Gets a validation error descriptor for when one or more right keys exist in the resource policy but cannot be delegated.
+    /// </summary>
+    public static ValidationErrorDescriptor RightKeyNotDelegable { get; }
+        = _factory.Create(55, $"One or more right keys cannot be delegated.");
+
+    /// <summary>
+    /// Gets a validation error descriptor for when one or more right keys cannot be delegated by the authenticated user on behalf of the party.
+    /// </summary>
+    public static ValidationErrorDescriptor RightKeyNotDelegableByUser { get; }
+        = _factory.Create(56, $"One or more right keys cannot be delegated by the authenticated user.");
+
+    /// <summary>
+    /// Gets a validation error descriptor for when right keys are given for a request that is not a resource request.
+    /// </summary>
+    public static ValidationErrorDescriptor RightKeysNotAllowedForRequestType { get; }
+        = _factory.Create(57, $"Right keys can only be given for resource requests.");
+
+    /// <summary>
     /// Gets a validation error descriptor for when a role assignment cannot be revoked.
     /// </summary>
     public static ValidationErrorDescriptor UnableToRevokeRoleAssignment { get; }
-        = _factory.Create(54, $"Role assignment cannot be revoked.");
+        = _factory.Create(58, $"Role assignment cannot be revoked.");
 
     /// <summary>
     /// Gets a validation error descriptor for when the operation could not be completed.
     /// </summary>
     public static ValidationErrorDescriptor UnableToCompleteOperation { get; }
-        = _factory.Create(55, $"The operation could not be completed.");
+        = _factory.Create(59, $"The operation could not be completed.");
 
     /// <summary>
     /// Gets a validation error descriptor for when an assignment has resources delegated.
     /// </summary>
     public static ValidationErrorDescriptor AssignmentResourcesExist { get; }
-        = _factory.Create(56, "Assignment has resources delegated.");
+        = _factory.Create(60, "Assignment has resources delegated.");
 
     /// <summary>
     /// Gets a validation error descriptor for when a resource type is invalid.
     /// </summary>
     public static ValidationErrorDescriptor InvalidResourceType { get; }
-        = _factory.Create(57, "Invalid resource type.");
+        = _factory.Create(61, "Invalid resource type.");
 
     /// <summary>
     /// Gets a validation error descriptor for when clearing delegation policy rules fails.
     /// </summary>
     public static ValidationErrorDescriptor PolicyClearFailed { get; }
-        = _factory.Create(58, "Failed to clear delegation policy rules.");
+        = _factory.Create(62, "Failed to clear delegation policy rules.");
 
     /// <summary>
     /// Gets a validation error descriptor for when a resource is held through a client delegation and cannot be revoked on this endpoint.
     /// </summary>
     public static ValidationErrorDescriptor ResourceNotRevocableViaClientDelegation { get; }
-        = _factory.Create(59, "Resource is delegated through a client delegation.");
+        = _factory.Create(63, "Resource is delegated through a client delegation.");
 }

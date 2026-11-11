@@ -38,7 +38,7 @@ internal static class ParameterValidation
             }
         }
 
-        return (ref ValidationErrorBuilder errors) =>
+        return (ref ValidationProblemBuilder errors) =>
             errors.Add(ValidationErrors.InvalidQueryParameter, "$QUERY/party", [new("party", ValidationErrorMessageTexts.InvalidPartyValue)]);
     };
 
@@ -52,7 +52,7 @@ internal static class ParameterValidation
     {
         if (value is null || value == Guid.Empty)
         {
-            return (ref ValidationErrorBuilder errors) =>
+            return (ref ValidationProblemBuilder errors) =>
                 errors.Add(ValidationErrors.InvalidQueryParameter, $"$QUERY/{paramName}", [new(paramName, ValidationErrorMessageTexts.InvalidPartyValue)]);
         }
 
@@ -88,13 +88,13 @@ internal static class ParameterValidation
     {
         if (string.IsNullOrWhiteSpace(personIdentifier))
         {
-            return (ref ValidationErrorBuilder errors) =>
+            return (ref ValidationProblemBuilder errors) =>
                 errors.Add(ValidationErrors.InvalidQueryParameter, "/personIdentifier", [new("personIdentifier", ValidationErrorMessageTexts.PersonIdentifierRequired)]);
         }
 
         if (string.IsNullOrWhiteSpace(personLastName))
         {
-            return (ref ValidationErrorBuilder errors) =>
+            return (ref ValidationProblemBuilder errors) =>
                 errors.Add(ValidationErrors.InvalidQueryParameter, "/lastName", [new("lastName", ValidationErrorMessageTexts.LastNameRequired)]);
         }
 
@@ -114,14 +114,14 @@ internal static class ParameterValidation
     {
         if (to.HasValue && toInput != null)
         {
-            return (ref ValidationErrorBuilder errors) =>
+            return (ref ValidationProblemBuilder errors) =>
                 errors.Add(ValidationErrors.InvalidQueryParameter, "$QUERY/to",
                     [new("to", ValidationErrorMessageTexts.ToParameterConflict)]);
         }
 
         if (!to.HasValue && toInput == null)
         {
-            return (ref ValidationErrorBuilder errors) =>
+            return (ref ValidationProblemBuilder errors) =>
                 errors.Add(ValidationErrors.InvalidQueryParameter, "$QUERY/to",
                     [new("to", ValidationErrorMessageTexts.ToParameterRequired)]);
         }
@@ -129,14 +129,14 @@ internal static class ParameterValidation
         // Validate 'to' is not Guid.Empty when provided
         if (to.HasValue && to.Value == Guid.Empty)
         {
-            return (ref ValidationErrorBuilder errors) =>
+            return (ref ValidationProblemBuilder errors) =>
                 errors.Add(ValidationErrors.InvalidQueryParameter, "$QUERY/to",
                     [new("to", ValidationErrorMessageTexts.InvalidPartyValue)]);
         }
 
         if (directRightKeys == null || !directRightKeys.Any())
         {
-            return (ref ValidationErrorBuilder errors) =>
+            return (ref ValidationProblemBuilder errors) =>
                 errors.Add(ValidationErrors.Required, "/directRightKeys",
                     [new("directRightKeys", ValidationErrorMessageTexts.DirectRightKeysRequired)]);
         }
@@ -170,7 +170,7 @@ internal static class ParameterValidation
         }
 
         // Invalid format - return error
-        return (ref ValidationErrorBuilder errors) =>
+        return (ref ValidationProblemBuilder errors) =>
             errors.Add(ValidationErrors.InvalidQueryParameter, "$QUERY/instance", [new("instance", ValidationErrorMessageTexts.InvalidInstanceUrnFormat)]);
     };
 
@@ -186,7 +186,7 @@ internal static class ParameterValidation
         }
         else
         {
-            return (ref ValidationErrorBuilder errors) =>
+            return (ref ValidationProblemBuilder errors) =>
                 errors.Add(ValidationErrors.InvalidQueryParameter, $"$QUERY/{paramName}", [new(paramName, ValidationErrorMessageTexts.InvalidPartyValue)]);
         }
     };

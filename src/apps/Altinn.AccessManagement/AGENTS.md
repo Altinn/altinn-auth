@@ -34,6 +34,7 @@ Decisions for this vertical are in [`docs/adr/`](docs/adr/README.md). Read [ADR-
 
 - **There are two naming families, both live, and `Altinn.AccessMgmt.*` is the new one.** `Altinn.AccessManagement.Core` sits beside `Altinn.AccessMgmt.Core`, and `Altinn.AccessManagement.Persistence` beside `Altinn.AccessMgmt.PersistenceEF`; the host references both persistence projects (`Altinn.AccessManagement.csproj`, lines 45 and 46). New persistence goes in `Altinn.AccessMgmt.PersistenceEF`, and new Core-layer code in `Altinn.AccessMgmt.Core`. Code still in the `Altinn.AccessManagement.*` projects is maintained there until it is migrated in large chunks. Recorded as decision 6 in [ADR-0001](docs/adr/0001-ef-core-persistence.md).
 - **One test project's folder and project names differ.** The folder is `test/AccessMgmt.Tests` and the project inside it is `Altinn.AccessManagement.Tests.csproj`. The seven other test projects match. So `dotnet test .../test/Altinn.AccessManagement.Tests` fails and `dotnet test .../test/AccessMgmt.Tests` works.
+- **New database ids are UUID v7 (`Guid.CreateVersion7()`)**, including the ids of new `ConstantDefinition`s, since those are seeded into the database. Keep `Guid.NewGuid()` for tokens, nonces and `jti`. Most existing `ConstantDefinition` ids are v4: don't change them, they are stored in every environment's database and referenced by assignments and delegations.
 
 _More belongs here._ This is the section that pays for itself, and it can only come from people who know why the code is the way it is.
 
@@ -43,6 +44,8 @@ _More belongs here._ This is the section that pays for itself, and it can only c
 - Shared helpers and test data live in `test/Altinn.AccessManagement.TestUtils`, which sets `IsTestProject=false` and is a library rather than a runnable test project.
 - `test/AccessMgmt.Tests` is by far the largest test project; the API-specific projects cover their own surface.
 - `test/Bruno` holds API tests and `test/K6` load tests; neither runs as part of `dotnet test`. Save `.bru` files without a BOM: the Bruno CLI cannot parse one that has a BOM, and a single such file stops the whole post-deployment run in Azure DevOps.
+- **That run executes every folder under `test/Bruno/AccessMgmt/test`, in whichever environment it targets, TT02 included.** A suite for routes behind a feature flag that is off somewhere needs a guard: `ActivityLog/folder.bru` skips its requests on TT02 with `bru.runner.skipRequest()`. Also don't commit what the Bruno app saves into `environments/*.bru` after a local run: `bru.setEnvVar` values such as request ids land there.
+- **A change to response bodies updates the Bruno assertions in the same PR.** That covers DTOs, error descriptors and package bumps such as ServiceDefaults or ProblemDetails. No GitHub workflow runs Bruno, so CI stays green and the post-deployment run is the first to fail. Grep `test/Bruno` for the fields that changed.
 - Every test needs `[UnitTest]` or `[IntegrationTest]` or the run fails. See the root file.
 
 ## Known tech debt

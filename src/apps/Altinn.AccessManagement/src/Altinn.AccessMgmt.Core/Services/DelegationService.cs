@@ -325,7 +325,7 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
     /// <inheritdoc/>
     public async Task<ProblemInstance> DeleteDelegation(Guid delegationId, CancellationToken cancellationToken)
     {
-        ValidationErrorBuilder errors = default;
+        ValidationProblemBuilder errors = default;
 
         var existingDelegation = await GetDelegation(delegationId, cancellationToken: cancellationToken);
         if (existingDelegation == null)

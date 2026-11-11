@@ -172,7 +172,7 @@ namespace Altinn.AccessManagement.Api.Enterprise.Controllers
                 return Unauthorized();
             }
 
-            ValidationErrorBuilder errors = default;
+            ValidationProblemBuilder errors = default;
 
             if (createdAfter.HasValue && createdBefore.HasValue && createdAfter >= createdBefore)
             {

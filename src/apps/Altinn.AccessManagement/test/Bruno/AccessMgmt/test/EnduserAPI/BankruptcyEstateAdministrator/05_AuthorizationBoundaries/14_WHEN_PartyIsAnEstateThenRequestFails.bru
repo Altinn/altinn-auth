@@ -1,0 +1,38 @@
+meta {
+  name: 14_WHEN_PartyIsAnEstateThenRequestFails
+  type: http
+  seq: 14
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/administrators?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+docs {
+  WHEN the bostyrer uses one of their estates (an organisation) as party, the request fails
+  with 403. The API manages administrators for the bostyrer, not for the estate.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  bru.setVar("party", td.BOSTYRER.client_BLAUT_FRYKTLØS_ØGLE_KONKURSBO.partyUuid);
+
+  await helpers.loginAs(td.BOSTYRER);
+}
+
+tests {
+  test("WHEN the party is an estate, the request returns 403", function() {
+    expect(res.status).to.equal(403);
+  });
+}
