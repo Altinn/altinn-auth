@@ -28,7 +28,11 @@ docs {
 }
 
 script:pre-request {
-	const { testdata, loginAs } = require("./test/DelegationRequest/ResourceRequestRightKeysV2/helpers.js");
+	const { skipOutsideEnabledEnvironments, testdata, loginAs } = require("./test/DelegationRequest/ResourceRequestRightKeysV2/helpers.js");
+	if (skipOutsideEnabledEnvironments()) {
+		return;
+	}
+
 	const td = testdata();
 
 	bru.setVar("party", td.approver.partyUuid);

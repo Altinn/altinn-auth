@@ -12,6 +12,23 @@ const paths = {
 	connections: "/accessmanagement/api/v1/enduser/connections",
 };
 
+// Environments where AccessManagement.Enduser.RequestV2Api is on and the seed data is verified.
+// TT02 has seed data, but stays out until the flag is on there.
+const enabledEnvironments = ["at22"];
+
+// Skips the current request outside the enabled environments. Returns true when skipped, so the
+// step can return before it loads seed data or reads variables that earlier, skipped steps never
+// set. bru.runner.skipRequest() only marks the request as skipped: the rest of the pre-request
+// script still runs, and an error there fails the run instead of skipping the request.
+function skipOutsideEnabledEnvironments() {
+	if (enabledEnvironments.includes(bru.getEnvVar("tokenEnv"))) {
+		return false;
+	}
+
+	bru.runner.skipRequest();
+	return true;
+}
+
 // Maps a person entry from the shared testdata files to the shape the steps use.
 // Party UUIDs are lowercased because the API returns them in lowercase.
 function person(p) {
@@ -95,4 +112,4 @@ function requireVar(name, step) {
 	}
 }
 
-module.exports = { testdata, loginAs, clearScenarioVars, resetPair, delegableKeys, requireVar, paths };
+module.exports = { skipOutsideEnabledEnvironments, testdata, loginAs, clearScenarioVars, resetPair, delegableKeys, requireVar, paths };

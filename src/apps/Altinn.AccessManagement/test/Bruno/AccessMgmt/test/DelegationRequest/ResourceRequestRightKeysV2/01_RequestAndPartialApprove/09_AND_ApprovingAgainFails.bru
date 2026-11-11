@@ -30,7 +30,11 @@ docs {
 }
 
 script:pre-request {
-	const { testdata, loginAs, requireVar } = require("./test/DelegationRequest/ResourceRequestRightKeysV2/helpers.js");
+	const { skipOutsideEnabledEnvironments, testdata, loginAs, requireVar } = require("./test/DelegationRequest/ResourceRequestRightKeysV2/helpers.js");
+	if (skipOutsideEnabledEnvironments()) {
+		return;
+	}
+
 	const td = testdata();
 
 	requireVar("rk_requestId", "creating the request");

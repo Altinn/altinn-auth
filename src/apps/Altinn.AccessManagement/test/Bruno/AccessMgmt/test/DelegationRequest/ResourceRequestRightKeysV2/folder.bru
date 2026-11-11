@@ -7,15 +7,6 @@ auth {
 	mode: inherit
 }
 
-script:pre-request {
-	// The v2 request routes are behind the feature flag AccessManagement.Enduser.RequestV2Api.
-	// Add an environment here once the flag is on there and its seed data is verified.
-	const enabledIn = ["at22"];
-	if (!enabledIn.includes(bru.getEnvVar("tokenEnv"))) {
-		bru.runner.skipRequest();
-	}
-}
-
 docs {
 	# Resource requests with selected rights (right keys), API version 2
 
@@ -51,8 +42,9 @@ docs {
 	`AccessManagement.Enduser.RequestV2Api` and `AccessMgmt.Controller.RequestAssignment.Resource`
 	must be on in the target environment. With the first off, every v2 call returns 404.
 	The Azure DevOps post-deployment run executes the whole `test` folder in every environment,
-	so this folder's pre-request script skips every request outside the environments listed in
-	`enabledIn`. TT02 has seed data, but stays out of the list until the flag is on there.
+	so every step starts with `skipOutsideEnabledEnvironments()` from `helpers.js`, which skips
+	the request outside `enabledEnvironments` before the step loads seed data. TT02 has seed
+	data, but stays out of the list until the flag is on there.
 
 	## Tokens and fixtures
 

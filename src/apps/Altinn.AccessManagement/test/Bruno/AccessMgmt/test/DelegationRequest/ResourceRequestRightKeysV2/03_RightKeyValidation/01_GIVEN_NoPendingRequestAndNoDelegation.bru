@@ -33,7 +33,11 @@ docs {
 }
 
 script:pre-request {
-	const { testdata, loginAs, clearScenarioVars } = require("./test/DelegationRequest/ResourceRequestRightKeysV2/helpers.js");
+	const { skipOutsideEnabledEnvironments, testdata, loginAs, clearScenarioVars } = require("./test/DelegationRequest/ResourceRequestRightKeysV2/helpers.js");
+	if (skipOutsideEnabledEnvironments()) {
+		return;
+	}
+
 	const td = testdata();
 
 	clearScenarioVars();
