@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using CreateSystemDelegationRequestDto = Altinn.Authorization.Api.Contracts.AccessManagement.CreateSystemDelegationRequestDto;
-using ValidationErrors = Altinn.AccessMgmt.Core.Utils.Models.ValidationErrors;
+using ValidationErrors = Altinn.AccessManagement.Core.Errors.ValidationErrors;
 
 namespace Altinn.AccessManagement.Api.Tests.Controllers;
 

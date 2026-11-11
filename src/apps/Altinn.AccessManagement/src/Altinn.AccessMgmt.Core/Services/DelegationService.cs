@@ -1,6 +1,6 @@
-﻿using Altinn.AccessMgmt.Core.Services.Contracts;
+﻿using Altinn.AccessManagement.Core.Errors;
+using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
-using Altinn.AccessMgmt.Core.Utils.Models;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;

@@ -83,7 +83,7 @@ public sealed class ToUuidResolver
             if (profile == null)
             {
                 ValidationProblemBuilder errors = default;
-                errors.Add(AccessMgmt.Core.Utils.Models.ValidationErrors.InvalidQueryParameter, ["/personIdentifier", "/lastName"], [new("personInput", ValidationErrorMessageTexts.PersonIdentifierLastNameInvalid)]);
+                errors.Add(ValidationErrors.InvalidQueryParameter, ["/personIdentifier", "/lastName"], [new("personInput", ValidationErrorMessageTexts.PersonIdentifierLastNameInvalid)]);
                 errors.TryToActionResult(out ActionResult errorResult);
                 return new ResolveToUuidResult(Guid.Empty, errorResult);
             }
