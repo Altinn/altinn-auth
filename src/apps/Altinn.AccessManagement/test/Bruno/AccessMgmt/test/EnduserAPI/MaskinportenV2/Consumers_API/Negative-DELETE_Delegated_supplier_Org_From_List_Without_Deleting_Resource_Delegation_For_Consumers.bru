@@ -22,7 +22,7 @@ tests {
     
     expect(res.status).to.equal(400);
   
-    expect(res.getBody().validationErrors[0].detail)
+    expect(res.getBody().validationErrors[0].title)
       .to.equal("Assignment has resources delegated.");
   
     expect(res.getBody().validationErrors[0].assignmentResources)

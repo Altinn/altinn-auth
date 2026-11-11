@@ -40,10 +40,10 @@ tests {
     expect(res.status).to.equal(400);
   });
 
-  test("THEN the validation problem names the missing language property", function() {
+  // Since ProblemDetails 6.0.0 (#4796) the error reads "The input was not valid." and no longer names the missing property.
+  test("THEN the request is rejected as a validation problem", function() {
     const body = res.getBody();
     expect(body.status).to.equal(400);
-    expect(body.errors).to.be.an("object");
-    expect(JSON.stringify(body.errors)).to.include("language");
+    expect(body.errors).to.be.an("object").that.is.not.empty;
   });
 }
