@@ -40,10 +40,13 @@ tests {
     expect(res.status).to.equal(400);
   });
 
-  // Since ProblemDetails 6.0.0 (#4796) the error reads "The input was not valid." and no longer names the missing property.
-  test("THEN the request is rejected as a validation problem", function() {
+  // Since ProblemDetails 6.0.0 (#4796) the error no longer names the missing property. Language is the
+  // only member of ConsentContextDto and is required, so a body-level "$" error for {} can only be the
+  // missing language. A comparison accept with a language is not used, since it would accept the request.
+  test("THEN the body is rejected for the missing required language", function() {
     const body = res.getBody();
     expect(body.status).to.equal(400);
-    expect(body.errors).to.be.an("object").that.is.not.empty;
+    expect(body.errors).to.have.all.keys("$");
+    expect(body.errors["$"]).to.deep.equal(["The input was not valid."]);
   });
 }
