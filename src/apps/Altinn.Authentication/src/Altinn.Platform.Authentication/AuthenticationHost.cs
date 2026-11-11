@@ -135,7 +135,6 @@ internal static class AuthenticationHost
         services.AddHttpClient<IOrganisationsService, OrganisationsService>();
         services.AddHttpClient<AuthorizationApiClient>();
         services.AddHttpClient<IAccessManagementClient, AccessManagementClient>();
-        services.AddMemoryCache(); // ResourceRegistryClient caches resource lookups
         services.AddHttpClient<IResourceRegistryClient, ResourceRegistryClient>();
         services.AddHttpClient<IPartiesClient, PartiesClient>();
         services.AddHttpClient<IRegisterUserProvisioningClient, RegisterUserProvisioningClient>((sp, client) =>
