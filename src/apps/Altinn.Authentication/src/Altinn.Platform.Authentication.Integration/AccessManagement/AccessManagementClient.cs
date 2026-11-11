@@ -556,7 +556,20 @@ public class AccessManagementClient : IAccessManagementClient
         {
             foreach (Right right in rights)
             {
-                string rightId = right.Resource.First().Value.ToString();
+                // A Right with no resource names nothing to revoke
+                if (right.Resource is [])
+                {
+                    continue;
+                }
+
+                // Fail on a Right without a resource id, so a delegation is not left behind unnoticed
+                string? rightId = right.Resource.FirstOrDefault(attr => attr.Id == AttributeIdentifier.ResourceRegistryAttribute)?.Value;
+                if (string.IsNullOrEmpty(rightId))
+                {
+                    _logger.LogError("Authentication // AccessManagementClient // RevokeRightsToSystemUser // Right has no resource id // SystemUser: {SystemUserId}", systemUser.Id);
+                    return false;
+                }
+
                 string endpointUrl = $"enduser/connections/resources?party={partyUuid}&from={partyUuid}&to={systemUser.Id}&resource={rightId}";
                 string token = JwtTokenUtil.GetTokenFromContext(_httpContextAccessor.HttpContext!, _platformSettings.JwtCookieName!)!;
                 HttpResponseMessage response = await _client.DeleteAsync(token, endpointUrl);
