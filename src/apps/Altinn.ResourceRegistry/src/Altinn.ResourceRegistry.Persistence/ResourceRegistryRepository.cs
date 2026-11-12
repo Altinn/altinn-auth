@@ -283,8 +283,8 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
     /// <inheritdoc/>
     public async Task<DateTimeOffset?> GetResourceDeletedAt(string id, CancellationToken cancellationToken = default)
     {
-        // last_changed is set when the resource is deleted, and nothing changes a deleted row
-        // until the identifier is created again.
+        // last_changed is set when the resource is deleted. Nothing changes a deleted row until the
+        // identifier is created again; SetResourceSubjects skips deleted rows for that reason.
         const string QUERY = /*strpsql*/@"
             SELECT last_changed
             FROM resourceregistry.resource_identifier
@@ -715,7 +715,9 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
 
         // Step 4: Mark the resource as having a policy and bump its global change id, in the same
         // transaction as the subject changes so the feed can never miss a committed policy update.
-        // No-op for identifiers not in the registry (e.g. apps not imported as resources).
+        // No-op for identifiers not in the registry (e.g. apps not imported as resources), and for
+        // deleted resources: an upload that finishes after the deletion must not move last_changed,
+        // which GetResourceDeletedAt reads as the deletion time, or flag a policy that was removed.
         if (logPolicyChange)
         {
             const string flagPolicyUploadedSQL = /*strpsql*/
@@ -725,6 +727,7 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
                     global_change_id = resourceregistry.tx_nextval('resourceregistry.resource_change_id_seq'),
                     last_changed = now()
                 WHERE identifier = @identifier
+                  AND NOT deleted
                 """;
 
             await using (var flagCmd = new NpgsqlCommand(flagPolicyUploadedSQL, conn, tx))

@@ -454,6 +454,28 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
         Assert.Equal("changes_recreated_res", changes.Items.First().ResourceId);
     }
 
+    [Fact]
+    public async Task SetResourceSubjects_DeletedResource_KeepsDeletionTimeAndLeavesPolicyFlagUnset()
+    {
+        await Repository.CreateResource(CreateTestResource("changes_late_upload_res"));
+        DeletedResource? deleted = await Repository.DeleteResource("changes_late_upload_res");
+        Assert.NotNull(deleted);
+
+        // A policy upload that started before the deletion can finish after it.
+        await Repository.SetResourceSubjects(CreateResourceSubjects("urn:altinn:resource:changes_late_upload_res", ["urn:altinn:rolecode:r001"], "ttd"), logPolicyChange: true);
+
+        Assert.Equal(deleted.DeletedAt, await Repository.GetResourceDeletedAt("changes_late_upload_res"));
+
+        await Repository.CreateResource(CreateTestResource("changes_late_upload_res"));
+
+        using var client = CreateClient();
+
+        HttpResponseMessage response = await client.GetAsync("resourceregistry/api/v1/resource/changes");
+        Paginated<ResourceChange>? changes = await response.Content.ReadFromJsonAsync<Paginated<ResourceChange>>();
+        Assert.NotNull(changes);
+        Assert.Empty(changes.Items);
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(1001)]
