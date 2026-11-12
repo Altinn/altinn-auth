@@ -12,6 +12,7 @@ using Altinn.AccessMgmt.Core.Audit;
 using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.Core.Services.Contracts;
+using Altinn.AccessMgmt.Core.Utils.Helper;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
@@ -342,26 +343,19 @@ public abstract class RequestControllerBase<TRequest, TStatus>(
     }
 
     /// <summary>
-    /// Approve a pending request — runs the same delegation logic as AddPackages/AddResourceRights
+    /// Approves a pending request on behalf of <paramref name="party"/>, the recipient of the request, and makes
+    /// the delegation: the package for a package request, and rights (right keys) for a resource request.
+    /// For a resource request, the rights given are <paramref name="selectedRightKeys"/> when given, otherwise
+    /// the rights requested, otherwise, for a request for the whole resource, every right the user can delegate.
+    /// The approve endpoint is versioned, so each versioned controller declares it and calls this.
     /// </summary>
-    [HttpPut("received/approve")]
-    [FeatureGate(RequirementType.Any, AccessMgmtFeatureFlags.EnableRequestAssignmentResource, AccessMgmtFeatureFlags.EnableRequestAssignmentPackage)]
-    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
-    [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_REQUESTS_WRITE)]
-    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
-    [ProducesResponseType(StatusCodes.Status200OK)]
-    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    [ProducesResponseType(StatusCodes.Status403Forbidden)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<TRequest>> ApproveRequest(
-        [FromQuery][Required] Guid party,
-        [FromQuery][Required] Guid id,
-        [FromBody] string[]? rightKeys,
-        CancellationToken ct = default
-        )
+    /// <param name="party">The party approving, which must be the recipient of the request</param>
+    /// <param name="id">The request to approve</param>
+    /// <param name="selectedRightKeys">The rights the user selected to give; null or empty when no selection was made</param>
+    /// <param name="ct">Cancellation token</param>
+    protected async Task<ActionResult<TRequest>> ApproveRequestCore(Guid party, Guid id, IReadOnlyList<string>? selectedRightKeys, CancellationToken ct)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         var requestResult = await RequestService.GetRequest(id, ct);
         if (requestResult.IsProblem)
@@ -399,9 +393,25 @@ public abstract class RequestControllerBase<TRequest, TStatus>(
         }
 
         // Guaranteed non-null here: TryBuild above returned false, so the null/auth check passed.
-        return request!.Type switch
+        // Checked before delegating, so a request that cannot be approved never gives access.
+        if (request!.Status != RequestStatusV2.Pending)
         {
-            "resource" => await ApproveResourceRequest(party, authUserUuid, request, rightKeys, ct),
+            errorBuilder.Add(ValidationErrors.RequestUnsupportedStatusUpdate, "$QUERY/id", [new("id", $"Unable to approve request with status '{request.Status}'.")]);
+        }
+
+        if (request.Type != "resource" && selectedRightKeys is { Count: > 0 })
+        {
+            errorBuilder.Add(ValidationErrors.RightKeysNotAllowedForRequestType, "/rightKeys", [new("rightKeys", $"Request '{request.Id}' is a {request.Type} request.")]);
+        }
+
+        if (errorBuilder.TryBuild(out problem))
+        {
+            return problem.ToActionResult();
+        }
+
+        return request.Type switch
+        {
+            "resource" => await ApproveResourceRequest(party, authUserUuid, request, selectedRightKeys, ct),
             "package" => await ApprovePackageRequest(party, request, ct),
             _ => BadRequest(),
         };
@@ -448,7 +458,7 @@ public abstract class RequestControllerBase<TRequest, TStatus>(
         CancellationToken ct = default
         )
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         var authUserUuid = AuthenticationHelper.GetAuthenticatedPartyUuid(HttpContext);
         var (hasConnections, _) = await ConnectionQuery.HasConnection(to, party);
@@ -486,7 +496,7 @@ public abstract class RequestControllerBase<TRequest, TStatus>(
 
     private async Task<ActionResult<TRequest>> ApprovePackageRequest(Guid partyUuid, AccessRequest request, CancellationToken ct)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         var assignment = await AssignmentService.GetOrCreateAssignment(request.To.Id, request.From.Id, RoleConstants.Rightholder, cancellationToken: ct);
         if (assignment is null)
@@ -520,8 +530,23 @@ public abstract class RequestControllerBase<TRequest, TStatus>(
         return Ok(ConvertRequest(updateResult.Value));
     }
 
-    private async Task<ActionResult<TRequest>> ApproveResourceRequest(Guid partyUuid, Guid authUserId, AccessRequest request, IEnumerable<string> rightKeys, CancellationToken ct)
+    private async Task<ActionResult<TRequest>> ApproveResourceRequest(Guid partyUuid, Guid authUserId, AccessRequest request, IReadOnlyList<string>? selectedRightKeys, CancellationToken ct)
     {
+        // The rights to give: the selection, otherwise the rights requested. When neither is given, the whole
+        // resource was requested, and every right the user can delegate is given below.
+        var hasSelection = selectedRightKeys is { Count: > 0 };
+        var rightKeys = hasSelection ? selectedRightKeys : request.RequestedRightKeys;
+        var jsonPointer = hasSelection ? "/rightKeys" : "/requestedRightKeys";
+
+        if (rightKeys is { Count: > 0 })
+        {
+            var policyProblem = await RequestService.ValidateResourceRightKeys(request.Resource.ReferenceId, rightKeys, jsonPointer, ct);
+            if (policyProblem is { })
+            {
+                return policyProblem.ToActionResult();
+            }
+        }
+
         var delegationCheck = await ConnectionService.ResourceDelegationCheck(
             authenticatedUserUuid: authUserId,
             party: partyUuid,
@@ -534,15 +559,30 @@ public abstract class RequestControllerBase<TRequest, TStatus>(
             return delegationCheck.Problem.ToActionResult();
         }
 
-        rightKeys = delegationCheck.Value.Rights
-            .Where(r => r.Result)
-            .Select(r => r.Right.Key)
-            .ToList();
-
-        if (!rightKeys.Any())
+        if (rightKeys is { Count: > 0 })
         {
-            return Forbid("Missing rights to give");
+            var userProblem = RequestApproval.ValidateUserCanDelegate(rightKeys, delegationCheck.Value.Rights, jsonPointer);
+            if (userProblem is { })
+            {
+                return userProblem.ToActionResult();
+            }
         }
+        else
+        {
+            rightKeys = delegationCheck.Value.Rights
+                .Where(r => r.Result)
+                .Select(r => r.Right.Key)
+                .Distinct(StringComparer.Ordinal)
+                .ToList();
+
+            if (rightKeys.Count == 0)
+            {
+                return Problems.NotAuthorizedForDelegationRequest.ToActionResult();
+            }
+        }
+
+        // Duplicates in a selection are given once.
+        rightKeys = rightKeys.Distinct(StringComparer.Ordinal).ToList();
 
         var from = await EntityService.GetEntity(request.From.Id, ct);
         var to = await EntityService.GetEntity(request.To.Id, ct);
@@ -569,7 +609,8 @@ public abstract class RequestControllerBase<TRequest, TStatus>(
             return result.Problem.ToActionResult();
         }
 
-        var updateResult = await RequestService.UpdateRequest(partyUuid, request.Id, RequestStatusV2.Approved, ct);
+        var status = RequestApproval.DetermineStatus(request.RequestedRightKeys, selectedRightKeys);
+        var updateResult = await RequestService.ApproveResourceRequest(partyUuid, request.Id, status, rightKeys, ct);
         if (updateResult.IsProblem)
         {
             return updateResult.Problem.ToActionResult();
@@ -585,7 +626,7 @@ public abstract class RequestControllerBase<TRequest, TStatus>(
     /// <returns>The resource when valid, otherwise the problem to return.</returns>
     protected async Task<(Altinn.AccessMgmt.PersistenceEF.Models.Resource Resource, ValidationProblemInstance Problem)> ValidateResourceRequest(Guid party, Guid to, string resource, CancellationToken ct)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         var (hasConnections, _) = await ConnectionQuery.HasConnection(to, party);
         if (!hasConnections)

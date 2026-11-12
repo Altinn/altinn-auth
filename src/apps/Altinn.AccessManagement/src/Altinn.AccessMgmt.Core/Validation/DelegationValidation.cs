@@ -18,7 +18,7 @@ public static class DelegationValidation
     {
         if (delegations is { } && delegations.Any())
         {
-            return (ref ValidationErrorBuilder errors) =>
+            return (ref ValidationProblemBuilder errors) =>
                 errors.Add(ValidationErrors.AssignmentHasActiveConnections, $"QUERY/{paramName}", [new("delegations", string.Join(",", delegations.Select(p => p.Id.ToString())))]);
         }
 

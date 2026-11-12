@@ -44,6 +44,6 @@ tests {
     const body = res.getBody();
     expect(body.status).to.equal(400);
     expect(body.code).to.equal("AM-00040");
-    expect(body.detail).to.equal("Given the rules for revocation this role could not be revoked");
+    expect(body.title).to.equal("Given the rules for revocation this role could not be revoked");
   });
 }

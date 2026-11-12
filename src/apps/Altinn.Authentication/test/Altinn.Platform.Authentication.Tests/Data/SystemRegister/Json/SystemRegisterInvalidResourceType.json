@@ -22,14 +22,6 @@
           "value": "ttd-am-k6"
         }
       ]
-    },
-    {
-      "resource": [
-        {
-          "id": "urn:altinn:res",
-          "value": "ttd-am-invalidresformat"
-        }
-      ]
     }
   ],
   "softDeleted": false,
