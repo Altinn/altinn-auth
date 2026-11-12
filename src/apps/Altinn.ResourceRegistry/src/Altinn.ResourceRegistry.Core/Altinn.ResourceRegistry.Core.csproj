@@ -4,6 +4,7 @@
     <PackageReference Include="Altinn.Authorization.ModelUtils" />
     <PackageReference Include="CommunityToolkit.Diagnostics" />
     <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" />
     <PackageReference Include="Altinn.Authorization.ABAC" />
     <PackageReference Include="Altinn.Authorization.ProblemDetails.Abstractions" />
     <PackageReference Include="Altinn.Common.AccessTokenClient" />
