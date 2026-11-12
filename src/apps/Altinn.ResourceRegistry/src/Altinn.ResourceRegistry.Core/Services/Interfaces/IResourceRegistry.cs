@@ -62,8 +62,8 @@ namespace Altinn.ResourceRegistry.Core.Services.Interfaces
         /// </summary>
         /// <param name="serviceResource">Service resource model for update in the resource registry</param>
         /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
-        /// <returns>The result of the operation</returns>
-        Task UpdateResource(ServiceResource serviceResource, CancellationToken cancellationToken = default);
+        /// <returns>The updated resource, or <see langword="null"/> if the resource does not exist or has been deleted</returns>
+        Task<ServiceResource> UpdateResource(ServiceResource serviceResource, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Deletes a resource from the resource registry

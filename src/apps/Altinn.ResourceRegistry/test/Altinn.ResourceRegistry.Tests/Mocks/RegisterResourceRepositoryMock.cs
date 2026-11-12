@@ -18,10 +18,26 @@ namespace Altinn.ResourceRegistry.Tests.Mocks
             return await Task.FromResult<ServiceResource>(resource);
         }
 
-        public async Task<DeletedResource?> DeleteResource(string id, CancellationToken cancellationToken = default)
+        public Task<DeletedResource?> DeleteResource(string id, CancellationToken cancellationToken = default)
+        {
+            return DeleteResource(id, null, cancellationToken);
+        }
+
+        public async Task<DeletedResource?> DeleteResource(string id, Func<DateTimeOffset, CancellationToken, Task>? beforeCommit, CancellationToken cancellationToken = default)
         {
             ServiceResource? resource = await GetResource(id, null, cancellationToken);
-            return resource is null ? null : new DeletedResource(resource, DateTimeOffset.UtcNow);
+            if (resource is null)
+            {
+                return null;
+            }
+
+            DeletedResource deleted = new(resource, DateTimeOffset.UtcNow);
+            if (beforeCommit is not null)
+            {
+                await beforeCommit(deleted.DeletedAt, cancellationToken);
+            }
+
+            return deleted;
         }
 
         public Task<DateTimeOffset?> GetResourceDeletedAt(string id, CancellationToken cancellationToken = default)

@@ -227,12 +227,28 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
     }
 
     /// <inheritdoc/>
-    public async Task<DeletedResource?> DeleteResource(string id, CancellationToken cancellationToken = default)
+    public Task<DeletedResource?> DeleteResource(string id, CancellationToken cancellationToken = default)
+        => DeleteResource(id, beforeCommit: null, cancellationToken);
+
+    /// <inheritdoc/>
+    public async Task<DeletedResource?> DeleteResource(string id, Func<DateTimeOffset, CancellationToken, Task>? beforeCommit, CancellationToken cancellationToken = default)
     {
         // Deleting a resource removes all its version rows; the latest version is returned with the
         // time of the deletion. The resource_identifier row is kept and marked deleted, so the change
         // feed can exclude the resource (and expose the deletion later if needed). The subjects from
         // its policy are soft-deleted, so consumers of the updated subjects see them removed.
+        //
+        // The identifier row is locked until the deletion commits, after beforeCommit has run.
+        // Creating the identifier again, updating the resource and flagging a policy upload all
+        // wait for the lock, so none of them sees the resource before the caller's cleanup is done.
+        // If the cleanup fails, the deletion is rolled back and can be retried.
+        const string LOCK = /*strpsql*/@"
+            SELECT 1
+            FROM resourceregistry.resource_identifier
+            WHERE identifier = @identifier
+              AND NOT deleted
+            FOR UPDATE";
+
         const string QUERY = /*strpsql*/@"
             WITH del AS (
                 DELETE FROM resourceregistry.resources
@@ -263,15 +279,43 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
 
         try
         {
-            await using var pgcom = _conn.CreateCommand(QUERY);
-            pgcom.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, id);
-            pgcom.Parameters.AddWithValue("resource_urn", NpgsqlDbType.Text, ResourceUrn(id));
+            await using var conn = await _conn.OpenConnectionAsync(cancellationToken);
+            await using var tx = await conn.BeginTransactionAsync(cancellationToken);
 
-            return await pgcom.ExecuteEnumerableAsync(cancellationToken)
-                .Select(async (reader, ct) => new DeletedResource(
-                    await GetServiceResource(reader, ct),
-                    await reader.GetFieldValueAsync<DateTimeOffset>("deleted_at", ct)))
-                .SingleOrDefaultAsync(cancellationToken);
+            await using (var lockCmd = new NpgsqlCommand(LOCK, conn, tx))
+            {
+                lockCmd.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, id);
+                if (await lockCmd.ExecuteScalarAsync(cancellationToken) is null)
+                {
+                    return null;
+                }
+            }
+
+            DeletedResource? deleted;
+            await using (var pgcom = new NpgsqlCommand(QUERY, conn, tx))
+            {
+                pgcom.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, id);
+                pgcom.Parameters.AddWithValue("resource_urn", NpgsqlDbType.Text, ResourceUrn(id));
+
+                deleted = await pgcom.ExecuteEnumerableAsync(cancellationToken)
+                    .Select(async (reader, ct) => new DeletedResource(
+                        await GetServiceResource(reader, ct),
+                        await reader.GetFieldValueAsync<DateTimeOffset>("deleted_at", ct)))
+                    .SingleOrDefaultAsync(cancellationToken);
+            }
+
+            if (deleted is null)
+            {
+                return null;
+            }
+
+            if (beforeCommit is not null)
+            {
+                await beforeCommit(deleted.DeletedAt, cancellationToken);
+            }
+
+            await tx.CommitAsync(cancellationToken);
+            return deleted;
         }
         catch (Exception e)
         {
@@ -394,8 +438,18 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
     }
 
     /// <inheritdoc/>
-    public async Task<ServiceResource> UpdateResource(ServiceResource resource, CancellationToken cancellationToken = default)
+    public async Task<ServiceResource?> UpdateResource(ServiceResource resource, CancellationToken cancellationToken = default)
     {
+        // Lock the identifier row first, as DeleteResource does. An update that read the resource
+        // before a deletion then waits for it, finds the identifier deleted, and writes nothing,
+        // instead of adding a version row to a deleted resource and moving its deletion time.
+        const string LOCK = /*strpsql*/@"
+            SELECT 1
+            FROM resourceregistry.resource_identifier
+            WHERE identifier = @identifier
+              AND NOT deleted
+            FOR UPDATE";
+
         const string QUERY = /*strpsql*/@"
             WITH ins AS (
                 INSERT INTO resourceregistry.resources(
@@ -429,14 +483,30 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
         var json = JsonSerializer.SerializeToDocument(resource, JsonSerializerOptions);
         try
         {
-            await using var pgcom = _conn.CreateCommand(QUERY);
-            pgcom.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, resource.Identifier);
-            pgcom.Parameters.AddWithValue("serviceresourcejson", NpgsqlDbType.Jsonb, json);
+            await using var conn = await _conn.OpenConnectionAsync(cancellationToken);
+            await using var tx = await conn.BeginTransactionAsync(cancellationToken);
 
-            var serviceResource = await pgcom.ExecuteEnumerableAsync(cancellationToken)
-                 .Select(GetServiceResource)
-                .FirstOrDefaultAsync(cancellationToken);
+            await using (var lockCmd = new NpgsqlCommand(LOCK, conn, tx))
+            {
+                lockCmd.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, resource.Identifier);
+                if (await lockCmd.ExecuteScalarAsync(cancellationToken) is null)
+                {
+                    return null;
+                }
+            }
 
+            ServiceResource? serviceResource;
+            await using (var pgcom = new NpgsqlCommand(QUERY, conn, tx))
+            {
+                pgcom.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, resource.Identifier);
+                pgcom.Parameters.AddWithValue("serviceresourcejson", NpgsqlDbType.Jsonb, json);
+
+                serviceResource = await pgcom.ExecuteEnumerableAsync(cancellationToken)
+                    .Select(GetServiceResource)
+                    .FirstOrDefaultAsync(cancellationToken);
+            }
+
+            await tx.CommitAsync(cancellationToken);
             return serviceResource ?? throw new SqlNullValueException("No result from database");
         }
         catch (Exception e)

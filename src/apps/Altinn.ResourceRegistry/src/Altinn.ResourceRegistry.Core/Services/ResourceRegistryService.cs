@@ -67,9 +67,9 @@ namespace Altinn.ResourceRegistry.Core.Services
         }
 
         /// <inheritdoc/>
-        public async Task UpdateResource(ServiceResource serviceResource, CancellationToken cancellationToken = default)
+        public async Task<ServiceResource> UpdateResource(ServiceResource serviceResource, CancellationToken cancellationToken = default)
         {
-            await _repository.UpdateResource(serviceResource, cancellationToken);
+            return await _repository.UpdateResource(serviceResource, cancellationToken);
         }
 
         /// <inheritdoc/>
@@ -81,16 +81,13 @@ namespace Altinn.ResourceRegistry.Core.Services
                 throw new AccessManagementUpdateException($"Deleting policy for resource {id} failed");
             }
 
-            DeletedResource deleted = await _repository.DeleteResource(id, cancellationToken);
-
-            // Remove the connections made up to this deletion, even if the identifier has been created
-            // again since: a create that checked for a deleted resource before this deletion revives it
-            // without removing them. Connections made after the deletion were set up for the new
-            // resource and are kept.
-            if (deleted is not null)
-            {
-                await RemoveAccessListConnections(id, deleted.DeletedAt, cancellationToken);
-            }
+            // Remove the connections made up to the deletion before it commits. Until then the
+            // identifier cannot be created again, so a recreated resource never sees the old
+            // connections. If the removal fails, the deletion is rolled back and can be retried.
+            await _repository.DeleteResource(
+                id,
+                (deletedAt, ct) => RemoveAccessListConnections(id, deletedAt, ct),
+                cancellationToken);
         }
 
         private async Task RemoveAccessListConnections(string resourceIdentifier, DateTimeOffset connectedBefore, CancellationToken cancellationToken)

@@ -16,6 +16,7 @@ using AngleSharp.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
+using Npgsql;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -901,93 +902,120 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
     }
 
     [Fact]
-    public async Task DeleteResource_RecreatedBeforeCleanup_KeepsNewAccessListConnection()
+    public async Task DeleteResource_CreateDuringCleanup_WaitsForDeleteAndDoesNotSeeOldConnections()
     {
-        const string ResourceId = "recreated_during_delete";
+        const string ResourceId = "created_during_delete";
         Guid oldParty = Guid.NewGuid();
-        Guid newParty = Guid.NewGuid();
 
         await Repository.CreateResource(CreateTestResource(ResourceId));
 
         // Connected well before the deletion, so the test does not depend on the app and database clocks agreeing.
         TimeProvider.Advance(TimeSpan.FromHours(-1));
-        await ConnectAccessList("race-old-list", ResourceId, oldParty);
+        await ConnectAccessList("create-race-old-list", ResourceId, oldParty);
         TimeProvider.Advance(TimeSpan.FromHours(2));
 
-        // Recreate the resource and connect a list for it after the delete has committed,
-        // just before the delete looks up the connections to remove.
-        IAccessListsRepository accessLists = AccessListsRepository;
-        bool recreated = false;
-        var interleaved = new Mock<IAccessListsRepository>();
-        interleaved
-            .Setup(r => r.LoadAccessList(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
-            .Returns((Guid id, CancellationToken ct) => accessLists.LoadAccessList(id, ct));
-        interleaved
-            .Setup(r => r.GetAccessListsByResource(It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))
-            .Returns(async (string resourceId, DateTimeOffset connectedBefore, CancellationToken ct) =>
-            {
-                if (!recreated)
-                {
-                    recreated = true;
-                    await ResourceRegistry.CreateResource(CreateTestResource(ResourceId), ct);
-                    await ConnectAccessList("race-new-list", ResourceId, newParty);
-                }
+        // Start a create while the delete is removing connections. The create finds the resource
+        // still live, so it does no cleanup of its own, and has to wait for the delete to commit.
+        Task? create = null;
+        bool createFinishedDuringCleanup = false;
+        var interleaved = InterleavedAccessLists(async ct =>
+        {
+            create = ResourceRegistry.CreateResource(CreateTestResource(ResourceId), CancellationToken.None);
+            createFinishedDuringCleanup = await FinishesWithin(create, TimeSpan.FromSeconds(1));
+        });
 
-                return await accessLists.GetAccessListsByResource(resourceId, connectedBefore, ct);
-            });
+        await DeleteWith(interleaved.Object, ResourceId);
 
-        var service = new ResourceRegistryService(
-            Repository,
-            Services.GetRequiredService<IPolicyRepository>(),
-            Services.GetRequiredService<IApplications>(),
-            Services.GetRequiredService<IServiceOwnerService>(),
-            interleaved.Object);
+        Assert.NotNull(create);
+        Assert.False(createFinishedDuringCleanup);
 
-        await service.Delete(ResourceId);
+        // The create either revives the identifier after the delete, or finds it taken and fails.
+        try
+        {
+            await create;
+        }
+        catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.UniqueViolation)
+        {
+        }
 
-        Assert.True(recreated);
-        Assert.NotNull(await Repository.GetResource(ResourceId, null));
-        Assert.Empty(await accessLists.GetMembershipsForPartiesAndResources([oldParty], [ResourceId], default));
-        Assert.Single(await accessLists.GetMembershipsForPartiesAndResources([newParty], [ResourceId], default));
+        Assert.Empty(await AccessListsRepository.GetMembershipsForPartiesAndResources([oldParty], [ResourceId], default));
     }
 
     [Fact]
-    public async Task DeleteResource_RevivedByCreateStartedBeforeDelete_RemovesOldAccessListConnection()
+    public async Task DeleteResource_UpdateDuringCleanup_WaitsAndFindsResourceDeleted()
     {
-        const string ResourceId = "revived_during_delete";
-        Guid oldParty = Guid.NewGuid();
+        const string ResourceId = "updated_during_delete";
 
         await Repository.CreateResource(CreateTestResource(ResourceId));
 
-        // Connected well before the deletion, so the test does not depend on the app and database clocks agreeing.
         TimeProvider.Advance(TimeSpan.FromHours(-1));
-        await ConnectAccessList("revive-old-list", ResourceId, oldParty);
+        await ConnectAccessList("update-race-list", ResourceId, Guid.NewGuid());
         TimeProvider.Advance(TimeSpan.FromHours(2));
 
-        // A create that looked for a deleted resource while this one was still live skips its cleanup,
-        // and revives the identifier right after the delete commits.
-        IResourceRegistryRepository repository = Repository;
-        var interleaved = new Mock<IResourceRegistryRepository>();
-        interleaved
-            .Setup(r => r.DeleteResource(It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .Returns(async (string id, CancellationToken ct) =>
-            {
-                DeletedResource? deleted = await repository.DeleteResource(id, ct);
-                await repository.CreateResource(CreateTestResource(id), ct);
-                return deleted;
-            });
+        // A PUT that read the resource before the deletion writes while the delete is still running.
+        Task<ServiceResource>? update = null;
+        bool updateFinishedDuringCleanup = false;
+        var interleaved = InterleavedAccessLists(async ct =>
+        {
+            update = Repository.UpdateResource(CreateTestResource(ResourceId), CancellationToken.None);
+            updateFinishedDuringCleanup = await FinishesWithin(update, TimeSpan.FromSeconds(1));
+        });
 
-        var service = new ResourceRegistryService(
-            interleaved.Object,
-            Services.GetRequiredService<IPolicyRepository>(),
-            Services.GetRequiredService<IApplications>(),
-            Services.GetRequiredService<IServiceOwnerService>(),
-            AccessListsRepository);
+        await DeleteWith(interleaved.Object, ResourceId);
+        DateTimeOffset? deletedAt = await Repository.GetResourceDeletedAt(ResourceId);
 
-        await service.Delete(ResourceId);
+        Assert.NotNull(update);
+        Assert.False(updateFinishedDuringCleanup);
+        Assert.Null(await update);
+        Assert.Null(await Repository.GetResource(ResourceId, null));
+        Assert.NotNull(deletedAt);
+        Assert.Equal(deletedAt, await Repository.GetResourceDeletedAt(ResourceId));
+    }
 
+    [Fact]
+    public async Task UpdateResource_DeletedResource_WritesNothingAndKeepsDeletionTime()
+    {
+        const string ResourceId = "updated_after_delete";
+
+        await Repository.CreateResource(CreateTestResource(ResourceId));
+        await Repository.DeleteResource(ResourceId);
+        DateTimeOffset? deletedAt = await Repository.GetResourceDeletedAt(ResourceId);
+
+        Assert.Null(await Repository.UpdateResource(CreateTestResource(ResourceId)));
+        Assert.Null(await Repository.GetResource(ResourceId, null));
+        Assert.NotNull(deletedAt);
+        Assert.Equal(deletedAt, await Repository.GetResourceDeletedAt(ResourceId));
+    }
+
+    [Fact]
+    public async Task DeleteResource_CleanupFails_RollsBackAndCanBeRetried()
+    {
+        const string ResourceId = "cleanup_fails";
+        Guid party = Guid.NewGuid();
+
+        await Repository.CreateResource(CreateTestResource(ResourceId));
+
+        TimeProvider.Advance(TimeSpan.FromHours(-1));
+        await ConnectAccessList("cleanup-fails-list", ResourceId, party);
+        TimeProvider.Advance(TimeSpan.FromHours(2));
+
+        var failing = new Mock<IAccessListsRepository>();
+        failing
+            .Setup(r => r.GetAccessListsByResource(It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new TimeoutException());
+
+        await Assert.ThrowsAsync<TimeoutException>(() => DeleteWith(failing.Object, ResourceId));
+
+        // The deletion was rolled back with the failed cleanup, so the resource is still there.
         Assert.NotNull(await Repository.GetResource(ResourceId, null));
-        Assert.Empty(await AccessListsRepository.GetMembershipsForPartiesAndResources([oldParty], [ResourceId], default));
+        Assert.Null(await Repository.GetResourceDeletedAt(ResourceId));
+        Assert.Single(await AccessListsRepository.GetMembershipsForPartiesAndResources([party], [ResourceId], default));
+
+        // Retrying the delete completes it.
+        await ResourceRegistry.Delete(ResourceId);
+
+        Assert.Null(await Repository.GetResource(ResourceId, null));
+        Assert.Empty(await AccessListsRepository.GetMembershipsForPartiesAndResources([party], [ResourceId], default));
     }
 
     [Fact]
@@ -1042,6 +1070,47 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
     private IAccessListsRepository AccessListsRepository => Services.GetRequiredService<IAccessListsRepository>();
 
     private IResourceRegistry ResourceRegistry => Services.GetRequiredService<IResourceRegistry>();
+
+    // Wraps the real access list repository, and runs duringCleanup once when the delete looks up
+    // the connections to remove, which is while it still holds the lock on the identifier.
+    private Mock<IAccessListsRepository> InterleavedAccessLists(Func<CancellationToken, Task> duringCleanup)
+    {
+        IAccessListsRepository accessLists = AccessListsRepository;
+        bool done = false;
+        var interleaved = new Mock<IAccessListsRepository>();
+        interleaved
+            .Setup(r => r.LoadAccessList(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Returns((Guid id, CancellationToken ct) => accessLists.LoadAccessList(id, ct));
+        interleaved
+            .Setup(r => r.GetAccessListsByResource(It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))
+            .Returns(async (string resourceId, DateTimeOffset connectedBefore, CancellationToken ct) =>
+            {
+                if (!done)
+                {
+                    done = true;
+                    await duringCleanup(ct);
+                }
+
+                return await accessLists.GetAccessListsByResource(resourceId, connectedBefore, ct);
+            });
+        return interleaved;
+    }
+
+    private Task DeleteWith(IAccessListsRepository accessLists, string resourceId)
+    {
+        var service = new ResourceRegistryService(
+            Repository,
+            Services.GetRequiredService<IPolicyRepository>(),
+            Services.GetRequiredService<IApplications>(),
+            Services.GetRequiredService<IServiceOwnerService>(),
+            accessLists);
+        return service.Delete(resourceId);
+    }
+
+    private static async Task<bool> FinishesWithin(Task task, TimeSpan timeout)
+    {
+        return await Task.WhenAny(task, Task.Delay(timeout)) == task;
+    }
 
     private async Task ConnectAccessList(string identifier, string resourceId, Guid member)
     {

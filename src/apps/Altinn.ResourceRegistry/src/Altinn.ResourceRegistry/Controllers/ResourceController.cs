@@ -262,7 +262,12 @@ namespace Altinn.ResourceRegistry.Controllers
 
             try
             {
-                await _resourceRegistry.UpdateResource(serviceResource, cancellationToken);
+                // Null when the resource was deleted after it was read above.
+                if (await _resourceRegistry.UpdateResource(serviceResource, cancellationToken) is null)
+                {
+                    return NotFound();
+                }
+
                 return Ok();
             }
             catch (Exception e)
