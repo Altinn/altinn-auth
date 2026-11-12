@@ -1784,9 +1784,9 @@ public partial class ConnectionService(
         return policy;
     }
 
-    private static ValidationErrorBuilder CheckFromAndToIsNotNull(Entity from, Entity to)
+    private static ValidationProblemBuilder CheckFromAndToIsNotNull(Entity from, Entity to)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
         if (from is null)
         {
             errorBuilder.Add(ValidationErrors.EntityNotExists, "$QUERY/from");
@@ -1800,9 +1800,9 @@ public partial class ConnectionService(
         return errorBuilder;
     }
 
-    private static ValidationErrorBuilder CheckFromAndToIsValidConnectingOldSIToEmailSI(Entity from, Entity to)
+    private static ValidationProblemBuilder CheckFromAndToIsValidConnectingOldSIToEmailSI(Entity from, Entity to)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         // Guaranteed non-null here: TryBuild above returned false, so both from/to passed their null guards. Check that the variants are correct for a self-registration connection: from should be SI and to should be SI_EMAIL
         if (from!.VariantId != EntityVariantConstants.SI)
@@ -1818,9 +1818,9 @@ public partial class ConnectionService(
         return errorBuilder;
     }
 
-    private static ValidationErrorBuilder CheckFromAndToIsValidRegisterSelfIdentifiedRoleToUser(Entity from, Entity to)
+    private static ValidationProblemBuilder CheckFromAndToIsValidRegisterSelfIdentifiedRoleToUser(Entity from, Entity to)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         // If from and to are the same this is only for the sub variants EMAIL and EDU
         if (from!.VariantId != EntityVariantConstants.SI_EDU && from.VariantId != EntityVariantConstants.SI_EMAIL)
@@ -1835,7 +1835,7 @@ public partial class ConnectionService(
     public async Task<Result<AssignmentDto>> AddSelfRegisteredUserRole(Guid fromId, Guid toId, CancellationToken cancellationToken = default)
     {
         var (from, to) = await GetFromAndToEntities(fromId, toId, cancellationToken);
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         errorBuilder = CheckFromAndToIsNotNull(from, to);
 

@@ -64,18 +64,13 @@ public class DelegationHelper(
 
             foreach (var right in verifiedRights)
             {
-                Dictionary<string, List<AttributePair>> parameters = [];
-
-                foreach (var attributePair in right.Resource)
-                {
-                    parameters.Add(attributePair.Id, [attributePair]);
-                }
-
                 errors.Add(new DetailExternal()
                 {
                     Code = DetailCodeExternal.Unknown,
                     Description = "Unknown Right",
-                    Parameters = parameters
+                    Parameters = right.Resource
+                        .GroupBy(attributePair => attributePair.Id)
+                        .ToDictionary(group => group.Key, group => group.ToList())
                 });
             }
 
@@ -88,6 +83,12 @@ public class DelegationHelper(
 
         foreach (Right right in verifiedRights)
         {
+            // A Right with no resource names nothing to delegate
+            if (right.Resource is [])
+            {
+                continue;
+            }
+
             string resourceId = right.Resource.FirstOrDefault(attr => attr.Id == AttributeIdentifier.ResourceRegistryAttribute)?.Value ?? string.Empty;
 
             ResourceCheckDto? resourceCheckDto = await accessManagementClient.CheckDelegationAccess(partyUuid, resourceId, cancellationToken);
