@@ -36,6 +36,6 @@ tests {
     const errors = res.getBody().validationErrors || [];
     const error = errors.find(e => e.code === "AM.VLD-00035");
     expect(error).to.not.be.undefined;
-    expect(error.detail).to.equal("Request do not exists.");
+    expect(error.title).to.equal("Request do not exists.");
   });
 }

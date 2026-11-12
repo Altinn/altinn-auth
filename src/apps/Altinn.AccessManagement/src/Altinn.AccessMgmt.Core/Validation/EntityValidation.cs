@@ -25,7 +25,7 @@ public static class EntityValidation
     {
         if (!Guid.TryParse(party, out var partyUuid))
         {
-            return (ref ValidationErrorBuilder errors) =>
+            return (ref ValidationProblemBuilder errors) =>
                 errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/party", [new("party", $"The 'party' parameter is not valid.")]);
         }
 
@@ -39,7 +39,7 @@ public static class EntityValidation
             return null;
         }
 
-        return (ref ValidationErrorBuilder errors) =>
+        return (ref ValidationProblemBuilder errors) =>
         {
             errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/from", [new("from", "Either the 'from' UUID or the 'to' UUID must match the 'party' UUID. Neither matches the 'party' UUID.")]);
             errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/to", [new("to", "Either the 'to' UUID or the 'from' UUID must match the 'party' UUID. Neither matches the 'party' UUID.")]);
@@ -53,7 +53,7 @@ public static class EntityValidation
             return null;
         }
 
-        return (ref ValidationErrorBuilder errors) => errors.Add(ValidationErrors.EntityNotExists, $"QUERY/{paramName}");
+        return (ref ValidationProblemBuilder errors) => errors.Add(ValidationErrors.EntityNotExists, $"QUERY/{paramName}");
     };
 
     internal static RuleExpression FromExists(Entity party) => () =>
@@ -73,7 +73,7 @@ public static class EntityValidation
             return null;
         }
 
-        return (ref ValidationErrorBuilder errors) =>
+        return (ref ValidationProblemBuilder errors) =>
         {
             errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{fromParamName}", [new(fromParamName, "An organization cannot delegate to itself.")]);
             errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{toParamName}", [new(toParamName, "An organization cannot delegate to itself.")]);

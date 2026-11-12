@@ -32,7 +32,7 @@ public class RequestService(
     /// <inheritdoc/>
     public async Task<Result<AccessRequest>> GetRequest(Guid requestId, CancellationToken ct = default)
     {
-        ValidationErrorBuilder error = default;
+        ValidationProblemBuilder error = default;
 
         var requestResource = await db.RequestAssignmentResources.AsNoTracking()
             .Include(r => r.Assignment).ThenInclude(a => a.From)
@@ -154,7 +154,7 @@ public class RequestService(
     /// <inheritdoc/>
     public async Task<Result<AccessRequest>> UpdateRequest(Guid partyUuid, Guid requestId, RequestStatusV2 status, CancellationToken ct = default)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         var requestResult = await GetRequest(requestId, ct);
         if (requestResult.IsProblem)
@@ -199,7 +199,7 @@ public class RequestService(
 
         if (requestResult.Value.Type != "resource")
         {
-            ValidationErrorBuilder errorBuilder = default;
+            ValidationProblemBuilder errorBuilder = default;
             errorBuilder.Add(ValidationErrors.RequestNotFound);
             errorBuilder.TryBuild(out var problems);
             return problems;
@@ -270,7 +270,7 @@ public class RequestService(
         HashSet<string> policyKeys = policy is null ? [] : [.. policy.Rules.SelectMany(rule => DelegationCheckHelper.CalculateRightKeys(rule, resource))];
         HashSet<string> delegableKeys = policy is null ? [] : [.. DelegationCheckHelper.DecomposePolicy(WithPermitRulesOnly(policy), resource).Select(right => right.Key)];
 
-        ValidationErrorBuilder errors = default;
+        ValidationProblemBuilder errors = default;
         for (int i = 0; i < requestedKeys.Count; i++)
         {
             var key = requestedKeys[i];
@@ -379,7 +379,7 @@ public class RequestService(
 
     private static ValidationProblemInstance OrganizationNotFoundProblem()
     {
-        ValidationErrorBuilder errors = default;
+        ValidationProblemBuilder errors = default;
         errors.Add(ValidationErrors.EntityNotExists, "QUERY/organization");
         errors.TryBuild(out var notFound);
         return notFound;
@@ -594,7 +594,7 @@ public class RequestService(
 
     private static Result<AccessRequest> VerifyRequestStatusUpdate(AccessRequest request, Guid partyUuid, RequestStatusV2 status)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         switch (request.Status)
         {
@@ -619,7 +619,7 @@ public class RequestService(
         return problems != null ? problems : request;
     }
 
-    private static void ValidateDraft(AccessRequest request, Guid partyUuid, RequestStatusV2 status, ref ValidationErrorBuilder errorBuilder)
+    private static void ValidateDraft(AccessRequest request, Guid partyUuid, RequestStatusV2 status, ref ValidationProblemBuilder errorBuilder)
     {
         if (status != RequestStatusV2.Pending && status != RequestStatusV2.Withdrawn)
         {
@@ -633,7 +633,7 @@ public class RequestService(
         }
     }
 
-    private static void ValidatePending(AccessRequest request, Guid partyUuid, RequestStatusV2 status, ref ValidationErrorBuilder errorBuilder)
+    private static void ValidatePending(AccessRequest request, Guid partyUuid, RequestStatusV2 status, ref ValidationProblemBuilder errorBuilder)
     {
         switch (status)
         {
@@ -661,7 +661,7 @@ public class RequestService(
         }
     }
 
-    private static void AddUnsupportedStatusError(AccessRequest request, RequestStatusV2 status, ref ValidationErrorBuilder errorBuilder)
+    private static void AddUnsupportedStatusError(AccessRequest request, RequestStatusV2 status, ref ValidationProblemBuilder errorBuilder)
     {
         var paramName = "party";
 
@@ -672,7 +672,7 @@ public class RequestService(
         );
     }
 
-    private static void AddUnauthorizedStatusError(AccessRequest request, RequestStatusV2 status, ref ValidationErrorBuilder errorBuilder)
+    private static void AddUnauthorizedStatusError(AccessRequest request, RequestStatusV2 status, ref ValidationProblemBuilder errorBuilder)
     {
         var paramName = "party";
 
@@ -694,7 +694,7 @@ public class RequestService(
 
     private async Task<Result<AccessRequest>> UpdatePackageRequestStatus(Guid id, RequestStatusV2 status, CancellationToken ct = default)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         var request = await db.RequestAssignmentPackages
             .Include(t => t.Assignment)
@@ -793,7 +793,7 @@ public class RequestService(
     /// </summary>
     private async Task<Result<AccessRequest>> UpdateResourceRequestStatus(Guid id, RequestStatusV2 status, List<string>? approvedRightKeys, CancellationToken ct = default)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         var request = await db.RequestAssignmentResources
             .Include(t => t.Assignment)

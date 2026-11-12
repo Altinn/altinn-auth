@@ -10,6 +10,7 @@ using Altinn.Authentication.Core.Problems;
 using Altinn.Authentication.Integration.Configuration;
 using Altinn.Authorization.ProblemDetails;
 using Altinn.Common.AccessTokenClient.Services;
+using Altinn.Platform.Authentication.Core.Models;
 using Altinn.Platform.Authentication.Core.Models.AccessPackages;
 using Altinn.Platform.Authentication.Core.Models.Rights;
 using Altinn.Platform.Authentication.Core.Models.Rights.ConnectionsDtos;
@@ -164,6 +165,68 @@ namespace Altinn.Platform.Authentication.Tests.Clients
             Assert.Contains($"client={client}", url);
             Assert.Contains($"agent={systemuser}", url);
             Assert.DoesNotContain("/api/v1/", url);
+        }
+
+        [Fact]
+        public async Task RevokeDelegatedRightToSystemUser_RevokesByResourceId_SkipsRightWithNoResource()
+        {
+            // Arrange
+            List<HttpRequestMessage> captured = [];
+            var sut = CreateClient(CreateHttpClient(HttpStatusCode.OK, string.Empty, capture: captured.Add));
+            SystemUserInternalDTO systemUser = new() { Id = Guid.NewGuid().ToString() };
+
+            // A Right with no resource, and a Right where the resource is not the first attribute
+            List<Right> rights =
+            [
+                new(),
+                new()
+                {
+                    Resource =
+                    [
+                        new AttributePair { Id = "urn:altinn:org", Value = "ttd" },
+                        new AttributePair { Id = "urn:altinn:resource", Value = "ske-krav-og-betalinger" }
+                    ]
+                }
+            ];
+
+            // Act
+            var result = await sut.RevokeDelegatedRightToSystemUser(Guid.NewGuid(), systemUser, rights);
+
+            // Assert
+            Assert.True(result.IsSuccess);
+            HttpRequestMessage request = Assert.Single(captured);
+            Assert.Equal(HttpMethod.Delete, request.Method);
+            Assert.Contains("resource=ske-krav-og-betalinger", request.RequestUri!.ToString());
+        }
+
+        [Fact]
+        public async Task RevokeDelegatedRightToSystemUser_RightWithNoResourceId_ReturnsProblem()
+        {
+            // Arrange
+            List<HttpRequestMessage> captured = [];
+            var sut = CreateClient(CreateHttpClient(HttpStatusCode.OK, string.Empty, capture: captured.Add));
+            SystemUserInternalDTO systemUser = new() { Id = Guid.NewGuid().ToString() };
+
+            // A Right with attributes, but none of them a resource, so there is nothing to revoke by id
+            List<Right> rights =
+            [
+                new()
+                {
+                    Resource =
+                    [
+                        new AttributePair { Id = "urn:altinn:org", Value = "ttd" },
+                        new AttributePair { Id = "urn:altinn:app", Value = "app" }
+                    ]
+                }
+            ];
+
+            // Act
+            var result = await sut.RevokeDelegatedRightToSystemUser(Guid.NewGuid(), systemUser, rights);
+
+            // Assert
+            Assert.True(result.IsProblem);
+            Assert.Equal(Problem.Rights_FailedToRevoke.Title, result.Problem!.Title);
+            Assert.Empty(captured);
         }
 
         [Theory]

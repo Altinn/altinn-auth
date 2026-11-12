@@ -9,7 +9,7 @@ using Altinn.Authorization.ProblemDetails;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using ValidationErrors = Altinn.AccessMgmt.Core.Utils.Models.ValidationErrors;
+using ValidationErrors = Altinn.AccessManagement.Core.Errors.ValidationErrors;
 
 namespace Altinn.AccessManagement.Api.Tests.Controllers;
 
@@ -36,7 +36,7 @@ public class PartyControllerTest
 
     private static ValidationProblemInstance MakeValidationProblem() =>
         ValidationComposer.Validate(() =>
-            (ref ValidationErrorBuilder errors) =>
+            (ref ValidationProblemBuilder errors) =>
                 errors.Add(ValidationErrors.InvalidPartyUrn, "QUERY/test"));
 
     private static readonly PartyBaseDto SampleParty = new()

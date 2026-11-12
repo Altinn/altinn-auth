@@ -556,7 +556,20 @@ public class AccessManagementClient : IAccessManagementClient
         {
             foreach (Right right in rights)
             {
-                string rightId = right.Resource.First().Value.ToString();
+                // A Right with no resource names nothing to revoke
+                if (right.Resource is [])
+                {
+                    continue;
+                }
+
+                // Fail on a Right without a resource id, so a delegation is not left behind unnoticed
+                string? rightId = right.Resource.FirstOrDefault(attr => attr.Id == AttributeIdentifier.ResourceRegistryAttribute)?.Value;
+                if (string.IsNullOrEmpty(rightId))
+                {
+                    _logger.LogError("Authentication // AccessManagementClient // RevokeRightsToSystemUser // Right has no resource id // SystemUser: {SystemUserId}", systemUser.Id);
+                    return false;
+                }
+
                 string endpointUrl = $"enduser/connections/resources?party={partyUuid}&from={partyUuid}&to={systemUser.Id}&resource={rightId}";
                 string token = JwtTokenUtil.GetTokenFromContext(_httpContextAccessor.HttpContext!, _platformSettings.JwtCookieName!)!;
                 HttpResponseMessage response = await _client.DeleteAsync(token, endpointUrl);
@@ -1029,8 +1042,9 @@ public class AccessManagementClient : IAccessManagementClient
             string responseContent = await response.Content.ReadAsStringAsync();
             ProblemDetails problemDetails = JsonSerializer.Deserialize<ProblemDetails>(responseContent, _serializerOptions)!;
 
+            // ProblemDetails 6.0 puts the descriptor text in title; older responses carried it in detail.
             string? validationErrors = string.Empty;
-            if (problemDetails.Detail == "One or more validation errors occurred.")
+            if (problemDetails.Detail == "One or more validation errors occurred." || problemDetails.Title == "One or more validation errors occurred.")
             {
                 AltinnValidationProblemDetails validationProblems = JsonSerializer.Deserialize<AltinnValidationProblemDetails>(responseContent, _serializerOptions)!;
                 validationErrors = JsonSerializer.Serialize(validationProblems, _serializerOptions);
@@ -1040,7 +1054,7 @@ public class AccessManagementClient : IAccessManagementClient
 
             var problemExtensionData = ProblemExtensionData.Create(new[]
             {
-                new KeyValuePair<string, string>("Problem Detail: ", problemDetails.Detail!),
+                new KeyValuePair<string, string>("Problem Detail: ", problemDetails.Detail ?? problemDetails.Title ?? string.Empty),
                 new KeyValuePair<string, string>("ValidationErrors: ", validationErrors!)
             });
 

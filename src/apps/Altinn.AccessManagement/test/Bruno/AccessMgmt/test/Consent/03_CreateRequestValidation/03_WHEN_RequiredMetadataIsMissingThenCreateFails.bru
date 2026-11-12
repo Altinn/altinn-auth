@@ -64,7 +64,7 @@ tests {
     const body = res.getBody();
     expect(body.status).to.equal(400);
     expect(body.code).to.equal("AM-00008");
-    expect(body.detail).to.equal("Missing metadata");
+    expect(body.title).to.equal("Missing metadata");
     expect(body.key).to.equal(td.consentResource.metadataKey);
   });
 }
