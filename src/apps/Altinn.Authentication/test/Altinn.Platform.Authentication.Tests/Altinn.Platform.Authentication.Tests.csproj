@@ -301,9 +301,6 @@
     <None Update="Data\SystemRegister\Json\SystemRegister2Rights.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="Data\SystemRegister\Json\SystemRegisterSubRights.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Update="Data\SystemRegister\Json\SystemRegisterDtoResponse.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>

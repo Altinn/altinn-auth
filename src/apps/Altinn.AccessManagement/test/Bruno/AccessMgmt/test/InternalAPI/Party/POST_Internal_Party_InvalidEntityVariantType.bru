@@ -50,7 +50,7 @@ tests {
     const data = body;
     
     expect(res.status).to.equal(400);
-    assert.equal(data.detail, "The EntityVariant is not found or not valid for the given EntityType");
+    assert.equal(data.title, "The EntityVariant is not found or not valid for the given EntityType");
     
   });
 }

@@ -48,7 +48,7 @@ tests {
     test("POST_EndUser_PackageDelegationRequest_Org_Cannot_Request_PersonPackage", function() {
       const data = res.getBody();
       expect(res.status).to.equal(400);
-      expect(data.validationErrors[0]).to.have.property("detail", "One or more packages is not assignable.");
+      expect(data.validationErrors[0]).to.have.property("title", "One or more packages is not assignable.");
   });
 }
 
