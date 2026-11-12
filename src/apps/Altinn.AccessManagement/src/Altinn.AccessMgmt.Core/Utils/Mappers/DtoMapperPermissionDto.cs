@@ -1,4 +1,5 @@
 ﻿using Altinn.AccessMgmt.Core.Models;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
@@ -50,6 +51,94 @@ public partial class DtoMapper : IDtoMapper
             ViaRole = ConvertCompactRole(connection.ViaRole),
             Role = connection.AssignmentId.HasValue ? ConvertCompactRole(connection.Role) : null
         };
+    }
+
+    /// <summary>
+    /// Converts a connection to a permission, with who last changed the access and when.
+    /// </summary>
+    /// <param name="connection">The connection record.</param>
+    /// <param name="changeInfo">Change info for exactly this combination of connection and package, resource or instance, or <c>null</c>.</param>
+    /// <param name="performers">Entities that made changes, by id. <c>null</c> leaves <c>PerformedBy</c> empty.</param>
+    public static PermissionDto ConvertToPermission(ConnectionQueryExtendedRecord connection, ConnectionQueryChangeInfo changeInfo, IReadOnlyDictionary<Guid, Entity> performers)
+    {
+        var permission = ConvertToPermission(connection);
+        if (changeInfo is null)
+        {
+            return permission;
+        }
+
+        permission.FromDate = changeInfo.ValidFrom;
+        if (performers is not null && changeInfo.ChangedBy is Guid changedBy && performers.TryGetValue(changedBy, out var performer))
+        {
+            permission.PerformedBy = ConvertPerformedBy(performer);
+        }
+
+        return permission;
+    }
+
+    /// <summary>
+    /// Converts the entity that performed a change. Fills only id, name, type, variant, party id, user id, username and,
+    /// for organizations, the organization identifier, and never person identifiers or dates of birth.
+    /// </summary>
+    public static CompactEntityDto ConvertPerformedBy(Entity entity)
+    {
+        if (entity is null)
+        {
+            return null;
+        }
+
+        EntityTypeConstants.TryGetById(entity.TypeId, out var type);
+        EntityVariantConstants.TryGetById(entity.VariantId, out var variant);
+
+        return new CompactEntityDto()
+        {
+            Id = entity.Id,
+            Name = entity.Name,
+            Type = type?.Entity.Name,
+            Variant = variant?.Entity.Name,
+            PartyId = entity.PartyId,
+            UserId = entity.UserId,
+            Username = entity.Username,
+            OrganizationIdentifier = entity.TypeId == EntityTypeConstants.Organization.Id ? entity.OrganizationIdentifier : null,
+        };
+    }
+
+    /// <summary>
+    /// Collects the distinct ids of everyone who changed the packages, resources and instances on the connections.
+    /// </summary>
+    public static HashSet<Guid> CollectChangedBy(IEnumerable<ConnectionQueryExtendedRecord> connections)
+    {
+        var ids = new HashSet<Guid>();
+        foreach (var connection in connections)
+        {
+            if (connection.PackageChangeInfo is not null)
+            {
+                foreach (var info in connection.PackageChangeInfo.Values)
+                {
+                    AddChangedBy(ids, info);
+                }
+            }
+
+            foreach (var resource in connection.Resources ?? [])
+            {
+                AddChangedBy(ids, resource.ChangeInfo);
+            }
+
+            foreach (var instance in connection.Instances ?? [])
+            {
+                AddChangedBy(ids, instance.ChangeInfo);
+            }
+        }
+
+        return ids;
+    }
+
+    private static void AddChangedBy(HashSet<Guid> ids, ConnectionQueryChangeInfo info)
+    {
+        if (info?.ChangedBy is Guid id)
+        {
+            ids.Add(id);
+        }
     }
 
     public CompactPermission ConvertToCompactPermission(Connection connection)

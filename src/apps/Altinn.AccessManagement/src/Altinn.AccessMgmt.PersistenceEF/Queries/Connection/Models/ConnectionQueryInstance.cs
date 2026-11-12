@@ -29,4 +29,10 @@ public sealed class ConnectionQueryInstance
     /// Gets the reference ID of the resource associated with this instance.
     /// </summary>
     public string ResourceRefId { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Who last changed the assignment instance row, and when. Only set when
+    /// <see cref="ConnectionQueryFilter.IncludeChangeInfo"/> is <c>true</c>.
+    /// </summary>
+    public ConnectionQueryChangeInfo ChangeInfo { get; init; }
 }

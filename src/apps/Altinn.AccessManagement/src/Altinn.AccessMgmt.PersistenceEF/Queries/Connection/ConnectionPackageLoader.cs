@@ -23,15 +23,38 @@ internal class ConnectionPackageLoader(AppDbContext db)
 
         SortedList<Guid, List<Guid>> assignmentPackages = [];
         SortedSet<Guid> assignmentPackageIds = [];
+        Dictionary<Guid, Dictionary<Guid, ConnectionQueryChangeInfo>> changeInfoByAssignment = null;
         if (assignmentPackageKeys.Count > 0)
         {
-            var assignmentPackagesRaw = await db.AssignmentPackages.Where(a => assignmentPackageKeys.Contains(a.AssignmentId))
-                .WhereIf(packageSet is not null, p => packageSet!.Contains(p.PackageId))
-                .Select(ap => new { ap.PackageId, ap.AssignmentId })
-                .ToListAsync(ct);
+            var assignmentPackageQuery = db.AssignmentPackages.Where(a => assignmentPackageKeys.Contains(a.AssignmentId))
+                .WhereIf(packageSet is not null, p => packageSet!.Contains(p.PackageId));
+
+            // Keep the projection covered by the (assignmentid, packageid) index unless change info is asked for.
+            var assignmentPackagesRaw = filter.IncludeChangeInfo
+                ? await assignmentPackageQuery
+                    .Select(ap => new AssignmentPackageRow(ap.PackageId, ap.AssignmentId, new ConnectionQueryChangeInfo(ap.Audit_ValidFrom, ap.Audit_ChangedBy)))
+                    .ToListAsync(ct)
+                : await assignmentPackageQuery
+                    .Select(ap => new AssignmentPackageRow(ap.PackageId, ap.AssignmentId, null))
+                    .ToListAsync(ct);
+
+            if (filter.IncludeChangeInfo)
+            {
+                changeInfoByAssignment = [];
+            }
 
             foreach (var assignmentPackage in assignmentPackagesRaw)
             {
+                if (changeInfoByAssignment is not null)
+                {
+                    if (!changeInfoByAssignment.TryGetValue(assignmentPackage.AssignmentId, out var infoByPackage))
+                    {
+                        changeInfoByAssignment[assignmentPackage.AssignmentId] = infoByPackage = [];
+                    }
+
+                    infoByPackage[assignmentPackage.PackageId] = assignmentPackage.ChangeInfo;
+                }
+
                 assignmentPackageIds.Add(assignmentPackage.PackageId);
                 if (assignmentPackages.TryGetValue(assignmentPackage.AssignmentId, out var ids))
                 {
@@ -154,6 +177,12 @@ internal class ConnectionPackageLoader(AppDbContext db)
                      : [];
 
                 keyPackageIds = assPackages.Distinct();
+
+                // Change info belongs to the record, not to the shared package objects (see ConnectionQueryExtendedRecord.PackageChangeInfo).
+                if (changeInfoByAssignment is not null && changeInfoByAssignment.TryGetValue(key.AssignmentId.Value, out var infoByPackage))
+                {
+                    key.PackageChangeInfo = infoByPackage;
+                }
             }
             else
             {
@@ -247,4 +276,6 @@ internal class ConnectionPackageLoader(AppDbContext db)
             }
         }
     }
+
+    private sealed record AssignmentPackageRow(Guid PackageId, Guid AssignmentId, ConnectionQueryChangeInfo ChangeInfo);
 }
