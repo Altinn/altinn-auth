@@ -6,7 +6,7 @@ using Altinn.AccessManagement.Core.Models;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Microsoft.AspNetCore.Authorization;
-using static Altinn.AccessManagement.Core.Constants.AltinnXacmlConstants;
+using static Altinn.Authorization.Xacml.Constants.AltinnXacmlConstants;
 
 namespace Altinn.AccessManagement.Api.Enduser.Authorization.Helper
 {
