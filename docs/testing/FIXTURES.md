@@ -83,9 +83,11 @@ adds during migration. Your test code should:
   in a shared DB.
 - **Use disjoint IDs.** When seeding your own rows, use IDs that cannot collide
   with the baseline or another class sharing the fixture. `EnsureSeedOnce`
-  marks an added row whose key already exists as unchanged, so a clash does
-  not fail: your row is silently dropped and the test runs against the
-  existing one.
+  checks only the primary key: an added row whose primary key already exists
+  is marked unchanged, so it is silently dropped and the test runs against the
+  existing row. A clash on a unique index still fails the seed, for example an
+  `Assignment` whose `(FromId, ToId, RoleId)` already exists under another
+  `Id`, so also pick combinations that no other seed uses.
 - **Reuse the named baseline actors** (`TestData.MalinEmilie`,
   `TestData.JinxArcane`, `TestEntities.MainUnitKarlstad`, …) rather than
   inventing parties, so the register/profile/roles mocks already resolve them.
