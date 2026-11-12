@@ -33,6 +33,8 @@ public partial class ConnectionsControllerTest
     /// - Havbris Regnskap AS: organization with a Rightholder assignment from Dumbo Adventures carrying the
     ///   SalarySpecialCategory package
     /// - Ola Nøkkelrolle: managing director of Havbris Regnskap AS, so he receives Havbris' access through a key role
+    /// - Fjordlys Holding AS: main unit with a Rightholder assignment to Kari carrying the SalarySpecialCategory package,
+    ///   and its subunit Fjordlys Holding AS avd. Bergen, which inherits that access
     /// - Siri Slemdal: person who performed the package, resource and instance changes above, at <see cref="ChangedAt"/>
     /// </para>
     /// <para>
@@ -50,6 +52,8 @@ public partial class ConnectionsControllerTest
         internal static readonly Guid KeyRoleOrganization = Guid.Parse("0196c3a0-0000-7000-8000-000000000002");
         internal static readonly Guid KeyRolePerson = Guid.Parse("0196c3a0-0000-7000-8000-000000000003");
         internal static readonly Guid Performer = Guid.Parse("0196c3a0-0000-7000-8000-000000000004");
+        internal static readonly Guid MainUnit = Guid.Parse("0196c3a0-0000-7000-8000-000000000005");
+        internal static readonly Guid SubUnit = Guid.Parse("0196c3a0-0000-7000-8000-000000000006");
 
         internal const string PerformerPersonIdentifier = "02029099911";
         internal const string InstanceId = "urn:altinn:instance-id:50960001/c0ffee00-0000-4000-8000-000000000001";
@@ -118,7 +122,31 @@ public partial class ConnectionsControllerTest
                     UserId = 50960004,
                     Username = "sirislemdal",
                     DateOfBirth = PerformerDateOfBirth,
+                },
+                new Entity()
+                {
+                    Id = MainUnit,
+                    Name = "Fjordlys Holding AS",
+                    TypeId = EntityTypeConstants.Organization,
+                    VariantId = EntityVariantConstants.AS,
+                    OrganizationIdentifier = "399960005",
+                    RefId = "399960005",
+                    PartyId = 50960005,
                 });
+
+            db.SaveChanges();
+
+            db.Entities.Add(new Entity()
+            {
+                Id = SubUnit,
+                Name = "Fjordlys Holding AS avd. Bergen",
+                TypeId = EntityTypeConstants.Organization,
+                VariantId = EntityVariantConstants.BEDR,
+                OrganizationIdentifier = "399960006",
+                RefId = "399960006",
+                PartyId = 50960006,
+                ParentId = MainUnit,
+            });
 
             db.SaveChanges();
 
@@ -136,9 +164,17 @@ public partial class ConnectionsControllerTest
                 RoleId = RoleConstants.Rightholder,
             };
 
+            var mainUnitToRecipient = new Assignment()
+            {
+                FromId = MainUnit,
+                ToId = Recipient,
+                RoleId = RoleConstants.Rightholder,
+            };
+
             db.Assignments.AddRange(
                 dumboToRecipient,
                 dumboToKeyRoleOrganization,
+                mainUnitToRecipient,
                 new Assignment()
                 {
                     FromId = KeyRoleOrganization,
@@ -157,6 +193,11 @@ public partial class ConnectionsControllerTest
                 new AssignmentPackage()
                 {
                     AssignmentId = dumboToKeyRoleOrganization.Id,
+                    PackageId = PackageConstants.SalarySpecialCategory.Id,
+                },
+                new AssignmentPackage()
+                {
+                    AssignmentId = mainUnitToRecipient.Id,
                     PackageId = PackageConstants.SalarySpecialCategory.Id,
                 });
 
@@ -275,6 +316,29 @@ public partial class ConnectionsControllerTest
             var package = Assert.Single(result.Items, p => p.Package.Id == PackageConstants.SalarySpecialCategory.Id);
             var permission = Assert.Single(package.Permissions, p => p.Via?.Id == KeyRoleOrganization);
             AssertChangedBySeedPerformer(permission, body);
+        }
+
+        /// <summary>
+        /// Fjordlys Holding has given Kari the package, and its subunit inherits it. Kari lists her packages
+        /// without a <c>from</c> filter, so the subunit records are added after the packages are loaded.
+        /// They carry the change info of the main unit's assignment.
+        /// </summary>
+        [Fact]
+        public async Task GetPackages_InheritedBySubunit_ReturnsChangeInfoOfMainUnitAssignment()
+        {
+            HttpClient client = CreateClient(Recipient, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
+
+            var (result, body) = await GetOk<PaginatedResult<PackagePermissionDto>>(
+                client,
+                $"{Route}/accesspackages?party={Recipient}&to={Recipient}");
+
+            var package = Assert.Single(result.Items, p => p.Package.Id == PackageConstants.SalarySpecialCategory.Id);
+            AssertChangedBySeedPerformer(Assert.Single(package.Permissions, p => p.From?.Id == MainUnit), body);
+
+            var subunitPermission = Assert.Single(package.Permissions, p => p.From?.Id == SubUnit);
+            Assert.NotNull(subunitPermission.Via);
+            Assert.Equal(MainUnit, subunitPermission.Via.Id);
+            AssertChangedBySeedPerformer(subunitPermission, body);
         }
 
         /// <summary>
