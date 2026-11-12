@@ -36,7 +36,7 @@ docs {
   Returns 200 with the assignment resource: `id`, `assignmentId` (the rettighetshaver
   assignment between the two parties) and `resourceId`. Errors: 400 AM-00027 unknown
   resource, AM-00033 no right key, AM-00036 a key not in the policy, AM-00053 the resource
-  uses an access list and the `from` organization is not on it; 403 AM-00048 when the
+  has access lists and the `from` organization is on none of them; 403 AM-00048 when the
   service owner does not own the resource.
 }
 

@@ -224,5 +224,5 @@ public static class Problems
 
     /// <summary>Gets a <see cref="ProblemDescriptor"/>.</summary>
     public static ProblemDescriptor FromPartyNotOnAccessList { get; }
-    = _factory.Create(53, HttpStatusCode.BadRequest, "The resource uses an access list, and the party delegating is not on it for the requested rights. Add the party to the access list before delegating.");
+    = _factory.Create(53, HttpStatusCode.BadRequest, "The resource has AccessListMode enabled, and the party has not been added to any access list tied to the resource. Add the party to a relevant access list before delegating.");
 }

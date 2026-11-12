@@ -214,8 +214,8 @@ namespace Altinn.AccessMgmt.Core.Services
                 return Problems.InvalidRightKey;
             }
 
-            // A resource in access list mode can only be used by organizations on its access list. A delegation from
-            // an organization that is not on it would be stored but give the recipient nothing, so refuse it.
+            // A resource in access list mode can only be used by organizations on one of its access lists. A delegation
+            // from an organization on none of them would be stored but give the recipient nothing, so refuse it.
             if (DelegationCheckHelper.IsAccessListModeEnabledAndApplicable(resourceMetadata.AccessListMode, fromEntity.TypeId))
             {
                 foreach (string key in keys)
