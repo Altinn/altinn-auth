@@ -20,39 +20,6 @@ namespace Altinn.AccessManagement.Core.Helpers
         private const string CoveredByNotDefined = "CoveredBy was not defined";
 
         /// <summary>
-        /// Extracts a list of all roles codes mentioned in a permit rule in a policy. 
-        /// </summary>
-        /// <param name="policy">The policy</param>
-        /// <returns>List of role codes</returns>
-        public static List<string> GetRolesWithAccess(XacmlPolicy policy)
-        {
-            HashSet<string> roleCodes = new HashSet<string>();
-
-            foreach (XacmlRule rule in policy.Rules)
-            {
-                if (rule.Effect.Equals(XacmlEffectType.Permit) && rule.Target != null)
-                {
-                    foreach (XacmlAnyOf anyOf in rule.Target.AnyOf)
-                    {
-                        foreach (XacmlAllOf allOf in anyOf.AllOf)
-                        {
-                            foreach (XacmlMatch xacmlMatch in allOf.Matches)
-                            {
-                                if (xacmlMatch.AttributeDesignator.AttributeId.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.LegacyRoleAttribute)
-                                    || xacmlMatch.AttributeDesignator.AttributeId.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute))
-                                {
-                                    roleCodes.Add(xacmlMatch.AttributeValue.Value);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            return roleCodes.ToList();
-        }
-
-        /// <summary>
         /// Finds the correct policy path based on a XacmlContextRequest
         /// </summary>
         /// <param name="request">Xacml context request to use for finding the org and app for building the path</param>
