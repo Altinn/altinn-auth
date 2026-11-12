@@ -39,8 +39,11 @@ internal class TokenGenerator
         {
             var opts = Options.Value;
 
+            var testTool = opts.PlatformAccessToken.TestTool;
             var request = RequestComposer.New(
-                RequestComposer.WithSetUri(opts.PlatformAccessToken.TestTool.Endpoint, "/api/GetPlatformAccessToken"),
+                testTool.PlatformAccessTokenUrl is { } url
+                    ? RequestComposer.WithSetUri(url.AbsoluteUri)
+                    : RequestComposer.WithSetUri(testTool.Endpoint, "/api/GetPlatformAccessToken"),
                 RequestComposer.WithHttpVerb(HttpMethod.Get),
                 RequestComposer.WithAppendQueryParam("env", opts.PlatformAccessToken.TestTool.Environment),
                 RequestComposer.WithAppendQueryParam("ttl", 3600),
