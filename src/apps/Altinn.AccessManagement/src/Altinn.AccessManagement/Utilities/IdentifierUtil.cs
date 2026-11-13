@@ -1,6 +1,6 @@
-﻿using Altinn.AccessManagement.Core.Constants;
-using Altinn.AccessManagement.Core.Models;
+﻿using Altinn.AccessManagement.Core.Models;
 using Altinn.Authorization.Api.Contracts.Register;
+using Altinn.Authorization.Xacml.Constants;
 
 namespace Altinn.AccessManagement.Utilities;
 

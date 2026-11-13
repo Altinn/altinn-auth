@@ -131,4 +131,11 @@
   <Folder Name="/libs/Altinn.Authorization.Testing/src/">
     <Project Path="src/libs/Altinn.Authorization.Testing/src/Altinn.Authorization.Testing/Altinn.Authorization.Testing.csproj" />
   </Folder>
+  <Folder Name="/libs/Altinn.Authorization.Xacml/" />
+  <Folder Name="/libs/Altinn.Authorization.Xacml/src/">
+    <Project Path="src/libs/Altinn.Authorization.Xacml/src/Altinn.Authorization.Xacml/Altinn.Authorization.Xacml.csproj" />
+  </Folder>
+  <Folder Name="/libs/Altinn.Authorization.Xacml/test/">
+    <Project Path="src/libs/Altinn.Authorization.Xacml/test/Altinn.Authorization.Xacml.Tests/Altinn.Authorization.Xacml.Tests.csproj" />
+  </Folder>
 </Solution>

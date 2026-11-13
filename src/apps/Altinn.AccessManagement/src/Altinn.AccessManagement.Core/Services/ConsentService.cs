@@ -229,7 +229,7 @@ namespace Altinn.AccessManagement.Core.Services
         /// <inheritdoc/>
         public async Task<Result<Consent>> GetConsent(Guid consentRequestId, CancellationToken cancellationToken)
         {
-            ValidationErrorBuilder errors = default;
+            ValidationProblemBuilder errors = default;
             ConsentRequestDetails consentRequest = await _consentRepository.GetRequest(consentRequestId, cancellationToken);
 
             if (consentRequest == null)
@@ -380,7 +380,7 @@ namespace Altinn.AccessManagement.Core.Services
                 return Problems.ConsentCantBeAccepted;
             }
 
-            ValidationErrorBuilder errors = default;
+            ValidationProblemBuilder errors = default;
             ValidateContext(context, ref errors);
 
             if (errors.TryBuild(out var beforeErrorREsult))
@@ -640,7 +640,7 @@ namespace Altinn.AccessManagement.Core.Services
         /// </summary>
         private async Task<Result<ConsentRequest>> ValidateAndSetInternalIdentifiers(ConsentRequest consentRequest, CancellationToken cancelactionToken)
         {
-            ValidationErrorBuilder validationErrorsBuilder = default;
+            ValidationProblemBuilder validationErrorsBuilder = default;
             MultipleProblemBuilder problemsBuilder = default;
             Result<ConsentPartyUrn> fromParty = await ValidatePartyFromExternalIdentity(consentRequest.From, cancelactionToken);
             if (fromParty.IsProblem)
@@ -728,7 +728,7 @@ namespace Altinn.AccessManagement.Core.Services
             return consentRequest;
         }
 
-        private static void ValidateContext(ConsentContext context, ref ValidationErrorBuilder errors)
+        private static void ValidateContext(ConsentContext context, ref ValidationProblemBuilder errors)
         {
             if (context == null)
             {
@@ -739,7 +739,7 @@ namespace Altinn.AccessManagement.Core.Services
         private async Task<(MultipleProblemBuilder Errors, string TemplateId)> ValidateConsentRight(ConsentRequest consentRequest, MultipleProblemBuilder problemsBuilder, int rightIndex, string templateId, CancellationToken cancelactionToken)
         {
             ConsentRight consentRight = consentRequest.ConsentRights[rightIndex];
-            ValidationErrorBuilder validationErrors = default;
+            ValidationProblemBuilder validationErrors = default;
 
             if (consentRight.Action == null || consentRight.Action.Count == 0)
             {
@@ -821,7 +821,7 @@ namespace Altinn.AccessManagement.Core.Services
             }
         }
 
-        private static ValidationErrorBuilder ValidateValidTo(ConsentRequest consentRequest, ValidationErrorBuilder errors)
+        private static ValidationProblemBuilder ValidateValidTo(ConsentRequest consentRequest, ValidationProblemBuilder errors)
         {
             if (consentRequest.ValidTo < DateTime.UtcNow && consentRequest.CreatedTime == null)
             {
@@ -903,7 +903,7 @@ namespace Altinn.AccessManagement.Core.Services
         /// <inheritdoc/>
         public async Task<Result<List<ConsentStatusChange>>> GetConsentEventsForParty(ConsentPartyUrn consentReceiver, ConsentEventsQuery query, int pageSize, CancellationToken cancellationToken)
         {
-            ValidationErrorBuilder validationErrorBuilder = default;
+            ValidationProblemBuilder validationErrorBuilder = default;
 
             if (pageSize <= 0 || pageSize > 1000)
             {

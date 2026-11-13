@@ -1,7 +1,7 @@
 ﻿using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Utils;
 using Altinn.Authorization.ABAC.Xacml;
-using Altinn.ResourceRegistry.Core.Constants;
+using Altinn.Authorization.Xacml.Constants;
 using Altinn.ResourceRegistry.Core.Helpers;
 using Altinn.ResourceRegistry.Core.Models;
 using System.Xml;

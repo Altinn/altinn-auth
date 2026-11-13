@@ -3,6 +3,7 @@ using Altinn.AccessMgmt.Core.Outbox;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 
 namespace Altinn.AccessMgmt.Core.Notifications;
 
@@ -45,8 +46,8 @@ public static class RequestReviewedNotification
     /// <param name="packageId">
     /// Optional identifier of the package being reviewed.
     /// </param>
-    /// <param name="isApproved">
-    /// Indicates whether the request was approved or denied.
+    /// <param name="requestStatus">
+    /// The outcome of the review: approved, partially approved or rejected.
     /// </param>
     /// <param name="notifyInSeconds">
     /// The delay, in seconds, before the outbox message should be processed.
@@ -64,15 +65,15 @@ public static class RequestReviewedNotification
         Guid recipientId,
         Guid? resourceId,
         Guid? packageId,
-        bool isApproved,
+        RequestStatusV2 requestStatus,
         int notifyInSeconds = DefaultNotifyInSeconds,
         CancellationToken ct = default)
     {
         await db.OutboxMessages.UpsertOutboxAsync(
             refId: $"{Handler}_{requesterId}_{recipientId}",
             handler: Handler,
-            addValueFactory: msg => AddValue(requesterId, recipientId, resourceId, packageId, isApproved, msg, notifyInSeconds),
-            updateValueFactory: (msg, data) => UpdateValue(requesterId, recipientId, resourceId, packageId, isApproved, msg, data, notifyInSeconds),
+            addValueFactory: msg => AddValue(requesterId, recipientId, resourceId, packageId, requestStatus, msg, notifyInSeconds),
+            updateValueFactory: (msg, data) => UpdateValue(requesterId, recipientId, resourceId, packageId, requestStatus, msg, data, notifyInSeconds),
             cancellationToken: ct
         );
     }
@@ -111,12 +112,24 @@ public static class RequestReviewedNotification
         );
     }
 
+    /// <summary>
+    /// Creates the content of a new outbox message holding the first reviewed resource or package
+    /// for a requester and recipient, and schedules the message <paramref name="notifyInSeconds"/> from now.
+    /// </summary>
+    /// <param name="reviewerId">The entity that reviewed the request.</param>
+    /// <param name="recipientId">The entity that receives the notification.</param>
+    /// <param name="resourceId">The reviewed resource, or null when a package was reviewed.</param>
+    /// <param name="packageId">The reviewed package, or null when a resource was reviewed.</param>
+    /// <param name="requestStatus">The outcome of the review.</param>
+    /// <param name="msg">The outbox message whose schedule and timeout are set.</param>
+    /// <param name="notifyInSeconds">The delay before the message is processed.</param>
+    /// <returns>The message content, with the outcome stored as both <c>RequestStatus</c> and <c>IsApproved</c>.</returns>
     private static RequestReviewNotificationMessage AddValue(
         Guid reviewerId,
         Guid recipientId,
         Guid? resourceId,
         Guid? packageId,
-        bool isApproved,
+        RequestStatusV2 requestStatus,
         OutboxMessage msg,
         int notifyInSeconds
     )
@@ -131,18 +144,37 @@ public static class RequestReviewedNotification
         {
             RecipientId = recipientId,
             ReviewerId = reviewerId,
-            Resources = resourceId.HasValue && resourceId.Value != Guid.Empty ? [new() { Ref = resourceId.Value, IsApproved = isApproved }] : [],
-            Packages = packageId.HasValue && packageId.Value != Guid.Empty ? [new() { Ref = packageId.Value, IsApproved = isApproved }] : [],
+            Resources = resourceId.HasValue && resourceId.Value != Guid.Empty ? [new() { Ref = resourceId.Value, RequestStatus = requestStatus, IsApproved = IsApproved(requestStatus) }] : [],
+            Packages = packageId.HasValue && packageId.Value != Guid.Empty ? [new() { Ref = packageId.Value, RequestStatus = requestStatus, IsApproved = IsApproved(requestStatus) }] : [],
             Updated = 0,
         };
     }
 
+    /// <summary>
+    /// Adds a reviewed resource or package to a pending outbox message, so that one email covers
+    /// every review between the same requester and recipient.
+    /// </summary>
+    /// <remarks>
+    /// An item that is already in the message gets the latest outcome. Each update proposes a schedule of now plus
+    /// <paramref name="notifyInSeconds"/> divided by one more than the number of updates, and keeps the current schedule
+    /// if that is later, so a burst of reviews is sent as one email without waiting the full delay after each review.
+    /// When the stored content can't be read, a new message is created as in <see cref="AddValue"/>.
+    /// </remarks>
+    /// <param name="reviewerId">The entity that reviewed the request.</param>
+    /// <param name="recipientId">The entity that receives the notification.</param>
+    /// <param name="resourceId">The reviewed resource, or null when a package was reviewed.</param>
+    /// <param name="packageId">The reviewed package, or null when a resource was reviewed.</param>
+    /// <param name="requestStatus">The outcome of the review.</param>
+    /// <param name="msg">The outbox message whose schedule is updated.</param>
+    /// <param name="data">The content already stored in the message.</param>
+    /// <param name="notifyInSeconds">The delay used to compute the new schedule.</param>
+    /// <returns>The updated message content.</returns>
     private static RequestReviewNotificationMessage UpdateValue(
         Guid reviewerId,
         Guid recipientId,
         Guid? resourceId,
         Guid? packageId,
-        bool isApproved,
+        RequestStatusV2 requestStatus,
         OutboxMessage msg,
         RequestReviewNotificationMessage data,
         int notifyInSeconds
@@ -151,7 +183,7 @@ public static class RequestReviewedNotification
         if (data is null)
         {
             Activity.Current?.AddTag(nameof(RequestReviewedNotification), $"Current outbox message {nameof(RequestReviewNotificationMessage)} is null? Creating new object.");
-            return AddValue(reviewerId, recipientId, resourceId, packageId, isApproved, msg, notifyInSeconds);
+            return AddValue(reviewerId, recipientId, resourceId, packageId, requestStatus, msg, notifyInSeconds);
         }
 
         data.Updated++;
@@ -166,12 +198,14 @@ public static class RequestReviewedNotification
                 list.Add(new()
                 {
                     Ref = resourceId.Value,
-                    IsApproved = isApproved
+                    RequestStatus = requestStatus,
+                    IsApproved = IsApproved(requestStatus),
                 });
             }
             else
             {
-                existing.IsApproved = isApproved;
+                existing.RequestStatus = requestStatus;
+                existing.IsApproved = IsApproved(requestStatus);
             }
 
             data.Resources = list;
@@ -187,12 +221,14 @@ public static class RequestReviewedNotification
                 list.Add(new()
                 {
                     Ref = packageId.Value,
-                    IsApproved = isApproved
+                    RequestStatus = requestStatus,
+                    IsApproved = IsApproved(requestStatus),
                 });
             }
             else
             {
-                existing.IsApproved = isApproved;
+                existing.RequestStatus = requestStatus;
+                existing.IsApproved = IsApproved(requestStatus);
             }
 
             data.Packages = list;
@@ -207,4 +243,11 @@ public static class RequestReviewedNotification
 
         return data;
     }
+
+    /// <summary>
+    /// Maps a review outcome to the legacy <c>IsApproved</c> flag, which is kept so that
+    /// messages written before <c>RequestStatus</c> existed can still be read.
+    /// </summary>
+    private static bool IsApproved(RequestStatusV2 requestStatus)
+        => requestStatus is RequestStatusV2.Approved or RequestStatusV2.PartialApprove;
 }

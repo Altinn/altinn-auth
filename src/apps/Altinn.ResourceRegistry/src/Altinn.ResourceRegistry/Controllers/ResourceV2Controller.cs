@@ -7,7 +7,7 @@ using Altinn.ResourceRegistry.Core.Services.Interfaces;
 using Altinn.ResourceRegistry.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using static Altinn.ResourceRegistry.Core.Constants.AltinnXacmlConstants;
+using static Altinn.Authorization.Xacml.Constants.AltinnXacmlConstants;
 
 namespace Altinn.ResourceRegistry.Controllers
 {

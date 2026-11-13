@@ -8,7 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using ConnectionOptions = Altinn.AccessMgmt.Core.Services.ConnectionOptions;
-using ValidationErrors = Altinn.AccessMgmt.Core.Utils.Models.ValidationErrors;
+using ValidationErrors = Altinn.AccessManagement.Core.Errors.ValidationErrors;
 
 namespace Altinn.AccessManagement.Api.Internal.Tests.Controllers;
 
@@ -28,7 +28,7 @@ public class InternalConnectionsControllerUnitTest
 
     private static ValidationProblemInstance MakeValidationProblem() =>
         ValidationComposer.Validate(() =>
-            (ref ValidationErrorBuilder errors) =>
+            (ref ValidationProblemBuilder errors) =>
                 errors.Add(ValidationErrors.InvalidPartyUrn, "QUERY/test"));
 
     #region GetConnections

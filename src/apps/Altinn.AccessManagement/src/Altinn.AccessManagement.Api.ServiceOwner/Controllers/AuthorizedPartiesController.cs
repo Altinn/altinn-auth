@@ -145,6 +145,11 @@ public class AuthorizedPartiesController(
             ModelState.AddModelError("Argument exception", ex.Message);
             return new ObjectResult(ProblemDetailsFactory.CreateValidationProblemDetails(HttpContext, ModelState));
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // The caller has gone away. That is not a server error, so it must not reach the catch-all below.
+            return StatusCode(StatusCodes.Status499ClientClosedRequest);
+        }
         catch (Exception ex)
         {
             logger.LogError(500, ex, "Unexpected internal exception occurred during ServiceOwnerGetAuthorizedParties");

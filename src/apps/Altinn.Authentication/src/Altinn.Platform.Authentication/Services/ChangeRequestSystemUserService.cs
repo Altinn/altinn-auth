@@ -345,6 +345,18 @@ public class ChangeRequestSystemUserService(
 
         Guid partyUuid = party.PartyUuid.Value;
 
+        // The required rights were validated when the vendor created the change request, but the system or the
+        // resources can have changed since. Validate them again, as approval of a system user request does, so a
+        // resource that has turned non-delegable is reported as such instead of failing the delegation check below.
+        if (systemUserChangeRequest.RequiredRights is { Count: > 0 })
+        {
+            Result<bool> validatedRequiredRights = await systemUserService.ValidateRights(systemUserChangeRequest.RequiredRights, regSystem, cancellationToken);
+            if (validatedRequiredRights.IsProblem)
+            {
+                return validatedRequiredRights.Problem;
+            }
+        }
+
         Result<List<AccessPackage>> verifiedRequiredAccessPackages = await VerifyAccessPackages(systemUserChangeRequest.RequiredAccessPackages, partyUuid, toBeChanged, true, cancellationToken);
         if (verifiedRequiredAccessPackages.IsProblem)
         {
@@ -586,6 +598,12 @@ public class ChangeRequestSystemUserService(
     /// </summary>
     private async Task<Result<bool>> ValidateRequiredRightsAndAccessPackages(ChangeRequestResponse validateSet, RegisteredSystemResponse systemInfo, CancellationToken cancellationToken)
     {
+        // Unwanted Rights are not matched against the System, but must have the same shape
+        if (AuthenticationHelper.HasMalformedRight(validateSet.UnwantedRights))
+        {
+            return Problem.Rights_MustHaveOneResource;
+        }
+
         if (validateSet.RequiredRights is { Count: > 0 })
         {
             Result<bool> valRights = await systemUserService.ValidateRights(validateSet.RequiredRights, systemInfo, cancellationToken);

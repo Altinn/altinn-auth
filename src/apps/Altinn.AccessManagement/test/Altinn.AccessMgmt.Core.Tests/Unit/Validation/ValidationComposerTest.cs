@@ -1,4 +1,4 @@
-﻿using Altinn.AccessMgmt.Core.Utils.Models;
+﻿using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessMgmt.Core.Validation;
 using Altinn.Authorization.ProblemDetails;
 
@@ -11,7 +11,7 @@ public class ValidationComposerTest
     private static RuleExpression Pass() => () => null;
 
     private static RuleExpression Fail() => () =>
-        (ref ValidationErrorBuilder errors) =>
+        (ref ValidationProblemBuilder errors) =>
             errors.Add(ValidationErrors.InvalidPartyUrn, "QUERY/test");
 
     // ── ValidationComposer.Validate ──────────────────────────────────────────
