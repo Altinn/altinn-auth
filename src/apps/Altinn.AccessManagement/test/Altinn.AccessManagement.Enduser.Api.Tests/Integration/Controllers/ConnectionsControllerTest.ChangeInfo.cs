@@ -253,9 +253,6 @@ public partial class ConnectionsControllerTest
             Assert.NotNull(lastModifiedBy);
             Assert.Equal(Performer, lastModifiedBy.Id);
             Assert.Equal("Siri Slemdal", lastModifiedBy.Name);
-            Assert.Equal(50960004, lastModifiedBy.PartyId);
-            Assert.Equal(50960004, lastModifiedBy.UserId);
-            Assert.Equal("sirislemdal", lastModifiedBy.Username);
             Assert.False(string.IsNullOrEmpty(lastModifiedBy.Type));
             AssertNoPersonalData(body);
         }
@@ -264,6 +261,7 @@ public partial class ConnectionsControllerTest
         {
             Assert.DoesNotContain(PerformerPersonIdentifier, body);
             Assert.DoesNotContain(PerformerDateOfBirth.ToString("yyyy-MM-dd"), body);
+            Assert.DoesNotContain("sirislemdal", body);
         }
 
         /// <summary>

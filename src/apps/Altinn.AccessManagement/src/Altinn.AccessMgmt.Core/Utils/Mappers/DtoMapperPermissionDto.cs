@@ -88,9 +88,9 @@ public partial class DtoMapper : IDtoMapper
     }
 
     /// <summary>
-    /// Converts the entity that made a change. Fills only id, name, type, variant, party id, user id, username and,
-    /// for organizations, the organization identifier. <see cref="AuditEntityDto"/> has no fields for person
-    /// identifiers or dates of birth.
+    /// Converts the entity that made a change. Fills only id, name, type and variant.
+    /// <see cref="AuditEntityDto"/> has no fields for identifiers such as organization or person numbers,
+    /// party ids, user ids, usernames or dates of birth.
     /// </summary>
     public static AuditEntityDto ConvertAuditEntity(Entity entity)
     {
@@ -108,10 +108,6 @@ public partial class DtoMapper : IDtoMapper
             Name = entity.Name,
             Type = type?.Entity.Name,
             Variant = variant?.Entity.Name,
-            PartyId = entity.PartyId,
-            UserId = entity.UserId,
-            Username = entity.Username,
-            OrganizationIdentifier = entity.TypeId == EntityTypeConstants.Organization.Id ? entity.OrganizationIdentifier : null,
         };
     }
 

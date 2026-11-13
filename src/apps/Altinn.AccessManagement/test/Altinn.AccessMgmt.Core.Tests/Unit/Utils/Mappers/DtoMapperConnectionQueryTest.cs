@@ -1001,7 +1001,7 @@ public class DtoMapperConnectionQueryTest
     }
 
     [Fact]
-    public void ConvertAuditEntity_Person_IncludesAltinnIdsButNoOrganizationIdentifier()
+    public void ConvertAuditEntity_Person_FillsIdNameTypeAndVariant()
     {
         var person = MakePerson();
 
@@ -1010,23 +1010,19 @@ public class DtoMapperConnectionQueryTest
         dto.Id.Should().Be(person.Id);
         dto.Name.Should().Be(person.Name);
         dto.Type.Should().NotBeNullOrEmpty();
-        dto.PartyId.Should().Be(50001234);
-        dto.UserId.Should().Be(20001234);
-        dto.Username.Should().Be("sirislemdal");
-        dto.OrganizationIdentifier.Should().BeNull();
     }
 
     [Fact]
-    public void AuditEntityDto_HasNoFieldsForPersonalIdentifiers()
+    public void AuditEntityDto_HasOnlyIdNameTypeAndVariant()
     {
-        // The contract itself must not be able to carry these, not just leave them empty.
-        var properties = typeof(global::Altinn.Authorization.Api.Contracts.AccessManagement.AuditEntityDto).GetProperties().Select(p => p.Name).ToList();
+        // The contract itself must not be able to carry identifiers, not just leave them empty.
+        var properties = typeof(global::Altinn.Authorization.Api.Contracts.AccessManagement.AuditEntityDto).GetProperties().Select(p => p.Name);
 
-        properties.Should().NotContain(["PersonIdentifier", "DateOfBirth", "DateOfDeath", "Parent", "Children"]);
+        properties.Should().BeEquivalentTo(["Id", "Name", "Type", "Variant"]);
     }
 
     [Fact]
-    public void ConvertToPermission_PersonPerformer_SerializesWithoutPersonIdentifierOrDateOfBirth()
+    public void ConvertToPermission_PersonPerformer_SerializesWithoutIdentifiers()
     {
         var person = MakePerson();
         var record = MakeRecord(MakeEntity("From"), MakeEntity("To"), MakeRole("rettighetshaver"));
@@ -1035,16 +1031,12 @@ public class DtoMapperConnectionQueryTest
         var json = System.Text.Json.JsonSerializer.Serialize(permission.AuditInfo);
 
         permission.AuditInfo!.LastModifiedBy!.Id.Should().Be(person.Id);
-        json.Should().NotContain(person.PersonIdentifier).And.NotContain("1970-01-01");
-    }
-
-    [Fact]
-    public void ConvertAuditEntity_Organization_IncludesOrganizationIdentifier()
-    {
-        var org = MakeEntity("Org");
-        org.OrganizationIdentifier = "910000000";
-
-        DtoMapper.ConvertAuditEntity(org).OrganizationIdentifier.Should().Be("910000000");
+        json.Should().NotContain(person.PersonIdentifier)
+            .And.NotContain("1970-01-01")
+            .And.NotContain("50001234")
+            .And.NotContain("20001234")
+            .And.NotContain("sirislemdal")
+            .And.NotContain("should-not-leak");
     }
 
     [Fact]

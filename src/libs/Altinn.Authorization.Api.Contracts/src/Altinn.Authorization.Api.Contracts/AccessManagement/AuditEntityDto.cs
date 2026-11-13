@@ -2,7 +2,8 @@
 
 /// <summary>
 /// The party that made a change, as shown in <see cref="AuditInfoDto"/>.
-/// Deliberately has no fields for personal identifiers or dates of birth, so they cannot be exposed.
+/// Deliberately holds only what is needed to show who it was: no identifiers such as
+/// organization or person numbers, party ids, user ids, usernames or dates of birth.
 /// </summary>
 public class AuditEntityDto
 {
@@ -25,24 +26,4 @@ public class AuditEntityDto
     /// Entity variant
     /// </summary>
     public string Variant { get; set; }
-
-    /// <summary>
-    /// Altinn party id
-    /// </summary>
-    public int? PartyId { get; set; }
-
-    /// <summary>
-    /// Altinn user id
-    /// </summary>
-    public int? UserId { get; set; }
-
-    /// <summary>
-    /// Altinn username
-    /// </summary>
-    public string? Username { get; set; }
-
-    /// <summary>
-    /// Organization number. Only set for organizations.
-    /// </summary>
-    public string? OrganizationIdentifier { get; set; }
 }
