@@ -28,6 +28,8 @@ namespace Altinn.AccessMgmt.Core.Services;
 /// <inheritdoc/>
 public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery) : IAssignmentService
 {
+    private const string AssignmentUniqueIndex = "ix_assignment_fromid_toid_roleid";
+
     /// <inheritdoc/>
     public async Task<List<AssignmentPackageDto>> ImportAssignmentPackages(Guid fromId, Guid toId, List<string> packageUrns, AuditValues values = null, CancellationToken cancellationToken = default)
     {
@@ -54,7 +56,21 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
                 Audit_ValidFrom = values?.ValidFrom ?? DateTimeOffset.UtcNow,
             };
             await db.Assignments.AddAsync(assignment, cancellationToken);
-            await db.SaveChangesAsync(values, cancellationToken);
+            try
+            {
+                await db.SaveChangesAsync(values, cancellationToken);
+            }
+            catch (DbUpdateException ex) when (ex.IsUniqueViolation(AssignmentUniqueIndex))
+            {
+                db.Entry(assignment).State = EntityState.Detached;
+                assignment = await db.Assignments
+                    .AsNoTracking()
+                    .Where(a => a.FromId == fromId)
+                    .Where(a => a.ToId == toId)
+                    .Where(a => a.RoleId == RoleConstants.Rightholder)
+                    .FirstOrDefaultAsync(cancellationToken)
+                    ?? throw new InvalidOperationException("Assignment conflict detected, but the existing assignment could not be found.", ex);
+            }
         }
 
         var existingAssignmentPackages = await db.AssignmentPackages
@@ -746,13 +762,23 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
         await db.Assignments.AddAsync(assignment, cancellationToken);
         int result;
 
-        if (audit == null)
+        try
         {
-            result = await db.SaveChangesAsync(cancellationToken);
+            if (audit == null)
+            {
+                result = await db.SaveChangesAsync(cancellationToken);
+            }
+            else
+            {
+                result = await db.SaveChangesAsync(audit, cancellationToken);
+            }
         }
-        else
+        catch (DbUpdateException ex) when (ex.IsUniqueViolation(AssignmentUniqueIndex))
         {
-            result = await db.SaveChangesAsync(audit, cancellationToken);
+            // A concurrent request created the same assignment between the lookup and the insert; use that one.
+            db.Entry(assignment).State = EntityState.Detached;
+            return await GetAssignment(fromEntityId, toEntityId, roleId, cancellationToken: cancellationToken)
+                ?? throw new InvalidOperationException("Assignment conflict detected, but the existing assignment could not be found.", ex);
         }
 
         if (result == 0)

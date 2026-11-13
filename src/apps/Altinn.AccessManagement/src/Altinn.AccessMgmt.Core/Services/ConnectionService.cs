@@ -651,76 +651,81 @@ public partial class ConnectionService(
             return problem;
         }
 
-        // Look for existing direct rightholder assignment
-        var assignment = await dbContext.Assignments
-            .AsNoTracking()
-            .Where(a => a.FromId == fromId)
-            .Where(a => a.ToId == toId)
-            .Where(a => a.RoleId == RoleConstants.Rightholder.Id)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (assignment == null)
+        // A concurrent request can create the same assignment or assignment package between the lookup and the save.
+        // On conflict the attempt runs again and finds the rows the other request committed.
+        return await dbContext.RetryOnConcurrentWriteConflict(async () =>
         {
-            assignment = new Assignment()
-            {
-                FromId = fromId,
-                ToId = toId,
-                RoleId = RoleConstants.Rightholder
-            };
-
-            await dbContext.Assignments.AddAsync(assignment, cancellationToken);
-        }
-        else
-        {
-            var existingAssignmentPackage = await dbContext.AssignmentPackages
+            // Look for existing direct rightholder assignment
+            var assignment = await dbContext.Assignments
                 .AsNoTracking()
-                .Where(a => a.AssignmentId == assignment.Id)
-                .Where(a => a.PackageId == packageId)
+                .Where(a => a.FromId == fromId)
+                .Where(a => a.ToId == toId)
+                .Where(a => a.RoleId == RoleConstants.Rightholder.Id)
                 .FirstOrDefaultAsync(cancellationToken);
 
-            if (existingAssignmentPackage is { })
+            if (assignment == null)
             {
-                return DtoMapper.Convert(existingAssignmentPackage);
+                assignment = new Assignment()
+                {
+                    FromId = fromId,
+                    ToId = toId,
+                    RoleId = RoleConstants.Rightholder
+                };
+
+                await dbContext.Assignments.AddAsync(assignment, cancellationToken);
             }
-        }
+            else
+            {
+                var existingAssignmentPackage = await dbContext.AssignmentPackages
+                    .AsNoTracking()
+                    .Where(a => a.AssignmentId == assignment.Id)
+                    .Where(a => a.PackageId == packageId)
+                    .FirstOrDefaultAsync(cancellationToken);
 
-        var newAssignmentPackage = new AssignmentPackage()
-        {
-            AssignmentId = assignment.Id,
-            PackageId = packageId,
-        };
+                if (existingAssignmentPackage is { })
+                {
+                    return DtoMapper.Convert(existingAssignmentPackage);
+                }
+            }
 
-        await dbContext.AssignmentPackages.AddAsync(newAssignmentPackage, cancellationToken);
+            var newAssignmentPackage = new AssignmentPackage()
+            {
+                AssignmentId = assignment.Id,
+                PackageId = packageId,
+            };
 
-        // System users cannot receive notifications.
-        if (to.TypeId == EntityTypeConstants.SystemUser)
-        {
-            await dbContext.SaveChangesAsync(cancellationToken);
-            return DtoMapper.Convert(newAssignmentPackage);
-        }
+            await dbContext.AssignmentPackages.AddAsync(newAssignmentPackage, cancellationToken);
 
-        await AccessAddedNotification.Upsert(
-            dbContext,
-            fromId,
-            toId,
-            null,
-            packageId,
-            appsettings?.Value?.Notifications?.AccessAddedNotifyInSeconds ?? AccessAddedNotification.DefaultNotifyInSeconds,
-            cancellationToken
-        );
+            // System users cannot receive notifications.
+            if (to.TypeId == EntityTypeConstants.SystemUser)
+            {
+                await dbContext.SaveChangesAsync(cancellationToken);
+                return DtoMapper.Convert(newAssignmentPackage);
+            }
 
-        await dbContext.SaveChangesWithOutboxRetry(
-            () => AccessAddedNotification.Upsert(
+            await AccessAddedNotification.Upsert(
                 dbContext,
                 fromId,
                 toId,
                 null,
                 packageId,
                 appsettings?.Value?.Notifications?.AccessAddedNotifyInSeconds ?? AccessAddedNotification.DefaultNotifyInSeconds,
-                cancellationToken),
-            cancellationToken);
+                cancellationToken
+            );
 
-        return DtoMapper.Convert(newAssignmentPackage);
+            await dbContext.SaveChangesWithOutboxRetry(
+                () => AccessAddedNotification.Upsert(
+                    dbContext,
+                    fromId,
+                    toId,
+                    null,
+                    packageId,
+                    appsettings?.Value?.Notifications?.AccessAddedNotifyInSeconds ?? AccessAddedNotification.DefaultNotifyInSeconds,
+                    cancellationToken),
+                cancellationToken);
+
+            return DtoMapper.Convert(newAssignmentPackage);
+        });
     }
 
     public async Task<Result<IEnumerable<AccessPackageDto.AccessPackageDtoCheck>>> CheckPackage(Guid party, IEnumerable<Guid> packageIds = null, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
