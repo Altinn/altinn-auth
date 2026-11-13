@@ -2,15 +2,15 @@
 using Altinn.AccessManagement.Core.Configuration;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services;
+using Altinn.AccessManagement.Tests.Utils;
 using Altinn.Authorization.ABAC.Xacml;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Moq;
 
 namespace Altinn.AccessManagement.Tests.Unit.Services;
 
 /// <summary>
-/// Unit tests for the memory cache behaviour of <see cref="PolicyRetrievalPoint"/>.
+/// Unit tests for the cache behaviour of <see cref="PolicyRetrievalPoint"/>.
 /// </summary>
 [UnitTest]
 public class PolicyRetrievalPointTest
@@ -28,7 +28,7 @@ public class PolicyRetrievalPointTest
 
         _sut = new PolicyRetrievalPoint(
             _policyFactory.Object,
-            new MemoryCache(new MemoryCacheOptions()),
+            HybridCacheUtil.Create(),
             Options.Create(new CacheConfig { PolicyCacheTimeout = 1 }));
     }
 

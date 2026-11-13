@@ -38,6 +38,7 @@ public static class ResolverServiceCollection
     public static void DefaultServiceCollection(IServiceCollection services)
     {
         services.AddMemoryCache();
+        services.AddHybridCache();
         services.AddTransient<IDelegationRequests, DelegationRequestService>();
         services.AddTransient<IAttributeResolver, UrnResolver>();
 
