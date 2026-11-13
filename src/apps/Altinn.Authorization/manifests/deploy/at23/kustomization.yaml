@@ -4,7 +4,7 @@ namespace: product-authorization
 labels:
   - pairs:
       app.kubernetes.io/part-of: authorization
-    includeSelectors: true
+    includeSelectors: false
     includeTemplates: true
 resources:
   - ../base
