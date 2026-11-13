@@ -64,6 +64,7 @@ namespace Altinn.Platform.Authorization.Telemetry
         private readonly Counter<long> _pdpDecisions;
         private readonly Counter<long> _auditLogEvents;
         private readonly Counter<long> _auditLogTrackerCapacityRotations;
+        private readonly Counter<long> _auditLogEventsSuppressed;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="DecisionTelemetry"/> class. Registered as a
@@ -80,7 +81,11 @@ namespace Altinn.Platform.Authorization.Telemetry
             _auditLogEvents = meter.CreateCounter<long>(
                 "altinn.pdp.auditlog.events",
                 unit: "1",
-                description: "Number of authorization events queued for the audit log, by whether they repeat an event already seen");
+                description: "Number of authorization events produced for the audit log, by whether they repeat an event already seen");
+            _auditLogEventsSuppressed = meter.CreateCounter<long>(
+                "altinn.pdp.auditlog.suppressed",
+                unit: "1",
+                description: "Number of duplicate authorization events dropped instead of queued for the audit log");
             _auditLogTrackerCapacityRotations = meter.CreateCounter<long>(
                 "altinn.pdp.auditlog.tracker.capacity_rotations",
                 unit: "1",
@@ -118,7 +123,7 @@ namespace Altinn.Platform.Authorization.Telemetry
         }
 
         /// <summary>
-        /// Records an authorization event queued for the audit log, and whether it repeats one already
+        /// Records an authorization event produced for the audit log, and whether it repeats one already
         /// seen. The share of duplicates is what deduplication before the queue would save.
         /// </summary>
         /// <param name="duplicateKind">How the event was classified by the duplicate tracker.</param>
@@ -128,26 +133,32 @@ namespace Altinn.Platform.Authorization.Telemetry
         /// </remarks>
         public void RecordAuditLogEvent(AuthorizationEventDuplicateKind duplicateKind)
         {
-            string duplicate = duplicateKind switch
-            {
-                AuthorizationEventDuplicateKind.None => "none",
-                AuthorizationEventDuplicateKind.SameTrace => "trace",
-                AuthorizationEventDuplicateKind.Window => "window",
-                _ => UnknownDimensionValue,
-            };
-
             TagList tags = new()
             {
-                { AuditLogDuplicateTag, duplicate },
+                { AuditLogDuplicateTag, DuplicateTagValue(duplicateKind) },
             };
 
             _auditLogEvents.Add(1, tags);
         }
 
         /// <summary>
-        /// Records an authorization event queued for the audit log that could not be classified, because
+        /// Records a duplicate authorization event that was dropped instead of queued for the audit log.
+        /// </summary>
+        /// <param name="duplicateKind">How the event was classified, <c>trace</c> or <c>window</c>.</param>
+        public void RecordAuditLogEventSuppressed(AuthorizationEventDuplicateKind duplicateKind)
+        {
+            TagList tags = new()
+            {
+                { AuditLogDuplicateTag, DuplicateTagValue(duplicateKind) },
+            };
+
+            _auditLogEventsSuppressed.Add(1, tags);
+        }
+
+        /// <summary>
+        /// Records an authorization event produced for the audit log that could not be classified, because
         /// measuring it failed. Counted in the same instrument, so that its total stays the number of
-        /// events queued.
+        /// events produced.
         /// </summary>
         public void RecordAuditLogEventMeasurementFailure()
         {
@@ -165,5 +176,13 @@ namespace Altinn.Platform.Authorization.Telemetry
         /// is shorter than configured, and duplicates are undercounted.
         /// </summary>
         public void RecordAuditLogTrackerCapacityRotation() => _auditLogTrackerCapacityRotations.Add(1);
+
+        private static string DuplicateTagValue(AuthorizationEventDuplicateKind duplicateKind) => duplicateKind switch
+        {
+            AuthorizationEventDuplicateKind.None => "none",
+            AuthorizationEventDuplicateKind.SameTrace => "trace",
+            AuthorizationEventDuplicateKind.Window => "window",
+            _ => UnknownDimensionValue,
+        };
     }
 }

@@ -10,3 +10,4 @@ Numbering starts at `0001` in this folder. ADR-0001 and ADR-0002 were recorded a
 | --- | --- | --- |
 | [0001](0001-access-management-as-pip.md) | Access Management is the policy information point for delegations, roles and access packages | Accepted |
 | [0002](0002-audit-events-through-a-queue.md) | Decisions are audit-logged through a queue to a separate, write-only store | Accepted |
+| [0003](0003-suppress-duplicate-audit-events.md) | Duplicate authorization events may be dropped in the PDP within a window | Proposed |
