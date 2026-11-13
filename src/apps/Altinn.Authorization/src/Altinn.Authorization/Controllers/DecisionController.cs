@@ -29,7 +29,6 @@ using Altinn.Platform.Storage.Interface.Models;
 using Azure.Core;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.FeatureManagement;
 
 namespace Altinn.Platform.Authorization.Controllers
@@ -46,7 +45,6 @@ namespace Altinn.Platform.Authorization.Controllers
         private readonly IContextHandler _contextHandler;
         private readonly IDelegationContextHandler _delegationContextHandler;
         private readonly ILogger _logger;
-        private readonly IMemoryCache _memoryCache;
         private readonly IEventLog _eventLog;
         private readonly IFeatureManager _featureManager;
         private readonly IAccessManagementWrapper _accessManagement;
@@ -80,7 +78,6 @@ namespace Altinn.Platform.Authorization.Controllers
         /// <param name="delegationContextHandler">The delegation context handler</param>
         /// <param name="policyRetrievalPoint">The policy Retrieval point</param>
         /// <param name="logger">the logger</param>
-        /// <param name="memoryCache">memory cache</param>
         /// <param name="eventLog">the authorization event logger</param>
         /// <param name="featureManager">the feature manager</param>
         /// <param name="decisionTelemetry">PDP decision metric recorder</param>
@@ -93,7 +90,6 @@ namespace Altinn.Platform.Authorization.Controllers
             IDelegationContextHandler delegationContextHandler,
             IPolicyRetrievalPoint policyRetrievalPoint,
             ILogger<DecisionController> logger,
-            IMemoryCache memoryCache,
             IEventLog eventLog,
             IFeatureManager featureManager,
             DecisionTelemetry decisionTelemetry)
@@ -103,7 +99,6 @@ namespace Altinn.Platform.Authorization.Controllers
             _contextHandler = contextHandler;
             _delegationContextHandler = delegationContextHandler;
             _logger = logger;
-            _memoryCache = memoryCache;
             _eventLog = eventLog;
             _featureManager = featureManager;
             _accessManagement = accessManagement;
@@ -653,9 +648,6 @@ namespace Altinn.Platform.Authorization.Controllers
             return result;
         }
 
-        private static string CreateCacheKey(params string[] cacheKeys) =>
-            string.Join("-", cacheKeys.Where(c => c != null && (c != string.Empty || !c.EndsWith(':'))));
-
         private static bool IsTypeApp(XacmlResourceAttributes resourceAttributes) =>
             !string.IsNullOrEmpty(resourceAttributes.OrgValue) && !string.IsNullOrEmpty(resourceAttributes.AppValue);
 
@@ -703,11 +695,11 @@ namespace Altinn.Platform.Authorization.Controllers
                 });
             }
 
-            // Look up delegations from (cached) AccessManagement PIP API
+            // Look up delegations from the AccessManagement PIP API; AccessManagementWrapper caches the answer
             IEnumerable<DelegationChangeDto> delegations = new List<DelegationChangeDto>();
             if (IsTypeApp(resourceAttributes))
             {
-                delegations = await GetAllCachedDelegationChanges(cancellationToken, WithDefaultGetAllDelegationChangesInput(resourceAttributes, decisionRequest, accessRestriction), input => input.Resource = new List<AttributeMatchDto>()
+                delegations = await _accessManagement.GetAllDelegationChanges(cancellationToken, WithDefaultGetAllDelegationChangesInput(resourceAttributes, decisionRequest, accessRestriction), input => input.Resource = new List<AttributeMatchDto>()
                 {
                     new(AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute, resourceAttributes.OrgValue),
                     new(AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute, resourceAttributes.AppValue),
@@ -716,7 +708,7 @@ namespace Altinn.Platform.Authorization.Controllers
 
             if (IsTypeResource(resourceAttributes))
             {
-                delegations = await GetAllCachedDelegationChanges(cancellationToken, WithDefaultGetAllDelegationChangesInput(resourceAttributes, decisionRequest, accessRestriction), input => input.Resource = new List<AttributeMatchDto>()
+                delegations = await _accessManagement.GetAllDelegationChanges(cancellationToken, WithDefaultGetAllDelegationChangesInput(resourceAttributes, decisionRequest, accessRestriction), input => input.Resource = new List<AttributeMatchDto>()
                 {
                     new(AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute, resourceAttributes.ResourceRegistryId)
                 });
@@ -755,35 +747,6 @@ namespace Altinn.Platform.Authorization.Controllers
             await _delegationContextHandler.EnrichRequestSubjectAttributes(subjectContextAttributes, orgAccessPartyIds, orgAccessPartyUuids, isInstanceAccessRequest, cancellationToken);
 
             return await ProcessDelegationResult(decisionRequest, delegations, resourcePolicy, cancellationToken);
-        }
-
-        private async Task<IEnumerable<DelegationChangeDto>> GetAllCachedDelegationChanges(CancellationToken cancellationToken = default, params Action<DelegationChangeInputDto>[] actions)
-        {
-            var delegation = new DelegationChangeInputDto();
-            foreach (var action in actions)
-            {
-                action(delegation);
-            }
-
-            var cacheKey = CreateCacheKey(
-                $"s:{delegation.Subject.Id}:{delegation.Subject.Value}",
-                $"p:{delegation.Party.Value}",
-                $"a:{delegation.Resource.FirstOrDefault(r => r.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute)?.Value}/{delegation.Resource.FirstOrDefault(r => r.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute)?.Value}",
-                $"r:{delegation.Resource.FirstOrDefault(r => r.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute)?.Value}",
-                $"ac:{delegation.AccessRestriction}",
-                $"vp:{delegation.ViaPartyOrganizationNumber}");
-
-            if (!_memoryCache.TryGetValue(cacheKey, out IEnumerable<DelegationChangeDto> result))
-            {
-                result = await _accessManagement.GetAllDelegationChanges(cancellationToken, actions);
-                var cacheEntryOptions = new MemoryCacheEntryOptions()
-                    .SetPriority(CacheItemPriority.High)
-                    .SetAbsoluteExpiration(new TimeSpan(0, 0, 5, 0));
-
-                _memoryCache.Set(cacheKey, result, cacheEntryOptions);
-            }
-
-            return result;
         }
 
         private async Task<XacmlContextResponse> ProcessDelegationResult(XacmlContextRequest decisionRequest, IEnumerable<DelegationChangeDto> delegations, XacmlPolicy resourcePolicy, CancellationToken cancellationToken = default)
