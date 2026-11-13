@@ -1,0 +1,42 @@
+name: Sync open issues to project
+
+on:
+  schedule:
+    - cron: "0 5 * * 1-5"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: List the missing issues without adding them
+        type: boolean
+        default: false
+
+jobs:
+  sync:
+    name: Add open issues missing from Team Autorisasjon
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 20
+
+      - uses: pnpm/action-setup@6e7bdbda5fe05107efc88b23b7ed00aa05f84ca0
+        with:
+          version: 9
+          run_install: |
+            - cwd: .github/scripts
+              args: [--frozen-lockfile]
+            - args: [--global, tsx]
+
+      - name: Add missing issues to project
+        env:
+          # GITHUB_TOKEN cannot read or write organisation projects
+          GITHUB_TOKEN: ${{ secrets.ASSIGN_PROJECT_TOKEN }}
+          GITHUB_PROJECT_NUMBER: 196
+          DRY_RUN: ${{ inputs.dry_run || 'false' }}
+        run: tsx ./.github/scripts/sync-project.mts
