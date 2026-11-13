@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.0.1](https://github.com/Altinn/altinn-auth/compare/Altinn.Authorization.PEP-v5.0.0...Altinn.Authorization.PEP-v5.0.1) (2026-11-13)
+
+
+### Bug Fixes
+
+* treat system users as authentication level 3 without obligation ([#4936](https://github.com/Altinn/altinn-auth/issues/4936)) ([8d3cace](https://github.com/Altinn/altinn-auth/commit/8d3cace34427f2abd21848a9c772c253fad15be3)), closes [#4720](https://github.com/Altinn/altinn-auth/issues/4720) [#3281](https://github.com/Altinn/altinn-auth/issues/3281)
+
 ## [5.0.0](https://github.com/Altinn/altinn-auth/compare/Altinn.Authorization.PEP-v4.2.3...Altinn.Authorization.PEP-v5.0.0) (2026-10-13)
 
 
