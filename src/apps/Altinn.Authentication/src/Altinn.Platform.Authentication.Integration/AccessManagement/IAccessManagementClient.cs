@@ -77,26 +77,11 @@ public interface IAccessManagementClient
     /// <param name="packages">Access package URNs</param>
     /// <param name="matchAllPackages">
     /// When <see langword="true"/> (the default), only clients holding ALL of the requested
-    /// <paramref name="packages"/> are returned (AND), via the v2 enduser match=all parameter. This only
-    /// takes effect on v2; the v1 enduser endpoint always filters with OR. Callers that need AND on v1
-    /// use <see cref="GetClientsForFacilitatorFromInternalApi"/> instead.
+    /// <paramref name="packages"/> are returned (AND), via the enduser match=all parameter.
+    /// Otherwise clients holding ANY of them are returned (OR).
     /// </param>
     /// <returns>List of clients FROM which the VIA provider can delegate packages TO an entity</returns>
     Task<Result<List<ClientDelegationDto>>> GetClientsForFacilitator(Guid provider, List<string> packages, bool matchAllPackages = true, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Get clients for a facilitator via the Access Management internal API, which requires the client to
-    /// hold ALL requested packages (AND).
-    /// TEMPORARY: used as the AND-filtering fallback for the client list while the v2 feature flag is off
-    /// (the v1 enduser API only filters with OR). Once v2 is enabled everywhere - where AND is available
-    /// via the match=all parameter - this method and the v1 fallback in
-    /// <see cref="GetClientsForFacilitator"/> can be removed.
-    /// </summary>
-    /// <param name="provider">The partyUuid of the VIA organisation (facilitator)</param>
-    /// <param name="packages">Access package identifiers to filter by (AND)</param>
-    /// <param name="cancellationToken">The cancellation token</param>
-    /// <returns>List of clients that hold ALL of the requested packages</returns>
-    Task<Result<List<ClientDelegationDto>>> GetClientsForFacilitatorFromInternalApi(Guid provider, List<string> packages, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets all packages that are delegated to the agent system user, via the provider from the client 
