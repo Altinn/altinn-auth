@@ -78,8 +78,8 @@ function clearScenarioVars() {
 
 // Brings the pair back to a known state, with the approver's token: rejects the pending
 // requests from the requester for the resource, so creating a request starts a new one
-// instead of returning an old one with other right keys, and removes the resource the
-// approver may have delegated to the requester in an earlier run.
+// instead of failing with 409 because one is pending with other right keys, and removes the
+// resource the approver may have delegated to the requester in an earlier run.
 async function resetPair(axios, td, pendingRequests) {
 	const baseUrl = bru.getEnvVar("baseUrl");
 	const headers = { Authorization: `Bearer ${bru.getVar("bearerToken")}` };

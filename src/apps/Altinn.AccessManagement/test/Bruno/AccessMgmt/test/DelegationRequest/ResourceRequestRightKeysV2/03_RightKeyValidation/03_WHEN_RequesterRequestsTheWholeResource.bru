@@ -32,6 +32,9 @@ docs {
 	as right keys from the resource policy. Leave it out to ask for the whole resource. Each key
 	must exist in the policy and be delegable, otherwise 400 with AM.VLD-00054 (not in the
 	policy) or AM.VLD-00055 (not delegable), pointing at `/requestedRightKeys/<index>`.
+	Unknown fields in the body, such as `rightKeys`, give 400. While a request between the same
+	parties for the resource is pending, sending the same keys returns it; other keys, or the
+	whole resource instead of keys or the other way round, give 409 with AM-00053.
 
 	Returns 200 with the v2 request: `status` is a plain string that clients must accept
 	unknown values of, and the requested keys are in `resource.requestedRightKeys`.
