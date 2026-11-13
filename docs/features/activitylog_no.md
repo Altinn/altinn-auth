@@ -22,7 +22,7 @@ Migreringen oppretter alt dette på forhånd, inkludert månedlige partisjoner 2
 
 ### Hendelsestypekatalogen
 
-35 hendelsestyper (kombinasjoner av type/subtype/hendelse/status) med navn og beskrivelse på bokmål, nynorsk og engelsk, definert i kodekonstanter og seedet inn i en hjelpetabell (`dbo.activitytype`). Loggen beholder sine fire rå dimensjonskolonner; katalogen er et rent oppslagslag — typedefinisjoner kan endres uten å røre en tabell med ~86 millioner rader.
+37 hendelsestyper (kombinasjoner av type/subtype/hendelse/status) med navn, beskrivelse og en setningsmal på bokmål, nynorsk og engelsk, definert i kodekonstanter og seedet inn i en hjelpetabell (`dbo.activitytype`). Loggen beholder sine fire rå dimensjonskolonner; katalogen er et rent oppslagslag — typedefinisjoner kan endres uten å røre en tabell med ~86 millioner rader.
 
 ### Historikk og utrulling
 
@@ -83,7 +83,9 @@ Returnerer områdets logghendelser for partyen, sortert nyeste først (`when` sy
 
 **Paging:** sidebasert via `pageSize` (default 100, begrenset til 1–1000) og `pageNo` (0-basert). Responsen er den standard paginerte konvolutten: elementene pluss `links.next`, en absolutt URL som bare finnes når det er flere hendelser. Verten er det konfigurerte plattform-vertsnavnet (`https://platform.{GeneralSettings:Hostname}`), samme konvensjon som de andre endepunktene som bygger lenker, fulgt av requestens sti og query med `pageNo` inkrementert. Requestens eget skjema og vertsnavn brukes ikke, siden de bak proxy-kjeden har vist en intern adresse; uten konfigurert vertsnavn, som lokalt, er de fallback.
 
-**Responselementer** (`ActivityLogDto`): hendelsesdimensjonene (`type`, `subtype`, `trigger`, `status`), `when`, aktør og kanal (`byId`/`byName`, `sourceId`/`sourceName`), `operationId`, relasjonen med navnesnapshots (`fromId`/`fromName`/`fromType`, `toId`/`toName`/`toType`, `viaId`/`viaName`/`viaType`, `roleId`/`roleName`, `viaRoleId`/`viaRoleName`), objektet (`packageId`/`packageName`, `resourceId`/`resourceName`, `instanceId`), radidentitet (`itemId`, `parentId`), en `details`-JSON (forrige status, forespørselshandling, proveniens), og `activityTypeId` — katalogoppføringen slått opp med mest-spesifikk-vinner-regelen (eksakt statusmatch, ellers status-null-fallbacken), slik at klienter kan vise katalognavn/-beskrivelse uten å mappe rådimensjonene selv.
+**Responselementer** (`ActivityLogDto`): hendelsesdimensjonene (`type`, `subtype`, `trigger`, `status`), `when`, aktør og kanal (`byId`/`byName`, `sourceId`/`sourceName`), `operationId`, relasjonen med navnesnapshots (`fromId`/`fromName`/`fromType`, `toId`/`toName`/`toType`, `viaId`/`viaName`/`viaType`, `roleId`/`roleName`, `viaRoleId`/`viaRoleName`), objektet (`packageId`/`packageName`, `resourceId`/`resourceName`, `instanceId`), radidentitet (`itemId`, `parentId`), en `details`-JSON (forrige status, forespørselshandling, proveniens), og `activityTypeId` — katalogoppføringen slått opp med mest-spesifikk-vinner-regelen (eksakt statusmatch, ellers status-null-fallbacken), slik at klienter kan vise katalognavn/-beskrivelse uten å mappe rådimensjonene selv — og `text`, hendelsen som én setning på forespurt språk (`Accept-Language`).
+
+**Hendelsestekst:** hver katalogoppføring har en mal som `{to} fikk enkelttjenesten «{resource}» hos {from} tildelt av {by}`, som mapperen fyller fra radens navnesnapshots (`{from}`, `{to}`, `{via}`, `{by}`, `{role}`, `{package}`, `{resource}`) i én omgang. Setningen navngir alle parter i tredjeperson og tiltaler aldri leseren, så samme hendelse leses likt uansett hvilken `direction` den hentes med. Et manglende navn blir et nøytralt ord (`ukjent`, `ukjend`, `unknown`); en hendelse uten katalogoppføring får `text: null`.
 
 ```
 GET /accessmanagement/api/v2/enduser/connections/activitylog?party={party}&direction=from&typeId={guid}&after=2026-01-01T00:00:00Z&pageSize=50

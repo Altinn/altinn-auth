@@ -10,16 +10,16 @@ namespace Altinn.AccessMgmt.Core.Services;
 public class ActivityLogService(ActivityLogQuery activityLogQuery) : IActivityLogService
 {
     /// <inheritdoc />
-    public Task<ActivityLogPage> GetConnectionsActivityLog(Guid party, ActivityLogDirection? direction, ActivityLogQueryFilter filter, int pageSize, int pageNumber, CancellationToken cancellationToken = default)
-        => GetCore(party, direction, filter, ActivityLogSlices.Connections, maskinportenSchema: false, pageSize, pageNumber, cancellationToken);
+    public Task<ActivityLogPage> GetConnectionsActivityLog(Guid party, ActivityLogDirection? direction, ActivityLogQueryFilter filter, int pageSize, int pageNumber, string languageCode = null, CancellationToken cancellationToken = default)
+        => GetCore(party, direction, filter, ActivityLogSlices.Connections, maskinportenSchema: false, pageSize, pageNumber, languageCode, cancellationToken);
 
     /// <inheritdoc />
-    public Task<ActivityLogPage> GetRequestActivityLog(Guid party, ActivityLogDirection? direction, ActivityLogQueryFilter filter, int pageSize, int pageNumber, CancellationToken cancellationToken = default)
-        => GetCore(party, direction, filter, ActivityLogSlices.Request, maskinportenSchema: false, pageSize, pageNumber, cancellationToken);
+    public Task<ActivityLogPage> GetRequestActivityLog(Guid party, ActivityLogDirection? direction, ActivityLogQueryFilter filter, int pageSize, int pageNumber, string languageCode = null, CancellationToken cancellationToken = default)
+        => GetCore(party, direction, filter, ActivityLogSlices.Request, maskinportenSchema: false, pageSize, pageNumber, languageCode, cancellationToken);
 
     /// <inheritdoc />
-    public Task<ActivityLogPage> GetMaskinportenSchemaActivityLog(Guid party, ActivityLogDirection? direction, ActivityLogQueryFilter filter, int pageSize, int pageNumber, CancellationToken cancellationToken = default)
-        => GetCore(party, direction, filter, ActivityLogSlices.Maskinporten, maskinportenSchema: true, pageSize, pageNumber, cancellationToken);
+    public Task<ActivityLogPage> GetMaskinportenSchemaActivityLog(Guid party, ActivityLogDirection? direction, ActivityLogQueryFilter filter, int pageSize, int pageNumber, string languageCode = null, CancellationToken cancellationToken = default)
+        => GetCore(party, direction, filter, ActivityLogSlices.Maskinporten, maskinportenSchema: true, pageSize, pageNumber, languageCode, cancellationToken);
 
     /// <inheritdoc />
     public Task<ActivityLogFilterValuePage> GetConnectionsActivityLogFilterValues(Guid party, ActivityLogDirection? direction, ActivityLogFilterField field, ActivityLogQueryFilter filter, string term, ActivityLogFilterValueOrder orderBy, int pageSize, int pageNumber, string languageCode = null, CancellationToken cancellationToken = default)
@@ -33,7 +33,7 @@ public class ActivityLogService(ActivityLogQuery activityLogQuery) : IActivityLo
     public Task<ActivityLogFilterValuePage> GetMaskinportenSchemaActivityLogFilterValues(Guid party, ActivityLogDirection? direction, ActivityLogFilterField field, ActivityLogQueryFilter filter, string term, ActivityLogFilterValueOrder orderBy, int pageSize, int pageNumber, string languageCode = null, CancellationToken cancellationToken = default)
         => GetFilterValuesCore(party, direction, field, filter, ActivityLogSlices.Maskinporten, maskinportenSchema: true, term, orderBy, pageSize, pageNumber, languageCode, cancellationToken);
 
-    private async Task<ActivityLogPage> GetCore(Guid party, ActivityLogDirection? direction, ActivityLogQueryFilter filter, IReadOnlyList<ActivityLogType> sliceTypes, bool maskinportenSchema, int pageSize, int pageNumber, CancellationToken cancellationToken)
+    private async Task<ActivityLogPage> GetCore(Guid party, ActivityLogDirection? direction, ActivityLogQueryFilter filter, IReadOnlyList<ActivityLogType> sliceTypes, bool maskinportenSchema, int pageSize, int pageNumber, string languageCode, CancellationToken cancellationToken)
     {
         var sliced = Slice(filter ?? new ActivityLogQueryFilter(), sliceTypes, maskinportenSchema);
         if (sliced is null)
@@ -45,7 +45,7 @@ public class ActivityLogService(ActivityLogQuery activityLogQuery) : IActivityLo
 
         var page = await activityLogQuery.GetAsync(anchoredFilter, pageSize, pageNumber, cancellationToken);
 
-        var items = page.Items.Select(DtoMapper.Convert).ToList();
+        var items = page.Items.Select(e => DtoMapper.Convert(e, languageCode)).ToList();
         return new ActivityLogPage(items, page.HasMore);
     }
 

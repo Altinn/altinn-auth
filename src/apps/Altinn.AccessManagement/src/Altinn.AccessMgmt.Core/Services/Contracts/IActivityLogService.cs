@@ -23,8 +23,9 @@ public interface IActivityLogService
     /// <param name="filter">Additional narrowing filters; InvolvedIds and the anchored field are overwritten by <paramref name="party"/>.</param>
     /// <param name="pageSize">Maximum number of entries per page.</param>
     /// <param name="pageNumber">Zero-based page number.</param>
+    /// <param name="languageCode">Three-letter language code ("eng", "nno") for the entry text; bokmål otherwise.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    Task<ActivityLogPage> GetConnectionsActivityLog(Guid party, ActivityLogDirection? direction, ActivityLogQueryFilter filter, int pageSize, int pageNumber, CancellationToken cancellationToken = default);
+    Task<ActivityLogPage> GetConnectionsActivityLog(Guid party, ActivityLogDirection? direction, ActivityLogQueryFilter filter, int pageSize, int pageNumber, string languageCode = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Returns one page of access request events involving the given party, newest first.
@@ -34,8 +35,9 @@ public interface IActivityLogService
     /// <param name="filter">Additional narrowing filters; InvolvedIds and the anchored field are overwritten by <paramref name="party"/>.</param>
     /// <param name="pageSize">Maximum number of entries per page.</param>
     /// <param name="pageNumber">Zero-based page number.</param>
+    /// <param name="languageCode">Three-letter language code ("eng", "nno") for the entry text; bokmål otherwise.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    Task<ActivityLogPage> GetRequestActivityLog(Guid party, ActivityLogDirection? direction, ActivityLogQueryFilter filter, int pageSize, int pageNumber, CancellationToken cancellationToken = default);
+    Task<ActivityLogPage> GetRequestActivityLog(Guid party, ActivityLogDirection? direction, ActivityLogQueryFilter filter, int pageSize, int pageNumber, string languageCode = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Returns one page of Maskinporten schema events involving the given party, newest
@@ -47,8 +49,9 @@ public interface IActivityLogService
     /// <param name="filter">Additional narrowing filters; InvolvedIds, the anchored field and the role list are overwritten.</param>
     /// <param name="pageSize">Maximum number of entries per page.</param>
     /// <param name="pageNumber">Zero-based page number.</param>
+    /// <param name="languageCode">Three-letter language code ("eng", "nno") for the entry text; bokmål otherwise.</param>
     /// <param name="cancellationToken">Cancellation token.</param>
-    Task<ActivityLogPage> GetMaskinportenSchemaActivityLog(Guid party, ActivityLogDirection? direction, ActivityLogQueryFilter filter, int pageSize, int pageNumber, CancellationToken cancellationToken = default);
+    Task<ActivityLogPage> GetMaskinportenSchemaActivityLog(Guid party, ActivityLogDirection? direction, ActivityLogQueryFilter filter, int pageSize, int pageNumber, string languageCode = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Returns one page of values occurring in the party's slice of the connections surface

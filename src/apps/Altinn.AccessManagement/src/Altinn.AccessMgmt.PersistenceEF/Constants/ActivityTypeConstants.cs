@@ -64,13 +64,16 @@ public static class ActivityTypeConstants
             Trigger = ActivityLogTrigger.Created,
             Name = "Rolletildeling opprettet",
             Description = "En part fikk en rolle hos en annen part, f.eks. som rettighetshaver eller tilgangsstyrer.",
+            Text = "{to} fikk rollen «{role}» hos {from} tildelt av {by}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Role assignment created"),
-            KeyValuePair.Create("Description", "A party was given a role for another party, e.g. as rightholder or access manager.")),
+            KeyValuePair.Create("Description", "A party was given a role for another party, e.g. as rightholder or access manager."),
+            KeyValuePair.Create("Text", "{to} was given the role “{role}” at {from} by {by}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Rolletildeling oppretta"),
-            KeyValuePair.Create("Description", "Ein part fekk ei rolle hos ein annan part, t.d. som rettshavar eller tilgangsstyrar.")),
+            KeyValuePair.Create("Description", "Ein part fekk ei rolle hos ein annan part, t.d. som rettshavar eller tilgangsstyrar."),
+            KeyValuePair.Create("Text", "{to} fekk rolla «{role}» hos {from} tildelt av {by}")),
     };
 
     /// <summary>
@@ -84,13 +87,16 @@ public static class ActivityTypeConstants
             Trigger = ActivityLogTrigger.Deleted,
             Name = "Rolletildeling fjernet",
             Description = "Rolletildelingen mellom partene ble fjernet.",
+            Text = "Rollen «{role}» for {to} hos {from} ble fjernet av {by}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Role assignment removed"),
-            KeyValuePair.Create("Description", "The role assignment between the parties was removed.")),
+            KeyValuePair.Create("Description", "The role assignment between the parties was removed."),
+            KeyValuePair.Create("Text", "The role “{role}” for {to} at {from} was removed by {by}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Rolletildeling fjerna"),
-            KeyValuePair.Create("Description", "Rolletildelinga mellom partane vart fjerna.")),
+            KeyValuePair.Create("Description", "Rolletildelinga mellom partane vart fjerna."),
+            KeyValuePair.Create("Text", "Rolla «{role}» for {to} hos {from} vart fjerna av {by}")),
     };
 
     /// <summary>
@@ -105,13 +111,16 @@ public static class ActivityTypeConstants
             Trigger = ActivityLogTrigger.Created,
             Name = "Tilgangspakke tildelt",
             Description = "En tilgangspakke ble lagt til i rolletildelingen mellom partene.",
+            Text = "{to} fikk tilgangspakken «{package}» hos {from} tildelt av {by}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Access package granted"),
-            KeyValuePair.Create("Description", "An access package was added to the role assignment between the parties.")),
+            KeyValuePair.Create("Description", "An access package was added to the role assignment between the parties."),
+            KeyValuePair.Create("Text", "{to} was granted the access package “{package}” at {from} by {by}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Tilgangspakke tildelt"),
-            KeyValuePair.Create("Description", "Ein tilgangspakke vart lagd til i rolletildelinga mellom partane.")),
+            KeyValuePair.Create("Description", "Ein tilgangspakke vart lagd til i rolletildelinga mellom partane."),
+            KeyValuePair.Create("Text", "{to} fekk tilgangspakken «{package}» hos {from} tildelt av {by}")),
     };
 
     /// <summary>
@@ -126,13 +135,16 @@ public static class ActivityTypeConstants
             Trigger = ActivityLogTrigger.Deleted,
             Name = "Tilgangspakke fjernet",
             Description = "Tilgangspakken ble fjernet fra rolletildelingen.",
+            Text = "Tilgangspakken «{package}» for {to} hos {from} ble fjernet av {by}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Access package removed"),
-            KeyValuePair.Create("Description", "The access package was removed from the role assignment.")),
+            KeyValuePair.Create("Description", "The access package was removed from the role assignment."),
+            KeyValuePair.Create("Text", "The access package “{package}” for {to} at {from} was removed by {by}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Tilgangspakke fjerna"),
-            KeyValuePair.Create("Description", "Tilgangspakken vart fjerna frå rolletildelinga.")),
+            KeyValuePair.Create("Description", "Tilgangspakken vart fjerna frå rolletildelinga."),
+            KeyValuePair.Create("Text", "Tilgangspakken «{package}» for {to} hos {from} vart fjerna av {by}")),
     };
 
     /// <summary>
@@ -147,13 +159,16 @@ public static class ActivityTypeConstants
             Trigger = ActivityLogTrigger.Created,
             Name = "Enkelttjeneste tildelt",
             Description = "Det ble gitt tilgang til en enkelttjeneste.",
+            Text = "{to} fikk enkelttjenesten «{resource}» hos {from} tildelt av {by}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Single service granted"),
-            KeyValuePair.Create("Description", "Access to a single service was granted.")),
+            KeyValuePair.Create("Description", "Access to a single service was granted."),
+            KeyValuePair.Create("Text", "{to} was granted the single service “{resource}” at {from} by {by}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Enkelttjeneste tildelt"),
-            KeyValuePair.Create("Description", "Det vart gitt tilgang til ei enkeltteneste.")),
+            KeyValuePair.Create("Description", "Det vart gitt tilgang til ei enkeltteneste."),
+            KeyValuePair.Create("Text", "{to} fekk enkelttenesta «{resource}» hos {from} tildelt av {by}")),
     };
 
     /// <summary>
@@ -168,13 +183,16 @@ public static class ActivityTypeConstants
             Trigger = ActivityLogTrigger.Deleted,
             Name = "Enkelttjeneste fjernet",
             Description = "Tilgangen til enkelttjenesten ble fjernet.",
+            Text = "Enkelttjenesten «{resource}» for {to} hos {from} ble fjernet av {by}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Single service removed"),
-            KeyValuePair.Create("Description", "Access to the single service was removed.")),
+            KeyValuePair.Create("Description", "Access to the single service was removed."),
+            KeyValuePair.Create("Text", "The single service “{resource}” for {to} at {from} was removed by {by}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Enkelttjeneste fjerna"),
-            KeyValuePair.Create("Description", "Tilgangen til enkelttenesta vart fjerna.")),
+            KeyValuePair.Create("Description", "Tilgangen til enkelttenesta vart fjerna."),
+            KeyValuePair.Create("Text", "Enkelttenesta «{resource}» for {to} hos {from} vart fjerna av {by}")),
     };
 
     /// <summary>
@@ -189,13 +207,16 @@ public static class ActivityTypeConstants
             Trigger = ActivityLogTrigger.Created,
             Name = "Instanstilgang tildelt",
             Description = "Det ble gitt tilgang til en enkelt instans, f.eks. et skjema eller en dialog.",
+            Text = "{to} fikk tilgang til en instans av «{resource}» hos {from} tildelt av {by}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Instance access granted"),
-            KeyValuePair.Create("Description", "Access to a single instance was granted, e.g. a form or a dialog.")),
+            KeyValuePair.Create("Description", "Access to a single instance was granted, e.g. a form or a dialog."),
+            KeyValuePair.Create("Text", "{to} was granted access to an instance of “{resource}” at {from} by {by}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Instanstilgang tildelt"),
-            KeyValuePair.Create("Description", "Det vart gitt tilgang til ein enkelt instans, t.d. eit skjema eller ein dialog.")),
+            KeyValuePair.Create("Description", "Det vart gitt tilgang til ein enkelt instans, t.d. eit skjema eller ein dialog."),
+            KeyValuePair.Create("Text", "{to} fekk tilgang til ein instans av «{resource}» hos {from} tildelt av {by}")),
     };
 
     /// <summary>
@@ -210,13 +231,16 @@ public static class ActivityTypeConstants
             Trigger = ActivityLogTrigger.Updated,
             Name = "Instanstilgang flyttet",
             Description = "Tilgangen til instansen ble flyttet til en annen rolletildeling (administrativ opprydding).",
+            Text = "Tilgangen til en instans av «{resource}» for {to} hos {from} ble flyttet av {by}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Instance access moved"),
-            KeyValuePair.Create("Description", "The instance access was moved to another role assignment (administrative cleanup).")),
+            KeyValuePair.Create("Description", "The instance access was moved to another role assignment (administrative cleanup)."),
+            KeyValuePair.Create("Text", "Access to an instance of “{resource}” for {to} at {from} was moved by {by}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Instanstilgang flytta"),
-            KeyValuePair.Create("Description", "Tilgangen til instansen vart flytta til ei anna rolletildeling (administrativ opprydding).")),
+            KeyValuePair.Create("Description", "Tilgangen til instansen vart flytta til ei anna rolletildeling (administrativ opprydding)."),
+            KeyValuePair.Create("Text", "Tilgangen til ein instans av «{resource}» for {to} hos {from} vart flytta av {by}")),
     };
 
     /// <summary>
@@ -231,13 +255,16 @@ public static class ActivityTypeConstants
             Trigger = ActivityLogTrigger.Deleted,
             Name = "Instanstilgang fjernet",
             Description = "Tilgangen til instansen ble fjernet.",
+            Text = "Tilgangen til en instans av «{resource}» for {to} hos {from} ble fjernet av {by}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Instance access removed"),
-            KeyValuePair.Create("Description", "Access to the instance was removed.")),
+            KeyValuePair.Create("Description", "Access to the instance was removed."),
+            KeyValuePair.Create("Text", "Access to an instance of “{resource}” for {to} at {from} was removed by {by}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Instanstilgang fjerna"),
-            KeyValuePair.Create("Description", "Tilgangen til instansen vart fjerna.")),
+            KeyValuePair.Create("Description", "Tilgangen til instansen vart fjerna."),
+            KeyValuePair.Create("Text", "Tilgangen til ein instans av «{resource}» for {to} hos {from} vart fjerna av {by}")),
     };
 
     #endregion
@@ -255,13 +282,16 @@ public static class ActivityTypeConstants
             Trigger = ActivityLogTrigger.Created,
             Name = "Klientdelegering opprettet",
             Description = "En fasilitator, f.eks. et regnskapsbyrå, koblet en klient til en agent.",
+            Text = "{to} ble koblet til klienten {from} via {via} av {by}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Client delegation created"),
-            KeyValuePair.Create("Description", "A facilitator, e.g. an accounting firm, connected a client to an agent.")),
+            KeyValuePair.Create("Description", "A facilitator, e.g. an accounting firm, connected a client to an agent."),
+            KeyValuePair.Create("Text", "{to} was connected to the client {from} via {via} by {by}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Klientdelegering oppretta"),
-            KeyValuePair.Create("Description", "Ein fasilitator, t.d. eit rekneskapsbyrå, kopla ein klient til ein agent.")),
+            KeyValuePair.Create("Description", "Ein fasilitator, t.d. eit rekneskapsbyrå, kopla ein klient til ein agent."),
+            KeyValuePair.Create("Text", "{to} vart kopla til klienten {from} via {via} av {by}")),
     };
 
     /// <summary>
@@ -275,13 +305,16 @@ public static class ActivityTypeConstants
             Trigger = ActivityLogTrigger.Deleted,
             Name = "Klientdelegering fjernet",
             Description = "Koblingen mellom klient og agent ble fjernet.",
+            Text = "Koblingen mellom {to} og klienten {from} via {via} ble fjernet av {by}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Client delegation removed"),
-            KeyValuePair.Create("Description", "The connection between client and agent was removed.")),
+            KeyValuePair.Create("Description", "The connection between client and agent was removed."),
+            KeyValuePair.Create("Text", "The connection between {to} and the client {from} via {via} was removed by {by}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Klientdelegering fjerna"),
-            KeyValuePair.Create("Description", "Koplinga mellom klient og agent vart fjerna.")),
+            KeyValuePair.Create("Description", "Koplinga mellom klient og agent vart fjerna."),
+            KeyValuePair.Create("Text", "Koplinga mellom {to} og klienten {from} via {via} vart fjerna av {by}")),
     };
 
     /// <summary>
@@ -296,13 +329,16 @@ public static class ActivityTypeConstants
             Trigger = ActivityLogTrigger.Created,
             Name = "Tilgangspakke delegert",
             Description = "En tilgangspakke ble delegert videre fra klient til agent via fasilitator.",
+            Text = "{to} fikk tilgangspakken «{package}» for klienten {from} delegert via {via} av {by}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Access package delegated"),
-            KeyValuePair.Create("Description", "An access package was delegated onwards from client to agent via the facilitator.")),
+            KeyValuePair.Create("Description", "An access package was delegated onwards from client to agent via the facilitator."),
+            KeyValuePair.Create("Text", "{to} was delegated the access package “{package}” for the client {from} via {via} by {by}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Tilgangspakke delegert"),
-            KeyValuePair.Create("Description", "Ein tilgangspakke vart delegert vidare frå klient til agent via fasilitator.")),
+            KeyValuePair.Create("Description", "Ein tilgangspakke vart delegert vidare frå klient til agent via fasilitator."),
+            KeyValuePair.Create("Text", "{to} fekk tilgangspakken «{package}» for klienten {from} delegert via {via} av {by}")),
     };
 
     /// <summary>
@@ -317,13 +353,16 @@ public static class ActivityTypeConstants
             Trigger = ActivityLogTrigger.Deleted,
             Name = "Delegert tilgangspakke fjernet",
             Description = "Den delegerte tilgangspakken ble fjernet fra klientdelegeringen.",
+            Text = "Den delegerte tilgangspakken «{package}» for klienten {from} ble fjernet fra {to} via {via} av {by}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Delegated access package removed"),
-            KeyValuePair.Create("Description", "The delegated access package was removed from the client delegation.")),
+            KeyValuePair.Create("Description", "The delegated access package was removed from the client delegation."),
+            KeyValuePair.Create("Text", "The delegated access package “{package}” for the client {from} was removed from {to} via {via} by {by}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Delegert tilgangspakke fjerna"),
-            KeyValuePair.Create("Description", "Den delegerte tilgangspakken vart fjerna frå klientdelegeringa.")),
+            KeyValuePair.Create("Description", "Den delegerte tilgangspakken vart fjerna frå klientdelegeringa."),
+            KeyValuePair.Create("Text", "Den delegerte tilgangspakken «{package}» for klienten {from} vart fjerna frå {to} via {via} av {by}")),
     };
 
     /// <summary>
@@ -338,13 +377,16 @@ public static class ActivityTypeConstants
             Trigger = ActivityLogTrigger.Created,
             Name = "Enkelttjeneste delegert",
             Description = "En enkelttjeneste ble delegert videre fra klient til agent via fasilitator.",
+            Text = "{to} fikk enkelttjenesten «{resource}» for klienten {from} delegert via {via} av {by}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Single service delegated"),
-            KeyValuePair.Create("Description", "A single service was delegated onwards from client to agent via the facilitator.")),
+            KeyValuePair.Create("Description", "A single service was delegated onwards from client to agent via the facilitator."),
+            KeyValuePair.Create("Text", "{to} was delegated the single service “{resource}” for the client {from} via {via} by {by}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Enkelttjeneste delegert"),
-            KeyValuePair.Create("Description", "Ei enkeltteneste vart delegert vidare frå klient til agent via fasilitator.")),
+            KeyValuePair.Create("Description", "Ei enkeltteneste vart delegert vidare frå klient til agent via fasilitator."),
+            KeyValuePair.Create("Text", "{to} fekk enkelttenesta «{resource}» for klienten {from} delegert via {via} av {by}")),
     };
 
     /// <summary>
@@ -359,13 +401,16 @@ public static class ActivityTypeConstants
             Trigger = ActivityLogTrigger.Deleted,
             Name = "Delegert enkelttjeneste fjernet",
             Description = "Den delegerte enkelttjenesten ble fjernet fra klientdelegeringen.",
+            Text = "Den delegerte enkelttjenesten «{resource}» for klienten {from} ble fjernet fra {to} via {via} av {by}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Delegated single service removed"),
-            KeyValuePair.Create("Description", "The delegated single service was removed from the client delegation.")),
+            KeyValuePair.Create("Description", "The delegated single service was removed from the client delegation."),
+            KeyValuePair.Create("Text", "The delegated single service “{resource}” for the client {from} was removed from {to} via {via} by {by}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Delegert enkeltteneste fjerna"),
-            KeyValuePair.Create("Description", "Den delegerte enkelttenesta vart fjerna frå klientdelegeringa.")),
+            KeyValuePair.Create("Description", "Den delegerte enkelttenesta vart fjerna frå klientdelegeringa."),
+            KeyValuePair.Create("Text", "Den delegerte enkelttenesta «{resource}» for klienten {from} vart fjerna frå {to} via {via} av {by}")),
     };
 
     #endregion
@@ -383,13 +428,16 @@ public static class ActivityTypeConstants
             Trigger = ActivityLogTrigger.Created,
             Name = "Forespørsel opprettet",
             Description = "Det ble opprettet en forespørsel mellom partene.",
+            Text = "{by} opprettet en forespørsel om tilgang for {to} hos {from}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Request created"),
-            KeyValuePair.Create("Description", "A request between the parties was created.")),
+            KeyValuePair.Create("Description", "A request between the parties was created."),
+            KeyValuePair.Create("Text", "{by} created a request for access for {to} at {from}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Førespurnad oppretta"),
-            KeyValuePair.Create("Description", "Det vart oppretta ein førespurnad mellom partane.")),
+            KeyValuePair.Create("Description", "Det vart oppretta ein førespurnad mellom partane."),
+            KeyValuePair.Create("Text", "{by} oppretta ein førespurnad om tilgang for {to} hos {from}")),
     };
 
     /// <summary>
@@ -403,13 +451,16 @@ public static class ActivityTypeConstants
             Trigger = ActivityLogTrigger.Deleted,
             Name = "Forespørsel fjernet",
             Description = "Forespørselen ble fjernet.",
+            Text = "Forespørselen om tilgang for {to} hos {from} ble fjernet av {by}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Request removed"),
-            KeyValuePair.Create("Description", "The request was removed.")),
+            KeyValuePair.Create("Description", "The request was removed."),
+            KeyValuePair.Create("Text", "The request for access for {to} at {from} was removed by {by}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Førespurnad fjerna"),
-            KeyValuePair.Create("Description", "Førespurnaden vart fjerna.")),
+            KeyValuePair.Create("Description", "Førespurnaden vart fjerna."),
+            KeyValuePair.Create("Text", "Førespurnaden om tilgang for {to} hos {from} vart fjerna av {by}")),
     };
 
     /// <summary>
@@ -424,13 +475,16 @@ public static class ActivityTypeConstants
             Trigger = ActivityLogTrigger.Created,
             Name = "Forespørsel om tilgangspakke opprettet",
             Description = "Det ble opprettet en forespørsel om tilgang til en tilgangspakke.",
+            Text = "{by} opprettet en forespørsel om tilgangspakken «{package}» for {to} hos {from}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Access package request created"),
-            KeyValuePair.Create("Description", "A request for access to an access package was created.")),
+            KeyValuePair.Create("Description", "A request for access to an access package was created."),
+            KeyValuePair.Create("Text", "{by} created a request for the access package “{package}” for {to} at {from}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Førespurnad om tilgangspakke oppretta"),
-            KeyValuePair.Create("Description", "Det vart oppretta ein førespurnad om tilgang til ein tilgangspakke.")),
+            KeyValuePair.Create("Description", "Det vart oppretta ein førespurnad om tilgang til ein tilgangspakke."),
+            KeyValuePair.Create("Text", "{by} oppretta ein førespurnad om tilgangspakken «{package}» for {to} hos {from}")),
     };
 
     /// <summary>
@@ -446,13 +500,16 @@ public static class ActivityTypeConstants
             Status = RequestStatusV2.Draft,
             Name = "Utkast til forespørsel om tilgangspakke opprettet",
             Description = "Et utkast til forespørsel om tilgangspakke ble opprettet, men er ikke sendt ennå.",
+            Text = "{by} opprettet et utkast til forespørsel om tilgangspakken «{package}» for {to} hos {from}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Access package request draft created"),
-            KeyValuePair.Create("Description", "A draft request for an access package was created but not yet sent.")),
+            KeyValuePair.Create("Description", "A draft request for an access package was created but not yet sent."),
+            KeyValuePair.Create("Text", "{by} created a draft request for the access package “{package}” for {to} at {from}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Utkast til førespurnad om tilgangspakke oppretta"),
-            KeyValuePair.Create("Description", "Eit utkast til førespurnad om tilgangspakke vart oppretta, men er ikkje sendt enno.")),
+            KeyValuePair.Create("Description", "Eit utkast til førespurnad om tilgangspakke vart oppretta, men er ikkje sendt enno."),
+            KeyValuePair.Create("Text", "{by} oppretta eit utkast til førespurnad om tilgangspakken «{package}» for {to} hos {from}")),
     };
 
     /// <summary>
@@ -468,13 +525,16 @@ public static class ActivityTypeConstants
             Status = RequestStatusV2.Pending,
             Name = "Forespørsel om tilgangspakke sendt",
             Description = "Forespørselen om tilgangspakke ble sendt til mottakeren for behandling.",
+            Text = "{by} sendte en forespørsel om tilgangspakken «{package}» for {to} hos {from}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Access package request sent"),
-            KeyValuePair.Create("Description", "The access package request was sent to the recipient for review.")),
+            KeyValuePair.Create("Description", "The access package request was sent to the recipient for review."),
+            KeyValuePair.Create("Text", "{by} sent a request for the access package “{package}” for {to} at {from}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Førespurnad om tilgangspakke send"),
-            KeyValuePair.Create("Description", "Førespurnaden om tilgangspakke vart send til mottakaren for handsaming.")),
+            KeyValuePair.Create("Description", "Førespurnaden om tilgangspakke vart send til mottakaren for handsaming."),
+            KeyValuePair.Create("Text", "{by} sende ein førespurnad om tilgangspakken «{package}» for {to} hos {from}")),
     };
 
     /// <summary>
@@ -489,13 +549,16 @@ public static class ActivityTypeConstants
             Trigger = ActivityLogTrigger.Updated,
             Name = "Forespørsel om tilgangspakke oppdatert",
             Description = "Forespørselen om tilgangspakke endret status.",
+            Text = "Forespørselen om tilgangspakken «{package}» for {to} hos {from} ble oppdatert av {by}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Access package request updated"),
-            KeyValuePair.Create("Description", "The access package request changed status.")),
+            KeyValuePair.Create("Description", "The access package request changed status."),
+            KeyValuePair.Create("Text", "The request for the access package “{package}” for {to} at {from} was updated by {by}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Førespurnad om tilgangspakke oppdatert"),
-            KeyValuePair.Create("Description", "Førespurnaden om tilgangspakke endra status.")),
+            KeyValuePair.Create("Description", "Førespurnaden om tilgangspakke endra status."),
+            KeyValuePair.Create("Text", "Førespurnaden om tilgangspakken «{package}» for {to} hos {from} vart oppdatert av {by}")),
     };
 
     /// <summary>
@@ -511,13 +574,16 @@ public static class ActivityTypeConstants
             Status = RequestStatusV2.Pending,
             Name = "Utkast til forespørsel om tilgangspakke sendt",
             Description = "Utkastet ble bekreftet og forespørselen sendt til mottakeren for behandling.",
+            Text = "{by} sendte utkastet til forespørsel om tilgangspakken «{package}» for {to} hos {from}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Access package request draft sent"),
-            KeyValuePair.Create("Description", "The draft was confirmed and the request sent to the recipient for review.")),
+            KeyValuePair.Create("Description", "The draft was confirmed and the request sent to the recipient for review."),
+            KeyValuePair.Create("Text", "{by} sent the draft request for the access package “{package}” for {to} at {from}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Utkast til førespurnad om tilgangspakke send"),
-            KeyValuePair.Create("Description", "Utkastet vart stadfesta og førespurnaden send til mottakaren for handsaming.")),
+            KeyValuePair.Create("Description", "Utkastet vart stadfesta og førespurnaden send til mottakaren for handsaming."),
+            KeyValuePair.Create("Text", "{by} sende utkastet til førespurnad om tilgangspakken «{package}» for {to} hos {from}")),
     };
 
     /// <summary>
@@ -533,13 +599,16 @@ public static class ActivityTypeConstants
             Status = RequestStatusV2.Approved,
             Name = "Forespørsel om tilgangspakke godkjent",
             Description = "Mottakeren godkjente forespørselen, og tilgangen ble opprettet.",
+            Text = "{by} godkjente forespørselen om tilgangspakken «{package}» for {to} hos {from}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Access package request approved"),
-            KeyValuePair.Create("Description", "The recipient approved the request and the access was created.")),
+            KeyValuePair.Create("Description", "The recipient approved the request and the access was created."),
+            KeyValuePair.Create("Text", "{by} approved the request for the access package “{package}” for {to} at {from}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Førespurnad om tilgangspakke godkjend"),
-            KeyValuePair.Create("Description", "Mottakaren godkjende førespurnaden, og tilgangen vart oppretta.")),
+            KeyValuePair.Create("Description", "Mottakaren godkjende førespurnaden, og tilgangen vart oppretta."),
+            KeyValuePair.Create("Text", "{by} godkjende førespurnaden om tilgangspakken «{package}» for {to} hos {from}")),
     };
 
     /// <summary>
@@ -555,13 +624,16 @@ public static class ActivityTypeConstants
             Status = RequestStatusV2.PartialApprove,
             Name = "Forespørsel om tilgangspakke delvis godkjent",
             Description = "Mottakeren godkjente forespørselen, men tilgangen som ble gitt samsvarer ikke med det som ble forespurt.",
+            Text = "{by} godkjente delvis forespørselen om tilgangspakken «{package}» for {to} hos {from}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Access package request partially approved"),
-            KeyValuePair.Create("Description", "The recipient approved the request, but the access given does not match what was requested.")),
+            KeyValuePair.Create("Description", "The recipient approved the request, but the access given does not match what was requested."),
+            KeyValuePair.Create("Text", "{by} partially approved the request for the access package “{package}” for {to} at {from}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Førespurnad om tilgangspakke delvis godkjend"),
-            KeyValuePair.Create("Description", "Mottakaren godkjende førespurnaden, men tilgangen som vart gitt samsvarer ikkje med det som vart førespurt.")),
+            KeyValuePair.Create("Description", "Mottakaren godkjende førespurnaden, men tilgangen som vart gitt samsvarer ikkje med det som vart førespurt."),
+            KeyValuePair.Create("Text", "{by} godkjende delvis førespurnaden om tilgangspakken «{package}» for {to} hos {from}")),
     };
 
     /// <summary>
@@ -577,13 +649,16 @@ public static class ActivityTypeConstants
             Status = RequestStatusV2.Rejected,
             Name = "Forespørsel om tilgangspakke avslått",
             Description = "Mottakeren avslo forespørselen.",
+            Text = "{by} avslo forespørselen om tilgangspakken «{package}» for {to} hos {from}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Access package request rejected"),
-            KeyValuePair.Create("Description", "The recipient rejected the request.")),
+            KeyValuePair.Create("Description", "The recipient rejected the request."),
+            KeyValuePair.Create("Text", "{by} rejected the request for the access package “{package}” for {to} at {from}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Førespurnad om tilgangspakke avslått"),
-            KeyValuePair.Create("Description", "Mottakaren avslo førespurnaden.")),
+            KeyValuePair.Create("Description", "Mottakaren avslo førespurnaden."),
+            KeyValuePair.Create("Text", "{by} avslo førespurnaden om tilgangspakken «{package}» for {to} hos {from}")),
     };
 
     /// <summary>
@@ -599,13 +674,16 @@ public static class ActivityTypeConstants
             Status = RequestStatusV2.Withdrawn,
             Name = "Forespørsel om tilgangspakke trukket",
             Description = "Avsenderen trakk forespørselen tilbake.",
+            Text = "{by} trakk tilbake forespørselen om tilgangspakken «{package}» for {to} hos {from}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Access package request withdrawn"),
-            KeyValuePair.Create("Description", "The sender withdrew the request.")),
+            KeyValuePair.Create("Description", "The sender withdrew the request."),
+            KeyValuePair.Create("Text", "{by} withdrew the request for the access package “{package}” for {to} at {from}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Førespurnad om tilgangspakke trekt"),
-            KeyValuePair.Create("Description", "Avsendaren trekte førespurnaden tilbake.")),
+            KeyValuePair.Create("Description", "Avsendaren trekte førespurnaden tilbake."),
+            KeyValuePair.Create("Text", "{by} trekte tilbake førespurnaden om tilgangspakken «{package}» for {to} hos {from}")),
     };
 
     /// <summary>
@@ -620,13 +698,16 @@ public static class ActivityTypeConstants
             Trigger = ActivityLogTrigger.Deleted,
             Name = "Forespørsel om tilgangspakke fjernet",
             Description = "Forespørselen om tilgangspakke ble fjernet.",
+            Text = "Forespørselen om tilgangspakken «{package}» for {to} hos {from} ble fjernet av {by}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Access package request removed"),
-            KeyValuePair.Create("Description", "The access package request was removed.")),
+            KeyValuePair.Create("Description", "The access package request was removed."),
+            KeyValuePair.Create("Text", "The request for the access package “{package}” for {to} at {from} was removed by {by}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Førespurnad om tilgangspakke fjerna"),
-            KeyValuePair.Create("Description", "Førespurnaden om tilgangspakke vart fjerna.")),
+            KeyValuePair.Create("Description", "Førespurnaden om tilgangspakke vart fjerna."),
+            KeyValuePair.Create("Text", "Førespurnaden om tilgangspakken «{package}» for {to} hos {from} vart fjerna av {by}")),
     };
 
     /// <summary>
@@ -641,13 +722,16 @@ public static class ActivityTypeConstants
             Trigger = ActivityLogTrigger.Created,
             Name = "Forespørsel om enkelttjeneste opprettet",
             Description = "Det ble opprettet en forespørsel om tilgang til en enkelttjeneste.",
+            Text = "{by} opprettet en forespørsel om enkelttjenesten «{resource}» for {to} hos {from}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Single service request created"),
-            KeyValuePair.Create("Description", "A request for access to a single service was created.")),
+            KeyValuePair.Create("Description", "A request for access to a single service was created."),
+            KeyValuePair.Create("Text", "{by} created a request for the single service “{resource}” for {to} at {from}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Førespurnad om enkeltteneste oppretta"),
-            KeyValuePair.Create("Description", "Det vart oppretta ein førespurnad om tilgang til ei enkeltteneste.")),
+            KeyValuePair.Create("Description", "Det vart oppretta ein førespurnad om tilgang til ei enkeltteneste."),
+            KeyValuePair.Create("Text", "{by} oppretta ein førespurnad om enkelttenesta «{resource}» for {to} hos {from}")),
     };
 
     /// <summary>
@@ -663,13 +747,16 @@ public static class ActivityTypeConstants
             Status = RequestStatusV2.Draft,
             Name = "Utkast til forespørsel om enkelttjeneste opprettet",
             Description = "Et utkast til forespørsel om enkelttjeneste ble opprettet, men er ikke sendt ennå.",
+            Text = "{by} opprettet et utkast til forespørsel om enkelttjenesten «{resource}» for {to} hos {from}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Single service request draft created"),
-            KeyValuePair.Create("Description", "A draft request for a single service was created but not yet sent.")),
+            KeyValuePair.Create("Description", "A draft request for a single service was created but not yet sent."),
+            KeyValuePair.Create("Text", "{by} created a draft request for the single service “{resource}” for {to} at {from}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Utkast til førespurnad om enkeltteneste oppretta"),
-            KeyValuePair.Create("Description", "Eit utkast til førespurnad om enkeltteneste vart oppretta, men er ikkje sendt enno.")),
+            KeyValuePair.Create("Description", "Eit utkast til førespurnad om enkeltteneste vart oppretta, men er ikkje sendt enno."),
+            KeyValuePair.Create("Text", "{by} oppretta eit utkast til førespurnad om enkelttenesta «{resource}» for {to} hos {from}")),
     };
 
     /// <summary>
@@ -685,13 +772,16 @@ public static class ActivityTypeConstants
             Status = RequestStatusV2.Pending,
             Name = "Forespørsel om enkelttjeneste sendt",
             Description = "Forespørselen om enkelttjeneste ble sendt til mottakeren for behandling.",
+            Text = "{by} sendte en forespørsel om enkelttjenesten «{resource}» for {to} hos {from}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Single service request sent"),
-            KeyValuePair.Create("Description", "The single service request was sent to the recipient for review.")),
+            KeyValuePair.Create("Description", "The single service request was sent to the recipient for review."),
+            KeyValuePair.Create("Text", "{by} sent a request for the single service “{resource}” for {to} at {from}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Førespurnad om enkeltteneste send"),
-            KeyValuePair.Create("Description", "Førespurnaden om enkeltteneste vart send til mottakaren for handsaming.")),
+            KeyValuePair.Create("Description", "Førespurnaden om enkeltteneste vart send til mottakaren for handsaming."),
+            KeyValuePair.Create("Text", "{by} sende ein førespurnad om enkelttenesta «{resource}» for {to} hos {from}")),
     };
 
     /// <summary>
@@ -706,13 +796,16 @@ public static class ActivityTypeConstants
             Trigger = ActivityLogTrigger.Updated,
             Name = "Forespørsel om enkelttjeneste oppdatert",
             Description = "Forespørselen om enkelttjeneste endret status.",
+            Text = "Forespørselen om enkelttjenesten «{resource}» for {to} hos {from} ble oppdatert av {by}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Single service request updated"),
-            KeyValuePair.Create("Description", "The single service request changed status.")),
+            KeyValuePair.Create("Description", "The single service request changed status."),
+            KeyValuePair.Create("Text", "The request for the single service “{resource}” for {to} at {from} was updated by {by}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Førespurnad om enkeltteneste oppdatert"),
-            KeyValuePair.Create("Description", "Førespurnaden om enkeltteneste endra status.")),
+            KeyValuePair.Create("Description", "Førespurnaden om enkeltteneste endra status."),
+            KeyValuePair.Create("Text", "Førespurnaden om enkelttenesta «{resource}» for {to} hos {from} vart oppdatert av {by}")),
     };
 
     /// <summary>
@@ -728,13 +821,16 @@ public static class ActivityTypeConstants
             Status = RequestStatusV2.Pending,
             Name = "Utkast til forespørsel om enkelttjeneste sendt",
             Description = "Utkastet ble bekreftet og forespørselen sendt til mottakeren for behandling.",
+            Text = "{by} sendte utkastet til forespørsel om enkelttjenesten «{resource}» for {to} hos {from}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Single service request draft sent"),
-            KeyValuePair.Create("Description", "The draft was confirmed and the request sent to the recipient for review.")),
+            KeyValuePair.Create("Description", "The draft was confirmed and the request sent to the recipient for review."),
+            KeyValuePair.Create("Text", "{by} sent the draft request for the single service “{resource}” for {to} at {from}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Utkast til førespurnad om enkeltteneste send"),
-            KeyValuePair.Create("Description", "Utkastet vart stadfesta og førespurnaden send til mottakaren for handsaming.")),
+            KeyValuePair.Create("Description", "Utkastet vart stadfesta og førespurnaden send til mottakaren for handsaming."),
+            KeyValuePair.Create("Text", "{by} sende utkastet til førespurnad om enkelttenesta «{resource}» for {to} hos {from}")),
     };
 
     /// <summary>
@@ -750,13 +846,16 @@ public static class ActivityTypeConstants
             Status = RequestStatusV2.Approved,
             Name = "Forespørsel om enkelttjeneste godkjent",
             Description = "Mottakeren godkjente forespørselen, og tilgangen ble opprettet.",
+            Text = "{by} godkjente forespørselen om enkelttjenesten «{resource}» for {to} hos {from}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Single service request approved"),
-            KeyValuePair.Create("Description", "The recipient approved the request and the access was created.")),
+            KeyValuePair.Create("Description", "The recipient approved the request and the access was created."),
+            KeyValuePair.Create("Text", "{by} approved the request for the single service “{resource}” for {to} at {from}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Førespurnad om enkeltteneste godkjend"),
-            KeyValuePair.Create("Description", "Mottakaren godkjende førespurnaden, og tilgangen vart oppretta.")),
+            KeyValuePair.Create("Description", "Mottakaren godkjende førespurnaden, og tilgangen vart oppretta."),
+            KeyValuePair.Create("Text", "{by} godkjende førespurnaden om enkelttenesta «{resource}» for {to} hos {from}")),
     };
 
     /// <summary>
@@ -772,13 +871,16 @@ public static class ActivityTypeConstants
             Status = RequestStatusV2.PartialApprove,
             Name = "Forespørsel om enkelttjeneste delvis godkjent",
             Description = "Mottakeren godkjente forespørselen, men tilgangen som ble gitt samsvarer ikke med det som ble forespurt.",
+            Text = "{by} godkjente delvis forespørselen om enkelttjenesten «{resource}» for {to} hos {from}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Single service request partially approved"),
-            KeyValuePair.Create("Description", "The recipient approved the request, but the access given does not match what was requested.")),
+            KeyValuePair.Create("Description", "The recipient approved the request, but the access given does not match what was requested."),
+            KeyValuePair.Create("Text", "{by} partially approved the request for the single service “{resource}” for {to} at {from}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Førespurnad om enkeltteneste delvis godkjend"),
-            KeyValuePair.Create("Description", "Mottakaren godkjende førespurnaden, men tilgangen som vart gitt samsvarer ikkje med det som vart førespurt.")),
+            KeyValuePair.Create("Description", "Mottakaren godkjende førespurnaden, men tilgangen som vart gitt samsvarer ikkje med det som vart førespurt."),
+            KeyValuePair.Create("Text", "{by} godkjende delvis førespurnaden om enkelttenesta «{resource}» for {to} hos {from}")),
     };
 
     /// <summary>
@@ -794,13 +896,16 @@ public static class ActivityTypeConstants
             Status = RequestStatusV2.Rejected,
             Name = "Forespørsel om enkelttjeneste avslått",
             Description = "Mottakeren avslo forespørselen.",
+            Text = "{by} avslo forespørselen om enkelttjenesten «{resource}» for {to} hos {from}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Single service request rejected"),
-            KeyValuePair.Create("Description", "The recipient rejected the request.")),
+            KeyValuePair.Create("Description", "The recipient rejected the request."),
+            KeyValuePair.Create("Text", "{by} rejected the request for the single service “{resource}” for {to} at {from}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Førespurnad om enkeltteneste avslått"),
-            KeyValuePair.Create("Description", "Mottakaren avslo førespurnaden.")),
+            KeyValuePair.Create("Description", "Mottakaren avslo førespurnaden."),
+            KeyValuePair.Create("Text", "{by} avslo førespurnaden om enkelttenesta «{resource}» for {to} hos {from}")),
     };
 
     /// <summary>
@@ -816,13 +921,16 @@ public static class ActivityTypeConstants
             Status = RequestStatusV2.Withdrawn,
             Name = "Forespørsel om enkelttjeneste trukket",
             Description = "Avsenderen trakk forespørselen tilbake.",
+            Text = "{by} trakk tilbake forespørselen om enkelttjenesten «{resource}» for {to} hos {from}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Single service request withdrawn"),
-            KeyValuePair.Create("Description", "The sender withdrew the request.")),
+            KeyValuePair.Create("Description", "The sender withdrew the request."),
+            KeyValuePair.Create("Text", "{by} withdrew the request for the single service “{resource}” for {to} at {from}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Førespurnad om enkeltteneste trekt"),
-            KeyValuePair.Create("Description", "Avsendaren trekte førespurnaden tilbake.")),
+            KeyValuePair.Create("Description", "Avsendaren trekte førespurnaden tilbake."),
+            KeyValuePair.Create("Text", "{by} trekte tilbake førespurnaden om enkelttenesta «{resource}» for {to} hos {from}")),
     };
 
     /// <summary>
@@ -837,13 +945,16 @@ public static class ActivityTypeConstants
             Trigger = ActivityLogTrigger.Deleted,
             Name = "Forespørsel om enkelttjeneste fjernet",
             Description = "Forespørselen om enkelttjeneste ble fjernet.",
+            Text = "Forespørselen om enkelttjenesten «{resource}» for {to} hos {from} ble fjernet av {by}",
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Single service request removed"),
-            KeyValuePair.Create("Description", "The single service request was removed.")),
+            KeyValuePair.Create("Description", "The single service request was removed."),
+            KeyValuePair.Create("Text", "The request for the single service “{resource}” for {to} at {from} was removed by {by}")),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Førespurnad om enkeltteneste fjerna"),
-            KeyValuePair.Create("Description", "Førespurnaden om enkeltteneste vart fjerna.")),
+            KeyValuePair.Create("Description", "Førespurnaden om enkeltteneste vart fjerna."),
+            KeyValuePair.Create("Text", "Førespurnaden om enkelttenesta «{resource}» for {to} hos {from} vart fjerna av {by}")),
     };
 
     #endregion
