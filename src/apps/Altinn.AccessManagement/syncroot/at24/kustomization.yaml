@@ -29,11 +29,11 @@ patches:
 
   - target:
       kind: Kustomization
-      name: deploy
+      name: access-management-deploy
     patch: |-
       apiVersion: kustomize.toolkit.fluxcd.io/v1
       kind: Kustomization
       metadata:
-        name: deploy
+        name: access-management-deploy
       spec:
         path: ./deploy/at24
