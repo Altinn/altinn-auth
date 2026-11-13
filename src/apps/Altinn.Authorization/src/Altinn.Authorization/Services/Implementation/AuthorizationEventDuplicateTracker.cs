@@ -79,7 +79,59 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         /// <param name="authorizationEvent">The event about to be queued for the audit log</param>
         /// <param name="resourceInstanceIds">The resource instance ids of the request the event is for</param>
         /// <returns>Whether, and how, the event repeats one already seen</returns>
-        public AuthorizationEventDuplicateKind Track(AuthorizationEvent authorizationEvent, IReadOnlyList<string> resourceInstanceIds)
+        public AuthorizationEventDuplicateKind Track(AuthorizationEvent authorizationEvent, IReadOnlyList<string> resourceInstanceIds) =>
+            ClassifyCore(authorizationEvent, resourceInstanceIds, remember: true).Kind;
+
+        /// <summary>
+        /// Classifies the event against those remembered within the window, without remembering it. Used
+        /// when duplicates are dropped: the event is remembered with <see cref="Remember"/> only once it
+        /// has been queued, so that a send that fails never makes a later event look like a duplicate.
+        /// </summary>
+        /// <param name="authorizationEvent">The event about to be queued for the audit log</param>
+        /// <param name="resourceInstanceIds">The resource instance ids of the request the event is for</param>
+        /// <returns>The classification, to pass to <see cref="Remember"/></returns>
+        public AuthorizationEventClassification Classify(AuthorizationEvent authorizationEvent, IReadOnlyList<string> resourceInstanceIds) =>
+            ClassifyCore(authorizationEvent, resourceInstanceIds, remember: false);
+
+        /// <summary>
+        /// Remembers a classified event, from the time it was classified, so that the window runs from when
+        /// the event happened rather than from when it was queued.
+        /// </summary>
+        /// <param name="classification">The classification returned by <see cref="Classify"/></param>
+        public void Remember(AuthorizationEventClassification classification)
+        {
+            if (classification.Kind == AuthorizationEventDuplicateKind.SameTrace)
+            {
+                // Both keys are already remembered.
+                return;
+            }
+
+            long now = _timeProvider.GetUtcNow().UtcTicks;
+            bool rotatedEarly;
+
+            lock (_gate)
+            {
+                rotatedEarly = RotateIfNeeded(now);
+
+                // A key remembered meanwhile, by a concurrent event, keeps its earlier time.
+                if (!IsSeen(classification.TraceKey, now))
+                {
+                    _current[classification.TraceKey] = classification.ClassifiedAtTicks;
+                }
+
+                if (classification.Kind == AuthorizationEventDuplicateKind.None && !IsSeen(classification.EventKey, now))
+                {
+                    _current[classification.EventKey] = classification.ClassifiedAtTicks;
+                }
+            }
+
+            if (rotatedEarly)
+            {
+                _telemetry.RecordAuditLogTrackerCapacityRotation();
+            }
+        }
+
+        private AuthorizationEventClassification ClassifyCore(AuthorizationEvent authorizationEvent, IReadOnlyList<string> resourceInstanceIds, bool remember)
         {
             (ulong eventKey, ulong traceKey) = ComputeKeys(authorizationEvent, resourceInstanceIds);
             long now = _timeProvider.GetUtcNow().UtcTicks;
@@ -100,19 +152,19 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 {
                     bool seenInWindow = IsSeen(eventKey, now);
 
-                    // Remember the trace even when the event was seen in another trace, so that further
-                    // repeats in this trace are classified as SameTrace.
-                    _current[traceKey] = now;
+                    if (remember)
+                    {
+                        // Remember the trace even when the event was seen in another trace, so that
+                        // further repeats in this trace are classified as SameTrace.
+                        _current[traceKey] = now;
 
-                    if (seenInWindow)
-                    {
-                        duplicateKind = AuthorizationEventDuplicateKind.Window;
+                        if (!seenInWindow)
+                        {
+                            _current[eventKey] = now;
+                        }
                     }
-                    else
-                    {
-                        _current[eventKey] = now;
-                        duplicateKind = AuthorizationEventDuplicateKind.None;
-                    }
+
+                    duplicateKind = seenInWindow ? AuthorizationEventDuplicateKind.Window : AuthorizationEventDuplicateKind.None;
                 }
             }
 
@@ -121,7 +173,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 _telemetry.RecordAuditLogTrackerCapacityRotation();
             }
 
-            return duplicateKind;
+            return new AuthorizationEventClassification(duplicateKind, eventKey, traceKey, now);
         }
 
         private bool RotateIfNeeded(long now)

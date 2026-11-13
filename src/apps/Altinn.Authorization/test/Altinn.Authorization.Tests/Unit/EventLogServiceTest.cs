@@ -20,6 +20,7 @@ namespace Altinn.Authorization.Tests.Unit;
 public class EventLogServiceTest : IDisposable
 {
     private const string AuditLogEventsInstrument = "altinn.pdp.auditlog.events";
+    private const string AuditLogSuppressedInstrument = "altinn.pdp.auditlog.suppressed";
 
     private readonly Mock<IEventsQueueClient> _queueClientMock = new();
     private readonly Mock<IFeatureManager> _featureManagerMock = new();
@@ -31,15 +32,17 @@ public class EventLogServiceTest : IDisposable
 
     private IMeterFactory MeterFactory => _metrics.GetRequiredService<IMeterFactory>();
 
-    private EventLogService CreateService(TimeProvider? trackerTimeProvider = null)
+    private EventLogService CreateService(TimeProvider? trackerTimeProvider = null, AuditLogSuppressScope suppressScope = AuditLogSuppressScope.Trace)
     {
         var telemetry = new DecisionTelemetry(MeterFactory);
+        var settings = Options.Create(new AuditLogDeduplicationSettings { SuppressScope = suppressScope });
         return new(
             _queueClientMock.Object,
             _timeProvider,
-            new AuthorizationEventDuplicateTracker(Options.Create(new AuditLogDeduplicationSettings()), trackerTimeProvider ?? _timeProvider, telemetry),
+            new AuthorizationEventDuplicateTracker(settings, trackerTimeProvider ?? _timeProvider, telemetry),
             telemetry,
-            _loggerMock.Object);
+            _loggerMock.Object,
+            settings);
     }
 
     [Fact]
@@ -252,6 +255,115 @@ public class EventLogServiceTest : IDisposable
             q => q.EnqueueAuthorizationEvent(It.IsAny<Altinn.Platform.Authorization.Models.EventLog.AuthorizationEvent>(), It.IsAny<CancellationToken>()),
             Times.Once);
     }
+
+    [Fact]
+    public async Task CreateAuthorizationEvent_SuppressionTraceScope_DropsRepeatsInTheSameRequestOnly()
+    {
+        EnableSuppression();
+        QueueReturns(true, true);
+        using var suppressed = new PdpMetricCollector(MeterFactory, AuditLogSuppressedInstrument);
+        var service = CreateService();
+
+        await LogDecision(service, "trace-1");
+        await LogDecision(service, "trace-1");
+        await LogDecision(service, "trace-2");
+
+        VerifyQueued(Times.Exactly(2));
+        Assert.Equal(new object?[] { "trace" }, suppressed.Measurements.Select(tags => tags["auditlog.duplicate"]).ToArray());
+    }
+
+    [Fact]
+    public async Task CreateAuthorizationEvent_SuppressionWindowScope_DropsRepeatsFromOtherRequests_AndStillMeasures()
+    {
+        EnableSuppression();
+        QueueReturns(true);
+        using var events = new PdpMetricCollector(MeterFactory, AuditLogEventsInstrument);
+        using var suppressed = new PdpMetricCollector(MeterFactory, AuditLogSuppressedInstrument);
+        var service = CreateService(suppressScope: AuditLogSuppressScope.Window);
+
+        await LogDecision(service, "trace-1");
+        await LogDecision(service, "trace-2");
+        await LogDecision(service, "trace-2");
+
+        VerifyQueued(Times.Once());
+        Assert.Equal(new object?[] { "none", "window", "trace" }, events.Measurements.Select(tags => tags["auditlog.duplicate"]).ToArray());
+        Assert.Equal(new object?[] { "window", "trace" }, suppressed.Measurements.Select(tags => tags["auditlog.duplicate"]).ToArray());
+    }
+
+    [Fact]
+    public async Task CreateAuthorizationEvent_Suppression_FailedSendIsNotRemembered()
+    {
+        EnableSuppression();
+        QueueReturns(false, true);
+        var service = CreateService();
+
+        await LogDecision(service, "trace-1");
+        await LogDecision(service, "trace-1");
+
+        VerifyQueued(Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task CreateAuthorizationEvent_Suppression_SendThatThrowsIsNotRemembered()
+    {
+        EnableSuppression();
+        _queueClientMock
+            .SetupSequence(q => q.EnqueueAuthorizationEvent(It.IsAny<Altinn.Platform.Authorization.Models.EventLog.AuthorizationEvent>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new OperationCanceledException())
+            .ReturnsAsync(new QueuePostReceipt { Success = true });
+        var service = CreateService();
+
+        await LogDecision(service, "trace-1");
+        await LogDecision(service, "trace-1");
+
+        VerifyQueued(Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task CreateAuthorizationEvent_Suppression_ClassificationFails_QueuesEveryEvent()
+    {
+        EnableSuppression();
+        QueueReturns(true, true);
+        var failingClock = new Mock<TimeProvider>();
+        failingClock.Setup(t => t.GetUtcNow()).Throws(new InvalidOperationException("clock failure"));
+        using var events = new PdpMetricCollector(MeterFactory, AuditLogEventsInstrument);
+        var service = CreateService(trackerTimeProvider: failingClock.Object);
+
+        await LogDecision(service, "trace-1");
+        await LogDecision(service, "trace-1");
+
+        // Nothing is known to be a duplicate, so nothing is dropped.
+        VerifyQueued(Times.Exactly(2));
+        Assert.Equal(new object?[] { "error", "error" }, events.Measurements.Select(tags => tags["auditlog.duplicate"]).ToArray());
+    }
+
+    private void EnableSuppression()
+    {
+        _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.AuditLog)).ReturnsAsync(true);
+        _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.AuditLogDuplicateMeasurement)).ReturnsAsync(true);
+        _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.AuditLogDuplicateSuppression)).ReturnsAsync(true);
+    }
+
+    private void QueueReturns(params bool[] successes)
+    {
+        var sequence = _queueClientMock.SetupSequence(q => q.EnqueueAuthorizationEvent(It.IsAny<Altinn.Platform.Authorization.Models.EventLog.AuthorizationEvent>(), It.IsAny<CancellationToken>()));
+        foreach (bool success in successes)
+        {
+            sequence = sequence.ReturnsAsync(new QueuePostReceipt { Success = success });
+        }
+    }
+
+    private void VerifyQueued(Times times) => _queueClientMock.Verify(
+        q => q.EnqueueAuthorizationEvent(It.IsAny<Altinn.Platform.Authorization.Models.EventLog.AuthorizationEvent>(), It.IsAny<CancellationToken>()),
+        times);
+
+    // The mocked queue completes synchronously, so the event is remembered before this returns.
+    private Task LogDecision(EventLogService service, string traceId) => service.CreateAuthorizationEvent(
+        _featureManagerMock.Object,
+        CreateMinimalRequest(),
+        new DefaultHttpContext { TraceIdentifier = traceId },
+        new XacmlContextResponse(new XacmlContextResult(XacmlContextDecision.Permit, new XacmlContextStatus(new XacmlContextStatusCode("urn:oasis:names:tc:xacml:1.0:status:ok")))),
+        TestContext.Current.CancellationToken);
 
     private static XacmlContextRequest CreateMinimalRequest(string? resourceInstanceId = null)
     {

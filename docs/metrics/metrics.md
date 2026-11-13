@@ -88,7 +88,19 @@ Below is a list of applications that publishes metrics, and what those metrics a
     <tr>
       <td><code>Altinn.Authorization.Pdp</code></td>
       <td><code>altinn.pdp.auditlog.events</code></td>
-      <td>The number of authorization events queued for the audit log, by whether they repeat an event already seen. Recorded when both the <code>AuditLog</code> and <code>AuditLogDuplicateMeasurement</code> feature flags are on; the latter is on by default.</td>
+      <td>The number of authorization events produced for the audit log, by whether they repeat an event already seen. Recorded when both the <code>AuditLog</code> and <code>AuditLogDuplicateMeasurement</code> feature flags are on; the latter is on by default.</td>
+      <td>counter</td>
+      <td>
+        <ul>
+          <li><code>auditlog.duplicate</code></li>
+        </ul>
+      </td>
+      <td>❌</td>
+    </tr>
+    <tr>
+      <td><code>Altinn.Authorization.Pdp</code></td>
+      <td><code>altinn.pdp.auditlog.suppressed</code></td>
+      <td>The number of duplicate authorization events dropped instead of queued for the audit log. Recorded when the <code>AuditLogDuplicateSuppression</code> feature flag is on, which it is not by default; <code>AuditLogDeduplication:SuppressScope</code> sets whether <code>window</code> duplicates are dropped or only <code>trace</code> ones. See ADR-0003 in <code>src/apps/Altinn.Authorization/docs/adr</code>.</td>
       <td>counter</td>
       <td>
         <ul>

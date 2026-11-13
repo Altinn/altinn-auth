@@ -20,5 +20,11 @@
         /// <c>altinn.pdp.auditlog.tracker.capacity_rotations</c>.
         /// </summary>
         public int MaxTrackedEvents { get; set; } = 100_000;
+
+        /// <summary>
+        /// Which duplicates are dropped when <see cref="FeatureFlags.AuditLogDuplicateSuppression"/> is on.
+        /// <see cref="AuditLogSuppressScope.Trace"/> by default, the cautious choice.
+        /// </summary>
+        public AuditLogSuppressScope SuppressScope { get; set; } = AuditLogSuppressScope.Trace;
     }
 }
