@@ -2,7 +2,9 @@
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Xml.Linq;
+using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Constants;
+using Altinn.AccessManagement.Core.Models.AccessList;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.TestUtils;
@@ -14,7 +16,9 @@ using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
+using Altinn.Authorization.Api.Contracts.Authorization;
 using Altinn.Authorization.Api.Contracts.Register;
+using Altinn.Authorization.Api.Contracts.ResourceRegistry;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -47,6 +51,7 @@ public partial class ServiceOwnerConnectionsControllerTest
     /// - <see cref="ResourceRegistryClientMock"/> for the available right keys of the resource
     /// - <see cref="PolicyRetrievalPointWithWrittenPoliciesMock"/> for XACML policy lookups, including delegation policies written during the test
     /// - <see cref="PolicyFactoryMock"/> captures written XACML policies
+    /// - <see cref="AccessListWithBakerJohnsenMock"/> for the access list of ttd_inntektsopplysninger, which is in access list mode
     /// </para>
     /// <para>
     /// Actors:
@@ -83,6 +88,7 @@ public partial class ServiceOwnerConnectionsControllerTest
             {
                 services.AddSingleton<IPolicyFactory, PolicyFactoryMock>();
                 services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointWithWrittenPoliciesMock>();
+                services.AddSingleton<IAccessListsAuthorizationClient, AccessListWithBakerJohnsenMock>();
             });
 
             Fixture.EnsureSeedOnce<AddRevokeResources>(db =>
@@ -870,6 +876,34 @@ public partial class ServiceOwnerConnectionsControllerTest
         }
 
         /// <summary>
+        /// ttd_inntektsopplysninger is in access list mode. An organization that is not on the access list could not
+        /// use the resource, so the service owner gets 400 instead of a delegation the recipient cannot use (#4186).
+        /// </summary>
+        [Fact]
+        public async Task AddResource_FromOrganizationNotOnAccessList_Returns400FromPartyNotOnAccessList()
+        {
+            List<string> rightKeys = await GetAvailableRightKeys(TtdResource, orgCode: "ttd");
+            var request = CreateRequest(Organization(TestData.SvendsenAutomobil), Organization(TestData.MittRegnskap), rightKeys, TtdResource);
+
+            var response = await CreateClient(orgCode: "ttd").PostAsJsonAsync($"{Route}/resources", request, TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            await AssertProblemCode(response, "AM-00053");
+            Assert.Null(await GetRightholderAssignment(TestData.SvendsenAutomobil.Id, TestData.MittRegnskap.Id));
+        }
+
+        /// <summary>
+        /// An organization on the access list of the resource can delegate it.
+        /// </summary>
+        [Fact]
+        public async Task AddResource_FromOrganizationOnAccessList_Returns200AndCreatesAssignmentResource()
+        {
+            await AddResource(Organization(TestData.BakerJohnsen), Organization(TestData.RegnskapNorge), TtdResource, orgCode: "ttd");
+
+            Assert.NotNull(await GetAssignmentResource(TestData.BakerJohnsen.Id, TestData.RegnskapNorge.Id, TtdResourceId));
+        }
+
+        /// <summary>
         /// A service owner without an organization number revokes a delegation of its own resource with the same
         /// consumer organization it delegated with. The revoke guard compares the recorded actor with that
         /// organization, so the assignment resource, the delegation policy and the assignment are removed.
@@ -916,6 +950,26 @@ public partial class ServiceOwnerConnectionsControllerTest
                 Resource = MaskinportenSchemaResource,
                 RightKeys = new RightKeyListDto { DirectRightKeys = ["read"] },
             };
+        }
+
+        /// <summary>
+        /// The access list of ttd_inntektsopplysninger, with Baker Johnsen as the only member, for the two actions
+        /// in the resource policy. Like Resource Registry, it matches the plain action id, such as "read".
+        /// </summary>
+        private sealed class AccessListWithBakerJohnsenMock : IAccessListsAuthorizationClient
+        {
+            private static readonly string[] Actions = ["read", "requestconsent"];
+
+            public Task<AccessListAuthorizationResponse> AuthorizePartyForAccessList(AccessListAuthorizationRequest request, CancellationToken cancellationToken = default)
+            {
+                bool isMember = request.Subject.Value.IsPartyUuid(out Guid partyUuid) && partyUuid == TestData.BakerJohnsen.Id
+                    && request.Resource.Value.IsResourceId(out ResourceIdentifier resource) && resource.ToString() == TtdResource
+                    && request.Action.Value.IsActionId(out ActionIdentifier action) && Actions.Contains(action.ToString());
+                return Task.FromResult(new AccessListAuthorizationResponse
+                {
+                    Result = isMember ? AccessListAuthorizationResult.Authorized : AccessListAuthorizationResult.NotAuthorized,
+                });
+            }
         }
     }
 
