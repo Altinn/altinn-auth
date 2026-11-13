@@ -1,0 +1,62 @@
+meta {
+	name: 02_AND_ApproverCanDelegateAtLeastTwoRights
+	type: http
+	seq: 2
+}
+
+get {
+	url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources/delegationcheck?party={{party}}&resource={{resource}}
+	body: none
+	auth: inherit
+}
+
+params:query {
+	party: {{party}}
+	resource: {{resource}}
+}
+
+docs {
+	AND the approver can delegate at least two right(s) on the resource.
+
+	GET /accessmanagement/api/v1/enduser/connections/resources/delegationcheck?party=<approver>&resource=<id>
+
+	Returns one entry per right in the resource policy. `right.key` is the opaque right key
+	the request endpoints take, and `result` says whether the authenticated user can delegate
+	it on behalf of the party. Right keys are hashes, not names, so the scenario looks them up
+	instead of hard-coding them: the first delegable key is stored as `rk_keyA` and the second
+	as `rk_keyB`.
+}
+
+script:pre-request {
+	const { skipOutsideEnabledEnvironments, testdata, loginAs } = require("./test/DelegationRequest/ResourceRequestRightKeysV2/helpers.js");
+	if (skipOutsideEnabledEnvironments()) {
+		return;
+	}
+
+	const td = testdata();
+
+	bru.setVar("party", td.approver.partyUuid);
+	bru.setVar("resource", td.resource);
+
+	await loginAs(td.approver);
+}
+
+script:post-response {
+	const { delegableKeys } = require("./test/DelegationRequest/ResourceRequestRightKeysV2/helpers.js");
+	const keys = res.status === 200 ? delegableKeys(res.getBody()) : [];
+
+	bru.setVar("rk_keyA", keys[0] || null);
+	bru.setVar("rk_keyB", keys[1] || null);
+}
+
+tests {
+	const { delegableKeys } = require("./test/DelegationRequest/ResourceRequestRightKeysV2/helpers.js");
+
+	test("AND the delegation check returns 200", function() {
+		expect(res.status).to.equal(200);
+	});
+
+	test("AND the approver can delegate at least two right(s) on the resource", function() {
+		expect(delegableKeys(res.getBody())).to.have.length.of.at.least(2);
+	});
+}
