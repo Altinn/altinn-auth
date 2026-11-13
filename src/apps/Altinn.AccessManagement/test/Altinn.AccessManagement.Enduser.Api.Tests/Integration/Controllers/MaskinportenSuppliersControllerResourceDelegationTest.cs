@@ -93,7 +93,7 @@ public class MaskinportenSuppliersControllerResourceDelegationTest : IClassFixtu
         Assert.True(response.StatusCode == HttpStatusCode.BadRequest, $"Expected BadRequest but got {response.StatusCode}. Body: {body}");
 
         using var problem = JsonDocument.Parse(body);
-        Assert.Equal("The resource is not available for delegation", problem.RootElement.GetProperty("detail").GetString());
+        Assert.Equal("The resource is not available for delegation", problem.RootElement.GetProperty("title").GetString());
     }
 
     private HttpClient CreateClient(Guid partyUuid, params string[] scopes)

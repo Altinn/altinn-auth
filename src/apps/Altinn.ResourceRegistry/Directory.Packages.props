@@ -3,21 +3,20 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
-    <PackageVersion Include="Altinn.Authorization.ABAC" Version="0.3.0" />
     <PackageVersion Include="Altinn.Authorization.ModelUtils" Version="4.0.0" />
     <PackageVersion Include="Altinn.Authorization.ProblemDetails.Abstractions" Version="6.0.0" />
     <PackageVersion Include="Altinn.Authorization.ProblemDetails" Version="6.0.0" />
     <PackageVersion Include="Altinn.Authorization.ServiceDefaults.Npgsql.Yuniql" Version="6.0.0" />
     <PackageVersion Include="Altinn.Authorization.ServiceDefaults.Npgsql" Version="6.0.0" />
     <PackageVersion Include="Altinn.Authorization.ServiceDefaults" Version="6.0.0" />
-    <PackageVersion Include="Altinn.Common.AccessToken" Version="5.1.17" />
+    <PackageVersion Include="Altinn.Common.AccessToken" Version="5.1.19" />
     <PackageVersion Include="Altinn.Common.AccessTokenClient" Version="3.2.12" />
     <PackageVersion Include="Altinn.Common.PEP" Version="4.2.3" />
     <PackageVersion Include="Altinn.Platform.Storage.Interface" Version="4.7.2" />
     <PackageVersion Include="Altinn.Swashbuckle.Abstractions" Version="4.0.0" />
     <PackageVersion Include="Altinn.Urn.Swashbuckle" Version="5.0.0" />
     <PackageVersion Include="Altinn.Urn" Version="5.0.0" />
-    <PackageVersion Include="AngleSharp" Version="1.9.0" />
+    <PackageVersion Include="AngleSharp" Version="1.10.1" />
     <PackageVersion Include="Azure.Extensions.AspNetCore.Configuration.Secrets" Version="1.5.2" />
     <PackageVersion Include="Azure.Identity" Version="1.21.0" />
     <PackageVersion Include="Azure.Security.KeyVault.Certificates" Version="4.10.0" />

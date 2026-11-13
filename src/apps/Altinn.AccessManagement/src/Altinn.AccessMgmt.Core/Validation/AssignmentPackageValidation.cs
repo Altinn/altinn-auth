@@ -13,7 +13,7 @@ public static class AssignmentPackageValidation
     {
         if (packages is { } && packages.Any())
         {
-            return (ref ValidationErrorBuilder errors) =>
+            return (ref ValidationProblemBuilder errors) =>
                 errors.Add(ValidationErrors.AssignmentHasActiveConnections, $"QUERY/{paramName}", [new("packages", $"following packages have active assignments [{string.Join(",", packages.Select(p => p.Id.ToString()))}].")]);
         }
 

@@ -3,7 +3,7 @@ using System.Xml;
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Utils;
 using Altinn.Authorization.ABAC.Xacml;
-using Altinn.Platform.Authorization.Constants;
+using Altinn.Authorization.Xacml.Constants;
 using Altinn.Platform.Authorization.Helpers.Extensions;
 using Altinn.Platform.Authorization.Models;
 
@@ -51,35 +51,6 @@ namespace Altinn.Platform.Authorization.Helpers
         }
 
         /// <summary>
-        /// Finds the correct policy path based on a XacmlContextRequest
-        /// </summary>
-        /// <param name="request">Xacml context request to use for finding the org and app for building the path</param>
-        /// <returns></returns>
-        public static string GetPolicyPath(XacmlContextRequest request)
-        {
-            string org = string.Empty;
-            string app = string.Empty;
-
-            foreach (XacmlContextAttributes attr in request.Attributes.Where(attr => attr.Category.OriginalString.Equals(XacmlConstants.MatchAttributeCategory.Resource)))
-            {
-                foreach (XacmlAttribute asd in attr.Attributes)
-                {
-                    if (asd.AttributeId.OriginalString.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute))
-                    {
-                        org = asd.AttributeValues.FirstOrDefault()?.Value ?? string.Empty;
-                    }
-
-                    if (asd.AttributeId.OriginalString.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute))
-                    {
-                        app = asd.AttributeValues.FirstOrDefault()?.Value ?? string.Empty;
-                    }
-                }
-            }
-
-            return GetAltinnAppsPolicyPath(org, app);
-        }
-
-        /// <summary>
         /// Returens the policy resource type based on XacmlContextRequest
         /// </summary>
         /// <param name="request">The requestId</param>
@@ -107,7 +78,7 @@ namespace Altinn.Platform.Authorization.Helpers
                         app = xacmlAtr.AttributeValues.First().Value;
                     }
 
-                    if (xacmlAtr.AttributeId.OriginalString.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistry))
+                    if (xacmlAtr.AttributeId.OriginalString.Equals(AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute))
                     {
                         string resourceValue = xacmlAtr.AttributeValues.First().Value;
                         if (resourceValue.StartsWith("app_"))
@@ -136,27 +107,6 @@ namespace Altinn.Platform.Authorization.Helpers
             {
                 return PolicyResourceType.Undefined;
             }
-        }
-
-        /// <summary>
-        /// Builds the policy path based on org and app names
-        /// </summary>
-        /// <param name="org">The organization name/identifier</param>
-        /// <param name="app">The altinn app name</param>
-        /// <returns></returns>
-        public static string GetAltinnAppsPolicyPath(string org, string app)
-        {
-            if (string.IsNullOrWhiteSpace(org))
-            {
-                throw new ArgumentException("Org was not defined");
-            }
-
-            if (string.IsNullOrWhiteSpace(app))
-            {
-                throw new ArgumentException("App was not defined");
-            }
-
-            return $"{org.AsFileName()}/{app.AsFileName()}/policy.xml";
         }
 
         /// <summary>
@@ -214,23 +164,6 @@ namespace Altinn.Platform.Authorization.Helpers
             }
 
             return $"{org.AsFileName()}/{app.AsFileName()}/{offeredBy.AsFileName()}/{coveredByPrefix}{coveredBy.AsFileName()}/delegationpolicy.xml";
-        }
-
-        /// <summary>
-        /// Takes the file IO stream and parses the policy file to a XacmlPolicy <see cref="XacmlPolicy"/>
-        /// </summary>
-        /// <param name="stream">The file IO stream</param>
-        /// <returns>XacmlPolicy</returns>
-        public static XacmlPolicy ParsePolicy(Stream stream)
-        {
-            stream.Position = 0;
-            XacmlPolicy policy;
-            using (XmlReader reader = XmlReader.Create(stream))
-            {
-                policy = XacmlParser.ParseXacmlPolicy(reader);
-            }
-
-            return policy;
         }
 
         /// <summary>
@@ -419,29 +352,6 @@ namespace Altinn.Platform.Authorization.Helpers
             }
 
             return resourcePolicies.Values.ToList();
-        }
-
-        /// <summary>
-        /// Gets the authentication level requirement from the obligation expression of the XacmlPolicy if specified 
-        /// </summary>
-        /// <param name="policy">The policy</param>
-        /// <returns>Minimum authentication level requirement</returns>
-        public static int GetMinimumAuthenticationLevelFromXacmlPolicy(XacmlPolicy policy)
-        {
-            foreach (XacmlObligationExpression oblExpr in policy.ObligationExpressions)
-            {
-                foreach (XacmlAttributeAssignmentExpression attrExpr in oblExpr.AttributeAssignmentExpressions)
-                {
-                    if (attrExpr.Category.OriginalString == AltinnXacmlConstants.MatchAttributeCategory.MinimumAuthenticationLevel &&
-                        attrExpr.Property is XacmlAttributeValue attrValue &&
-                        int.TryParse(attrValue.Value, out int minAuthLevel))
-                    {
-                        return minAuthLevel;
-                    }
-                }
-            }
-
-            return 0;
         }
 
         private static void AddActionsToResourcePolicy(List<ResourceAction> actions, ResourcePolicy resourcePolicy)

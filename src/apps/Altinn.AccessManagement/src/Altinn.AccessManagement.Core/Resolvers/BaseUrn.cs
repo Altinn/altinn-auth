@@ -1,4 +1,4 @@
-﻿using Altinn.AccessManagement.Core.Constants;
+﻿using Altinn.Authorization.Xacml.Constants;
 
 namespace Altinn.AccessManagement.Core.Resolvers;
 

@@ -11,6 +11,7 @@ using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Altinn.Authorization.Api.Contracts.Consent;
 using Altinn.Authorization.ProblemDetails;
+using Altinn.Authorization.Xacml.Constants;
 using Altinn.Common.PEP.Helpers;
 using Altinn.Common.PEP.Interfaces;
 using Microsoft.AspNetCore.Authorization;
@@ -172,7 +173,7 @@ namespace Altinn.AccessManagement.Api.Enterprise.Controllers
                 return Unauthorized();
             }
 
-            ValidationErrorBuilder errors = default;
+            ValidationProblemBuilder errors = default;
 
             if (createdAfter.HasValue && createdBefore.HasValue && createdAfter >= createdBefore)
             {

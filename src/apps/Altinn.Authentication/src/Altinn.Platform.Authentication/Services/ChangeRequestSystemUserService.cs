@@ -586,6 +586,12 @@ public class ChangeRequestSystemUserService(
     /// </summary>
     private async Task<Result<bool>> ValidateRequiredRightsAndAccessPackages(ChangeRequestResponse validateSet, RegisteredSystemResponse systemInfo, CancellationToken cancellationToken)
     {
+        // Unwanted Rights are not matched against the System, but must have the same shape
+        if (AuthenticationHelper.HasMalformedRight(validateSet.UnwantedRights))
+        {
+            return Problem.Rights_MustHaveOneResource;
+        }
+
         if (validateSet.RequiredRights is { Count: > 0 })
         {
             Result<bool> valRights = await systemUserService.ValidateRights(validateSet.RequiredRights, systemInfo, cancellationToken);

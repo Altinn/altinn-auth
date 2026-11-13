@@ -45,6 +45,6 @@ tests {
     const body = res.getBody();
     expect(body.status).to.equal(400);
     expect(body.code).to.equal("AM-00002");
-    expect(body.detail).to.equal("Consent have wrong status to be consented");
+    expect(body.title).to.equal("Consent have wrong status to be consented");
   });
 }

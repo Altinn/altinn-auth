@@ -807,6 +807,29 @@ namespace Altinn.Platform.Authentication.Helpers
         }
 
         /// <summary>
+        /// Checks if any Right is neither empty nor one urn:altinn:resource attribute with a value.
+        /// </summary>
+        public static bool HasMalformedRight(List<Right>? rights)
+        {
+            return rights?.Any(IsMalformed) ?? false;
+        }
+
+        /// <summary>
+        /// Gets the indexes of the Rights that are neither empty nor one urn:altinn:resource attribute with a value.
+        /// </summary>
+        public static List<int> GetMalformedRightIndexes(List<Right>? rights)
+        {
+            return rights?.Index().Where(right => IsMalformed(right.Item)).Select(right => right.Index).ToList() ?? [];
+        }
+
+        private static bool IsMalformed(Right? right) => right is null || !IsAtMostOneResource(right);
+
+        private static bool IsAtMostOneResource(Right right) =>
+            right.Resource is []
+            || (right.Resource is [{ Id: AttributeIdentifier.ResourceRegistryAttribute } attribute]
+                && !string.IsNullOrWhiteSpace(attribute.Value));
+
+        /// <summary>
         /// Checks if the AccessPackages list has duplicate values
         /// </summary>
         /// <param name="accessPackages">The list of access packages to check</param>
