@@ -365,7 +365,7 @@ public partial class ConnectionService(
 
     /// <summary>
     /// Looks up everyone who last changed the packages, resources and instances on the connections, in one query.
-    /// Used in both directions; <see cref="DtoMapper.ConvertPerformedBy"/> keeps personal identifiers out of the response.
+    /// Used in both directions; <see cref="DtoMapper.ConvertAuditEntity"/> keeps personal identifiers out of the response.
     /// Returns <c>null</c> without walking the connections when change info is turned off, and makes no query when no change is recorded.
     /// </summary>
     private async Task<IReadOnlyDictionary<Guid, Entity>> GetPerformers(IEnumerable<ConnectionQueryExtendedRecord> connections, bool includeChangeInfo, CancellationToken cancellationToken)

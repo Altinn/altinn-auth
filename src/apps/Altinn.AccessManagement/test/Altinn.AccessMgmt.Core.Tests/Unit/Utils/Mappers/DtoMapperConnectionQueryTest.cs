@@ -895,7 +895,7 @@ public class DtoMapperConnectionQueryTest
     }
 
     // ══════════════════════════════════════════════════════════════════════════
-    // Change info: PerformedBy and FromDate
+    // Change info: AuditInfo (LastModified and LastModifiedBy)
     // ══════════════════════════════════════════════════════════════════════════
     private static readonly Guid PersonTypeId = new("bfe09e70-e868-44b3-8d81-dfe0e13e058a");
 
@@ -937,16 +937,16 @@ public class DtoMapperConnectionQueryTest
         var permissions = result.Should().ContainSingle().Subject.Permissions.ToList();
         permissions.Should().HaveCount(2);
         var permissionA = permissions.Single(p => p.To.Id == recordA.ToId);
-        permissionA.FromDate.Should().Be(dateA);
-        permissionA.PerformedBy!.Id.Should().Be(performerA.Id);
+        permissionA.AuditInfo!.LastModified.Should().Be(dateA);
+        permissionA.AuditInfo!.LastModifiedBy!.Id.Should().Be(performerA.Id);
 
         var permissionB = permissions.Single(p => p.To.Id == recordB.ToId);
-        permissionB.FromDate.Should().Be(dateB);
-        permissionB.PerformedBy!.Id.Should().Be(performerB.Id);
+        permissionB.AuditInfo!.LastModified.Should().Be(dateB);
+        permissionB.AuditInfo!.LastModifiedBy!.Id.Should().Be(performerB.Id);
     }
 
     [Fact]
-    public void ConvertPackages_RolePackageWithoutChangeInfo_LeavesFieldsNull()
+    public void ConvertPackages_RolePackageWithoutChangeInfo_LeavesAuditInfoNull()
     {
         var pkg = MakeQueryPackage();
         var record = MakeRecord(MakeEntity("From"), MakeEntity("To"), MakeRole("dagl"), packages: [pkg]);
@@ -954,14 +954,13 @@ public class DtoMapperConnectionQueryTest
         var result = DtoMapper.ConvertPackages([record], new Dictionary<Guid, Entity>());
 
         var permission = result.Single().Permissions.Single();
-        permission.FromDate.Should().BeNull();
-        permission.PerformedBy.Should().BeNull();
+        permission.AuditInfo.Should().BeNull();
     }
 
     [Fact]
-    public void ConvertPackages_WithoutPerformers_ReturnsFromDateButNotPerformedBy()
+    public void ConvertPackages_WithoutPerformers_ReturnsLastModifiedButNotLastModifiedBy()
     {
-        // No performer lookup: FromDate is still set from the change info.
+        // No performer lookup: LastModified is still set from the change info.
         var pkg = MakeQueryPackage();
         var performer = MakeEntity("Performer");
         var date = new DateTimeOffset(2026, 3, 3, 0, 0, 0, TimeSpan.Zero);
@@ -970,8 +969,8 @@ public class DtoMapperConnectionQueryTest
 
         var permission = DtoMapper.ConvertPackages([record], performers: null).Single().Permissions.Single();
 
-        permission.FromDate.Should().Be(date);
-        permission.PerformedBy.Should().BeNull();
+        permission.AuditInfo!.LastModified.Should().Be(date);
+        permission.AuditInfo.LastModifiedBy.Should().BeNull();
     }
 
     [Fact]
@@ -984,8 +983,8 @@ public class DtoMapperConnectionQueryTest
 
         var permission = DtoMapper.ConvertResources([record], new Dictionary<Guid, Entity> { [performer.Id] = performer }).Single().Permissions.Single();
 
-        permission.FromDate.Should().Be(date);
-        permission.PerformedBy!.Id.Should().Be(performer.Id);
+        permission.AuditInfo!.LastModified.Should().Be(date);
+        permission.AuditInfo!.LastModifiedBy!.Id.Should().Be(performer.Id);
     }
 
     [Fact]
@@ -997,16 +996,16 @@ public class DtoMapperConnectionQueryTest
 
         var permission = DtoMapper.ConvertToPermission(record, new ConnectionQueryChangeInfo(date, performer.Id), new Dictionary<Guid, Entity> { [performer.Id] = performer });
 
-        permission.FromDate.Should().Be(date);
-        permission.PerformedBy!.Name.Should().Be("Performer");
+        permission.AuditInfo!.LastModified.Should().Be(date);
+        permission.AuditInfo!.LastModifiedBy!.Name.Should().Be("Performer");
     }
 
     [Fact]
-    public void ConvertPerformedBy_Person_IncludesAltinnIdsButNeverPersonalIdentifiers()
+    public void ConvertAuditEntity_Person_IncludesAltinnIdsButNoOrganizationIdentifier()
     {
         var person = MakePerson();
 
-        var dto = DtoMapper.ConvertPerformedBy(person);
+        var dto = DtoMapper.ConvertAuditEntity(person);
 
         dto.Id.Should().Be(person.Id);
         dto.Name.Should().Be(person.Name);
@@ -1014,32 +1013,38 @@ public class DtoMapperConnectionQueryTest
         dto.PartyId.Should().Be(50001234);
         dto.UserId.Should().Be(20001234);
         dto.Username.Should().Be("sirislemdal");
-        dto.PersonIdentifier.Should().BeNull();
-        dto.DateOfBirth.Should().BeNull();
         dto.OrganizationIdentifier.Should().BeNull();
-        dto.Parent.Should().BeNull();
     }
 
     [Fact]
-    public void ConvertToPermission_PersonPerformer_HidesPersonIdentifierAndDateOfBirth()
+    public void AuditEntityDto_HasNoFieldsForPersonalIdentifiers()
+    {
+        // The contract itself must not be able to carry these, not just leave them empty.
+        var properties = typeof(global::Altinn.Authorization.Api.Contracts.AccessManagement.AuditEntityDto).GetProperties().Select(p => p.Name).ToList();
+
+        properties.Should().NotContain(["PersonIdentifier", "DateOfBirth", "DateOfDeath", "Parent", "Children"]);
+    }
+
+    [Fact]
+    public void ConvertToPermission_PersonPerformer_SerializesWithoutPersonIdentifierOrDateOfBirth()
     {
         var person = MakePerson();
         var record = MakeRecord(MakeEntity("From"), MakeEntity("To"), MakeRole("rettighetshaver"));
 
         var permission = DtoMapper.ConvertToPermission(record, new ConnectionQueryChangeInfo(DateTimeOffset.UtcNow, person.Id), new Dictionary<Guid, Entity> { [person.Id] = person });
+        var json = System.Text.Json.JsonSerializer.Serialize(permission.AuditInfo);
 
-        permission.PerformedBy!.Id.Should().Be(person.Id);
-        permission.PerformedBy.PersonIdentifier.Should().BeNull();
-        permission.PerformedBy.DateOfBirth.Should().BeNull();
+        permission.AuditInfo!.LastModifiedBy!.Id.Should().Be(person.Id);
+        json.Should().NotContain(person.PersonIdentifier).And.NotContain("1970-01-01");
     }
 
     [Fact]
-    public void ConvertPerformedBy_Organization_IncludesOrganizationIdentifier()
+    public void ConvertAuditEntity_Organization_IncludesOrganizationIdentifier()
     {
         var org = MakeEntity("Org");
         org.OrganizationIdentifier = "910000000";
 
-        DtoMapper.ConvertPerformedBy(org).OrganizationIdentifier.Should().Be("910000000");
+        DtoMapper.ConvertAuditEntity(org).OrganizationIdentifier.Should().Be("910000000");
     }
 
     [Fact]

@@ -17,13 +17,13 @@ namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers;
 
 /// <summary>
 /// Partial test class for ConnectionsController, focused on who last changed an access and when
-/// (<see cref="PermissionDto.PerformedBy"/> and <see cref="PermissionDto.FromDate"/>) on the
+/// (<see cref="PermissionDto.AuditInfo"/>) on the
 /// access package, resource and instance endpoints.
 /// </summary>
 public partial class ConnectionsControllerTest
 {
     /// <summary>
-    /// Tests for <see cref="PermissionDto.PerformedBy"/> and <see cref="PermissionDto.FromDate"/>.
+    /// Tests for <see cref="PermissionDto.AuditInfo"/>.
     /// </summary>
     /// <remarks>
     /// <para>
@@ -247,21 +247,21 @@ public partial class ConnectionsControllerTest
 
         private static void AssertChangedBySeedPerformer(PermissionDto permission, string body)
         {
-            Assert.Equal(ChangedAt, permission.FromDate);
-            Assert.NotNull(permission.PerformedBy);
-            Assert.Equal(Performer, permission.PerformedBy.Id);
-            Assert.Equal("Siri Slemdal", permission.PerformedBy.Name);
-            Assert.Equal(50960004, permission.PerformedBy.PartyId);
-            Assert.Equal(50960004, permission.PerformedBy.UserId);
-            Assert.Equal("sirislemdal", permission.PerformedBy.Username);
-            Assert.False(string.IsNullOrEmpty(permission.PerformedBy.Type));
-            AssertNoPersonalData(permission.PerformedBy, body);
+            Assert.NotNull(permission.AuditInfo);
+            Assert.Equal(ChangedAt, permission.AuditInfo.LastModified);
+            var lastModifiedBy = permission.AuditInfo.LastModifiedBy;
+            Assert.NotNull(lastModifiedBy);
+            Assert.Equal(Performer, lastModifiedBy.Id);
+            Assert.Equal("Siri Slemdal", lastModifiedBy.Name);
+            Assert.Equal(50960004, lastModifiedBy.PartyId);
+            Assert.Equal(50960004, lastModifiedBy.UserId);
+            Assert.Equal("sirislemdal", lastModifiedBy.Username);
+            Assert.False(string.IsNullOrEmpty(lastModifiedBy.Type));
+            AssertNoPersonalData(body);
         }
 
-        private static void AssertNoPersonalData(CompactEntityDto performedBy, string body)
+        private static void AssertNoPersonalData(string body)
         {
-            Assert.Null(performedBy.PersonIdentifier);
-            Assert.Null(performedBy.DateOfBirth);
             Assert.DoesNotContain(PerformerPersonIdentifier, body);
             Assert.DoesNotContain(PerformerDateOfBirth.ToString("yyyy-MM-dd"), body);
         }
@@ -271,7 +271,7 @@ public partial class ConnectionsControllerTest
         /// carries who gave it and when, without the performer's personal identifiers.
         /// </summary>
         [Fact]
-        public async Task GetPackages_DirectAssignment_ToOthers_ReturnsPerformedByAndFromDate()
+        public async Task GetPackages_DirectAssignment_ToOthers_ReturnsAuditInfo()
         {
             HttpClient client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
 
@@ -288,7 +288,7 @@ public partial class ConnectionsControllerTest
         /// this direction too, still without the performer's personal identifiers.
         /// </summary>
         [Fact]
-        public async Task GetPackages_DirectAssignment_FromOthers_ReturnsPerformedByAndFromDate()
+        public async Task GetPackages_DirectAssignment_FromOthers_ReturnsAuditInfo()
         {
             HttpClient client = CreateClient(Recipient, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
 
@@ -362,8 +362,7 @@ public partial class ConnectionsControllerTest
             Assert.NotEmpty(rolePermissions);
             Assert.All(rolePermissions, p =>
             {
-                Assert.Null(p.FromDate);
-                Assert.Null(p.PerformedBy);
+                Assert.Null(p.AuditInfo);
             });
         }
 
@@ -382,17 +381,18 @@ public partial class ConnectionsControllerTest
 
             var package = Assert.Single(result.Items, p => p.Package.Id == PackageConstants.SalarySpecialCategory.Id);
             var permission = Assert.Single(package.Permissions);
-            Assert.NotNull(permission.FromDate);
-            Assert.NotNull(permission.PerformedBy);
-            Assert.Equal(SystemEntityConstants.StaticDataIngest.Id, permission.PerformedBy.Id);
-            Assert.Equal(EntityTypeConstants.Internal.Entity.Name, permission.PerformedBy.Type);
+            Assert.NotNull(permission.AuditInfo);
+            var lastModifiedBy = permission.AuditInfo.LastModifiedBy;
+            Assert.NotNull(lastModifiedBy);
+            Assert.Equal(SystemEntityConstants.StaticDataIngest.Id, lastModifiedBy.Id);
+            Assert.Equal(EntityTypeConstants.Internal.Entity.Name, lastModifiedBy.Type);
         }
 
         /// <summary>
         /// Malin lists the resources Dumbo has given to Kari, which carry the change info of the assignment resource.
         /// </summary>
         [Fact]
-        public async Task GetResources_DirectAssignment_ToOthers_ReturnsPerformedByAndFromDate()
+        public async Task GetResources_DirectAssignment_ToOthers_ReturnsAuditInfo()
         {
             HttpClient client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
 
@@ -408,7 +408,7 @@ public partial class ConnectionsControllerTest
         /// Kari lists the resources she has received from Dumbo, with who gave them and when.
         /// </summary>
         [Fact]
-        public async Task GetResources_DirectAssignment_FromOthers_ReturnsPerformedByAndFromDate()
+        public async Task GetResources_DirectAssignment_FromOthers_ReturnsAuditInfo()
         {
             HttpClient client = CreateClient(Recipient, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
 
@@ -424,7 +424,7 @@ public partial class ConnectionsControllerTest
         /// Malin lists the instances Dumbo has given to Kari, which carry the change info of the assignment instance.
         /// </summary>
         [Fact]
-        public async Task GetInstances_DirectAssignment_ToOthers_ReturnsPerformedByAndFromDate()
+        public async Task GetInstances_DirectAssignment_ToOthers_ReturnsAuditInfo()
         {
             HttpClient client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
 
@@ -440,7 +440,7 @@ public partial class ConnectionsControllerTest
         /// Kari lists the instances she has received from Dumbo, with who gave them and when.
         /// </summary>
         [Fact]
-        public async Task GetInstances_DirectAssignment_FromOthers_ReturnsPerformedByAndFromDate()
+        public async Task GetInstances_DirectAssignment_FromOthers_ReturnsAuditInfo()
         {
             HttpClient client = CreateClient(Recipient, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_FROMOTHERS_READ);
 
@@ -455,7 +455,7 @@ public partial class ConnectionsControllerTest
 
     /// <summary>
     /// With <see cref="AccessMgmtFeatureFlags.EnableEnduserConnectionsChangeInfo"/> turned off, the same access as in
-    /// <see cref="ChangeInfo"/> is returned without <see cref="PermissionDto.PerformedBy"/> and <see cref="PermissionDto.FromDate"/>.
+    /// <see cref="ChangeInfo"/> is returned without <see cref="PermissionDto.AuditInfo"/>.
     /// </summary>
     [IntegrationTest]
     public class ChangeInfoDisabled : IClassFixture<ApiFixture>
@@ -483,8 +483,7 @@ public partial class ConnectionsControllerTest
 
         private static void AssertNoChangeInfo(PermissionDto permission)
         {
-            Assert.Null(permission.FromDate);
-            Assert.Null(permission.PerformedBy);
+            Assert.Null(permission.AuditInfo);
         }
 
         [Fact]

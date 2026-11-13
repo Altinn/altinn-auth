@@ -79,7 +79,7 @@ public partial class DtoMapper : IDtoMapper
     /// Groups the connections per package or resource, with one permission per connection.
     /// </summary>
     /// <param name="res">The connection records.</param>
-    /// <param name="performers">Entities that made changes, by id. <c>null</c> leaves <c>PerformedBy</c> empty.</param>
+    /// <param name="performers">Entities that made changes, by id. <c>null</c> leaves <c>LastModifiedBy</c> empty.</param>
     public static List<PackagePermissionDto> ConvertPackages(IEnumerable<ConnectionQueryExtendedRecord> res, IReadOnlyDictionary<Guid, Entity> performers = null)
     {
         var records = res.ToList();
@@ -113,7 +113,7 @@ public partial class DtoMapper : IDtoMapper
     /// Groups the connections per package or resource, with one permission per connection.
     /// </summary>
     /// <param name="res">The connection records.</param>
-    /// <param name="performers">Entities that made changes, by id. <c>null</c> leaves <c>PerformedBy</c> empty.</param>
+    /// <param name="performers">Entities that made changes, by id. <c>null</c> leaves <c>LastModifiedBy</c> empty.</param>
     public static List<ResourcePermissionDto> ConvertResources(IEnumerable<ConnectionQueryExtendedRecord> res, IReadOnlyDictionary<Guid, Entity> performers = null)
     {
         var records = res.ToList();

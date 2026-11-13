@@ -58,29 +58,41 @@ public partial class DtoMapper : IDtoMapper
     /// </summary>
     /// <param name="connection">The connection record.</param>
     /// <param name="changeInfo">Change info for exactly this combination of connection and package, resource or instance, or <c>null</c>.</param>
-    /// <param name="performers">Entities that made changes, by id. <c>null</c> leaves <c>PerformedBy</c> empty.</param>
+    /// <param name="performers">Entities that made changes, by id. <c>null</c> leaves <c>LastModifiedBy</c> empty.</param>
     public static PermissionDto ConvertToPermission(ConnectionQueryExtendedRecord connection, ConnectionQueryChangeInfo changeInfo, IReadOnlyDictionary<Guid, Entity> performers)
     {
         var permission = ConvertToPermission(connection);
-        if (changeInfo is null)
-        {
-            return permission;
-        }
-
-        permission.FromDate = changeInfo.ValidFrom;
-        if (performers is not null && changeInfo.ChangedBy is Guid changedBy && performers.TryGetValue(changedBy, out var performer))
-        {
-            permission.PerformedBy = ConvertPerformedBy(performer);
-        }
-
+        permission.AuditInfo = ConvertAuditInfo(changeInfo, performers);
         return permission;
     }
 
     /// <summary>
-    /// Converts the entity that performed a change. Fills only id, name, type, variant, party id, user id, username and,
-    /// for organizations, the organization identifier, and never person identifiers or dates of birth.
+    /// Converts change info to <see cref="AuditInfoDto"/>, or <c>null</c> when there is none.
     /// </summary>
-    public static CompactEntityDto ConvertPerformedBy(Entity entity)
+    /// <param name="changeInfo">Who last changed the access and when, or <c>null</c>.</param>
+    /// <param name="performers">Entities that made changes, by id. <c>null</c> leaves <c>LastModifiedBy</c> empty.</param>
+    public static AuditInfoDto ConvertAuditInfo(ConnectionQueryChangeInfo changeInfo, IReadOnlyDictionary<Guid, Entity> performers)
+    {
+        if (changeInfo is null)
+        {
+            return null;
+        }
+
+        var auditInfo = new AuditInfoDto() { LastModified = changeInfo.ValidFrom };
+        if (performers is not null && changeInfo.ChangedBy is Guid changedBy && performers.TryGetValue(changedBy, out var performer))
+        {
+            auditInfo.LastModifiedBy = ConvertAuditEntity(performer);
+        }
+
+        return auditInfo;
+    }
+
+    /// <summary>
+    /// Converts the entity that made a change. Fills only id, name, type, variant, party id, user id, username and,
+    /// for organizations, the organization identifier. <see cref="AuditEntityDto"/> has no fields for person
+    /// identifiers or dates of birth.
+    /// </summary>
+    public static AuditEntityDto ConvertAuditEntity(Entity entity)
     {
         if (entity is null)
         {
@@ -90,7 +102,7 @@ public partial class DtoMapper : IDtoMapper
         EntityTypeConstants.TryGetById(entity.TypeId, out var type);
         EntityVariantConstants.TryGetById(entity.VariantId, out var variant);
 
-        return new CompactEntityDto()
+        return new AuditEntityDto()
         {
             Id = entity.Id,
             Name = entity.Name,

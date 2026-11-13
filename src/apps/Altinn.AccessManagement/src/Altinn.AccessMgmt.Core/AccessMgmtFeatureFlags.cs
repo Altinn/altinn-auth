@@ -187,10 +187,10 @@ public static class AccessMgmtFeatureFlags
     public const string EnableEnduserMaskinportenActivityLogApi = "AccessManagement.Enduser.MaskinportenActivityLogApi";
 
     /// <summary>
-    /// Includes who last changed each access and when (<c>performedBy</c> and <c>fromDate</c> on permissions) in the
+    /// Includes who last changed each access and when (<c>auditInfo</c> on permissions) in the
     /// enduser connections endpoints for access packages, resources and instances. Reading the audit columns turns
     /// index-only scans into index scans with heap lookups, so turning the flag off removes that extra load at runtime;
-    /// the fields are then <c>null</c>.
+    /// <c>auditInfo</c> is then <c>null</c>.
     /// </summary>
     public const string EnableEnduserConnectionsChangeInfo = "AccessManagement.Enduser.ConnectionsChangeInfo";
 }
