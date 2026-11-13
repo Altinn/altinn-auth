@@ -1,9 +1,13 @@
 ﻿using Altinn.Platform.Storage.Interface.Models;
 using Altinn.ResourceRegistry.Controllers;
 using Altinn.ResourceRegistry.Core;
+using Altinn.ResourceRegistry.Core.AccessLists;
 using Altinn.ResourceRegistry.Core.Constants;
 using Altinn.ResourceRegistry.Core.Enums;
 using Altinn.ResourceRegistry.Core.Models;
+using Altinn.ResourceRegistry.Core.ServiceOwners;
+using Altinn.ResourceRegistry.Core.Services;
+using Altinn.ResourceRegistry.Core.Services.Interfaces;
 using Altinn.ResourceRegistry.Models;
 using Altinn.ResourceRegistry.Tests.Mocks;
 using Altinn.ResourceRegistry.Tests.Utils;
@@ -11,6 +15,8 @@ using Altinn.ResourceRegistry.TestUtils;
 using AngleSharp.Text;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
+using Moq;
+using Npgsql;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -423,6 +429,54 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
         Assert.Equal("changes_kept_res", changes.Items.First().ResourceId);
     }
 
+    [Fact]
+    public async Task GetResourceChanges_RecreatedResourceIsListedAfterPolicyUpload()
+    {
+        await Repository.CreateResource(CreateTestResource("changes_recreated_res"));
+        await Repository.SetResourceSubjects(CreateResourceSubjects("urn:altinn:resource:changes_recreated_res", ["urn:altinn:rolecode:r001"], "ttd"), logPolicyChange: true);
+        await Repository.DeleteResource("changes_recreated_res");
+
+        await Repository.CreateResource(CreateTestResource("changes_recreated_res"));
+
+        using var client = CreateClient();
+
+        // The policy was deleted with the resource, so the recreated resource has none yet.
+        HttpResponseMessage response = await client.GetAsync("resourceregistry/api/v1/resource/changes");
+        Paginated<ResourceChange>? changes = await response.Content.ReadFromJsonAsync<Paginated<ResourceChange>>();
+        Assert.NotNull(changes);
+        Assert.Empty(changes.Items);
+
+        await Repository.SetResourceSubjects(CreateResourceSubjects("urn:altinn:resource:changes_recreated_res", ["urn:altinn:rolecode:r001"], "ttd"), logPolicyChange: true);
+
+        response = await client.GetAsync("resourceregistry/api/v1/resource/changes");
+        changes = await response.Content.ReadFromJsonAsync<Paginated<ResourceChange>>();
+        Assert.NotNull(changes);
+        Assert.Single(changes.Items);
+        Assert.Equal("changes_recreated_res", changes.Items.First().ResourceId);
+    }
+
+    [Fact]
+    public async Task SetResourceSubjects_DeletedResource_KeepsDeletionTimeAndLeavesPolicyFlagUnset()
+    {
+        await Repository.CreateResource(CreateTestResource("changes_late_upload_res"));
+        DeletedResource? deleted = await Repository.DeleteResource("changes_late_upload_res");
+        Assert.NotNull(deleted);
+
+        // A policy upload that started before the deletion can finish after it.
+        await Repository.SetResourceSubjects(CreateResourceSubjects("urn:altinn:resource:changes_late_upload_res", ["urn:altinn:rolecode:r001"], "ttd"), logPolicyChange: true);
+
+        Assert.Equal(deleted.DeletedAt, await Repository.GetResourceDeletedAt("changes_late_upload_res"));
+
+        await Repository.CreateResource(CreateTestResource("changes_late_upload_res"));
+
+        using var client = CreateClient();
+
+        HttpResponseMessage response = await client.GetAsync("resourceregistry/api/v1/resource/changes");
+        Paginated<ResourceChange>? changes = await response.Content.ReadFromJsonAsync<Paginated<ResourceChange>>();
+        Assert.NotNull(changes);
+        Assert.Empty(changes.Items);
+    }
+
     [Theory]
     [InlineData(0)]
     [InlineData(1001)]
@@ -764,6 +818,342 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
         HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
 
         await AssertOrganizationNumberFormatResult(response, expected, resource.Identifier!, organization);
+    }
+
+    [Fact]
+    public async Task CreateResource_AfterDelete_Created()
+    {
+        var client = CreateClient();
+        string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        ServiceResource resource = CreateValidResource("recreated_after_delete");
+
+        Assert.Equal(HttpStatusCode.Created, (await PostResource(client, resource)).StatusCode);
+        ServiceResource? original = await Repository.GetResource(resource.Identifier!, null);
+        Assert.NotNull(original);
+
+        // Delete through the repository; the API refuses deletes in the integrationtest environment.
+        await Repository.DeleteResource(resource.Identifier!);
+        Assert.Null(await Repository.GetResource(resource.Identifier!, null));
+
+        resource.Title!["en"] = "Recreated";
+
+        Assert.Equal(HttpStatusCode.Created, (await PostResource(client, resource)).StatusCode);
+
+        ServiceResource? recreated = await Repository.GetResource(resource.Identifier!, null);
+        Assert.NotNull(recreated);
+        Assert.Equal("Recreated", recreated.Title!["en"]);
+        Assert.NotEqual(original.VersionId, recreated.VersionId);
+
+        // The recreated resource is live again, so creating it once more is still a conflict.
+        Assert.Equal(HttpStatusCode.Conflict, (await PostResource(client, resource)).StatusCode);
+    }
+
+    [Fact]
+    public async Task DeleteResource_RemovesAccessListConnectionsAndPolicySubjects()
+    {
+        const string ResourceId = "deleted_with_access_list";
+        Guid party = Guid.NewGuid();
+
+        await Repository.CreateResource(CreateTestResource(ResourceId));
+        await Repository.SetResourceSubjects(CreateResourceSubjects($"urn:altinn:resource:{ResourceId}", ["urn:altinn:rolecode:r001"], "ttd"), logPolicyChange: true);
+        await ConnectAccessList("deleted-list", ResourceId, party);
+
+        await ResourceRegistry.Delete(ResourceId);
+
+        Assert.Empty(await AccessListsRepository.GetMembershipsForPartiesAndResources([party], [ResourceId], default));
+        Assert.Empty(await AccessListsRepository.GetAccessListsByResource(ResourceId, DateTimeOffset.UtcNow.AddYears(1)));
+        Assert.Empty(await ActiveSubjects(ResourceId));
+    }
+
+    [Fact]
+    public async Task CreateResource_AfterDelete_DoesNotInheritAccessListsOrPolicySubjects()
+    {
+        var client = CreateClient();
+        string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
+        ServiceResource resource = CreateValidResource("recreated_without_leftovers");
+        string resourceId = resource.Identifier!;
+        Guid oldParty = Guid.NewGuid();
+        Guid newParty = Guid.NewGuid();
+
+        Assert.Equal(HttpStatusCode.Created, (await PostResource(client, resource)).StatusCode);
+
+        // Connected well before the deletion, so the test does not depend on the app and database clocks agreeing.
+        TimeProvider.Advance(TimeSpan.FromHours(-1));
+        await ConnectAccessList("old-list", resourceId, oldParty);
+        TimeProvider.Advance(TimeSpan.FromHours(2));
+
+        // Simulate a resource deleted before Delete cleaned up: the repository delete leaves the
+        // access list connection, and subjects from the old policy are still active.
+        await Repository.DeleteResource(resourceId);
+        await Repository.SetResourceSubjects(CreateResourceSubjects($"urn:altinn:resource:{resourceId}", ["urn:altinn:rolecode:r001"], "skd"));
+
+        // Set up for the new resource after the deletion, so it is kept.
+        await ConnectAccessList("new-list", resourceId, newParty);
+
+        Assert.Equal(HttpStatusCode.Created, (await PostResource(client, resource)).StatusCode);
+
+        Assert.Empty(await AccessListsRepository.GetMembershipsForPartiesAndResources([oldParty], [resourceId], default));
+        Assert.Single(await AccessListsRepository.GetMembershipsForPartiesAndResources([newParty], [resourceId], default));
+        Assert.Empty(await ActiveSubjects(resourceId));
+    }
+
+    [Fact]
+    public async Task DeleteResource_CreateDuringCleanup_WaitsForDeleteAndDoesNotSeeOldConnections()
+    {
+        const string ResourceId = "created_during_delete";
+        Guid oldParty = Guid.NewGuid();
+
+        await Repository.CreateResource(CreateTestResource(ResourceId));
+
+        // Connected well before the deletion, so the test does not depend on the app and database clocks agreeing.
+        TimeProvider.Advance(TimeSpan.FromHours(-1));
+        await ConnectAccessList("create-race-old-list", ResourceId, oldParty);
+        TimeProvider.Advance(TimeSpan.FromHours(2));
+
+        // Start a create while the delete is removing connections. The create finds the resource
+        // still live, so it does no cleanup of its own, and has to wait for the delete to commit.
+        Task? create = null;
+        bool createFinishedDuringCleanup = false;
+        var interleaved = InterleavedAccessLists(async ct =>
+        {
+            create = ResourceRegistry.CreateResource(CreateTestResource(ResourceId), CancellationToken.None);
+            createFinishedDuringCleanup = await FinishesWithin(create, TimeSpan.FromSeconds(1));
+        });
+
+        await DeleteWith(interleaved.Object, ResourceId);
+
+        Assert.NotNull(create);
+        Assert.False(createFinishedDuringCleanup);
+
+        // The create either revives the identifier after the delete, or finds it taken and fails.
+        try
+        {
+            await create;
+        }
+        catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.UniqueViolation)
+        {
+        }
+
+        Assert.Empty(await AccessListsRepository.GetMembershipsForPartiesAndResources([oldParty], [ResourceId], default));
+    }
+
+    [Fact]
+    public async Task DeleteResource_UpdateDuringCleanup_WaitsAndFindsResourceDeleted()
+    {
+        const string ResourceId = "updated_during_delete";
+
+        await Repository.CreateResource(CreateTestResource(ResourceId));
+
+        TimeProvider.Advance(TimeSpan.FromHours(-1));
+        await ConnectAccessList("update-race-list", ResourceId, Guid.NewGuid());
+        TimeProvider.Advance(TimeSpan.FromHours(2));
+
+        // A PUT that read the resource before the deletion writes while the delete is still running.
+        Task<ServiceResource>? update = null;
+        bool updateFinishedDuringCleanup = false;
+        var interleaved = InterleavedAccessLists(async ct =>
+        {
+            update = Repository.UpdateResource(CreateTestResource(ResourceId), CancellationToken.None);
+            updateFinishedDuringCleanup = await FinishesWithin(update, TimeSpan.FromSeconds(1));
+        });
+
+        await DeleteWith(interleaved.Object, ResourceId);
+        DateTimeOffset? deletedAt = await Repository.GetResourceDeletedAt(ResourceId);
+
+        Assert.NotNull(update);
+        Assert.False(updateFinishedDuringCleanup);
+        Assert.Null(await update);
+        Assert.Null(await Repository.GetResource(ResourceId, null));
+        Assert.NotNull(deletedAt);
+        Assert.Equal(deletedAt, await Repository.GetResourceDeletedAt(ResourceId));
+    }
+
+    [Fact]
+    public async Task UpdateResource_DeletedResource_WritesNothingAndKeepsDeletionTime()
+    {
+        const string ResourceId = "updated_after_delete";
+
+        await Repository.CreateResource(CreateTestResource(ResourceId));
+        await Repository.DeleteResource(ResourceId);
+        DateTimeOffset? deletedAt = await Repository.GetResourceDeletedAt(ResourceId);
+
+        Assert.Null(await Repository.UpdateResource(CreateTestResource(ResourceId)));
+        Assert.Null(await Repository.GetResource(ResourceId, null));
+        Assert.NotNull(deletedAt);
+        Assert.Equal(deletedAt, await Repository.GetResourceDeletedAt(ResourceId));
+    }
+
+    [Fact]
+    public async Task DeleteResource_CleanupFails_RollsBackAndCanBeRetried()
+    {
+        const string ResourceId = "cleanup_fails";
+        Guid party = Guid.NewGuid();
+
+        await Repository.CreateResource(CreateTestResource(ResourceId));
+
+        TimeProvider.Advance(TimeSpan.FromHours(-1));
+        await ConnectAccessList("cleanup-fails-list", ResourceId, party);
+        TimeProvider.Advance(TimeSpan.FromHours(2));
+
+        var failing = new Mock<IAccessListsRepository>();
+        failing
+            .Setup(r => r.GetAccessListsByResource(It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new TimeoutException());
+
+        await Assert.ThrowsAsync<TimeoutException>(() => DeleteWith(failing.Object, ResourceId));
+
+        // The deletion was rolled back with the failed cleanup, so the resource is still there.
+        Assert.NotNull(await Repository.GetResource(ResourceId, null));
+        Assert.Null(await Repository.GetResourceDeletedAt(ResourceId));
+        Assert.Single(await AccessListsRepository.GetMembershipsForPartiesAndResources([party], [ResourceId], default));
+
+        // Retrying the delete completes it.
+        await ResourceRegistry.Delete(ResourceId);
+
+        Assert.Null(await Repository.GetResource(ResourceId, null));
+        Assert.Empty(await AccessListsRepository.GetMembershipsForPartiesAndResources([party], [ResourceId], default));
+    }
+
+    [Fact]
+    public async Task DeleteResource_AccessListChangedDuringCleanup_RetriesAndRemovesConnection()
+    {
+        const string ResourceId = "list_changed_during_delete";
+        Guid party = Guid.NewGuid();
+
+        await Repository.CreateResource(CreateTestResource(ResourceId));
+
+        // Connected well before the deletion, so the test does not depend on the app and database clocks agreeing.
+        TimeProvider.Advance(TimeSpan.FromHours(-1));
+        await ConnectAccessList("changed-during-delete", ResourceId, party);
+        TimeProvider.Advance(TimeSpan.FromHours(2));
+
+        // Change the list after the delete has loaded it, so the first save conflicts.
+        IAccessListsRepository accessLists = AccessListsRepository;
+        int loads = 0;
+        var interleaved = new Mock<IAccessListsRepository>();
+        interleaved
+            .Setup(r => r.GetAccessListsByResource(It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))
+            .Returns((string resourceId, DateTimeOffset connectedBefore, CancellationToken ct) => accessLists.GetAccessListsByResource(resourceId, connectedBefore, ct));
+        interleaved
+            .Setup(r => r.LoadAccessList(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Returns(async (Guid id, CancellationToken ct) =>
+            {
+                IAccessListAggregate? loaded = await accessLists.LoadAccessList(id, ct);
+                if (++loads == 1)
+                {
+                    IAccessListAggregate? concurrent = await accessLists.LoadAccessList(id, ct);
+                    concurrent!.AddMembers([Guid.NewGuid()]);
+                    await concurrent.SaveChanges(ct);
+                }
+
+                return loaded;
+            });
+
+        var service = new ResourceRegistryService(
+            Repository,
+            Services.GetRequiredService<IPolicyRepository>(),
+            Services.GetRequiredService<IApplications>(),
+            Services.GetRequiredService<IServiceOwnerService>(),
+            interleaved.Object);
+
+        await service.Delete(ResourceId);
+
+        Assert.Equal(2, loads);
+        Assert.Empty(await accessLists.GetMembershipsForPartiesAndResources([party], [ResourceId], default));
+        Assert.Empty(await accessLists.GetAccessListsByResource(ResourceId, DateTimeOffset.UtcNow.AddYears(1)));
+    }
+
+    private IAccessListsRepository AccessListsRepository => Services.GetRequiredService<IAccessListsRepository>();
+
+    private IResourceRegistry ResourceRegistry => Services.GetRequiredService<IResourceRegistry>();
+
+    // Wraps the real access list repository, and runs duringCleanup once when the delete looks up
+    // the connections to remove, which is while it still holds the lock on the identifier.
+    private Mock<IAccessListsRepository> InterleavedAccessLists(Func<CancellationToken, Task> duringCleanup)
+    {
+        IAccessListsRepository accessLists = AccessListsRepository;
+        bool done = false;
+        var interleaved = new Mock<IAccessListsRepository>();
+        interleaved
+            .Setup(r => r.LoadAccessList(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
+            .Returns((Guid id, CancellationToken ct) => accessLists.LoadAccessList(id, ct));
+        interleaved
+            .Setup(r => r.GetAccessListsByResource(It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))
+            .Returns(async (string resourceId, DateTimeOffset connectedBefore, CancellationToken ct) =>
+            {
+                if (!done)
+                {
+                    done = true;
+                    await duringCleanup(ct);
+                }
+
+                return await accessLists.GetAccessListsByResource(resourceId, connectedBefore, ct);
+            });
+        return interleaved;
+    }
+
+    private Task DeleteWith(IAccessListsRepository accessLists, string resourceId)
+    {
+        var service = new ResourceRegistryService(
+            Repository,
+            Services.GetRequiredService<IPolicyRepository>(),
+            Services.GetRequiredService<IApplications>(),
+            Services.GetRequiredService<IServiceOwnerService>(),
+            accessLists);
+        return service.Delete(resourceId);
+    }
+
+    private static async Task<bool> FinishesWithin(Task task, TimeSpan timeout)
+    {
+        return await Task.WhenAny(task, Task.Delay(timeout)) == task;
+    }
+
+    private async Task ConnectAccessList(string identifier, string resourceId, Guid member)
+    {
+        IAccessListAggregate accessList = await AccessListsRepository.CreateAccessList("skd", identifier, identifier, identifier);
+        accessList.AddResourceConnection(resourceId, []);
+        accessList.AddMembers([member]);
+        await accessList.SaveChanges();
+    }
+
+    private async Task<IEnumerable<AttributeMatchV2>> ActiveSubjects(string resourceId)
+    {
+        List<ResourceSubjects> resourceSubjects = await Repository.FindSubjectsForResources([$"urn:altinn:resource:{resourceId}"]);
+        return resourceSubjects.SelectMany(r => r.Subjects ?? []);
+    }
+
+    private static ServiceResource CreateValidResource(string identifier)
+    {
+        return new ServiceResource()
+        {
+            Identifier = identifier,
+            Title = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+            Description = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+            RightDescription = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
+            Status = "Completed",
+            ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
+            HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
+            {
+                Organization = "974761076",
+                Orgcode = "skd",
+            },
+            ResourceType = ResourceType.GenericAccessResource,
+        };
+    }
+
+    private static Task<HttpResponseMessage> PostResource(HttpClient client, ServiceResource resource)
+    {
+        HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, "resourceregistry/api/v1/Resource/")
+        {
+            Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
+        };
+
+        httpRequestMessage.Headers.Add("Accept", "application/json");
+        return client.SendAsync(httpRequestMessage);
     }
 
     [Fact]

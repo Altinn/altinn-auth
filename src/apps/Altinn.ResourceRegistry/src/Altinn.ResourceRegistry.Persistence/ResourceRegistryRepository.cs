@@ -6,6 +6,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using Altinn.Authorization.ProblemDetails;
 using Altinn.ResourceRegistry.Core;
+using Altinn.ResourceRegistry.Core.Constants;
 using Altinn.ResourceRegistry.Core.Errors;
 using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Persistence.Extensions;
@@ -127,13 +128,50 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
 
         try
         {
-            await using (var cmd1 = new NpgsqlCommand(
+            // A deleted resource keeps its resource_identifier row (see DeleteResource), so reuse it
+            // when the identifier is created again. The policy was removed with the resource, so the
+            // revived row starts without one, like a new resource, and any subjects still left from
+            // the old policy (resources deleted before subjects were cleared on delete) are removed.
+            long revived;
+            await using (var revive = new NpgsqlCommand(
                 @"
-                INSERT INTO resourceregistry.resource_identifier(identifier, created)
-                VALUES (@identifier, now());",
+                WITH revived AS (
+                    UPDATE resourceregistry.resource_identifier
+                    SET deleted = false,
+                        created = now(),
+                        policy_uploaded = false,
+                        global_change_id = resourceregistry.tx_nextval('resourceregistry.resource_change_id_seq'),
+                        last_changed = now()
+                    WHERE identifier = @identifier
+                      AND deleted
+                    RETURNING identifier
+                ), subjects AS (
+                    UPDATE resourceregistry.resourcesubjects
+                    SET deleted = true,
+                        updated_at = now()
+                    WHERE resource_urn = @resource_urn
+                      AND deleted = false
+                      AND EXISTS (SELECT 1 FROM revived)
+                )
+                SELECT count(*) FROM revived;",
                 conn,
                 tx))
             {
+                revive.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, resource.Identifier);
+                revive.Parameters.AddWithValue("resource_urn", NpgsqlDbType.Text, ResourceUrn(resource.Identifier));
+                revived = (long)(await revive.ExecuteScalarAsync(cancellationToken))!;
+            }
+
+            // Otherwise insert a new row. For a live resource this raises the unique violation that
+            // the caller reports as a conflict.
+            if (revived == 0)
+            {
+                await using var cmd1 = new NpgsqlCommand(
+                    @"
+                    INSERT INTO resourceregistry.resource_identifier(identifier, created)
+                    VALUES (@identifier, now());",
+                    conn,
+                    tx);
                 cmd1.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, resource.Identifier);
                 await cmd1.ExecuteNonQueryAsync(cancellationToken);
             }
@@ -172,8 +210,8 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
                 }
             }
 
-            // The new resource_identifier row gets its global_change_id and last_changed from the
-            // column defaults (tx_nextval and now()).
+            // A new resource_identifier row gets its global_change_id and last_changed from the
+            // column defaults (tx_nextval and now()); a revived row got them in the update above.
             await tx.CommitAsync(cancellationToken);
             return serviceResource;
         }
@@ -189,11 +227,28 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
     }
 
     /// <inheritdoc/>
-    public async Task<ServiceResource?> DeleteResource(string id, CancellationToken cancellationToken = default)
+    public Task<DeletedResource?> DeleteResource(string id, CancellationToken cancellationToken = default)
+        => DeleteResource(id, beforeCommit: null, cancellationToken);
+
+    /// <inheritdoc/>
+    public async Task<DeletedResource?> DeleteResource(string id, Func<DateTimeOffset, CancellationToken, Task>? beforeCommit, CancellationToken cancellationToken = default)
     {
-        // Deleting a resource removes all its version rows; the latest version is returned. The
-        // resource_identifier row is kept and marked deleted, so the change feed can exclude the
-        // resource (and expose the deletion later if needed).
+        // Deleting a resource removes all its version rows; the latest version is returned with the
+        // time of the deletion. The resource_identifier row is kept and marked deleted, so the change
+        // feed can exclude the resource (and expose the deletion later if needed). The subjects from
+        // its policy are soft-deleted, so consumers of the updated subjects see them removed.
+        //
+        // The identifier row is locked until the deletion commits, after beforeCommit has run.
+        // Creating the identifier again, updating the resource and flagging a policy upload all
+        // wait for the lock, so none of them sees the resource before the caller's cleanup is done.
+        // If the cleanup fails, the deletion is rolled back and can be retried.
+        const string LOCK = /*strpsql*/@"
+            SELECT 1
+            FROM resourceregistry.resource_identifier
+            WHERE identifier = @identifier
+              AND NOT deleted
+            FOR UPDATE";
+
         const string QUERY = /*strpsql*/@"
             WITH del AS (
                 DELETE FROM resourceregistry.resources
@@ -206,24 +261,61 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
                     last_changed = now()
                 WHERE ri.identifier = @identifier
                   AND EXISTS (SELECT 1 FROM del)
+                RETURNING ri.identifier, ri.created, ri.last_changed
+            ), subjects AS (
+                UPDATE resourceregistry.resourcesubjects
+                SET deleted = true,
+                    updated_at = now()
+                WHERE resource_urn = @resource_urn
+                  AND deleted = false
+                  AND EXISTS (SELECT 1 FROM del)
             )
-            SELECT del.identifier, ri.created, del.modified, del.serviceresourcejson, del.version_id
+            SELECT del.identifier, bump.created, del.modified, del.serviceresourcejson, del.version_id, bump.last_changed AS deleted_at
             FROM del
-            JOIN resourceregistry.resource_identifier ri ON ri.identifier = del.identifier
+            JOIN bump ON bump.identifier = del.identifier
             ORDER BY del.version_id DESC
             LIMIT 1
             ";
 
         try
         {
-            await using var pgcom = _conn.CreateCommand(QUERY);
-            pgcom.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, id);
+            await using var conn = await _conn.OpenConnectionAsync(cancellationToken);
+            await using var tx = await conn.BeginTransactionAsync(cancellationToken);
 
-            var serviceResource = await pgcom.ExecuteEnumerableAsync(cancellationToken)
-                .Select(GetServiceResource)
-                .SingleOrDefaultAsync(cancellationToken);
+            await using (var lockCmd = new NpgsqlCommand(LOCK, conn, tx))
+            {
+                lockCmd.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, id);
+                if (await lockCmd.ExecuteScalarAsync(cancellationToken) is null)
+                {
+                    return null;
+                }
+            }
 
-            return serviceResource;
+            DeletedResource? deleted;
+            await using (var pgcom = new NpgsqlCommand(QUERY, conn, tx))
+            {
+                pgcom.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, id);
+                pgcom.Parameters.AddWithValue("resource_urn", NpgsqlDbType.Text, ResourceUrn(id));
+
+                deleted = await pgcom.ExecuteEnumerableAsync(cancellationToken)
+                    .Select(async (reader, ct) => new DeletedResource(
+                        await GetServiceResource(reader, ct),
+                        await reader.GetFieldValueAsync<DateTimeOffset>("deleted_at", ct)))
+                    .SingleOrDefaultAsync(cancellationToken);
+            }
+
+            if (deleted is null)
+            {
+                return null;
+            }
+
+            if (beforeCommit is not null)
+            {
+                await beforeCommit(deleted.DeletedAt, cancellationToken);
+            }
+
+            await tx.CommitAsync(cancellationToken);
+            return deleted;
         }
         catch (Exception e)
         {
@@ -231,6 +323,39 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
             throw;
         }
     }
+
+    /// <inheritdoc/>
+    public async Task<DateTimeOffset?> GetResourceDeletedAt(string id, CancellationToken cancellationToken = default)
+    {
+        // last_changed is set when the resource is deleted. Nothing changes a deleted row until the
+        // identifier is created again; SetResourceSubjects skips deleted rows for that reason.
+        const string QUERY = /*strpsql*/@"
+            SELECT last_changed
+            FROM resourceregistry.resource_identifier
+            WHERE identifier = @identifier
+              AND deleted";
+
+        try
+        {
+            await using var pgcom = _conn.CreateCommand(QUERY);
+            pgcom.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, id);
+
+            return await pgcom.ExecuteScalarAsync(cancellationToken) switch
+            {
+                DateTime deletedAt => new DateTimeOffset(deletedAt, TimeSpan.Zero),
+                DateTimeOffset deletedAt => deletedAt,
+                _ => null,
+            };
+        }
+        catch (Exception e)
+        {
+            _logger.LogError(e, "Authorization // ResourceRegistryRepository // GetResourceDeletedAt // Exception");
+            throw;
+        }
+    }
+
+    private static string ResourceUrn(string id)
+        => $"{AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute}:{id}";
 
     /// <inheritdoc/>
     public async Task<ServiceResource?> GetResource(string id, int? versionId, CancellationToken cancellationToken = default)
@@ -313,8 +438,18 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
     }
 
     /// <inheritdoc/>
-    public async Task<ServiceResource> UpdateResource(ServiceResource resource, CancellationToken cancellationToken = default)
+    public async Task<ServiceResource?> UpdateResource(ServiceResource resource, CancellationToken cancellationToken = default)
     {
+        // Lock the identifier row first, as DeleteResource does. An update that read the resource
+        // before a deletion then waits for it, finds the identifier deleted, and writes nothing,
+        // instead of adding a version row to a deleted resource and moving its deletion time.
+        const string LOCK = /*strpsql*/@"
+            SELECT 1
+            FROM resourceregistry.resource_identifier
+            WHERE identifier = @identifier
+              AND NOT deleted
+            FOR UPDATE";
+
         const string QUERY = /*strpsql*/@"
             WITH ins AS (
                 INSERT INTO resourceregistry.resources(
@@ -348,14 +483,30 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
         var json = JsonSerializer.SerializeToDocument(resource, JsonSerializerOptions);
         try
         {
-            await using var pgcom = _conn.CreateCommand(QUERY);
-            pgcom.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, resource.Identifier);
-            pgcom.Parameters.AddWithValue("serviceresourcejson", NpgsqlDbType.Jsonb, json);
+            await using var conn = await _conn.OpenConnectionAsync(cancellationToken);
+            await using var tx = await conn.BeginTransactionAsync(cancellationToken);
 
-            var serviceResource = await pgcom.ExecuteEnumerableAsync(cancellationToken)
-                 .Select(GetServiceResource)
-                .FirstOrDefaultAsync(cancellationToken);
+            await using (var lockCmd = new NpgsqlCommand(LOCK, conn, tx))
+            {
+                lockCmd.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, resource.Identifier);
+                if (await lockCmd.ExecuteScalarAsync(cancellationToken) is null)
+                {
+                    return null;
+                }
+            }
 
+            ServiceResource? serviceResource;
+            await using (var pgcom = new NpgsqlCommand(QUERY, conn, tx))
+            {
+                pgcom.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, resource.Identifier);
+                pgcom.Parameters.AddWithValue("serviceresourcejson", NpgsqlDbType.Jsonb, json);
+
+                serviceResource = await pgcom.ExecuteEnumerableAsync(cancellationToken)
+                    .Select(GetServiceResource)
+                    .FirstOrDefaultAsync(cancellationToken);
+            }
+
+            await tx.CommitAsync(cancellationToken);
             return serviceResource ?? throw new SqlNullValueException("No result from database");
         }
         catch (Exception e)
@@ -634,7 +785,9 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
 
         // Step 4: Mark the resource as having a policy and bump its global change id, in the same
         // transaction as the subject changes so the feed can never miss a committed policy update.
-        // No-op for identifiers not in the registry (e.g. apps not imported as resources).
+        // No-op for identifiers not in the registry (e.g. apps not imported as resources), and for
+        // deleted resources: an upload that finishes after the deletion must not move last_changed,
+        // which GetResourceDeletedAt reads as the deletion time, or flag a policy that was removed.
         if (logPolicyChange)
         {
             const string flagPolicyUploadedSQL = /*strpsql*/
@@ -644,6 +797,7 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
                     global_change_id = resourceregistry.tx_nextval('resourceregistry.resource_change_id_seq'),
                     last_changed = now()
                 WHERE identifier = @identifier
+                  AND NOT deleted
                 """;
 
             await using (var flagCmd = new NpgsqlCommand(flagPolicyUploadedSQL, conn, tx))

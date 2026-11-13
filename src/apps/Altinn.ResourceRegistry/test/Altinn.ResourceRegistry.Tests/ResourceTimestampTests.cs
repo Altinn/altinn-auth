@@ -62,7 +62,8 @@ public class ResourceTimestampTests(DbFixture dbFixture, WebApplicationFixture w
         await AssertApiTimestamps(updated, original);
 
         var deleted = await Repository.DeleteResource(ResourceId);
-        AssertTimestamps(updated, deleted);
+        Assert.NotNull(deleted);
+        AssertTimestamps(updated, deleted.Resource);
     }
 
     [Fact]
