@@ -26,6 +26,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         private readonly AuditLogSuppressScope _suppressScope;
 
         private int _measurementFailureLogged;
+        private int _droppingFailureLogged;
 
         /// <summary>
         /// Instantiation for event log servcie
@@ -77,35 +78,45 @@ namespace Altinn.Platform.Authorization.Services.Implementation
 
         private void EnqueueUnlessDuplicate(AuthorizationEvent authorizationEvent, XacmlContextRequest contextRequest, bool measure, CancellationToken cancellationToken)
         {
+            // The measurement keeps observing every event, dropped or not, in its own state, so that its
+            // numbers mean the same with dropping on or off. Dropping decides from confirmed sends only.
+            if (measure)
+            {
+                MeasureDuplicate(authorizationEvent, contextRequest);
+            }
+
             // When classifying fails, nothing is known to be a duplicate, and the event is queued: logging
             // too much is safer than logging too little.
             AuthorizationEventClassification? classification = null;
             try
             {
                 classification = _duplicateTracker.Classify(authorizationEvent, EventLogHelper.GetResourceInstanceIds(contextRequest));
-
-                if (measure)
-                {
-                    _telemetry.RecordAuditLogEvent(classification.Value.Kind);
-                }
             }
             catch (Exception ex)
             {
-                RecordMeasurementFailure(ex);
+                LogDroppingFailure(ex);
             }
 
             if (classification is { } duplicate && IsSuppressed(duplicate.Kind))
             {
                 try
                 {
+                    _telemetry.RecordAuditLogEventSuppressed(duplicate.Kind);
+                }
+                catch
+                {
+                    // Best effort: the event is dropped whether or not it is counted.
+                }
+
+                try
+                {
                     // A repeat from another trace is dropped because its event is already in the log, so
                     // its own trace can be remembered too.
                     _duplicateTracker.Remember(duplicate);
-                    _telemetry.RecordAuditLogEventSuppressed(duplicate.Kind);
                 }
                 catch (Exception ex)
                 {
-                    RecordMeasurementFailure(ex);
+                    LogDroppingFailure(ex);
                 }
 
                 return;
@@ -137,7 +148,24 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 }
                 catch (Exception ex)
                 {
-                    RecordMeasurementFailure(ex);
+                    LogDroppingFailure(ex);
+                }
+            }
+        }
+
+        private void LogDroppingFailure(Exception exception)
+        {
+            // Dropping has its own warning, logged once per instance, and no metric: a failure here is not
+            // an event the measurement saw, and counting it would add to altinn.pdp.auditlog.events.
+            if (Interlocked.Exchange(ref _droppingFailureLogged, 1) == 0)
+            {
+                try
+                {
+                    Log.DuplicateDroppingFailed(_logger, exception);
+                }
+                catch
+                {
+                    // Best effort: the logger may be what failed.
                 }
             }
         }
@@ -194,6 +222,9 @@ namespace Altinn.Platform.Authorization.Services.Implementation
         {
             [LoggerMessage(1, LogLevel.Warning, "Measuring duplicate authorization events failed. Further failures are counted in altinn.pdp.auditlog.events as auditlog.duplicate=error, but not logged.")]
             public static partial void DuplicateMeasurementFailed(ILogger logger, Exception exception);
+
+            [LoggerMessage(2, LogLevel.Warning, "Tracking authorization events for dropping duplicates failed. An event that cannot be classified is queued. Further failures are not logged.")]
+            public static partial void DuplicateDroppingFailed(ILogger logger, Exception exception);
         }
     }
 }

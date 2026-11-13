@@ -377,6 +377,70 @@ public class EventLogServiceTest : IDisposable
         VerifyQueued(Times.Exactly(2));
     }
 
+    [Fact]
+    public async Task CreateAuthorizationEvent_SuppressionOn_MeasurementStillSeesRepeatsOfAFailedSend()
+    {
+        // From review: dropping must not change what the measurement reports.
+        EnableSuppression();
+        QueueReturns(false, true);
+        using var events = new PdpMetricCollector(MeterFactory, AuditLogEventsInstrument);
+        var service = CreateService(suppressScope: AuditLogSuppressScope.Window);
+
+        await LogDecision(service, "trace-1");
+        await LogDecision(service, "trace-2");
+
+        // Not dropped, since the first send failed, but still measured as a repeat.
+        VerifyQueued(Times.Exactly(2));
+        Assert.Equal(new object?[] { "none", "window" }, events.Measurements.Select(tags => tags["auditlog.duplicate"]).ToArray());
+    }
+
+    [Fact]
+    public async Task CreateAuthorizationEvent_SuppressionOnMeasurementOff_FailureRecordsNoMeasurement_AndLogsOnce()
+    {
+        // From review: with the measurement off, a failure in dropping must not appear in its metric.
+        EnableSuppression();
+        _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.AuditLogDuplicateMeasurement)).ReturnsAsync(false);
+        QueueReturns(true, true);
+        _loggerMock.Setup(l => l.IsEnabled(It.IsAny<LogLevel>())).Returns(true);
+        var failingClock = new Mock<TimeProvider>();
+        failingClock.Setup(t => t.GetUtcNow()).Throws(new InvalidOperationException("clock failure"));
+        using var events = new PdpMetricCollector(MeterFactory, AuditLogEventsInstrument);
+        var service = CreateService(trackerTimeProvider: failingClock.Object);
+
+        await LogDecision(service, "trace-1");
+        await LogDecision(service, "trace-1");
+
+        VerifyQueued(Times.Exactly(2));
+        Assert.Empty(events.Measurements);
+        _loggerMock.Verify(
+            l => l.Log(LogLevel.Warning, It.IsAny<EventId>(), It.IsAny<It.IsAnyType>(), It.IsAny<InvalidOperationException>(), It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task CreateAuthorizationEvent_Suppression_RememberFails_CountsTheEventOnce()
+    {
+        // From review: a failure after the event was measured must not count it a second time.
+        EnableSuppression();
+        bool sent = false;
+        _queueClientMock
+            .Setup(q => q.EnqueueAuthorizationEvent(It.IsAny<Altinn.Platform.Authorization.Models.EventLog.AuthorizationEvent>(), It.IsAny<CancellationToken>()))
+            .Callback(() => sent = true)
+            .ReturnsAsync(new QueuePostReceipt { Success = true });
+
+        // The clock fails once the event is sent, so remembering it fails, whatever came before.
+        var start = new DateTimeOffset(2026, 11, 13, 12, 0, 0, TimeSpan.Zero);
+        var clock = new Mock<TimeProvider>();
+        clock.Setup(t => t.GetUtcNow()).Returns(() => sent ? throw new InvalidOperationException("clock failure") : start);
+        using var events = new PdpMetricCollector(MeterFactory, AuditLogEventsInstrument);
+        var service = CreateService(trackerTimeProvider: clock.Object);
+
+        await LogDecision(service, "trace-1");
+
+        VerifyQueued(Times.Once());
+        Assert.Equal(new object?[] { "none" }, events.Measurements.Select(tags => tags["auditlog.duplicate"]).ToArray());
+    }
+
     private void EnableSuppression()
     {
         _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.AuditLog)).ReturnsAsync(true);
