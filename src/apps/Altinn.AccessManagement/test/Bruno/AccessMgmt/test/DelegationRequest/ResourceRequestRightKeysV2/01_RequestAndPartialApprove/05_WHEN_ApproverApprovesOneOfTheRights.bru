@@ -1,0 +1,76 @@
+meta {
+	name: 05_WHEN_ApproverApprovesOneOfTheRights
+	type: http
+	seq: 5
+}
+
+put {
+	url: {{baseUrl}}/accessmanagement/api/v2/enduser/request/received/approve?party={{party}}&id={{rk_requestId}}
+	body: json
+	auth: inherit
+}
+
+params:query {
+	party: {{party}}
+	id: {{rk_requestId}}
+}
+
+headers {
+	Content-Type: application/json
+	Accept: application/json
+}
+
+body:json {
+	{
+		"rightKeys": ["{{rk_keyA}}"]
+	}
+}
+
+docs {
+	WHEN the approver approves the request, but gives only the first of the two rights.
+
+	PUT /accessmanagement/api/v2/enduser/request/received/approve?party=<approver>&id=<request>
+
+	Scope `altinn:portal/enduser` or `altinn:accessmanagement/enduser:requests.write`. `party`
+	must be the party the request was sent to. The optional body `{ "rightKeys": [...] }`
+	selects the rights to give, and may include rights that were not requested. Each key must
+	exist in the policy and be delegable by the authenticated user on behalf of the party,
+	otherwise 400 with AM.VLD-00054, AM.VLD-00055 or AM.VLD-00056, pointing at
+	`/rightKeys/<index>`. Leave the body out to give what was requested.
+
+	The approval creates an ordinary resource delegation from the approver to the requester.
+	The request becomes Approved when what is given matches what was requested, and
+	PartialApprove otherwise. The keys given are returned in `resource.approvedRightKeys`.
+}
+
+script:pre-request {
+	const { skipOutsideEnabledEnvironments, testdata, loginAs, requireVar } = require("./test/DelegationRequest/ResourceRequestRightKeysV2/helpers.js");
+	if (skipOutsideEnabledEnvironments()) {
+		return;
+	}
+
+	const td = testdata();
+
+	requireVar("rk_requestId", "creating the request");
+	bru.setVar("party", td.approver.partyUuid);
+
+	await loginAs(td.approver);
+}
+
+tests {
+	test("WHEN the approver approves one of the rights, the request returns 200", function() {
+		expect(res.status).to.equal(200);
+	});
+
+	test("THEN the request is PartialApprove", function() {
+		const body = res.getBody();
+		expect(body.id).to.equal(bru.getVar("rk_requestId"));
+		expect(body.status).to.equal("PartialApprove");
+	});
+
+	test("THEN the approved right is the one selected, and the requested rights are unchanged", function() {
+		const body = res.getBody();
+		expect(body.resource.approvedRightKeys).to.deep.equal([bru.getVar("rk_keyA")]);
+		expect(body.resource.requestedRightKeys).to.have.members([bru.getVar("rk_keyA"), bru.getVar("rk_keyB")]);
+	});
+}

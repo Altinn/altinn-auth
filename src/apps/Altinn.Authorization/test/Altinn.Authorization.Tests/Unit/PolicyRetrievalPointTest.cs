@@ -309,7 +309,7 @@ namespace Altinn.Authorization.Tests.Unit
             // Arrange
             HybridCache cache = TestSetupUtil.CreateHybridCache();
             (PolicyRetrievalPoint prp, Mock<IPolicyRepository> repository) = CreatePolicyRetrievalPointWithMockedRepository(cache);
-            PolicyAdministrationPoint pap = new PolicyAdministrationPoint(repository.Object, cache);
+            PolicyAdministrationPoint pap = new PolicyAdministrationPoint(repository.Object, cache, new Mock<ILogger<PolicyAdministrationPoint>>().Object);
             repository
                 .SetupSequence(r => r.GetPolicyAsync(POLICYPATH, It.IsAny<CancellationToken>()))
                 .Returns(Task.FromResult(GetPolicyStream("current")))

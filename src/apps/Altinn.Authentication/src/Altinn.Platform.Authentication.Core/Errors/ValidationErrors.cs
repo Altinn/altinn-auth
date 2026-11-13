@@ -73,6 +73,12 @@ public static class ValidationErrors
         = _factory.Create(9, "One or more resource id is in wrong format. The valid format is urn:altinn:resource");
 
     /// <summary>
+    /// Gets a validation error descriptor for a missing or invalid agent query parameter
+    /// </summary>
+    public static ValidationErrorDescriptor SystemUser_Missing_SystemUserId { get; }
+        = _factory.Create(10, "The agent query parameter is missing or invalid");
+
+    /// <summary>
     /// Gets the validation error descriptor indicating that the request contains duplicate client IDs.
     /// </summary>
     public static ValidationErrorDescriptor SystemRegister_Duplicate_ClientIds { get; }
@@ -90,12 +96,6 @@ public static class ValidationErrors
     /// </summary>
     public static ValidationErrorDescriptor SystemRegister_Invalid_SystemId_Spaces { get; }
         = _factory.Create(13, "System ID cannot have spaces in id (leading, trailing or in between the id)");
-
-    /// <summary>
-    /// Gets a validation error descriptor for system user id that does not exist
-    /// </summary>
-    public static ValidationErrorDescriptor SystemUser_Missing_SystemUserId { get; }
-        = _factory.Create(14, "The agent query parameter is missing or invalid");
 
     /// <summary>
     /// Gets a validation error descriptor for system user id that does not exist
@@ -144,4 +144,10 @@ public static class ValidationErrors
     /// </summary>
     public static ValidationErrorDescriptor SystemRegister_ResourceId_ResourceNotDelegable { get; }
         = _factory.Create(21, "One or more resources specified in rights is marked as not delegable in the resource registry.");
+
+    /// <summary>
+    /// Gets a validation error descriptor when a right has more than one resource, or an attribute that is not a resource.
+    /// </summary>
+    public static ValidationErrorDescriptor SystemRegister_Right_MustHaveOneResource { get; }
+        = _factory.Create(22, "A right can have at most one resource, with the id urn:altinn:resource. Use one right per resource.");
 }

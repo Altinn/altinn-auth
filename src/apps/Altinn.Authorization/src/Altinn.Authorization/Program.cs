@@ -355,7 +355,7 @@ void ConfigureServices(IServiceCollection services, IConfiguration config)
     services.AddFeatureManagement();
 
     // Temporary registration: AddAltinnCache() from Altinn.Authorization.ServiceDefaults 6.1 replaces it
-    // before this leaves draft (#155).
+    // before this PR merges (#155).
     services.AddHybridCache();
 }
 

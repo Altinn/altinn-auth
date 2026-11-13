@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Net;
+using Altinn.Authorization.Xacml;
 using Altinn.ResourceRegistry.Core;
 using Altinn.ResourceRegistry.Core.Extensions;
 using Altinn.ResourceRegistry.Core.Helpers;
@@ -58,7 +59,7 @@ internal class PolicyRepository : IPolicyRepository
     /// <inheritdoc/>
     public async Task<Stream?> GetAppPolicyAsync(string org, string app, CancellationToken cancellationToken = default)
     {
-        string filePath = PolicyHelper.GetAltinnAppsPolicyPath(org, app);
+        string filePath = XacmlPolicyHelper.GetAltinnAppsPolicyPath(org, app);
         BlobClient blobClient = CreateAppPolicyBlobClient(filePath);
 
         return await GetBlobStreamInternal(blobClient, cancellationToken);
@@ -85,7 +86,7 @@ internal class PolicyRepository : IPolicyRepository
     /// <inheritdoc/>
     public async Task<Response<BlobContentInfo>> WriteAppPolicyAsync(string org, string app, Stream fileStream, CancellationToken cancellationToken = default)
     {
-        string filePath = PolicyHelper.GetAltinnAppsPolicyPath(org, app);
+        string filePath = XacmlPolicyHelper.GetAltinnAppsPolicyPath(org, app);
         BlobClient blobClient = CreateAppPolicyBlobClient(filePath);
 
         return await WriteBlobStreamInternal(blobClient, fileStream, cancellationToken: cancellationToken);

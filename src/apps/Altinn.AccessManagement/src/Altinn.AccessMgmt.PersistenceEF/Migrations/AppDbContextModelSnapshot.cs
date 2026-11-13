@@ -238,6 +238,10 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("cutoff");
 
+                    b.Property<Guid?>("LastId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("lastid");
+
                     b.HasKey("Source")
                         .HasName("pk_activitylogbackfillprogress");
 

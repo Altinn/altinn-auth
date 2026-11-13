@@ -224,7 +224,7 @@ public interface ISystemUserService
 
     /// <summary>
     /// Validate that the Rights is both a subset of the Default Rights registered on the System, and at least one Right is selected.
-    /// Also ensure that if any of the new Rights have sub-resources, that the sub-resources are equal to the registered Rights.
+    /// Also ensure that each Right names exactly one resource. Two resources in one Right are rejected, even when the System has the same Right.
     /// Finally ensure the resources are still usable in the resource registry: present, of a supported resource type
     /// and delegable.
     /// </summary>

@@ -2,6 +2,7 @@
 using Altinn.Authorization.Api.Contracts.Authorization;
 using Altinn.Authorization.Tests.Data;
 using Altinn.Authorization.Tests.Util;
+using Altinn.Authorization.Xacml.Constants;
 using Altinn.Platform.Authenticaiton.Extensions;
 using Altinn.Platform.Authorization.Constants;
 using Altinn.Platform.Authorization.Models;
@@ -126,7 +127,7 @@ public class AccessManagementWrapperMock : IAccessManagementWrapper
 
     public static Func<DelegationChangeInputDto, bool> IfResourceID(string resourceId) => delegation =>
     {
-        return delegation.Resource.FirstOrDefault(resource => resource.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistry)?.Value == resourceId;
+        return delegation.Resource.FirstOrDefault(resource => resource.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute)?.Value == resourceId;
     };
 
     public static Func<DelegationChangeInputDto, bool> IfToMatch(AttributeMatch to) => delegation =>

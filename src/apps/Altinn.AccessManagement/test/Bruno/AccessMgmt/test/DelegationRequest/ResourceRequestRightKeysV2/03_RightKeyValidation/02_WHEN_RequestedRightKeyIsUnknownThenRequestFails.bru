@@ -1,0 +1,76 @@
+meta {
+	name: 02_WHEN_RequestedRightKeyIsUnknownThenRequestFails
+	type: http
+	seq: 2
+}
+
+post {
+	url: {{baseUrl}}/accessmanagement/api/v2/enduser/request/resource?party={{party}}&to={{to}}&resource={{resource}}
+	body: json
+	auth: inherit
+}
+
+params:query {
+	party: {{party}}
+	to: {{to}}
+	resource: {{resource}}
+}
+
+headers {
+	Content-Type: application/json
+	Accept: application/json
+}
+
+body:json {
+	{
+		"requestedRightKeys": ["not-a-right-key"]
+	}
+}
+
+docs {
+	WHEN the requester asks for a right key that is not in the resource policy, the request
+	fails with 400 and AM.VLD-00054 pointing at `/requestedRightKeys/0`. No request is created.
+
+	POST /accessmanagement/api/v2/enduser/request/resource?party=<requester>&to=<approver>&resource=<id>
+
+	Scope `altinn:portal/enduser` or `altinn:accessmanagement/enduser:requests.write`. `party`
+	is the party asking for access, `to` the party asked to grant it; the two must already be
+	connected. The optional body `{ "requestedRightKeys": [...] }` names the rights asked for,
+	as right keys from the resource policy. Leave it out to ask for the whole resource. Each key
+	must exist in the policy and be delegable, otherwise 400 with AM.VLD-00054 (not in the
+	policy) or AM.VLD-00055 (not delegable), pointing at `/requestedRightKeys/<index>`.
+
+	Returns 200 with the v2 request: `status` is a plain string that clients must accept
+	unknown values of, and the requested keys are in `resource.requestedRightKeys`.
+}
+
+script:pre-request {
+	const { skipOutsideEnabledEnvironments, testdata, loginAs } = require("./test/DelegationRequest/ResourceRequestRightKeysV2/helpers.js");
+	if (skipOutsideEnabledEnvironments()) {
+		return;
+	}
+
+	const td = testdata();
+
+	bru.setVar("party", td.requester.partyUuid);
+	bru.setVar("to", td.approver.partyUuid);
+	bru.setVar("resource", td.resource);
+
+	await loginAs(td.requester.innehaver);
+}
+
+tests {
+	test("WHEN the right key is unknown, the request returns 400", function() {
+		expect(res.status).to.equal(400);
+	});
+
+	test("THEN AM.VLD-00054 points at the unknown right key", function() {
+		const body = res.getBody();
+		expect(body.status).to.equal(400);
+		expect(body.code).to.equal("STD-00000");
+		expect(body.validationErrors).to.be.an("array").that.is.not.empty;
+		const error = body.validationErrors.find(e => e.code === "AM.VLD-00054");
+		expect(error, "validation error AM.VLD-00054").to.exist;
+		expect(error.paths.some(p => p.endsWith("/requestedRightKeys/0")), "path ending in /requestedRightKeys/0").to.equal(true);
+	});
+}
