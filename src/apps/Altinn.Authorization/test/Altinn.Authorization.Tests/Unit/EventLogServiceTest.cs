@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Time.Testing;
 using Microsoft.FeatureManagement;
 using Moq;
 
@@ -335,6 +336,45 @@ public class EventLogServiceTest : IDisposable
         // Nothing is known to be a duplicate, so nothing is dropped.
         VerifyQueued(Times.Exactly(2));
         Assert.Equal(new object?[] { "error", "error" }, events.Measurements.Select(tags => tags["auditlog.duplicate"]).ToArray());
+    }
+
+    [Fact]
+    public async Task CreateAuthorizationEvent_SuppressionWindowScope_StopsDroppingWhenTheQueuedEventLeavesTheWindow()
+    {
+        // From review: a dropped repeat's trace must not get a window of its own.
+        EnableSuppression();
+        QueueReturns(true, true);
+        var clock = new FakeTimeProvider(new DateTimeOffset(2026, 11, 13, 12, 0, 0, TimeSpan.Zero));
+        var service = CreateService(trackerTimeProvider: clock, suppressScope: AuditLogSuppressScope.Window);
+
+        await LogDecision(service, "trace-1");
+        clock.Advance(TimeSpan.FromSeconds(50));
+        await LogDecision(service, "trace-2");
+
+        // 65 seconds after the only queued copy, so this one must be queued too.
+        clock.Advance(TimeSpan.FromSeconds(15));
+        await LogDecision(service, "trace-2");
+
+        VerifyQueued(Times.Exactly(2));
+    }
+
+    [Fact]
+    public async Task CreateAuthorizationEvent_SuppressionSwitchedOnWhileRunning_IgnoresEventsTheMeasurementSaw()
+    {
+        // From review: the measurement remembers an event whose send failed. Dropping, switched on
+        // afterwards, must not treat that event as logged.
+        _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.AuditLog)).ReturnsAsync(true);
+        _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.AuditLogDuplicateMeasurement)).ReturnsAsync(true);
+        bool suppression = false;
+        _featureManagerMock.Setup(f => f.IsEnabledAsync(FeatureFlags.AuditLogDuplicateSuppression)).ReturnsAsync(() => suppression);
+        QueueReturns(false, true);
+        var service = CreateService(suppressScope: AuditLogSuppressScope.Window);
+
+        await LogDecision(service, "trace-1");
+        suppression = true;
+        await LogDecision(service, "trace-2");
+
+        VerifyQueued(Times.Exactly(2));
     }
 
     private void EnableSuppression()

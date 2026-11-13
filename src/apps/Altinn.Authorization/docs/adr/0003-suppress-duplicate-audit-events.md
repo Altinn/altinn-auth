@@ -34,9 +34,10 @@ The likely main source is Altinn apps saving form data each time a user leaves a
 We will make it possible for the PDP to drop duplicate events, behind the feature flag `AuditLogDuplicateSuppression`, and switch it on only when this ADR is accepted.
 
 1. **Scope is configurable.** `AuditLogDeduplication:SuppressScope` is `Trace`, which drops only repeats within the same request, or `Window`, which also drops repeats from other requests within the window. `Trace` is the default. The saving is in `Window`.
-2. **An event is remembered only after the queue has it.** The PDP classifies the event without remembering it, drops it if it is a duplicate within scope, and otherwise queues it and remembers it when the send succeeds. A failed send therefore never hides a later event. The cost is that identical events in flight at the same moment can all be logged.
-3. **Failures log too much rather than too little.** If classifying fails, the event is queued. Nothing in the measurement or the dropping can fail the decision.
-4. **What is dropped is counted.** `altinn.pdp.auditlog.suppressed`, tagged `trace` or `window`, sits beside `altinn.pdp.auditlog.events`, which keeps counting every event produced.
+2. **An event is remembered only after the queue has it.** The PDP classifies the event without remembering it, drops it if it is a duplicate within scope, and otherwise queues it and remembers it when the send succeeds. A failed send therefore never hides a later event. The cost is that identical events in flight at the same moment can all be logged. For the same reason, dropping keeps state of its own, separate from the measurement, which remembers every event whether or not it was queued.
+3. **The window belongs to the logged event.** A repeat that is dropped does not start a window of its own. Its trace is remembered from the time of the event it repeats, so a repeat is dropped only while that event is within the window, never up to two windows after it.
+4. **Failures log too much rather than too little.** If classifying fails, the event is queued. Nothing in the measurement or the dropping can fail the decision.
+5. **What is dropped is counted.** `altinn.pdp.auditlog.suppressed`, tagged `trace` or `window`, sits beside `altinn.pdp.auditlog.events`, which keeps counting every event produced.
 
 ### Alternatives considered
 

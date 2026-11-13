@@ -9,12 +9,12 @@ namespace Altinn.Platform.Authorization.Services.Implementation
     /// </summary>
     public readonly struct AuthorizationEventClassification
     {
-        internal AuthorizationEventClassification(AuthorizationEventDuplicateKind kind, ulong eventKey, ulong traceKey, long classifiedAtTicks)
+        internal AuthorizationEventClassification(AuthorizationEventDuplicateKind kind, ulong eventKey, ulong traceKey, long windowStartTicks)
         {
             Kind = kind;
             EventKey = eventKey;
             TraceKey = traceKey;
-            ClassifiedAtTicks = classifiedAtTicks;
+            WindowStartTicks = windowStartTicks;
         }
 
         /// <summary>
@@ -26,6 +26,6 @@ namespace Altinn.Platform.Authorization.Services.Implementation
 
         internal ulong TraceKey { get; }
 
-        internal long ClassifiedAtTicks { get; }
+        internal long WindowStartTicks { get; }
     }
 }
