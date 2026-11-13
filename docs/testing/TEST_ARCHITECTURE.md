@@ -64,11 +64,12 @@ its own fixture until it is converted to owned data.
 ## Author-facing pattern
 
 ```csharp
-[Collection(DefaultHost.Name)]                     // one host for the whole profile
-public class GetInstanceRights(DefaultHost host) {
-    [Fact] public async Task ... {
-        var party = host.NewOwnedOrg();            // unique id; no collision possible
-        // seed under `party`; assert only on `party`'s results
+[IntegrationTest]
+[Collection(PolicyInformationPointDbCollection.Name)]  // one host for the whole cohort
+public class PolicyInformationPointResourcesAndInstancesTest {
+    public PolicyInformationPointResourcesAndInstancesTest(AccessMgmtApiFixture fixture) {
+        // seed rows under IDs only this class uses; assert only on those rows
+        fixture.EnsureSeedOnce<PolicyInformationPointResourcesAndInstancesTest>(db => { ... });
     }
 }
 ```
