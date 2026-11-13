@@ -25,6 +25,7 @@ namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers;
 /// <remarks>
 /// Seed data (own parties from the shared catalog, own assignments):
 /// - Verdiq AS -> Paula: Agent assignment (connections slice, Verdiq outgoing)
+/// - Verdiq AS -> Ørsta: Agent assignment (second outgoing connection, so paging has a next page)
 /// - Nordis AS -> Verdiq AS: Rightholder assignment (Verdiq incoming, pins the anchor)
 /// - Nordis AS -> Ørsta: Supplier assignment (the Maskinporten schema slice)
 /// - Verdiq AS -> Paula: pending package request (the request area, same pair as the Agent
@@ -39,6 +40,8 @@ public class ActivityLogControllerTest : IClassFixture<ApiFixture>
 
     private const string RequestRoute = "accessmanagement/api/v2/enduser/request/activitylog";
 
+    private const string PlatformHostname = "test.altinn.cloud";
+
     private static readonly Guid Verdiq = TestEntities.OrganizationVerdiqAS.Id;
     private static readonly Guid Nordis = TestEntities.OrganizationNordisAS.Id;
     private static readonly Guid Paula = TestEntities.PersonPaula.Id;
@@ -52,10 +55,12 @@ public class ActivityLogControllerTest : IClassFixture<ApiFixture>
         Fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.EnableEnduserConnectionsActivityLogApi);
         Fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.EnableEnduserMaskinportenActivityLogApi);
         Fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.EnableEnduserRequestActivityLogApi);
+        Fixture.WithInMemoryAppsettings(dict => dict["GeneralSettings:Hostname"] = PlatformHostname);
         Fixture.EnsureSeedOnce<ActivityLogControllerTest>(db =>
         {
             db.Assignments.AddRange(
                 new Assignment { FromId = Verdiq, ToId = Paula, RoleId = RoleConstants.Agent },
+                new Assignment { FromId = Verdiq, ToId = Orsta, RoleId = RoleConstants.Agent },
                 new Assignment { FromId = Nordis, ToId = Verdiq, RoleId = RoleConstants.Rightholder },
                 new Assignment { FromId = Nordis, ToId = Orsta, RoleId = RoleConstants.Supplier });
 
@@ -180,6 +185,33 @@ public class ActivityLogControllerTest : IClassFixture<ApiFixture>
         Assert.NotNull(result);
         Assert.Contains(result.Items, e => e.FromId == Verdiq);
         Assert.DoesNotContain(result.Items, e => e.FromId == Nordis);
+    }
+
+    /// <summary>
+    /// The next link must be absolute with the configured platform hostname as authority,
+    /// not the request's host: behind the proxy chain that host has surfaced an internal
+    /// address (#4663).
+    /// </summary>
+    [Fact]
+    public async Task Connections_WithMorePages_NextLinkUsesPlatformHostname()
+    {
+        var client = CreateClient(Verdiq, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ);
+
+        var response = await client.GetAsync($"{ConnectionsRoute}?party={Verdiq}&direction=from&pageSize=1", TestContext.Current.CancellationToken);
+
+        var body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Body: {body}");
+
+        var result = JsonSerializer.Deserialize<PaginatedResult<ActivityLogDto>>(body, JsonOpts);
+        Assert.NotNull(result);
+        Assert.Single(result.Items);
+
+        var next = result.Links.Next;
+        Assert.NotNull(next);
+        Assert.StartsWith($"https://platform.{PlatformHostname}/{ConnectionsRoute}?", next);
+        Assert.True(Uri.TryCreate(next, UriKind.Absolute, out _), $"Expected an absolute URL but got {next}");
+        Assert.Contains("pageSize=1", next);
+        Assert.Contains("pageNo=1", next);
     }
 
     [Fact]
