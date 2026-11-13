@@ -93,7 +93,11 @@ details, up to 50 source annotations, and an Actions summary. It runs from
 the default branch so fork PRs can receive checks without granting write
 permissions to their test jobs. The reporting workflow must be merged into
 the default branch before it starts running. Missing reports are allowed for
-verticals without tests or jobs that failed before testing.
+verticals without tests or jobs that failed before testing. If the reporter
+fails part-way, it marks the checks it left in progress `neutral` with
+"Test results not published", and the verticals after that get no check;
+re-run the Test Report workflow run to publish them. A neutral check is not a
+test failure: the vertical's `Build and Test` job is the gate.
 
 For a test failure, inspect the test report check or the job's `Test` step,
 which enables `TestingPlatformShowTestsFailure` to print individual errors.
