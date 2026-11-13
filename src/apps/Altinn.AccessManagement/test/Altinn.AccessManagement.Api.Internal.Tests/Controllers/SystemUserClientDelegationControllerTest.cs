@@ -1,4 +1,5 @@
 ﻿using System.Net;
+using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text.Json;
 using Altinn.AccessManagement.Api.Internal.Controllers.Internal;
@@ -9,6 +10,7 @@ using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
+using Microsoft.EntityFrameworkCore;
 
 namespace Altinn.AccessManagement.Api.Internal.Tests.Controllers;
 
@@ -188,6 +190,174 @@ public class SystemUserClientDelegationControllerTest
             var response = await client.GetAsync($"{Route}/clients?party={TestEntities.OrganizationVerdiqAS.Id}&roles=notarole", TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+    }
+
+    #endregion
+
+    #region POST accessmanagement/api/v1/internal/systemuserclientdelegation
+
+    /// <summary>
+    /// <see cref="SystemUserClientDelegationController.PostClientDelegation(Guid, CreateSystemDelegationRequestDto, CancellationToken)"/>
+    ///
+    /// The Bruno negative tests in SystemUserClientDelegation/NegativeTests send these same
+    /// requests in AT22 and TT02, so the error codes asserted here are the ones they assert.
+    /// </summary>
+    [IntegrationTest]
+    public class PostClientDelegation : IClassFixture<ApiFixture>
+    {
+        public PostClientDelegation(ApiFixture fixture)
+        {
+            Fixture = fixture;
+            Fixture.EnsureSeedOnce<PostClientDelegation>(db =>
+            {
+                // Okern is a regnskapsforer client of Verdiq and nothing else, so it holds the
+                // regnskapsforer role packages but no forretningsforer assignment.
+                db.Assignments.Add(new Assignment()
+                {
+                    FromId = TestEntities.OrganizationOkernBorettslag.Id,
+                    ToId = TestEntities.OrganizationVerdiqAS.Id,
+                    RoleId = RoleConstants.Accountant,
+                });
+
+                db.SaveChanges();
+            });
+        }
+
+        public ApiFixture Fixture { get; }
+
+        private async Task<HttpResponseMessage> Post(Guid clientId, Guid agentId, string roleIdentifier, string packageUrn, string agentRole = null, Action<CreateSystemDelegationRequestDto> change = null)
+        {
+            var client = Fixture.Server.CreateClient();
+            var token = TestTokenGenerator.CreateToken(new ClaimsIdentity("mock"), claims =>
+            {
+                claims.Add(new Claim("scope", AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_WRITE));
+                claims.Add(new Claim(AltinnCoreClaimTypes.PartyUuid, TestEntities.PersonPaula.Id.ToString()));
+            });
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+
+            var request = new CreateSystemDelegationRequestDto
+            {
+                ClientId = clientId,
+                AgentId = agentId,
+                AgentName = "Test agent",
+                AgentRole = agentRole ?? RoleConstants.Agent.Entity.Code,
+                RolePackages = [new() { RoleIdentifier = roleIdentifier, PackageUrn = packageUrn }],
+            };
+            change?.Invoke(request);
+
+            return await client.PostAsJsonAsync($"{Route}?party={TestEntities.OrganizationVerdiqAS.Id}", request, TestContext.Current.CancellationToken);
+        }
+
+        private static async Task<List<string>> ValidationErrorCodes(HttpResponseMessage response)
+        {
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            using var body = JsonDocument.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+            return [.. body.RootElement.GetProperty("validationErrors").EnumerateArray().Select(e => e.GetProperty("code").GetString())];
+        }
+
+        [Fact]
+        public async Task PostClientDelegation_UnknownPackage_Returns400InvalidPackage()
+        {
+            var response = await Post(TestEntities.OrganizationOkernBorettslag.Id, TestEntities.SystemUserClient.Id, RoleConstants.Accountant.Entity.Code, "xyz12345");
+
+            Assert.Equal(["AM.VLD-00030"], await ValidationErrorCodes(response));
+        }
+
+        [Fact]
+        public async Task PostClientDelegation_AgentIsPerson_Returns400DisallowedEntityType()
+        {
+            var response = await Post(TestEntities.OrganizationOkernBorettslag.Id, TestEntities.PersonPaula.Id, RoleConstants.Accountant.Entity.Code, PackageConstants.AccountantSalary.Entity.Urn);
+
+            Assert.Equal(["AM.VLD-00008"], await ValidationErrorCodes(response));
+        }
+
+        [Fact]
+        public async Task PostClientDelegation_ClientNotConnectedToFacilitator_Returns400MissingAssignment()
+        {
+            var response = await Post(TestEntities.OrganizationSolsidenSameie.Id, TestEntities.SystemUserClient.Id, RoleConstants.Accountant.Entity.Code, PackageConstants.AccountantSalary.Entity.Urn);
+
+            Assert.Equal(["AM.VLD-00032"], await ValidationErrorCodes(response));
+        }
+
+        [Fact]
+        public async Task PostClientDelegation_ForretningsforerPackageForAccountantClient_Returns400MissingAssignment()
+        {
+            var response = await Post(TestEntities.OrganizationOkernBorettslag.Id, TestEntities.SystemUserClient.Id, RoleConstants.BusinessManager.Entity.Code, PackageConstants.BusinessManagerRealEstate.Entity.Urn);
+
+            Assert.Equal(["AM.VLD-00032"], await ValidationErrorCodes(response));
+        }
+
+        [Fact]
+        public async Task PostClientDelegation_NullRoleIdentifier_Returns400Required()
+        {
+            var response = await Post(TestEntities.OrganizationOkernBorettslag.Id, TestEntities.SystemUserClient.Id, null, PackageConstants.AccountantSalary.Entity.Urn);
+
+            Assert.Equal([Altinn.AccessManagement.Core.Errors.ValidationErrors.Required.ErrorCode.ToString()], await ValidationErrorCodes(response));
+        }
+
+        [Fact]
+        public async Task PostClientDelegation_NullRolePackages_Returns400Required()
+        {
+            var response = await Post(TestEntities.OrganizationOkernBorettslag.Id, TestEntities.SystemUserClient.Id, RoleConstants.Accountant.Entity.Code, PackageConstants.AccountantSalary.Entity.Urn, change: r => r.RolePackages = null);
+
+            Assert.Equal([Altinn.AccessManagement.Core.Errors.ValidationErrors.Required.ErrorCode.ToString()], await ValidationErrorCodes(response));
+        }
+
+        [Fact]
+        public async Task PostClientDelegation_NullRolePackage_Returns400Required()
+        {
+            var response = await Post(TestEntities.OrganizationOkernBorettslag.Id, TestEntities.SystemUserClient.Id, RoleConstants.Accountant.Entity.Code, PackageConstants.AccountantSalary.Entity.Urn, change: r => r.RolePackages = [null]);
+
+            Assert.Equal([Altinn.AccessManagement.Core.Errors.ValidationErrors.Required.ErrorCode.ToString()], await ValidationErrorCodes(response));
+        }
+
+        [Fact]
+        public async Task PostClientDelegation_NullPackageUrn_Returns400Required()
+        {
+            var response = await Post(TestEntities.OrganizationOkernBorettslag.Id, TestEntities.SystemUserClient.Id, RoleConstants.Accountant.Entity.Code, null);
+
+            Assert.Equal([Altinn.AccessManagement.Core.Errors.ValidationErrors.Required.ErrorCode.ToString()], await ValidationErrorCodes(response));
+        }
+
+        [Fact]
+        public async Task PostClientDelegation_UnknownRoleIdentifier_Returns400RoleNotExists()
+        {
+            var response = await Post(TestEntities.OrganizationOkernBorettslag.Id, TestEntities.SystemUserClient.Id, "xyz12345", PackageConstants.AccountantSalary.Entity.Urn);
+
+            Assert.Equal(["AM.VLD-00007"], await ValidationErrorCodes(response));
+        }
+
+        [Fact]
+        public async Task PostClientDelegation_PackageTheClientHolds_Returns200WithDelegation()
+        {
+            var response = await Post(TestEntities.OrganizationOkernBorettslag.Id, TestEntities.SystemUserClient.Id, RoleConstants.Accountant.Entity.Code, PackageConstants.AccountantSalary.Entity.Urn);
+
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+            var result = await response.Content.ReadFromJsonAsync<List<CreateDelegationResponseDto>>(TestContext.Current.CancellationToken);
+            Assert.Single(result);
+        }
+
+        [Fact]
+        public async Task PostClientDelegation_AgentRoleTheServiceCannotAssign_Returns400InvalidRoleAndLeavesNoAgentBehind()
+        {
+            // daglig-leder comes from the Central Coordinating Register, so the service may not create that assignment.
+            var agentId = Guid.CreateVersion7();
+
+            var response = await Post(TestEntities.OrganizationOkernBorettslag.Id, agentId, RoleConstants.Accountant.Entity.Code, PackageConstants.AccountantSalary.Entity.Urn, RoleConstants.ManagingDirector.Entity.Code);
+
+            Assert.Equal(["AM.VLD-00029"], await ValidationErrorCodes(response));
+            var agentExists = true;
+            await Fixture.QueryDb(async db => agentExists = await db.Entities.AsNoTracking().AnyAsync(e => e.Id == agentId, TestContext.Current.CancellationToken));
+            Assert.False(agentExists);
+        }
+
+        [Fact]
+        public async Task PostClientDelegation_UnknownAgentRole_Returns400RoleNotExists()
+        {
+            var response = await Post(TestEntities.OrganizationOkernBorettslag.Id, TestEntities.SystemUserClient.Id, RoleConstants.Accountant.Entity.Code, PackageConstants.AccountantSalary.Entity.Urn, "xyz12345");
+
+            Assert.Equal(["AM.VLD-00007"], await ValidationErrorCodes(response));
         }
     }
 

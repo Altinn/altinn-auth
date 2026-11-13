@@ -35,8 +35,6 @@ script:pre-request {
   bru.setEnvVar("auth_scopes","altinn:authentication/systemuser.read");
   
   var token = await TestToolsTokenGenerator.getToken(); // Fetch and store the token
-  
-  console.log(token)
   bru.setEnvVar("bearer_token", token);
   
 }

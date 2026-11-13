@@ -3,9 +3,13 @@ using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Validation;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Abstractions;
+using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using CreateSystemDelegationRequestDto = Altinn.Authorization.Api.Contracts.AccessManagement.CreateSystemDelegationRequestDto;
 using ValidationErrors = Altinn.AccessManagement.Core.Errors.ValidationErrors;
@@ -100,12 +104,29 @@ public class SystemUserClientDelegationControllerTest
     {
         var delegationSvc = new Mock<IDelegationService>();
         delegationSvc.Setup(s => s.CreateClientDelegation(It.IsAny<CreateSystemDelegationRequestDto>(), Party, It.IsAny<CancellationToken>()))
-                     .ReturnsAsync([]);
+                     .ReturnsAsync(new List<CreateDelegationResponseDto>());
 
         var result = await CreateSut(delegationSvc: delegationSvc.Object)
             .PostClientDelegation(Party, new CreateSystemDelegationRequestDto(), TestContext.Current.CancellationToken);
 
         Assert.IsType<OkObjectResult>(result.Result);
+    }
+
+    [Fact]
+    public async Task PostClientDelegation_ServiceReturnsProblem_Returns400()
+    {
+        var delegationSvc = new Mock<IDelegationService>();
+        delegationSvc.Setup(s => s.CreateClientDelegation(It.IsAny<CreateSystemDelegationRequestDto>(), Party, It.IsAny<CancellationToken>()))
+                     .ReturnsAsync(MakeProblem());
+
+        var result = await CreateSut(delegationSvc: delegationSvc.Object)
+            .PostClientDelegation(Party, new CreateSystemDelegationRequestDto(), TestContext.Current.CancellationToken);
+
+        // ToActionResult returns an internal result type with no public status, so execute it and read the response status.
+        var http = new DefaultHttpContext { RequestServices = new ServiceCollection().AddLogging().BuildServiceProvider() };
+        http.Response.Body = new MemoryStream();
+        await result.Result.ExecuteResultAsync(new ActionContext(http, new RouteData(), new ActionDescriptor()));
+        Assert.Equal(StatusCodes.Status400BadRequest, http.Response.StatusCode);
     }
 
     #endregion
