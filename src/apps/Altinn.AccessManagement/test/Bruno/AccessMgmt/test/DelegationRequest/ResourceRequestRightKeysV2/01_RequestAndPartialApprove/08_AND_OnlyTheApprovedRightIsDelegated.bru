@@ -1,0 +1,55 @@
+meta {
+	name: 08_AND_OnlyTheApprovedRightIsDelegated
+	type: http
+	seq: 8
+}
+
+get {
+	url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources/rights?party={{party}}&from={{party}}&to={{to}}&resource={{resource}}
+	body: none
+	auth: inherit
+}
+
+params:query {
+	party: {{party}}
+	from: {{party}}
+	to: {{to}}
+	resource: {{resource}}
+}
+
+docs {
+	AND the approval delegated only the approved right from the approver to the requester.
+
+	GET /accessmanagement/api/v1/enduser/connections/resources/rights?party=<approver>&from=<approver>&to=<requester>&resource=<id>
+
+	The approval is an ordinary resource delegation, so it shows up among the rights the approver
+	has given others, and can be changed or removed like any other delegation.
+}
+
+script:pre-request {
+	const { skipOutsideEnabledEnvironments, testdata, loginAs, requireVar } = require("./test/DelegationRequest/ResourceRequestRightKeysV2/helpers.js");
+	if (skipOutsideEnabledEnvironments()) {
+		return;
+	}
+
+	const td = testdata();
+
+	requireVar("rk_keyB", "02");
+	bru.setVar("party", td.approver.partyUuid);
+	bru.setVar("to", td.requester.partyUuid);
+	bru.setVar("resource", td.resource);
+
+	await loginAs(td.approver);
+}
+
+tests {
+	test("AND the delegated rights can be listed, the request returns 200", function() {
+		expect(res.status).to.equal(200);
+	});
+
+	test("AND the approved right is delegated, and the right that was not approved is not", function() {
+		const delegated = JSON.stringify(res.getBody());
+		expect(delegated).to.contain(bru.getVar("rk_keyA"));
+		expect(delegated).to.not.contain(bru.getVar("rk_keyB"));
+	});
+}

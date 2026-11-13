@@ -1,7 +1,6 @@
 ﻿using System.Text;
 using System.Text.Json;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
-using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.Consent;
@@ -12,6 +11,7 @@ using Altinn.AccessMgmt.Core.Utils.Helper;
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
+using Altinn.Authorization.Xacml.Constants;
 using static Altinn.Authorization.ABAC.Constants.XacmlConstants;
 
 namespace Altinn.AccessManagement.TestUtils.Mocks
@@ -282,7 +282,7 @@ namespace Altinn.AccessManagement.TestUtils.Mocks
                 {
                     result.Add(urn);
                 }
-                else if (includeAppRights && urn.StartsWith(AltinnXacmlConstants.MatchAttributeIdentifiers.Delegation))
+                else if (includeAppRights && urn.StartsWith(AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceDelegationAttribute))
                 {
                     result.Add(urn);
                 }

@@ -1,5 +1,6 @@
 ﻿using System.Text;
 using Altinn.Authorization.ABAC.Xacml;
+using Altinn.Authorization.Xacml;
 using Altinn.Platform.Authorization.Constants;
 using Altinn.Platform.Authorization.Helpers;
 using Altinn.Platform.Authorization.Models;
@@ -159,7 +160,7 @@ namespace Altinn.Platform.Authorization.Controllers
                     continue;
                 }
 
-                response.MinimumAuthenticationLevel = PolicyHelper.GetMinimumAuthenticationLevelFromXacmlPolicy(policy);
+                response.MinimumAuthenticationLevel = XacmlPolicyHelper.GetMinimumAuthenticationLevelFromXacmlPolicy(policy);
                 response.ResourcePolicies = new List<ResourcePolicy>();
                 List<ResourcePolicy> list = PolicyHelper.GetResourcePoliciesFromXacmlPolicy(policy, language);
                 foreach (ResourcePolicy resourcePolicy in list)

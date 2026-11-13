@@ -355,7 +355,7 @@ public abstract class RequestControllerBase<TRequest, TStatus>(
     /// <param name="ct">Cancellation token</param>
     protected async Task<ActionResult<TRequest>> ApproveRequestCore(Guid party, Guid id, IReadOnlyList<string>? selectedRightKeys, CancellationToken ct)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         var requestResult = await RequestService.GetRequest(id, ct);
         if (requestResult.IsProblem)
@@ -458,7 +458,7 @@ public abstract class RequestControllerBase<TRequest, TStatus>(
         CancellationToken ct = default
         )
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         var authUserUuid = AuthenticationHelper.GetAuthenticatedPartyUuid(HttpContext);
         var (hasConnections, _) = await ConnectionQuery.HasConnection(to, party);
@@ -496,7 +496,7 @@ public abstract class RequestControllerBase<TRequest, TStatus>(
 
     private async Task<ActionResult<TRequest>> ApprovePackageRequest(Guid partyUuid, AccessRequest request, CancellationToken ct)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         var assignment = await AssignmentService.GetOrCreateAssignment(request.To.Id, request.From.Id, RoleConstants.Rightholder, cancellationToken: ct);
         if (assignment is null)
@@ -626,7 +626,7 @@ public abstract class RequestControllerBase<TRequest, TStatus>(
     /// <returns>The resource when valid, otherwise the problem to return.</returns>
     protected async Task<(Altinn.AccessMgmt.PersistenceEF.Models.Resource Resource, ValidationProblemInstance Problem)> ValidateResourceRequest(Guid party, Guid to, string resource, CancellationToken ct)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         var (hasConnections, _) = await ConnectionQuery.HasConnection(to, party);
         if (!hasConnections)

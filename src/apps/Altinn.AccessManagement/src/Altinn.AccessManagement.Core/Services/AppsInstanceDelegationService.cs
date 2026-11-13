@@ -1,7 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Configuration;
-using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Enums;
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Helpers;
@@ -17,6 +16,7 @@ using Altinn.Authorization.Api.Contracts.Authorization;
 using Altinn.Authorization.Api.Contracts.Register;
 using Altinn.Authorization.Api.Contracts.ResourceRegistry;
 using Altinn.Authorization.ProblemDetails;
+using Altinn.Authorization.Xacml.Constants;
 using Altinn.Urn;
 using Altinn.Urn.Json;
 using Azure.Core;
@@ -145,7 +145,7 @@ public class AppsInstanceDelegationService : IAppsInstanceDelegationService
         return false;
     }
 
-    private static void AddValidationErrorsForResourceInstance(ref ValidationErrorBuilder errors, IEnumerable<RightInternal> rights, string resourceid)
+    private static void AddValidationErrorsForResourceInstance(ref ValidationProblemBuilder errors, IEnumerable<RightInternal> rights, string resourceid)
     {
         ValidateAndGetSignificantResourcePartsFromResource(rights.FirstOrDefault()?.Resource, out List<UrnJsonTypeValue> firstResource, resourceid);
         int counter = -1;
@@ -176,7 +176,7 @@ public class AppsInstanceDelegationService : IAppsInstanceDelegationService
     {
         ResourceDelegationCheckResponse result = new ResourceDelegationCheckResponse() { From = null, ResourceRightDelegationCheckResults = new List<ResourceRightDelegationCheckResult>() };
 
-        ValidationErrorBuilder errors = default;
+        ValidationProblemBuilder errors = default;
 
         ServiceResource resource = (await _resourceRegistryClient.GetResourceList(cancellationToken)).Find(r => r.Identifier == request.ResourceId);
         List<Right> delegableRights = null;
@@ -256,7 +256,7 @@ public class AppsInstanceDelegationService : IAppsInstanceDelegationService
             request.InstanceId = $"{AltinnXacmlConstants.MatchAttributeIdentifiers.InstanceAttribute}:{party.PartyId}/{instanceId}";
         }
 
-        (ValidationErrorBuilder Errors, InstanceRight RulesToHandle, List<RightInternal> RightsAppCantHandle) input = await SetUpDelegationOrRevokeRequest(request, cancellationToken);
+        (ValidationProblemBuilder Errors, InstanceRight RulesToHandle, List<RightInternal> RightsAppCantHandle) input = await SetUpDelegationOrRevokeRequest(request, cancellationToken);
         request.InstanceId = instanceId;
 
         if (input.Errors.TryBuild(out var errorResult))
@@ -283,7 +283,7 @@ public class AppsInstanceDelegationService : IAppsInstanceDelegationService
     /// <inheritdoc/>
     public async Task<Result<List<AppsInstanceRevokeResponse>>> RevokeAll(AppsInstanceGetRequest request, CancellationToken cancellationToken = default)
     {
-        ValidationErrorBuilder errors = default;
+        ValidationProblemBuilder errors = default;
 
         // Fetch rights valid for delegation
         ServiceResource resource = (await _resourceRegistryClient.GetResourceList(cancellationToken)).Find(r => r.Identifier == request.ResourceId);
@@ -495,7 +495,7 @@ public class AppsInstanceDelegationService : IAppsInstanceDelegationService
             request.InstanceId = $"{AltinnXacmlConstants.MatchAttributeIdentifiers.InstanceAttribute}:{party.PartyId}/{instanceId}";
         }
 
-        (ValidationErrorBuilder Errors, InstanceRight RulesToHandle, List<RightInternal> RightsAppCantHandle) input = await SetUpDelegationOrRevokeRequest(request, cancellationToken);
+        (ValidationProblemBuilder Errors, InstanceRight RulesToHandle, List<RightInternal> RightsAppCantHandle) input = await SetUpDelegationOrRevokeRequest(request, cancellationToken);
         request.InstanceId = instanceId;
 
         if (input.Errors.TryBuild(out var errorResult))
@@ -519,9 +519,9 @@ public class AppsInstanceDelegationService : IAppsInstanceDelegationService
         return result;
     }
 
-    private async Task<(ValidationErrorBuilder Errors, InstanceRight RulesToHandle, List<RightInternal> RightsAppCantHandle)> SetUpDelegationOrRevokeRequest(AppsInstanceDelegationRequest request, CancellationToken cancellationToken = default)
+    private async Task<(ValidationProblemBuilder Errors, InstanceRight RulesToHandle, List<RightInternal> RightsAppCantHandle)> SetUpDelegationOrRevokeRequest(AppsInstanceDelegationRequest request, CancellationToken cancellationToken = default)
     {
-        ValidationErrorBuilder errors = default;
+        ValidationProblemBuilder errors = default;
         List<RightInternal> rightsAppCantHandle = null;
         InstanceRight rulesToHandle = null;
 
@@ -657,7 +657,7 @@ public class AppsInstanceDelegationService : IAppsInstanceDelegationService
     /// <inheritdoc/>
     public async Task<Result<List<AppsInstanceDelegationResponse>>> Get(AppsInstanceGetRequest request, CancellationToken cancellationToken = default)
     {
-        ValidationErrorBuilder errors = default;
+        ValidationProblemBuilder errors = default;
 
         // Fetch rights valid for delegation
         ServiceResource resource = (await _resourceRegistryClient.GetResourceList(cancellationToken)).Find(r => r.Identifier == request.ResourceId);

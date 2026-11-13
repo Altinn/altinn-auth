@@ -4,6 +4,7 @@ using Altinn.AccessManagement.Core.Helpers.Extensions;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.Authorization.ABAC.Xacml;
+using Altinn.Authorization.Xacml;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Options;
 
@@ -37,14 +38,14 @@ namespace Altinn.AccessManagement.Core.Services
         /// <inheritdoc/>
         public async Task<XacmlPolicy> GetPolicyAsync(XacmlContextRequest request, CancellationToken cancellationToken = default)
         {
-            string policyPath = PolicyHelper.GetPolicyPath(request);
+            string policyPath = XacmlPolicyHelper.GetPolicyPath(request);
             return await GetPolicyInternalAsync(policyPath, cancellationToken: cancellationToken);
         }
 
         /// <inheritdoc/>
         public async Task<XacmlPolicy> GetPolicyAsync(string org, string app, CancellationToken cancellationToken = default)
         {
-            string policyPath = PolicyHelper.GetAltinnAppsPolicyPath(org, app);
+            string policyPath = XacmlPolicyHelper.GetAltinnAppsPolicyPath(org, app);
             return await GetPolicyInternalAsync(policyPath, cancellationToken: cancellationToken);
         }
 
@@ -103,7 +104,7 @@ namespace Altinn.AccessManagement.Core.Services
         private static XacmlPolicy ParsePolicyDocument(byte[] policyDocument)
         {
             using MemoryStream stream = new MemoryStream(policyDocument, writable: false);
-            return PolicyHelper.ParsePolicy(stream);
+            return XacmlPolicyHelper.ParsePolicy(stream);
         }
     }
 }

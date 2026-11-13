@@ -1,4 +1,5 @@
 ﻿using System.Net.Mime;
+using Altinn.AccessManagement.Core.Configuration;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessMgmt.Core.Extensions;
 using Altinn.AccessMgmt.Core.Services.Contracts;
@@ -11,6 +12,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.Extensions.Options;
 
 namespace Altinn.AccessManagement.Api.Enduser.Controllers.Base;
 
@@ -23,7 +25,7 @@ namespace Altinn.AccessManagement.Api.Enduser.Controllers.Base;
 /// filters and may equal the party. The two discovery endpoints are static, anonymous and
 /// cached.
 /// </summary>
-public abstract class ActivityLogAreaControllerBase(IActivityLogService activityLogService, ActivityLogArea area) : ControllerBase
+public abstract class ActivityLogAreaControllerBase(IActivityLogService activityLogService, IOptions<GeneralSettings> generalSettings, ActivityLogArea area) : ControllerBase
 {
     private const int DefaultPageSize = 100;
 
@@ -186,11 +188,26 @@ public abstract class ActivityLogAreaControllerBase(IActivityLogService activity
         return true;
     }
 
+    /// <summary>
+    /// Builds the absolute link to the next page. The authority is the configured platform
+    /// hostname, the same convention the other link-building endpoints use, because the
+    /// request's scheme and host are whatever the proxy chain forwarded and have surfaced an
+    /// internal address. Without a configured hostname, as in local development and tests,
+    /// the request's own scheme and host are used.
+    /// </summary>
     private string NextLink(int pageSize, int nextPageNo)
     {
         var query = QueryHelpers.ParseQuery(Request.QueryString.Value);
         query["pageSize"] = pageSize.ToString();
         query["pageNo"] = nextPageNo.ToString();
-        return UriHelper.BuildAbsolute(Request.Scheme, Request.Host, Request.PathBase, Request.Path, QueryString.Create(query));
+        var queryString = QueryString.Create(query);
+
+        var hostname = generalSettings.Value.Hostname;
+        if (string.IsNullOrWhiteSpace(hostname) || hostname.Equals("localhost", StringComparison.OrdinalIgnoreCase))
+        {
+            return UriHelper.BuildAbsolute(Request.Scheme, Request.Host, Request.PathBase, Request.Path, queryString);
+        }
+
+        return UriHelper.BuildAbsolute(Uri.UriSchemeHttps, new HostString($"platform.{hostname}"), Request.PathBase, Request.Path, queryString);
     }
 }
