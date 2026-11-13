@@ -1,5 +1,5 @@
-﻿using Altinn.AccessManagement.Core.Constants;
-using Altinn.AccessManagement.Utilities;
+﻿using Altinn.AccessManagement.Utilities;
+using Altinn.Authorization.Xacml.Constants;
 using Microsoft.AspNetCore.Http;
 
 namespace Altinn.AccessManagement.Tests.Unit.Utilities;

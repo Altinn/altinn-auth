@@ -51,7 +51,7 @@ public static class RequestApproval
     {
         HashSet<string> delegableKeys = [.. rights.Where(right => right.Result).Select(right => right.Right.Key)];
 
-        ValidationErrorBuilder errors = default;
+        ValidationProblemBuilder errors = default;
         for (int i = 0; i < rightKeys.Count; i++)
         {
             var key = rightKeys[i];

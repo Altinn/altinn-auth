@@ -1,0 +1,20 @@
+meta {
+	name: 01_RequestAndPartialApprove
+	seq: 1
+}
+
+docs {
+	Scenario: An organisation asks a person for two rights on a resource and gets one of them
+
+		Given the approver has no pending request from the requester for the resource
+		And the approver can delegate at least two rights on the resource
+		When the requester asks for two rights on the resource through v2
+		Then the approver sees the requested rights on the request
+		When the approver approves only one of the rights
+		Then the request is PartialApprove with the approved right
+		And the requester sees the request as PartialApprove among its sent requests
+		And v1 reports the request as Approved with statusV2 PartialApprove
+		And only the approved right is delegated to the requester
+		And approving the request again fails
+		Finally the approver removes the delegation to clean up
+}

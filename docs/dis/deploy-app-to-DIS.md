@@ -65,14 +65,21 @@ Wait for `Running` status before continuing.
 
 ### 2. Update RBAC terraform for DIS service principals
 
-DIS creates an `ApplicationIdentity` resource per app with the `principalId` in its status. There are two per app: the app itself and the pre-deploy job — both are needed.
+DIS creates an `ApplicationIdentity` resource per app. After the first deployment the `servicePrincipalId` is populated in its status. There are two per app: the app itself and the pre-deploy job — both are needed.
+
+```bash
+kubectl get applicationidentity -n <namespace> <name> -o yaml
+# look for: status.servicePrincipalId
+```
+
+To list all identities in the namespace at once:
 
 ```bash
 kubectl get applicationidentity -n <namespace> \
-  -o jsonpath='{range .items[*]}{.metadata.name}: {.status.principalId}{"\n"}{end}'
+  -o jsonpath='{range .items[*]}{.metadata.name}: {.status.servicePrincipalId}{"\n"}{end}'
 ```
 
-In the app's `infra/main.tf` (in Azure DevOps), add a `module "rbac_dis_app"` block for these principal IDs, mirroring the existing `module "rbac_platform_app"`. If the app has a Key Vault, also add `Key Vault Secrets User` entries for the DIS principal IDs in the `key_vault_roles` list. Apply the terraform.
+Append the DIS `servicePrincipalId` values to the existing `module "rbac_platform_app"` block in the app's `infra/main.tf` (Azure DevOps). If the app has a Key Vault, also add `Key Vault Secrets User` entries for the DIS principal IDs in the `key_vault_roles` list. Apply the terraform.
 
 ### 3. Configure DIS proxy
 
@@ -82,12 +89,37 @@ The app also needs to trust the proxy by adding the trusted proxies configuratio
 
 > Once all services have been migrated to DIS, the proxy endpoints and trusted proxies configuration can be removed.
 
-### 4. Platform Key Vault and App Configuration access (if needed)
+**Platform-to-DIS direction:** there is a matching proxy on the platform-cluster side — a feature-flagged nginx proxy in each service's platform-cluster Helm chart ([altinn-studio-ops](https://github.com/Altinn/altinn-studio-ops)) that lets platform-cluster callers reach DIS-hosted services without changing their configured endpoints. This proxy must be deployed before shifting internal traffic in phase 2 of the migration. See feature [#5001](https://github.com/Altinn/altinn-auth/issues/5001) for the per-service proxy tasks and the general migration runbook.
 
-If the app reads secrets from the platform Key Vault or uses platform App Configuration, access must be ordered from the platform team. Provide them with the `principalId` values from step 2.
+### 4. Database firewall (if the app uses a database)
 
-> **Chicken-and-egg:** the DIS managed identity does not exist until after the first deployment. Deploy the app first (step 1), retrieve the principal IDs (step 2), then order access. The app may fail to start until access is granted. Once all services have migrated to DIS, access to the platform Key Vault can be cleaned up.
+DIS runs in its own network. If the app connects to a PostgreSQL database, the database's firewall must allow inbound connections from the DIS core subnet.
 
-### 5. App-specific Key Vault access (if needed)
+1. Check whether the DIS core subnet is already listed in the database's firewall rules (Azure Portal → PostgreSQL flexible server → Networking).
+2. If it is not listed, open an issue in [altinn-platform](https://github.com/Altinn/altinn-platform/issues) requesting a firewall opening for the DIS core subnet. The app will fail to connect until this is in place.
 
-If the app was not covered in step 2, update the Key Vault terraform in Azure DevOps to grant the app's managed identity the appropriate role. Apply the changes.
+### 5. Storage Account firewall (if the app uses Storage queues or blobs)
+
+The same applies to Azure Storage accounts. If the app reads from or writes to a Storage Account (queues, blobs), the DIS core subnet must be allowed in the storage account's firewall.
+
+1. Check whether the DIS core subnet is listed under the storage account's networking rules (Azure Portal → Storage account → Networking).
+2. If it is not listed, open an issue in [altinn-platform](https://github.com/Altinn/altinn-platform/issues) requesting the network rule to be added.
+
+### 6. Platform Key Vault access (if needed)
+
+If the app reads secrets from the platform Key Vault, the DIS workload identity must have the `Key Vault Secrets User` role on that Key Vault.
+
+1. Check whether the principal IDs from step 2 already have this role (Azure Portal → Key Vault → Access control (IAM)).
+2. If they do not, create a ticket to the platform team providing the `principalId` values. The app may fail to start until access is granted.
+
+> **Chicken-and-egg:** the DIS managed identity does not exist until after the first deployment. Deploy the app first (step 1), retrieve the principal IDs (step 2), then check and order access. Once all services have migrated to DIS, access to the platform Key Vault can be cleaned up.
+
+### 7. Azure App Configuration access (if needed)
+
+If the app reads from platform App Configuration, access can be granted directly via Terraform without involving the platform team.
+
+In the app's `infra/main.tf` (Azure DevOps), add an `App Configuration Data Reader` role assignment for the DIS principal IDs on the App Configuration instance. Apply the terraform.
+
+### 8. App-specific Key Vault access (if needed)
+
+If the app has its own Key Vault and it was not covered in step 2, update the Key Vault terraform in Azure DevOps to grant the DIS managed identity the appropriate role. Apply the changes.

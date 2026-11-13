@@ -48,6 +48,6 @@ tests {
     const body = res.getBody();
     expect(body.status).to.equal(400);
     expect(body.code).to.equal("AM-00033");
-    expect(body.detail).to.equal("No right key provided");
+    expect(body.title).to.equal("No right key provided");
   });
 }

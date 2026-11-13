@@ -4,7 +4,6 @@
     <PackageReference Include="Altinn.Authorization.ModelUtils" />
     <PackageReference Include="CommunityToolkit.Diagnostics" />
     <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" />
-    <PackageReference Include="Altinn.Authorization.ABAC" />
     <PackageReference Include="Altinn.Authorization.ProblemDetails.Abstractions" />
     <PackageReference Include="Altinn.Common.AccessTokenClient" />
     <PackageReference Include="Altinn.Platform.Storage.Interface" />
@@ -25,6 +24,7 @@
       Altinn.Authorization.Api.Contracts depends on older versions of packages this vertical uses.
     -->
     <Compile Include="..\..\..\..\libs\Altinn.Authorization.Api.Contracts\src\Altinn.Authorization.Api.Contracts\ResourceRegistry\Enums\ResourceAccessListMode.cs" Link="Enums\ResourceAccessListMode.cs" />
+    <ProjectReference Include="..\..\..\..\libs\Altinn.Authorization.Xacml\src\Altinn.Authorization.Xacml\Altinn.Authorization.Xacml.csproj" />
   </ItemGroup>
 
   <ItemGroup>

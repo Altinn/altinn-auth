@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Enums;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
@@ -7,6 +6,7 @@ using Altinn.AccessManagement.Models;
 using Altinn.AccessManagement.Tests.Integration.Controllers;
 using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.Authorization.ABAC.Constants;
+using Altinn.Authorization.Xacml.Constants;
 using Altinn.Platform.Register.Models;
 
 namespace Altinn.AccessManagement.Tests.Utils
@@ -269,27 +269,6 @@ namespace Altinn.AccessManagement.Tests.Utils
                 BlobStorageVersionId = "CorrectLeaseId",
                 Created = created
             };
-        }
-
-        /// <summary>
-        /// Creates a list of roles.
-        /// </summary>
-        /// <returns>The newly created list of roles.</returns>
-        public static List<string> GetRolesWithAccess()
-        {
-            List<string> roles = new List<string>();
-            roles.Add("BEST");
-            roles.Add("BOBE");
-            roles.Add("DAGL");
-            roles.Add("DTPR");
-            roles.Add("DTSO");
-            roles.Add("INNH");
-            roles.Add("KEMN");
-            roles.Add("KOMP");
-            roles.Add("LEDE");
-            roles.Add("REPR");
-
-            return roles;
         }
 
         /// <summary>
