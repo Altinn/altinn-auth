@@ -211,10 +211,6 @@ namespace Altinn.Platform.Authentication.Tests.Clients
             Assert.Empty(captured);
         }
 
-        [Theory]
-        [InlineData(false, "v1", "to")]
-        [InlineData(true, "v2", "agent")]
-        public async Task RevokeSystemUserAsAgent_UsesVersionedRouteAndAgentParam(bool useV2, string version, string agentParam)
         [Fact]
         public async Task RevokeSystemUserAsAgent_UsesV2RouteAndAgentParam()
         {
