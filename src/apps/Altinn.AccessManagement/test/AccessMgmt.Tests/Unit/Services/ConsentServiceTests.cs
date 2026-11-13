@@ -9,7 +9,7 @@ using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services;
 using Altinn.AccessManagement.Core.Services.Interfaces;
-using Microsoft.Extensions.Caching.Memory;
+using Altinn.AccessManagement.Tests.Utils;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
@@ -28,7 +28,6 @@ public class ConsentServiceTests
     private readonly Mock<IConsentRepository> _consentRepositoryMock;
     private readonly Mock<IResourceRegistryClient> _resourceRegistryClientMock;
     private readonly Mock<IAMPartyService> _amPartyServiceMock;
-    private readonly Mock<IMemoryCache> _memoryCacheMock;
     private readonly TimeProvider _timeProvider;
     private readonly Mock<IOptions<GeneralSettings>> _generalSettingsMock;
     private readonly Mock<IConsentDelegationCheckService> _consentDelegationCheckServiceMock;
@@ -39,13 +38,11 @@ public class ConsentServiceTests
         _consentRepositoryMock = new Mock<IConsentRepository>();
         _resourceRegistryClientMock = new Mock<IResourceRegistryClient>();
         _amPartyServiceMock = new Mock<IAMPartyService>();
-        _memoryCacheMock = new Mock<IMemoryCache>();
         _timeProvider = TimeProvider.System;
         _generalSettingsMock = new Mock<IOptions<GeneralSettings>>();
         _consentDelegationCheckServiceMock = new Mock<IConsentDelegationCheckService>();
 
         _generalSettingsMock.Setup(x => x.Value).Returns(new GeneralSettings { Hostname = "localhost" });
-        SetupMemoryCache();
     }
 
     // =======================================================================
@@ -374,26 +371,9 @@ public class ConsentServiceTests
             _consentRepositoryMock.Object,
             _resourceRegistryClientMock.Object,
             _amPartyServiceMock.Object,
-            _memoryCacheMock.Object,
+            HybridCacheUtil.Create(),
             _timeProvider,
             _generalSettingsMock.Object,
             _consentDelegationCheckServiceMock.Object);
-    }
-
-    private void SetupMemoryCache()
-    {
-        // Mock TryGetValue to return false (cache miss)
-        _memoryCacheMock
-            .Setup(x => x.TryGetValue(It.IsAny<object>(), out It.Ref<object>.IsAny))
-            .Returns(false);
-
-        // Mock CreateEntry for Set operations
-        var mockCacheEntry = new Mock<ICacheEntry>();
-        mockCacheEntry.SetupProperty(x => x.Value);
-        mockCacheEntry.SetupProperty(x => x.AbsoluteExpirationRelativeToNow);
-
-        _memoryCacheMock
-            .Setup(x => x.CreateEntry(It.IsAny<object>()))
-            .Returns(mockCacheEntry.Object);
     }
 }

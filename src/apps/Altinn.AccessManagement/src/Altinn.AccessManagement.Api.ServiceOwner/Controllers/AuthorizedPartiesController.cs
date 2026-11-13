@@ -2,6 +2,7 @@
 using System.Net.Mime;
 using Altinn.AccessManagement.Core.Configuration;
 using Altinn.AccessManagement.Core.Constants;
+using Altinn.AccessManagement.Core.Helpers.Extensions;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Telemetry;
@@ -12,7 +13,7 @@ using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.FeatureManagement.Mvc;
 
 namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers;
@@ -28,9 +29,12 @@ public class AuthorizedPartiesController(
     IAuthorizedPartiesService authorizedPartiesService,
     IProviderService providerService,
     AuthorizedPartiesTelemetry authorizedPartiesTelemetry,
-    IMemoryCache memoryCache,
+    HybridCache cache,
     IConfiguration configuration) : ControllerBase
 {
+    private static readonly HybridCacheEntryOptions OrgCodeCacheOptions = new() { Expiration = TimeSpan.FromHours(1) };
+    private static readonly string[] ProviderTag = ["provider"];
+
     /// <summary>
     /// Endpoint for retrieving all authorized parties for a given user or organization 
     /// </summary>
@@ -193,15 +197,19 @@ public class AuthorizedPartiesController(
         {
             // Cached because orgnumber→orgcode is effectively static and this endpoint is high-traffic.
             var orgNumberKey = organizationId.ToString();
-            string? orgCode = await memoryCache.GetOrCreateAsync($"authparties:orgcode:{orgNumberKey}", async entry =>
-            {
-                entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromHours(1);
-                Provider provider = await providerService.GetProviderByOrganizationId(orgNumberKey, cancellationToken);
-                return provider?.Code;
-            });
+
+            // One lookup per caller rather than a factory shared between concurrent misses: the provider service is request
+            // scoped, and a cancelled request must not dispose it under another request's lookup. An org number without a
+            // provider is cached as an empty string, so the lookup is not repeated for it.
+            string? orgCode = await cache.GetOrFetchAsync<string>(
+                $"authorizedparties:orgcode:{orgNumberKey}",
+                async ct => (await providerService.GetProviderByOrganizationId(orgNumberKey, ct))?.Code ?? string.Empty,
+                OrgCodeCacheOptions,
+                ProviderTag,
+                cancellationToken);
 
             // Fall back to orgnumber when the caller has the scope but is not a registered tjenesteier in Altinn.
-            return orgCode ?? orgNumberKey;
+            return string.IsNullOrEmpty(orgCode) ? orgNumberKey : orgCode;
         }
 
         return AuthorizedPartiesTelemetry.UnknownDimensionValue;

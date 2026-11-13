@@ -7,7 +7,7 @@ namespace Altinn.AccessManagement.Core.Helpers.Extensions;
 /// Two cache patterns <see cref="HybridCache"/> has no method for: a lookup that never calls a data source,
 /// and a fetch that caches only a value, so a missing item is looked up again on the next call.
 /// </summary>
-internal static class HybridCacheExtensions
+public static class HybridCacheExtensions
 {
     private static readonly HybridCacheEntryOptions LookupOnly = new() { Flags = HybridCacheEntryFlags.DisableUnderlyingData };
 
