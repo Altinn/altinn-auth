@@ -34,7 +34,8 @@ Decisions for this vertical are in [`docs/adr/`](docs/adr/README.md). Read [ADR-
 
 ## Landmines
 
-_Nothing recorded yet._ This section is the reason the file exists, and it can only be written by people who know why the code is the way it is. If you have ever said "don't change that, it looks wrong but it isn't" about this vertical, write it here. See [#4078](https://github.com/Altinn/altinn-auth/issues/4078).
+- **`PolicyRetrievalPoint` and `ResourceRegistryWrapper` read and write `HybridCache` in two steps on purpose.** The factory of `GetOrCreateAsync` cannot decline to cache, and empty or unparseable policies and non-OK responses must not be cached. The read passes `DisableUnderlyingData`; on a `SetAsync` that flag silently writes nothing.
+- **The resource policy stays in the local tier.** `XacmlPolicy` serializes but throws on deserialization, so it is wrapped in an immutable type with the distributed tier disabled. Every other cached value is copied through System.Text.Json on each hit.
 
 ## Test gotchas
 
