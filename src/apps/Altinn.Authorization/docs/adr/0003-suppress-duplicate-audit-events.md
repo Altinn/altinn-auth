@@ -52,7 +52,7 @@ We will make it possible for the PDP to drop duplicate events, behind the featur
 - For a repeated access within a minute, the audit log keeps the first occurrence only. A question such as "how many times did this user read this message, and when" can then only be answered to the minute. Whether that is acceptable is what [altinn-auth-audit-log#312](https://github.com/Altinn/altinn-auth-audit-log/issues/312) and [#4285](https://github.com/Altinn/altinn-auth/issues/4285) must answer. They ask the same question and should answer it once.
 - Events are compared by a 64-bit XxHash3 key with a random per-process seed. A collision would drop a real event. With 200 000 keys in a window that is about one in a billion by chance, and a crafted collision would need the seed, which never leaves the process. If that is not strong enough for an audit record, a keyed hash such as SipHash or HMAC is the alternative, at a higher cost per event.
 - Each PDP pod deduplicates on its own, so more pods mean fewer duplicates caught. The audit-log side with a shared cache covers the rest.
-- Turning the flag on per environment is a change in `manifests/deploy/<environment>`. Start with `Trace` in TT02, then `Window` in TT02, comparing queued events with `suppressed`, and production only when this ADR is accepted.
+- Turning the flag on per environment is a change in `manifests/deploy/<environment>`. TT02 starts with `Window` ([#5005](https://github.com/Altinn/altinn-auth/pull/5005)), since `Trace` and `Window` run the same code and only `Window` saves enough to learn from; compare queued events with `suppressed`. Production only when this ADR is accepted.
 
 ## References
 
