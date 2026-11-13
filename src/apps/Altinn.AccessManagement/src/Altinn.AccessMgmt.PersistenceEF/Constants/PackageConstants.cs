@@ -951,14 +951,14 @@ public static class PackageConstants
     /// - <c>Id:</c> d3ba7bba-195b-4b69-ae68-df20ecd57097
     /// - <c>URN:</c> urn:altinn:accesspackage:tilskudd-stotte-erstatning
     /// - <c>Provider:</c> Altinn3
-    /// - <c>Description:</c> Denne tilgangspakken gir fullmakter til tjenester knyttet til å søke tilskudd, støtte og erstatning. Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmakten gir.
+    /// - <c>Description:</c> Denne tilgangspakken gir fullmakter til tjenester knyttet til å søke og rapportere på tilskudd, støtte og erstatning. Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmakten gir.
     /// </remarks>
     public static ConstantDefinition<Package> GrantSupportCompensation { get; } = new ConstantDefinition<Package>("d3ba7bba-195b-4b69-ae68-df20ecd57097")
     {
         Entity = new()
         {
             Name = "Tilskudd, støtte og erstatning",
-            Description = "Denne tilgangspakken gir fullmakter til tjenester knyttet til å søke tilskudd, støtte og erstatning. Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmakten gir.",
+            Description = "Denne tilgangspakken gir fullmakter til tjenester knyttet til å søke og rapportere på tilskudd, støtte og erstatning. Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmakten gir.",
             Urn = "urn:altinn:accesspackage:tilskudd-stotte-erstatning",
             Code = "tilskudd-stotte-erstatning",
             IsDelegable = true,
@@ -970,11 +970,11 @@ public static class PackageConstants
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Grant, support and compensation"),
-            KeyValuePair.Create("Description", "This access package provides authorizations for services related to applying for grants, support and compensation. In the event of regulatory changes or the introduction of new digital services, there may be changes in the access that the authorization provides.")
+            KeyValuePair.Create("Description", "This access package provides authorizations for services related to applying for and reporting on grants, support and compensation. In the event of regulatory changes or the introduction of new digital services, there may be changes in the access that the authorization provides.")
         ),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Tilskot, støtte og erstatning"),
-            KeyValuePair.Create("Description", "Denne tilgangspakken gir fullmakter til tenester knytt til å søkje tilskot, støtte og erstatning. Ved regelverksendringar eller innføring av nye digitale tenester kan det bli endringar i tilgangar som fullmakta gir.")
+            KeyValuePair.Create("Description", "Denne tilgangspakken gir fullmakter til tenester knytt til å søkje og rapportere på tilskot, støtte og erstatning. Ved regelverksendringar eller innføring av nye digitale tenester kan det bli endringar i tilgangar som fullmakta gir.")
         ),
     };
 
