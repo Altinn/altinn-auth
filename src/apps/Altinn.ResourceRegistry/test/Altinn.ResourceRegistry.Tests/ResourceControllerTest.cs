@@ -13,6 +13,7 @@ using Altinn.ResourceRegistry.TestUtils;
 using Microsoft.Extensions.DependencyInjection;
 using Altinn.ResourceRegistry.Core;
 using Altinn.ResourceRegistry.Tests.Mocks;
+using Altinn.ResourceRegistry.Core.Services;
 using Altinn.ResourceRegistry.Core.Services.Interfaces;
 
 namespace Altinn.ResourceRegistry.Tests
@@ -24,8 +25,16 @@ namespace Altinn.ResourceRegistry.Tests
         {
             services.AddSingleton<IResourceRegistryRepository, RegisterResourceRepositoryMock>();
             services.AddSingleton<IApplications, ApplicationsClientMock>();
+            services.AddSingleton<ISamarbeidsportalenClient>(PrefixApi());
 
             base.ConfigureTestServices(services);
+        }
+
+        private static SamarbeidsportalenClientMock PrefixApi()
+        {
+            SamarbeidsportalenClientMock prefixApi = new();
+            prefixApi.Respond([new() { Prefix = "skd", OwnerOrgNo = "974761076", Active = true }]);
+            return prefixApi;
         }
 
         [Fact]
@@ -702,162 +711,10 @@ namespace Altinn.ResourceRegistry.Tests
         }
 
         [Fact]
-        public async Task CreateResource_WithAdminScope()
-        {
-            var client = CreateClient();
-            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.admin");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            ServiceResource resource = new ServiceResource()
-            {
-                Identifier = "superdupertjenestene",
-                Title = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
-                Status = "Active",
-                Homepage = "www.altinn.no",
-                IsPartOf = "Altinn",
-                Keywords = new List<Keyword>(),
-                Description = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
-                RightDescription = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
-                ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
-                HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
-                {
-                    Organization = "974761076",
-                    Orgcode = "skd",
-                },
-                ResourceType = ResourceType.GenericAccessResource,
-                ResourceReferences = new List<ResourceReference>
-                {
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "altinn:TestScope"
-                    },
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "digdir:TestScope"
-                    },
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "difi:TestScope"
-                    },
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "krr:TestScope"
-                    },
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "test:TestScope"
-                    },
-                }
-
-            };
-
-            string requestUri = "resourceregistry/api/v1/Resource/";
-
-            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-            {
-                Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
-            };
-
-            httpRequestMessage.Headers.Add("Accept", "application/json");
-            httpRequestMessage.Headers.Add("ContentType", "application/json");
-
-            HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        }
-
-        [Fact]
-        public async Task CreateResource_WithValidPrefix()
-        {
-            var client = CreateClient();
-            string[] prefixes = { "altinn", "digdir", "difi", "krr", "test", "digdirintern", "idporten", "digitalpostinnbygger", "minid", "move", "difitest" };
-            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write", prefixes);
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            ServiceResource resource = new ServiceResource()
-            {
-                Identifier = "superdupertjenestene",
-                Title = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
-                Status = "Active",
-                Homepage = "www.altinn.no",
-                IsPartOf = "Altinn",
-                Keywords = new List<Keyword>(),
-                Description = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
-                RightDescription = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
-                ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
-                HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
-                {
-                    Organization = "974761076",
-                    Orgcode = "skd",
-                },
-                ResourceType = ResourceType.GenericAccessResource,
-                ResourceReferences = new List<ResourceReference>
-                {
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "altinn:TestScope"
-                    },
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "digdir:TestScope"
-                    },
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "difi:TestScope"
-                    },
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "krr:TestScope"
-                    },
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "test:TestScope"
-                    },
-                }
-
-            };
-
-            string requestUri = "resourceregistry/api/v1/Resource/";
-
-            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-            {
-                Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
-            };
-
-            httpRequestMessage.Headers.Add("Accept", "application/json");
-            httpRequestMessage.Headers.Add("ContentType", "application/json");
-
-            HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        }
-
-        [Fact]
         public async Task CreateResource_With_APPrefixWithoutRequiredResourceReference()
         {
             var client = CreateClient();
-            string[] prefixes = { "altinn", "digdir", "difi", "krr", "test", "digdirintern", "idporten", "digitalpostinnbygger", "minid", "move", "difitest" };
-            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write", prefixes);
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             ServiceResource resource = new ServiceResource()
@@ -897,8 +754,7 @@ namespace Altinn.ResourceRegistry.Tests
         public async Task CreateResource_With_APPrefixWithRequiredResourceReference()
         {
             var client = CreateClient();
-            string[] prefixes = { "altinn", "digdir", "difi", "krr", "test", "digdirintern", "idporten", "digitalpostinnbygger", "minid", "move", "difitest" };
-            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write", prefixes);
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             ServiceResource resource = new ServiceResource()
@@ -950,8 +806,7 @@ namespace Altinn.ResourceRegistry.Tests
         public async Task CreateMaskinportenSchemaResource_WithoutScope_BadRequest()
         {
             var client = CreateClient();
-            string[] prefixes = { "altinn", "digdir", "difi", "krr", "test", "digdirintern", "idporten", "digitalpostinnbygger", "minid", "move", "difitest" };
-            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write", prefixes);
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             ServiceResource resource = new ServiceResource()
@@ -995,8 +850,7 @@ namespace Altinn.ResourceRegistry.Tests
         public async Task CreateMaskinportenSchemaResource_WitScope_Ceated()
         {
             var client = CreateClient();
-            string[] prefixes = { "altinn", "digdir", "difi", "krr", "test", "digdirintern", "idporten", "digitalpostinnbygger", "minid", "move", "difitest" };
-            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write", prefixes);
+            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write");
             client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             ServiceResource resource = new ServiceResource()
@@ -1022,31 +876,13 @@ namespace Altinn.ResourceRegistry.Tests
                     {
                         ReferenceSource = ReferenceSource.Altinn2,
                         ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "altinn:TestScope"
+                        Reference = "skd:TestScope"
                     },
                     new()
                     {
                         ReferenceSource = ReferenceSource.Altinn2,
                         ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "digdir:TestScope"
-                    },
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "difi:TestScope"
-                    },
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "krr:TestScope"
-                    },
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "test:TestScope"
+                        Reference = "skd:OtherTestScope"
                     },
                 }
             };
@@ -1064,325 +900,6 @@ namespace Altinn.ResourceRegistry.Tests
             HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
 
             Assert.Equal(HttpStatusCode.Created, response.StatusCode);
-        }
-
-        [Fact]
-        public async Task CreateResource_WithInvalidPrefix()
-        {
-            var client = CreateClient();
-            string[] prefixes = { "altinn", "digdir" };
-            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write", prefixes);
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            ServiceResource resource = new ServiceResource()
-            {
-                Identifier = "superdupertjenestene",
-                Title = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
-                Status = "Active",
-                Homepage = "www.altinn.no",
-                IsPartOf = "Altinn",
-                Keywords = new List<Keyword>(),
-                Description = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
-                RightDescription = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
-                ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
-                HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
-                {
-                    Organization = "974761076",
-                    Orgcode = "skd",
-                },
-                ResourceType = ResourceType.GenericAccessResource,
-                ResourceReferences = new List<ResourceReference>
-                {
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "altinn:TestScope"
-                    },
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "digdir:TestScope"
-                    },
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "difi:TestScope"
-                    },
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "krr:TestScope"
-                    },
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "test:TestScope"
-                    },
-                }
-
-            };
-
-            string requestUri = "resourceregistry/api/v1/Resource/";
-
-            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Post, requestUri)
-            {
-                Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
-            };
-
-            httpRequestMessage.Headers.Add("Accept", "application/json");
-            httpRequestMessage.Headers.Add("ContentType", "application/json");
-
-            HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-            string responseContent = await response.Content.ReadAsStringAsync();
-
-            ValidationProblemDetails? errordetails = JsonSerializer.Deserialize<ValidationProblemDetails>(responseContent, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
-
-            Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-            Assert.NotNull(errordetails);
-
-            Assert.Single(errordetails.Errors);
-            Assert.Equal(3, errordetails.Errors["InvalidPrefix"].Length);
-        }
-
-        [Fact]
-        public async Task UpdateResource_WithAdminScope()
-        {
-            var client = CreateClient();
-            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.admin");
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            ServiceResource resource = new ServiceResource()
-            {
-                Identifier = "altinn_access_management",
-                Title = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
-                Status = "Active",
-                Homepage = "www.altinn.no",
-                IsPartOf = "Altinn",
-                Keywords = new List<Keyword>(),
-                Description = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
-                RightDescription = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
-                ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
-                HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
-                {
-                    Organization = "974761076",
-                    Orgcode = "skd",
-                },
-                ResourceType = ResourceType.GenericAccessResource,
-                ResourceReferences = new List<ResourceReference>
-                {
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "altinn:TestScope"
-                    },
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "digdir:TestScope"
-                    },
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "difi:TestScope"
-                    },
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "krr:TestScope"
-                    },
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "test:TestScope"
-                    },
-                }
-
-            };
-
-            string requestUri = $"resourceregistry/api/v1/Resource/{resource.Identifier}";
-
-            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Put, requestUri)
-            {
-                Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
-            };
-
-            httpRequestMessage.Headers.Add("Accept", "application/json");
-            httpRequestMessage.Headers.Add("ContentType", "application/json");
-
-            HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        }
-
-        [Fact]
-        public async Task UpdateResource_WithValidPrefix()
-        {
-            var client = CreateClient();
-            string[] prefixes = { "altinn", "digdir", "difi", "krr", "test", "digdirintern", "idporten", "digitalpostinnbygger", "minid", "move", "difitest" };
-            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write", prefixes);
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            ServiceResource resource = new ServiceResource()
-            {
-                Identifier = "altinn_access_management",
-                Title = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
-                Status = "Active",
-                Homepage = "www.altinn.no",
-                IsPartOf = "Altinn",
-                Keywords = new List<Keyword>(),
-                Description = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
-                RightDescription = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
-                ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
-                HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
-                {
-                    Organization = "974761076",
-                    Orgcode = "skd",
-                },
-                ResourceType = ResourceType.GenericAccessResource,
-                ResourceReferences = new List<ResourceReference>
-                {
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "altinn:TestScope"
-                    },
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "digdir:TestScope"
-                    },
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "difi:TestScope"
-                    },
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "krr:TestScope"
-                    },
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "test:TestScope"
-                    },
-                }
-
-            };
-
-            string requestUri = $"resourceregistry/api/v1/Resource/{resource.Identifier}";
-
-            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Put, requestUri)
-            {
-                Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
-            };
-
-            httpRequestMessage.Headers.Add("Accept", "application/json");
-            httpRequestMessage.Headers.Add("ContentType", "application/json");
-
-            HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        }
-
-        [Fact]
-        public async Task UpdateResource_WithInvalidPrefix()
-        {
-            var client = CreateClient();
-            string[] prefixes = { "altinn", "digdir" };
-            string token = PrincipalUtil.GetOrgToken("skd", "974761076", "altinn:resourceregistry/resource.write", prefixes);
-            client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
-
-            ServiceResource resource = new ServiceResource()
-            {
-                Identifier = "altinn_access_management",
-                Title = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
-                Status = "Active",
-                Homepage = "www.altinn.no",
-                IsPartOf = "Altinn",
-                Keywords = new List<Keyword>(),
-                Description = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
-                RightDescription = new Dictionary<string, string> { { "en", "English" }, { "nb", "Bokmal" }, { "nn", "Nynorsk" } },
-                ContactPoints = new List<ContactPoint>() { new ContactPoint() { Category = "Support", ContactPage = "support.skd.no", Email = "support@skd.no", Telephone = "+4790012345" } },
-                HasCompetentAuthority = new Altinn.ResourceRegistry.Core.Models.CompetentAuthority()
-                {
-                    Organization = "974761076",
-                    Orgcode = "skd",
-                },
-                ResourceType = ResourceType.GenericAccessResource,
-                ResourceReferences = new List<ResourceReference>
-                {
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "altinn:TestScope"
-                    },
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "digdir:TestScope"
-                    },
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "difi:TestScope"
-                    },
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "krr:TestScope"
-                    },
-                    new()
-                    {
-                        ReferenceSource = ReferenceSource.Altinn2,
-                        ReferenceType = ReferenceType.MaskinportenScope,
-                        Reference = "test:TestScope"
-                    },
-                }
-
-            };
-
-            string requestUri = $"resourceregistry/api/v1/Resource/{resource.Identifier}";
-
-            HttpRequestMessage httpRequestMessage = new HttpRequestMessage(HttpMethod.Put, requestUri)
-            {
-                Content = new StringContent(JsonSerializer.Serialize(resource), Encoding.UTF8, "application/json")
-            };
-
-            httpRequestMessage.Headers.Add("Accept", "application/json");
-            httpRequestMessage.Headers.Add("ContentType", "application/json");
-
-            HttpResponseMessage response = await client.SendAsync(httpRequestMessage);
-
-            string responseContent = await response.Content.ReadAsStringAsync();
-
-            ValidationProblemDetails? errordetails = JsonSerializer.Deserialize<ValidationProblemDetails>(responseContent, new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase });
-
-            Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-            Assert.NotNull(errordetails);
-
-            Assert.Single(errordetails.Errors);
-            Assert.Equal(3, errordetails.Errors["InvalidPrefix"].Length);
         }
 
         [Fact]
