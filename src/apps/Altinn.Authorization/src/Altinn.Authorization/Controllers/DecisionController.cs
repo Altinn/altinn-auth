@@ -16,6 +16,7 @@ using Altinn.Authorization.Xacml.Constants;
 using Altinn.Platform.Authenticaiton.Extensions;
 using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Constants;
+using Altinn.Platform.Authorization.Exceptions;
 using Altinn.Platform.Authorization.Helpers;
 using Altinn.Platform.Authorization.ModelBinding;
 using Altinn.Platform.Authorization.Models;
@@ -362,7 +363,103 @@ namespace Altinn.Platform.Authorization.Controllers
             return Content(xml);
         }
 
+        /// <summary>
+        /// Answers one request. A lookup that fails while the request is evaluated is answered here, as
+        /// Indeterminate, so that it never reaches the caller as an exception or as a decision.
+        /// </summary>
+        /// <param name="decisionRequest">The request to answer</param>
+        /// <param name="isExernalRequest">Whether the request came through the external endpoint</param>
+        /// <param name="logEvent">Whether the request is a single request, which is audit-logged here</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns>A response with one result</returns>
         private async Task<XacmlContextResponse> Authorize(XacmlContextRequest decisionRequest, bool isExernalRequest, bool logEvent = true, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                return await Evaluate(decisionRequest, isExernalRequest, logEvent, cancellationToken);
+            }
+            catch (DependencyFailedException ex)
+            {
+                // A lookup the decision depends on failed, so the PDP cannot tell whether the subject has access.
+                // That is Indeterminate, never "no access". It is answered for this request alone, so that the
+                // other requests of a multi-request still get their own decision.
+                _logger.LogError(ex, "// DecisionController // Authorize // Lookup against {Dependency} failed", ex.Dependency);
+
+                XacmlContextResult result = new XacmlContextResult(XacmlContextDecision.Indeterminate)
+                {
+                    Status = new XacmlContextStatus(XacmlContextStatusCode.ProcessingError)
+                    {
+                        StatusMessage = $"The decision could not be made because the lookup against '{ex.Dependency}' failed."
+                    }
+                };
+                AddRequestAttributes(decisionRequest, result);
+
+                XacmlContextResponse response = new XacmlContextResponse(result);
+                await LogRequestOnError(decisionRequest, response, logEvent, cancellationToken);
+                return response;
+            }
+        }
+
+        /// <summary>
+        /// Copies the request attributes marked IncludeInResult to the result, as the evaluation does for the
+        /// decisions it reaches. A client uses them to tie a result to its request, and needs that for the
+        /// request that failed as much as for the ones that got a decision.
+        /// </summary>
+        /// <param name="decisionRequest">The request, with whatever attributes it had when the lookup failed</param>
+        /// <param name="result">The result to add the attributes to</param>
+        private static void AddRequestAttributes(XacmlContextRequest decisionRequest, XacmlContextResult result)
+        {
+            foreach (XacmlContextAttributes category in decisionRequest.Attributes)
+            {
+                XacmlContextAttributes included = new XacmlContextAttributes(category.Category) { Content = category.Content, Id = category.Id };
+                foreach (XacmlAttribute attribute in category.Attributes.Where(a => a.IncludeInResult))
+                {
+                    included.Attributes.Add(attribute);
+                }
+
+                if (included.Attributes.Count > 0)
+                {
+                    result.Attributes.Add(included);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Writes the audit event of a request that ended in an error, under the same feature flags as the requests
+        /// the endpoints catch: one flag for a single request and one for the requests of a multi-request.
+        /// </summary>
+        /// <param name="decisionRequest">The request the event is about</param>
+        /// <param name="response">The response the request was answered with</param>
+        /// <param name="isSingleRequest">Whether the request is a single request or one of a multi-request</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        private async Task LogRequestOnError(XacmlContextRequest decisionRequest, XacmlContextResponse response, bool isSingleRequest, CancellationToken cancellationToken)
+        {
+            try
+            {
+                string featureFlag = isSingleRequest ? FeatureFlags.DecisionRequestLogRequestOnError : FeatureFlags.DecisionRequestLogRequestOnErrorMultiRequest;
+                if (await _featureManager.IsEnabledAsync(featureFlag, cancellationToken))
+                {
+                    await _eventLog.CreateAuthorizationEvent(_featureManager, decisionRequest, HttpContext, response, cancellationToken);
+                }
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                // The audit event must not replace the answer the caller is waiting for.
+                _logger.LogWarning(ex, "// DecisionController // LogRequestOnError // Failed to write the authorization event");
+            }
+        }
+
+        /// <summary>
+        /// Evaluates one request: validates it, enriches it, evaluates it against the policy of the resource and,
+        /// when that gives no decision, against the delegations the subject has received.
+        /// </summary>
+        /// <param name="decisionRequest">The request to evaluate</param>
+        /// <param name="isExernalRequest">Whether the request came through the external endpoint</param>
+        /// <param name="logEvent">Whether to write the audit event of the decision</param>
+        /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
+        /// <returns>A response with one result</returns>
+        /// <exception cref="DependencyFailedException">A lookup the decision depends on failed</exception>
+        private async Task<XacmlContextResponse> Evaluate(XacmlContextRequest decisionRequest, bool isExernalRequest, bool logEvent, CancellationToken cancellationToken)
         {
             // The access restriction mode is specified per request via the urn:altinn:authorization:access-restriction
             // resource attribute, so it is resolved from the parsed request rather than a call-wide parameter.
@@ -431,8 +528,9 @@ namespace Altinn.Platform.Authorization.Controllers
                 {
                     delegationContextResponse = await AuthorizeUsingDelegations(decisionRequest, policy, accessRestriction, cancellationToken);
                 }
-                catch (Exception ex)
+                catch (Exception ex) when (ex is not DependencyFailedException)
                 {
+                    // A failed lookup is let through: without the delegations the PDP cannot say that there is no access.
                     _logger.LogError(ex, "// DecisionController // Authorize // Delegation // Unexpected Exception");
                 }
             }
