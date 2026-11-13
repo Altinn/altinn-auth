@@ -8,11 +8,18 @@ labels:
     includeTemplates: true
 resources:
   - ../base
-
 configMapGenerator:
   - name: environment
     envs:
       - ./config/environment.env
-
+patches:
+  - patch: |-
+      apiVersion: gateway.networking.k8s.io/v1
+      kind: HTTPRoute
+      metadata:
+        name: authorization
+      spec:
+        hostnames:
+          - authorization.at23.dis-core.altinn.cloud
 generatorOptions:
   disableNameSuffixHash: true
