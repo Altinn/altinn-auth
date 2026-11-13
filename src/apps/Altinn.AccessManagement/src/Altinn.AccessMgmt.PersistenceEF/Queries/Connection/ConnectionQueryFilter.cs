@@ -89,6 +89,13 @@ public sealed class ConnectionQueryFilter
     public bool EnrichPackageResources { get; init; } = false;
 
     /// <summary>
+    /// Gets or sets a value indicating whether to read who last changed each assignment package, resource and instance, and when.
+    /// The values come from the audit columns on the assignment tables themselves, never from the history tables.
+    /// Off by default because reading them turns index-only scans into index scans with heap lookups.
+    /// </summary>
+    public bool IncludeChangeInfo { get; init; } = false;
+
+    /// <summary>
     /// Gets or sets a value indicating whether to include or exclude deleted entities. ToDo: Implementation for this in the ConnectionQuery (see issue #3786).
     /// </summary>
     public bool ExcludeDeleted { get; init; } = false;

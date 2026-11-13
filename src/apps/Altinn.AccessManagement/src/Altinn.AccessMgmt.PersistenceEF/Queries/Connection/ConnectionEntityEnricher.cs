@@ -202,6 +202,7 @@ internal class ConnectionEntityEnricher(AppDbContext db)
                         Reason = ConnectionReason.Hierarchy,
 
                         Packages = c.Packages,
+                        PackageChangeInfo = c.PackageChangeInfo,
                         Resources = c.Resources
                     });
                 }

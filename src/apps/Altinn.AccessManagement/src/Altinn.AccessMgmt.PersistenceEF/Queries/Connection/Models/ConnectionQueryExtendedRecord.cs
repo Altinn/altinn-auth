@@ -19,4 +19,11 @@ public class ConnectionQueryExtendedRecord : ConnectionQueryRecord
     /// Instances
     /// </summary>
     public List<ConnectionQueryInstance> Instances { get; set; } = new();
+
+    /// <summary>
+    /// Change info per package id for packages assigned directly on this record's assignment.
+    /// Only set when <see cref="ConnectionQueryFilter.IncludeChangeInfo"/> is <c>true</c>.
+    /// Kept on the record and not on <see cref="ConnectionQueryPackage"/> because package objects are shared between records.
+    /// </summary>
+    public IReadOnlyDictionary<Guid, ConnectionQueryChangeInfo> PackageChangeInfo { get; set; }
 }

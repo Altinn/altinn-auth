@@ -893,4 +893,166 @@ public class DtoMapperConnectionQueryTest
         result[0].Party!.Id.Should().Be(from.Id);
         result[0].Packages.Should().ContainSingle(p => p.Id == pkg.Id);
     }
+
+    // ══════════════════════════════════════════════════════════════════════════
+    // Change info: AuditInfo (LastModified and LastModifiedBy)
+    // ══════════════════════════════════════════════════════════════════════════
+    private static readonly Guid PersonTypeId = new("bfe09e70-e868-44b3-8d81-dfe0e13e058a");
+
+    private static Entity MakePerson(string name = "Siri Slemdal") => new()
+    {
+        Id = Guid.NewGuid(),
+        TypeId = PersonTypeId,
+        VariantId = UtbgVariantId,
+        Name = name,
+        PersonIdentifier = "01017012345",
+        DateOfBirth = new DateOnly(1970, 1, 1),
+        OrganizationIdentifier = "should-not-leak",
+        PartyId = 50001234,
+        UserId = 20001234,
+        Username = "sirislemdal",
+    };
+
+    [Fact]
+    public void ConvertPackages_SamePackageOnTwoRecords_UsesChangeInfoPerRecord()
+    {
+        // The package object is shared between records, as in ConnectionPackageLoader.
+        var pkg = MakeQueryPackage();
+        var from = MakeEntity("From");
+        var role = MakeRole("rettighetshaver");
+        var performerA = MakePerson("A");
+        var performerB = MakeEntity("B");
+        var dateA = new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        var dateB = new DateTimeOffset(2026, 2, 2, 0, 0, 0, TimeSpan.Zero);
+
+        var recordA = MakeRecord(from, MakeEntity("To A"), role, packages: [pkg]);
+        recordA.PackageChangeInfo = new Dictionary<Guid, ConnectionQueryChangeInfo> { [pkg.Id] = new(dateA, performerA.Id) };
+        var recordB = MakeRecord(from, MakeEntity("To B"), role, packages: [pkg]);
+        recordB.PackageChangeInfo = new Dictionary<Guid, ConnectionQueryChangeInfo> { [pkg.Id] = new(dateB, performerB.Id) };
+
+        var performers = new Dictionary<Guid, Entity> { [performerA.Id] = performerA, [performerB.Id] = performerB };
+
+        var result = DtoMapper.ConvertPackages([recordA, recordB], performers);
+
+        var permissions = result.Should().ContainSingle().Subject.Permissions.ToList();
+        permissions.Should().HaveCount(2);
+        var permissionA = permissions.Single(p => p.To.Id == recordA.ToId);
+        permissionA.AuditInfo!.LastModified.Should().Be(dateA);
+        permissionA.AuditInfo!.LastModifiedBy!.Id.Should().Be(performerA.Id);
+
+        var permissionB = permissions.Single(p => p.To.Id == recordB.ToId);
+        permissionB.AuditInfo!.LastModified.Should().Be(dateB);
+        permissionB.AuditInfo!.LastModifiedBy!.Id.Should().Be(performerB.Id);
+    }
+
+    [Fact]
+    public void ConvertPackages_RolePackageWithoutChangeInfo_LeavesAuditInfoNull()
+    {
+        var pkg = MakeQueryPackage();
+        var record = MakeRecord(MakeEntity("From"), MakeEntity("To"), MakeRole("dagl"), packages: [pkg]);
+
+        var result = DtoMapper.ConvertPackages([record], new Dictionary<Guid, Entity>());
+
+        var permission = result.Single().Permissions.Single();
+        permission.AuditInfo.Should().BeNull();
+    }
+
+    [Fact]
+    public void ConvertPackages_WithoutPerformers_ReturnsLastModifiedButNotLastModifiedBy()
+    {
+        // No performer lookup: LastModified is still set from the change info.
+        var pkg = MakeQueryPackage();
+        var performer = MakeEntity("Performer");
+        var date = new DateTimeOffset(2026, 3, 3, 0, 0, 0, TimeSpan.Zero);
+        var record = MakeRecord(MakeEntity("From"), MakeEntity("To"), MakeRole("rettighetshaver"), packages: [pkg]);
+        record.PackageChangeInfo = new Dictionary<Guid, ConnectionQueryChangeInfo> { [pkg.Id] = new(date, performer.Id) };
+
+        var permission = DtoMapper.ConvertPackages([record], performers: null).Single().Permissions.Single();
+
+        permission.AuditInfo!.LastModified.Should().Be(date);
+        permission.AuditInfo.LastModifiedBy.Should().BeNull();
+    }
+
+    [Fact]
+    public void ConvertResources_DirectResource_UsesChangeInfoOfThatResource()
+    {
+        var performer = MakeEntity("Performer");
+        var date = new DateTimeOffset(2026, 4, 4, 0, 0, 0, TimeSpan.Zero);
+        var resource = new ConnectionQueryResource { Id = Guid.NewGuid(), Name = "Res", RefId = "ref", ChangeInfo = new(date, performer.Id) };
+        var record = MakeRecord(MakeEntity("From"), MakeEntity("To"), MakeRole("rettighetshaver"), resources: [resource]);
+
+        var permission = DtoMapper.ConvertResources([record], new Dictionary<Guid, Entity> { [performer.Id] = performer }).Single().Permissions.Single();
+
+        permission.AuditInfo!.LastModified.Should().Be(date);
+        permission.AuditInfo!.LastModifiedBy!.Id.Should().Be(performer.Id);
+    }
+
+    [Fact]
+    public void ConvertToPermission_InstanceChangeInfo_SetsFields()
+    {
+        var performer = MakeEntity("Performer");
+        var date = new DateTimeOffset(2026, 5, 5, 0, 0, 0, TimeSpan.Zero);
+        var record = MakeRecord(MakeEntity("From"), MakeEntity("To"), MakeRole("rettighetshaver"));
+
+        var permission = DtoMapper.ConvertToPermission(record, new ConnectionQueryChangeInfo(date, performer.Id), new Dictionary<Guid, Entity> { [performer.Id] = performer });
+
+        permission.AuditInfo!.LastModified.Should().Be(date);
+        permission.AuditInfo!.LastModifiedBy!.Name.Should().Be("Performer");
+    }
+
+    [Fact]
+    public void ConvertAuditEntity_Person_FillsIdNameTypeAndVariant()
+    {
+        var person = MakePerson();
+
+        var dto = DtoMapper.ConvertAuditEntity(person);
+
+        dto.Id.Should().Be(person.Id);
+        dto.Name.Should().Be(person.Name);
+        dto.Type.Should().NotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public void AuditEntityDto_HasOnlyIdNameTypeAndVariant()
+    {
+        // The contract itself must not be able to carry identifiers, not just leave them empty.
+        var properties = typeof(global::Altinn.Authorization.Api.Contracts.AccessManagement.AuditEntityDto).GetProperties().Select(p => p.Name);
+
+        properties.Should().BeEquivalentTo(["Id", "Name", "Type", "Variant"]);
+    }
+
+    [Fact]
+    public void ConvertToPermission_PersonPerformer_SerializesWithoutIdentifiers()
+    {
+        var person = MakePerson();
+        var record = MakeRecord(MakeEntity("From"), MakeEntity("To"), MakeRole("rettighetshaver"));
+
+        var permission = DtoMapper.ConvertToPermission(record, new ConnectionQueryChangeInfo(DateTimeOffset.UtcNow, person.Id), new Dictionary<Guid, Entity> { [person.Id] = person });
+        var json = System.Text.Json.JsonSerializer.Serialize(permission.AuditInfo);
+
+        permission.AuditInfo!.LastModifiedBy!.Id.Should().Be(person.Id);
+        json.Should().NotContain(person.PersonIdentifier)
+            .And.NotContain("1970-01-01")
+            .And.NotContain("50001234")
+            .And.NotContain("20001234")
+            .And.NotContain("sirislemdal")
+            .And.NotContain("should-not-leak");
+    }
+
+    [Fact]
+    public void CollectChangedBy_ReturnsDistinctPerformersAcrossPackagesResourcesAndInstances()
+    {
+        var a = Guid.NewGuid();
+        var b = Guid.NewGuid();
+        var date = DateTimeOffset.UtcNow;
+        var record = MakeRecord(
+            MakeEntity("From"),
+            MakeEntity("To"),
+            MakeRole("rettighetshaver"),
+            resources: [new ConnectionQueryResource { Id = Guid.NewGuid(), ChangeInfo = new(date, a) }],
+            instances: [new ConnectionQueryInstance { Id = Guid.NewGuid(), ChangeInfo = new(date, b) }]);
+        record.PackageChangeInfo = new Dictionary<Guid, ConnectionQueryChangeInfo> { [Guid.NewGuid()] = new(date, a), [Guid.NewGuid()] = new(date, null) };
+
+        DtoMapper.CollectChangedBy([record]).Should().BeEquivalentTo([a, b]);
+    }
 }

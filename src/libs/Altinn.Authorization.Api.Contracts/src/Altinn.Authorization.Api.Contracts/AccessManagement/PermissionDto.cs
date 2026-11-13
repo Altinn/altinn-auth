@@ -34,4 +34,11 @@ public class PermissionDto
     /// Reason
     /// </summary>
     public AccessReason Reason { get; set; }
+
+    /// <summary>
+    /// When this access was last changed, and by whom. Returned both for access given to others and access received
+    /// from others. <c>null</c> for role packages, for resources that come through a package, for client delegations,
+    /// and while the feature is turned off.
+    /// </summary>
+    public AuditInfoDto? AuditInfo { get; set; }
 }

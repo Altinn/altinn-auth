@@ -4,6 +4,7 @@ locals {
     "AccessManagement.Enduser.RequestActivityLogApi"                         = { description = "Activity log endpoints under enduser/request." },
     "AccessManagement.Enduser.RequestV2Api"                                  = { description = "v2 request endpoints under enduser/request, where resource requests can name the requested right keys." },
     "AccessManagement.Enduser.MaskinportenActivityLogApi"                    = { description = "Activity log endpoints under enduser/maskinporten." },
+    "AccessManagement.Enduser.ConnectionsChangeInfo"                         = { description = "Includes auditInfo (lastModified and lastModifiedBy) on permissions in the enduser connections endpoints for access packages, resources and instances. Turn off to remove the extra database load." },
     "AccessMgmt.Core.Outbox.RequestPendingNotify"                            = { description = "Specifies if notifications for pending access requests are enabled." },
     "AccessMgmt.Core.Outbox.RequestReviewedNotify"                           = { description = "Specifies if notifications for reviewed access requests are enabled." },
     "AccessMgmt.Core.Outbox.RightholderAddedNotify"                          = { description = "Specifies if notifications should be sent when a rightholder assignment is added." },
