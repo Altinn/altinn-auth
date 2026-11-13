@@ -227,7 +227,7 @@ public static class DbSetExtensions
     /// Returns true if the exception was caused by a unique constraint violation on the outbox message refid index.
     /// </summary>
     public static bool IsOutboxUniqueConstraintViolation(this DbUpdateException ex)
-        => ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation, ConstraintName: "uq_outboxmessage_refid_pending" };
+        => ex.IsUniqueViolation("uq_outboxmessage_refid_pending");
 
     /// <summary>
     /// Saves all changes and, if a concurrent request already committed an outbox message with the same
