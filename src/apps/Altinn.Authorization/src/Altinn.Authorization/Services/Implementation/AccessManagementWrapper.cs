@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using Altinn.Authorization.Api.Contracts.Authorization;
 using Altinn.Authorization.Enums;
+using Altinn.Authorization.Xacml.Constants;
 using Altinn.Platform.Authorization.Clients;
 using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Models.AccessManagement;
@@ -21,10 +22,12 @@ namespace Altinn.Platform.Authorization.Services.Implementation;
 public class AccessManagementWrapper : IAccessManagementWrapper
 {
     private static readonly string[] RolesTags = ["roles"];
+    private static readonly string[] DelegationTags = ["delegations"];
 
     // The cache is read and written in two steps instead of through the factory of GetOrCreateAsync: the factory
     // cannot decline to cache its result, and a non-OK or empty response must not be cached.
     private static readonly HybridCacheEntryOptions ReadOptions = new() { Flags = HybridCacheEntryFlags.DisableUnderlyingData };
+    private static readonly HybridCacheEntryOptions DelegationCacheOptions = new() { Expiration = TimeSpan.FromMinutes(5) };
 
     private readonly GeneralSettings _generalSettings;
     private readonly AccessManagementClient _client;
@@ -79,7 +82,31 @@ public class AccessManagementWrapper : IAccessManagementWrapper
         };
 
         actions.ToList().ForEach(action => action(input));
-        return await GetAllDelegationChanges(input, cancellationToken);
+
+        string cacheKey = GetDelegationChangesCacheKey(input);
+        IEnumerable<DelegationChangeDto> result = await _cache.GetOrCreateAsync<IEnumerable<DelegationChangeDto>>(cacheKey, static _ => default, ReadOptions, cancellationToken: cancellationToken);
+        if (result == null)
+        {
+            result = await GetAllDelegationChanges(input, cancellationToken);
+            await _cache.SetAsync(cacheKey, result, DelegationCacheOptions, DelegationTags, cancellationToken);
+        }
+
+        return result;
+    }
+
+    private static string GetDelegationChangesCacheKey(DelegationChangeInputDto input)
+    {
+        string[] parts =
+        [
+            $"s:{input.Subject.Id}:{input.Subject.Value}",
+            $"p:{input.Party.Value}",
+            $"a:{input.Resource.FirstOrDefault(r => r.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute)?.Value}/{input.Resource.FirstOrDefault(r => r.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute)?.Value}",
+            $"r:{input.Resource.FirstOrDefault(r => r.Id == AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute)?.Value}",
+            $"ac:{input.AccessRestriction}",
+            $"vp:{input.ViaPartyOrganizationNumber}",
+        ];
+
+        return "delegations:" + string.Join("-", parts.Where(c => c != null && (c != string.Empty || !c.EndsWith(':'))));
     }
 
     /// <inheritdoc/>

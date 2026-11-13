@@ -18,6 +18,7 @@ public interface IAccessManagementWrapper
     /// <summary>
     /// Endpoint to find all delegation changes for a given user, reportee and app/resource context
     /// </summary>
+    /// <remarks>The answer is cached for five minutes per subject, party, app or resource, access restriction and via-party.</remarks>
     /// <returns>optional funvation pattern for modifying the request sent to Access Management API</returns>
     public Task<IEnumerable<DelegationChangeDto>> GetAllDelegationChanges(CancellationToken cancellationToken = default, params Action<DelegationChangeInputDto>[] actions);
 
