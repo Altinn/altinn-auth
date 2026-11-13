@@ -22,6 +22,7 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
     private static readonly AuditValues Seeder = new(SystemEntityConstants.StaticDataIngest, SystemEntityConstants.StaticDataIngest);
 
     private readonly EfDatabaseFixture _fixture;
+    private readonly DbContextOptions<AppDbContext> _options;
     private readonly AppDbContext _db;
     private readonly ActivityLogQuery _query;
 
@@ -29,11 +30,11 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
     {
         _fixture = fixture;
 
-        var options = new DbContextOptionsBuilder<AppDbContext>()
+        _options = new DbContextOptionsBuilder<AppDbContext>()
             .UseNpgsql(fixture.Db.Admin.ToString())
             .Options;
 
-        _db = new AppDbContext(options);
+        _db = new AppDbContext(_options);
         _query = new ActivityLogQuery(_db);
     }
 
@@ -661,6 +662,49 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
         Assert.Equal(1, result.Skipped);
         Assert.False(await PartitionExists(partition), $"{partition} should still be missing");
     }
+
+    [Fact]
+    public async Task EnsureMonthPartitions_WithoutCallerTransaction_CommitsPartitions()
+    {
+        // Further ahead than the other partition tests, so their "missing before" checks are not
+        // affected should cleanup ever fail.
+        const int monthsAhead = ActivityLogPartitionMaintenance.DefaultMonthsAhead + 12;
+
+        Assert.Null(_db.Database.CurrentTransaction);
+        var before = await ChildPartitions(_db);
+
+        try
+        {
+            // No caller transaction: the method opens and commits its own, as Init() relies on.
+            var result = await ActivityLogPartitionMaintenance.EnsureMonthPartitions(_db, monthsAhead, TestContext.Current.CancellationToken);
+            Assert.Equal(0, result.Skipped);
+            Assert.True(result.Created > 0);
+
+            // A fresh context on its own connection only sees committed partitions.
+            await using var fresh = new AppDbContext(_options);
+            var created = (await ChildPartitions(fresh)).Except(before).ToList();
+            Assert.Equal(result.Created, created.Count);
+        }
+        finally
+        {
+            // Drop what the test committed, by comparing against the partitions that existed
+            // before, so the cleanup holds even if the call ran across a month boundary.
+            foreach (var partition in (await ChildPartitions(_db)).Except(before))
+            {
+                var sql = "DROP TABLE IF EXISTS dbo." + partition;
+                await _db.Database.ExecuteSqlRawAsync(sql, TestContext.Current.CancellationToken);
+            }
+        }
+    }
+
+    private static Task<List<string>> ChildPartitions(AppDbContext db) => db.Database
+        .SqlQuery<string>($"""
+            SELECT c.relname AS "Value"
+            FROM pg_inherits i
+            JOIN pg_class c ON c.oid = i.inhrelid
+            WHERE i.inhparent = 'dbo.activitylog'::regclass
+            """)
+        .ToListAsync(TestContext.Current.CancellationToken);
 
     private Task<string> PartitionName(int monthsAhead) => _db.Database
         .SqlQuery<string>($"SELECT 'dbo.activitylog_p' || to_char(now() + make_interval(months => {monthsAhead}), 'YYYYMM') AS \"Value\"")
