@@ -32,7 +32,7 @@ The SBL-decommission flags (`EnterpriseUserAuthenticationDisabled`, `CookieTicke
 
 ## Secrets & certificates
 
-- **JWT signing certs** come from Azure Key Vault. The newest certificate that has been valid for at least the configured *rollover delay* is used to sign, so new certs propagate to verifiers (via JWKS) before they sign. Public keys are published at `GET /openid/.well-known/openid-configuration/jwks`.
+- **JWT signing certs** come from Azure Key Vault. The newest unexpired certificate with a private key that has been valid for at least the configured *rollover delay* is used to sign, so new certs propagate to verifiers (via JWKS) before they sign. If every certificate has expired, the newest is still used so sign-in keeps working, and each token logs the error `Every JWT signing certificate has expired` with the thumbprint: alert on it and rotate the certificate. Public keys are published at `GET /openid/.well-known/openid-configuration/jwks`.
 - **Pepper** (`OidcRefreshTokenPepper`) and DB credentials must come from secret stores, not committed config.
 
 ## Health & observability
