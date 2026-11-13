@@ -64,6 +64,7 @@ internal static class RequestApprovalTestData
 
     /// <summary>
     /// The right keys in the delegation policy written for the requester, that is, what was delegated to it.
+    /// The policy path names an organisation by its party id and a person by its user id.
     /// </summary>
     public static HashSet<string> GetDelegatedRightKeys(ApiFixture fixture, ConstantDefinition<Entity> requester)
     {
@@ -89,6 +90,7 @@ internal static class RequestApprovalTestData
         var policyFactory = Assert.IsType<PolicyFactoryMock>(fixture.Server.Services.GetRequiredService<IPolicyFactory>());
         return policyFactory.WrittenPolicies
             .Where(p => p.Key.Contains($"/p{requester.Entity.PartyId}/", StringComparison.Ordinal)
+                || (requester.Entity.UserId is { } userId && p.Key.Contains($"/u{userId}/", StringComparison.Ordinal))
                 || p.Key.Contains(requester.Id.ToString(), StringComparison.OrdinalIgnoreCase))
             .ToList();
     }
