@@ -3,6 +3,8 @@ using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 
@@ -21,7 +23,11 @@ namespace Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 /// Resolved once at DI setup from the application lifecycle feature configuration rather than per request.
 /// Defaults to <c>false</c> when not supplied.
 /// </param>
-public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled = false, bool excludeAltinn2Roles = false)
+/// <param name="logger">
+/// Logger passed on to the enricher, which warns when RoleConstants and the role table have drifted.
+/// Optional so existing callers keep compiling; without it those warnings are not logged.
+/// </param>
+public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled = false, bool excludeAltinn2Roles = false, ILogger<ConnectionQuery>? logger = null)
 {
     private readonly ConnectionBaseQueryBuilder _baseQueryBuilder = new();
 
@@ -223,7 +229,7 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
 
             if (filter.EnrichEntities)
             {
-                var enricher = new ConnectionEntityEnricher(db);
+                var enricher = new ConnectionEntityEnricher(db, logger ?? NullLogger<ConnectionQuery>.Instance);
                 result = await enricher.EnrichAsync(
                     result,
                     filter,

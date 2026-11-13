@@ -19,6 +19,7 @@ using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
 using AMPartyService = Altinn.AccessMgmt.Core.Services.AMPartyService;
@@ -61,7 +62,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped(sp => new ConnectionQuery(
             sp.GetRequiredService<AppDbContext>(),
             sp.GetRequiredService<AppLifecycleFeatures>().AdosSubunitInheritance,
-            sp.GetRequiredService<AppLifecycleFeatures>().DisableAltinn2Roles));
+            sp.GetRequiredService<AppLifecycleFeatures>().DisableAltinn2Roles,
+            sp.GetRequiredService<ILogger<ConnectionQuery>>()));
         services.AddScoped<IConnectionService, ConnectionService>();
         services.AddScoped<IBankruptcyEstateDelegationService, BankruptcyEstateDelegationService>();
         services.AddScoped<IMaskinportenSupplierService, MaskinportenSupplierService>();
