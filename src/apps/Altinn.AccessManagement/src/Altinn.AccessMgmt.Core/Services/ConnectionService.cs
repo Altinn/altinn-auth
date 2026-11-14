@@ -362,7 +362,14 @@ public partial class ConnectionService(
 
             var dto = new InstancePermissionDto
             {
-                Resource = new ResourceDto { Id = firstInstance.ResourceId, RefId = firstInstance.ResourceRefId, Name = firstInstance.ResourceName },
+                Resource = new ResourceDto
+                {
+                    Id = firstInstance.ResourceId,
+                    RefId = firstInstance.ResourceRefId,
+                    Name = firstInstance.ResourceName,
+                    Delegable = firstInstance.ResourceDelegable,
+                    AccessListMode = firstInstance.ResourceAccessListMode
+                },
                 Instance = new InstanceDto
                 {
                     RefId = firstInstance.InstanceId,
@@ -1013,14 +1020,6 @@ public partial class ConnectionService(
         // isMaskinPortenSchema is used later to add denial reasons, so we only set it when we want to deny
         bool isMaskinPortenSchema = isMaskinPortenSchemaResource && !allowMaskinportenSchema;
 
-        // Fetch Resourcemetadata
-        ServiceResource resourceMetadata = await contextRetrievalService.GetResource(resource, cancellationToken);
-
-        if (resourceMetadata is null)
-        {
-            return Problems.InvalidResource;
-        }
-
         List<RightDto> rightKeys = await contextRetrievalService.GetResourcePolicyV2(resource, languageCode, cancellationToken);
 
         if (rightKeys is null)
@@ -1028,8 +1027,8 @@ public partial class ConnectionService(
             return Problems.MissingMetadata;
         }
 
-        ResourceAccessListMode accessListMode = resourceMetadata.AccessListMode;
-        bool isResourceDelegable = ignoreDelegableFlag || resourceMetadata.Delegable;
+        ResourceAccessListMode accessListMode = resourceDto.AccessListMode;
+        bool isResourceDelegable = ignoreDelegableFlag || resourceDto.Delegable;
 
         // Decompose policy into resource/tasks
         List<Models.Right> rights = DelegationCheckHelper.DecomposePolicy(policy, resource);
@@ -1086,20 +1085,14 @@ public partial class ConnectionService(
             isMaskinPortenSchema = true;
         }
 
-        ServiceResource resourceMetadata = await contextRetrievalService.GetResource(resource, cancellationToken);
-        if (resourceMetadata is null)
-        {
-            return Problems.InvalidResource;
-        }
-
         List<RightDto> rightKeys = await contextRetrievalService.GetResourcePolicyV2(resource, languageCode, cancellationToken);
         if (rightKeys is null)
         {
             return Problems.MissingMetadata;
         }
 
-        ResourceAccessListMode accessListMode = resourceMetadata.AccessListMode;
-        bool isResourceDelegable = resourceMetadata.Delegable;
+        ResourceAccessListMode accessListMode = resourceDto.AccessListMode;
+        bool isResourceDelegable = resourceDto.Delegable;
 
         List<Models.Right> rights = DelegationCheckHelper.DecomposePolicy(policy, resource);
 
@@ -1673,42 +1666,19 @@ public partial class ConnectionService(
 
     private async Task<ResourceDto> FetchResource(string resource, CancellationToken cancellationToken)
     {
-        Resource resourceObj = await dbContext.Resources.AsNoTracking().SingleOrDefaultAsync(r => r.RefId == resource, cancellationToken);
+        Resource resourceObj = await dbContext.Resources
+            .AsNoTracking()
+            .Include(r => r.Type)
+            .Include(r => r.Provider)
+                .ThenInclude(p => p.Type)
+            .SingleOrDefaultAsync(r => r.RefId == resource, cancellationToken);
 
         if (resourceObj is null)
         {
             throw new ValidationException($"Resource with id '{resource}' not found");
         }
 
-        Provider provider = await dbContext.Providers.AsNoTracking().SingleOrDefaultAsync(p => p.Id == resourceObj.ProviderId, cancellationToken);
-        ProviderTypeConstants.TryGetById(provider.TypeId, out var providerType);
-        PersistenceEF.Models.ResourceType resourceType = await dbContext.ResourceTypes.SingleOrDefaultAsync(rt => rt.Id == resourceObj.TypeId, cancellationToken);
-
-        ProviderDto providerDto = new ProviderDto
-        {
-            Id = provider.Id,
-            Code = provider.Code,
-            LogoUrl = provider.LogoUrl,
-            Name = provider.Name,
-            RefId = provider.RefId,
-            TypeId = provider.TypeId,
-            Type = new ProviderTypeDto { Id = providerType.Id, Name = providerType.Entity.Name }
-        };
-
-        ResourceDto resourceDto = new ResourceDto
-        {
-            Id = resourceObj.Id,
-            Name = resourceObj.Name,
-            Description = resourceObj.Description,
-            RightDescription = resourceObj.RightDescription,
-            Provider = providerDto,
-            ProviderId = provider.Id,
-            RefId = resourceObj.RefId,
-            TypeId = resourceObj.TypeId,
-            Type = new ResourceTypeDto { Id = resourceType.Id, Name = resourceType.Name }
-        };
-
-        return resourceDto;
+        return DtoMapper.Convert(resourceObj);
     }
 
     private async Task<XacmlPolicy> GetPolicy(string resource, CancellationToken cancellationToken = default)
