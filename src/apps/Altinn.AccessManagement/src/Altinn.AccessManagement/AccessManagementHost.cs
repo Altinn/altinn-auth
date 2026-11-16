@@ -67,7 +67,7 @@ internal static partial class AccessManagementHost
     public static WebApplication Create(string[] args)
     {
         Log.CreateAltinnHost(Logger);
-        var builder = AltinnHost.CreateWebApplicationBuilder("access-management", args, opts => opts.ConfigureEnabledServices(services => services.DisableApplicationInsights()));
+        var builder = AltinnHost.CreateWebApplicationBuilder("access-management", args);
         builder.ConfigureAppsettings();
         builder.ConfigureLibsHost();
         builder.Services.AddMemoryCache();
