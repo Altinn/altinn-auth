@@ -16,6 +16,7 @@ using Altinn.ResourceRegistry.Core.ServiceOwners;
 using Altinn.ResourceRegistry.Core.Services.Interfaces;
 using Azure;
 using Azure.Storage.Blobs.Models;
+using Microsoft.Extensions.Caching.Hybrid;
 using Nerdbank.Streams;
 
 namespace Altinn.ResourceRegistry.Core.Services
@@ -29,6 +30,7 @@ namespace Altinn.ResourceRegistry.Core.Services
         private readonly IPolicyRepository _policyRepository;
         private readonly IApplications _applicationsClient;
         private readonly IServiceOwnerService _serviceOwnerService;
+        private readonly HybridCache _hybridCache;
 
         /// <summary>
         /// Creates a new instance of the <see cref="ResourceRegistryService"/> service.
@@ -38,12 +40,14 @@ namespace Altinn.ResourceRegistry.Core.Services
             IResourceRegistryRepository repository,
             IPolicyRepository policyRepository,
             IApplications applicationsClient,
-            IServiceOwnerService serviceOwnerService)
+            IServiceOwnerService serviceOwnerService,
+            HybridCache hybridCache)
         {
             _repository = repository;
             _policyRepository = policyRepository;
             _applicationsClient = applicationsClient;
             _serviceOwnerService = serviceOwnerService;
+            _hybridCache = hybridCache;
         }
 
         /// <inheritdoc/>
@@ -242,58 +246,65 @@ namespace Altinn.ResourceRegistry.Core.Services
 
             async Task<List<ServiceResource>> GetResourceListInner(CancellationToken cancellationToken)
             {
-                ResourceSearch resourceSearch = new ResourceSearch();
+                string cacheKey = $"ResourceList_{includeAllVersions}_{includeMigratedApps}";
 
-                List<ServiceResource> resources = await Search(resourceSearch, includeAllVersions, cancellationToken);
-
-                if (!includeMigratedApps)
-                {
-                    resources = resources
-                        .Where(resource => !IsMigratedApplicationResource(resource))
-                        .ToList();
-                }
-
-                foreach (ServiceResource resource in resources)
-                {
-                    // For app resources, use org/app format like Storage apps do
-                    if (resource.Identifier.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX, StringComparison.OrdinalIgnoreCase))
+                return await _hybridCache.GetOrCreateAsync(
+                    cacheKey,
+                    async ct =>
                     {
-                        string[] parts = resource.Identifier.Split('_', 3);
-                        if (parts.Length == 3)
+                        ResourceSearch resourceSearch = new ResourceSearch();
+
+                        List<ServiceResource> resources = await Search(resourceSearch, includeAllVersions, ct);
+
+                        if (!includeMigratedApps)
                         {
-                            string org = parts[1];
-                            string app = parts[2];
-                            resource.AuthorizationReference = new List<AuthorizationReferenceAttribute>
+                            resources = resources
+                                .Where(resource => !IsMigratedApplicationResource(resource))
+                                .ToList();
+                        }
+
+                        foreach (ServiceResource resource in resources)
+                        {
+                            // For app resources, use org/app format like Storage apps do
+                            if (resource.Identifier.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX, StringComparison.OrdinalIgnoreCase))
+                            {
+                                string[] parts = resource.Identifier.Split('_', 3);
+                                if (parts.Length == 3)
+                                {
+                                    string org = parts[1];
+                                    string app = parts[2];
+                                    resource.AuthorizationReference = new List<AuthorizationReferenceAttribute>
                             {
                                 new AuthorizationReferenceAttribute() { Id = "urn:altinn:org", Value = org },
                                 new AuthorizationReferenceAttribute() { Id = "urn:altinn:app", Value = app }
                             };
-                        }
-                        else
-                        {
-                            // Fallback if identifier format is unexpected
-                            resource.AuthorizationReference = new List<AuthorizationReferenceAttribute>
+                                }
+                                else
+                                {
+                                    // Fallback if identifier format is unexpected
+                                    resource.AuthorizationReference = new List<AuthorizationReferenceAttribute>
                             {
                                 new AuthorizationReferenceAttribute() { Id = "urn:altinn:resource", Value = resource.Identifier }
                             };
-                        }
-                    }
-                    else
-                    {
-                        // Non-app resources use resource format
-                        resource.AuthorizationReference = new List<AuthorizationReferenceAttribute>
+                                }
+                            }
+                            else
+                            {
+                                // Non-app resources use resource format
+                                resource.AuthorizationReference = new List<AuthorizationReferenceAttribute>
                         {
                             new AuthorizationReferenceAttribute() { Id = "urn:altinn:resource", Value = resource.Identifier }
                         };
-                    }
-                }
+                            }
+                        }
 
-                return resources;
+                        return resources;
 
-                static bool IsMigratedApplicationResource(ServiceResource resource)
-                {
-                    return resource.ResourceType == Enums.ResourceType.MigratedApp;
-                }
+                        static bool IsMigratedApplicationResource(ServiceResource resource)
+                        {
+                            return resource.ResourceType == Enums.ResourceType.MigratedApp;
+                        }
+                    });
             }
 
             async Task<List<ServiceResource>> GetAltinn3Applications(bool includeMigratedApps, CancellationToken cancellationToken = default)
