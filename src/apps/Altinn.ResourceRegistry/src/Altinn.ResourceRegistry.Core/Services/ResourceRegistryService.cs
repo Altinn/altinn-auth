@@ -304,7 +304,8 @@ namespace Altinn.ResourceRegistry.Core.Services
                         {
                             return resource.ResourceType == Enums.ResourceType.MigratedApp;
                         }
-                    });
+                    },
+                    cancellationToken: cancellationToken);
             }
 
             async Task<List<ServiceResource>> GetAltinn3Applications(bool includeMigratedApps, CancellationToken cancellationToken = default)
