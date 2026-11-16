@@ -67,7 +67,7 @@ internal static partial class AccessManagementHost
     public static WebApplication Create(string[] args)
     {
         Log.CreateAltinnHost(Logger);
-        var builder = AltinnHost.CreateWebApplicationBuilder("access-management", args, opts => opts.ConfigureEnabledServices(services => services.DisableApplicationInsights()));
+        var builder = AltinnHost.CreateWebApplicationBuilder("access-management", args);
         builder.ConfigureAppsettings();
         builder.ConfigureLibsHost();
         builder.Services.AddMemoryCache();
@@ -81,35 +81,9 @@ internal static partial class AccessManagementHost
 
         builder.ConfigureLibsIntegrations();
         builder.ConfigureAppsettings();
-
-        if (!builder.Environment.IsDevelopment())
-        {
-            if (builder.Configuration.GetValue<string>("ApplicationInsights:InstrumentationKey") is var key && !string.IsNullOrEmpty(key))
-            {
-                var npgsqlMinDurationMs = builder.Configuration.GetValue("Telemetry:NpgsqlMinimumDurationMs", 100);
-
-                builder.Services.AddOpenTelemetry()
-                    .UseAzureMonitor(m =>
-                    {
-                        m.ConnectionString = string.Format("InstrumentationKey={0}", key);
-                    })
-                    .WithTracing(tracing =>
-                    {
-                        tracing
-                            .AddProcessor(sp => new ApiVersionRouteProcessor(sp.GetRequiredService<IHttpContextAccessor>()))
-                            .AddProcessor(sp => new NpgsqlProcessor(
-                                TimeSpan.FromMilliseconds(npgsqlMinDurationMs),
-                                sp.GetRequiredService<IHttpContextAccessor>()));
-                    });
-            }
-        }
-
-        builder.Services.AddSingleton<AuthorizedPartiesTelemetry>();
-        builder.Services.ConfigureOpenTelemetryMeterProvider(provider => provider
-            .AddMeter(AuthorizedPartiesTelemetry.MeterName));
+        builder.ConfigureOtel();
 
         var connectionStrings = GetConnectionStrings(builder.Configuration);
-
         builder.AddAltinnDatabase(opt =>
         {
             opt.Enabled = connectionStrings.Valid;
@@ -164,6 +138,26 @@ internal static partial class AccessManagementHost
         builder.AddAccessManagementInternal();
 
         return builder.Build();
+    }
+
+    private static void ConfigureOtel(this WebApplicationBuilder builder)
+    {
+        if (!builder.Environment.IsDevelopment())
+        {
+            // ServiceDefaults already wires up UseAzureMonitor (and the base tracing
+            // pipeline) when ApplicationInsights isn't disabled, so this only needs to
+            // append AM's own processors to whatever TracerProviderBuilder ends up built.
+            var npgsqlMinDurationMs = builder.Configuration.GetValue("Telemetry:NpgsqlMinimumDurationMs", 100);
+            builder.Services.ConfigureOpenTelemetryTracerProvider(tracing => tracing
+                .AddProcessor(sp => new ApiVersionRouteProcessor(sp.GetRequiredService<IHttpContextAccessor>()))
+                .AddProcessor(sp => new NpgsqlProcessor(
+                    TimeSpan.FromMilliseconds(npgsqlMinDurationMs),
+                    sp.GetRequiredService<IHttpContextAccessor>())));
+        }
+
+        builder.Services.AddSingleton<AuthorizedPartiesTelemetry>();
+        builder.Services.ConfigureOpenTelemetryMeterProvider(provider => provider
+            .AddMeter(AuthorizedPartiesTelemetry.MeterName));
     }
 
     private static (string AppSource, string MigrationSource, bool Valid) GetConnectionStrings(ConfigurationManager configuration)
