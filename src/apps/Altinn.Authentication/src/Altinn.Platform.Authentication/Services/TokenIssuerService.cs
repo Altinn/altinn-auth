@@ -12,7 +12,6 @@ using Altinn.Platform.Authentication.Core.Models.Oidc;
 using Altinn.Platform.Authentication.Core.Services.Interfaces;
 using Altinn.Platform.Authentication.Helpers;
 using Altinn.Platform.Authentication.Services.Interfaces;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
@@ -21,12 +20,11 @@ namespace Altinn.Platform.Authentication.Services
     /// <summary>
     /// Token issuer service for minting OAuth 2.0 / OIDC tokens.
     /// </summary>
-    public class TokenIssuerService(IJwtSigningCertificateProvider jwtSigningCertificateProvider, IOptions<GeneralSettings> generalSettings, TimeProvider timeProvider, ILogger<TokenIssuerService> logger) : ITokenIssuer
+    public class TokenIssuerService(IJwtSigningCertificateProvider jwtSigningCertificateProvider, IOptions<GeneralSettings> generalSettings, TimeProvider timeProvider) : ITokenIssuer
     {
         private readonly IJwtSigningCertificateProvider _certificateProvider = jwtSigningCertificateProvider;
         private readonly GeneralSettings _generalSettings = generalSettings.Value;
         private readonly TimeProvider _timeProvider = timeProvider;
-        private readonly ILogger<TokenIssuerService> _logger = logger;
 
         /// <inheritdoc/>
         public async Task<string> CreateAccessTokenAsync(ClaimsPrincipal principal, DateTimeOffset tokenExpiration, CancellationToken cancellationToken = default)
@@ -46,7 +44,7 @@ namespace Altinn.Platform.Authentication.Services
             List<X509Certificate2> certificates = await _certificateProvider.GetCertificates();
 
             X509Certificate2 certificate = SigningCertificateSelector.Select(
-                certificates, _generalSettings.JwtSigningCertificateRolloverDelayHours, _timeProvider.GetUtcNow(), _logger);
+                certificates, _generalSettings.JwtSigningCertificateRolloverDelayHours, _timeProvider.GetUtcNow());
 
             JwtSecurityTokenHandler tokenHandler = new();
             SecurityTokenDescriptor tokenDescriptor = new()

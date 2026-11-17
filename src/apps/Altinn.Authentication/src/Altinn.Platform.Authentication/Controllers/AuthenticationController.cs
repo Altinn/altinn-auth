@@ -914,8 +914,7 @@ namespace Altinn.Platform.Authentication.Controllers
             X509Certificate2 certificate = SigningCertificateSelector.Select(
                 certificates,
                 _generalSettings.JwtSigningCertificateRolloverDelayHours,
-                now,
-                _logger);
+                now);
 
             var lifetime = TimeSpan.FromMinutes(_generalSettings.JwtValidityMinutes);
             var exp = (expires ?? now.Add(lifetime)).UtcDateTime;

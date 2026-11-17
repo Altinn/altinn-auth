@@ -32,7 +32,7 @@ The SBL-decommission flags (`EnterpriseUserAuthenticationDisabled`, `CookieTicke
 
 ## Secrets & certificates
 
-- **JWT signing certs** come from Azure Key Vault. The newest unexpired certificate with a private key that has been valid for at least the configured *rollover delay* is used to sign, so new certs propagate to verifiers (via JWKS) before they sign. If every certificate has expired, the newest is still used so sign-in keeps working, and each token logs the error `Every JWT signing certificate has expired` with the thumbprint: alert on it and rotate the certificate. Public keys are published at `GET /openid/.well-known/openid-configuration/jwks`.
+- **JWT signing certs** come from Azure Key Vault. The newest unexpired certificate with a private key that has been valid for at least the configured *rollover delay* is used to sign, so new certs propagate to verifiers (via JWKS) before they sign. An expired certificate is never used. If every certificate has expired, no token can be issued and sign-in fails: each attempt throws `InvalidOperationException` with `Every JWT signing certificate has expired` and the thumbprint of the newest. Rotate the certificate in Key Vault before it expires (#4553 tracks alerting ahead of expiry). Public keys are published at `GET /openid/.well-known/openid-configuration/jwks`.
 - **Pepper** (`OidcRefreshTokenPepper`) and DB credentials must come from secret stores, not committed config.
 
 ## Health & observability
@@ -88,6 +88,7 @@ Use **log alerts** (`azurerm_monitor_scheduled_query_rules_alert_v2`) rather tha
 | Symptom | Likely cause / where to look |
 | --- | --- |
 | Users get `401` on `exchange/id-porten` despite valid login | Could be a **Register outage** mis-mapped to `401` (see [#2072](https://github.com/Altinn/altinn-authentication/issues/2072)). Check Register health and the logs around `PartiesClient`. |
+| Sign-in fails everywhere with `Every JWT signing certificate has expired` | The signing certificate in Key Vault was not rotated. Upload a new version; it is used as soon as it is valid, since the rollover delay only applies while an unexpired older certificate exists. Allow up to an hour for the certificate cache. |
 | Token-exchange failures after a deploy | Check whether the upstream **issuer/JWKS** config changed, and whether the **signing certificate** rolled (a too-fresh or expired cert breaks verification). |
 | Browser sign-in fails; users bounce back to the client with `temporarily_unavailable` | The upstream token exchange or upstream token validation failed. Split `altinn.authentication.oidc.upstream_token_exchange` by `error.type` and `http.response.status_code`: `invalid_client` = our client secret/registration at the IdP, `invalid_grant` = user-driven or a code-lifetime/clock problem, a 5xx/429 or a missing status code = the IdP is down, rate-limiting us, or the circuit breaker is open. If the exchange metric looks healthy, check `…upstream_token_validation` — `signing_key_not_found` means the IdP rolled its signing keys and our JWKS cache is stale. The matching `LogError`/`LogWarning` carries the upstream `error_description`. |
 | Notifications/emails (SI link) going to the wrong environment | Per-environment `PlatformSettings__ApiNotificationsEndpoint` override missing (base default is AT22). |

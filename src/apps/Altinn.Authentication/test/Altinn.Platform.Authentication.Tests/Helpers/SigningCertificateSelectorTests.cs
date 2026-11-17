@@ -4,9 +4,6 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using Altinn.Platform.Authentication.Helpers;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Logging.Testing;
 using Xunit;
 
 namespace Altinn.Platform.Authentication.Tests.Helpers
@@ -61,18 +58,15 @@ namespace Altinn.Platform.Authentication.Tests.Helpers
         }
 
         [Fact]
-        public void Select_EveryCertificateHasExpired_SignsWithTheNewestAndLogsAnError()
+        public void Select_EveryCertificateHasExpired_ThrowsNamingTheNewest()
         {
             using X509Certificate2 older = CreateCertificate(Now.AddDays(-730), Now.AddDays(-365));
             using X509Certificate2 newest = CreateCertificate(Now.AddDays(-365), Now.AddDays(-1));
-            FakeLogger logger = new();
 
-            X509Certificate2 selected = SigningCertificateSelector.Select([older, newest], RolloverDelayHours, Now, logger);
+            InvalidOperationException exception = Assert.Throws<InvalidOperationException>(() => Select(older, newest));
 
-            Assert.Same(newest, selected);
-            FakeLogRecord record = Assert.Single(logger.Collector.GetSnapshot());
-            Assert.Equal(LogLevel.Error, record.Level);
-            Assert.Contains(newest.Thumbprint, record.Message);
+            Assert.Contains("expired", exception.Message);
+            Assert.Contains(newest.Thumbprint, exception.Message);
         }
 
         [Fact]
@@ -101,13 +95,13 @@ namespace Altinn.Platform.Authentication.Tests.Helpers
             using X509Certificate2 old = CreateCertificate(Now.AddDays(-300), Now.AddDays(65));
             using X509Certificate2 fresh = CreateCertificate(Now.AddMinutes(-5), Now.AddDays(365));
 
-            X509Certificate2 selected = SigningCertificateSelector.Select([old, fresh], 0, Now, NullLogger.Instance);
+            X509Certificate2 selected = SigningCertificateSelector.Select([old, fresh], 0, Now);
 
             Assert.Same(fresh, selected);
         }
 
         private static X509Certificate2 Select(params X509Certificate2[] certificates) =>
-            SigningCertificateSelector.Select(new List<X509Certificate2>(certificates), RolloverDelayHours, Now, NullLogger.Instance);
+            SigningCertificateSelector.Select(new List<X509Certificate2>(certificates), RolloverDelayHours, Now);
 
         private static X509Certificate2 CreateCertificate(DateTimeOffset notBefore, DateTimeOffset notAfter)
         {

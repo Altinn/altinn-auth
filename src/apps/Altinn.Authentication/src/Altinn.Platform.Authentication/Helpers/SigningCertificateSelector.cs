@@ -3,7 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
-using Microsoft.Extensions.Logging;
 
 namespace Altinn.Platform.Authentication.Helpers
 {
@@ -17,20 +16,20 @@ namespace Altinn.Platform.Authentication.Helpers
         /// Returns the newest certificate that can sign now.
         /// </summary>
         /// <remarks>
-        /// Only certificates with a private key whose validity has started are candidates. Unexpired ones are
-        /// preferred, and among those the newest that has existed longer than <paramref name="rolloverDelayHours"/>,
-        /// which gives a freshly published certificate time to reach token consumers. When every candidate has
-        /// expired, the newest is still used, so a missed rotation does not stop sign-in, and an error is logged
-        /// on every use so the rotation is noticed.
+        /// Only certificates with a private key that are inside their validity window are candidates. Among those,
+        /// the newest that has existed longer than <paramref name="rolloverDelayHours"/> is preferred, which gives a
+        /// freshly published certificate time to reach token consumers. An expired certificate is never used: when
+        /// every candidate has expired, no token is signed, so a missed rotation fails loudly instead of going unnoticed.
         /// <c>NotBefore</c>/<c>NotAfter</c> are local time on <see cref="X509Certificate2"/>, so they are compared in UTC.
         /// </remarks>
         /// <param name="certificates">The available signing certificates.</param>
         /// <param name="rolloverDelayHours">How long a certificate must have existed before it is preferred for signing.</param>
         /// <param name="now">The current time.</param>
-        /// <param name="logger">Logs the expired-certificate fallback.</param>
         /// <returns>The certificate to sign with.</returns>
-        /// <exception cref="InvalidOperationException">No certificate with a private key has started its validity.</exception>
-        public static X509Certificate2 Select(IEnumerable<X509Certificate2> certificates, int rolloverDelayHours, DateTimeOffset now, ILogger logger)
+        /// <exception cref="InvalidOperationException">
+        /// No certificate with a private key has started its validity, or every one of them has expired.
+        /// </exception>
+        public static X509Certificate2 Select(IEnumerable<X509Certificate2> certificates, int rolloverDelayHours, DateTimeOffset now)
         {
             DateTime nowUtc = now.UtcDateTime;
 
@@ -50,11 +49,9 @@ namespace Altinn.Platform.Authentication.Helpers
             if (unexpired.Count == 0)
             {
                 X509Certificate2 newestExpired = started.MaxBy(c => c.NotBefore.ToUniversalTime())!;
-                logger.LogError(
-                    "Every JWT signing certificate has expired; signing with {Thumbprint}, which expired {NotAfter:o}. Rotate the signing certificate in Key Vault.",
-                    newestExpired.Thumbprint,
-                    newestExpired.NotAfter.ToUniversalTime());
-                return newestExpired;
+                throw new InvalidOperationException(
+                    $"Every JWT signing certificate has expired; the newest, {newestExpired.Thumbprint}, expired "
+                    + $"{newestExpired.NotAfter.ToUniversalTime():o}. Rotate the signing certificate in Key Vault.");
             }
 
             DateTime rolloverCutoffUtc = now.AddHours(-rolloverDelayHours).UtcDateTime;
