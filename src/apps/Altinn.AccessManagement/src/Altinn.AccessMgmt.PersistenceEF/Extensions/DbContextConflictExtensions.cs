@@ -26,8 +26,8 @@ public static class DbContextConflictExtensions
     /// <param name="ex">The exception thrown by the save.</param>
     /// <param name="constraintName">The constraint that must be violated; null matches any unique constraint.</param>
     public static bool IsUniqueViolation(this DbUpdateException ex, string constraintName = null) =>
-        ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } pgEx
-        && (constraintName is null || string.Equals(pgEx.ConstraintName, constraintName, StringComparison.Ordinal));
+        ex.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation } postgresEx
+        && (constraintName is null || string.Equals(postgresEx.ConstraintName, constraintName, StringComparison.Ordinal));
 
     /// <summary>
     /// Runs <paramref name="attempt"/>, which reads the current rows, stages its changes and saves them.
