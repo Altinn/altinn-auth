@@ -75,19 +75,29 @@ namespace Altinn.ResourceRegistry.Core.Services
         /// <inheritdoc/>
         public async Task Delete(string id, CancellationToken cancellationToken = default)
         {
+            // Remove the connections made up to the deletion before it commits. Until then the
+            // identifier cannot be created again, so a recreated resource never sees the old
+            // connections. If the removal fails, the deletion is rolled back and can be retried.
+            //
+            // The policy is deleted last. Deleting the blob cannot be rolled back, so it waits until
+            // the connections are gone, and a failed cleanup leaves the resource with its policy.
+            await _repository.DeleteResource(
+                id,
+                async (deletedAt, ct) =>
+                {
+                    await RemoveAccessListConnections(id, deletedAt, ct);
+                    await DeletePolicy(id, ct);
+                },
+                cancellationToken);
+        }
+
+        private async Task DeletePolicy(string id, CancellationToken cancellationToken)
+        {
             bool deletePolicyResult = await _policyRepository.TryDeletePolicyAsync(id, cancellationToken);
             if (!deletePolicyResult)
             {
                 throw new AccessManagementUpdateException($"Deleting policy for resource {id} failed");
             }
-
-            // Remove the connections made up to the deletion before it commits. Until then the
-            // identifier cannot be created again, so a recreated resource never sees the old
-            // connections. If the removal fails, the deletion is rolled back and can be retried.
-            await _repository.DeleteResource(
-                id,
-                (deletedAt, ct) => RemoveAccessListConnections(id, deletedAt, ct),
-                cancellationToken);
         }
 
         private async Task RemoveAccessListConnections(string resourceIdentifier, DateTimeOffset connectedBefore, CancellationToken cancellationToken)

@@ -242,6 +242,11 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
         // Creating the identifier again, updating the resource and flagging a policy upload all
         // wait for the lock, so none of them sees the resource before the caller's cleanup is done.
         // If the cleanup fails, the deletion is rolled back and can be retried.
+        //
+        // The subjects are soft-deleted last, right before the commit, and stamped with clock_timestamp()
+        // rather than now(). now() is when the transaction started, which would put the tombstones behind
+        // subject changes that other transactions commit while the cleanup runs. A reader paging the
+        // updated subjects past those changes would then never see the tombstones.
         const string LOCK = /*strpsql*/@"
             SELECT 1
             FROM resourceregistry.resource_identifier
@@ -262,13 +267,6 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
                 WHERE ri.identifier = @identifier
                   AND EXISTS (SELECT 1 FROM del)
                 RETURNING ri.identifier, ri.created, ri.last_changed
-            ), subjects AS (
-                UPDATE resourceregistry.resourcesubjects
-                SET deleted = true,
-                    updated_at = now()
-                WHERE resource_urn = @resource_urn
-                  AND deleted = false
-                  AND EXISTS (SELECT 1 FROM del)
             )
             SELECT del.identifier, bump.created, del.modified, del.serviceresourcejson, del.version_id, bump.last_changed AS deleted_at
             FROM del
@@ -276,6 +274,13 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
             ORDER BY del.version_id DESC
             LIMIT 1
             ";
+
+        const string DELETE_SUBJECTS = /*strpsql*/@"
+            UPDATE resourceregistry.resourcesubjects
+            SET deleted = true,
+                updated_at = clock_timestamp()
+            WHERE resource_urn = @resource_urn
+              AND deleted = false";
 
         try
         {
@@ -295,7 +300,6 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
             await using (var pgcom = new NpgsqlCommand(QUERY, conn, tx))
             {
                 pgcom.Parameters.AddWithValue("identifier", NpgsqlDbType.Text, id);
-                pgcom.Parameters.AddWithValue("resource_urn", NpgsqlDbType.Text, ResourceUrn(id));
 
                 deleted = await pgcom.ExecuteEnumerableAsync(cancellationToken)
                     .Select(async (reader, ct) => new DeletedResource(
@@ -312,6 +316,12 @@ internal class ResourceRegistryRepository : IResourceRegistryRepository
             if (beforeCommit is not null)
             {
                 await beforeCommit(deleted.DeletedAt, cancellationToken);
+            }
+
+            await using (var subjectsCmd = new NpgsqlCommand(DELETE_SUBJECTS, conn, tx))
+            {
+                subjectsCmd.Parameters.AddWithValue("resource_urn", NpgsqlDbType.Text, ResourceUrn(id));
+                await subjectsCmd.ExecuteNonQueryAsync(cancellationToken);
             }
 
             await tx.CommitAsync(cancellationToken);

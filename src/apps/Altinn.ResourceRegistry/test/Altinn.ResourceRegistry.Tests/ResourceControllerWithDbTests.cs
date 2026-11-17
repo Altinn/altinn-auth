@@ -4,6 +4,7 @@ using Altinn.ResourceRegistry.Core;
 using Altinn.ResourceRegistry.Core.AccessLists;
 using Altinn.ResourceRegistry.Core.Constants;
 using Altinn.ResourceRegistry.Core.Enums;
+using Altinn.ResourceRegistry.Core.Exceptions;
 using Altinn.ResourceRegistry.Core.Models;
 using Altinn.ResourceRegistry.Core.ServiceOwners;
 using Altinn.ResourceRegistry.Core.Services;
@@ -1019,6 +1020,82 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
     }
 
     [Fact]
+    public async Task DeleteResource_CleanupFails_KeepsPolicy()
+    {
+        const string ResourceId = "cleanup_fails_keeps_policy";
+
+        await Repository.CreateResource(CreateTestResource(ResourceId));
+
+        var failing = new Mock<IAccessListsRepository>();
+        failing
+            .Setup(r => r.GetAccessListsByResource(It.IsAny<string>(), It.IsAny<DateTimeOffset>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new TimeoutException());
+        var policies = new Mock<IPolicyRepository>();
+        policies
+            .Setup(r => r.TryDeletePolicyAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
+
+        await Assert.ThrowsAsync<TimeoutException>(() => DeleteWith(failing.Object, ResourceId, policies.Object));
+
+        // The deletion was rolled back, and the policy, which cannot be restored, was never deleted.
+        Assert.NotNull(await Repository.GetResource(ResourceId, null));
+        policies.Verify(r => r.TryDeletePolicyAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+
+        // A retry that gets through the cleanup deletes the policy along with the resource.
+        await DeleteWith(AccessListsRepository, ResourceId, policies.Object);
+
+        Assert.Null(await Repository.GetResource(ResourceId, null));
+        policies.Verify(r => r.TryDeletePolicyAsync(ResourceId, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task DeleteResource_PolicyDeleteFails_RollsBack()
+    {
+        const string ResourceId = "policy_delete_fails";
+
+        await Repository.CreateResource(CreateTestResource(ResourceId));
+
+        var policies = new Mock<IPolicyRepository>();
+        policies
+            .Setup(r => r.TryDeletePolicyAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        await Assert.ThrowsAsync<AccessManagementUpdateException>(() => DeleteWith(AccessListsRepository, ResourceId, policies.Object));
+
+        Assert.NotNull(await Repository.GetResource(ResourceId, null));
+        Assert.Null(await Repository.GetResourceDeletedAt(ResourceId));
+    }
+
+    [Fact]
+    public async Task DeleteResource_SubjectChangedDuringCleanup_TombstonesAreAfterIt()
+    {
+        const string ResourceId = "subjects_paged_during_delete";
+        const string OtherResourceId = "subjects_changed_during_delete";
+        string resourceUrn = $"urn:altinn:resource:{ResourceId}";
+        string otherResourceUrn = $"urn:altinn:resource:{OtherResourceId}";
+
+        await Repository.CreateResource(CreateTestResource(ResourceId));
+        await Repository.CreateResource(CreateTestResource(OtherResourceId));
+        await Repository.SetResourceSubjects(CreateResourceSubjects(resourceUrn, ["urn:altinn:rolecode:r001"], "ttd"), logPolicyChange: true);
+
+        // Another resource's subjects change and commit while the delete is cleaning up.
+        Mock<IAccessListsRepository> interleaved = InterleavedAccessLists(async ct =>
+            await Repository.SetResourceSubjects(CreateResourceSubjects(otherResourceUrn, ["urn:altinn:rolecode:r002"], "ttd"), logPolicyChange: true));
+
+        await DeleteWith(interleaved.Object, ResourceId);
+
+        // A reader that has paged up to that change must still find the tombstones after it.
+        UpdatedResourceSubject otherChange = Assert.Single(
+            await Repository.FindUpdatedResourceSubjects(DateTimeOffset.MinValue, 1000),
+            s => s.ResourceUrn.ToString() == otherResourceUrn);
+        List<UpdatedResourceSubject> afterOtherChange = await Repository.FindUpdatedResourceSubjects(
+            otherChange.UpdatedAt, 1000, (otherChange.ResourceUrn, otherChange.SubjectUrn));
+
+        UpdatedResourceSubject tombstone = Assert.Single(afterOtherChange, s => s.ResourceUrn.ToString() == resourceUrn);
+        Assert.True(tombstone.Deleted);
+    }
+
+    [Fact]
     public async Task DeleteResource_AccessListChangedDuringCleanup_RetriesAndRemovesConnection()
     {
         const string ResourceId = "list_changed_during_delete";
@@ -1096,11 +1173,11 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
         return interleaved;
     }
 
-    private Task DeleteWith(IAccessListsRepository accessLists, string resourceId)
+    private Task DeleteWith(IAccessListsRepository accessLists, string resourceId, IPolicyRepository? policies = null)
     {
         var service = new ResourceRegistryService(
             Repository,
-            Services.GetRequiredService<IPolicyRepository>(),
+            policies ?? Services.GetRequiredService<IPolicyRepository>(),
             Services.GetRequiredService<IApplications>(),
             Services.GetRequiredService<IServiceOwnerService>(),
             accessLists);
