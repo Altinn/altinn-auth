@@ -35,7 +35,7 @@ public static class ServiceCollectionExtensions
         ConstantGuard.ConstantIdsAreUnique();
         services.AddScoped<ReadOnlyInterceptor>();
         services.AddScoped<IAuditAccessor, AuditAccessor>();
-        services.AddMemoryCache(); // Add memory cache for translation service
+        services.AddHybridCache(); // TranslationService caches in HybridCache; the host's shared registration configures it.
         services.AddScoped<ITranslationService, TranslationService>();
         services.AddScoped<ActivityLogQuery>();
         services.AddScoped<AppDbContextFactory>();

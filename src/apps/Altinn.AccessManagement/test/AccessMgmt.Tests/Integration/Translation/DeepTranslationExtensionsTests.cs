@@ -1,11 +1,12 @@
-﻿using Altinn.AccessManagement.TestUtils.Fixtures;
+﻿using Altinn.AccessManagement.Tests.Utils;
+using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.Core.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Altinn.AccessManagement.Tests.Integration.Translation;
@@ -17,12 +18,12 @@ namespace Altinn.AccessManagement.Tests.Integration.Translation;
 public class DeepTranslationExtensionsTests : IClassFixture<EfDatabaseFixture>
 {
     private readonly EfDatabaseFixture _fixture;
-    private readonly IMemoryCache _cache;
+    private readonly HybridCache _cache;
 
     public DeepTranslationExtensionsTests(EfDatabaseFixture fixture)
     {
         _fixture = fixture;
-        _cache = new MemoryCache(new MemoryCacheOptions());
+        _cache = HybridCacheUtil.Create();
     }
 
     /// <summary>

@@ -1,4 +1,5 @@
 ﻿using Altinn.AccessManagement.Api.Metadata.Controllers;
+using Altinn.AccessManagement.Tests.Utils;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.Core.Services;
 using Altinn.AccessMgmt.Core.Services.Contracts;
@@ -10,7 +11,6 @@ using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Altinn.AccessManagement.Tests.Integration.Controllers.Metadata;
@@ -33,8 +33,8 @@ public class MetadataTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
         _db = new AppDbContext(options);
 
         // Create a real translation service for tests
-        var memoryCache = new MemoryCache(new MemoryCacheOptions());
-        _translationService = new TranslationService(_db, memoryCache, NullLogger<TranslationService>.Instance);
+        var cache = HybridCacheUtil.Create();
+        _translationService = new TranslationService(_db, cache, NullLogger<TranslationService>.Instance);
     }
 
     /// <inheritdoc />

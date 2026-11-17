@@ -4,13 +4,14 @@ using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
+using Altinn.AccessManagement.Core.Helpers.Extensions;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.Consent;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Integration.Configuration;
 using Altinn.AccessMgmt.Core.Constants.Translation;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -22,19 +23,21 @@ namespace Altinn.AccessManagement.Integration.Clients
     [ExcludeFromCodeCoverage]
     public class ResourceRegistryClient : IResourceRegistryClient
     {
+        private static readonly HybridCacheEntryOptions ConsentTemplateCacheOptions = new() { Expiration = TimeSpan.FromHours(4) };
+        private static readonly string[] ConsentTemplateTag = ["consent"];
         private readonly HttpClient _httpClient = new();
         private readonly ILogger<IResourceRegistryClient> _logger;
         private readonly JsonSerializerOptions options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
         private readonly JsonSerializerOptions _serializerOptions = new JsonSerializerOptions() { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase, WriteIndented = true };
-        private readonly IMemoryCache _memoryCache;
+        private readonly HybridCache _cache;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="ResourceRegistryClient"/> class
         /// </summary>
         /// <param name="settings">The resource registry config settings</param>
         /// <param name="logger">Logger instance for this ResourceRegistryClient</param>
-        /// <param name="memoryCache">Memory cache instance for caching purposes</param>
-        public ResourceRegistryClient(IOptions<PlatformSettings> settings, ILogger<IResourceRegistryClient> logger, IMemoryCache memoryCache)
+        /// <param name="cache">The cache</param>
+        public ResourceRegistryClient(IOptions<PlatformSettings> settings, ILogger<IResourceRegistryClient> logger, HybridCache cache)
         {
             PlatformSettings platformSettings = settings.Value;
             _httpClient.BaseAddress = new Uri(platformSettings.ApiResourceRegistryEndpoint);
@@ -42,7 +45,7 @@ namespace Altinn.AccessManagement.Integration.Clients
             _httpClient.DefaultRequestHeaders.Clear();
             _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-            _memoryCache = memoryCache;
+            _cache = cache;
             _logger = logger;
         }
 
@@ -165,31 +168,28 @@ namespace Altinn.AccessManagement.Integration.Clients
         {
             // Temp location. Will be moved to CDN
             string url = "https://raw.githubusercontent.com/Altinn/altinn-studio-docs/master/content/authorization/architecture/resourceregistry/consent_templates.json";
-            string cacheKey = "ConsentTemplates";
 
-            if (_memoryCache.TryGetValue(cacheKey, out List<ConsentTemplate> cachedTemplates))
-            {
-                return cachedTemplates;
-            }
-
-            try
-            {
-                HttpResponseMessage response = await _httpClient.GetAsync(url);
-                response.EnsureSuccessStatusCode();
-                string consentTemplatesString = await response.Content.ReadAsStringAsync();
-                List<ConsentTemplate> consentTemplates = JsonSerializer.Deserialize<List<ConsentTemplate>>(consentTemplatesString, _serializerOptions);
-
-                // Cache sliding for 4 hours
-                var cacheEntryOptions = new MemoryCacheEntryOptions().SetSlidingExpiration(TimeSpan.FromHours(4));
-
-                _memoryCache.Set(cacheKey, consentTemplates, cacheEntryOptions);
-
-                return consentTemplates;
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("Something went wrong when retrieving consent templates", ex);
-            }
+            // Four hours absolute (was four hours sliding, which HybridCache has no equivalent for): a busy pod refetches
+            // once per window instead of never.
+            return await _cache.GetOrFetchAsync(
+                "resource:consent-templates",
+                async ct =>
+                {
+                    try
+                    {
+                        HttpResponseMessage response = await _httpClient.GetAsync(url, ct);
+                        response.EnsureSuccessStatusCode();
+                        string consentTemplatesString = await response.Content.ReadAsStringAsync(ct);
+                        return JsonSerializer.Deserialize<List<ConsentTemplate>>(consentTemplatesString, _serializerOptions);
+                    }
+                    catch (Exception ex)
+                    {
+                        throw new InvalidOperationException("Something went wrong when retrieving consent templates", ex);
+                    }
+                },
+                ConsentTemplateCacheOptions,
+                ConsentTemplateTag,
+                CancellationToken.None);
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Altinn.AccessManagement.Api.Metadata.Controllers;
+using Altinn.AccessManagement.Tests.Utils;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
@@ -7,7 +8,6 @@ using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 
 namespace Altinn.AccessManagement.Tests.Integration.Controllers.Metadata;
@@ -90,13 +90,13 @@ public class PackagesControllerIntegrationTests : IClassFixture<EfDatabaseFixtur
 
         _db = new AppDbContext(options);
 
-        var memoryCache = new MemoryCache(new MemoryCacheOptions());
-        _translationService = new TranslationService(_db, memoryCache, NullLogger<TranslationService>.Instance);
+        var cache = HybridCacheUtil.Create();
+        _translationService = new TranslationService(_db, cache, NullLogger<TranslationService>.Instance);
 
         // Fully qualify: the namespace-less Persistence `PackageService` (six-arg
         // ctor) is in the global namespace, so an unqualified `PackageService(_db)`
         // would bind there.
-        _packageService = new Altinn.AccessMgmt.Core.Services.PackageService(_db, _translationService, memoryCache);
+        _packageService = new Altinn.AccessMgmt.Core.Services.PackageService(_db, _translationService, cache);
     }
 
     private PackagesController CreateController(string acceptLanguage = "nb-NO")

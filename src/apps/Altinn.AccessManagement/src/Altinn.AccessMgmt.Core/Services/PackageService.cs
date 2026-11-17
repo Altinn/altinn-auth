@@ -1,4 +1,5 @@
-﻿using Altinn.AccessMgmt.Core.Extensions;
+﻿using System.ComponentModel;
+using Altinn.AccessMgmt.Core.Extensions;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.Core.Utils.Models;
@@ -9,7 +10,7 @@ using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Hybrid;
 
 namespace Altinn.AccessMgmt.Core.Services;
 
@@ -20,17 +21,25 @@ public class PackageService : IPackageService
 
     public ITranslationService TranslationService { get; set; }
 
-    private IMemoryCache _memoryCache;
-    private static readonly MemoryCacheEntryOptions _cacheOptions = new()
+    private readonly HybridCache _cache;
+
+    // Areas, packages and package resources are EF entities with their navigations, several MB serialized, so they
+    // never leave this process: no distributed tier, kept by reference, and an explicit local expiration so a short
+    // default LocalCacheExpiration from the shared registration cannot evict them.
+    private static readonly HybridCacheEntryOptions _cacheOptions = new()
     {
-        AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(10)
+        Expiration = TimeSpan.FromMinutes(10),
+        LocalCacheExpiration = TimeSpan.FromMinutes(10),
+        Flags = HybridCacheEntryFlags.DisableDistributedCache,
     };
 
-    public PackageService(AppDbContext appDbContext, ITranslationService translationService, IMemoryCache memoryCache)
+    private static readonly string[] PackageTags = ["package", "resource"];
+
+    public PackageService(AppDbContext appDbContext, ITranslationService translationService, HybridCache cache)
     {
         DbContext = appDbContext;
         TranslationService = translationService;
-        _memoryCache = memoryCache;
+        _cache = cache;
     }
 
     private const StringComparison Ic = StringComparison.InvariantCultureIgnoreCase;
@@ -198,34 +207,21 @@ public class PackageService : IPackageService
     {
         bool filterResourceProviders = resourceProviderCodes != null && resourceProviderCodes.Any();
 
-        string cacheKey = "packageSvcAreas";
-        if (!_memoryCache.TryGetValue(cacheKey, out List<Area> areas))
-        {
-            areas = await DbContext.Areas.AsNoTracking().ToListAsync(cancellationToken);
-            _memoryCache.Set(cacheKey, areas, _cacheOptions);
-        }
-
-        cacheKey = "packageSvcPackages";
-        if (!_memoryCache.TryGetValue(cacheKey, out List<Package> allPackages))
-        {
-            allPackages = await DbContext.Packages.AsNoTracking().Include(t => t.EntityType).ToListAsync(cancellationToken);
-            _memoryCache.Set(cacheKey, allPackages, _cacheOptions);
-        }
+        List<Area> areas = await GetCachedListAsync("package:areas", ct => DbContext.Areas.AsNoTracking().ToListAsync(ct), cancellationToken);
+        List<Package> allPackages = await GetCachedListAsync("package:all", ct => DbContext.Packages.AsNoTracking().Include(t => t.EntityType).ToListAsync(ct), cancellationToken);
 
         var packages = allPackages.Where(p => typeId.HasValue && typeId.Value != Guid.Empty ? p.EntityTypeId == typeId.Value : true);
 
         var result = new List<PackageDto>();
 
-        cacheKey = "packageSvcPackageResources";
-        if (!_memoryCache.TryGetValue(cacheKey, out List<PackageResource> allPackageResources))
-        {
-            allPackageResources = await DbContext.PackageResources.AsNoTracking()
+        List<PackageResource> allPackageResources = await GetCachedListAsync(
+            "package:resources",
+            ct => DbContext.PackageResources.AsNoTracking()
                 .Include(t => t.Resource)
                 .Include(t => t.Resource).ThenInclude(t => t.Provider)
                 .Include(t => t.Resource).ThenInclude(t => t.Type)
-                .ToListAsync(cancellationToken);
-            _memoryCache.Set(cacheKey, allPackageResources, _cacheOptions);
-        }
+                .ToListAsync(ct),
+            cancellationToken);
 
         var packageResources = allPackageResources
             .Where(pr => filterResourceProviders ? resourceProviderCodes.Any(code => pr.Resource?.Provider?.Code?.Contains(code, StringComparison.OrdinalIgnoreCase) == true) : true)
@@ -249,6 +245,21 @@ public class PackageService : IPackageService
         }
 
         return result;
+    }
+
+    private async Task<List<T>> GetCachedListAsync<T>(string cacheKey, Func<CancellationToken, Task<List<T>>> query, CancellationToken cancellationToken)
+    {
+        CachedList<T> entry = await _cache.GetOrCreateAsync(cacheKey, async ct => new CachedList<T>(await query(ct)), _cacheOptions, PackageTags, cancellationToken);
+        return entry.Items;
+    }
+
+    /// <summary>
+    /// Sealed and marked immutable so <see cref="HybridCache"/> keeps the list in memory by reference instead of serializing it.
+    /// </summary>
+    [ImmutableObject(true)]
+    private sealed class CachedList<T>(List<T> items)
+    {
+        public List<T> Items { get; } = items;
     }
 
     /// <inheritdoc/>

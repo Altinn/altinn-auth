@@ -3,7 +3,7 @@ using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models.Audit.Base;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Logging;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Utils;
@@ -26,14 +26,15 @@ namespace Altinn.AccessMgmt.PersistenceEF.Utils;
 public class TranslationService : ITranslationService
 {
     private readonly AppDbContext _db;
-    private readonly IMemoryCache _cache;
+    private readonly HybridCache _cache;
     private readonly ILogger<TranslationService> _logger;
-    private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(30);
+    private static readonly HybridCacheEntryOptions TranslationCacheOptions = new() { Expiration = TimeSpan.FromMinutes(30) };
+    private static readonly string[] TranslationTag = ["translation"];
 
-    public TranslationService(AppDbContext dbContext, IMemoryCache memoryCache, ILogger<TranslationService> logger)
+    public TranslationService(AppDbContext dbContext, HybridCache cache, ILogger<TranslationService> logger)
     {
         _db = dbContext;
-        _cache = memoryCache;
+        _cache = cache;
         _logger = logger;
     }
 
@@ -114,14 +115,12 @@ public class TranslationService : ITranslationService
         {
             // Fall back to database with caching
             var storedTypeName = GetStoredTypeName(typeName);
-            var cacheKey = $"translation_{storedTypeName}_{entityId}_{effectiveLanguageCode}";
+            var cacheKey = $"translation:{storedTypeName}:{entityId}:{effectiveLanguageCode}";
 
             _logger.LogTrace("Checking cache for translation key: {CacheKey}", cacheKey);
 
-            transMap = await _cache.GetOrCreateAsync(cacheKey, async entry =>
+            transMap = await _cache.GetOrCreateAsync(cacheKey, async ct =>
             {
-                entry.AbsoluteExpirationRelativeToNow = CacheDuration;
-
                 _logger.LogDebug(
                     "Cache miss for {TypeName} with ID {EntityId}, querying database for language {LanguageCode}",
                     typeName, entityId, effectiveLanguageCode);
@@ -146,7 +145,7 @@ public class TranslationService : ITranslationService
                 }
 
                 return dbTranslations;
-            });
+            }, TranslationCacheOptions, TranslationTag);
         }
 
         if (transMap == null || !transMap.Any())
@@ -244,8 +243,8 @@ public class TranslationService : ITranslationService
         await _db.SaveChangesAsync(systemAudit, cancellationToken);
 
         // Invalidate cache
-        var cacheKey = $"translation_{translationEntry.Type}_{translationEntry.Id}_{translationEntry.LanguageCode}";
-        _cache.Remove(cacheKey);
+        var cacheKey = $"translation:{translationEntry.Type}:{translationEntry.Id}:{translationEntry.LanguageCode}";
+        await _cache.RemoveAsync(cacheKey, cancellationToken);
         _logger.LogDebug("Invalidated cache for key: {CacheKey}", cacheKey);
     }
 

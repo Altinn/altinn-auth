@@ -1,4 +1,5 @@
-﻿using Altinn.AccessManagement.TestUtils.Fixtures;
+﻿using Altinn.AccessManagement.Tests.Utils;
+using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
@@ -6,7 +7,7 @@ using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Logging.Abstractions;
 
 // No web host: builds an AppDbContext directly from the EfDatabaseFixture
@@ -23,7 +24,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Services;
 public class TranslationServiceTests : IClassFixture<EfDatabaseFixture>
 {
     private readonly AppDbContext _db;
-    private readonly IMemoryCache _cache;
+    private readonly HybridCache _cache;
     private readonly TranslationService _translationService;
 
     public TranslationServiceTests(EfDatabaseFixture fixture)
@@ -43,7 +44,7 @@ public class TranslationServiceTests : IClassFixture<EfDatabaseFixture>
             )
         };
 
-        _cache = new MemoryCache(new MemoryCacheOptions());
+        _cache = HybridCacheUtil.Create();
         _translationService = new TranslationService(_db, _cache, NullLogger<TranslationService>.Instance);
     }
 
