@@ -275,24 +275,43 @@ public static class DeepTranslationExtensions
         foreach (var group in resources.Where(r => r != null).GroupBy(r => r.Id))
         {
             var first = group.First();
-            var hasName = first.Name != null;
-            var hasDescription = first.Description != null;
-            var hasRightDescription = first.RightDescription != null;
+            var firstShape = ShapeOf(first);
 
             var translated = await first.TranslateDeepAsync(translationService, languageCode, allowPartial);
-            translated.Name = hasName ? translated.Name : null;
-            translated.Description = hasDescription ? translated.Description : null;
-            translated.RightDescription = hasRightDescription ? translated.RightDescription : null;
+            var (name, description, rightDescription) = (translated.Name, translated.Description, translated.RightDescription);
+
+            ApplyText(translated, firstShape, name, description, rightDescription);
 
             foreach (var other in group.Skip(1))
             {
-                other.Name = translated.Name;
-                other.Description = translated.Description;
-                other.RightDescription = translated.RightDescription;
-                other.Provider = translated.Provider ?? await other.Provider.TranslateDeepAsync(translationService, languageCode, allowPartial);
-                other.Type = translated.Type ?? (other.Type == null ? null : await translationService.TranslateAsync(other.Type, languageCode, allowPartial));
+                ApplyText(other, ShapeOf(other), name, description, rightDescription);
+
+                if (other.Provider != null)
+                {
+                    other.Provider = translated.Provider ?? await other.Provider.TranslateDeepAsync(translationService, languageCode, allowPartial);
+                }
+
+                if (other.Type != null)
+                {
+                    other.Type = translated.Type ?? await translationService.TranslateAsync(other.Type, languageCode, allowPartial);
+                }
             }
         }
+    }
+
+    private static (bool Name, bool Description, bool RightDescription) ShapeOf(ResourceDto resource)
+        => (resource.Name != null, resource.Description != null, resource.RightDescription != null);
+
+    /// <summary>
+    /// Applies translated text to one resource instance and keeps the fields that instance had:
+    /// a field it had takes the translation, or keeps its own text when there is none, and a
+    /// field it lacked stays empty.
+    /// </summary>
+    private static void ApplyText(ResourceDto target, (bool Name, bool Description, bool RightDescription) shape, string name, string description, string rightDescription)
+    {
+        target.Name = shape.Name ? name ?? target.Name : null;
+        target.Description = shape.Description ? description ?? target.Description : null;
+        target.RightDescription = shape.RightDescription ? rightDescription ?? target.RightDescription : null;
     }
 
     /// <summary>
