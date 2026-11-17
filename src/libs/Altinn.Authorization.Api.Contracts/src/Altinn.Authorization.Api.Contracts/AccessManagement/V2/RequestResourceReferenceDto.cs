@@ -14,4 +14,11 @@ public class RequestResourceReferenceDto : RequestReferenceDto
     /// </summary>
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
     public IEnumerable<string>? RequestedRightKeys { get; set; }
+
+    /// <summary>
+    /// The rights given when the request was approved, as right keys from the resource policy.
+    /// Not set until the request is approved.
+    /// </summary>
+    [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+    public IEnumerable<string>? ApprovedRightKeys { get; set; }
 }

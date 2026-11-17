@@ -6,6 +6,7 @@ using Altinn.AccessMgmt.Core.HostedServices.Leases;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.Authorization.Api.Contracts.ResourceRegistry.Enums;
 using Altinn.Authorization.Host.Lease;
 using Altinn.Authorization.Integration.Platform;
 using Altinn.Authorization.Integration.Platform.ResourceRegistry;
@@ -28,6 +29,9 @@ public class ResourceSyncServiceTest : IClassFixture<ApiFixture>
     public ResourceSyncServiceTest(ApiFixture fixture)
     {
         Fixture = fixture;
+
+        // These tests cover the sync without the change feed. Set the flag explicitly, so local user secrets cannot turn it on.
+        Fixture.WithDisabledFeatureFlag(AccessMgmtFeatureFlags.HostedServicesResourceRegistrySyncChangeFeed);
         Fixture.ConfigureServices(services =>
         {
             services.RemoveAll<IAltinnResourceRegistry>();
@@ -391,6 +395,41 @@ public class ResourceSyncServiceTest : IClassFixture<ApiFixture>
         Assert.Null(lease.Data.ResourceChangesNextPageLink);
     }
 
+    [Fact]
+    public async Task SyncResources_ImportsDelegableAccessListModeAndScopes_FromUpdatedFeed()
+    {
+        var refId = "rsst-updated-scopes-" + Guid.NewGuid().ToString("N");
+        Registry.ResourceFactory = id => Success(MaskinportenResourceModel(id, delegable: false, "Enabled", "test:scope.a"));
+        Registry.StreamPagesFactory = (_, _) => [Success(new PageStream<ResourceUpdatedModel>
+        {
+            Stats = new PageStream<ResourceUpdatedModel>.StatsStream(),
+            Links = new PageStream<ResourceUpdatedModel>.LinksStream { Next = null },
+            Data =
+            [
+                new ResourceUpdatedModel
+                {
+                    SubjectUrn = "urn:altinn:rolecode:priv",
+                    ResourceUrn = "urn:altinn:resource:" + refId,
+                    UpdatedAt = DateTime.UtcNow,
+                },
+            ],
+        })];
+
+        await ResolveService().SyncResources(new FakeLease(), TestContext.Current.CancellationToken);
+
+        await Fixture.QueryDb(async db =>
+        {
+            var resource = await db.Resources
+                .AsNoTracking()
+                .Include(r => r.Scopes)
+                .SingleOrDefaultAsync(r => r.RefId == refId, TestContext.Current.CancellationToken);
+            Assert.NotNull(resource);
+            Assert.False(resource.Delegable);
+            Assert.Equal(ResourceAccessListMode.Enabled, resource.AccessListMode);
+            Assert.Equal(["test:scope.a"], resource.Scopes.Select(s => s.Scope));
+        });
+    }
+
     private IResourceSyncService ResolveService()
     {
         using var scope = Fixture.Services.CreateScope();
@@ -409,6 +448,23 @@ public class ResourceSyncServiceTest : IClassFixture<ApiFixture>
         },
         ResourceType = "GenericAccessResource",
     };
+
+    /// <summary>
+    /// A Maskinporten schema with the given scopes, mixed with a reference of another type that is not a scope.
+    /// </summary>
+    internal static ResourceModel MaskinportenResourceModel(string identifier, bool delegable, string? accessListMode, params string[] scopes)
+    {
+        var model = NewResourceModel(identifier);
+        model.ResourceType = "MaskinportenSchema";
+        model.Delegable = delegable;
+        model.AccessListMode = accessListMode;
+        model.ResourceReferences =
+        [
+            .. scopes.Select(scope => new ResourceReference { ReferenceSource = "ExternalPlatform", ReferenceType = "MaskinportenScope", Reference = scope }),
+            new ResourceReference { ReferenceSource = "Default", ReferenceType = "Uri", Reference = "https://example.test" },
+        ];
+        return model;
+    }
 
     internal static PlatformResponse<T> Success<T>(T content) => new()
     {

@@ -44,7 +44,7 @@ tests {
   test("Delegating a non-delegable maskinporten resource returns 400", function() {
     const data = res.getBody();
     expect(res.status).to.equal(400);
-     expect(res.getBody().detail).to.equal("The resource is not available for delegation");
+     expect(res.getBody().title).to.equal("The resource is not available for delegation");
      });
 }
 

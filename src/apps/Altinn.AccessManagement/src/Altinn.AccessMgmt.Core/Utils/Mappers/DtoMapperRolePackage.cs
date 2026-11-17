@@ -196,6 +196,7 @@ public partial class DtoMapper : IDtoMapper
             Id = resource.Id,
             Name = resource.Name,
             Description = resource.Description,
+            RightDescription = resource.RightDescription,
             TypeId = resource.TypeId,
             Type = Convert(resource.Type),
             ProviderId = resource.ProviderId,

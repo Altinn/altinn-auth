@@ -9,7 +9,8 @@ using Moq;
 namespace Altinn.AccessManagement.Tests.Unit.Services;
 
 /// <summary>
-/// Unit tests for <see cref="RequestService.ValidateResourceRightKeys"/>.
+/// Unit tests for <see cref="RequestService.ValidateResourceRightKeys(string, IEnumerable{string}?, string, CancellationToken)"/>
+/// and its overload that reports errors at <c>/requestedRightKeys</c>.
 ///
 /// Uses the policy of <c>ttd-migratedcorrespondence-4471-1</c> from the test data. Its first rule gives
 /// read and subscribe to a role, so those keys are delegable. Its second rule gives write and subscribe
@@ -98,6 +99,24 @@ public class RequestServiceValidateResourceRightKeysTest
         Assert.Equal(2, problem.Errors.Length);
         Assert.Contains(problem.Errors, e => e.ErrorCode == ValidationErrors.RightKeyNotFound.ErrorCode && e.Paths.Any(p => p.EndsWith("/requestedRightKeys/1")));
         Assert.Contains(problem.Errors, e => e.ErrorCode == ValidationErrors.RightKeyNotDelegable.ErrorCode && e.Paths.Any(p => p.EndsWith("/requestedRightKeys/2")));
+    }
+
+    [Fact]
+    public async Task ValidateResourceRightKeys_WithJsonPointer_ReportsErrorsAtThatPointer()
+    {
+        var (delegableKeys, nonDelegableKeys) = await GetPolicyKeys();
+
+        var problem = await CreateService().ValidateResourceRightKeys(
+            Resource,
+            [delegableKeys[0], "unknown-right-key", nonDelegableKeys[0]],
+            "/rightKeys",
+            TestContext.Current.CancellationToken);
+
+        Assert.NotNull(problem);
+        Assert.Equal(2, problem.Errors.Length);
+        Assert.Contains(problem.Errors, e => e.ErrorCode == ValidationErrors.RightKeyNotFound.ErrorCode && e.Paths.Any(p => p.EndsWith("/rightKeys/1")));
+        Assert.Contains(problem.Errors, e => e.ErrorCode == ValidationErrors.RightKeyNotDelegable.ErrorCode && e.Paths.Any(p => p.EndsWith("/rightKeys/2")));
+        Assert.DoesNotContain(problem.Errors, e => e.Paths.Any(p => p.Contains("/requestedRightKeys", StringComparison.Ordinal)));
     }
 
     [Fact]

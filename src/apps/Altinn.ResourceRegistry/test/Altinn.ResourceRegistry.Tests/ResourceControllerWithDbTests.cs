@@ -15,6 +15,7 @@ using Altinn.ResourceRegistry.Tests.Utils;
 using Altinn.ResourceRegistry.TestUtils;
 using AngleSharp.Text;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
 using Moq;
 using Npgsql;
@@ -1135,7 +1136,8 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
             Services.GetRequiredService<IPolicyRepository>(),
             Services.GetRequiredService<IApplications>(),
             Services.GetRequiredService<IServiceOwnerService>(),
-            interleaved.Object);
+            interleaved.Object,
+            Services.GetRequiredService<HybridCache>());
 
         await service.Delete(ResourceId);
 
@@ -1180,7 +1182,8 @@ public class ResourceControllerWithDbTests(DbFixture dbFixture, WebApplicationFi
             policies ?? Services.GetRequiredService<IPolicyRepository>(),
             Services.GetRequiredService<IApplications>(),
             Services.GetRequiredService<IServiceOwnerService>(),
-            accessLists);
+            accessLists,
+            Services.GetRequiredService<HybridCache>());
         return service.Delete(resourceId);
     }
 

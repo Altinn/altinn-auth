@@ -53,12 +53,12 @@ tests {
   test("Delete agent without deleting delegated rights with cascade : false ", function() {
     const data = res.getBody();
     
-    expect(data).to.have.property("title", "Bad Request");
+    expect(data).to.have.property("statusDescription", "Bad Request");
     expect(data).to.have.property("status", 400);
     
-     expect(data).to.have.property("detail");
+     expect(data).to.have.property("title");
   
-    expect(data.detail).to.equal(
+    expect(data.title).to.equal(
       "One or more validation errors occurred."
     );
   
@@ -68,8 +68,8 @@ tests {
   
     const validationError = data.validationErrors[0];
   
-    expect(validationError).to.have.property("detail");
-    expect(validationError.detail).to.equal(
+    expect(validationError).to.have.property("title");
+    expect(validationError.title).to.equal(
       "The delegation has one or more active access packages associated with it. Set cascade to true to remove the delegation and its active access packages."
     );
   });

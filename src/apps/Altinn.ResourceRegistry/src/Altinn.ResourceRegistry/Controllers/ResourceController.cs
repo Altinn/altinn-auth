@@ -1,5 +1,6 @@
 ﻿using Altinn.Authorization.ProblemDetails;
 using Altinn.Authorization.ServiceDefaults;
+using Altinn.Authorization.Xacml.Constants;
 using Altinn.Platform.Events.Formatters;
 using Altinn.ResourceRegistry.Core.Constants;
 using Altinn.ResourceRegistry.Core.Errors;

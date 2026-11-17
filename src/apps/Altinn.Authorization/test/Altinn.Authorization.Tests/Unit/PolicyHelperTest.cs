@@ -1,6 +1,7 @@
 ﻿using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
-using Altinn.Platform.Authorization.Constants;
+using Altinn.Authorization.Xacml;
+using Altinn.Authorization.Xacml.Constants;
 using Altinn.Platform.Authorization.Helpers;
 using Altinn.Platform.Authorization.Models;
 
@@ -9,26 +10,6 @@ namespace Altinn.Authorization.Tests.Unit;
 [UnitTest]
 public class PolicyHelperTest
 {
-    // --- GetAltinnAppsPolicyPath ---
-    [Fact]
-    public void GetAltinnAppsPolicyPath_ValidInput_ReturnsExpectedPath()
-    {
-        string result = PolicyHelper.GetAltinnAppsPolicyPath("ttd", "testapp");
-        Assert.Equal("ttd/testapp/policy.xml", result);
-    }
-
-    [Fact]
-    public void GetAltinnAppsPolicyPath_NullOrg_ThrowsArgumentException()
-    {
-        Assert.Throws<ArgumentException>(() => PolicyHelper.GetAltinnAppsPolicyPath(null, "testapp"));
-    }
-
-    [Fact]
-    public void GetAltinnAppsPolicyPath_EmptyApp_ThrowsArgumentException()
-    {
-        Assert.Throws<ArgumentException>(() => PolicyHelper.GetAltinnAppsPolicyPath("ttd", string.Empty));
-    }
-
     // --- GetAltinnAppDelegationPolicyPath ---
     [Fact]
     public void GetAltinnAppDelegationPolicyPath_CoveredByPartyId_ReturnsPathWithPPrefix()
@@ -88,7 +69,7 @@ public class PolicyHelperTest
     public void GetPolicyResourceType_ResourceRegistryNonApp_ReturnsResourceRegistry()
     {
         var request = CreateContextRequestWithResource(
-            (AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistry, "nav_sykepenger"));
+            (AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute, "nav_sykepenger"));
 
         var result = PolicyHelper.GetPolicyResourceType(request, out string resourceId, out string org, out string app);
 
@@ -100,7 +81,7 @@ public class PolicyHelperTest
     public void GetPolicyResourceType_ResourceRegistryAppPrefix_ReturnsAltinnApps()
     {
         var request = CreateContextRequestWithResource(
-            (AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistry, "app_ttd_testapp"));
+            (AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute, "app_ttd_testapp"));
 
         var result = PolicyHelper.GetPolicyResourceType(request, out string resourceId, out string org, out string app);
 
@@ -117,19 +98,6 @@ public class PolicyHelperTest
         var result = PolicyHelper.GetPolicyResourceType(request, out _, out _, out _);
 
         Assert.Equal(PolicyResourceType.Undefined, result);
-    }
-
-    // --- GetPolicyPath ---
-    [Fact]
-    public void GetPolicyPath_OrgAndApp_ReturnsExpected()
-    {
-        var request = CreateContextRequestWithResource(
-            (AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute, "ttd"),
-            (AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute, "testapp"));
-
-        string result = PolicyHelper.GetPolicyPath(request);
-
-        Assert.Equal("ttd/testapp/policy.xml", result);
     }
 
     // --- GetRolesWithAccess ---
@@ -237,7 +205,7 @@ public class PolicyHelperTest
             Target = new XacmlTarget(new List<XacmlAnyOf>
             {
                 new XacmlAnyOf(new List<XacmlAllOf> { new XacmlAllOf(new List<XacmlMatch> { CreateSubjectMatch(roleAttributeId, roleCode) }) }),
-                new XacmlAnyOf(new List<XacmlAllOf> { new XacmlAllOf(new List<XacmlMatch> { CreateMatch(XacmlConstants.MatchAttributeCategory.Resource, AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistry, "bankruptcy_estate_resource") }) }),
+                new XacmlAnyOf(new List<XacmlAllOf> { new XacmlAllOf(new List<XacmlMatch> { CreateMatch(XacmlConstants.MatchAttributeCategory.Resource, AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute, "bankruptcy_estate_resource") }) }),
                 new XacmlAnyOf(new List<XacmlAllOf> { new XacmlAllOf(new List<XacmlMatch> { CreateMatch(XacmlConstants.MatchAttributeCategory.Action, XacmlConstants.MatchAttributeIdentifiers.ActionId, "read") }) })
             })
         });
@@ -296,23 +264,10 @@ public class PolicyHelperTest
         });
 
         using var stream = PolicyHelper.GetXmlMemoryStreamFromXacmlPolicy(original);
-        var parsed = PolicyHelper.ParsePolicy(stream);
+        var parsed = XacmlPolicyHelper.ParsePolicy(stream);
 
         Assert.Single(parsed.Rules);
         Assert.Equal("1.0", parsed.Version);
-    }
-
-    // --- GetMinimumAuthenticationLevelFromXacmlPolicy ---
-    [Fact]
-    public void GetMinimumAuthenticationLevelFromXacmlPolicy_NoObligation_ReturnsZero()
-    {
-        var policy = new XacmlPolicy(
-            new Uri("urn:policy:1"), new Uri(XacmlConstants.CombiningAlgorithms.PolicyDenyOverrides),
-            new XacmlTarget(new List<XacmlAnyOf>()));
-
-        int result = PolicyHelper.GetMinimumAuthenticationLevelFromXacmlPolicy(policy);
-
-        Assert.Equal(0, result);
     }
 
     // Helpers

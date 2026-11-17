@@ -8,8 +8,15 @@ labels:
     includeTemplates: true
 resources:
   - ../base
-
 patches:
+  - patch: |-
+      apiVersion: gateway.networking.k8s.io/v1
+      kind: HTTPRoute
+      metadata:
+        name: resource-registry
+      spec:
+        hostnames:
+          - resource-registry.at22.dis-core.altinn.cloud
   - patch: |-
       apiVersion: apps/v1
       kind: Deployment

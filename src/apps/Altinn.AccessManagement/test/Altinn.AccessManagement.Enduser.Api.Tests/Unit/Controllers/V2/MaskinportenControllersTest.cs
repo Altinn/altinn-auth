@@ -9,7 +9,7 @@ using Altinn.Authorization.ProblemDetails;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
-using ValidationErrors = Altinn.AccessMgmt.Core.Utils.Models.ValidationErrors;
+using ValidationErrors = Altinn.AccessManagement.Core.Errors.ValidationErrors;
 
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Unit.Controllers.V2;
 
@@ -32,7 +32,7 @@ public class MaskinportenConsumersControllerTest
 
     private static ValidationProblemInstance MakeValidationProblem() =>
         ValidationComposer.Validate(() =>
-            (ref ValidationErrorBuilder errors) =>
+            (ref ValidationProblemBuilder errors) =>
                 errors.Add(ValidationErrors.InvalidPartyUrn, "QUERY/test"));
 
     #region GetConsumers
@@ -277,7 +277,7 @@ public class MaskinportenSuppliersControllerTest
 
     private static ValidationProblemInstance MakeValidationProblem() =>
         ValidationComposer.Validate(() =>
-            (ref ValidationErrorBuilder errors) =>
+            (ref ValidationProblemBuilder errors) =>
                 errors.Add(ValidationErrors.InvalidPartyUrn, "QUERY/test"));
 
     #region AddSupplier

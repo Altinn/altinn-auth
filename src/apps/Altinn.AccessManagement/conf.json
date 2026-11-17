@@ -25,6 +25,7 @@
     "lib:Altinn.Authorization.Integration",
     "lib:Altinn.Authorization.Api.Contracts",
     "lib:Altinn.Authorization.Testing",
+    "lib:Altinn.Authorization.Xacml",
     "pkg:Altinn.Authorization.PEP"
   ],
   "sonarcloud": {

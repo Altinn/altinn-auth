@@ -1,0 +1,15 @@
+meta {
+	name: 03_RightKeyValidation
+	seq: 3
+}
+
+docs {
+	Scenario: Right keys that are not in the resource policy are rejected
+
+		Given the approver has no pending request from the requester for the resource
+		When the requester asks for a right key that is not in the policy, the request fails
+		When the requester asks for the whole resource through v2
+		And the approver selects a right key that is not in the policy, the approval fails
+		Then the request is still pending, with nothing approved
+		Finally the approver rejects the request to clean up
+}

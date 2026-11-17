@@ -20,6 +20,7 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.FeatureManagement;
 using Microsoft.FeatureManagement.Mvc;
 using RequestDtoV2 = Altinn.Authorization.Api.Contracts.AccessManagement.V2.RequestDto;
 
@@ -62,6 +63,37 @@ public class RequestController(
     /// </summary>
     protected override IEnumerable<RequestStatusV2> GetStatusFilter(RequestStatusV2[]? status)
         => status == null || status.Length == 0 ? DefaultStatusFilter : status;
+
+    /// <summary>
+    /// Approve a pending request, optionally selecting the rights (right keys) to give for a resource request.
+    /// The selection may include rights that were not requested. Each right key must exist in the policy of the
+    /// resource and be delegable by the authenticated user on behalf of the party.
+    /// Without a selection, what was requested is given. The request becomes Approved when what is given matches
+    /// what was requested, and PartialApprove otherwise; a selection for a request for the whole resource gives PartialApprove.
+    /// </summary>
+    /// <param name="party">The party approving, which must be the recipient of the request</param>
+    /// <param name="id">The request to approve</param>
+    /// <param name="input">The rights to give. Leave out, or leave the list empty, to give what was requested.</param>
+    /// <param name="ct">Cancellation token</param>
+    [HttpPut("received/approve")]
+    [FeatureGate(RequirementType.Any, AccessMgmtFeatureFlags.EnableRequestAssignmentResource, AccessMgmtFeatureFlags.EnableRequestAssignmentPackage)]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+    [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_REQUESTS_WRITE)]
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
+    [ProducesResponseType<RequestDtoV2>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<RequestDtoV2>> ApproveRequest(
+        [FromQuery][Required] Guid party,
+        [FromQuery][Required] Guid id,
+        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] ApproveRequestDto? input,
+        CancellationToken ct = default
+        )
+    {
+        return await ApproveRequestCore(party, id, input?.RightKeys?.ToList(), ct);
+    }
 
     /// <summary>
     /// Create request for a resource on behalf of a party, optionally naming the rights being requested.

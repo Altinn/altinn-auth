@@ -1,0 +1,16 @@
+meta {
+	name: 02_RequestAndApproveAsRequested
+	seq: 2
+}
+
+docs {
+	Scenario: An organisation asks a person for one right and gets exactly that
+
+		Given the approver has no pending request from the requester for the resource
+		And the approver can delegate at least one right on the resource
+		When the requester asks for one right on the resource through v2
+		And the approver approves the request without selecting rights
+		Then the request is Approved with the requested right as the approved right
+		And the requester sees the request as Approved
+		Finally the approver removes the delegation to clean up
+}

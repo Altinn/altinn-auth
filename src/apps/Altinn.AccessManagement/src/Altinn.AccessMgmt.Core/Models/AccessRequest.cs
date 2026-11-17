@@ -47,6 +47,12 @@ public class AccessRequest
     public IReadOnlyList<string>? RequestedRightKeys { get; set; }
 
     /// <summary>
+    /// The rights given when the request was approved, as right keys from the resource policy.
+    /// Null until the request is approved.
+    /// </summary>
+    public IReadOnlyList<string>? ApprovedRightKeys { get; set; }
+
+    /// <summary>
     /// Requested package. Not set for resource requests.
     /// </summary>
     public RequestReferenceDto? Package { get; set; }

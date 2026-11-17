@@ -4,6 +4,8 @@ using Altinn.AccessMgmt.Core.Utils.Helper;
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.ProblemDetails;
+using Altinn.Authorization.Xacml;
+using Altinn.Authorization.Xacml.Constants;
 using Altinn.Platform.Storage.Interface.Models;
 using Altinn.ResourceRegistry.Core.AccessLists;
 using Altinn.ResourceRegistry.Core.Aggregates;
@@ -16,6 +18,7 @@ using Altinn.ResourceRegistry.Core.ServiceOwners;
 using Altinn.ResourceRegistry.Core.Services.Interfaces;
 using Azure;
 using Azure.Storage.Blobs.Models;
+using Microsoft.Extensions.Caching.Hybrid;
 using Nerdbank.Streams;
 
 namespace Altinn.ResourceRegistry.Core.Services
@@ -32,6 +35,13 @@ namespace Altinn.ResourceRegistry.Core.Services
         private readonly IApplications _applicationsClient;
         private readonly IServiceOwnerService _serviceOwnerService;
         private readonly IAccessListsRepository _accessListsRepository;
+        private readonly HybridCache _hybridCache;
+
+        private static readonly HybridCacheEntryOptions ResourceListCacheEntryOptions = new()
+        {
+            Expiration = TimeSpan.FromSeconds(120),
+            LocalCacheExpiration = TimeSpan.FromSeconds(120)
+        };
 
         /// <summary>
         /// Creates a new instance of the <see cref="ResourceRegistryService"/> service.
@@ -42,13 +52,15 @@ namespace Altinn.ResourceRegistry.Core.Services
             IPolicyRepository policyRepository,
             IApplications applicationsClient,
             IServiceOwnerService serviceOwnerService,
-            IAccessListsRepository accessListsRepository)
+            IAccessListsRepository accessListsRepository,
+            HybridCache hybridCache)
         {
             _repository = repository;
             _policyRepository = policyRepository;
             _applicationsClient = applicationsClient;
             _serviceOwnerService = serviceOwnerService;
             _accessListsRepository = accessListsRepository;
+            _hybridCache = hybridCache;
         }
 
         /// <inheritdoc/>
@@ -238,7 +250,7 @@ namespace Altinn.ResourceRegistry.Core.Services
             }
 
             policyContent.Position = 0;
-            XacmlPolicy policy = await PolicyHelper.ParsePolicy(policyContent);
+            XacmlPolicy policy = await XacmlPolicyHelper.ParsePolicyAsync(policyContent, cancellationToken);
             IDictionary<string, ICollection<string>> subjectAttributes = policy.GetAttributeDictionaryByCategory(XacmlConstants.MatchAttributeCategory.Subject);
             ServiceResource virtualAppResource = new ServiceResource()
             {
@@ -312,58 +324,13 @@ namespace Altinn.ResourceRegistry.Core.Services
 
             async Task<List<ServiceResource>> GetResourceListInner(CancellationToken cancellationToken)
             {
-                ResourceSearch resourceSearch = new ResourceSearch();
+                string cacheKey = $"ResourceList_{includeAllVersions}_{includeMigratedApps}";
 
-                List<ServiceResource> resources = await Search(resourceSearch, includeAllVersions, cancellationToken);
-
-                if (!includeMigratedApps)
-                {
-                    resources = resources
-                        .Where(resource => !IsMigratedApplicationResource(resource))
-                        .ToList();
-                }
-
-                foreach (ServiceResource resource in resources)
-                {
-                    // For app resources, use org/app format like Storage apps do
-                    if (resource.Identifier.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX, StringComparison.OrdinalIgnoreCase))
-                    {
-                        string[] parts = resource.Identifier.Split('_', 3);
-                        if (parts.Length == 3)
-                        {
-                            string org = parts[1];
-                            string app = parts[2];
-                            resource.AuthorizationReference = new List<AuthorizationReferenceAttribute>
-                            {
-                                new AuthorizationReferenceAttribute() { Id = "urn:altinn:org", Value = org },
-                                new AuthorizationReferenceAttribute() { Id = "urn:altinn:app", Value = app }
-                            };
-                        }
-                        else
-                        {
-                            // Fallback if identifier format is unexpected
-                            resource.AuthorizationReference = new List<AuthorizationReferenceAttribute>
-                            {
-                                new AuthorizationReferenceAttribute() { Id = "urn:altinn:resource", Value = resource.Identifier }
-                            };
-                        }
-                    }
-                    else
-                    {
-                        // Non-app resources use resource format
-                        resource.AuthorizationReference = new List<AuthorizationReferenceAttribute>
-                        {
-                            new AuthorizationReferenceAttribute() { Id = "urn:altinn:resource", Value = resource.Identifier }
-                        };
-                    }
-                }
-
-                return resources;
-
-                static bool IsMigratedApplicationResource(ServiceResource resource)
-                {
-                    return resource.ResourceType == Enums.ResourceType.MigratedApp;
-                }
+                return await _hybridCache.GetOrCreateAsync(
+                    cacheKey,
+                    ct => new ValueTask<List<ServiceResource>>(BuildResourceListAsync(includeAllVersions, includeMigratedApps, ct)),
+                    options: ResourceListCacheEntryOptions,
+                    cancellationToken: cancellationToken);
             }
 
             async Task<List<ServiceResource>> GetAltinn3Applications(bool includeMigratedApps, CancellationToken cancellationToken = default)
@@ -373,6 +340,67 @@ namespace Altinn.ResourceRegistry.Core.Services
 
                 return applicationList.Applications.Select(application => MapApplicationToApplicationResource(application, serviceOwners)).ToList();
             }
+        }
+
+        /// <summary>
+        /// Builds the base resource list from Resource Registry for caching.
+        /// Optionally includes all versions and filters out migrated app resources.
+        /// Also normalizes <see cref="ServiceResource.AuthorizationReference"/> so app resources
+        /// get <c>urn:altinn:org</c>/<c>urn:altinn:app</c>, while other resources get
+        /// <c>urn:altinn:resource</c>.
+        /// </summary>
+        /// <param name="includeAllVersions">Whether all resource versions should be included.</param>
+        /// <param name="includeMigratedApps">Whether migrated app resources should be included.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>The normalized list of resources.</returns>
+        private async Task<List<ServiceResource>> BuildResourceListAsync(
+            bool includeAllVersions,
+            bool includeMigratedApps,
+            CancellationToken cancellationToken)
+        {
+            ResourceSearch resourceSearch = new();
+            List<ServiceResource> resources = await Search(resourceSearch, includeAllVersions, cancellationToken);
+
+            if (!includeMigratedApps)
+            {
+                resources = resources
+                    .Where(resource => resource.ResourceType != Enums.ResourceType.MigratedApp)
+                    .ToList();
+            }
+
+            foreach (ServiceResource resource in resources)
+            {
+                if (resource.Identifier.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX, StringComparison.OrdinalIgnoreCase))
+                {
+                    string[] parts = resource.Identifier.Split('_', 3);
+                    if (parts.Length == 3)
+                    {
+                        string org = parts[1];
+                        string app = parts[2];
+                        resource.AuthorizationReference =
+                        [
+                            new AuthorizationReferenceAttribute { Id = "urn:altinn:org", Value = org },
+                    new AuthorizationReferenceAttribute { Id = "urn:altinn:app", Value = app }
+                        ];
+                    }
+                    else
+                    {
+                        resource.AuthorizationReference =
+                        [
+                            new AuthorizationReferenceAttribute { Id = "urn:altinn:resource", Value = resource.Identifier }
+                        ];
+                    }
+                }
+                else
+                {
+                    resource.AuthorizationReference =
+                    [
+                        new AuthorizationReferenceAttribute { Id = "urn:altinn:resource", Value = resource.Identifier }
+                    ];
+                }
+            }
+
+            return resources;
         }
 
         /// <summary>
@@ -526,6 +554,12 @@ namespace Altinn.ResourceRegistry.Core.Services
             return rights;
         }
 
+        /// <summary>
+        /// Gets and parses the policy for a resource, or for an Altinn app when the identifier has the app resource prefix.
+        /// </summary>
+        /// <param name="resourceIdentifer">The resource identifier, or <c>app_{org}_{app}</c> for an app</param>
+        /// <param name="cancellationToken">Cancellation token</param>
+        /// <returns>The parsed policy, or <c>null</c> if no policy is found</returns>
         private async Task<XacmlPolicy> GetXacmlPolicy(string resourceIdentifer, CancellationToken cancellationToken)
         {
             Stream policyContent = null;
@@ -552,7 +586,7 @@ namespace Altinn.ResourceRegistry.Core.Services
             }
 
             policyContent.Position = 0;
-            XacmlPolicy policy = await PolicyHelper.ParsePolicy(policyContent);
+            XacmlPolicy policy = await XacmlPolicyHelper.ParsePolicyAsync(policyContent, cancellationToken);
             return policy;
         }
     }

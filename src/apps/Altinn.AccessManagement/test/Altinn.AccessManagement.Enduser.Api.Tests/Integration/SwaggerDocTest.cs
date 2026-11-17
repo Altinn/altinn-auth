@@ -196,6 +196,58 @@ public class SwaggerDocTest
     }
 
     /// <summary>
+    /// Tests that the body of the approve endpoint is versioned: version 2 takes an object with the
+    /// selected right keys, while version 1 keeps the array it was published with.
+    /// </summary>
+    [IntegrationTest]
+    public class ApproveRequestBody : IClassFixture<ApiFixture>
+    {
+        public ApproveRequestBody(ApiFixture fixture)
+        {
+            fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.EnableRequestAssignmentResource);
+            fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.EnableRequestAssignmentPackage);
+            fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.EnableEnduserRequestV2Api);
+            Client = fixture.BuildConfiguration();
+        }
+
+        private HttpClient Client { get; }
+
+        private async Task<(JsonElement Schema, JsonElement Schemas)> GetApproveBodySchema(string version)
+        {
+            var body = await Client.GetStringAsync($"/swagger/{version}/swagger.json", TestContext.Current.CancellationToken);
+            using var doc = JsonDocument.Parse(body);
+            var schemas = doc.RootElement.GetProperty("components").GetProperty("schemas").Clone();
+            var schema = doc.RootElement
+                .GetProperty("paths")
+                .GetProperty($"/accessmanagement/api/{version}/enduser/request/received/approve")
+                .GetProperty("put")
+                .GetProperty("requestBody")
+                .GetProperty("content")
+                .GetProperty("application/json")
+                .GetProperty("schema")
+                .Clone();
+            return (schema, schemas);
+        }
+
+        [Fact]
+        public async Task GetSwaggerJson_V2Doc_ApproveTakesObjectWithRightKeys()
+        {
+            var (schema, schemas) = await GetApproveBodySchema("v2");
+
+            var resolved = schemas.GetProperty(schema.GetProperty("$ref").GetString()!.Split('/').Last());
+            resolved.GetProperty("properties").GetProperty("rightKeys").GetProperty("type").GetString().Should().Be("array");
+        }
+
+        [Fact]
+        public async Task GetSwaggerJson_V1Doc_ApproveKeepsArrayBody()
+        {
+            var (schema, _) = await GetApproveBodySchema("v1");
+
+            schema.GetProperty("type").GetString().Should().Be("array");
+        }
+    }
+
+    /// <summary>
     /// Tests that the status filter of the request endpoints is versioned: version 1 only
     /// offers the statuses it was published with, while version 2 also offers those added later.
     /// </summary>

@@ -13,7 +13,7 @@ public static class AssignmentA2RoleValidation
     {
         if (a2Assignments is { } && a2Assignments.Any())
         {
-            return (ref ValidationErrorBuilder errors) =>
+            return (ref ValidationProblemBuilder errors) =>
                 errors.Add(ValidationErrors.AssignmentHasActiveConnections, $"QUERY/{paramName}", [new("roles", $"following roles have active assignments [{string.Join(",", a2Assignments.Select(r => r.Role?.Name ?? r.RoleId.ToString()))}].")]);
         }
 

@@ -51,7 +51,7 @@ tests {
   
   test(requestName + "|HttpStatus.BadRequest", function() {
     expect(res.status).to.equal(400);
-    expect(body.detail).to.equal('The package is not delegated by the entity trying to revoke so it is denied');
+    expect(body.title).to.equal('The package is not delegated by the entity trying to revoke so it is denied');
   });
   
 }

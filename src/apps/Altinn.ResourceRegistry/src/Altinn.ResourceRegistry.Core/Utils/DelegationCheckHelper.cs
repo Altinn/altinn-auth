@@ -1,10 +1,10 @@
 ﻿using System.Text;
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
-using Altinn.ResourceRegistry.Core.Constants;
+using Altinn.Authorization.Xacml.Constants;
 using Altinn.ResourceRegistry.Core.Helpers;
 using Altinn.ResourceRegistry.Core.Models;
-using static Altinn.ResourceRegistry.Core.Constants.AltinnXacmlConstants;
+using static Altinn.Authorization.Xacml.Constants.AltinnXacmlConstants;
 
 namespace Altinn.AccessMgmt.Core.Utils.Helper
 {
@@ -252,7 +252,7 @@ namespace Altinn.AccessMgmt.Core.Utils.Helper
                 {
                     result.Add(urn);
                 }
-                else if (includeAppRights && urn.StartsWith(AltinnXacmlConstants.MatchAttributeIdentifiers.Delegation))
+                else if (includeAppRights && urn.StartsWith(AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceDelegationAttribute))
                 {
                     result.Add(urn);
                 }

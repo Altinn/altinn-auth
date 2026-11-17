@@ -8,6 +8,7 @@ using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Enums;
 using Altinn.Authorization.ABAC.Xacml;
+using Altinn.Authorization.Xacml;
 using Azure;
 using Azure.Storage.Blobs.Models;
 using Microsoft.Extensions.Logging;
@@ -47,7 +48,7 @@ namespace Altinn.AccessManagement.Core.Services
                 throw new ArgumentException("The policy file can not be null");
             }
 
-            string filePath = PolicyHelper.GetAltinnAppsPolicyPath(org, app);
+            string filePath = XacmlPolicyHelper.GetAltinnAppsPolicyPath(org, app);
             Response<BlobContentInfo> response = await _policyFactory.Create(filePath).WritePolicyAsync(fileStream, cancellationToken: cancellationToken);
 
             return response?.GetRawResponse()?.Status == (int)HttpStatusCode.Created;

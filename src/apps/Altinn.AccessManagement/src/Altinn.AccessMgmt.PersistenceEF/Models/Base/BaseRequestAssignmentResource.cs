@@ -38,4 +38,9 @@ public class BaseRequestAssignmentResource : BaseAudit, IEntityId
     /// The rights requested for the resource, as right keys from the resource policy. Null when no specific rights were requested.
     /// </summary>
     public List<string>? RequestedRightKeys { get; set; }
+
+    /// <summary>
+    /// The rights given when the request was approved, as right keys from the resource policy. Null until the request is approved.
+    /// </summary>
+    public List<string>? ApprovedRightKeys { get; set; }
 }
