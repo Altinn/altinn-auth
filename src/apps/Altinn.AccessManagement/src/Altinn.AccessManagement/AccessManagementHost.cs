@@ -71,6 +71,10 @@ internal static partial class AccessManagementHost
         builder.ConfigureAppsettings();
         builder.ConfigureLibsHost();
         builder.Services.AddMemoryCache();
+
+        // Temporary until Altinn.Authorization.ServiceDefaults 6.1 ships AddAltinnCache() (altinn-authorization-utils#804),
+        // which replaces this call with the shared registration and the optional Valkey tier.
+        builder.Services.AddHybridCache();
         builder.Services.AddAutoMapper(typeof(Program));
         builder.Services.AddRouting(options => options.LowercaseUrls = true);
         builder.Services.AddControllers();

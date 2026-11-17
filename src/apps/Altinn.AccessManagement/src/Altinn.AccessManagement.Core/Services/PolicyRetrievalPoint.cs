@@ -1,10 +1,11 @@
 ﻿using Altinn.AccessManagement.Core.Configuration;
 using Altinn.AccessManagement.Core.Helpers;
+using Altinn.AccessManagement.Core.Helpers.Extensions;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.Xacml;
-using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Options;
 
 namespace Altinn.AccessManagement.Core.Services
@@ -15,21 +16,23 @@ namespace Altinn.AccessManagement.Core.Services
     /// </summary>
     public class PolicyRetrievalPoint : IPolicyRetrievalPoint
     {
+        private static readonly string[] PolicyTag = ["policy"];
+
         private readonly IPolicyFactory _policyFactory;
-        private readonly IMemoryCache _memoryCache;
-        private readonly CacheConfig _cacheConfig;
+        private readonly HybridCache _cache;
+        private readonly HybridCacheEntryOptions _cacheEntryOptions;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PolicyRetrievalPoint"/> class.
         /// </summary>
         /// <param name="policyFactory">The policy factory</param>
-        /// <param name="memoryCache">The cache handler</param>
+        /// <param name="cache">The cache</param>
         /// <param name="cacheConfig">The cache config settings</param>
-        public PolicyRetrievalPoint(IPolicyFactory policyFactory, IMemoryCache memoryCache, IOptions<CacheConfig> cacheConfig)
+        public PolicyRetrievalPoint(IPolicyFactory policyFactory, HybridCache cache, IOptions<CacheConfig> cacheConfig)
         {
             _policyFactory = policyFactory;
-            _memoryCache = memoryCache;
-            _cacheConfig = cacheConfig.Value;
+            _cache = cache;
+            _cacheEntryOptions = new HybridCacheEntryOptions { Expiration = TimeSpan.FromMinutes(cacheConfig.Value.PolicyCacheTimeout) };
         }
 
         /// <inheritdoc/>
@@ -61,8 +64,9 @@ namespace Altinn.AccessManagement.Core.Services
 
         private async Task<XacmlPolicy> GetPolicyInternalAsync(string policyPath, string version = "", CancellationToken cancellationToken = default)
         {
-            string cacheKey = policyPath + version;
-            if (_memoryCache.TryGetValue(cacheKey, out byte[] cachedDocument))
+            string cacheKey = $"policy:{policyPath}:{version}";
+            byte[] cachedDocument = await _cache.GetAsync<byte[]>(cacheKey, cancellationToken);
+            if (cachedDocument != null)
             {
                 return ParsePolicyDocument(cachedDocument);
             }
@@ -90,26 +94,17 @@ namespace Altinn.AccessManagement.Core.Services
             // Parse before caching, so a document that fails to parse is never cached and the next
             // read fetches a fresh copy.
             XacmlPolicy policy = ParsePolicyDocument(policyDocument);
-            PutPolicyDocumentInCache(cacheKey, policyDocument);
+            await _cache.SetAsync(cacheKey, policyDocument, _cacheEntryOptions, PolicyTag, cancellationToken);
 
             return policy;
         }
 
         // The cache holds the policy document rather than the parsed policy: callers mutate the XacmlPolicy they get
-        // back, so every read needs its own instance.
+        // back, so every read needs its own instance, and XacmlPolicy does not survive the cache serializer.
         private static XacmlPolicy ParsePolicyDocument(byte[] policyDocument)
         {
             using MemoryStream stream = new MemoryStream(policyDocument, writable: false);
             return XacmlPolicyHelper.ParsePolicy(stream);
-        }
-
-        private void PutPolicyDocumentInCache(string cacheKey, byte[] policyDocument)
-        {
-            var cacheEntryOptions = new MemoryCacheEntryOptions()
-               .SetPriority(CacheItemPriority.High)
-               .SetAbsoluteExpiration(new TimeSpan(0, _cacheConfig.PolicyCacheTimeout, 0));
-
-            _memoryCache.Set(cacheKey, policyDocument, cacheEntryOptions);
         }
     }
 }
