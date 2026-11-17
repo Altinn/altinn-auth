@@ -54,7 +54,7 @@ tests {
     expect(body.validationErrors).to.have.lengthOf(1);
     const error = body.validationErrors[0];
     expect(error.code).to.equal("AMSO.VLD-00001");
-    expect(error.detail).to.equal("Invalid URN");
+    expect(error.title).to.equal("Invalid URN");
     expect(error.paths).to.deep.equal(["connection/from"]);
   });
 }

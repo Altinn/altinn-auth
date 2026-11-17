@@ -25,6 +25,29 @@ public static class ConstantLookup
     private static readonly ConcurrentDictionary<(Type ConstantsClass, Type EntityType), Dictionary<string, object>> _bylegacyCode = new();
     private static readonly ConcurrentDictionary<(Type ConstantsClass, Type EntityType), List<object>> _constants = new();
 
+    /// <summary>
+    /// Whether the app runs in production. Set by the host at startup. When true, the lookups leave out constants
+    /// marked <see cref="ConstantDefinition{T}.TestOnly"/>.
+    /// </summary>
+    public static bool IsProd { get; set; }
+
+    private static bool IsAvailable<TType>(ConstantDefinition<TType> constant)
+        where TType : class, IEntityId
+        => !(constant.TestOnly && IsProd);
+
+    private static bool TryGetAvailable<TType>(object value, out ConstantDefinition<TType>? result)
+        where TType : class, IEntityId
+    {
+        result = (ConstantDefinition<TType>)value;
+        if (IsAvailable(result))
+        {
+            return true;
+        }
+
+        result = null;
+        return false;
+    }
+
     private static List<ConstantDefinition<TType>> GetConstants<TType>(Type constantsClass)
         where TType : class, IEntityId
     {
@@ -139,13 +162,19 @@ public static class ConstantLookup
         var byId = GetById<TType>(constantsClass);
         if (byId.TryGetValue(id, out var value))
         {
-            result = (ConstantDefinition<TType>)value;
-            return true;
+            return TryGetAvailable(value, out result);
         }
 
         result = null;
         return false;
     }
+
+    /// <summary>
+    /// Whether the constant with this id is available in this environment. An unknown id counts as available.
+    /// </summary>
+    public static bool IsAvailable<TType>(Type constantsClass, Guid id)
+        where TType : class, IEntityId
+        => !GetById<TType>(constantsClass).TryGetValue(id, out var value) || IsAvailable((ConstantDefinition<TType>)value);
 
     /// <summary>
     /// Try to get entity by name for types that implement both IEntityId and IEntityName.
@@ -162,8 +191,7 @@ public static class ConstantLookup
         var byName = GetByName<TType>(constantsClass);
         if (byName.TryGetValue(name, out var value))
         {
-            result = (ConstantDefinition<TType>)value;
-            return true;
+            return TryGetAvailable(value, out result);
         }
 
         result = null;
@@ -185,8 +213,7 @@ public static class ConstantLookup
         var byName = GetByName<TType>(constantsClass);
         if (byName.TryGetValue(name, out var value))
         {
-            result = (ConstantDefinition<TType>)value;
-            return true;
+            return TryGetAvailable(value, out result);
         }
 
         if (includeTranslations)
@@ -218,8 +245,7 @@ public static class ConstantLookup
         var byUrn = GetByUrn<TType>(constantsClass);
         if (byUrn.TryGetValue(urn, out var value))
         {
-            result = (ConstantDefinition<TType>)value;
-            return true;
+            return TryGetAvailable(value, out result);
         }
 
         result = null;
@@ -241,8 +267,7 @@ public static class ConstantLookup
         var byCode = GetByCode<TType>(constantsClass);
         if (byCode.TryGetValue(code, out var value))
         {
-            result = (ConstantDefinition<TType>)value;
-            return true;
+            return TryGetAvailable(value, out result);
         }
 
         result = null;
@@ -263,8 +288,7 @@ public static class ConstantLookup
         var byCode = GetByLegacyCode(constantsClass);
         if (byCode.TryGetValue(legacyCode, out var value))
         {
-            result = (ConstantDefinition<Role>)value;
-            return true;
+            return TryGetAvailable(value, out result);
         }
 
         result = null;
@@ -272,13 +296,13 @@ public static class ConstantLookup
     }
 
     /// <summary>
-    /// Get all constants as a read-only collection for types that implement IEntityId.
+    /// Get all constants available in this environment as a read-only collection for types that implement IEntityId.
     /// </summary>
     public static IReadOnlyCollection<ConstantDefinition<TType>> AllEntities<TType>(Type constantsClass)
         where TType : class, IEntityId
     {
         var all = GetAllEntities<TType>(constantsClass);
-        return [.. all.Cast<ConstantDefinition<TType>>()];
+        return [.. all.Cast<ConstantDefinition<TType>>().Where(IsAvailable)];
     }
 
     /// <summary>

@@ -76,6 +76,17 @@ public static class RoleConstants
     public static IReadOnlyCollection<TranslationEntry> AllTranslations()
         => ConstantLookup.AllTranslations<Role>(typeof(RoleConstants));
 
+    /// <summary>
+    /// Ids of all roles provided by <see cref="ProviderConstants.Altinn2"/>.
+    /// </summary>
+    public static IReadOnlySet<Guid> Altinn2RoleIds => _altinn2RoleIds.Value;
+
+    private static readonly Lazy<HashSet<Guid>> _altinn2RoleIds = new(() =>
+        AllEntities()
+            .Where(r => r.Entity.ProviderId == ProviderConstants.Altinn2.Id)
+            .Select(r => r.Id)
+            .ToHashSet());
+
     #region Altinn 3 Roles
 
     /// <summary>

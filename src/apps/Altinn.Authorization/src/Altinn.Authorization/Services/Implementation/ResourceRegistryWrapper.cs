@@ -5,6 +5,7 @@ using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.Api.Contracts.Register;
 using Altinn.Authorization.Api.Contracts.ResourceRegistry;
 using Altinn.Authorization.Models.ResourceRegistry;
+using Altinn.Authorization.Xacml;
 using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Platform.Authorization.Clients;
 using Altinn.Platform.Authorization.Configuration;
@@ -78,7 +79,7 @@ namespace Altinn.Authorization.Services.Implementation
                     Stream policyBlob = await response.Content.ReadAsStreamAsync(cancellationToken);
                     using (policyBlob)
                     {
-                        policy = policyBlob.Length > 0 ? PolicyHelper.ParsePolicy(policyBlob) : null;
+                        policy = policyBlob.Length > 0 ? XacmlPolicyHelper.ParsePolicy(policyBlob) : null;
                     }
 
                     PutInCache(cacheKey, _generalSettings.PolicyCacheTimeout, policy);

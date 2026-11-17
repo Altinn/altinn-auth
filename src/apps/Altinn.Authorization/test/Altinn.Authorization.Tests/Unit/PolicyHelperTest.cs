@@ -1,6 +1,7 @@
 ﻿using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
-using Altinn.Platform.Authorization.Constants;
+using Altinn.Authorization.Xacml;
+using Altinn.Authorization.Xacml.Constants;
 using Altinn.Platform.Authorization.Helpers;
 using Altinn.Platform.Authorization.Models;
 
@@ -9,26 +10,6 @@ namespace Altinn.Authorization.Tests.Unit;
 [UnitTest]
 public class PolicyHelperTest
 {
-    // --- GetAltinnAppsPolicyPath ---
-    [Fact]
-    public void GetAltinnAppsPolicyPath_ValidInput_ReturnsExpectedPath()
-    {
-        string result = PolicyHelper.GetAltinnAppsPolicyPath("ttd", "testapp");
-        Assert.Equal("ttd/testapp/policy.xml", result);
-    }
-
-    [Fact]
-    public void GetAltinnAppsPolicyPath_NullOrg_ThrowsArgumentException()
-    {
-        Assert.Throws<ArgumentException>(() => PolicyHelper.GetAltinnAppsPolicyPath(null, "testapp"));
-    }
-
-    [Fact]
-    public void GetAltinnAppsPolicyPath_EmptyApp_ThrowsArgumentException()
-    {
-        Assert.Throws<ArgumentException>(() => PolicyHelper.GetAltinnAppsPolicyPath("ttd", string.Empty));
-    }
-
     // --- GetAltinnAppDelegationPolicyPath ---
     [Fact]
     public void GetAltinnAppDelegationPolicyPath_CoveredByPartyId_ReturnsPathWithPPrefix()
@@ -88,7 +69,7 @@ public class PolicyHelperTest
     public void GetPolicyResourceType_ResourceRegistryNonApp_ReturnsResourceRegistry()
     {
         var request = CreateContextRequestWithResource(
-            (AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistry, "nav_sykepenger"));
+            (AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute, "nav_sykepenger"));
 
         var result = PolicyHelper.GetPolicyResourceType(request, out string resourceId, out string org, out string app);
 
@@ -100,7 +81,7 @@ public class PolicyHelperTest
     public void GetPolicyResourceType_ResourceRegistryAppPrefix_ReturnsAltinnApps()
     {
         var request = CreateContextRequestWithResource(
-            (AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistry, "app_ttd_testapp"));
+            (AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute, "app_ttd_testapp"));
 
         var result = PolicyHelper.GetPolicyResourceType(request, out string resourceId, out string org, out string app);
 
@@ -117,19 +98,6 @@ public class PolicyHelperTest
         var result = PolicyHelper.GetPolicyResourceType(request, out _, out _, out _);
 
         Assert.Equal(PolicyResourceType.Undefined, result);
-    }
-
-    // --- GetPolicyPath ---
-    [Fact]
-    public void GetPolicyPath_OrgAndApp_ReturnsExpected()
-    {
-        var request = CreateContextRequestWithResource(
-            (AltinnXacmlConstants.MatchAttributeIdentifiers.OrgAttribute, "ttd"),
-            (AltinnXacmlConstants.MatchAttributeIdentifiers.AppAttribute, "testapp"));
-
-        string result = PolicyHelper.GetPolicyPath(request);
-
-        Assert.Equal("ttd/testapp/policy.xml", result);
     }
 
     // --- GetRolesWithAccess ---
@@ -151,7 +119,7 @@ public class PolicyHelperTest
                         new XacmlMatch(
                             new Uri(XacmlConstants.AttributeMatchFunction.StringEqual),
                             new XacmlAttributeValue(new Uri(XacmlConstants.DataTypes.XMLString), "REGNA"),
-                            new XacmlAttributeDesignator(new Uri(XacmlConstants.MatchAttributeCategory.Subject), new Uri(AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute), new Uri(XacmlConstants.DataTypes.XMLString), false))
+                            new XacmlAttributeDesignator(new Uri(XacmlConstants.MatchAttributeCategory.Subject), new Uri(AltinnXacmlConstants.MatchAttributeIdentifiers.LegacyRoleAttribute), new Uri(XacmlConstants.DataTypes.XMLString), false))
                     })
                 })
             })
@@ -163,6 +131,44 @@ public class PolicyHelperTest
 
         Assert.Single(roles);
         Assert.Contains("REGNA", roles);
+    }
+
+    [Fact]
+    public void GetRolesWithAccess_PolicyWithRolePrefix_ReturnsBankruptcyEstateAdministratorRole()
+    {
+        var policy = CreatePermitPolicyWithSubjectMatches(
+            CreateSubjectMatch(AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute, "innbygger-konkursbo-administrator"));
+
+        var roles = PolicyHelper.GetRolesWithAccess(policy);
+
+        Assert.Single(roles);
+        Assert.Contains("innbygger-konkursbo-administrator", roles);
+    }
+
+    [Fact]
+    public void GetRolesWithAccess_PolicyWithLegacyAndNewRolePrefixes_ReturnsRolesFromBoth()
+    {
+        var policy = CreatePermitPolicyWithSubjectMatches(
+            CreateSubjectMatch(AltinnXacmlConstants.MatchAttributeIdentifiers.LegacyRoleAttribute, "DAGL"),
+            CreateSubjectMatch(AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute, "innbygger-konkursbo-administrator"));
+
+        var roles = PolicyHelper.GetRolesWithAccess(policy);
+
+        Assert.Equal(2, roles.Count);
+        Assert.Contains("DAGL", roles);
+        Assert.Contains("innbygger-konkursbo-administrator", roles);
+    }
+
+    [Fact]
+    public void GetRolesWithAccess_PolicyWithRolePrefixInDenyRule_ReturnsEmpty()
+    {
+        var policy = CreatePolicyWithSubjectMatches(
+            XacmlEffectType.Deny,
+            CreateSubjectMatch(AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute, "innbygger-konkursbo-administrator"));
+
+        var roles = PolicyHelper.GetRolesWithAccess(policy);
+
+        Assert.Empty(roles);
     }
 
     [Fact]
@@ -182,6 +188,34 @@ public class PolicyHelperTest
         var roles = PolicyHelper.GetRolesWithAccess(policy);
 
         Assert.Empty(roles);
+    }
+
+    // --- GetResourcePoliciesFromXacmlPolicy ---
+    [Theory]
+    [InlineData(AltinnXacmlConstants.MatchAttributeIdentifiers.LegacyRoleAttribute, "DAGL")]
+    [InlineData(AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute, "innbygger-konkursbo-administrator")]
+    public void GetResourcePoliciesFromXacmlPolicy_RoleSubject_ReturnsRoleGrant(string roleAttributeId, string roleCode)
+    {
+        var policy = new XacmlPolicy(
+            new Uri("urn:policy:1"), new Uri(XacmlConstants.CombiningAlgorithms.PolicyDenyOverrides),
+            new XacmlTarget(new List<XacmlAnyOf>()));
+
+        policy.Rules.Add(new XacmlRule("rule1", XacmlEffectType.Permit)
+        {
+            Target = new XacmlTarget(new List<XacmlAnyOf>
+            {
+                new XacmlAnyOf(new List<XacmlAllOf> { new XacmlAllOf(new List<XacmlMatch> { CreateSubjectMatch(roleAttributeId, roleCode) }) }),
+                new XacmlAnyOf(new List<XacmlAllOf> { new XacmlAllOf(new List<XacmlMatch> { CreateMatch(XacmlConstants.MatchAttributeCategory.Resource, AltinnXacmlConstants.MatchAttributeIdentifiers.ResourceRegistryAttribute, "bankruptcy_estate_resource") }) }),
+                new XacmlAnyOf(new List<XacmlAllOf> { new XacmlAllOf(new List<XacmlMatch> { CreateMatch(XacmlConstants.MatchAttributeCategory.Action, XacmlConstants.MatchAttributeIdentifiers.ActionId, "read") }) })
+            })
+        });
+
+        var resourcePolicies = PolicyHelper.GetResourcePoliciesFromXacmlPolicy(policy, "nb");
+
+        var resourcePolicy = Assert.Single(resourcePolicies);
+        var action = Assert.Single(resourcePolicy.Actions);
+        var roleGrant = Assert.Single(action.RoleGrants);
+        Assert.Equal(roleCode, roleGrant.RoleTypeCode);
     }
 
     // --- BuildDelegationPolicy ---
@@ -230,26 +264,48 @@ public class PolicyHelperTest
         });
 
         using var stream = PolicyHelper.GetXmlMemoryStreamFromXacmlPolicy(original);
-        var parsed = PolicyHelper.ParsePolicy(stream);
+        var parsed = XacmlPolicyHelper.ParsePolicy(stream);
 
         Assert.Single(parsed.Rules);
         Assert.Equal("1.0", parsed.Version);
     }
 
-    // --- GetMinimumAuthenticationLevelFromXacmlPolicy ---
-    [Fact]
-    public void GetMinimumAuthenticationLevelFromXacmlPolicy_NoObligation_ReturnsZero()
+    // Helpers
+    private static XacmlMatch CreateSubjectMatch(string attributeId, string value)
+    {
+        return CreateMatch(XacmlConstants.MatchAttributeCategory.Subject, attributeId, value);
+    }
+
+    private static XacmlMatch CreateMatch(string category, string attributeId, string value)
+    {
+        return new XacmlMatch(
+            new Uri(XacmlConstants.AttributeMatchFunction.StringEqual),
+            new XacmlAttributeValue(new Uri(XacmlConstants.DataTypes.XMLString), value),
+            new XacmlAttributeDesignator(new Uri(category), new Uri(attributeId), new Uri(XacmlConstants.DataTypes.XMLString), false));
+    }
+
+    private static XacmlPolicy CreatePermitPolicyWithSubjectMatches(params XacmlMatch[] matches)
+    {
+        return CreatePolicyWithSubjectMatches(XacmlEffectType.Permit, matches);
+    }
+
+    private static XacmlPolicy CreatePolicyWithSubjectMatches(XacmlEffectType effect, params XacmlMatch[] matches)
     {
         var policy = new XacmlPolicy(
             new Uri("urn:policy:1"), new Uri(XacmlConstants.CombiningAlgorithms.PolicyDenyOverrides),
             new XacmlTarget(new List<XacmlAnyOf>()));
 
-        int result = PolicyHelper.GetMinimumAuthenticationLevelFromXacmlPolicy(policy);
+        // Each match goes in its own AllOf, as policies list alternative subjects
+        var allOfs = matches.Select(match => new XacmlAllOf(new List<XacmlMatch> { match })).ToList();
 
-        Assert.Equal(0, result);
+        policy.Rules.Add(new XacmlRule("rule1", effect)
+        {
+            Target = new XacmlTarget(new List<XacmlAnyOf> { new XacmlAnyOf(allOfs) })
+        });
+
+        return policy;
     }
 
-    // Helper
     private static XacmlContextRequest CreateContextRequestWithResource(params (string attributeId, string value)[] attributes)
     {
         var contextAttributes = new XacmlContextAttributes(new Uri(XacmlConstants.MatchAttributeCategory.Resource));

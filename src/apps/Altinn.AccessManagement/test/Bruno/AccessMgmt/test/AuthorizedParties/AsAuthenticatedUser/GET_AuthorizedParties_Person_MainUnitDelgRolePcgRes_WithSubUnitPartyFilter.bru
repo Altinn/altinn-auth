@@ -83,8 +83,19 @@ tests {
       expectedMainUnit.subunit.roleDelegatedToKeyRoleUnit
     ];
     
-    assertIncludeMembersIgnoreCase(actualMainUnit.authorizedRoles, expectedRolesMainUnit);
-    assertIncludeMembersIgnoreCase(actualSubUnit.authorizedRoles, expectedRolesSubUnit);
+    // The delegated roles (UTINN, REGNA, HVASK, LOPER) are Altinn 2 roles, hidden where
+    // AccessManagement.Roles.DisableAltinn2 is on (see testdata/altinn2-roles.js).
+    const { altinn2RolesDisabled } = require("./testdata/altinn2-roles.js");
+    if (altinn2RolesDisabled()) {
+      const hidden = expectedRolesSubUnit.map(role => role.toLowerCase());
+      [actualMainUnit, actualSubUnit].forEach(party => {
+        const shown = (party.authorizedRoles || []).filter(role => hidden.includes(role.toLowerCase()));
+        expect(shown, `Altinn 2 roles should be hidden on ${party.name}`).to.be.empty;
+      });
+    } else {
+      assertIncludeMembersIgnoreCase(actualMainUnit.authorizedRoles, expectedRolesMainUnit);
+      assertIncludeMembersIgnoreCase(actualSubUnit.authorizedRoles, expectedRolesSubUnit);
+    }
     
     const expectedPackagesMainUnit = [
       expectedMainUnit.directPackageToDelegate,

@@ -1,0 +1,56 @@
+meta {
+  name: 07_AND_FilterValuesListTheReceiver
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/connections/activitylog/filter/To?party={{party}}&direction=from&term={{term}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  direction: from
+  term: {{term}}
+}
+
+docs {
+  AND the filter values list the receiver.
+
+  `GET .../activitylog/filter/{field}` returns the values occurring in the party's log
+  for one filter field as `{ id, name }` pairs, for building filter pickers. `term`
+  is a case-insensitive contains-match on the name, `orderBy` is Name (default) or
+  When. The field must be one the area offers (see `filter/fields`).
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().connections;
+
+  bru.setVar("party", td.delegator.partyUuid);
+  bru.setVar("term", td.receiver.lastname.toLowerCase());
+
+  await loginAs(td.delegator);
+}
+
+tests {
+  const { sameId, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().connections;
+  const body = res.getBody();
+
+  test("AND the filter values return 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the receiver is a value of the To field, found by part of its name", function() {
+    const value = body.data.find(v => sameId(v.id, td.receiver.partyUuid));
+    expect(value, "expected the receiver among the To values").to.not.be.undefined;
+    expect(value.name).to.include(td.receiver.lastname);
+  });
+
+  test("AND every value matches the search term", function() {
+    body.data.forEach(v => expect(v.name.toLowerCase()).to.include(td.receiver.lastname.toLowerCase()));
+  });
+}

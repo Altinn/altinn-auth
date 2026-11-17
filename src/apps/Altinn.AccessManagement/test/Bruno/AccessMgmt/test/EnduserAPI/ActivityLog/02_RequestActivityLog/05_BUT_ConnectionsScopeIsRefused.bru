@@ -1,0 +1,36 @@
+meta {
+  name: 05_BUT_ConnectionsScopeIsRefused
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/request/activitylog?party={{party}}&direction=from
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  direction: from
+}
+
+docs {
+  BUT a token with only a connections scope
+  (`enduser:connections:toothers.read`) cannot read the request log, and gets 403.
+}
+
+script:pre-request {
+  const { loginAs, scopes, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().request;
+
+  bru.setVar("party", td.requester.partyUuid);
+
+  await loginAs(td.requester, scopes.enduserSystemToOthersRead);
+}
+
+tests {
+  test("BUT the connections scope is refused with 403", function() {
+    expect(res.status).to.equal(403);
+  });
+}

@@ -4,7 +4,6 @@ metadata:
   name: am-init
   labels:
     app.kubernetes.io/name: access-management-pre-deploy
-    app.kubernetes.io/part-of: access-management
 spec: {}
 ---
 apiVersion: application.dis.altinn.cloud/v1alpha1
@@ -13,7 +12,6 @@ metadata:
   name: am-api
   labels:
     app.kubernetes.io/name: access-management-api
-    app.kubernetes.io/part-of: access-management
 spec: {}
 ---
 apiVersion: application.dis.altinn.cloud/v1alpha1
@@ -22,5 +20,4 @@ metadata:
   name: am-ffb
   labels:
     app.kubernetes.io/name: access-management-ffb
-    app.kubernetes.io/part-of: access-management
 spec: {}

@@ -46,7 +46,7 @@ reviews:
     - path: "src/apps/Altinn.ResourceRegistry/**"
       instructions: "Intentional build island. Do not suggest aligning it with other verticals."
     - path: "**/*.bru"
-      instructions: "Bruno files must be UTF-8 without BOM, LF line endings and tab indentation."
+      instructions: "Bruno files must be UTF-8 without BOM, LF line endings and two-space indentation."
     - path: "**/infra/**/*.tf"
       instructions: "Check that new feature toggles in app code are also added here."
   tools:

@@ -1,0 +1,45 @@
+meta {
+  name: 05_THEN_AssistantIsNoLongerListed
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/administrators?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+docs {
+  THEN the assistant is no longer listed among the bostyrer's administrators.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  bru.setVar("party", td.BOSTYRER.partyUuid);
+
+  await helpers.loginAs(td.BOSTYRER);
+}
+
+tests {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  const td = helpers.testdata();
+
+  test("THEN the administrators can be listed, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the assistant is not listed as an administrator", function() {
+    const entry = helpers.findAdministrator(res.getBody(), td.user_LUN_ANALYSE_GÅSTOL.partyUuid);
+    expect(entry, "expected the assistant not to be listed").to.be.undefined;
+  });
+}

@@ -2,6 +2,7 @@
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.Api.Contracts.Authorization;
 using Altinn.Authorization.Api.Contracts.Register;
+using Altinn.Authorization.Xacml.Constants;
 using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Constants;
 using Altinn.Platform.Authorization.Models;
@@ -647,7 +648,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
                 }
             }
 
-            if (policySubjectAttributes.ContainsKey(AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute))
+            if (policySubjectAttributes.ContainsKey(AltinnXacmlConstants.MatchAttributeIdentifiers.LegacyRoleAttribute) || policySubjectAttributes.ContainsKey(AltinnXacmlConstants.MatchAttributeIdentifiers.RoleAttribute))
             {
                 if (subjectPartyUuid != Guid.Empty && resourceAttr.PartyUuid != Guid.Empty)
                 {

@@ -48,7 +48,7 @@ public class ActivityLogQueryParameters
     /// <summary>
     /// Request statuses.
     /// </summary>
-    public List<RequestStatus> Status { get; set; }
+    public List<RequestStatusV2> Status { get; set; }
 
     /// <summary>
     /// Acting entity identifiers.

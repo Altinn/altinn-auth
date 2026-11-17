@@ -18,7 +18,7 @@ public static class PackageValidation
             return null;
         }
 
-        return (ref ValidationErrorBuilder errors) =>
+        return (ref ValidationProblemBuilder errors) =>
             errors.Add(ValidationErrors.PackageNotExists, $"QUERY/{paramName}", [new("packages", $"No packages with name '{packageName}' do not exists.")]
         );
     };
@@ -28,7 +28,7 @@ public static class PackageValidation
         if (packages.Any(p => !p.Result))
         {
             var packageUrns = string.Join(", ", packages.Select(p => p.Package.Urn));
-            return (ref ValidationErrorBuilder errors) => errors.Add(ValidationErrors.UserNotAuthorized, $"QUERY/{paramName}", [new("packages", $"User is not allowed to assign the following package(s) '{packageUrns}'.")]);
+            return (ref ValidationProblemBuilder errors) => errors.Add(ValidationErrors.UserNotAuthorized, $"QUERY/{paramName}", [new("packages", $"User is not allowed to assign the following package(s) '{packageUrns}'.")]);
         }
 
         return null;
@@ -85,7 +85,7 @@ public static class PackageValidation
 
         if (notAssignablePackages.Any())
         {
-            return (ref ValidationErrorBuilder errors) =>
+            return (ref ValidationProblemBuilder errors) =>
                 errors.Add(ValidationErrors.PackageIsNotAssignableToRecipient, $"QUERY/{paramName}", [new("Packages", $"{string.Join(", ", notAssignablePackages)} are not assignable to the given entitytype in input.")]);
         }
 
@@ -124,7 +124,7 @@ public static class PackageValidation
 
         if (packagesNotAssignableFromOrg.Any())
         {
-            return (ref ValidationErrorBuilder errors) =>
+            return (ref ValidationProblemBuilder errors) =>
                 errors.Add(ValidationErrors.PackageIsNotAssignable, $"QUERY/{paramName}", [new("Packages", $"{string.Join(", ", packagesNotAssignableFromOrg)} are not assignable from {assignedFromType.Name}.")]);
         }
 
@@ -143,13 +143,13 @@ public static class PackageValidation
         {
             if (!packageObj.Entity.IsAssignable)
             {
-                return (ref ValidationErrorBuilder errors) =>
+                return (ref ValidationProblemBuilder errors) =>
                         errors.Add(ValidationErrors.PackageIsNotAssignable, paramName, [new(paramName, $"Package '{package}' is not assignable.")]);
             }
         }
         else
         {
-            return (ref ValidationErrorBuilder errors) =>
+            return (ref ValidationProblemBuilder errors) =>
                    errors.Add(ValidationErrors.PackageNotExists, paramName, [new(paramName, $"No package was found with value '{package}'.")]);
         }
 
@@ -166,7 +166,7 @@ public static class PackageValidation
     {
         if (resource.Type.Name == "MaskinportenSchema")
         {
-            return (ref ValidationErrorBuilder errors) =>
+            return (ref ValidationProblemBuilder errors) =>
                         errors.Add(ValidationErrors.ResourceIsNotDelegable, paramName, [new(paramName, $"Resource '{resource.Name}' is of type 'MaskinportenSchema' and cannot be requested.")]);
         }
 
@@ -184,7 +184,7 @@ public static class PackageValidation
     {
         if (fromId == toId)
         {
-            return (ref ValidationErrorBuilder errors) =>
+            return (ref ValidationProblemBuilder errors) =>
                 errors.Add(ValidationErrors.RequestFromSelfNotAllowed, $"QUERY/{paramName}", [new("from/to", $"From and To cannot be the same for assignment.")]);
         }
 
@@ -206,7 +206,7 @@ public static class PackageValidation
         if (!packageLookupResult.Any())
         {
             var msg = string.Join(",", packageName.Select(p => p.ToString()));
-            return (ref ValidationErrorBuilder errors) =>
+            return (ref ValidationProblemBuilder errors) =>
                 errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{paramName}", [new("packages", $"No packages were found with the names '{msg}'.")]
             );
         }
@@ -214,7 +214,7 @@ public static class PackageValidation
         if (packageLookupResult.Count() != packageName.Count())
         {
             var pkgsNotFound = packageName.Where(n => packageLookupResult.Any(p => p.Name.Equals(n, StringComparison.InvariantCultureIgnoreCase)));
-            return (ref ValidationErrorBuilder errors) =>
+            return (ref ValidationProblemBuilder errors) =>
                 errors.Add(ValidationErrors.InvalidQueryParameter, $"QUERY/{paramName}", [new("packages", $"Packages with name(s) was not found '{pkgsNotFound}'.")]
             );
         }

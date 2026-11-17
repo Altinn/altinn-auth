@@ -1,0 +1,41 @@
+meta {
+  name: 03_WHEN_OtherPersonReadsAdministratorsThenRequestFails
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/administrators?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+docs {
+  WHEN a person with no access to the bostyrer lists the bostyrer's administrators, the PDP
+  denies read on altinn_bankruptcy_estate_admin and the request fails with 403.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  bru.setVar("party", td.BOSTYRER.partyUuid);
+  bru.setVar("user", td.user_LUN_ANALYSE_GÅSTOL.partyUuid);
+  bru.setVar("personIdentifier", td.user_LUN_ANALYSE_GÅSTOL.pid);
+  bru.setVar("lastName", td.user_LUN_ANALYSE_GÅSTOL.lastname);
+
+  await helpers.loginAs(td.creditor_VILJESTERK_GRANDIS);
+}
+
+tests {
+  test("WHEN another person reads the bostyrer's administrators, the request returns 403", function() {
+    expect(res.status).to.equal(403);
+  });
+}

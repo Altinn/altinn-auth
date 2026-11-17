@@ -1,0 +1,53 @@
+meta {
+  name: 09_AND_ActivityTypeFilterValuesListDraftAndWithdrawal
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/request/activitylog/filter/ActivityType?party={{party}}&direction=from
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  direction: from
+}
+
+headers {
+  Accept-Language: en
+}
+
+docs {
+  AND the ActivityType filter values list the catalog entries occurring in the
+  requester's log, among them the draft and the withdrawal, with names in the requested
+  language.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().request;
+
+  bru.setVar("party", td.requester.partyUuid);
+
+  await loginAs(td.requester);
+}
+
+tests {
+  const { activityTypes } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const body = res.getBody();
+
+  test("AND the filter values return 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the draft and the withdrawal are listed with English names", function() {
+    const draft = body.data.find(v => v.id === activityTypes.packageRequestDraftCreated);
+    const withdrawn = body.data.find(v => v.id === activityTypes.packageRequestWithdrawn);
+    expect(draft, "expected the draft activity type").to.not.be.undefined;
+    expect(withdrawn, "expected the withdrawn activity type").to.not.be.undefined;
+    expect(draft.name).to.equal("Access package request draft created");
+    expect(withdrawn.name).to.equal("Access package request withdrawn");
+  });
+}

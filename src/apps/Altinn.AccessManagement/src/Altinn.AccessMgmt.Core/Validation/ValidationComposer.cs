@@ -3,14 +3,14 @@
 namespace Altinn.AccessMgmt.Core.Validation;
 
 /// <summary>
-/// A delegate representing a validation rule that accepts a reference to a <see cref="ValidationErrorBuilder"/>
+/// A delegate representing a validation rule that accepts a reference to a <see cref="ValidationProblemBuilder"/>
 /// and adds errors if validation fails.
 /// </summary>
-/// <param name="errors">The reference to the <see cref="ValidationErrorBuilder"/> where validation errors are added.</param>
-public delegate void ValidationRule(ref ValidationErrorBuilder errors);
+/// <param name="errors">The reference to the <see cref="ValidationProblemBuilder"/> where validation errors are added.</param>
+public delegate void ValidationRule(ref ValidationProblemBuilder errors);
 
 /// <summary>
-/// A delegate that returns a validation rule that accepts a reference to a <see cref="ValidationErrorBuilder"/>
+/// A delegate that returns a validation rule that accepts a reference to a <see cref="ValidationProblemBuilder"/>
 /// and adds errors if validation fails.
 /// </summary>
 public delegate ValidationRule RuleExpression();
@@ -32,7 +32,7 @@ public static class ValidationComposer
     /// </returns>
     public static ValidationProblemInstance? Validate(params RuleExpression[] rules)
     {
-        var builder = default(ValidationErrorBuilder);
+        var builder = default(ValidationProblemBuilder);
         if (All(rules)() is var r && r is { })
         {
             r(ref builder);
@@ -63,7 +63,7 @@ public static class ValidationComposer
             return null;
         }
 
-        return (ref ValidationErrorBuilder errors) =>
+        return (ref ValidationProblemBuilder errors) =>
         {
             foreach (var result in failures)
             {
@@ -90,7 +90,7 @@ public static class ValidationComposer
 
         if (results.Count == funcs.Length)
         {
-            return (ref ValidationErrorBuilder errors) =>
+            return (ref ValidationProblemBuilder errors) =>
             {
                 foreach (var result in results)
                 {

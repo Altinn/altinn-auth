@@ -65,10 +65,10 @@ tests {
     expect(body).to.be.an('object');
   
     // Top-level ProblemDetails fields
-    expect(body).to.have.property('type', 'https://tools.ietf.org/html/rfc9110#section-15.5.1');
-    expect(body).to.have.property('title', 'Bad Request');
+    expect(body).to.have.property('type', 'urn:altinn:error:STD-00000');
+    expect(body).to.have.property('statusDescription', 'Bad Request');
     expect(body).to.have.property('status', 400);
-    expect(body).to.have.property('detail', 'One or more validation errors occurred.');
+    expect(body).to.have.property('title', 'One or more validation errors occurred.');
     expect(body).to.have.property('code', 'STD-00000');
   
     // validationErrors array present and has exactly one item
@@ -80,7 +80,7 @@ tests {
   
     // Validation error properties
     expect(ve).to.have.property('code', 'AM.VLD-00026');
-    expect(ve).to.have.property('detail', 'User not authorized for operation.');
+    expect(ve).to.have.property('title', 'User not authorized for operation.');
   
     // paths is an array with the expected single entry
     expect(ve).to.have.property('paths');

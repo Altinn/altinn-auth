@@ -12,6 +12,11 @@ namespace Altinn.ResourceRegistry.Utils
     public static class RdfUtil
     {
         /// <summary>
+        /// ContactPoint.Category is stored without a language, and the stored values are mostly Norwegian bokmål.
+        /// </summary>
+        private const string ContactPointCategoryLanguage = "nb";
+
+        /// <summary>
         /// Creates an Rdf string representation for a service resource from the resource registry
         /// </summary>
         /// <param name="serviceResources">List of  service resource models to create Rdf representation of</param>
@@ -27,6 +32,7 @@ namespace Altinn.ResourceRegistry.Utils
             g.NamespaceMap.AddNamespace("schema", UriFactory.Create("http://schema.org/"));
             g.NamespaceMap.AddNamespace("eli", UriFactory.Create("http://data.europa.eu/eli/ontology#"));
             g.NamespaceMap.AddNamespace("foaf", UriFactory.Create("http://xmlns.com/foaf/0.1/"));
+            g.NamespaceMap.AddNamespace("vcard", UriFactory.Create("http://www.w3.org/2006/vcard/ns#"));
 
             StringBuilder resourceErrors = new StringBuilder();
 
@@ -87,6 +93,8 @@ namespace Altinn.ResourceRegistry.Utils
                             g.Assert(new Triple(serviceNode, keywordPredicate, keywordObject));
                         }
                     }
+
+                    AddContactPoints(g, serviceNode, serviceResource.ContactPoints);
                 }
                 catch (Exception ex)
                 {
@@ -113,6 +121,77 @@ namespace Altinn.ResourceRegistry.Utils
 
             // We can now retrieve the written RDF by using the ToString() method of the StringWriter
             return sw.ToString();
+        }
+
+        private static void AddContactPoints(IGraph g, IUriNode serviceNode, List<ContactPoint> contactPoints)
+        {
+            if (contactPoints == null)
+            {
+                return;
+            }
+
+            IUriNode contactPointPredicate = g.CreateUriNode("cv:contactPoint");
+
+            for (int i = 0; i < contactPoints.Count; i++)
+            {
+                ContactPoint contactPoint = contactPoints[i];
+                if (contactPoint == null)
+                {
+                    continue;
+                }
+
+                string category = contactPoint.Category?.Trim();
+                string email = contactPoint.Email?.Trim();
+                string telephone = contactPoint.Telephone?.Trim();
+                Uri contactPage = CreateContactPageUri(contactPoint.ContactPage);
+
+                if (string.IsNullOrEmpty(category) && string.IsNullOrEmpty(email) && string.IsNullOrEmpty(telephone) && contactPage == null)
+                {
+                    // Nothing usable left, so do not export an empty cv:ContactPoint
+                    continue;
+                }
+
+                // Numbered by position in the stored list, so the IRI stays the same between exports
+                IUriNode contactPointNode = g.CreateUriNode(UriFactory.Create(serviceNode.Uri.AbsoluteUri + "/contactpoint/" + i));
+                g.Assert(new Triple(serviceNode, contactPointPredicate, contactPointNode));
+                g.Assert(new Triple(contactPointNode, g.CreateUriNode("rdf:type"), g.CreateUriNode("cv:ContactPoint")));
+
+                if (!string.IsNullOrEmpty(category))
+                {
+                    g.Assert(new Triple(contactPointNode, g.CreateUriNode("vcard:category"), g.CreateLiteralNode(category, ContactPointCategoryLanguage)));
+                }
+
+                if (!string.IsNullOrEmpty(email))
+                {
+                    g.Assert(new Triple(contactPointNode, g.CreateUriNode("cv:email"), g.CreateLiteralNode(email)));
+                }
+
+                if (!string.IsNullOrEmpty(telephone))
+                {
+                    g.Assert(new Triple(contactPointNode, g.CreateUriNode("cv:telephone"), g.CreateLiteralNode(telephone)));
+                }
+
+                if (contactPage != null)
+                {
+                    g.Assert(new Triple(contactPointNode, g.CreateUriNode("cv:contactPage"), g.CreateUriNode(contactPage)));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Returns the contact page as an absolute http(s) IRI, or null when it is not one.
+        /// An invalid value is skipped rather than thrown, since one exception replaces the whole export.
+        /// </summary>
+        private static Uri CreateContactPageUri(string contactPage)
+        {
+            if (string.IsNullOrWhiteSpace(contactPage)
+                || !Uri.TryCreate(contactPage.Trim(), UriKind.Absolute, out Uri uri)
+                || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+            {
+                return null;
+            }
+
+            return uri;
         }
 
         private static bool IncludeInExport(ServiceResource resource)

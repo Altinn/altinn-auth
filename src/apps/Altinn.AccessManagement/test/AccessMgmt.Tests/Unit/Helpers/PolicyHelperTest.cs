@@ -1,9 +1,6 @@
 ﻿using Altinn.AccessManagement.Core.Enums;
 using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessManagement.Enums;
-using Altinn.AccessManagement.Tests.Utils;
-using Altinn.AccessManagement.TestUtils.Mocks;
-using Altinn.Authorization.ABAC.Xacml;
 
 namespace Altinn.AccessManagement.Tests.Unit.Helpers
 {
@@ -13,64 +10,6 @@ namespace Altinn.AccessManagement.Tests.Unit.Helpers
     [UnitTest]
     public class PolicyHelperTest
     {
-        private readonly PolicyRetrievalPointMock _policyRetrievalPointMock;
-
-        /// <summary>
-        /// Constructor setting up dependencies
-        /// </summary>
-        public PolicyHelperTest()
-        {
-            _policyRetrievalPointMock = new PolicyRetrievalPointMock();
-        }
-
-        /// <summary>
-        /// Scenario:
-        /// Tests that the GetAltinnAppsPolicyPath method returns a correct path based on the input parameters.
-        /// Input:
-        /// Org and app from the AltinnAppId.
-        /// Expected Result:
-        /// True
-        /// Success Criteria:
-        /// Rule is found and expected result is returned
-        /// </summary>
-        [Fact]
-        public void GetAltinnAppsPolicyPath_OrgAndApp_ReturnsExpectedPath()
-        {
-            // Arrange
-            string expected = $"org1/app1/policy.xml";
-
-            // Act
-            string actual = PolicyHelper.GetAltinnAppsPolicyPath("org1", "app1");
-
-            // Assert
-            Assert.Equal(expected, actual);
-        }
-
-        /// <summary>
-        /// Scenario:
-        /// Tests that the GetAltinnAppsPolicyPath method returns a correct path based on the input parameters.
-        /// Input:
-        /// Org and app from the AltinnAppId.
-        /// Expected Result:
-        /// True
-        /// Success Criteria:
-        /// Rule is found and expected result is returned
-        /// </summary>
-        [Fact]
-        public async Task GetRolesWithAccess_FromPolicy_ReturnsExpectedRoles()
-        {
-            // Arrange
-            XacmlPolicy policy = await _policyRetrievalPointMock.GetPolicyAsync("resource1", TestContext.Current.CancellationToken);
-
-            List<string> expected = TestDataUtil.GetRolesWithAccess();
-
-            // Act
-            List<string> actual = PolicyHelper.GetRolesWithAccess(policy);
-
-            // Assert
-            Assert.Equal(actual, expected);
-        }
-
         /// <summary>
         /// Scenario:
         /// Tests that the GetDelegationPolicyPath method throws the expected argument exception when org does not have a value

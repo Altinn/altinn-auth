@@ -34,9 +34,10 @@ docs {
   (Ocp-Apim-Subscription-Key) is required.
 
   Response 200, a JSON array of distinct role codes taken from the
-  urn:altinn:rolecode matches in the Permit rules of the policy:
+  urn:altinn:rolecode and urn:altinn:role matches in the Permit rules of
+  the policy, without the prefix:
 
-    ["priv", "dagl"]
+    ["priv", "dagl", "innbygger-konkursbo-administrator"]
 
   The order follows the policy file and the casing is as written there. An
   app whose policy has no role matches returns an empty array. An app with

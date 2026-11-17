@@ -1,5 +1,6 @@
 ﻿using Altinn.Authorization.ProblemDetails;
 using Altinn.Authorization.ServiceDefaults;
+using Altinn.Authorization.Xacml.Constants;
 using Altinn.Platform.Events.Formatters;
 using Altinn.ResourceRegistry.Core.Constants;
 using Altinn.ResourceRegistry.Core.Errors;
@@ -148,6 +149,8 @@ namespace Altinn.ResourceRegistry.Controllers
                 return ValidationProblem(ModelState);
             }
 
+            TrimOrganizationNumber(serviceResource);
+
             // Validate Resource
             if (!ServiceResourceHelper.ValidateResource(serviceResource, await GetServiceOwnerOrgCode(serviceResource, cancellationToken), true, out Dictionary<string, List<string>> message))
             {
@@ -231,6 +234,8 @@ namespace Altinn.ResourceRegistry.Controllers
             {
                 return ValidationProblem(ModelState);
             }
+
+            TrimOrganizationNumber(serviceResource);
 
             // Validate Resource
             if (!ServiceResourceHelper.ValidateResource(serviceResource, await GetServiceOwnerOrgCode(serviceResource, cancellationToken), false, out Dictionary<string, List<string>> message))
@@ -698,9 +703,21 @@ namespace Altinn.ResourceRegistry.Controllers
                 return null;
             }
 
-            var org = Core.Register.OrganizationNumber.Parse(serviceResource.HasCompetentAuthority.Organization);
+            if (!Core.Register.OrganizationNumber.TryParse(serviceResource.HasCompetentAuthority.Organization, null, out var org))
+            {
+                return null;
+            }
+
             ServiceOwnerLookup serviceOwners = await _serviceOwnerService.GetServiceOwners(cancellationToken);
             return serviceOwners.TryFind(org, out var owners) && owners.Length > 0 ? owners[0].OrgCode : null;
+        }
+
+        private static void TrimOrganizationNumber(ServiceResource serviceResource)
+        {
+            if (serviceResource.HasCompetentAuthority is { Organization: not null } competentAuthority)
+            {
+                competentAuthority.Organization = competentAuthority.Organization.Trim();
+            }
         }
     }
 

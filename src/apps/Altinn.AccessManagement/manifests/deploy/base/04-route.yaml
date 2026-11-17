@@ -4,7 +4,6 @@ metadata:
   name: access-management
   labels:
     app.kubernetes.io/name: access-management
-    app.kubernetes.io/part-of: access-management
 spec:
   parentRefs:
     - group: gateway.networking.k8s.io

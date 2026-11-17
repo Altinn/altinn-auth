@@ -508,4 +508,10 @@ public static class Problem
     /// </summary>
     public static ProblemDescriptor Rights_ResourceNotDelegable { get; }
         = _factory.Create(82, HttpStatusCode.BadRequest, "One or more resources specified in rights is marked as not delegable in the resource registry.");
+
+    /// <summary>
+    /// A requested Right has more than one resource, or an attribute that is not a resource.
+    /// </summary>
+    public static ProblemDescriptor Rights_MustHaveOneResource { get; }
+        = _factory.Create(83, HttpStatusCode.BadRequest, "A right can have at most one resource, with the id urn:altinn:resource. Use one right per resource.");
 }

@@ -1,0 +1,42 @@
+meta {
+  name: 05_WHEN_OtherPersonRevokesAdministratorThenRequestFails
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/administrators?party={{party}}&user={{user}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  user: {{user}}
+}
+
+docs {
+  WHEN a person with no access to the bostyrer revokes an administrator for the bostyrer,
+  the request fails with 403.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  bru.setVar("party", td.BOSTYRER.partyUuid);
+  bru.setVar("user", td.user_LUN_ANALYSE_GÅSTOL.partyUuid);
+  bru.setVar("personIdentifier", td.user_LUN_ANALYSE_GÅSTOL.pid);
+  bru.setVar("lastName", td.user_LUN_ANALYSE_GÅSTOL.lastname);
+
+  await helpers.loginAs(td.creditor_VILJESTERK_GRANDIS);
+}
+
+tests {
+  test("WHEN another person revokes an administrator for the bostyrer, the request returns 403", function() {
+    expect(res.status).to.equal(403);
+  });
+}

@@ -1,0 +1,33 @@
+meta {
+  name: 07_GIVEN_CallWithoutATokenIsRejected
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/connections/activitylog?party={{party}}&direction=from
+  body: none
+  auth: none
+}
+
+params:query {
+  party: {{party}}
+  direction: from
+}
+
+docs {
+  GIVEN a call to the log itself without a token, THEN it is rejected with 401. Only
+  the two discovery endpoints are anonymous.
+}
+
+script:pre-request {
+  const { testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+
+  bru.setVar("party", testdata().connections.delegator.partyUuid);
+}
+
+tests {
+  test("THEN the call without a token is rejected with 401", function() {
+    expect(res.status).to.equal(401);
+  });
+}

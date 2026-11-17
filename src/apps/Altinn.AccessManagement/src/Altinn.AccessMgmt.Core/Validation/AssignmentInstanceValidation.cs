@@ -13,7 +13,7 @@ public static class AssignmentInstanceValidation
     {
         if (instances is { } && instances.Any())
         {
-            return (ref ValidationErrorBuilder errors) =>
+            return (ref ValidationProblemBuilder errors) =>
                 errors.Add(ValidationErrors.AssignmentHasActiveConnections, $"QUERY/{paramName}", [new("instances", $"following instances have active assignments [{string.Join(",", instances.Select(p => p.Id.ToString()))}].")]);
         }
 

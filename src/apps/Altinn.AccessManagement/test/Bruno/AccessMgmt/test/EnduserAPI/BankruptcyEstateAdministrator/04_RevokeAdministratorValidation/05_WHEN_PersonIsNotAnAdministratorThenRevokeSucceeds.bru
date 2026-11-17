@@ -1,0 +1,69 @@
+meta {
+  name: 05_WHEN_PersonIsNotAnAdministratorThenRevokeSucceeds
+  type: http
+  seq: 5
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/administrators?party={{party}}&user={{user}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  user: {{user}}
+}
+
+docs {
+  WHEN the bostyrer revokes a person who is not their administrator. Nothing changes and the
+  revoke is idempotent, so it returns 204.
+
+  A 204 alone would also pass if the person had been an administrator and was removed, so the
+  step lists the administrators before and after the revoke. It asserts the person is absent
+  both times, and that the list is otherwise unchanged, so a revoke that removed someone else
+  fails too.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  bru.setVar("party", td.BOSTYRER.partyUuid);
+  bru.setVar("user", td.creditor_VILJESTERK_GRANDIS.partyUuid);
+
+  await helpers.loginAs(td.BOSTYRER);
+  bru.setVar("administratorsBeforeRevoke", JSON.stringify(await helpers.listAdministrators(td.BOSTYRER.partyUuid)));
+}
+
+script:post-response {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  bru.setVar("administratorsAfterRevoke", JSON.stringify(await helpers.listAdministrators(bru.getVar("party"))));
+}
+
+tests {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  const td = helpers.testdata();
+
+  test("GIVEN the person is not an administrator before the revoke", function() {
+    const body = JSON.parse(bru.getVar("administratorsBeforeRevoke"));
+    expect(helpers.findAdministrator(body, td.creditor_VILJESTERK_GRANDIS.partyUuid)).to.be.undefined;
+  });
+
+  test("WHEN the person is not an administrator, the request returns 204", function() {
+    expect(res.status).to.equal(204);
+  });
+
+  test("THEN the person is still not an administrator", function() {
+    const body = JSON.parse(bru.getVar("administratorsAfterRevoke"));
+    expect(helpers.findAdministrator(body, td.creditor_VILJESTERK_GRANDIS.partyUuid)).to.be.undefined;
+  });
+
+  test("AND no other administrator was removed or added", function() {
+    const ids = body => JSON.parse(body).data.map(e => e.administrator.id.toLowerCase()).sort();
+    expect(ids(bru.getVar("administratorsAfterRevoke"))).to.deep.equal(ids(bru.getVar("administratorsBeforeRevoke")));
+  });
+}
