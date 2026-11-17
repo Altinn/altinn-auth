@@ -14,7 +14,7 @@ public interface IConnectionService
     /// <summary>
     /// Get Connections
     /// </summary>
-    Task<Result<IEnumerable<ConnectionDto>>> Get(Guid party, Guid? fromId, Guid? toId, bool includeClientDelegations = true, bool includeAgentConnections = true, bool includeAccessPackages = false, bool includeResources = false, bool includeInstances = false, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default);
+    Task<Result<IEnumerable<ConnectionDto>>> Get(Guid party, Guid? fromId, Guid? toId, bool includeClientDelegations = true, bool includeAgentConnections = true, bool includeAccessPackages = false, bool includeResources = false, bool includeInstances = false, Action<ConnectionOptions> configureConnections = null, string languageCode = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Creates a role assignment between two entities.
@@ -78,13 +78,13 @@ public interface IConnectionService
     /// Get connection resources
     /// </summary>
     /// <returns></returns>
-    Task<Result<IEnumerable<ResourcePermissionDto>>> GetResources(Guid party, Guid? fromId, Guid? toId, Guid? resourceId, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default);
+    Task<Result<IEnumerable<ResourcePermissionDto>>> GetResources(Guid party, Guid? fromId, Guid? toId, Guid? resourceId, Action<ConnectionOptions> configureConnections = null, string languageCode = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get connection resource instances
     /// </summary>
     /// <returns></returns>
-    Task<Result<IEnumerable<InstancePermissionDto>>> GetResourceInstances(Guid party, Guid? fromId, Guid? toId, Guid? resourceId, string instanceId, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default);
+    Task<Result<IEnumerable<InstancePermissionDto>>> GetResourceInstances(Guid party, Guid? fromId, Guid? toId, Guid? resourceId, string instanceId, Action<ConnectionOptions> configureConnections = null, string languageCode = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Removes a resource (by resource unique name) from assignment based on a specific role between two entities.
@@ -292,22 +292,22 @@ public interface IConnectionService
     /// <summary>
     /// Get list of resourcerules with a list of parties that have this permission
     /// </summary>
-    Task<ResourceRightDto> GetResourceRightsToOthers(Guid partyId, Guid toId, Guid resourceId, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default);
+    Task<ResourceRightDto> GetResourceRightsToOthers(Guid partyId, Guid toId, Guid resourceId, Action<ConnectionOptions> configureConnection = null, string languageCode = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get list of resourcerules with a list of parties that have this permission
     /// </summary>
-    Task<ResourceRightDto> GetResourceRightsFromOthers(Guid partyId, Guid fromId, Guid resourceId, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default);
+    Task<ResourceRightDto> GetResourceRightsFromOthers(Guid partyId, Guid fromId, Guid resourceId, Action<ConnectionOptions> configureConnection = null, string languageCode = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get list of instance rights with a list of parties that have this permission
     /// </summary>
-    Task<InstanceRightDto> GetInstanceRightsToOthers(Guid partyId, Guid toId, Guid resourceId, string instanceId, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default);
+    Task<InstanceRightDto> GetInstanceRightsToOthers(Guid partyId, Guid toId, Guid resourceId, string instanceId, Action<ConnectionOptions> configureConnection = null, string languageCode = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Get list of instance rights with a list of parties you have this permission at
     /// </summary>
-    Task<InstanceRightDto> GetInstanceRightsFromOthers(Guid partyId, Guid fromId, Guid resourceId, string instanceId, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default);
+    Task<InstanceRightDto> GetInstanceRightsFromOthers(Guid partyId, Guid fromId, Guid resourceId, string instanceId, Action<ConnectionOptions> configureConnection = null, string languageCode = null, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Gets all connections to an agent of the given service provider (viaId)

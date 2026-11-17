@@ -33,7 +33,8 @@ public class ConnectionsController(
     IConnectionService ConnectionService,
     IInputValidation inputValidation,
     IEntityService EntityService,
-    IResourceService resourceService
+    IResourceService resourceService,
+    ITranslationService translationService
     ) : ControllerBase
 {
     private Action<ConnectionOptions> ConfigureConnections { get; } = options =>
@@ -84,6 +85,7 @@ public class ConnectionsController(
             includeResources,
             includeInstances,
             ConfigureConnections,
+            this.GetLanguageCode(),
             cancellationToken
         );
 
@@ -502,6 +504,7 @@ public class ConnectionsController(
             toId: to,
             resourceId: resourceObj?.Id,
             configureConnections: ConfigureConnections,
+            languageCode: this.GetLanguageCode(),
             cancellationToken: cancellationToken
         );
 
@@ -540,12 +543,14 @@ public class ConnectionsController(
             return problem.ToActionResult();
         }
 
+        var languageCode = this.GetLanguageCode();
         var result = party == from
             ? await ConnectionService.GetResourceRightsToOthers(
                 partyId: party,
                 toId: to,
                 resourceId: resourceObj.Id,
                 configureConnection: ConfigureConnections,
+                languageCode: languageCode,
                 cancellationToken: cancellationToken
                 )
             : await ConnectionService.GetResourceRightsFromOthers(
@@ -553,12 +558,13 @@ public class ConnectionsController(
                 fromId: from,
                 resourceId: resourceObj.Id,
                 configureConnection: ConfigureConnections,
+                languageCode: languageCode,
                 cancellationToken: cancellationToken
                 );
 
         var externalResult = new ExternalResourceRightDto
         {
-            Resource = DtoMapper.Convert(resourceObj),
+            Resource = await DtoMapper.Convert(resourceObj).TranslateDeepAsync(translationService, languageCode),
             DirectRights = [],
             IndirectRights = []
         };
@@ -789,6 +795,7 @@ public class ConnectionsController(
             resourceId: resourceObj?.Id,
             instanceId: instance,
             configureConnections: ConfigureConnections,
+            languageCode: this.GetLanguageCode(),
             cancellationToken: cancellationToken
         );
 
@@ -837,6 +844,7 @@ public class ConnectionsController(
             return problem.ToActionResult();
         }
 
+        var languageCode = this.GetLanguageCode();
         var result = party == from
             ? await ConnectionService.GetInstanceRightsToOthers(
                 partyId: party,
@@ -844,6 +852,7 @@ public class ConnectionsController(
                 resourceId: resourceObj.Id,
                 instanceId: instance,
                 configureConnection: ConfigureConnections,
+                languageCode: languageCode,
                 cancellationToken: cancellationToken
                 )
             : await ConnectionService.GetInstanceRightsFromOthers(
@@ -852,12 +861,13 @@ public class ConnectionsController(
                 resourceId: resourceObj.Id,
                 instanceId: instance,
                 configureConnection: ConfigureConnections,
+                languageCode: languageCode,
                 cancellationToken: cancellationToken
                 );
 
         var externalResult = new ExtInstanceRightDto
         {
-            Resource = DtoMapper.Convert(resourceObj),
+            Resource = await DtoMapper.Convert(resourceObj).TranslateDeepAsync(translationService, languageCode),
             Instance = result?.Instance,
             DirectRights = [],
             IndirectRights = []

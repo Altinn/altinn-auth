@@ -434,6 +434,7 @@ namespace Altinn.AccessManagement.TestUtils.Mocks
             Dictionary<string, Dictionary<string, string>> actionDictionary = new Dictionary<string, Dictionary<string, string>>()
                 {
                     { "nb", new Dictionary<string, string>() { { "read", "les" }, { "write", "skriv" }, { "delete", "slett" } } },
+                    { "nn", new Dictionary<string, string>() { { "read", "les" }, { "write", "skriv" }, { "delete", "slett" } } },
                     { "en", new Dictionary<string, string>() { { "read", "read" }, { "write", "write" }, { "delete", "delete" } } }
                 };
 

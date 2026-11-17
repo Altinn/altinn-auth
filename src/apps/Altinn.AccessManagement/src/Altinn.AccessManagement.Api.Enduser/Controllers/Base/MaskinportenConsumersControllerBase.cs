@@ -3,6 +3,7 @@ using System.Net.Mime;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.Core.Audit;
+using Altinn.AccessMgmt.Core.Extensions;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
@@ -141,7 +142,7 @@ public abstract class MaskinportenConsumersControllerBase(
             resourceId = resourceEntity.Value.Id;
         }
 
-        var result = await maskinportenSupplierService.GetConsumerResources(party, consumerEntityId, resourceId, cancellationToken);
+        var result = await maskinportenSupplierService.GetConsumerResources(party, consumerEntityId, resourceId, this.GetLanguageCode(), cancellationToken);
         if (result.IsProblem)
         {
             return result.Problem.ToActionResult();
