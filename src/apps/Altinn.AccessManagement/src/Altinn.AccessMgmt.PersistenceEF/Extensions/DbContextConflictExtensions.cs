@@ -32,7 +32,7 @@ public static class DbContextConflictExtensions
     /// <summary>
     /// Runs <paramref name="attempt"/>, which reads the current rows, stages its changes and saves them.
     /// If the save collides with a concurrent request, the change tracker is cleared and the attempt runs
-    /// again, so it reads
+    /// again, so it reads the rows the other request committed instead of staging them a second time.
     /// The last attempt rethrows the conflict.
     /// </summary>
     /// <param name="db">The context the attempt reads from and saves to.</param>

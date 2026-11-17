@@ -27,7 +27,8 @@ public partial class ConnectionsControllerTest
     /// but share the same <c>AccessAddedNotification</c> outbox refId
     /// (<c>access_added_{from}_{to}</c>). When the requests actually race, one will hit the
     /// <c>uq_outboxmessage_refid_pending</c> unique constraint and must recover via the retry path;
-    /// both must ultimately return 200 OK.
+    /// both must ultimately return 200 OK. The assignment and assignment package conflicts handled by the
+    /// outer retry in <c>ConnectionService.AddPackage</c> are covered by <c>ConnectionServiceAddPackageConcurrentTest</c>.
     /// </remarks>
     [IntegrationTest]
     public class AddAssignmentPackageConcurrent : IClassFixture<ApiFixture>
