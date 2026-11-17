@@ -32,6 +32,12 @@ namespace Altinn.ResourceRegistry.Core.Services
         private readonly IServiceOwnerService _serviceOwnerService;
         private readonly HybridCache _hybridCache;
 
+        private static readonly HybridCacheEntryOptions ResourceListCacheEntryOptions = new()
+        {
+            Expiration = TimeSpan.FromSeconds(120),
+            LocalCacheExpiration = TimeSpan.FromSeconds(120)
+        };
+
         /// <summary>
         /// Creates a new instance of the <see cref="ResourceRegistryService"/> service.
         /// The ResourceRegistryService is responsible for business logic and implementations for working with the resource registry
@@ -250,61 +256,8 @@ namespace Altinn.ResourceRegistry.Core.Services
 
                 return await _hybridCache.GetOrCreateAsync(
                     cacheKey,
-                    async ct =>
-                    {
-                        ResourceSearch resourceSearch = new ResourceSearch();
-
-                        List<ServiceResource> resources = await Search(resourceSearch, includeAllVersions, ct);
-
-                        if (!includeMigratedApps)
-                        {
-                            resources = resources
-                                .Where(resource => !IsMigratedApplicationResource(resource))
-                                .ToList();
-                        }
-
-                        foreach (ServiceResource resource in resources)
-                        {
-                            // For app resources, use org/app format like Storage apps do
-                            if (resource.Identifier.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX, StringComparison.OrdinalIgnoreCase))
-                            {
-                                string[] parts = resource.Identifier.Split('_', 3);
-                                if (parts.Length == 3)
-                                {
-                                    string org = parts[1];
-                                    string app = parts[2];
-                                    resource.AuthorizationReference = new List<AuthorizationReferenceAttribute>
-                            {
-                                new AuthorizationReferenceAttribute() { Id = "urn:altinn:org", Value = org },
-                                new AuthorizationReferenceAttribute() { Id = "urn:altinn:app", Value = app }
-                            };
-                                }
-                                else
-                                {
-                                    // Fallback if identifier format is unexpected
-                                    resource.AuthorizationReference = new List<AuthorizationReferenceAttribute>
-                            {
-                                new AuthorizationReferenceAttribute() { Id = "urn:altinn:resource", Value = resource.Identifier }
-                            };
-                                }
-                            }
-                            else
-                            {
-                                // Non-app resources use resource format
-                                resource.AuthorizationReference = new List<AuthorizationReferenceAttribute>
-                        {
-                            new AuthorizationReferenceAttribute() { Id = "urn:altinn:resource", Value = resource.Identifier }
-                        };
-                            }
-                        }
-
-                        return resources;
-
-                        static bool IsMigratedApplicationResource(ServiceResource resource)
-                        {
-                            return resource.ResourceType == Enums.ResourceType.MigratedApp;
-                        }
-                    },
+                    ct => new ValueTask<List<ServiceResource>>(BuildResourceListAsync(includeAllVersions, includeMigratedApps, ct)),
+                    options: ResourceListCacheEntryOptions,
                     cancellationToken: cancellationToken);
             }
 
@@ -315,6 +268,67 @@ namespace Altinn.ResourceRegistry.Core.Services
 
                 return applicationList.Applications.Select(application => MapApplicationToApplicationResource(application, serviceOwners)).ToList();
             }
+        }
+
+        /// <summary>
+        /// Builds the base resource list from Resource Registry for caching.
+        /// Optionally includes all versions and filters out migrated app resources.
+        /// Also normalizes <see cref="ServiceResource.AuthorizationReference"/> so app resources
+        /// get <c>urn:altinn:org</c>/<c>urn:altinn:app</c>, while other resources get
+        /// <c>urn:altinn:resource</c>.
+        /// </summary>
+        /// <param name="includeAllVersions">Whether all resource versions should be included.</param>
+        /// <param name="includeMigratedApps">Whether migrated app resources should be included.</param>
+        /// <param name="cancellationToken">Cancellation token.</param>
+        /// <returns>The normalized list of resources.</returns>
+        private async Task<List<ServiceResource>> BuildResourceListAsync(
+            bool includeAllVersions,
+            bool includeMigratedApps,
+            CancellationToken cancellationToken)
+        {
+            ResourceSearch resourceSearch = new();
+            List<ServiceResource> resources = await Search(resourceSearch, includeAllVersions, cancellationToken);
+
+            if (!includeMigratedApps)
+            {
+                resources = resources
+                    .Where(resource => resource.ResourceType != Enums.ResourceType.MigratedApp)
+                    .ToList();
+            }
+
+            foreach (ServiceResource resource in resources)
+            {
+                if (resource.Identifier.StartsWith(ResourceConstants.APPLICATION_RESOURCE_PREFIX, StringComparison.OrdinalIgnoreCase))
+                {
+                    string[] parts = resource.Identifier.Split('_', 3);
+                    if (parts.Length == 3)
+                    {
+                        string org = parts[1];
+                        string app = parts[2];
+                        resource.AuthorizationReference =
+                        [
+                            new AuthorizationReferenceAttribute { Id = "urn:altinn:org", Value = org },
+                    new AuthorizationReferenceAttribute { Id = "urn:altinn:app", Value = app }
+                        ];
+                    }
+                    else
+                    {
+                        resource.AuthorizationReference =
+                        [
+                            new AuthorizationReferenceAttribute { Id = "urn:altinn:resource", Value = resource.Identifier }
+                        ];
+                    }
+                }
+                else
+                {
+                    resource.AuthorizationReference =
+                    [
+                        new AuthorizationReferenceAttribute { Id = "urn:altinn:resource", Value = resource.Identifier }
+                    ];
+                }
+            }
+
+            return resources;
         }
 
         /// <summary>

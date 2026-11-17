@@ -95,12 +95,6 @@ internal static class ResourceRegistryHost
 
         services.AddHybridCache(options =>
         {
-            options.DefaultEntryOptions = new HybridCacheEntryOptions
-            {
-                Expiration = TimeSpan.FromSeconds(120),
-                LocalCacheExpiration = TimeSpan.FromSeconds(120)
-            };
-
             options.MaximumPayloadBytes = 1024 * 1024 * 32; // 32 MB
         });
 
