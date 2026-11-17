@@ -139,7 +139,7 @@ public class MaskinportenConsumersControllerTest
     public async Task GetResources_NoFilters_Success_Returns200Ok()
     {
         var svc = new Mock<IMaskinportenSupplierService>();
-        svc.Setup(s => s.GetConsumerResources(Party, null, null, It.IsAny<CancellationToken>()))
+        svc.Setup(s => s.GetConsumerResources(Party, null, null, It.IsAny<string>(), It.IsAny<CancellationToken>()))
            .ReturnsAsync(new Result<IEnumerable<ResourcePermissionDto>>([]));
 
         var result = await CreateSut(svc.Object).GetResources(Party, cancellationToken: TestContext.Current.CancellationToken);
@@ -151,7 +151,7 @@ public class MaskinportenConsumersControllerTest
     public async Task GetResources_NoFilters_Problem_ReturnsNonOk()
     {
         var svc = new Mock<IMaskinportenSupplierService>();
-        svc.Setup(s => s.GetConsumerResources(Party, null, null, It.IsAny<CancellationToken>()))
+        svc.Setup(s => s.GetConsumerResources(Party, null, null, It.IsAny<string>(), It.IsAny<CancellationToken>()))
            .ReturnsAsync(MakeValidationProblem());
 
         var result = await CreateSut(svc.Object).GetResources(Party, cancellationToken: TestContext.Current.CancellationToken);
@@ -191,7 +191,7 @@ public class MaskinportenConsumersControllerTest
            .ReturnsAsync(new Result<Entity>(SampleEntity));
         svc.Setup(s => s.GetResourceByRefId("res1", It.IsAny<CancellationToken>()))
            .ReturnsAsync(new Result<Resource>(SampleResource));
-        svc.Setup(s => s.GetConsumerResources(Party, EntityId, ResourceId, It.IsAny<CancellationToken>()))
+        svc.Setup(s => s.GetConsumerResources(Party, EntityId, ResourceId, It.IsAny<string>(), It.IsAny<CancellationToken>()))
            .ReturnsAsync(new Result<IEnumerable<ResourcePermissionDto>>([]));
 
         var result = await CreateSut(svc.Object).GetResources(Party, consumer: "org1", resource: "res1", cancellationToken: TestContext.Current.CancellationToken);
@@ -486,7 +486,7 @@ public class MaskinportenSuppliersControllerTest
     public async Task GetResources_NoFilters_Success_Returns200Ok()
     {
         var svc = new Mock<IMaskinportenSupplierService>();
-        svc.Setup(s => s.GetSupplierResources(Party, null, null, It.IsAny<CancellationToken>()))
+        svc.Setup(s => s.GetSupplierResources(Party, null, null, It.IsAny<string>(), It.IsAny<CancellationToken>()))
            .ReturnsAsync(new Result<IEnumerable<ResourcePermissionDto>>([]));
 
         var result = await CreateSut(svc.Object).GetResources(Party, cancellationToken: TestContext.Current.CancellationToken);
@@ -498,7 +498,7 @@ public class MaskinportenSuppliersControllerTest
     public async Task GetResources_NoFilters_Problem_ReturnsNonOk()
     {
         var svc = new Mock<IMaskinportenSupplierService>();
-        svc.Setup(s => s.GetSupplierResources(Party, null, null, It.IsAny<CancellationToken>()))
+        svc.Setup(s => s.GetSupplierResources(Party, null, null, It.IsAny<string>(), It.IsAny<CancellationToken>()))
            .ReturnsAsync(MakeValidationProblem());
 
         var result = await CreateSut(svc.Object).GetResources(Party, cancellationToken: TestContext.Current.CancellationToken);

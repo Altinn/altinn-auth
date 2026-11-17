@@ -37,7 +37,7 @@ public class InternalConnectionsControllerUnitTest
     public async Task GetConnections_Success_Returns200WithConnections()
     {
         var svc = new Mock<IConnectionService>();
-        svc.Setup(s => s.Get(Party, Party, To, true, true, false, false, false, It.IsAny<Action<ConnectionOptions>>(), It.IsAny<CancellationToken>()))
+        svc.Setup(s => s.Get(Party, Party, To, true, true, false, false, false, It.IsAny<Action<ConnectionOptions>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
            .ReturnsAsync(new Result<IEnumerable<ConnectionDto>>([]));
 
         var result = await CreateSut(svc.Object).GetConnections(Connection, new PagingInput(), TestContext.Current.CancellationToken);
@@ -49,7 +49,7 @@ public class InternalConnectionsControllerUnitTest
     public async Task GetConnections_Problem_ReturnsActionResult()
     {
         var svc = new Mock<IConnectionService>();
-        svc.Setup(s => s.Get(Party, Party, To, true, true, false, false, false, It.IsAny<Action<ConnectionOptions>>(), It.IsAny<CancellationToken>()))
+        svc.Setup(s => s.Get(Party, Party, To, true, true, false, false, false, It.IsAny<Action<ConnectionOptions>>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
            .ReturnsAsync(MakeValidationProblem());
 
         var result = await CreateSut(svc.Object).GetConnections(Connection, new PagingInput(), TestContext.Current.CancellationToken);

@@ -53,7 +53,7 @@ public partial class ConnectionService(
     ISingleRightsService singleRightsService,
     AppLifecycleFeatures lifecycleFeatures) : IConnectionService
 {
-    public async Task<Result<IEnumerable<ConnectionDto>>> Get(Guid party, Guid? fromId, Guid? toId, bool includeClientDelegations = true, bool includeAgentConnections = true, bool includeAccessPackages = false, bool includeResources = false, bool includeInstances = false, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default)
+    public async Task<Result<IEnumerable<ConnectionDto>>> Get(Guid party, Guid? fromId, Guid? toId, bool includeClientDelegations = true, bool includeAgentConnections = true, bool includeAccessPackages = false, bool includeResources = false, bool includeInstances = false, Action<ConnectionOptions> configureConnections = null, string languageCode = null, CancellationToken cancellationToken = default)
     {
         var options = new ConnectionOptions(configureConnections);
         var (from, to) = await GetFromAndToEntities(fromId, toId, cancellationToken);
@@ -94,9 +94,29 @@ public partial class ConnectionService(
             cancellationToken
         );
 
-        return direction == ConnectionQueryDirection.FromOthers
+        var result = direction == ConnectionQueryDirection.FromOthers
             ? DtoMapper.ConvertFromOthers(connections, getSingle: fromId.HasValue)
             : DtoMapper.ConvertToOthers(connections, getSingle: toId.HasValue);
+
+        await result
+            .SelectMany(FlattenConnections)
+            .SelectMany(c => c.Resources ?? [])
+            .TranslateDistinctInPlaceAsync(translationService, languageCode);
+
+        return result;
+    }
+
+    private static IEnumerable<ConnectionDto> FlattenConnections(ConnectionDto connection)
+    {
+        yield return connection;
+
+        foreach (var sub in connection.Connections ?? [])
+        {
+            foreach (var nested in FlattenConnections(sub))
+            {
+                yield return nested;
+            }
+        }
     }
 
     /// <inheritdoc/>
@@ -262,7 +282,7 @@ public partial class ConnectionService(
 
     #region Resources
 
-    public async Task<Result<IEnumerable<ResourcePermissionDto>>> GetResources(Guid party, Guid? fromId, Guid? toId, Guid? resourceId, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default)
+    public async Task<Result<IEnumerable<ResourcePermissionDto>>> GetResources(Guid party, Guid? fromId, Guid? toId, Guid? resourceId, Action<ConnectionOptions> configureConnections = null, string languageCode = null, CancellationToken cancellationToken = default)
     {
         var options = new ConnectionOptions(configureConnections);
         var (from, to) = await GetFromAndToEntities(fromId, toId, cancellationToken);
@@ -300,10 +320,13 @@ public partial class ConnectionService(
             cancellationToken
         );
 
-        return DtoMapper.ConvertResources(resources);
+        var result = DtoMapper.ConvertResources(resources);
+        await result.Select(r => r.Resource).TranslateDistinctInPlaceAsync(translationService, languageCode);
+
+        return result;
     }
 
-    public async Task<Result<IEnumerable<InstancePermissionDto>>> GetResourceInstances(Guid party, Guid? fromId, Guid? toId, Guid? resourceId, string instanceId, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default)
+    public async Task<Result<IEnumerable<InstancePermissionDto>>> GetResourceInstances(Guid party, Guid? fromId, Guid? toId, Guid? resourceId, string instanceId, Action<ConnectionOptions> configureConnections = null, string languageCode = null, CancellationToken cancellationToken = default)
     {
         var options = new ConnectionOptions(configureConnections);
         var (from, to) = await GetFromAndToEntities(fromId, toId, cancellationToken);
@@ -343,7 +366,10 @@ public partial class ConnectionService(
             cancellationToken
         );
 
-        return await MapConnectionsToInstancePermissions(instances, cancellationToken);
+        var result = await MapConnectionsToInstancePermissions(instances, cancellationToken);
+        await result.Select(r => r.Resource).TranslateDistinctInPlaceAsync(translationService, languageCode);
+
+        return result;
     }
 
     private async Task<List<InstancePermissionDto>> MapConnectionsToInstancePermissions(IEnumerable<ConnectionQueryExtendedRecord> connections, CancellationToken cancellationToken)
@@ -1042,7 +1068,7 @@ public partial class ConnectionService(
         var roles = await RoleDelegationCheck(party, authenticatedUserUuid, isMainAdminForFrom, cancellationToken);
 
         // Fetch resource rights
-        var resources = await GetResourceRights(party, authenticatedUserUuid, resourceDto.Id, null, includeClientDelegations: false, cancellationToken);
+        var resources = await GetResourceRights(party, authenticatedUserUuid, resourceDto.Id, null, includeClientDelegations: false, cancellationToken: cancellationToken);
 
         ProcessTheAccessToTheRightKeys(rights, packages.Value, roles.Value, resources);
 
@@ -1108,8 +1134,8 @@ public partial class ConnectionService(
         bool isMainAdminForFrom = await IsMainAdmin(party, authenticatedUserUuid, cancellationToken);
 
         var roles = await RoleDelegationCheck(party, authenticatedUserUuid, isMainAdminForFrom, cancellationToken);
-        var resources = await GetResourceRights(party, authenticatedUserUuid, resourceDto.Id, null, includeClientDelegations: false, cancellationToken);
-        var instances = await GetInstanceRights(party, authenticatedUserUuid, resourceDto.Id, instanceId, RoleConstants.Rightholder, cancellationToken);
+        var resources = await GetResourceRights(party, authenticatedUserUuid, resourceDto.Id, null, includeClientDelegations: false, cancellationToken: cancellationToken);
+        var instances = await GetInstanceRights(party, authenticatedUserUuid, resourceDto.Id, instanceId, RoleConstants.Rightholder, cancellationToken: cancellationToken);
 
         ProcessTheAccessToTheRightKeys(rights, packages.Value, roles.Value, resources, instances);
 
@@ -2043,7 +2069,7 @@ public partial class ConnectionService
     }
 
     /// <inheritdoc />
-    public async Task<ResourceRightDto> GetResourceRightsToOthers(Guid partyId, Guid toId, Guid resourceId, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
+    public async Task<ResourceRightDto> GetResourceRightsToOthers(Guid partyId, Guid toId, Guid resourceId, Action<ConnectionOptions> configureConnection = null, string languageCode = null, CancellationToken cancellationToken = default)
     {
         var result = await GetResourceRights(
            fromId: partyId,
@@ -2051,6 +2077,7 @@ public partial class ConnectionService
            resourceId: resourceId,
            roleId: RoleConstants.Rightholder,
            includeClientDelegations: true,
+           languageCode: languageCode,
            cancellationToken: cancellationToken
            );
 
@@ -2058,7 +2085,7 @@ public partial class ConnectionService
     }
 
     /// <inheritdoc />
-    public async Task<ResourceRightDto> GetResourceRightsFromOthers(Guid partyId, Guid fromId, Guid resourceId, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
+    public async Task<ResourceRightDto> GetResourceRightsFromOthers(Guid partyId, Guid fromId, Guid resourceId, Action<ConnectionOptions> configureConnection = null, string languageCode = null, CancellationToken cancellationToken = default)
     {
         var result = await GetResourceRights(
             fromId: fromId,
@@ -2066,6 +2093,7 @@ public partial class ConnectionService
             resourceId: resourceId,
             roleId: RoleConstants.Rightholder,
             includeClientDelegations: true,
+            languageCode: languageCode,
             cancellationToken: cancellationToken
             );
 
@@ -2073,7 +2101,7 @@ public partial class ConnectionService
     }
 
     /// <inheritdoc />
-    public async Task<InstanceRightDto> GetInstanceRightsToOthers(Guid partyId, Guid toId, Guid resourceId, string instanceId, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
+    public async Task<InstanceRightDto> GetInstanceRightsToOthers(Guid partyId, Guid toId, Guid resourceId, string instanceId, Action<ConnectionOptions> configureConnection = null, string languageCode = null, CancellationToken cancellationToken = default)
     {
         var result = await GetInstanceRights(
            fromId: partyId,
@@ -2081,6 +2109,7 @@ public partial class ConnectionService
            resourceId: resourceId,
            instanceId: instanceId,
            roleId: RoleConstants.Rightholder,
+           languageCode: languageCode,
            cancellationToken: cancellationToken
            );
 
@@ -2088,7 +2117,7 @@ public partial class ConnectionService
     }
 
     /// <inheritdoc />
-    public async Task<InstanceRightDto> GetInstanceRightsFromOthers(Guid partyId, Guid fromId, Guid resourceId, string instanceId, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
+    public async Task<InstanceRightDto> GetInstanceRightsFromOthers(Guid partyId, Guid fromId, Guid resourceId, string instanceId, Action<ConnectionOptions> configureConnection = null, string languageCode = null, CancellationToken cancellationToken = default)
     {
         var result = await GetInstanceRights(
             fromId: fromId,
@@ -2096,13 +2125,14 @@ public partial class ConnectionService
             resourceId: resourceId,
             instanceId: instanceId,
             roleId: RoleConstants.Rightholder,
+            languageCode: languageCode,
             cancellationToken: cancellationToken
             );
 
         return result.FirstOrDefault();
     }
 
-    internal async Task<List<ResourceRightDto>> GetResourceRights(Guid? fromId, Guid? toId, Guid? resourceId, Guid? roleId, bool includeClientDelegations, CancellationToken cancellationToken = default)
+    internal async Task<List<ResourceRightDto>> GetResourceRights(Guid? fromId, Guid? toId, Guid? resourceId, Guid? roleId, bool includeClientDelegations, string languageCode = null, CancellationToken cancellationToken = default)
     {
         if (!fromId.HasValue && !toId.HasValue)
         {
@@ -2280,7 +2310,7 @@ public partial class ConnectionService
 
         foreach (var resource in res.Select(t => t.Resource).DistinctBy(t => t.Id))
         {
-            var rightKeys = await contextRetrievalService.GetResourcePolicyV2(resource.RefId, cancellationToken: cancellationToken);
+            var rightKeys = await contextRetrievalService.GetResourcePolicyV2(resource.RefId, languageCode ?? "nb", cancellationToken);
 
             var resourceRight = new ResourceRightDto()
             {
@@ -2313,6 +2343,7 @@ public partial class ConnectionService
                             Right = new RightDto
                             {
                                 Key = rightKey,
+                                Name = rightKeyMetadata?.Name,
                                 Resource = rightKeyMetadata?.Resource,
                                 Action = rightKeyMetadata?.Action,
                             },
@@ -2352,10 +2383,12 @@ public partial class ConnectionService
             result.Add(resourceRight);
         }
 
+        await result.Select(r => r.Resource).TranslateDistinctInPlaceAsync(translationService, languageCode);
+
         return result;
     }
 
-    private async Task<List<InstanceRightDto>> GetInstanceRights(Guid? fromId, Guid? toId, Guid? resourceId, string? instanceId, Guid? roleId, CancellationToken cancellationToken = default)
+    private async Task<List<InstanceRightDto>> GetInstanceRights(Guid? fromId, Guid? toId, Guid? resourceId, string? instanceId, Guid? roleId, string languageCode = null, CancellationToken cancellationToken = default)
     {
         if (!fromId.HasValue && !toId.HasValue)
         {
@@ -2454,7 +2487,7 @@ public partial class ConnectionService
 
         foreach (var resource in res.Select(t => t.Resource).DistinctBy(t => t.Id))
         {
-            var rightKeys = await contextRetrievalService.GetResourcePolicyV2(resource.RefId, cancellationToken: cancellationToken);
+            var rightKeys = await contextRetrievalService.GetResourcePolicyV2(resource.RefId, languageCode ?? "nb", cancellationToken);
 
             var instanceRight = new InstanceRightDto()
             {
@@ -2490,6 +2523,7 @@ public partial class ConnectionService
                             Right = new RightDto
                             {
                                 Key = rightKey,
+                                Name = rightKeyMetadata?.Name,
                                 Resource = rightKeyMetadata?.Resource,
                                 Action = rightKeyMetadata?.Action,
                             },
@@ -2528,6 +2562,8 @@ public partial class ConnectionService
 
             result.Add(instanceRight);
         }
+
+        await result.Select(r => r.Resource).TranslateDistinctInPlaceAsync(translationService, languageCode);
 
         return result;
     }

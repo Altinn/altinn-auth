@@ -232,7 +232,7 @@ public abstract class MaskinportenSuppliersControllerBase(
             resourceId = resourceEntity.Value.Id;
         }
 
-        var result = await maskinportenSupplierService.GetSupplierResources(party, supplierEntityId, resourceId, cancellationToken);
+        var result = await maskinportenSupplierService.GetSupplierResources(party, supplierEntityId, resourceId, this.GetLanguageCode(), cancellationToken);
         if (result.IsProblem)
         {
             return result.Problem.ToActionResult();
