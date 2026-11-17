@@ -85,6 +85,55 @@ public class TranslateDistinctInPlaceTest
         Assert.Equal("English right description", resource.RightDescription);
     }
 
+    [Fact]
+    public async Task CompactThenFull_EachKeepsItsOwnShape()
+    {
+        var id = Guid.CreateVersion7();
+        var compact = Compact(id, "res-a");
+        var full = new ResourceDto { Id = id, RefId = "res-a", Name = "Navn", Description = "Beskrivelse", RightDescription = "Rettighet" };
+        var svc = new EnglishResourceTranslator();
+
+        await new[] { compact, full }.TranslateDistinctInPlaceAsync(svc, "eng");
+
+        Assert.Equal(1, svc.ResourceLookups);
+        Assert.Equal("res-a (en)", compact.Name);
+        Assert.Null(compact.Description);
+        Assert.Null(compact.RightDescription);
+        Assert.Equal("res-a (en)", full.Name);
+        Assert.Equal("English description", full.Description);
+        Assert.Equal("English right description", full.RightDescription);
+    }
+
+    [Fact]
+    public async Task FullThenCompact_EachKeepsItsOwnShape()
+    {
+        var id = Guid.CreateVersion7();
+        var full = new ResourceDto
+        {
+            Id = id,
+            RefId = "res-a",
+            Name = "Navn",
+            Description = "Beskrivelse",
+            RightDescription = "Rettighet",
+            Provider = new ProviderDto { Id = Guid.CreateVersion7(), Name = "Leverandør" },
+            Type = new ResourceTypeDto { Id = Guid.CreateVersion7(), Name = "Type" },
+        };
+        var compact = Compact(id, "res-a");
+        var svc = new EnglishResourceTranslator();
+
+        await new[] { full, compact }.TranslateDistinctInPlaceAsync(svc, "eng");
+
+        Assert.Equal(1, svc.ResourceLookups);
+        Assert.Equal("English description", full.Description);
+        Assert.NotNull(full.Provider);
+        Assert.NotNull(full.Type);
+        Assert.Equal("res-a (en)", compact.Name);
+        Assert.Null(compact.Description);
+        Assert.Null(compact.RightDescription);
+        Assert.Null(compact.Provider);
+        Assert.Null(compact.Type);
+    }
+
     [Theory]
     [InlineData(null)]
     [InlineData("")]
