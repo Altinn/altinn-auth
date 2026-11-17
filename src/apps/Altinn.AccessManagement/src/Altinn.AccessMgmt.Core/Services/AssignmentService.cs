@@ -1,11 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Text;
 using Altinn.AccessManagement.Core.Errors;
-using Altinn.AccessManagement.Core.Helpers;
-using Altinn.AccessManagement.Core.Models;
-using Altinn.AccessManagement.Core.Repositories.Interfaces;
-using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
@@ -14,158 +9,16 @@ using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
-using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
-using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.ProblemDetails;
-using Altinn.Authorization.Xacml.Constants;
-using Altinn.Urn;
-using Altinn.Urn.Json;
 using Microsoft.EntityFrameworkCore;
 
 namespace Altinn.AccessMgmt.Core.Services;
 
 /// <inheritdoc/>
-public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery) : IAssignmentService
+public class AssignmentService(AppDbContext db) : IAssignmentService
 {
     private const string AssignmentUniqueIndex = "ix_assignment_fromid_toid_roleid";
-
-    /// <inheritdoc/>
-    public async Task<List<AssignmentPackageDto>> ImportAssignmentPackages(Guid fromId, Guid toId, List<string> packageUrns, AuditValues values = null, CancellationToken cancellationToken = default)
-    {
-        var packageIds = await db.Packages
-            .AsNoTracking()
-            .Where(p => packageUrns.Contains(p.Urn))
-            .Select(p => p.Id)
-            .ToListAsync(cancellationToken);
-
-        var assignment = await db.Assignments
-            .AsNoTracking()
-            .Where(a => a.FromId == fromId)
-            .Where(a => a.ToId == toId)
-            .Where(a => a.RoleId == RoleConstants.Rightholder)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (assignment is null)
-        {
-            assignment = new Assignment()
-            {
-                FromId = fromId,
-                ToId = toId,
-                RoleId = RoleConstants.Rightholder,
-                Audit_ValidFrom = values?.ValidFrom ?? DateTimeOffset.UtcNow,
-            };
-            await db.Assignments.AddAsync(assignment, cancellationToken);
-            try
-            {
-                await db.SaveChangesAsync(values, cancellationToken);
-            }
-            catch (DbUpdateException ex) when (ex.IsUniqueViolation(AssignmentUniqueIndex))
-            {
-                db.Entry(assignment).State = EntityState.Detached;
-                assignment = await db.Assignments
-                    .AsNoTracking()
-                    .Where(a => a.FromId == fromId)
-                    .Where(a => a.ToId == toId)
-                    .Where(a => a.RoleId == RoleConstants.Rightholder)
-                    .FirstOrDefaultAsync(cancellationToken)
-                    ?? throw new InvalidOperationException("Assignment conflict detected, but the existing assignment could not be found.", ex);
-            }
-        }
-
-        var existingAssignmentPackages = await db.AssignmentPackages
-            .AsNoTracking()
-            .Where(a => a.AssignmentId == assignment.Id)
-            .Where(a => packageIds.Contains(a.PackageId))
-            .ToListAsync(cancellationToken);
-
-        List<AssignmentPackageDto> result = new();
-
-        foreach (var existing in existingAssignmentPackages)
-        {
-            result.Add(DtoMapper.Convert(existing));
-        }
-
-        if (result.Count == packageIds.Count)
-        {
-            return result;
-        }
-
-        foreach (var packageId in packageIds.Except(existingAssignmentPackages.Select(p => p.PackageId)))
-        {
-            AssignmentPackage newAssignmentPackage = new AssignmentPackage()
-            {
-                AssignmentId = assignment.Id,
-                PackageId = packageId,
-                Audit_ValidFrom = values?.ValidFrom ?? DateTimeOffset.UtcNow,
-            };
-
-            await db.AssignmentPackages.AddAsync(newAssignmentPackage, cancellationToken);
-            result.Add(DtoMapper.Convert(newAssignmentPackage));
-        }
-
-        await db.SaveChangesAsync(values, cancellationToken);
-
-        return result;
-    }
-
-    /// <inheritdoc/>
-    public async Task<int> RevokeImportedAssignmentPackages(Guid fromId, Guid toId, List<string> packageUrns, AuditValues values = null, bool onlyRemoveA2Packages = true, CancellationToken cancellationToken = default)
-    {
-        var packageIds = await db.Packages
-            .AsNoTracking()
-            .Where(p => packageUrns.Contains(p.Urn))
-            .Select(p => p.Id)
-            .ToListAsync(cancellationToken);
-
-        var assignment = await db.Assignments
-            .AsNoTracking()
-            .Include(a => a.From)
-            .Include(a => a.To)
-            .Where(a => a.FromId == fromId)
-            .Where(a => a.ToId == toId)
-            .Where(a => a.RoleId == RoleConstants.Rightholder)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (assignment is null)
-        {
-            return 0;
-        }
-
-        var existingAssignmentPackages = await db.AssignmentPackages
-            .AsNoTracking()
-            .Where(a => a.AssignmentId == assignment.Id)
-            .Where(a => packageIds.Contains(a.PackageId))
-            .Where(a => !onlyRemoveA2Packages || a.Audit_ChangedBySystem == SystemEntityConstants.Altinn2RoleImportSystem.Id)
-            .ToListAsync(cancellationToken);
-
-        bool removeditem = false;
-        foreach (var item in existingAssignmentPackages)
-        {
-            db.Remove(item);
-            removeditem = true;
-        }
-
-        int result = 0;
-        if (removeditem)
-        {
-            result = await db.SaveChangesAsync(values, cancellationToken);
-        }
-
-        if (!onlyRemoveA2Packages || assignment.Audit_ChangedBySystem == SystemEntityConstants.Altinn2RoleImportSystem.Id)
-        {
-            ValidationProblemBuilder errors = await CheckCascadingAssignmentRevoke(assignment.Id, cancellationToken);
-
-            // if no existing dependencies remove assignment
-            if (errors.IsEmpty)
-            {
-                db.Assignments.Remove(assignment);
-                await db.SaveChangesAsync(values, cancellationToken);
-            }
-        }
-
-        return result;
-    }
 
     /// <inheritdoc/>
     public async Task<IEnumerable<SystemuserClientDto>> GetClients(Guid toId, string[] roles, string[] packages, CancellationToken cancellationToken = default)
@@ -311,12 +164,6 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
     }
 
     /// <inheritdoc/>
-    public async Task<IEnumerable<Assignment>> GetAssignments(Guid fromId, Guid toId, CancellationToken cancellationToken = default)
-    {
-        return await db.Assignments.AsNoTracking().Where(t => t.FromId == fromId && t.ToId == toId).ToListAsync(cancellationToken);
-    }
-
-    /// <inheritdoc/>
     public async Task<List<Assignment>> GetFacilitatorAssignments(Guid fromId, string roleCode, CancellationToken cancellationToken = default)
     {
         var roleResult = await db.Roles.AsNoTracking()
@@ -339,156 +186,6 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
 
         return result;
     }
-
-    /// <inheritdoc/>
-    public async Task<Assignment> GetAssignment(Guid fromId, Guid toId, string roleCode, CancellationToken cancellationToken = default)
-    {
-        var roleResult = await db.Roles.AsNoTracking()
-            .Where(t => t.Code == roleCode)
-            .ToListAsync(cancellationToken);
-
-        if (roleResult == null || !roleResult.Any())
-        {
-            return null;
-        }
-
-        return await GetAssignment(fromId, toId, roleResult.First().Id);
-    }
-
-    /// <inheritdoc/>
-    public async Task<IEnumerable<Assignment>> GetKeyRoleAssignments(Guid toId, CancellationToken cancellationToken = default)
-    {
-        return await db.Assignments.AsNoTracking()
-            .Where(t => t.ToId == toId)
-            .Include(t => t.Role)
-            .Where(t => t.Role.IsKeyRole)
-            .Include(t => t.From)
-            .ToListAsync(cancellationToken);
-    }
-
-    #region Packages, Resources and Instances
-
-    /// <inheritdoc/>
-    public async Task<IEnumerable<AssignmentPackage>> GetAssignmentPackages(Guid assignmentId, CancellationToken cancellationToken = default)
-    {
-        return await db.AssignmentPackages.AsNoTracking().Where(t => t.AssignmentId == assignmentId).Include(t => t.Package).ToListAsync();
-    }
-
-    /// <inheritdoc/>
-    public async Task<IEnumerable<AssignmentResource>> GetAssignmentResources(Guid assignmentId, CancellationToken cancellationToken = default)
-    {
-        return await db.AssignmentResources.AsNoTracking().Where(t => t.AssignmentId == assignmentId).Include(t => t.Resource).ToListAsync();
-    }
-
-    /// <inheritdoc/>
-    public async Task<IEnumerable<AssignmentInstance>> GetAssignmentInstances(Guid assignmentId, CancellationToken cancellationToken = default)
-    {
-        return await db.AssignmentInstances.AsNoTracking().Where(t => t.AssignmentId == assignmentId).Include(t => t.Resource).Include(t => t.Assignment).ToListAsync();
-    }
-
-    /// <inheritdoc/>
-    public async Task<IEnumerable<AssignmentInstance>> GetAssignmentInstances(Guid assignmentId, Guid resourceId, CancellationToken cancellationToken = default)
-    {
-        return await db.AssignmentInstances.AsNoTracking().Where(t => t.AssignmentId == assignmentId && t.ResourceId == resourceId).Include(t => t.Resource).Include(t => t.Assignment).ToListAsync();
-    }
-
-    /// <inheritdoc/>
-    public async Task<bool> AddAssignmentPackage(Guid userId, Guid assignmentId, Guid packageId, CancellationToken cancellationToken = default)
-    {
-        /*
-        [X] Check if user is TS
-        [X] Check if user assignment.roles has packages
-        [X] Check if user assignment.assignmentpackages has package
-        [?] Check if users has packages delegated?
-
-        [ ] Check if package can be delegated
-        */
-
-        var user = await db.Entities.AsNoTracking().SingleAsync(t => t.Id == userId, cancellationToken);
-        var assignment = await db.Assignments.SingleAsync(t => t.Id == assignmentId, cancellationToken);
-        var package = await db.Packages.SingleAsync(t => t.Id == packageId, cancellationToken);
-
-        // Sjekk om bruker er Tilgangsstyrer for From-parten
-        if (!await HasRole(assignment.FromId, userId, RoleConstants.AccessManager, cancellationToken))
-        {
-            throw new UnauthorizedAccessException(string.Format("User '{0}' does not have permission to add package to assignment", user.Name));
-        }
-
-        if (!await HasPackage(assignment.FromId, userId, package.Id, cancellationToken))
-        {
-            throw new UnauthorizedAccessException($"User '{user.Name}' does not have package '{package.Name}'");
-        }
-
-        await db.AssignmentPackages.AddAsync(
-            new AssignmentPackage()
-            {
-                AssignmentId = assignmentId,
-                PackageId = packageId
-            },
-            cancellationToken
-            );
-
-        var result = await db.SaveChangesAsync(cancellationToken);
-        if (result == 0)
-        {
-            return false;
-        }
-
-        return true;
-    }
-
-    private async Task<bool> UpsertAssignmentResourceInternal(Guid assignmentId, Guid resourceId, string policyPath, string policyVersion, int delegationEventId, AuditValues audit, CancellationToken cancellationToken = default)
-    {
-        var assignment = await db.Assignments.AsNoTracking().SingleAsync(t => t.Id == assignmentId, cancellationToken);
-        var resource = await db.Resources.AsNoTracking().SingleAsync(t => t.Id == resourceId, cancellationToken);
-
-        var res = await db.AssignmentResources.AsTracking().FirstOrDefaultAsync(t => t.AssignmentId == assignmentId && t.ResourceId == resource.Id, cancellationToken);
-
-        if (res != null)
-        {
-            res.PolicyPath = policyPath;
-            res.PolicyVersion = policyVersion;
-            res.DelegationChangeId = delegationEventId;
-        }
-        else
-        {
-            res = new AssignmentResource()
-            {
-                Id = Guid.CreateVersion7(),
-                AssignmentId = assignment.Id,
-                ResourceId = resource.Id,
-                PolicyPath = policyPath,
-                PolicyVersion = policyVersion,
-                DelegationChangeId = delegationEventId
-            };
-            db.AssignmentResources.Add(res);
-        }
-
-        var result = await db.SaveChangesAsync(audit, cancellationToken);
-
-        return result > 0;
-    }
-
-    private async Task<bool> HasRole(Guid fromId, Guid toId, Guid roleId, CancellationToken cancellationToken)
-    {
-        return await db.Assignments.AsNoTracking().AnyAsync(t => t.FromId == fromId && t.ToId == toId && t.RoleId == roleId, cancellationToken);
-    }
-
-    private async Task<bool> HasPackage(Guid fromId, Guid toId, Guid packageId, CancellationToken cancellationToken)
-    {
-        // Filter needs to be tested
-        var result = await connectionQuery.GetConnectionsFromOthersAsync(new ConnectionQueryFilter()
-        {
-            FromIds = [fromId],
-            ToIds = [toId],
-            PackageIds = [packageId],
-            IncludePackages = true,
-        });
-
-        return result.Any();
-    }
-
-    #endregion
 
     /// <inheritdoc/>
     public async Task<ProblemInstance> DeleteAssignment(Guid fromEntityId, Guid toEntityId, string roleCode, bool cascade = false, CancellationToken cancellationToken = default)
@@ -562,7 +259,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
     /// <param name="assignmentId">The id of the assignment to delete</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>dependencies on the assignment taht will be revoked together with the assignment if it is removed</returns>
-    public async Task<ValidationProblemBuilder> CheckCascadingAssignmentRevoke(Guid assignmentId, CancellationToken cancellationToken)
+    private async Task<ValidationProblemBuilder> CheckCascadingAssignmentRevoke(Guid assignmentId, CancellationToken cancellationToken)
     {
         ValidationProblemBuilder errors = default;
 
@@ -664,66 +361,6 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
     }
 
     /// <inheritdoc/>
-    public async Task<Result<Assignment>> GetOrCreateAssignment(Guid fromEntityId, Guid toEntityId, string roleCode, CancellationToken cancellationToken = default)
-    {
-        ValidationProblemBuilder errors = default;
-
-        var fromEntity = await db.Entities.SingleAsync(t => t.Id == fromEntityId, cancellationToken);
-        var toEntity = await db.Entities.SingleAsync(t => t.Id == toEntityId, cancellationToken);
-        ValidatePartyIsNotNull(fromEntityId, fromEntity, ref errors, "$QUERY/party");
-        ValidatePartyIsOrg(fromEntity, ref errors, "$QUERY/party");
-        ValidatePartyIsNotNull(toEntityId, toEntity, ref errors, "$QUERY/to");
-        ValidatePartyIsOrg(toEntity, ref errors, "$QUERY/to");
-
-        var roleResult = await db.Roles.AsNoTracking().Where(t => t.Code == roleCode).ToListAsync(cancellationToken);
-        if (roleResult == null || !roleResult.Any())
-        {
-            Unreachable();
-        }
-
-        var roleId = roleResult.First().Id;
-        var existingAssignment = await GetAssignment(fromEntityId, toEntityId, roleId, cancellationToken: cancellationToken);
-        if (existingAssignment != null)
-        {
-            return existingAssignment;
-        }
-
-        if (errors.TryBuild(out var errorResult))
-        {
-            return errorResult;
-        }
-
-        var assignment = new Assignment
-        {
-            FromId = fromEntityId,
-            ToId = toEntityId,
-            RoleId = roleId,
-        };
-
-        await db.Assignments.AddAsync(assignment, cancellationToken);
-        var result = await db.SaveChangesAsync(cancellationToken);
-
-        if (result == 0)
-        {
-            Unreachable();
-        }
-
-        return assignment;
-    }
-
-    /// <inheritdoc/>
-    public async Task<Assignment> GetOrCreateAssignmentInternal(Guid fromEntityId, Guid toEntityId, string roleCode, CancellationToken cancellationToken = default)
-    {
-        var roleResult = await db.Roles.AsNoTracking().Where(t => t.Code == roleCode).ToListAsync(cancellationToken);
-        if (roleResult == null || !roleResult.Any())
-        {
-            throw new KeyNotFoundException($"Role '{roleCode}' not found");
-        }
-
-        return await GetOrCreateAssignment(fromEntityId, toEntityId, roleResult.First().Id, cancellationToken: cancellationToken);
-    }
-
-    /// <inheritdoc/>
     public async Task<Assignment> GetOrCreateAssignment(Guid fromEntityId, Guid toEntityId, Guid roleId, AuditValues audit = null, CancellationToken cancellationToken = default)
     {
         var assignment = await GetAssignment(fromEntityId, toEntityId, roleId, cancellationToken: cancellationToken);
@@ -737,19 +374,6 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
         {
             throw new KeyNotFoundException($"Role '{roleId}' not found");
         }
-
-        /*
-        var inheritedAssignments = await GetInheritedAssignment(fromEntityId, toEntityId, role.Id, cancellationToken: cancellationToken);
-        if (inheritedAssignments != null && inheritedAssignments.Any())
-        {
-            if (inheritedAssignments.Count() == 1)
-            {
-                throw new Exception(string.Format("An inheirited assignment exists From:'{0}.FromName' Via:'{0}.ViaName' To:'{}.ToName'. Use Force = true to create anyway.", inheritedAssignments.First()));
-            }
-
-            throw new Exception(string.Format("Multiple inheirited assignment exists. Use Force = true to create anyway."));
-        }
-        */
 
         assignment = new Assignment()
         {
@@ -788,32 +412,6 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
 
         return assignment;
     }
-
-    /*
-    /// <inheritdoc/>
-    public async Task<IEnumerable<InheritedAssignment>> GetInheritedAssignment(Guid fromId, Guid toId, Guid roleId, CancellationToken cancellationToken = default)
-    {
-        var filter = inheritedAssignmentRepository.CreateFilterBuilder();
-        filter.Equal(t => t.FromId, fromId);
-        filter.Equal(t => t.ToId, toId);
-        filter.Equal(t => t.RoleId, roleId);
-
-        return await inheritedAssignmentRepository.Get(filter, cancellationToken: cancellationToken);
-    }
-
-    /// <inheritdoc/>
-    public async Task<IEnumerable<InheritedAssignment>> GetInheritedAssignment(Guid fromId, Guid toId, string roleCode, CancellationToken cancellationToken = default)
-    {
-        var roleResult = await roleRepository.Get(t => t.Code, roleCode, cancellationToken: cancellationToken);
-        if (roleResult == null || !roleResult.Any())
-        {
-            throw new Exception(string.Format("Role not found '{0}'", roleCode));
-        }
-
-        var roleId = roleResult.First().Id;
-        return await GetInheritedAssignment(fromId, toId, roleId, cancellationToken: cancellationToken);
-    }
-    */
 
     /// <inheritdoc/>
     public async Task<IEnumerable<AssignmentOrRolePackageAccess>> GetPackagesForAssignment(Guid assignmentId, CancellationToken cancellationToken = default)
@@ -921,178 +519,9 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
         return db.SaveChanges(audit);
     }
 
-    private static void ValidatePartyIsNotNull(Guid id, Entity entity, ref ValidationProblemBuilder errors, string param)
-    {
-        if (entity is null)
-        {
-            errors.Add(ValidationErrors.EntityNotExists, param, [new("partyId", id.ToString())]);
-        }
-    }
-
-    private static void ValidatePartyIsOrg(Entity entity, ref ValidationProblemBuilder errors, string param)
-    {
-        if (entity is not null && !entity.Type.Name.Equals("Organisasjon", StringComparison.InvariantCultureIgnoreCase))
-        {
-            errors.Add(ValidationErrors.InvalidQueryParameter, param, [new("partyId", $"expected party of type 'Organisasjon' got '{entity.Type.Name}'.")]);
-        }
-    }
-
     [DoesNotReturn]
     private static void Unreachable()
     {
         throw new UnreachableException();
-    }
-
-    /// <inheritdoc />
-    public async Task<int> RevokeImportedAssignmentResource(Guid fromId, Guid toId, string resourceName, AuditValues audit, CancellationToken cancellationToken = default)
-    {
-        var resource = await db.Resources
-            .AsNoTracking()
-            .Where(a => a.RefId == resourceName)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (resource is null)
-        {
-            throw new KeyNotFoundException($"Resource '{resourceName}' not found");
-        }
-
-        var maskinportenResourceType = await db.ResourceTypes
-            .AsNoTracking()
-            .Where(a => a.Name == "MaskinportenSchema")
-            .FirstOrDefaultAsync(cancellationToken);
-
-        var assignmentRole = RoleConstants.Rightholder;
-
-        if (maskinportenResourceType is not null && maskinportenResourceType.Id == resource.TypeId)
-        {
-            assignmentRole = RoleConstants.Supplier;
-        }
-
-        var assignment = await db.Assignments
-            .AsNoTracking()
-            .Where(a => a.FromId == fromId)
-            .Where(a => a.ToId == toId)
-            .Where(a => a.RoleId == assignmentRole.Id)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (assignment is null)
-        {
-            return 0;
-        }
-
-        var assignmentResource = await db.AssignmentResources
-            .AsNoTracking()
-            .Where(ar => ar.AssignmentId == assignment.Id)
-            .Where(ar => ar.ResourceId == resource.Id)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        int result = 0;
-
-        if (assignmentResource is not null)
-        {
-            db.Remove(assignmentResource);
-            result = await db.SaveChangesAsync(audit, cancellationToken);
-        }
-
-        if (assignment.Audit_ChangedBySystem == SystemEntityConstants.SingleRightImportSystem)
-        {
-            await DeleteAssignment(assignment.Id, false, audit, cancellationToken);
-        }
-
-        return result;
-    }
-
-    /// <inheritdoc />
-    public async Task<int> ImportAssignmentResourceChange(Guid fromId, Guid toId, string resourceName, string blobStoragePolicyPath, string blobStorageVersionId, int delegationEventId, AuditValues audit, CancellationToken cancellationToken = default)
-    {
-        var resource = await db.Resources
-            .AsNoTracking()
-            .Where(a => a.RefId == resourceName)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (resource is null)
-        {
-            throw new KeyNotFoundException($"Resource '{resourceName}' not found");
-        }
-
-        var resourceType = await db.ResourceTypes
-            .AsNoTracking()
-            .Where(a => a.Name == "MaskinportenSchema")
-            .FirstOrDefaultAsync(cancellationToken);
-
-        var assignmentRole = RoleConstants.Rightholder;
-
-        if (resourceType is not null && resourceType.Id == resource.TypeId)
-        {
-            assignmentRole = RoleConstants.Supplier;
-        }
-
-        var assignment = await db.Assignments
-            .AsNoTracking()
-            .Where(a => a.FromId == fromId)
-            .Where(a => a.ToId == toId)
-            .Where(a => a.RoleId == assignmentRole.Id)
-            .FirstOrDefaultAsync(cancellationToken);
-
-        if (assignment is null)
-        {
-            assignment = new Assignment()
-            {
-                FromId = fromId,
-                ToId = toId,
-                RoleId = assignmentRole.Id,
-                Audit_ValidFrom = audit?.ValidFrom ?? DateTimeOffset.UtcNow,
-            };
-            await db.Assignments.AddAsync(assignment, cancellationToken);
-            await db.SaveChangesAsync(audit, cancellationToken);
-        }
-
-        var result = await UpsertAssignmentResourceInternal(assignment.Id, resource.Id, blobStoragePolicyPath, blobStorageVersionId, delegationEventId, audit, cancellationToken);
-
-        return result ? 1 : 0;
-    }
-
-    private string GetPolicyPath(Guid fromId, Guid toUuid, string resourcename, string instanceId, int partyId)
-    {
-        string instanceUrn = $"{AltinnXacmlConstants.MatchAttributeIdentifiers.InstanceAttribute}:{partyId}/{instanceId}";
-
-        InstanceRight rule = new InstanceRight
-        {
-            FromUuid = fromId,
-            ToUuid = toUuid,
-            ResourceId = resourcename,
-            InstanceId = instanceUrn
-        };
-
-        bool pathOk = DelegationHelper.TryGetNewDelegationPolicyPathFromInstanceRule(rule, out string path);
-
-        if (pathOk)
-        {
-            return path;
-        }
-
-        return null;
-    }
-
-    private string GetPolicyPathResource(Guid fromId, Guid toUuid, string resourcename, string instanceId)
-    {
-        string instanceUrn = $"{AltinnXacmlConstants.MatchAttributeIdentifiers.CorrespondenceInstanceAttribute}:{instanceId}";
-
-        InstanceRight rule = new InstanceRight
-        {
-            FromUuid = fromId,
-            ToUuid = toUuid,
-            ResourceId = resourcename,
-            InstanceId = instanceUrn
-        };
-
-        bool pathOk = DelegationHelper.TryGetNewDelegationPolicyPathFromInstanceRule(rule, out string path);
-
-        if (pathOk)
-        {
-            return path;
-        }
-
-        return null;
     }
 }
