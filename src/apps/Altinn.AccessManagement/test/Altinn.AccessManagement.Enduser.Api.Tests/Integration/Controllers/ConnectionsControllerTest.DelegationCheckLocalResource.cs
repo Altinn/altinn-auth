@@ -93,6 +93,7 @@ public partial class ConnectionsControllerTest
                 foreach (var resource in db.Resources.Where(r => r.Id == TestData.NavSykepengerDialog.Id || r.Id == TestData.SiriusSkattemelding.Id))
                 {
                     resource.Delegable = false;
+                    resource.AccessListMode = ResourceAccessListMode.Disabled;
                 }
 
                 foreach (var resource in db.Resources.Where(r => r.Id == TestData.NavSykepengerSykmelding.Id || r.Id == TestData.MattilsynetBakeryService.Id))
@@ -118,10 +119,14 @@ public partial class ConnectionsControllerTest
             return client;
         }
 
-        private static void AssertResourceNotFetchedFromRegistry()
+        /// <summary>
+        /// Checks the calls recorded during the last request: the policy was read for <paramref name="resourceRefId"/>,
+        /// and the resource was never looked up.
+        /// </summary>
+        private static void AssertResourceNotFetchedFromRegistry(string resourceRefId)
         {
-            Assert.Contains(nameof(IContextRetrievalService.GetResourcePolicyV2), ContextRetrievalCalls);
-            Assert.DoesNotContain(nameof(IContextRetrievalService.GetResource), ContextRetrievalCalls);
+            Assert.Contains($"{nameof(IContextRetrievalService.GetResourcePolicyV2)}({resourceRefId})", ContextRetrievalCalls);
+            Assert.DoesNotContain(ContextRetrievalCalls, c => c.StartsWith($"{nameof(IContextRetrievalService.GetResource)}("));
         }
 
         private static void VerifyAccessListAskedFor(string resourceRefId) =>
@@ -131,8 +136,16 @@ public partial class ConnectionsControllerTest
                     It.IsAny<CancellationToken>()),
                 Times.AtLeastOnce());
 
+        private static void VerifyAccessListNeverAskedFor(string resourceRefId) =>
+            AccessLists.Verify(
+                c => c.AuthorizePartyForAccessList(
+                    It.Is<AccessListAuthorizationRequest>(r => IsResource(r, resourceRefId)),
+                    It.IsAny<CancellationToken>()),
+                Times.Never());
+
         private async Task<T> GetOk<T>(string url)
         {
+            ContextRetrievalCalls.Clear();
             HttpClient client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE);
             HttpResponseMessage response = await client.GetAsync(url, TestContext.Current.CancellationToken);
 
@@ -157,7 +170,9 @@ public partial class ConnectionsControllerTest
             Assert.NotEmpty(result.Rights);
             Assert.All(result.Rights, r => Assert.False(r.Result, $"Right '{r.Right.Name}' must not be delegable"));
             Assert.All(result.Rights, r => Assert.Contains(DelegationCheckReasonCode.ResourceNotDelegable, r.ReasonCodes));
-            AssertResourceNotFetchedFromRegistry();
+            Assert.All(result.Rights, r => Assert.DoesNotContain(DelegationCheckReasonCode.AccessListValidationFail, r.ReasonCodes));
+            VerifyAccessListNeverAskedFor(TestData.NavSykepengerDialog.RefId);
+            AssertResourceNotFetchedFromRegistry(TestData.NavSykepengerDialog.RefId);
         }
 
         /// <summary>
@@ -190,7 +205,9 @@ public partial class ConnectionsControllerTest
             Assert.NotEmpty(result.Rights);
             Assert.All(result.Rights, r => Assert.False(r.Result, $"Right '{r.Right.Name}' must not be delegable"));
             Assert.All(result.Rights, r => Assert.Contains(DelegationCheckReasonCode.ResourceNotDelegable, r.ReasonCodes));
-            AssertResourceNotFetchedFromRegistry();
+            Assert.All(result.Rights, r => Assert.DoesNotContain(DelegationCheckReasonCode.AccessListValidationFail, r.ReasonCodes));
+            VerifyAccessListNeverAskedFor(TestData.SiriusSkattemelding.RefId);
+            AssertResourceNotFetchedFromRegistry(TestData.SiriusSkattemelding.RefId);
         }
 
         /// <summary>
@@ -212,11 +229,11 @@ public partial class ConnectionsControllerTest
 
     /// <summary>
     /// Tests for <see cref="ConnectionsController.CheckResource(Guid, string, CancellationToken)"/> against a
-    /// resource with <c>AccessListMode = Enabled</c> locally, where the party is on the access list.
+    /// resource with <c>AccessListMode = Enabled</c> locally, where the party is on the access list for some actions.
     /// </summary>
     /// <remarks>
     /// A class of its own, because the access-list client mock is registered once per fixture and this one
-    /// answers <see cref="AccessListAuthorizationResult.Authorized"/>.
+    /// answers <see cref="AccessListAuthorizationResult.Authorized"/> for every action except <c>subscribe</c>.
     /// </remarks>
     [IntegrationTest]
     public class DelegationCheckLocalResourceAccessListAuthorized : IClassFixture<ApiFixture>
@@ -231,6 +248,9 @@ public partial class ConnectionsControllerTest
             _accessLists
                 .Setup(c => c.AuthorizePartyForAccessList(It.IsAny<AccessListAuthorizationRequest>(), It.IsAny<CancellationToken>()))
                 .ReturnsAsync(new AccessListAuthorizationResponse { Result = AccessListAuthorizationResult.Authorized });
+            _accessLists
+                .Setup(c => c.AuthorizePartyForAccessList(It.Is<AccessListAuthorizationRequest>(r => ActionName(r) == "subscribe"), It.IsAny<CancellationToken>()))
+                .ReturnsAsync(new AccessListAuthorizationResponse { Result = AccessListAuthorizationResult.NotAuthorized });
 
             Fixture.ConfigureServices(services =>
             {
@@ -248,11 +268,12 @@ public partial class ConnectionsControllerTest
         public ApiFixture Fixture { get; }
 
         /// <summary>
-        /// nav_sykepenger_dialog has access lists enabled locally and Dumbo Adventures is on the list. Malin has
-        /// role and package access to every right, so all of them are granted and the access-list client is asked.
+        /// nav_sykepenger_dialog has access lists enabled locally. Dumbo Adventures is on the list for <c>read</c> and
+        /// <c>access</c> but not <c>subscribe</c>. Malin has role and package access to every right, so the access-list
+        /// answer for each action decides that right alone.
         /// </summary>
         [Fact]
-        public async Task CheckResource_WhenLocalResourceAccessListModeEnabledAndPartyAuthorized_Returns200WithAllRightsGranted()
+        public async Task CheckResource_WhenLocalResourceAccessListModeEnabledAndPartyAuthorizedForSomeActions_Returns200WithThoseRightsGranted()
         {
             var client = Fixture.Server.CreateClient();
             var token = TestTokenGenerator.CreateToken(new ClaimsIdentity("mock"), claims =>
@@ -271,14 +292,26 @@ public partial class ConnectionsControllerTest
 
             ResourceCheckDto result = JsonSerializer.Deserialize<ResourceCheckDto>(body, JsonOpts);
             Assert.NotNull(result);
-            Assert.NotEmpty(result.Rights);
-            Assert.All(result.Rights, r => Assert.True(r.Result, $"Right '{r.Right.Name}' should be delegable"));
-            Assert.All(result.Rights, r => Assert.DoesNotContain(DelegationCheckReasonCode.AccessListValidationFail, r.ReasonCodes));
-            _accessLists.Verify(
-                c => c.AuthorizePartyForAccessList(
-                    It.Is<AccessListAuthorizationRequest>(r => IsDumboAdventuresAndResource(r, TestData.NavSykepengerDialog.RefId)),
-                    It.IsAny<CancellationToken>()),
-                Times.AtLeastOnce());
+            Assert.Equal(["access", "read", "subscribe"], result.Rights.Select(r => r.Right.Action.Value).Order());
+
+            foreach (RightCheckDto right in result.Rights.Where(r => r.Right.Action.Value != "subscribe"))
+            {
+                Assert.True(right.Result, $"Right '{right.Right.Name}' should be delegable");
+                Assert.DoesNotContain(DelegationCheckReasonCode.AccessListValidationFail, right.ReasonCodes);
+            }
+
+            RightCheckDto subscribe = Assert.Single(result.Rights, r => r.Right.Action.Value == "subscribe");
+            Assert.False(subscribe.Result, $"Right '{subscribe.Right.Name}' must not be delegable");
+            Assert.Contains(DelegationCheckReasonCode.AccessListValidationFail, subscribe.ReasonCodes);
+
+            foreach (string action in new[] { "read", "subscribe", "access" })
+            {
+                _accessLists.Verify(
+                    c => c.AuthorizePartyForAccessList(
+                        It.Is<AccessListAuthorizationRequest>(r => IsDumboAdventuresAndResource(r, TestData.NavSykepengerDialog.RefId) && ActionName(r) == action),
+                        It.IsAny<CancellationToken>()),
+                    Times.Once());
+            }
         }
     }
 
@@ -287,10 +320,24 @@ public partial class ConnectionsControllerTest
     /// </summary>
     private static bool IsDumboAdventuresAndResource(AccessListAuthorizationRequest request, string resourceRefId) =>
         request.Subject.Value.IsPartyUuid(out Guid partyUuid) && partyUuid == TestData.DumboAdventures.Id
-        && request.Resource.Value.IsResourceId(out var resourceId) && resourceId.ToString() == resourceRefId;
+        && IsResource(request, resourceRefId);
 
     /// <summary>
-    /// Forwards every call to the wrapped service and records the method name.
+    /// True when an access-list request asks about the given resource, whichever party it names.
+    /// </summary>
+    private static bool IsResource(AccessListAuthorizationRequest request, string resourceRefId) =>
+        request.Resource.Value.IsResourceId(out var resourceId) && resourceId.ToString() == resourceRefId;
+
+    /// <summary>
+    /// The action an access-list request asks about, without its URN prefix, such as <c>read</c>.
+    /// </summary>
+    private static string ActionName(AccessListAuthorizationRequest request) =>
+        request.Action.Value is { } action && action.IsActionId(out var actionId)
+            ? actionId.ToString().Split(':')[^1]
+            : null;
+
+    /// <summary>
+    /// Forwards every call to the wrapped service and records it as <c>Method(firstArgument)</c>.
     /// </summary>
     public class CallRecorder : DispatchProxy
     {
@@ -313,7 +360,7 @@ public partial class ConnectionsControllerTest
         /// <inheritdoc/>
         protected override object Invoke(MethodInfo targetMethod, object[] args)
         {
-            _calls.Enqueue(targetMethod.Name);
+            _calls.Enqueue($"{targetMethod.Name}({(args is { Length: > 0 } ? args[0] : null)})");
             try
             {
                 return targetMethod.Invoke(_inner, args);
