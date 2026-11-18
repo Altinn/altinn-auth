@@ -50,8 +50,8 @@ public static class TestData
     };
 
     /// <summary>
-    /// MaskinportenSchema resource marked delegable=false in the resource registry mock data
-    /// (<c>Data/ResourceRegistryResources/non_delegable_maskinportenschema</c>).
+    /// MaskinportenSchema resource with <see cref="Resource.Delegable"/> set to false, as imported from the
+    /// resource registry. The delegation check reads the flag from this seeded resource.
     /// </summary>
     public static readonly Resource NonDelegableMaskinportenSchema = new()
     {
@@ -61,6 +61,7 @@ public static class TestData
         RefId = "non_delegable_maskinportenschema",
         TypeId = TestData.MaskinportenSchemaResourceType.Id,
         ProviderId = ProviderConstants.ResourceRegistry.Id,
+        Delegable = false,
     };
 
     public static readonly Resource MattilsynetBakeryService = new()

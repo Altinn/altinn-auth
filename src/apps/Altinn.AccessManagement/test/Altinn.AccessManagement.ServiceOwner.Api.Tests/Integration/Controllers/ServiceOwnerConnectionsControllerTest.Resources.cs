@@ -109,6 +109,7 @@ public partial class ServiceOwnerConnectionsControllerTest
                     RefId = NonDelegableResource,
                     TypeId = resource.TypeId,
                     ProviderId = SkatteetatenProviderId,
+                    Delegable = false,
                 });
                 db.SaveChanges();
 
