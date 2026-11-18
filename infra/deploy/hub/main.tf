@@ -246,6 +246,5 @@ resource "azurerm_management_lock" "delete" {
   for_each = { for lock in [
     azurerm_public_ip_prefix.ipv4,
     azurerm_public_ip_prefix.ipv6,
-    azurerm_storage_account.storage
   ] : lock.name => lock.id }
 }
