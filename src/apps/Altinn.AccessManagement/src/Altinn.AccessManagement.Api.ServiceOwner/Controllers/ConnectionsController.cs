@@ -92,11 +92,6 @@ namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers
                 return Problems.ConnectionEntitiesDoNotExist.ToActionResult();
             }
 
-            if (fromEntityId == toEntityId)
-            {
-                return Problems.SelfDelegationNotAllowed.ToActionResult();
-            }
-
             PackageDto package = await packageService.GetPackageByUrnValue(packageIdentifier, cancellationToken);
 
             if (package is null)
@@ -275,11 +270,6 @@ namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers
             if (fromEntityId is null || toEntityId is null)
             {
                 return Problems.ConnectionEntitiesDoNotExist.ToActionResult();
-            }
-
-            if (fromEntityId == toEntityId)
-            {
-                return Problems.SelfDelegationNotAllowed.ToActionResult();
             }
 
             Entity authenticatedServiceOwnerEntity = await EntityService.GetByOrgNo(organizationNumber.ToString(), cancellationToken);
