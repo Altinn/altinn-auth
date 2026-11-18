@@ -20,13 +20,13 @@ namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers.V2;
 /// exercising the full pipeline (routing, scope authorization, real services + database via
 /// <see cref="ApiFixture"/>, resource registry and policy mocks).
 ///
-/// The tests cover the Resource Registry delegable flag: a MaskinportenSchema resource with
+/// The tests cover the imported delegable flag: a MaskinportenSchema resource with
 /// delegable=false must not be delegated through this API, even though the dedicated maskinporten
 /// API is otherwise allowed to delegate MaskinportenSchema resources. Mirrors the Bruno test
 /// <c>Negative_POST_Delegate_non_Delegable_Maskinporten_resource_To_supplier_Org</c>.
 ///
 /// Test data: the resource <c>non_delegable_maskinportenschema</c> is seeded in the database via
-/// <see cref="TestDataSeeds"/> and defined with delegable=false in the resource registry mock data.
+/// <see cref="TestDataSeeds"/> with <c>Delegable = false</c>, which is what the delegation check reads.
 /// Its policy grants the same roles and packages as <c>nav_sykepenger_dialog</c>, so Malin Emilie
 /// (managing director of Dumbo Adventures) has delegable rights on it; the delegable flag is the
 /// only blocker.
@@ -56,7 +56,7 @@ public class MaskinportenSuppliersControllerResourceDelegationTest : IClassFixtu
 
     /// <summary>
     /// Malin (MD of Dumbo Adventures) checks the non-delegable MaskinportenSchema resource.
-    /// She has role and package access, but the resource is delegable=false in the Resource
+    /// She has role and package access, but the seeded resource is delegable=false, imported from the Resource
     /// Registry, so every right must come back denied with reason ResourceNotDelegable.
     /// </summary>
     [Fact]

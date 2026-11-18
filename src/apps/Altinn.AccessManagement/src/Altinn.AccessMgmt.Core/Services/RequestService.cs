@@ -772,6 +772,7 @@ public class RequestService(
             );
         }
 
+        // Queues the reviewed notification, with the outcome of this review.
         async Task UpsertReviewedOutboxMessage(RequestAssignmentPackage request, CancellationToken ct)
         {
             await RequestReviewedNotification.Upsert(
@@ -780,7 +781,7 @@ public class RequestService(
                 request.Assignment.FromId,
                 null,
                 request.PackageId,
-                status is RequestStatusV2.Approved or RequestStatusV2.PartialApprove,
+                status,
                 appsettings?.Value?.Request?.NotifyRequestApprovedInSeconds ?? (60 * 15),
                 ct
             );
@@ -876,6 +877,7 @@ public class RequestService(
             );
         }
 
+        // Queues the reviewed notification, with the outcome of this review.
         async Task UpsertReviewedOutboxMessage(RequestAssignmentResource request, CancellationToken ct)
         {
             await RequestReviewedNotification.Upsert(
@@ -884,7 +886,7 @@ public class RequestService(
                 request.Assignment.FromId,
                 request.ResourceId,
                 null,
-                status is RequestStatusV2.Approved or RequestStatusV2.PartialApprove,
+                status,
                 appsettings?.Value?.Request?.NotifyRequestApprovedInSeconds ?? (60 * 15),
                 ct
             );

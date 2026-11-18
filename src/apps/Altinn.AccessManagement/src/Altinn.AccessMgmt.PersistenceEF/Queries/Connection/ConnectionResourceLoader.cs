@@ -48,6 +48,8 @@ internal class ConnectionResourceLoader(AppDbContext db)
                 r.Id,
                 r.Name,
                 r.RefId,
+                r.Delegable,
+                r.AccessListMode,
                 x.ValidFrom,
                 x.ChangedBy
             })
@@ -62,6 +64,8 @@ internal class ConnectionResourceLoader(AppDbContext db)
                 Id = ai.Id,
                 Name = ai.Name,
                 RefId = ai.RefId,
+                Delegable = ai.Delegable,
+                AccessListMode = ai.AccessListMode,
                 ChangeInfo = ai.ValidFrom.HasValue ? new ConnectionQueryChangeInfo(ai.ValidFrom.Value, ai.ChangedBy) : null
             };
 
@@ -113,6 +117,8 @@ internal class ConnectionResourceLoader(AppDbContext db)
                 x.InstanceId,
                 ResourceName = r.Name,
                 ResourceRefId = r.RefId,
+                ResourceDelegable = r.Delegable,
+                ResourceAccessListMode = r.AccessListMode,
                 x.ValidFrom,
                 x.ChangedBy
             })
@@ -129,6 +135,8 @@ internal class ConnectionResourceLoader(AppDbContext db)
                 InstanceId = ai.InstanceId,
                 ResourceName = ai.ResourceName,
                 ResourceRefId = ai.ResourceRefId,
+                ResourceDelegable = ai.ResourceDelegable,
+                ResourceAccessListMode = ai.ResourceAccessListMode,
                 ChangeInfo = ai.ValidFrom.HasValue ? new ConnectionQueryChangeInfo(ai.ValidFrom.Value, ai.ChangedBy) : null
             };
 
@@ -169,7 +177,9 @@ internal class ConnectionResourceLoader(AppDbContext db)
                 x.DelegationId,
                 r.Id,
                 r.Name,
-                r.RefId
+                r.RefId,
+                r.Delegable,
+                r.AccessListMode
             })
             .AsNoTracking()
             .ToListAsync(ct);
@@ -183,7 +193,9 @@ internal class ConnectionResourceLoader(AppDbContext db)
                 {
                     Id = dr.Id,
                     Name = dr.Name,
-                    RefId = dr.RefId
+                    RefId = dr.RefId,
+                    Delegable = dr.Delegable,
+                    AccessListMode = dr.AccessListMode
                 });
             }
             else
@@ -194,7 +206,9 @@ internal class ConnectionResourceLoader(AppDbContext db)
                     {
                         Id = dr.Id,
                         Name = dr.Name,
-                        RefId = dr.RefId
+                        RefId = dr.RefId,
+                        Delegable = dr.Delegable,
+                        AccessListMode = dr.AccessListMode
                     }
                 ];
             }

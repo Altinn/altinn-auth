@@ -1726,6 +1726,46 @@ public class ChangeRequestControllerTest(
     }
 
     /// <summary>
+    /// A ChangeRequest created while the resource was delegable is rejected at approval with the precise
+    /// problem when the resource has turned non-delegable in the meantime
+    /// </summary>
+    [Fact]
+    public async Task ChangeRequest_Approve_Fails_When_Resource_Turned_NotDelegable()
+    {
+        // Create System used for test
+        string dataFileName = "Data/SystemRegister/Json/SystemRegister2Rights.json";
+        await CreateSystemRegister(dataFileName);
+
+        // The ChangeRequest requires ske-krav-og-betalinger, which is delegable when the request is created
+        ChangeRequestResponse changeRequest = await CreateChangeRequest(1, "991825827_the_matrix");
+
+        // The resource is turned non-delegable before the customer approves
+        _resourceRegistryClient.NotDelegableResourceIds.Add("ske-krav-og-betalinger");
+
+        _pdpMock.Setup(p => p.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>())).ReturnsAsync(new XacmlJsonResponse
+        {
+            Response = GetDecisionResultSingle()
+        });
+
+        HttpClient client = CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", PrincipalUtil.GetToken(1337, null, 3, now: TestTime));
+
+        int partyId = 500000;
+        HttpResponseMessage approveResponse = await client.PostAsync($"/authentication/api/v1/systemuser/changerequest/{partyId}/{changeRequest.Id}/approve", null);
+
+        Assert.Equal(HttpStatusCode.BadRequest, approveResponse.StatusCode);
+        ProblemDetails? problemDetails = await approveResponse.Content.ReadFromJsonAsync<ProblemDetails>();
+        Assert.NotNull(problemDetails);
+        Assert.Equal(Problem.Rights_ResourceNotDelegable.Title, problemDetails.Title);
+        Assert.Equal("ske-krav-og-betalinger", problemDetails.Extensions["NotDelegableResources"]?.ToString());
+
+        // The ChangeRequest is still New, so it can be approved once the resource is delegable again
+        _resourceRegistryClient.NotDelegableResourceIds.Clear();
+        HttpResponseMessage retryResponse = await client.PostAsync($"/authentication/api/v1/systemuser/changerequest/{partyId}/{changeRequest.Id}/approve", null);
+        Assert.Equal(HttpStatusCode.OK, retryResponse.StatusCode);
+    }
+
+    /// <summary>
     /// After having verified that the ChangeRequest is needed, create a ChangeRequest, then delete it
     /// </summary>
     [Fact]

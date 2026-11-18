@@ -1,6 +1,6 @@
 ﻿using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
-using Altinn.Platform.Authorization.Constants;
+using Altinn.Authorization.Xacml.Constants;
 using Altinn.Platform.Authorization.Models;
 
 namespace Altinn.Platform.Authorization.Helpers

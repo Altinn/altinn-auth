@@ -241,7 +241,7 @@ internal class ConnectionPackageLoader(AppDbContext db)
             .Join(db.Resources, pr => pr.ResourceId, r => r.Id, (pr, r) => new
             {
                 pr.PackageId,
-                Resource = new ConnectionQueryResource { Id = r.Id, Name = r.Name }
+                Resource = new ConnectionQueryResource { Id = r.Id, Name = r.Name, RefId = r.RefId, Delegable = r.Delegable, AccessListMode = r.AccessListMode }
             })
             .AsNoTracking()
             .ToListAsync(ct);

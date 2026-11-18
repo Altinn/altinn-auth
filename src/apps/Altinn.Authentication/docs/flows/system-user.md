@@ -75,6 +75,8 @@ Any other right is rejected with `400`. That is a right with several attributes,
 
 Every path that takes in rights runs this check (`AuthenticationHelper.HasMalformedRight`), and approving a system user request runs it again.
 
+Rights are also checked against the resource registry (`SystemUserService.ValidateRights`): the resource must exist, be of a supported type and be delegable. This runs when a request or change request is created, and again when either is approved, because a resource can change in between. A resource that is only non-delegable gives `AUTH-00082` (`Rights_ResourceNotDelegable`) with the resource ids in `NotDelegableResources`; anything else gives `Rights_NotFound_Or_NotDelegable`. A change request that fails this at approval stays `New`.
+
 ## Agent system users & client delegation
 
 An **agent** system user acts on behalf of **multiple clients** — the classic case being an accountant/auditor firm whose system manages many customers. Beyond the standard flow:

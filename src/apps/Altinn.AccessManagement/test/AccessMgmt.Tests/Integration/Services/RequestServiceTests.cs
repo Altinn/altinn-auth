@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Net;
+using System.Text.Json;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessMgmt.Core.Appsettings;
@@ -11,7 +12,11 @@ using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.AccessMgmt.PersistenceEF.Models.Base;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
+using Altinn.Authorization.Integration.Platform;
+using Altinn.Authorization.Integration.Platform.Notification;
+using Altinn.Authorization.Integration.Platform.Notification.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -106,12 +111,12 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
     /// <summary>
     /// Seeds a unique <see cref="Resource"/> per test so create/update operations don't interfere with each other.
     /// </summary>
-    private async Task<Resource> SeedUniqueResource()
+    private async Task<Resource> SeedUniqueResource(string name = "UniqueTestResource")
     {
         var resource = new Resource
         {
             Id = Guid.CreateVersion7(),
-            Name = "UniqueTestResource",
+            Name = name,
             Description = "UniqueTestResourceDescription",
             RefId = Guid.CreateVersion7().ToString(),
             ProviderId = ProviderConstants.ResourceRegistry.Id,
@@ -282,16 +287,111 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
 
         await _requestService.ApproveResourceRequest(OrgFrom.Id, created.Id, RequestStatusV2.PartialApprove, ["key-b"], TestContext.Current.CancellationToken);
 
-        // One message is kept per requester and recipient, and other tests here use the same pair,
-        // so look for this request's resource in the message rather than for the message itself.
+        var resource = await GetReviewedResource(created.Resource.Id);
+        Assert.Equal(RequestStatusV2.PartialApprove, resource.RequestStatus);
+        Assert.True(resource.IsApproved);
+    }
+
+    #endregion
+
+    #region Reviewed notification
+
+    // One outbox message is kept per requester and recipient, and the other tests in this class use the same pair,
+    // so these tests look for their own resource or package in the message rather than for the message itself.
+    // Each test uses a package no other test here reviews, because a package's entry is overwritten by the latest review.
+    private async Task<RequestReviewNotificationMessageResponse<Guid>> GetReviewedResource(Guid? resourceId)
+    {
+        var messages = await GetReviewedMessages();
+        return Assert.Single(messages.SelectMany(m => m.Resources), r => r.Ref == resourceId);
+    }
+
+    private async Task<RequestReviewNotificationMessageResponse<Guid>> GetReviewedPackage(Guid packageId)
+    {
+        var messages = await GetReviewedMessages();
+        return Assert.Single(messages.SelectMany(m => m.Packages), p => p.Ref == packageId);
+    }
+
+    private async Task<List<RequestReviewNotificationMessage>> GetReviewedMessages()
+    {
         var outbox = await _db.OutboxMessages.AsNoTracking()
             .Where(m => m.Handler == RequestReviewedNotification.Handler)
             .ToListAsync(TestContext.Current.CancellationToken);
-        var resources = outbox
-            .SelectMany(m => JsonSerializer.Deserialize<RequestReviewNotificationMessage>(m.Data).Resources)
-            .Where(r => r.Ref == created.Resource.Id);
-        var resource = Assert.Single(resources);
+        return outbox.Select(m => JsonSerializer.Deserialize<RequestReviewNotificationMessage>(m.Data)).ToList();
+    }
+
+    [Fact]
+    public async Task ApproveResourceRequest_Approved_WritesReviewedNotification()
+    {
+        var created = await CreatePendingResourceRequest(["key-a"]);
+
+        await _requestService.ApproveResourceRequest(OrgFrom.Id, created.Id, RequestStatusV2.Approved, ["key-a"], TestContext.Current.CancellationToken);
+
+        var resource = await GetReviewedResource(created.Resource.Id);
+        Assert.Equal(RequestStatusV2.Approved, resource.RequestStatus);
         Assert.True(resource.IsApproved);
+    }
+
+    [Fact]
+    public async Task UpdateRequest_RejectedResourceRequest_WritesReviewedNotification()
+    {
+        var created = await CreatePendingResourceRequest(["key-a"]);
+
+        await _requestService.UpdateRequest(OrgFrom.Id, created.Id, RequestStatusV2.Rejected, TestContext.Current.CancellationToken);
+
+        var resource = await GetReviewedResource(created.Resource.Id);
+        Assert.Equal(RequestStatusV2.Rejected, resource.RequestStatus);
+        Assert.False(resource.IsApproved);
+    }
+
+    [Fact]
+    public async Task UpdateRequest_ApprovedPackageRequest_WritesReviewedNotification()
+    {
+        var created = (await _requestService.CreatePackageRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, PackageConstants.AnimalHusbandry.Id, RequestStatusV2.Pending, TestContext.Current.CancellationToken)).Value;
+
+        await _requestService.UpdateRequest(OrgFrom.Id, created.Id, RequestStatusV2.Approved, TestContext.Current.CancellationToken);
+
+        var package = await GetReviewedPackage(PackageConstants.AnimalHusbandry.Id);
+        Assert.Equal(RequestStatusV2.Approved, package.RequestStatus);
+        Assert.True(package.IsApproved);
+    }
+
+    [Fact]
+    public async Task UpdateRequest_RejectedPackageRequest_WritesReviewedNotification()
+    {
+        var created = (await _requestService.CreatePackageRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, PackageConstants.Aquaculture.Id, RequestStatusV2.Pending, TestContext.Current.CancellationToken)).Value;
+
+        await _requestService.UpdateRequest(OrgFrom.Id, created.Id, RequestStatusV2.Rejected, TestContext.Current.CancellationToken);
+
+        var package = await GetReviewedPackage(PackageConstants.Aquaculture.Id);
+        Assert.Equal(RequestStatusV2.Rejected, package.RequestStatus);
+        Assert.False(package.IsApproved);
+    }
+
+    // Runs the handler on the stored outbox message, so the status is followed from the request
+    // through the database and into the email text.
+    [Fact]
+    public async Task RequestReviewedNotificationHandler_PartiallyApprovedResource_EmailSaysApprovedWithAdjustments()
+    {
+        var resourceName = $"Delvis godkjent tjeneste {Guid.CreateVersion7()}";
+        var resource = await SeedUniqueResource(resourceName);
+        var created = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, ["key-a"], RequestStatusV2.Pending, TestContext.Current.CancellationToken)).Value;
+        await _requestService.ApproveResourceRequest(OrgFrom.Id, created.Id, RequestStatusV2.PartialApprove, ["key-b"], TestContext.Current.CancellationToken);
+
+        var outbox = await _db.OutboxMessages.AsNoTracking()
+            .Where(m => m.Handler == RequestReviewedNotification.Handler)
+            .ToListAsync(TestContext.Current.CancellationToken);
+        var message = Assert.Single(outbox, m => m.Data.Contains(resource.Id.ToString(), StringComparison.OrdinalIgnoreCase));
+
+        var notification = new CapturingNotification();
+        var handler = new RequestReviewedNotificationHandler(_db, notification, new EnabledFeatureManager(), new EntityService(_db));
+
+        var status = await handler.Handle(message, TestContext.Current.CancellationToken);
+
+        Assert.Equal(OutboxStatus.Completed, status);
+        var sent = Assert.Single(notification.Sent);
+        var body = sent.Recipient.RecipientOrganization?.EmailSettings?.Body ?? sent.Recipient.RecipientPerson?.EmailSettings?.Body;
+        Assert.Contains($"<li>{resourceName}. <strong><em>Godkjent med justeringer.</em></strong></li>", body);
+        Assert.Contains("har svart på din forespørsel om fullmakter.", body);
     }
 
     #endregion
@@ -525,6 +625,30 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
         Assert.Equal(RequestStatusV2.Rejected, rejected.Status);
     }
     #endregion
+
+    private sealed class EnabledFeatureManager : IFeatureManager
+    {
+        public async IAsyncEnumerable<string> GetFeatureNamesAsync()
+        {
+            await Task.CompletedTask;
+            yield break;
+        }
+
+        public Task<bool> IsEnabledAsync(string feature) => Task.FromResult(true);
+
+        public Task<bool> IsEnabledAsync<TContext>(string feature, TContext context) => Task.FromResult(true);
+    }
+
+    private sealed class CapturingNotification : IAltinnNotification
+    {
+        public List<NotificationOrderChainRequestExt> Sent { get; } = [];
+
+        public Task<PlatformResponse<NotificationOrderChainResponseExt>> Send(NotificationOrderChainRequestExt model, CancellationToken cancellationToken = default)
+        {
+            Sent.Add(model);
+            return Task.FromResult(new PlatformResponse<NotificationOrderChainResponseExt> { IsSuccessful = true, StatusCode = HttpStatusCode.OK });
+        }
+    }
 
     private sealed class DisabledFeatureManager : IFeatureManager
     {

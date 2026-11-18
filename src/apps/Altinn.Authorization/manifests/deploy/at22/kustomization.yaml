@@ -9,12 +9,19 @@ labels:
 resources:
   - ../base
   - 05-cache.yaml
-
 configMapGenerator:
   - name: environment
     namespace: product-authorization
     envs:
       - ./config/environment.env
-
+patches:
+  - patch: |-
+      apiVersion: gateway.networking.k8s.io/v1
+      kind: HTTPRoute
+      metadata:
+        name: authorization
+      spec:
+        hostnames:
+          - authorization.at22.dis-core.altinn.cloud
 generatorOptions:
   disableNameSuffixHash: true
