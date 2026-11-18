@@ -8,10 +8,10 @@ aks_federation = [
 ]
 deploy_app_principal_id = "6eaed23e-df7f-4708-9c8e-a7f34deeadb4"
 platform_workflow_principal_ids = [
-  "626d6e0e-278c-420b-8100-cf6f818ea601",  # altinn-access-management-app-at23-aks01
-  "5ba57db2-e173-4e07-9693-427a4b91d00b",  # altinn-access-management-app-at23-aks02
-  "8e6903ec-9028-4712-9721-c0c3d83db691",  # dis: am-api
-  "c7320b9c-5877-4c0c-89b0-d34205c79eed"   # dis: am-ffb
+  "626d6e0e-278c-420b-8100-cf6f818ea601", # altinn-access-management-app-at23-aks01
+  "5ba57db2-e173-4e07-9693-427a4b91d00b", # altinn-access-management-app-at23-aks02
+  "8e6903ec-9028-4712-9721-c0c3d83db691", # dis: am-api
+  "c7320b9c-5877-4c0c-89b0-d34205c79eed"  # dis: am-ffb
 ]
 db_max_pool_size = 4
 db_compute_sku   = "D2"
