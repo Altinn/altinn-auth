@@ -47,6 +47,10 @@ jobs:
           cat << EOF > .github/openvpn.config
           ${{ secrets.OVPN_CONFIG }}
           EOF
+          # OpenVPN 2.7 enables kernel data channel offload by default, and the
+          # Azure point-to-site gateway does not negotiate the DATA_V2 packet
+          # format DCO requires, so the pushed options fail to apply.
+          echo "disable-dco" >> .github/openvpn.config
 
       - name: Connect to VPN
         uses: kota65535/github-openvpn-connect-action@cd2ed8a90cc7b060dc4e001143e811b5f7ea0af5 # v3.1.0
@@ -99,6 +103,10 @@ jobs:
           cat << EOF > .github/openvpn.config
           ${{ secrets.OVPN_CONFIG }}
           EOF
+          # OpenVPN 2.7 enables kernel data channel offload by default, and the
+          # Azure point-to-site gateway does not negotiate the DATA_V2 packet
+          # format DCO requires, so the pushed options fail to apply.
+          echo "disable-dco" >> .github/openvpn.config
 
       - name: Connect to VPN
         uses: kota65535/github-openvpn-connect-action@cd2ed8a90cc7b060dc4e001143e811b5f7ea0af5 # v3.1.0
@@ -108,7 +116,7 @@ jobs:
 
       - name: Update DNS
         run: |
-          sudo openvpn --config .github/openvpn.config --daemon --writepid openvpn.pid
+          sudo openvpn --config .github/openvpn.config --daemon --disable-dco --writepid openvpn.pid
           echo "nameserver ${{ secrets.OVPN_NAMESERVER }}" | sudo tee /etc/resolv.conf > /dev/null
 
       - name: Terraform Apply
