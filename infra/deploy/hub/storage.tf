@@ -1,26 +1,4 @@
-resource "azurerm_storage_account" "storage" {
-  name                          = "st${local.suffix}"
-  resource_group_name           = azurerm_resource_group.hub.name
-  location                      = azurerm_resource_group.hub.location
-  account_tier                  = "Standard"
-  account_replication_type      = "GRS"
-  https_traffic_only_enabled    = true
-  public_network_access_enabled = true
 
-  allow_nested_items_to_be_public = false
-
-  # Must be enabled otherwise terraform can't create sub-resources like queues/blobs/files
-  shared_access_key_enabled = true
-  identity {
-    type = "SystemAssigned"
-  }
-
-  tags = merge({}, local.default_tags)
-
-  lifecycle {
-    prevent_destroy = true
-  }
-}
 
 # https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment
 resource "azurerm_role_assignment" "storage_account_contributor" {
