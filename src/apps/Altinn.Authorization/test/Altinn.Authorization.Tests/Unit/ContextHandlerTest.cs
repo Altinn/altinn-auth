@@ -36,7 +36,7 @@ namespace Altinn.Authorization.Tests.Unit
                 new InstanceMetadataRepositoryMock(),
                 new OedRoleAssignmentWrapperMock(),
                 new ProfileMock(),
-                memoryCache,
+                TestSetupUtil.CreateHybridCache(),
                 Options.Create(new GeneralSettings { RoleCacheTimeout = 5 }),
                 new RegisterServiceMock(),
                 new PolicyRetrievalPointMock(memoryCache, httpContextAccessorMock.Object, null),
