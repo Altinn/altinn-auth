@@ -15,6 +15,15 @@ and known-good seed-data IDs.
 |---|---|
 | AccessManagement | `src/apps/Altinn.AccessManagement/test/Bruno/AccessMgmt/` |
 | Authorization | `src/apps/Altinn.Authorization/test/Bruno/Altinn.Authorization/` |
+| Authentication | `src/apps/Altinn.Authentication/test/Bruno/Altinn.Authentication/` |
+| ResourceRegistry | `src/apps/Altinn.ResourceRegistry/test/Bruno/Altinn.ResourceRegistry/` |
+
+The ResourceRegistry collection also provisions some fixtures the others depend on:
+`Resource/DevTest Resources` creates some of the `devtest_*` resources and their
+policies, `Resource/System Resources` creates `altinn_*` resources, and
+`AccessLists/authz-bruno` creates the `authz-bruno` access list. Other `devtest_*` IDs in
+the test data, such as `devtest_gar_bruno_direct_resource`, have no creation request
+anywhere and rely on data already in the environment.
 
 ## Layout (AccessMgmt collection)
 
@@ -28,6 +37,22 @@ and known-good seed-data IDs.
   ignore it).
 - `TestToolsTokenGenerator.js` + per-area `testdata/*.js`: generate platform / Maskinporten
   tokens and supply seed-data IDs (org / app / party / instance) at request time.
+
+## Test data per environment
+
+Test data is a JS module per area and environment, `testdata/<area>/<env>.js` (a few
+older areas use `<env>testdata.js`). Some suites keep their own `testdata/` folder
+next to their requests. A request loads the set for the selected environment with
+``require(`./testdata/<area>/${bru.getEnvVar("tokenEnv")}.js`)``, where `tokenEnv`
+comes from `environments/<ENV>.bru`. In a `.bru` file the path resolves from the
+collection root; in a `helpers.js` it resolves from the helper's own folder.
+
+Each module holds named personas: synthetic orgs with their orgno, partyId and
+partyUuid, their daglig leder, clients and subunits. The pid and orgno are the same
+in AT22 and TT02; userId, partyId and partyUuid differ. The IDs are hard-coded, and
+nothing generates or refreshes them. Every area except `manualtests` has data for
+AT22 and TT02, and a few also for AT23 / AT24. There is none for YT01, so a suite
+that needs it cannot run there.
 
 ## Anatomy of a `.bru` request
 
