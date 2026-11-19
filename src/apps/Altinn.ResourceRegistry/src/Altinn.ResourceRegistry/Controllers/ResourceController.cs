@@ -19,7 +19,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ApplicationModels;
 using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
-using Microsoft.FeatureManagement;
 
 namespace Altinn.ResourceRegistry.Controllers
 {
@@ -34,7 +33,6 @@ namespace Altinn.ResourceRegistry.Controllers
         private readonly ILogger<ResourceController> _logger;
         private readonly AltinnServiceDescriptor _serviceDescriptor;
         private readonly IServiceOwnerService _serviceOwnerService;
-        private readonly IFeatureManager _featureManager;
         private readonly IScopePrefixValidator _scopePrefixValidator;
 
         /// <summary>
@@ -45,14 +43,12 @@ namespace Altinn.ResourceRegistry.Controllers
             ILogger<ResourceController> logger,
             AltinnServiceDescriptor serviceDescriptor,
             IServiceOwnerService serviceOwnerService,
-            IFeatureManager featureManager,
             IScopePrefixValidator scopePrefixValidator)
         {
             _resourceRegistry = resourceRegistry;
             _logger = logger;
             _serviceDescriptor = serviceDescriptor;
             _serviceOwnerService = serviceOwnerService;
-            _featureManager = featureManager;
             _scopePrefixValidator = scopePrefixValidator;
         }
 
@@ -666,14 +662,6 @@ namespace Altinn.ResourceRegistry.Controllers
             if (scopes is not { Count: > 0 })
             {
                 return null;
-            }
-
-            if (!await _featureManager.IsEnabledAsync(FeatureFlags.ValidateScopePrefixWithMaskinportenApi))
-            {
-                // Legacy check against the caller's token claims, skipped for the admin scope. Removed in #4341.
-                return MaskinportenSchemaAuthorizer.IsAuthorizedForChangeResourceWithScopes(scopes, HttpContext.User, out List<string> forbiddenScopes)
-                    ? null
-                    : Unauthorized(MaskinportenSchemaAuthorizer.CreateErrorResponseMissingPrefix(forbiddenScopes));
             }
 
             IReadOnlyList<string> unownedScopes;

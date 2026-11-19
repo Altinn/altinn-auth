@@ -74,15 +74,5 @@
         /// Scope for access list info for PDP
         /// </summary>
         public const string SCOPE_ACCESS_LIST_PDP = "altinn:resourceregistry/pdp:accesslist.read";
-
-        /// <summary>
-        /// Claim for scopes from maskinporten token
-        /// </summary>
-        public const string CLAIM_MASKINPORTEN_SCOPE = "scope";
-
-        /// <summary>
-        /// Claim for consumer prefixes from maskinporten token
-        /// </summary>
-        public const string CLAIM_MASKINPORTEN_CONSUMER_PREFIX = "consumer_prefix";
     }
 }

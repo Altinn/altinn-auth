@@ -5,7 +5,6 @@ using System.Text;
 using System.Text.Json;
 using Altinn.ResourceRegistry.Controllers;
 using Altinn.ResourceRegistry.Core;
-using Altinn.ResourceRegistry.Core.Constants;
 using Altinn.ResourceRegistry.Core.Enums;
 using Altinn.ResourceRegistry.Core.Errors;
 using Altinn.ResourceRegistry.Core.Models;
@@ -15,16 +14,14 @@ using Altinn.ResourceRegistry.TestUtils;
 using Altinn.ResourceRegistry.Tests.Mocks;
 using Altinn.ResourceRegistry.Tests.Utils;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace Altinn.ResourceRegistry.Tests.ScopePrefixes;
 
 /// <summary>
-/// POST and PUT of resources with Maskinporten scopes, with
-/// <see cref="FeatureFlags.ValidateScopePrefixWithMaskinportenApi"/> turned on. The claim-based
-/// check used while the flag is off is covered by <see cref="ResourceControllerTest"/>.
+/// POST and PUT of resources with Maskinporten scopes, whose prefixes are checked against the
+/// Samarbeidsportalen prefix API.
 /// </summary>
 public class ResourceControllerScopePrefixTests(DbFixture dbFixture, WebApplicationFixture webApplicationFixture)
     : WebApplicationTests(dbFixture, webApplicationFixture)
@@ -41,14 +38,6 @@ public class ResourceControllerScopePrefixTests(DbFixture dbFixture, WebApplicat
 
     private readonly SamarbeidsportalenClientMock _prefixApi = new();
     private readonly CapturingLoggerProvider _logs = new();
-
-    protected override void ConfigureTestConfiguration(IConfigurationBuilder builder)
-    {
-        builder.AddInMemoryCollection(new Dictionary<string, string?>
-        {
-            [$"FeatureManagement:{FeatureFlags.ValidateScopePrefixWithMaskinportenApi}"] = "true",
-        });
-    }
 
     protected override void ConfigureTestServices(IServiceCollection services)
     {
