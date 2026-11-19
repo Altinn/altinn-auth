@@ -8,12 +8,24 @@ using Altinn.Authorization.Tests.Integration;
 using Altinn.Authorization.Tests.Unit;
 using Altinn.Platform.Authorization.Models.EventLog;
 using Altinn.Platform.Storage.Interface.Models;
+using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json;
 
 namespace Altinn.Authorization.Tests.Util
 {
     public static class TestSetupUtil
     {
+        /// <summary>
+        /// Creates a HybridCache without a distributed tier, as the host registers it.
+        /// </summary>
+        public static HybridCache CreateHybridCache()
+        {
+            ServiceCollection services = new ServiceCollection();
+            services.AddHybridCache();
+            return services.BuildServiceProvider().GetRequiredService<HybridCache>();
+        }
+
         public static HttpRequestMessage CreateXacmlRequest(string testcase)
         {
             XmlDocument policyDocument = new XmlDocument();
