@@ -574,6 +574,20 @@ public partial class ServiceOwnerConnectionsControllerTest
             await AssertProblemCode(response, "AM-00021");
         }
 
+        /// <summary>
+        /// A party cannot delegate to itself.
+        /// </summary>
+        [Fact]
+        public async Task AddResource_ToSameParty_Returns400SelfDelegationNotAllowed()
+        {
+            var request = CreateRequest(Organization(TestData.FredriksonsFabrikk), Organization(TestData.FredriksonsFabrikk), await GetAvailableRightKeys());
+
+            var response = await CreateClient().PostAsJsonAsync($"{Route}/resources", request, TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            await AssertProblemCode(response, "AM-00053");
+        }
+
         [Fact]
         public async Task AddResource_WithoutAuthentication_Returns401()
         {

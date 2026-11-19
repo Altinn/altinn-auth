@@ -22,6 +22,11 @@ namespace Altinn.AccessMgmt.Core.Services
         /// <inheritdoc />
         public async Task<Result<AssignmentPackageDto>> AddPackage(Guid fromId, Guid toId, Guid packageId, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
         {
+            if (fromId == toId)
+            {
+                return Problems.SelfDelegationNotAllowed;
+            }
+
             var options = new ConnectionOptions(configureConnection);
 
             // Validate From / To entity types against the configured options.
@@ -161,6 +166,11 @@ namespace Altinn.AccessMgmt.Core.Services
             if (keys.Count == 0)
             {
                 return Problems.MissingRightKey;
+            }
+
+            if (fromId == toId)
+            {
+                return Problems.SelfDelegationNotAllowed;
             }
 
             var options = new ConnectionOptions(configureConnection);
