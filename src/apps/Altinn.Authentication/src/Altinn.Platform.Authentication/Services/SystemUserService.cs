@@ -23,7 +23,6 @@ using Altinn.Platform.Authentication.Model;
 using Altinn.Platform.Authentication.Services.Interfaces;
 using Altinn.Register.Contracts.V1;
 using Microsoft.Extensions.Options;
-using Microsoft.FeatureManagement;
 using Newtonsoft.Json.Linq;
 
 using SystemUserType = Altinn.Platform.Authentication.Core.Enums.SystemUserType;
@@ -973,7 +972,11 @@ namespace Altinn.Platform.Authentication.Services
             bool[] outerValidationSet = new bool[packages.Count];
             List<string> packageUrns = [.. packages.Select(p => p.Urn!)];
 
-            Result<List<ClientDelegationDto>> clients = await _accessManagementClient.GetClientsForFacilitator(provider, packageUrns, cancellationToken: cancellationToken);
+            // Match ANY of the requested packages so a client that holds some of them is returned and the
+            // per-package check below reports AgentSystemUser_ClientMissingAccessPackages, as before the
+            // v2 migration. With match=all Access Management filters that client out, and the caller would
+            // get the less precise AgentSystemUser_ClientNotFound.
+            Result<List<ClientDelegationDto>> clients = await _accessManagementClient.GetClientsForFacilitator(provider, packageUrns, matchAllPackages: false, cancellationToken: cancellationToken);
             if (clients.IsProblem)
             {
                 return clients.Problem;
@@ -1216,15 +1219,11 @@ namespace Altinn.Platform.Authentication.Services
         }
 
         /// <inheritdoc/>
-        public async Task<Result<List<ExternalClientDto>>> GetClientsForFacilitator(Guid facilitator, List<string>? packages, IFeatureManager featureManager, CancellationToken cancellationToken)
+        public async Task<Result<List<ExternalClientDto>>> GetClientsForFacilitator(Guid facilitator, List<string>? packages, CancellationToken cancellationToken)
         {
             // The client must hold ALL requested packages (AND), otherwise partially-matching clients are
-            // listed and later fail delegation. v2 does AND via the match=all parameter; v1's enduser
-            // endpoint only supports OR, so use the internal API (which filters with AND) on v1.
-            bool useV2 = await featureManager.IsEnabledAsync(AccessManagementFeatureFlags.ClientDelegationApiV2);
-            Result<List<ClientDelegationDto>> res = useV2
-                ? await _accessManagementClient.GetClientsForFacilitator(facilitator, packages!, matchAllPackages: true, cancellationToken)
-                : await _accessManagementClient.GetClientsForFacilitatorFromInternalApi(facilitator, packages!, cancellationToken);
+            // listed and later fail delegation. The v2 enduser clients endpoint does AND via match=all.
+            Result<List<ClientDelegationDto>> res = await _accessManagementClient.GetClientsForFacilitator(facilitator, packages!, matchAllPackages: true, cancellationToken);
 
             if (!res.IsSuccess)
             {

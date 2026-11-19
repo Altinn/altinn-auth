@@ -1,6 +1,5 @@
 ﻿using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Models;
-using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
@@ -23,6 +22,11 @@ namespace Altinn.AccessMgmt.Core.Services
         /// <inheritdoc />
         public async Task<Result<AssignmentPackageDto>> AddPackage(Guid fromId, Guid toId, Guid packageId, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
         {
+            if (fromId == toId)
+            {
+                return Problems.SelfDelegationNotAllowed;
+            }
+
             var options = new ConnectionOptions(configureConnection);
 
             // Validate From / To entity types against the configured options.
@@ -164,6 +168,11 @@ namespace Altinn.AccessMgmt.Core.Services
                 return Problems.MissingRightKey;
             }
 
+            if (fromId == toId)
+            {
+                return Problems.SelfDelegationNotAllowed;
+            }
+
             var options = new ConnectionOptions(configureConnection);
 
             // Validate From / To entity types against the configured options.
@@ -183,16 +192,10 @@ namespace Altinn.AccessMgmt.Core.Services
                 return Problems.PartyNotFound;
             }
 
-            // The resource registry Delegable flag decides whether the resource may be delegated at all.
+            // The Delegable flag, imported from the resource registry, decides whether the resource may be delegated at all.
             // The service owner ConnectionsController checks this first, to answer before ownership and with a detail;
             // this guard is defence in depth, so the service does not depend on its caller for it.
-            ServiceResource resourceMetadata = await contextRetrievalService.GetResource(resource.RefId, cancellationToken);
-            if (resourceMetadata is null)
-            {
-                return Problems.InvalidResource;
-            }
-
-            if (!resourceMetadata.Delegable)
+            if (!resource.Delegable)
             {
                 return Problems.ResourceNotDelegable;
             }
@@ -329,13 +332,18 @@ namespace Altinn.AccessMgmt.Core.Services
             // The same Delegable guard as in AddResource, so the lookup does not advertise rights the add endpoint refuses to delegate.
             // The service owner ConnectionsController checks this first, to answer before ownership and with a detail;
             // this guard is defence in depth, so the service does not depend on its caller for it.
-            ServiceResource resourceMetadata = await contextRetrievalService.GetResource(resource, cancellationToken);
-            if (resourceMetadata is null)
+            bool? delegable = await dbContext.Resources
+                .AsNoTracking()
+                .Where(r => r.RefId == resource)
+                .Select(r => (bool?)r.Delegable)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (delegable is null)
             {
                 return Problems.InvalidResource;
             }
 
-            if (!resourceMetadata.Delegable)
+            if (!delegable.Value)
             {
                 return Problems.ResourceNotDelegable;
             }

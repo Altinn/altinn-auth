@@ -41,7 +41,9 @@ internal class ConnectionResourceLoader(AppDbContext db)
                 x.AssignmentId,
                 r.Id,
                 r.Name,
-                r.RefId
+                r.RefId,
+                r.Delegable,
+                r.AccessListMode
             })
             .AsNoTracking()
             .ToListAsync(ct);
@@ -55,7 +57,9 @@ internal class ConnectionResourceLoader(AppDbContext db)
                 {
                     Id = ai.Id,
                     Name = ai.Name,
-                    RefId = ai.RefId
+                    RefId = ai.RefId,
+                    Delegable = ai.Delegable,
+                    AccessListMode = ai.AccessListMode
                 });
             }
             else
@@ -66,7 +70,9 @@ internal class ConnectionResourceLoader(AppDbContext db)
                     {
                         Id = ai.Id,
                         Name = ai.Name,
-                        RefId = ai.RefId
+                        RefId = ai.RefId,
+                        Delegable = ai.Delegable,
+                        AccessListMode = ai.AccessListMode
                     }
                 ];
             }
@@ -103,7 +109,9 @@ internal class ConnectionResourceLoader(AppDbContext db)
                 x.ResourceId,
                 x.InstanceId,
                 ResourceName = r.Name,
-                ResourceRefId = r.RefId
+                ResourceRefId = r.RefId,
+                ResourceDelegable = r.Delegable,
+                ResourceAccessListMode = r.AccessListMode
             })
             .AsNoTracking()
             .ToListAsync(ct);
@@ -119,7 +127,9 @@ internal class ConnectionResourceLoader(AppDbContext db)
                     ResourceId = ai.ResourceId,
                     InstanceId = ai.InstanceId,
                     ResourceName = ai.ResourceName,
-                    ResourceRefId = ai.ResourceRefId
+                    ResourceRefId = ai.ResourceRefId,
+                    ResourceDelegable = ai.ResourceDelegable,
+                    ResourceAccessListMode = ai.ResourceAccessListMode
                 });
             }
             else
@@ -132,7 +142,9 @@ internal class ConnectionResourceLoader(AppDbContext db)
                         ResourceId = ai.ResourceId,
                         InstanceId = ai.InstanceId,
                         ResourceName = ai.ResourceName,
-                        ResourceRefId = ai.ResourceRefId
+                        ResourceRefId = ai.ResourceRefId,
+                        ResourceDelegable = ai.ResourceDelegable,
+                        ResourceAccessListMode = ai.ResourceAccessListMode
                     }
                 ];
             }
@@ -165,7 +177,9 @@ internal class ConnectionResourceLoader(AppDbContext db)
                 x.DelegationId,
                 r.Id,
                 r.Name,
-                r.RefId
+                r.RefId,
+                r.Delegable,
+                r.AccessListMode
             })
             .AsNoTracking()
             .ToListAsync(ct);
@@ -179,7 +193,9 @@ internal class ConnectionResourceLoader(AppDbContext db)
                 {
                     Id = dr.Id,
                     Name = dr.Name,
-                    RefId = dr.RefId
+                    RefId = dr.RefId,
+                    Delegable = dr.Delegable,
+                    AccessListMode = dr.AccessListMode
                 });
             }
             else
@@ -190,7 +206,9 @@ internal class ConnectionResourceLoader(AppDbContext db)
                     {
                         Id = dr.Id,
                         Name = dr.Name,
-                        RefId = dr.RefId
+                        RefId = dr.RefId,
+                        Delegable = dr.Delegable,
+                        AccessListMode = dr.AccessListMode
                     }
                 ];
             }
