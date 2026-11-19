@@ -543,24 +543,24 @@ public static class ActivityTypeConstants
     };
 
     /// <summary>
-    /// Request / Package / Updated to PartialApprove — the recipient approved the request, but the access given does not match what was requested.
+    /// Request / Package / Updated to ApprovedWithAdjustments — the recipient approved the request, but the access given does not match what was requested.
     /// </summary>
-    public static ConstantDefinition<ActivityType> RequestPackageUpdatedPartialApprove { get; } = new ConstantDefinition<ActivityType>("fa78024b-beb7-4730-9040-ea6d69f9c16f")
+    public static ConstantDefinition<ActivityType> RequestPackageUpdatedApprovedWithAdjustments { get; } = new ConstantDefinition<ActivityType>("fa78024b-beb7-4730-9040-ea6d69f9c16f")
     {
         Entity = new()
         {
             Type = ActivityLogType.Request,
             Subtype = ActivityLogSubtype.Package,
             Trigger = ActivityLogTrigger.Updated,
-            Status = RequestStatusV2.PartialApprove,
-            Name = "Forespørsel om tilgangspakke delvis godkjent",
+            Status = RequestStatusV2.ApprovedWithAdjustments,
+            Name = "Forespørsel om tilgangspakke godkjent med justeringer",
             Description = "Mottakeren godkjente forespørselen, men tilgangen som ble gitt samsvarer ikke med det som ble forespurt.",
         },
         EN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Access package request partially approved"),
+            KeyValuePair.Create("Name", "Access package request approved with adjustments"),
             KeyValuePair.Create("Description", "The recipient approved the request, but the access given does not match what was requested.")),
         NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Førespurnad om tilgangspakke delvis godkjend"),
+            KeyValuePair.Create("Name", "Førespurnad om tilgangspakke godkjend med justeringar"),
             KeyValuePair.Create("Description", "Mottakaren godkjende førespurnaden, men tilgangen som vart gitt samsvarer ikkje med det som vart førespurt.")),
     };
 
@@ -760,24 +760,24 @@ public static class ActivityTypeConstants
     };
 
     /// <summary>
-    /// Request / Resource / Updated to PartialApprove — the recipient approved the request, but the access given does not match what was requested.
+    /// Request / Resource / Updated to ApprovedWithAdjustments — the recipient approved the request, but the access given does not match what was requested.
     /// </summary>
-    public static ConstantDefinition<ActivityType> RequestResourceUpdatedPartialApprove { get; } = new ConstantDefinition<ActivityType>("ec902a84-63a4-4e86-9a73-1bc27dedd4e0")
+    public static ConstantDefinition<ActivityType> RequestResourceUpdatedApprovedWithAdjustments { get; } = new ConstantDefinition<ActivityType>("ec902a84-63a4-4e86-9a73-1bc27dedd4e0")
     {
         Entity = new()
         {
             Type = ActivityLogType.Request,
             Subtype = ActivityLogSubtype.Resource,
             Trigger = ActivityLogTrigger.Updated,
-            Status = RequestStatusV2.PartialApprove,
-            Name = "Forespørsel om enkelttjeneste delvis godkjent",
+            Status = RequestStatusV2.ApprovedWithAdjustments,
+            Name = "Forespørsel om enkelttjeneste godkjent med justeringer",
             Description = "Mottakeren godkjente forespørselen, men tilgangen som ble gitt samsvarer ikke med det som ble forespurt.",
         },
         EN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Single service request partially approved"),
+            KeyValuePair.Create("Name", "Single service request approved with adjustments"),
             KeyValuePair.Create("Description", "The recipient approved the request, but the access given does not match what was requested.")),
         NN = TranslationEntryList.Create(
-            KeyValuePair.Create("Name", "Førespurnad om enkeltteneste delvis godkjend"),
+            KeyValuePair.Create("Name", "Førespurnad om enkeltteneste godkjend med justeringar"),
             KeyValuePair.Create("Description", "Mottakaren godkjende førespurnaden, men tilgangen som vart gitt samsvarer ikkje med det som vart førespurt.")),
     };
 

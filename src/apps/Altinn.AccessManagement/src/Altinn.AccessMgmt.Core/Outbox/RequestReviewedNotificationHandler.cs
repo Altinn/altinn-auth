@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Altinn.AccessMgmt.Core.Extensions;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
@@ -299,7 +300,7 @@ public class RequestReviewedNotificationHandler(
     {
         RequestStatusV2.Approved => "Godkjent.",
         RequestStatusV2.Rejected => "Avslått.",
-        RequestStatusV2.PartialApprove => "Godkjent med justeringer.",
+        RequestStatusV2.ApprovedWithAdjustments => "Godkjent med justeringer.",
         _ => isApproved ? "Godkjent." : "Avslått.",
     };
 }
@@ -331,6 +332,11 @@ public class RequestReviewNotificationMessageResponse<T>
 
     public bool IsApproved { get; set; }
 
+    /// <summary>
+    /// The review outcome. Null in messages written before the status was stored. Messages written before
+    /// <see cref="RequestStatusV2.ApprovedWithAdjustments"/> was renamed store PartialApprove, which is read as the new name.
+    /// </summary>
+    [JsonConverter(typeof(LegacyRequestStatusJsonConverter))]
     public RequestStatusV2? RequestStatus { get; set; }
 }
 

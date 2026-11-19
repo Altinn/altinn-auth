@@ -59,7 +59,7 @@ public class RequestReviewNotificationMessageTest
     [Theory]
     [InlineData(RequestStatusV2.Approved)]
     [InlineData(RequestStatusV2.Rejected)]
-    [InlineData(RequestStatusV2.PartialApprove)]
+    [InlineData(RequestStatusV2.ApprovedWithAdjustments)]
     public void SerializeAndDeserialize_KeepsRequestStatus(RequestStatusV2 status)
     {
         var original = new RequestReviewNotificationMessage
@@ -70,5 +70,51 @@ public class RequestReviewNotificationMessageTest
         var roundTripped = JsonSerializer.Deserialize<RequestReviewNotificationMessage>(JsonSerializer.Serialize(original));
 
         roundTripped.Resources.Single().RequestStatus.Should().Be(status);
+    }
+
+    [Fact]
+    public void Deserialize_MessageWrittenBeforeTheRename_ReadsPartialApproveAsApprovedWithAdjustments()
+    {
+        var json = $$"""
+            {
+              "Resources": [ { "Ref": "{{ResourceId}}", "IsApproved": true, "RequestStatus": "PartialApprove" } ],
+              "Packages": [ { "Ref": "{{PackageId}}", "IsApproved": true, "RequestStatus": "Approved" } ]
+            }
+            """;
+
+        var message = JsonSerializer.Deserialize<RequestReviewNotificationMessage>(json);
+
+        var resource = message.Resources.Single();
+        resource.RequestStatus.Should().Be(RequestStatusV2.ApprovedWithAdjustments);
+        RequestReviewedNotificationHandler.GetStatusLabel(resource.RequestStatus, resource.IsApproved).Should().Be("Godkjent med justeringer.");
+        message.Packages.Single().RequestStatus.Should().Be(RequestStatusV2.Approved);
+    }
+
+    [Fact]
+    public void Serialize_ApprovedWithAdjustments_WritesTheNewName()
+    {
+        var message = new RequestReviewNotificationMessage
+        {
+            Resources = [new() { Ref = ResourceId, RequestStatus = RequestStatusV2.ApprovedWithAdjustments, IsApproved = true }],
+        };
+
+        var json = JsonSerializer.Serialize(message);
+
+        json.Should().Contain("\"RequestStatus\":\"ApprovedWithAdjustments\"").And.NotContain("PartialApprove");
+    }
+
+    [Fact]
+    public void SerializeAndDeserialize_WithoutRequestStatus_KeepsNull()
+    {
+        var original = new RequestReviewNotificationMessage
+        {
+            Resources = [new() { Ref = ResourceId, IsApproved = true }],
+        };
+
+        var json = JsonSerializer.Serialize(original);
+        var roundTripped = JsonSerializer.Deserialize<RequestReviewNotificationMessage>(json);
+
+        json.Should().Contain("\"RequestStatus\":null");
+        roundTripped.Resources.Single().RequestStatus.Should().BeNull();
     }
 }

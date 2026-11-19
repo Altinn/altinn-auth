@@ -41,7 +41,8 @@ public enum RequestStatusV2
     Withdrawn = 5,
 
     /// <summary>
-    /// Request is approved, but what was granted does not match what was requested
+    /// Request is approved, but what was granted differs from what was requested: fewer, other or more rights.
+    /// Named PartialApprove before version 2 was published; the number is unchanged.
     /// </summary>
-    PartialApprove = 6
+    ApprovedWithAdjustments = 6
 }

@@ -1031,7 +1031,7 @@ public class RequestControllerTest
 
     /// <summary>
     /// Version 1 approves exactly what was requested: the requested rights when the request names them,
-    /// otherwise every right the user can delegate. A body is ignored, and the request is never PartialApprove.
+    /// otherwise every right the user can delegate. A body is ignored, and the request is never ApprovedWithAdjustments.
     /// See <see cref="RequestApprovalTestData"/> for the setup.
     /// </summary>
     [IntegrationTest]
@@ -1356,23 +1356,23 @@ public class RequestControllerTest
 
     #endregion
 
-    #region PartialApprove — v1 reports it as Approved, StatusV2 carries it
+    #region ApprovedWithAdjustments — v1 reports it as Approved, StatusV2 carries it
 
     /// <summary>
     /// v1 clients may check <see cref="RequestDto.Status"/> exhaustively, so a request stored as
-    /// <see cref="RequestStatus.PartialApprove"/> is reported as Approved there, and as PartialApprove in StatusV2.
+    /// <see cref="RequestStatus.ApprovedWithAdjustments"/> is reported as Approved there, and as ApprovedWithAdjustments in StatusV2.
     /// Own fixture, so the seeded request does not change counts in the shared read-only collection.
     /// </summary>
     [IntegrationTest]
-    public class PartialApproveRequest : IClassFixture<ApiFixture>
+    public class ApprovedWithAdjustmentsRequest : IClassFixture<ApiFixture>
     {
-        private static readonly Guid PartialApproveRequestId = Guid.Parse("0196b0d0-0000-7000-8000-000000000001");
+        private static readonly Guid ApprovedWithAdjustmentsRequestId = Guid.Parse("0196b0d0-0000-7000-8000-000000000001");
 
-        public PartialApproveRequest(ApiFixture fixture)
+        public ApprovedWithAdjustmentsRequest(ApiFixture fixture)
         {
             Fixture = fixture;
             EnableFeatureFlags(fixture);
-            fixture.EnsureSeedOnce<PartialApproveRequest>(db =>
+            fixture.EnsureSeedOnce<ApprovedWithAdjustmentsRequest>(db =>
             {
                 var reqAssignment = new RequestAssignment
                 {
@@ -1386,10 +1386,10 @@ public class RequestControllerTest
 
                 db.RequestAssignmentPackages.Add(new RequestAssignmentPackage
                 {
-                    Id = PartialApproveRequestId,
+                    Id = ApprovedWithAdjustmentsRequestId,
                     AssignmentId = reqAssignment.Id,
                     PackageId = PackageConstants.Agriculture.Id,
-                    Status = RequestStatusV2.PartialApprove,
+                    Status = RequestStatusV2.ApprovedWithAdjustments,
                 });
                 db.SaveChanges();
             });
@@ -1410,7 +1410,7 @@ public class RequestControllerTest
             using var doc = JsonDocument.Parse(json);
             foreach (var item in doc.RootElement.GetProperty("data").EnumerateArray())
             {
-                if (item.GetProperty("id").GetGuid() == PartialApproveRequestId)
+                if (item.GetProperty("id").GetGuid() == ApprovedWithAdjustmentsRequestId)
                 {
                     return item.Clone();
                 }
@@ -1420,18 +1420,18 @@ public class RequestControllerTest
         }
 
         [Fact]
-        public async Task GetRequest_StatusIsApprovedAndStatusV2IsPartialApprove()
+        public async Task GetRequest_StatusIsApprovedAndStatusV2IsApprovedWithAdjustments()
         {
             var client = CreateSystemClient(Fixture, TestData.BakerJohnsen.Id);
 
             var response = await client.GetAsync(
-                $"{Route}?party={TestData.BakerJohnsen.Id}&id={PartialApproveRequestId}",
+                $"{Route}?party={TestData.BakerJohnsen.Id}&id={ApprovedWithAdjustmentsRequestId}",
                 TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
             Assert.Equal("Approved", doc.RootElement.GetProperty("status").GetString());
-            Assert.Equal("PartialApprove", doc.RootElement.GetProperty("statusV2").GetString());
+            Assert.Equal("ApprovedWithAdjustments", doc.RootElement.GetProperty("statusV2").GetString());
         }
 
         [Fact]
@@ -1441,7 +1441,7 @@ public class RequestControllerTest
 
             Assert.NotNull(item);
             Assert.Equal("Approved", item.Value.GetProperty("status").GetString());
-            Assert.Equal("PartialApprove", item.Value.GetProperty("statusV2").GetString());
+            Assert.Equal("ApprovedWithAdjustments", item.Value.GetProperty("statusV2").GetString());
         }
 
         [Fact]
@@ -1461,13 +1461,13 @@ public class RequestControllerTest
         }
 
         [Fact]
-        public async Task GetReceived_FilterOnPartialApprove_Returns400()
+        public async Task GetReceived_FilterOnApprovedWithAdjustments_Returns400()
         {
-            // PartialApprove is not a version 1 status, so version 1 does not accept it as a filter
+            // ApprovedWithAdjustments is not a version 1 status, so version 1 does not accept it as a filter
             var client = CreateSystemClient(Fixture, TestData.BakerJohnsen.Id);
 
             var response = await client.GetAsync(
-                $"{Route}/received?party={TestData.BakerJohnsen.Id}&status=PartialApprove",
+                $"{Route}/received?party={TestData.BakerJohnsen.Id}&status=ApprovedWithAdjustments",
                 TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);

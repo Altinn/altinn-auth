@@ -16,7 +16,7 @@ public class RequestDto
     public Guid Id { get; set; }
 
     /// <summary>
-    /// Request status (e.g. draft, pending, approved, partial approve, rejected, withdrawn).
+    /// Request status (e.g. draft, pending, approved, approved with adjustments, rejected, withdrawn).
     /// Clients must accept values they do not know.
     /// </summary>
     public NonExhaustiveEnum<RequestStatusV2> Status { get; set; }
