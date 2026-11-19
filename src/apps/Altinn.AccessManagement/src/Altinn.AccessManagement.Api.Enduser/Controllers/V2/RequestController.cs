@@ -66,7 +66,8 @@ public class RequestController(
     /// The selection may include rights that were not requested. Each right key must exist in the policy of the
     /// resource and be delegable by the authenticated user on behalf of the party.
     /// Without a selection, what was requested is given. The request becomes Approved when what is given matches
-    /// what was requested, and PartialApprove otherwise; a selection for a request for the whole resource gives PartialApprove.
+    /// what was requested, and PartialApprove otherwise. For a request for the whole resource, selecting every right the
+    /// authenticated user can delegate gives Approved, and selecting only some of them gives PartialApprove.
     /// </summary>
     /// <param name="party">The party approving, which must be the recipient of the request</param>
     /// <param name="id">The request to approve</param>
