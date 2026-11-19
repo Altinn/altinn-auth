@@ -2307,7 +2307,7 @@ public partial class ConnectionService
 
                     if (right == null)
                     {
-                        var rightKeyMetadata = rightKeys.FirstOrDefault(r => r.Key == rightKey);
+                        var rightKeyMetadata = rightKeys?.FirstOrDefault(r => r.Key == rightKey);
                         right = new RightPermission()
                         {
                             Right = new RightDto
@@ -2487,7 +2487,7 @@ public partial class ConnectionService
 
                     if (right == null)
                     {
-                        var rightKeyMetadata = rightKeys.FirstOrDefault(r => r.Key == rightKey);
+                        var rightKeyMetadata = rightKeys?.FirstOrDefault(r => r.Key == rightKey);
                         right = new RightPermission()
                         {
                             Right = new RightDto
