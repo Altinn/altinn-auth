@@ -1,16 +1,25 @@
-﻿using Altinn.AccessMgmt.PersistenceEF.Constants;
+﻿using System.Collections.Concurrent;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 
 /// <summary>
 /// Responsible for enriching connection query records with entity, child, and role data.
 /// </summary>
-internal class ConnectionEntityEnricher(AppDbContext db)
+internal class ConnectionEntityEnricher(AppDbContext db, ILogger logger)
 {
+    /// <summary>
+    /// Role ids the drift warning has already been logged for. Drift is a state, not an event:
+    /// a retired role stays in the table and referenced until someone cleans it up, so without
+    /// this the warning would repeat on every enrichment call for as long as it lasts.
+    /// </summary>
+    private static readonly ConcurrentDictionary<Guid, byte> WarnedStrayRoleIds = new();
+
     /// <summary>
     /// Enriches the given records with entity, role, and child-nesting data.
     /// </summary>
@@ -18,9 +27,107 @@ internal class ConnectionEntityEnricher(AppDbContext db)
     {
         var entityDict = await FetchEntitiesAsync(allKeys, ct);
         var childrenDict = doChildNesting ? await FetchChildrenAsync(entityDict, filter, applyFromFilter, ct) : [];
-        var rolesDict = await FetchRolesAsync(ct);
+        var rolesDict = await ResolveRolesAsync(allKeys, ct);
 
         return ApplyEnrichment(allKeys, entityDict, childrenDict, rolesDict, doChildNesting, applyFromFilter, filter);
+    }
+
+    /// <summary>
+    /// Resolves the roles referenced by the records, from the constants where possible and from
+    /// the database for any id they do not cover.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Roles are seeded from <see cref="RoleConstants"/> and never written at runtime, so the
+    /// role table is only a projection of the constants. Projecting the referenced roles from
+    /// the constants removes a load of all roles, joined to provider and provider type, from
+    /// every enrichment call.
+    /// </para>
+    /// <para>
+    /// The projection is rebuilt per call rather than cached. The result is handed to callers as
+    /// ordinary mutable models, and a process-wide cache would turn any later in-place edit, such
+    /// as a translation applied to the wrong object, into corrupted role data for every request
+    /// until restart. Fresh instances per call keep the same ownership the database query had.
+    /// </para>
+    /// <para>
+    /// StaticDataIngest never deletes, so a role dropped from <see cref="RoleConstants"/> in an
+    /// earlier release can still exist in the database and be referenced by an assignment made
+    /// while it was current. Falling back keeps reads working through that drift instead of
+    /// failing the whole query on one stale row.
+    /// </para>
+    /// </remarks>
+    private async Task<Dictionary<Guid, Role>> ResolveRolesAsync(List<ConnectionQueryExtendedRecord> allKeys, CancellationToken ct)
+    {
+        HashSet<Guid> referenced = [];
+        foreach (var key in allKeys)
+        {
+            if (key.RoleId != Guid.Empty)
+            {
+                referenced.Add(key.RoleId);
+            }
+
+            if (key.ViaRoleId is { } viaRoleId && viaRoleId != Guid.Empty)
+            {
+                referenced.Add(viaRoleId);
+            }
+        }
+
+        Dictionary<Guid, Role> resolved = [];
+        Dictionary<Guid, Provider> providersById = [];
+        HashSet<Guid> missing = [];
+        foreach (var roleId in referenced)
+        {
+            if (RoleConstants.TryGetById(roleId, out var definition))
+            {
+                resolved[roleId] = ProjectRole(definition.Entity, providersById);
+            }
+            else
+            {
+                missing.Add(roleId);
+            }
+        }
+
+        if (missing.Count == 0)
+        {
+            return resolved;
+        }
+
+        var strays = await db.Roles
+            .Include(r => r.Provider).ThenInclude(p => p.Type)
+            .AsNoTracking()
+            .Where(r => missing.Contains(r.Id))
+            .ToListAsync(ct);
+
+        List<Guid> drifted = [];
+        foreach (var stray in strays)
+        {
+            resolved[stray.Id] = stray;
+            missing.Remove(stray.Id);
+            if (WarnedStrayRoleIds.TryAdd(stray.Id, 0))
+            {
+                drifted.Add(stray.Id);
+            }
+        }
+
+        if (drifted.Count > 0)
+        {
+            logger.LogWarning(
+                "RoleConstants does not cover {StrayRoleCount} role(s) referenced by connections: {StrayRoleIds}. Falling back to the role table; the seeded constants and the database have drifted.",
+                drifted.Count,
+                string.Join(", ", drifted));
+        }
+
+        // Not deduplicated on purpose: a dangling id fails the query with KeyNotFoundException
+        // in ApplyEnrichment, and every such failure should have a log line naming the role.
+        if (missing.Count > 0)
+        {
+            logger.LogError(
+                "{DanglingRoleCount} role(s) referenced by connections exist neither in RoleConstants nor in the role table: {DanglingRoleIds}. The query will fail on these ids.",
+                missing.Count,
+                string.Join(", ", missing));
+        }
+
+        return resolved;
     }
 
     /// <summary>
@@ -148,18 +255,79 @@ internal class ConnectionEntityEnricher(AppDbContext db)
     }
 
     /// <summary>
-    /// Loads roles. Could be cached or fetched from RoleConstants instead to avoid DB roundtrip. Added as issue #3793.
+    /// Projects a role constant into the same shape the previous query produced: the role with
+    /// its provider, and that provider with its type. <see cref="Role.EntityType"/> is left
+    /// unset because the query did not include it either.
     /// </summary>
-    private async Task<Dictionary<Guid, Role>> FetchRolesAsync(CancellationToken ct)
+    /// <remarks>
+    /// <para>
+    /// The audit columns inherited from <see cref="Altinn.AccessMgmt.PersistenceEF.Models.Audit.Base.BaseAudit"/> are not
+    /// copied, because the constants do not carry them. A projected role therefore holds the
+    /// field initializers instead of what the table has: <c>Audit_ValidFrom</c> is the time
+    /// of projection and <c>Audit_ChangeOperation</c> a fresh Guid. Nothing reads them from an
+    /// enriched role, and <c>RoleDto</c> does not expose them.
+    /// </para>
+    /// <para>
+    /// The graph is rebuilt here rather than assigned onto the constants' own entities. Those
+    /// instances are the seeds StaticDataIngest hands to EF, and a populated reference navigation
+    /// on a seed makes <c>DbSet.Add</c> cascade into an insert of the referenced provider.
+    /// Providers are shared between the roles of one call through <paramref name="providersById"/>,
+    /// which matches what the query's include produced.
+    /// </para>
+    /// </remarks>
+    private static Role ProjectRole(Role seed, Dictionary<Guid, Provider> providersById)
     {
-        var roles = await db.Roles.Include(r => r.Provider).ThenInclude(p => p.Type).AsNoTracking().ToListAsync(ct);
-        Dictionary<Guid, Role> rolesDict = [];
-        foreach (var role in roles)
+        if (!providersById.TryGetValue(seed.ProviderId, out var provider))
         {
-            rolesDict.Add(role.Id, role);
+            provider = ProjectProvider(seed.ProviderId);
+            if (provider is not null)
+            {
+                providersById[seed.ProviderId] = provider;
+            }
         }
 
-        return rolesDict;
+        return new Role
+        {
+            Id = seed.Id,
+            Name = seed.Name,
+            Code = seed.Code,
+            LegacyCode = seed.LegacyCode,
+            Description = seed.Description,
+            Urn = seed.Urn,
+            LegacyUrn = seed.LegacyUrn,
+            IsKeyRole = seed.IsKeyRole,
+            IsAssignable = seed.IsAssignable,
+            IsAvailableForServiceOwners = seed.IsAvailableForServiceOwners,
+            EntityTypeId = seed.EntityTypeId,
+            ProviderId = seed.ProviderId,
+            Provider = provider,
+        };
+    }
+
+    /// <summary>
+    /// Projects a provider constant with its type, or returns null when the constants do not
+    /// cover the id.
+    /// </summary>
+    private static Provider? ProjectProvider(Guid providerId)
+    {
+        if (!ProviderConstants.TryGetById(providerId, out var definition))
+        {
+            return null;
+        }
+
+        var seed = definition.Entity;
+        return new Provider
+        {
+            Id = seed.Id,
+            Name = seed.Name,
+            RefId = seed.RefId,
+            LogoUrl = seed.LogoUrl,
+            Code = seed.Code,
+            TypeId = seed.TypeId,
+            Type = ProviderTypeConstants.TryGetById(seed.TypeId, out var providerType)
+                ? new ProviderType { Id = providerType.Entity.Id, Name = providerType.Entity.Name }
+                : null,
+        };
     }
 
     /// <summary>
