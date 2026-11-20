@@ -41,7 +41,7 @@ docs {
 
 	The approval creates an ordinary resource delegation from the approver to the requester.
 	The request becomes Approved when what is given matches what was requested, and
-	PartialApprove otherwise. For a request for the whole resource, selecting every right the
+	ApprovedWithAdjustments otherwise. For a request for the whole resource, selecting every right the
 	approver can delegate gives Approved, the same as leaving the body out. The keys given are
 	returned in `resource.approvedRightKeys`.
 }
@@ -65,10 +65,10 @@ tests {
 		expect(res.status).to.equal(200);
 	});
 
-	test("THEN the request is PartialApprove", function() {
+	test("THEN the request is ApprovedWithAdjustments", function() {
 		const body = res.getBody();
 		expect(body.id).to.equal(bru.getVar("rk_requestId"));
-		expect(body.status).to.equal("PartialApprove");
+		expect(body.status).to.equal("ApprovedWithAdjustments");
 	});
 
 	test("THEN the approved right is the one selected, and the requested rights are unchanged", function() {

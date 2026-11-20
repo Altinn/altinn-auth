@@ -146,7 +146,7 @@ public class SwaggerDocTest
 
             var status = ResolveProperty(schemas, "AMCoreModels.RequestDto", "status");
             status.GetProperty("type").GetString().Should().Be("string");
-            status.GetProperty("enum").EnumerateArray().Select(e => e.GetString()).Should().Contain("Approved").And.NotContain("PartialApprove");
+            status.GetProperty("enum").EnumerateArray().Select(e => e.GetString()).Should().Contain("Approved").And.NotContain("ApprovedWithAdjustments");
         }
 
         [Theory]
@@ -190,7 +190,7 @@ public class SwaggerDocTest
 
             // Each known value is a single-value enum; the alternative without an enum takes unknown values.
             var knownValues = oneOf.Where(s => s.TryGetProperty("enum", out _)).Select(s => s.GetProperty("enum")[0].GetString()).ToList();
-            knownValues.Should().Contain("PartialApprove");
+            knownValues.Should().Contain("ApprovedWithAdjustments");
             oneOf.Count.Should().Be(knownValues.Count + 1, "unknown values must be allowed");
         }
     }
@@ -267,7 +267,7 @@ public class SwaggerDocTest
         [Theory]
         [InlineData("v1", false)]
         [InlineData("v2", true)]
-        public async Task GetSwaggerJson_SentRequestsStatusFilter_OffersPartialApproveOnlyInV2(string version, bool offersPartialApprove)
+        public async Task GetSwaggerJson_SentRequestsStatusFilter_OffersApprovedWithAdjustmentsOnlyInV2(string version, bool offersApprovedWithAdjustments)
         {
             var body = await Client.GetStringAsync($"/swagger/{version}/swagger.json", TestContext.Current.CancellationToken);
             using var doc = JsonDocument.Parse(body);
@@ -288,7 +288,7 @@ public class SwaggerDocTest
 
             var values = statuses.GetProperty("enum").EnumerateArray().Select(e => e.GetString()).ToList();
             values.Should().Contain("Approved");
-            values.Contains("PartialApprove").Should().Be(offersPartialApprove);
+            values.Contains("ApprovedWithAdjustments").Should().Be(offersApprovedWithAdjustments);
         }
     }
 }

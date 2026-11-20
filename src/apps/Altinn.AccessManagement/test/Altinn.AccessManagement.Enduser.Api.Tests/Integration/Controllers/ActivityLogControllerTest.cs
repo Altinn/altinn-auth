@@ -398,10 +398,10 @@ public class ActivityLogControllerTest : IClassFixture<ApiFixture>
     }
 
     /// <summary>
-    /// The request area offers the PartialApprove catalog entries, with the status as a plain string.
+    /// The request area offers the ApprovedWithAdjustments catalog entries, with the status as a plain string.
     /// </summary>
     [Fact]
-    public async Task Request_Types_IncludePartialApproveEntriesWithStringStatus()
+    public async Task Request_Types_IncludeApprovedWithAdjustmentsEntriesWithStringStatus()
     {
         var client = Fixture.Server.CreateClient();
 
@@ -411,13 +411,13 @@ public class ActivityLogControllerTest : IClassFixture<ApiFixture>
         Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Body: {body}");
 
         using var doc = JsonDocument.Parse(body);
-        var partialApproveIds = doc.RootElement.EnumerateArray()
-            .Where(t => t.TryGetProperty("status", out var status) && status.ValueKind == JsonValueKind.String && status.GetString() == "PartialApprove")
+        var approvedWithAdjustmentsIds = doc.RootElement.EnumerateArray()
+            .Where(t => t.TryGetProperty("status", out var status) && status.ValueKind == JsonValueKind.String && status.GetString() == "ApprovedWithAdjustments")
             .Select(t => t.GetProperty("id").GetGuid())
             .ToList();
 
-        Assert.Contains(ActivityTypeConstants.RequestPackageUpdatedPartialApprove.Id, partialApproveIds);
-        Assert.Contains(ActivityTypeConstants.RequestResourceUpdatedPartialApprove.Id, partialApproveIds);
+        Assert.Contains(ActivityTypeConstants.RequestPackageUpdatedApprovedWithAdjustments.Id, approvedWithAdjustmentsIds);
+        Assert.Contains(ActivityTypeConstants.RequestResourceUpdatedApprovedWithAdjustments.Id, approvedWithAdjustmentsIds);
     }
 
     private HttpClient CreateClient(Guid partyUuid, params string[] scopes)

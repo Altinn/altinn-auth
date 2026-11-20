@@ -15,7 +15,7 @@ public class RequestReviewedNotificationHandlerTest
     [Theory]
     [InlineData(RequestStatusV2.Approved, "Godkjent.")]
     [InlineData(RequestStatusV2.Rejected, "Avslått.")]
-    [InlineData(RequestStatusV2.PartialApprove, "Godkjent med justeringer.")]
+    [InlineData(RequestStatusV2.ApprovedWithAdjustments, "Godkjent med justeringer.")]
     public void GetStatusLabel_ReviewOutcome_ReturnsLabel(RequestStatusV2 status, string expected)
     {
         RequestReviewedNotificationHandler.GetStatusLabel(status, isApproved: false).Should().Be(expected);
@@ -47,7 +47,7 @@ public class RequestReviewedNotificationHandlerTest
             [
                 Package("Lønn", RequestStatusV2.Approved),
                 Package("Ordinær post til virksomheten", RequestStatusV2.Rejected),
-                Resource("Melding fra Regnskapsregisteret", RequestStatusV2.PartialApprove),
+                Resource("Melding fra Regnskapsregisteret", RequestStatusV2.ApprovedWithAdjustments),
                 Resource("Motta nabo- og planvarsel", RequestStatusV2.Approved),
             ]);
 
@@ -98,7 +98,7 @@ public class RequestReviewedNotificationHandlerTest
         var body = RequestReviewedNotificationHandler.BuildEmailBody(
             Organization("Baker Hansen AS", "313955966"),
             [
-                Resource("Melding fra Regnskapsregisteret", RequestStatusV2.PartialApprove),
+                Resource("Melding fra Regnskapsregisteret", RequestStatusV2.ApprovedWithAdjustments),
                 Resource("Motta nabo- og planvarsel", RequestStatusV2.Rejected),
                 Resource("Byggesøknad", RequestStatusV2.Approved),
             ]);
@@ -139,7 +139,7 @@ public class RequestReviewedNotificationHandlerTest
     {
         var body = RequestReviewedNotificationHandler.BuildEmailBody(
             Organization("Baker Hansen AS", "313955966"),
-            [Resource("Motta nabo- og planvarsel", RequestStatusV2.PartialApprove)]);
+            [Resource("Motta nabo- og planvarsel", RequestStatusV2.ApprovedWithAdjustments)]);
 
         body.Should().Contain("Enkelttjenester:");
         body.Should().NotContain("Tilgangspakker:");

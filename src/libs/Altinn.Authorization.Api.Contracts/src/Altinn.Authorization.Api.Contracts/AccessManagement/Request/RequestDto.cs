@@ -15,13 +15,13 @@ public class RequestDto
     /// <summary>
     /// Request status (e.g. draft, pending, approved, rejected, withdrawn).
     /// Statuses added later are reported as their closest version 1 value, such as
-    /// <see cref="RequestStatusV2.PartialApprove"/> as <see cref="RequestStatus.Approved"/>; see <see cref="StatusV2"/>.
+    /// <see cref="RequestStatusV2.ApprovedWithAdjustments"/> as <see cref="RequestStatus.Approved"/>; see <see cref="StatusV2"/>.
     /// </summary>
     public RequestStatus Status { get; set; }
 
     /// <summary>
     /// Request status, including values added after <see cref="Status"/> was fixed, such as
-    /// <see cref="RequestStatusV2.PartialApprove"/>. Clients must accept values they do not know.
+    /// <see cref="RequestStatusV2.ApprovedWithAdjustments"/>. Clients must accept values they do not know.
     /// </summary>
     public NonExhaustiveEnum<RequestStatusV2> StatusV2 { get; set; }
 

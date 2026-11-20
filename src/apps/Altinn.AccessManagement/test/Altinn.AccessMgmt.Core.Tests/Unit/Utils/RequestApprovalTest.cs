@@ -38,28 +38,28 @@ public class RequestApprovalTest
     }
 
     [Fact]
-    public void DetermineStatus_SelectionWithFewerRights_ReturnsPartialApprove()
+    public void DetermineStatus_SelectionWithFewerRights_ReturnsApprovedWithAdjustments()
     {
-        RequestApproval.DetermineStatus(["read", "write"], ["read"], []).Should().Be(RequestStatusV2.PartialApprove);
+        RequestApproval.DetermineStatus(["read", "write"], ["read"], []).Should().Be(RequestStatusV2.ApprovedWithAdjustments);
     }
 
     [Fact]
-    public void DetermineStatus_SelectionWithMoreRights_ReturnsPartialApprove()
+    public void DetermineStatus_SelectionWithMoreRights_ReturnsApprovedWithAdjustments()
     {
-        RequestApproval.DetermineStatus(["read"], ["read", "write"], []).Should().Be(RequestStatusV2.PartialApprove);
+        RequestApproval.DetermineStatus(["read"], ["read", "write"], []).Should().Be(RequestStatusV2.ApprovedWithAdjustments);
     }
 
     [Fact]
-    public void DetermineStatus_SelectionWithOtherRights_ReturnsPartialApprove()
+    public void DetermineStatus_SelectionWithOtherRights_ReturnsApprovedWithAdjustments()
     {
-        RequestApproval.DetermineStatus(["read"], ["write"], []).Should().Be(RequestStatusV2.PartialApprove);
+        RequestApproval.DetermineStatus(["read"], ["write"], []).Should().Be(RequestStatusV2.ApprovedWithAdjustments);
     }
 
     [Fact]
-    public void DetermineStatus_SelectionForWholeResource_WithSomeDelegableRights_ReturnsPartialApprove()
+    public void DetermineStatus_SelectionForWholeResource_WithSomeDelegableRights_ReturnsApprovedWithAdjustments()
     {
-        RequestApproval.DetermineStatus(null, ["read"], ["read", "write"]).Should().Be(RequestStatusV2.PartialApprove);
-        RequestApproval.DetermineStatus([], ["read"], ["read", "write"]).Should().Be(RequestStatusV2.PartialApprove);
+        RequestApproval.DetermineStatus(null, ["read"], ["read", "write"]).Should().Be(RequestStatusV2.ApprovedWithAdjustments);
+        RequestApproval.DetermineStatus([], ["read"], ["read", "write"]).Should().Be(RequestStatusV2.ApprovedWithAdjustments);
     }
 
     [Fact]
@@ -73,7 +73,7 @@ public class RequestApprovalTest
     public void DetermineStatus_SelectionForRequestedRights_IgnoresDelegableRights()
     {
         // Every delegable right selected, but more than was requested
-        RequestApproval.DetermineStatus(["read"], ["read", "write"], ["read", "write"]).Should().Be(RequestStatusV2.PartialApprove);
+        RequestApproval.DetermineStatus(["read"], ["read", "write"], ["read", "write"]).Should().Be(RequestStatusV2.ApprovedWithAdjustments);
 
         // Exactly what was requested, but fewer than the approver could give
         RequestApproval.DetermineStatus(["read"], ["read"], ["read", "write"]).Should().Be(RequestStatusV2.Approved);
@@ -82,7 +82,7 @@ public class RequestApprovalTest
     [Fact]
     public void DetermineStatus_ComparesKeysCaseSensitively()
     {
-        RequestApproval.DetermineStatus(["read"], ["READ"], []).Should().Be(RequestStatusV2.PartialApprove);
+        RequestApproval.DetermineStatus(["read"], ["READ"], []).Should().Be(RequestStatusV2.ApprovedWithAdjustments);
     }
 
     // ── ValidateUserCanDelegate ─────────────────────────────────────────────

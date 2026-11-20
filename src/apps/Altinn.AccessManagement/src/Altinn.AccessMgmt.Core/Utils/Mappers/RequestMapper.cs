@@ -110,20 +110,20 @@ public partial class DtoMapper : IDtoMapper
         RequestStatusV2.Approved => RequestStatus.Approved,
         RequestStatusV2.Rejected => RequestStatus.Rejected,
         RequestStatusV2.Withdrawn => RequestStatus.Withdrawn,
-        RequestStatusV2.PartialApprove => RequestStatus.Approved,
+        RequestStatusV2.ApprovedWithAdjustments => RequestStatus.Approved,
         _ => throw new ArgumentOutOfRangeException(nameof(status), status, "The status has no version 1 value."),
     };
 
     /// <summary>
     /// The statuses to filter on for a status filter from a v1 client. Since <see cref="ConvertToV1Status"/>
-    /// reports PartialApprove as Approved, filtering on Approved also includes PartialApprove.
+    /// reports ApprovedWithAdjustments as Approved, filtering on Approved also includes ApprovedWithAdjustments.
     /// </summary>
     public static IEnumerable<RequestStatusV2> ConvertFromV1StatusFilter(IEnumerable<RequestStatus> statuses)
     {
         var result = statuses.Select(status => (RequestStatusV2)status).ToHashSet();
         if (result.Contains(RequestStatusV2.Approved))
         {
-            result.Add(RequestStatusV2.PartialApprove);
+            result.Add(RequestStatusV2.ApprovedWithAdjustments);
         }
 
         return result;

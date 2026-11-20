@@ -80,7 +80,7 @@ public abstract class RequestControllerBase<TRequest, TStatus>(
     /// <summary>
     /// The statuses filtered on when none are given: every status except <see cref="RequestStatusV2.None"/>.
     /// </summary>
-    protected static readonly RequestStatusV2[] DefaultStatusFilter = [RequestStatusV2.Draft, RequestStatusV2.Pending, RequestStatusV2.Approved, RequestStatusV2.PartialApprove, RequestStatusV2.Rejected, RequestStatusV2.Withdrawn];
+    protected static readonly RequestStatusV2[] DefaultStatusFilter = [RequestStatusV2.Draft, RequestStatusV2.Pending, RequestStatusV2.Approved, RequestStatusV2.ApprovedWithAdjustments, RequestStatusV2.Rejected, RequestStatusV2.Withdrawn];
 
     private Action<ConnectionOptions> ConfigureConnections { get; } = options =>
     {

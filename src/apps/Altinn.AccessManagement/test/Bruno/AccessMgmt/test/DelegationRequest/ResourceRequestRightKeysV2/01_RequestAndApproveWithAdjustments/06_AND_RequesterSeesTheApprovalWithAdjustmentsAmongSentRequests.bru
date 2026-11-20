@@ -1,11 +1,11 @@
 meta {
-	name: 06_AND_RequesterSeesThePartialApprovalAmongSentRequests
+	name: 06_AND_RequesterSeesTheApprovalWithAdjustmentsAmongSentRequests
 	type: http
 	seq: 6
 }
 
 get {
-	url: {{baseUrl}}/accessmanagement/api/v2/enduser/request/sent?party={{party}}&to={{to}}&status=PartialApprove&type=resource
+	url: {{baseUrl}}/accessmanagement/api/v2/enduser/request/sent?party={{party}}&to={{to}}&status=ApprovedWithAdjustments&type=resource
 	body: none
 	auth: inherit
 }
@@ -13,17 +13,17 @@ get {
 params:query {
 	party: {{party}}
 	to: {{to}}
-	status: PartialApprove
+	status: ApprovedWithAdjustments
 	type: resource
 }
 
 docs {
-	AND the requester sees the request among its sent requests, filtered on PartialApprove.
+	AND the requester sees the request among its sent requests, filtered on ApprovedWithAdjustments.
 
-	GET /accessmanagement/api/v2/enduser/request/sent?party=<requester>&to=<approver>&status=PartialApprove&type=resource
+	GET /accessmanagement/api/v2/enduser/request/sent?party=<requester>&to=<approver>&status=ApprovedWithAdjustments&type=resource
 
 	Returns 200 with a page of v2 requests in `data`. In v2 the status filter takes every
-	status, PartialApprove included. Without a filter, every status is returned.
+	status, ApprovedWithAdjustments included. Without a filter, every status is returned.
 }
 
 script:pre-request {
@@ -46,10 +46,10 @@ tests {
 		expect(res.status).to.equal(200);
 	});
 
-	test("AND the partially approved request is listed with the approved right", function() {
+	test("AND the request approved with adjustments is listed with the approved right", function() {
 		const listed = res.getBody().data.find(r => r.id === bru.getVar("rk_requestId"));
 		expect(listed, "the request in the sent list").to.exist;
-		expect(listed.status).to.equal("PartialApprove");
+		expect(listed.status).to.equal("ApprovedWithAdjustments");
 		expect(listed.resource.approvedRightKeys).to.deep.equal([bru.getVar("rk_keyA")]);
 	});
 }
