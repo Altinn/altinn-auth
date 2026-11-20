@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text.Json;
 using Altinn.AccessManagement.Core.Constants;
+using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.TestUtils;
 using Altinn.AccessManagement.TestUtils.Data;
 using Altinn.AccessManagement.TestUtils.Fixtures;
@@ -11,6 +12,7 @@ using Altinn.AccessMgmt.Core.Outbox;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
+using Altinn.Authorization.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
 
 namespace Altinn.AccessManagement.ServiceOwner.Api.Tests.Integration.Controllers;
@@ -160,11 +162,46 @@ public class RequestControllerTest
                     TypeId = TestData.MaskinportenSchemaResourceType.Id,
                 });
 
+                db.Resources.Add(new Resource
+                {
+                    Id = Guid.CreateVersion7(),
+                    Name = "TestNonDelegableResource",
+                    Description = "Test resource for ServiceOwner API tests that is not delegable",
+                    RefId = "test-resource-so-not-delegable-1",
+                    ProviderId = TestData.ServiceOwnerNAV,
+                    TypeId = TestResourceType.Id,
+                    Delegable = false,
+                });
+
                 db.SaveChanges();
             });
         }
 
         public ApiFixture Fixture { get; }
+
+        [Fact]
+        public async Task CreateRequest_WithNonDelegableResource_Returns400ResourceIsNotDelegable()
+        {
+            var client = CreateClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
+
+            var body = new RequestResourceDto
+            {
+                From = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}",
+                To = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}",
+                Resource = "test-resource-so-not-delegable-1",
+            };
+
+            var response = await client.PostAsJsonAsync(
+                Route + "/resource",
+                body,
+                TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+            var problem = await response.Content.ReadFromJsonAsync<AltinnValidationProblemDetails>(TestContext.Current.CancellationToken);
+            Assert.NotNull(problem);
+            Assert.Contains(problem.Errors, e => e.ErrorCode == ValidationErrors.ResourceIsNotDelegable.ErrorCode);
+        }
 
         [Fact]
         public async Task CreateRequest_WithResource_Returns202WithRequestDto()
@@ -187,23 +224,9 @@ public class RequestControllerTest
 
             Assert.Equal(HttpStatusCode.Accepted, response.StatusCode);
 
-            await Fixture.QueryDb(static async db =>
-            {
-                var outbox = await db.OutboxMessages.FirstOrDefaultAsync(TestContext.Current.CancellationToken);
-                Assert.NotNull(outbox);
-                Assert.NotNull(outbox.Data);
-
-                var data = JsonSerializer.Deserialize<ResourceRequestPendingNotificationMessage>(outbox.Data);
-                Assert.NotNull(data);
-
-                Assert.Equal(TestData.LarsBakke, data.RequesterId);
-                Assert.Equal(TestData.BakerJohnsen, data.RecipientId);
-                Assert.NotEmpty(data.ResourceIds);
-                Assert.Empty(data.PackageIds);
-            });
-
             var obj = await response.Content.ReadFromJsonAsync<RequestDto>(TestContext.Current.CancellationToken);
             Assert.NotNull(obj);
+            Assert.Equal(RequestStatus.Draft, obj.Status);
         }
 
         [Fact]
@@ -426,7 +449,7 @@ public class RequestControllerTest
             await Fixture.QueryDb(async db =>
             {
                 var request = await db.RequestAssignmentPackages.FirstOrDefaultAsync(t => t.Id == obj.Id);
-                request.Status = RequestStatus.Approved;
+                request.Status = RequestStatusV2.Approved;
                 db.RequestAssignmentPackages.Update(request);
                 await db.SaveChangesAsync(TestContext.Current.CancellationToken);
             });
@@ -466,7 +489,7 @@ public class RequestControllerTest
             await Fixture.QueryDb(async db =>
             {
                 var request = await db.RequestAssignmentPackages.FirstOrDefaultAsync(t => t.Id == obj.Id);
-                request.Status = RequestStatus.Pending;
+                request.Status = RequestStatusV2.Pending;
                 db.RequestAssignmentPackages.Update(request);
                 await db.SaveChangesAsync(TestContext.Current.CancellationToken);
             });
@@ -685,6 +708,47 @@ public class RequestControllerTest
                 TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.OK, statusResponse.StatusCode);
+        }
+
+        /// <summary>
+        /// The service owner API may be checked exhaustively, so PartialApprove is reported as Approved.
+        /// The create response carries StatusV2 next to Status.
+        /// </summary>
+        [Fact]
+        public async Task GetRequestStatus_ForPartialApproveRequest_ReturnsApproved()
+        {
+            var client = CreateReadWriteClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
+
+            var createResponse = await client.PostAsJsonAsync(
+                Route,
+                new CreateServiceOwnerRequest
+                {
+                    From = $"urn:altinn:person:identifier-no:{TestData.LarsBakke.Entity.PersonIdentifier}",
+                    To = $"urn:altinn:organization:identifier-no:{TestData.BakerJohnsen.Entity.OrganizationIdentifier}",
+                    Resource = new RequestReferenceDto { ReferenceId = "test-resource-getstatus-1" },
+                    Package = new RequestReferenceDto(),
+                },
+                TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.Accepted, createResponse.StatusCode);
+            using var created = JsonDocument.Parse(await createResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+            var id = created.RootElement.GetProperty("id").GetGuid();
+            Assert.Equal(created.RootElement.GetProperty("status").GetString(), created.RootElement.GetProperty("statusV2").GetString());
+
+            await Fixture.QueryDb(async db =>
+            {
+                var request = await db.RequestAssignmentResources.SingleAsync(r => r.Id == id, TestContext.Current.CancellationToken);
+                request.Status = RequestStatusV2.PartialApprove;
+                await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+            });
+
+            var statusResponse = await client.GetAsync($"{Route}/{id}/status", TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.OK, statusResponse.StatusCode);
+            Assert.Equal("\"Approved\"", await statusResponse.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+
+            // The service owner API is not deprecated
+            Assert.False(statusResponse.Headers.Contains("Deprecation"));
         }
 
         [Fact]

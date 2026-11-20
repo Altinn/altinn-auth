@@ -221,6 +221,7 @@ public static partial class StaticDataIngest
         await IngestRoleMap(dbContext, cancellationToken);
         await IngestRolePackage(dbContext, cancellationToken);
         await IngestEntityVariantRole(dbContext, cancellationToken);
+        await RemoveObsoletePackages(dbContext, cancellationToken);
     }
 
     internal static async Task AutoIngest<T>(

@@ -16,7 +16,12 @@ namespace Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 /// Resolved once at DI setup from the application lifecycle feature configuration rather than per request.
 /// Defaults to <c>false</c> (fully reversible) when not supplied.
 /// </param>
-public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled = false)
+/// <param name="excludeAltinn2Roles">
+/// Whether Altinn 2 roles (including rolemap-derived roles) should be excluded from all connection lookups.
+/// Resolved once at DI setup from the application lifecycle feature configuration rather than per request.
+/// Defaults to <c>false</c> when not supplied.
+/// </param>
+public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled = false, bool excludeAltinn2Roles = false)
 {
     private readonly ConnectionBaseQueryBuilder _baseQueryBuilder = new();
 
@@ -65,10 +70,12 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
             return (false, null);
         }
 
+        var excludedRoleIds = excludeAltinn2Roles ? RoleConstants.Altinn2RoleIds.ToHashSet() : [];
+
         if (reasons.Contains(ConnectionReason.Assignment))
         {
             var assignments = db.Assignments.AsNoTracking()
-                .Where(t => t.FromId == fromId && t.ToId == toId);
+                .Where(t => t.FromId == fromId && t.ToId == toId && !excludedRoleIds.Contains(t.RoleId));
 
             if (await assignments.AnyAsync())
             {
@@ -79,7 +86,7 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
         if (reasons.Contains(ConnectionReason.Delegation))
         {
             var delegations = db.Delegations.AsNoTracking()
-                .Where(t => t.From.FromId == fromId && t.To.ToId == toId);
+                .Where(t => t.From.FromId == fromId && t.To.ToId == toId && !excludedRoleIds.Contains(t.From.RoleId));
 
             if (await delegations.AnyAsync())
             {
@@ -95,6 +102,7 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
             from a in db.Assignments.AsNoTracking()
             join e in db.Entities.AsNoTracking() on a.FromId equals e.ParentId
             where a.ToId == toId && e.Id == fromId
+                && !excludedRoleIds.Contains(a.RoleId)
                 && (includeAdosSubunitInheritance || e.VariantId != EntityVariantConstants.ADOS.Id)
             select 1;
 
@@ -114,6 +122,8 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
                 a.FromId == fromId &&
                 kr.IsKeyRole == true &&
                 k.ToId == toId &&
+                !excludedRoleIds.Contains(a.RoleId) &&
+                !excludedRoleIds.Contains(k.RoleId) &&
                 (a.RoleId != RoleConstants.ParticipantSharedResponsibility.Id || a.From.VariantId != EntityVariantConstants.IKS.Id) &&
                 (k.RoleId != RoleConstants.ParticipantSharedResponsibility.Id || a.To.VariantId != EntityVariantConstants.IKS.Id)
             select 1;
@@ -135,6 +145,7 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
         try
         {
             filter.IncludeAdosSubunitInheritance = adosSubunitInheritanceEnabled;
+            filter.ExcludeAltinn2Roles = excludeAltinn2Roles;
 
             bool delayChildNesting = true;
             bool delayFromFilter = true;
@@ -145,14 +156,20 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
             }
 
             var baseQuery = direction == ConnectionQueryDirection.FromOthers
-                ? _baseQueryBuilder.FromOthers(
+                ? await _baseQueryBuilder.FromOthersAsync(
                         db,
                         filter,
                         filter.IncludeSubConnections && !delayChildNesting,
-                        !filter.IncludeSubConnections || !delayFromFilter)
+                        !filter.IncludeSubConnections || !delayFromFilter,
+                        ct)
                 : _baseQueryBuilder.ToOthers(db, filter);
 
-            var result = baseQuery.Select(ToDtoEmpty).ToList();
+            var result = new List<ConnectionQueryExtendedRecord>();
+            await foreach (var record in baseQuery.AsAsyncEnumerable().WithCancellation(ct))
+            {
+                result.Add(ToDtoEmpty(record));
+            }
+
             if (filter.ExcludeDeleted)
             {
                 // Before packages and resources are loaded, so no work is spent on connections that are dropped
@@ -161,26 +178,19 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
 
             if (filter.IncludePackages || filter.EnrichPackageResources)
             {
-                try
+                var packageLoader = new ConnectionPackageLoader(db);
+                var pkgs = await packageLoader.LoadPackagesByKeyAsync(result, filter, ct);
+                if (filter.EnrichPackageResources)
                 {
-                    var packageLoader = new ConnectionPackageLoader(db);
-                    var pkgs = await packageLoader.LoadPackagesByKeyAsync(result, filter, ct);
-                    if (filter.EnrichPackageResources)
-                    {
-                        await packageLoader.EnrichPackageResourcesAsync(pkgs, filter, ct);
-                    }
-
-                    result = Attach(result, pkgs, p => p.Id, (dto, list) => dto.Packages = list);
-
-                    // Remove connections where no packages were found if filtering on specific packages
-                    if (filter.PackageIds != null)
-                    {
-                        result.RemoveAll(t => t.Packages.Count == 0);
-                    }
+                    await packageLoader.EnrichPackageResourcesAsync(pkgs, filter, ct);
                 }
-                catch (Exception ex)
+
+                result = Attach(result, pkgs, p => p.Id, (dto, list) => dto.Packages = list);
+
+                // Remove connections where no packages were found if filtering on specific packages
+                if (filter.PackageIds != null)
                 {
-                    throw new InvalidOperationException("Failed to include packages", ex);
+                    result.RemoveAll(t => t.Packages.Count == 0);
                 }
             }
 
@@ -189,45 +199,31 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
                 var resourceLoader = new ConnectionResourceLoader(db);
                 var rightholderAssignments = ConnectionResourceLoader.GetRightholderAssignments(result, filter);
 
-                try
+                if (filter.IncludeResources)
                 {
-                    if (filter.IncludeResources)
+                    var rightholderAssignmentIds = rightholderAssignments.Select(a => (Guid)a.AssignmentId).Distinct().ToHashSet();
+                    if (rightholderAssignmentIds.Count > 0)
                     {
-                        var rightholderAssignmentIds = rightholderAssignments.Select(a => (Guid)a.AssignmentId).Distinct().ToHashSet();
-                        if (rightholderAssignmentIds.Count > 0)
-                        {
-                            result = await resourceLoader.LoadResourcesByKeyAsync(result, rightholderAssignmentIds, filter, ct);
-                        }
+                        result = await resourceLoader.LoadResourcesByKeyAsync(result, rightholderAssignmentIds, filter, ct);
+                    }
 
-                        if (filter.IncludeDelegation && filter.IncludeDelegationResources)
+                    if (filter.IncludeDelegation && filter.IncludeDelegationResources)
+                    {
+                        var delegationIds = result.Where(r => r.DelegationId.HasValue).Select(r => (Guid)r.DelegationId!).Distinct().ToHashSet();
+                        if (delegationIds.Count > 0)
                         {
-                            var delegationIds = result.Where(r => r.DelegationId.HasValue).Select(r => (Guid)r.DelegationId!).Distinct().ToHashSet();
-                            if (delegationIds.Count > 0)
-                            {
-                                result = await resourceLoader.LoadDelegationResourcesByKeyAsync(result, delegationIds, filter, ct);
-                            }
+                            result = await resourceLoader.LoadDelegationResourcesByKeyAsync(result, delegationIds, filter, ct);
                         }
                     }
                 }
-                catch (Exception ex)
-                {
-                    throw new InvalidOperationException("Failed to include resources", ex);
-                }
 
-                try
+                if (filter.IncludeInstances)
                 {
-                    if (filter.IncludeInstances)
+                    var rightholderAssignmentIds = rightholderAssignments.Where(a => a.Reason != ConnectionReason.Hierarchy && !a.IsMainUnitAccess).Select(a => (Guid)a.AssignmentId).Distinct().ToHashSet();
+                    if (rightholderAssignmentIds.Count > 0)
                     {
-                        var rightholderAssignmentIds = rightholderAssignments.Where(a => a.Reason != ConnectionReason.Hierarchy && !a.IsMainUnitAccess).Select(a => (Guid)a.AssignmentId).Distinct().ToHashSet();
-                        if (rightholderAssignmentIds.Count > 0)
-                        {
-                            result = await resourceLoader.LoadInstancesByKeyAsync(result, rightholderAssignmentIds, filter, ct);
-                        }
+                        result = await resourceLoader.LoadInstancesByKeyAsync(result, rightholderAssignmentIds, filter, ct);
                     }
-                }
-                catch (Exception ex)
-                {
-                    throw new InvalidOperationException("Failed to include instances", ex);
                 }
             }
 
@@ -244,16 +240,21 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
 
             return result;
         }
-        catch (Exception ex)
+        catch (Exception ex) when (ex is not OperationCanceledException)
         {
+            // Cancellation is not a failure: let it through unwrapped so the caller can tell an abandoned request from a server error.
             throw new InvalidOperationException($"Failed to get connections with filter: {JsonSerializer.Serialize(filter)}", ex);
         }
     }
 
     /// <summary>
-    /// Removes connections to deleted parties, and to parties whose main unit is deleted, for <see cref="ConnectionQueryFilter.ExcludeDeleted"/>.
-    /// The party is <c>From</c> for FromOthers and <c>To</c> for ToOthers. Only the parties already found through the connections
-    /// are looked up, by primary key, so the cost follows the size of the result and not the number of deleted entities.
+    /// Removes connections to deleted parties, <see cref="ConnectionQueryFilter.ExcludeDeleted"/>.
+    /// The party is <c>From</c> for FromOthers and <c>To</c> for ToOthers. Only the deletion status of the party itself is checked,
+    /// never the status of its main unit. For FromOthers, a subunit connection inherited from a main unit is also removed when
+    /// that main unit is deleted, because the connection is the main unit's: this gives the same result whether subunits are
+    /// nested in SQL or in the enricher.
+    /// Only the parties already found through the connections are looked up, by primary key, so the cost follows the size of
+    /// the result and not the number of deleted entities.
     /// </summary>
     private async Task<List<ConnectionQueryExtendedRecord>> RemoveDeletedPartiesAsync(List<ConnectionQueryExtendedRecord> result, ConnectionQueryDirection direction, CancellationToken ct)
     {
@@ -262,23 +263,27 @@ public class ConnectionQuery(AppDbContext db, bool adosSubunitInheritanceEnabled
             return result;
         }
 
-        Func<ConnectionQueryExtendedRecord, Guid> partyId = direction == ConnectionQueryDirection.FromOthers ? r => r.FromId : r => r.ToId;
-        var partyIds = result.Select(partyId).ToHashSet();
+        bool fromOthers = direction == ConnectionQueryDirection.FromOthers;
+        Func<ConnectionQueryExtendedRecord, Guid> partyId = fromOthers ? r => r.FromId : r => r.ToId;
+        Func<ConnectionQueryExtendedRecord, bool> inheritedFromMainUnit = r => fromOthers && r.IsMainUnitAccess && r.ViaId.HasValue;
 
-        var deletedPartyIds = await db.Entities
+        var entityIds = result.Select(partyId).ToHashSet();
+        entityIds.UnionWith(result.Where(inheritedFromMainUnit).Select(r => r.ViaId!.Value));
+
+        var deletedEntityIds = await db.Entities
             .AsNoTracking()
-            .Where(e => partyIds.Contains(e.Id))
-            .Where(e => e.IsDeleted || (e.Parent != null && e.Parent.IsDeleted))
+            .Where(e => entityIds.Contains(e.Id))
+            .Where(e => e.IsDeleted)
             .Select(e => e.Id)
             .ToListAsync(ct);
 
-        if (deletedPartyIds.Count == 0)
+        if (deletedEntityIds.Count == 0)
         {
             return result;
         }
 
-        var deletedSet = deletedPartyIds.ToHashSet();
-        result.RemoveAll(r => deletedSet.Contains(partyId(r)));
+        var deletedSet = deletedEntityIds.ToHashSet();
+        result.RemoveAll(r => deletedSet.Contains(partyId(r)) || (inheritedFromMainUnit(r) && deletedSet.Contains(r.ViaId!.Value)));
         return result;
     }
 

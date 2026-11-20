@@ -1,0 +1,38 @@
+{
+  "id": "991825827_the_matrix_ap_null",
+  "vendor": {
+    "authority": "iso6523-actorid-upis",
+    "ID": "0192:991825827"
+  },
+  "name": {
+    "nb": "The Null Matrix",
+    "en": "The Null Matrix",
+    "nn": "The Null Matrix"
+  },
+  "description": {
+    "nb": "Test system",
+    "en": "Test system",
+    "nn": "Test system"
+  },
+  "accessPackages": null,
+  "rights": [
+    {
+      "resource": [
+        {
+          "id": "urn:altinn:resource",
+          "value": "ske-krav-og-betalinger"
+        }
+      ]
+    }
+  ],
+  "softDeleted": false,
+  "clientId": [
+    "45a56b27-c96c-492e-b9fc-0061017cbeda"
+  ],
+  "allowedredirecturls": [
+    "https://vg.no",
+    "https://nrk.no",
+    "https://altinn.no"
+  ],
+  "isVisible": true
+}

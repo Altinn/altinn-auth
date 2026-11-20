@@ -1,13 +1,10 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
-using Altinn.AccessManagement.Core.Enums.ResourceRegistry;
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.AccessList;
 using Altinn.AccessManagement.Core.Models.Party;
-using Altinn.AccessManagement.Core.Models.Register;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
-using Altinn.AccessManagement.Core.Models.Rights;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessMgmt.Core.Appsettings;
 using Altinn.AccessMgmt.Core.Constants.Translation;
@@ -30,6 +27,10 @@ using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
+using Altinn.Authorization.Api.Contracts.Authorization;
+using Altinn.Authorization.Api.Contracts.Register;
+using Altinn.Authorization.Api.Contracts.ResourceRegistry;
+using Altinn.Authorization.Api.Contracts.ResourceRegistry.Enums;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -362,7 +363,14 @@ public partial class ConnectionService(
 
             var dto = new InstancePermissionDto
             {
-                Resource = new ResourceDto { Id = firstInstance.ResourceId, RefId = firstInstance.ResourceRefId, Name = firstInstance.ResourceName },
+                Resource = new ResourceDto
+                {
+                    Id = firstInstance.ResourceId,
+                    RefId = firstInstance.ResourceRefId,
+                    Name = firstInstance.ResourceName,
+                    Delegable = firstInstance.ResourceDelegable,
+                    AccessListMode = firstInstance.ResourceAccessListMode
+                },
                 Instance = new InstanceDto
                 {
                     RefId = firstInstance.InstanceId,
@@ -945,6 +953,7 @@ public partial class ConnectionService(
             toId: toId.Value,
             toIsMainAdminForFrom,
             includeAdosSubunitInheritance: lifecycleFeatures.AdosSubunitInheritance,
+            excludeAltinn2Roles: lifecycleFeatures.DisableAltinn2Roles,
             ct: cancellationToken
         );
 
@@ -1012,14 +1021,6 @@ public partial class ConnectionService(
         // isMaskinPortenSchema is used later to add denial reasons, so we only set it when we want to deny
         bool isMaskinPortenSchema = isMaskinPortenSchemaResource && !allowMaskinportenSchema;
 
-        // Fetch Resourcemetadata
-        ServiceResource resourceMetadata = await contextRetrievalService.GetResource(resource, cancellationToken);
-
-        if (resourceMetadata is null)
-        {
-            return Problems.InvalidResource;
-        }
-
         List<RightDto> rightKeys = await contextRetrievalService.GetResourcePolicyV2(resource, languageCode, cancellationToken);
 
         if (rightKeys is null)
@@ -1027,8 +1028,8 @@ public partial class ConnectionService(
             return Problems.MissingMetadata;
         }
 
-        ResourceAccessListMode accessListMode = resourceMetadata.AccessListMode;
-        bool isResourceDelegable = ignoreDelegableFlag || resourceMetadata.Delegable;
+        ResourceAccessListMode accessListMode = resourceDto.AccessListMode;
+        bool isResourceDelegable = ignoreDelegableFlag || resourceDto.Delegable;
 
         // Decompose policy into resource/tasks
         List<Models.Right> rights = DelegationCheckHelper.DecomposePolicy(policy, resource);
@@ -1047,6 +1048,8 @@ public partial class ConnectionService(
 
         // Map to result
         IEnumerable<RightCheckDto> checkRights = await MapFromInternalToExternalRights(rights, resource, accessListMode, fromParty, rightKeys, isResourceDelegable, isMaskinPortenSchema, cancellationToken);
+
+        resourceDto = await resourceDto.TranslateDeepAsync(translationService, languageCode, true);
 
         // build reult with reason based on roles, packages, resource rights and users delegable
         ResourceCheckDto resourceCheckDto = new ResourceCheckDto
@@ -1083,20 +1086,14 @@ public partial class ConnectionService(
             isMaskinPortenSchema = true;
         }
 
-        ServiceResource resourceMetadata = await contextRetrievalService.GetResource(resource, cancellationToken);
-        if (resourceMetadata is null)
-        {
-            return Problems.InvalidResource;
-        }
-
         List<RightDto> rightKeys = await contextRetrievalService.GetResourcePolicyV2(resource, languageCode, cancellationToken);
         if (rightKeys is null)
         {
             return Problems.MissingMetadata;
         }
 
-        ResourceAccessListMode accessListMode = resourceMetadata.AccessListMode;
-        bool isResourceDelegable = resourceMetadata.Delegable;
+        ResourceAccessListMode accessListMode = resourceDto.AccessListMode;
+        bool isResourceDelegable = resourceDto.Delegable;
 
         List<Models.Right> rights = DelegationCheckHelper.DecomposePolicy(policy, resource);
 
@@ -1112,6 +1109,8 @@ public partial class ConnectionService(
 
         // Map to result
         IEnumerable<RightCheckDto> checkRights = await MapFromInternalToExternalRights(rights, resource, accessListMode, fromParty, rightKeys, isResourceDelegable, isMaskinPortenSchema, cancellationToken);
+
+        resourceDto = await resourceDto.TranslateDeepAsync(translationService, languageCode, true);
 
         // build result with resource, instance and rights
         InstanceCheckDto instanceCheckDto = new InstanceCheckDto
@@ -1668,41 +1667,19 @@ public partial class ConnectionService(
 
     private async Task<ResourceDto> FetchResource(string resource, CancellationToken cancellationToken)
     {
-        Resource resourceObj = await dbContext.Resources.AsNoTracking().SingleOrDefaultAsync(r => r.RefId == resource, cancellationToken);
+        Resource resourceObj = await dbContext.Resources
+            .AsNoTracking()
+            .Include(r => r.Type)
+            .Include(r => r.Provider)
+                .ThenInclude(p => p.Type)
+            .SingleOrDefaultAsync(r => r.RefId == resource, cancellationToken);
 
         if (resourceObj is null)
         {
             throw new ValidationException($"Resource with id '{resource}' not found");
         }
 
-        Provider provider = await dbContext.Providers.AsNoTracking().SingleOrDefaultAsync(p => p.Id == resourceObj.ProviderId, cancellationToken);
-        ProviderTypeConstants.TryGetById(provider.TypeId, out var providerType);
-        PersistenceEF.Models.ResourceType resourceType = await dbContext.ResourceTypes.SingleOrDefaultAsync(rt => rt.Id == resourceObj.TypeId, cancellationToken);
-
-        ProviderDto providerDto = new ProviderDto
-        {
-            Id = provider.Id,
-            Code = provider.Code,
-            LogoUrl = provider.LogoUrl,
-            Name = provider.Name,
-            RefId = provider.RefId,
-            TypeId = provider.TypeId,
-            Type = new ProviderTypeDto { Id = providerType.Id, Name = providerType.Entity.Name }
-        };
-
-        ResourceDto resourceDto = new ResourceDto
-        {
-            Id = resourceObj.Id,
-            Name = resourceObj.Name,
-            Description = resourceObj.Description,
-            Provider = providerDto,
-            ProviderId = provider.Id,
-            RefId = resourceObj.RefId,
-            TypeId = resourceObj.TypeId,
-            Type = new ResourceTypeDto { Id = resourceType.Id, Name = resourceType.Name }
-        };
-
-        return resourceDto;
+        return DtoMapper.Convert(resourceObj);
     }
 
     private async Task<XacmlPolicy> GetPolicy(string resource, CancellationToken cancellationToken = default)
@@ -1733,9 +1710,9 @@ public partial class ConnectionService(
         return policy;
     }
 
-    private static ValidationErrorBuilder CheckFromAndToIsNotNull(Entity from, Entity to)
+    private static ValidationProblemBuilder CheckFromAndToIsNotNull(Entity from, Entity to)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
         if (from is null)
         {
             errorBuilder.Add(ValidationErrors.EntityNotExists, "$QUERY/from");
@@ -1749,9 +1726,9 @@ public partial class ConnectionService(
         return errorBuilder;
     }
 
-    private static ValidationErrorBuilder CheckFromAndToIsValidConnectingOldSIToEmailSI(Entity from, Entity to)
+    private static ValidationProblemBuilder CheckFromAndToIsValidConnectingOldSIToEmailSI(Entity from, Entity to)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         // Guaranteed non-null here: TryBuild above returned false, so both from/to passed their null guards. Check that the variants are correct for a self-registration connection: from should be SI and to should be SI_EMAIL
         if (from!.VariantId != EntityVariantConstants.SI)
@@ -1767,9 +1744,9 @@ public partial class ConnectionService(
         return errorBuilder;
     }
 
-    private static ValidationErrorBuilder CheckFromAndToIsValidRegisterSelfIdentifiedRoleToUser(Entity from, Entity to)
+    private static ValidationProblemBuilder CheckFromAndToIsValidRegisterSelfIdentifiedRoleToUser(Entity from, Entity to)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         // If from and to are the same this is only for the sub variants EMAIL and EDU
         if (from!.VariantId != EntityVariantConstants.SI_EDU && from.VariantId != EntityVariantConstants.SI_EMAIL)
@@ -1784,7 +1761,7 @@ public partial class ConnectionService(
     public async Task<Result<AssignmentDto>> AddSelfRegisteredUserRole(Guid fromId, Guid toId, CancellationToken cancellationToken = default)
     {
         var (from, to) = await GetFromAndToEntities(fromId, toId, cancellationToken);
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         errorBuilder = CheckFromAndToIsNotNull(from, to);
 

@@ -1,4 +1,4 @@
-﻿module.exports = {
+module.exports = {
   env: "tt02",
   resource_to_delegate: {
    maskinporten_ressurs : "ttd-bruno-maskinporten-ressurs",

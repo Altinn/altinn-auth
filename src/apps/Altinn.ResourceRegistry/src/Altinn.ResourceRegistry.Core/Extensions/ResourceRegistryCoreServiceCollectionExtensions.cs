@@ -1,4 +1,5 @@
 ﻿using Altinn.ResourceRegistry.Core.AccessLists;
+using Altinn.ResourceRegistry.Core.ScopePrefixes;
 using Altinn.ResourceRegistry.Core.ServiceOwners;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -18,6 +19,7 @@ public static class ResourceRegistryCoreServiceCollectionExtensions
     {
         services.AddAccessListsService();
         services.AddResourceOwnerService();
+        services.AddScopePrefixValidator();
 
         return services;
     }
@@ -42,6 +44,19 @@ public static class ResourceRegistryCoreServiceCollectionExtensions
     public static IServiceCollection AddResourceOwnerService(this IServiceCollection services)
     {
         services.TryAddSingleton<IServiceOwnerService, ServiceOwnerService>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// Registers the <see cref="IScopePrefixValidator"/> in the <see cref="IServiceCollection"/>.
+    /// It is a singleton so that the cached prefix list is shared by all requests.
+    /// </summary>
+    /// <param name="services">The <see cref="IServiceCollection"/></param>
+    /// <returns><paramref name="services"/></returns>
+    public static IServiceCollection AddScopePrefixValidator(this IServiceCollection services)
+    {
+        services.TryAddSingleton<IScopePrefixValidator, ScopePrefixValidator>();
 
         return services;
     }

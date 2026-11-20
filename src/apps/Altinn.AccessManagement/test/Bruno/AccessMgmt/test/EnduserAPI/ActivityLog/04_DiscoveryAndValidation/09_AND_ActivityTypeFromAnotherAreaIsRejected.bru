@@ -1,0 +1,46 @@
+meta {
+  name: 09_AND_ActivityTypeFromAnotherAreaIsRejected
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/connections/activitylog?party={{party}}&direction=from&typeId={{typeId}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  direction: from
+  typeId: {{typeId}}
+}
+
+docs {
+  AND a catalog id from another area (here: request created, in the connections area) is rejected with 400.
+
+  The response is a validation problem with the message under `errors.TypeId`.
+}
+
+script:pre-request {
+  const { activityTypes, loginAs, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().connections;
+
+  bru.setVar("party", td.delegator.partyUuid);
+  bru.setVar("typeId", activityTypes.requestCreated);
+
+  await loginAs(td.delegator);
+}
+
+tests {
+  test("AND the query is rejected with 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("AND the problem names TypeId", function() {
+    const body = res.getBody();
+    expect(body.status).to.equal(400);
+    expect(body.errors).to.have.property("TypeId");
+    expect(body.errors["TypeId"][0]).to.include("is not available in this part of the activity log");
+  });
+}

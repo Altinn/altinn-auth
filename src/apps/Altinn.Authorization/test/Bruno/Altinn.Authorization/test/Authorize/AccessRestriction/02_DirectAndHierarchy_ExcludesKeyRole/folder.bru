@@ -1,0 +1,15 @@
+meta {
+	name: 02_DirectAndHierarchy_ExcludesKeyRole
+	seq: 2
+}
+
+auth {
+	mode: inherit
+}
+
+docs {
+	GIVEN the managing director (DAGL) of ULASTELIG RETTFERDIG TIGER AS
+		AND STOLT BETYDELIG TIGER AS has delegated an access package (revisorattesterer) to ULASTELIG RETTFERDIG TIGER AS
+	WHEN the DAGL is authorized for the package resource on behalf of STOLT BETYDELIG TIGER AS
+	THEN no access-restriction permits through keyrole inheritance, while DirectAndHierarchy does not
+}

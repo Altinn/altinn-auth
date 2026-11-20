@@ -1,5 +1,5 @@
-// Personas for the delegation request scenarios under test/DelegationRequest/DraftAndCounts
-// and test/DelegationRequest/ServiceOwnerDelegationRequests.
+// Personas for the delegation request scenarios under test/DelegationRequest/DraftAndCounts,
+// test/DelegationRequest/ServiceOwnerDelegationRequests and test/DelegationRequest/ResourceRequestRightKeysV2.
 // Personas come from the shared AT22 fixtures wherever one exists, so ids are not copied.
 // The two persons of the service owner delegation requests exist elsewhere only under
 // testdata/manualtests, which an automated suite should not depend on, so they are kept here.
@@ -28,5 +28,13 @@ module.exports = {
     grantor: { name: "HALV BAR", pid: "21886599509", partyUuid: "6d52840a-d12a-4d8c-a5af-79dd9e03a504" },
     // Person who would receive access.
     requester: { name: "FIKTIV FOTBALL", pid: "26848897956", partyUuid: "e92c27c4-4f4a-40d0-9a15-0120fe5c1916" },
+  },
+  resourceRequestRightKeysV2: {
+    // Delegable resource owned by ttd, with at least two rights the approver can delegate.
+    resource: beOmTilgang.resource_to_delegate.resource_id_privatperson,
+    // Organization asking for access, acting through its innehaver. It is connected to the approver.
+    requester: beOmTilgang.Bot_Org,
+    // Private person asked to grant access to the resource.
+    approver: beOmTilgang.Bot_person,
   },
 };

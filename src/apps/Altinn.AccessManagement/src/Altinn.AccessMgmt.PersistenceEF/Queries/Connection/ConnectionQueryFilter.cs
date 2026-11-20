@@ -91,9 +91,12 @@ public sealed class ConnectionQueryFilter
     /// <summary>
     /// Gets or sets a value indicating whether to exclude connections to deleted parties.
     /// Applies to the party on the other side of the query: <c>From</c> for FromOthers and <c>To</c> for ToOthers.
-    /// A subunit whose main unit is deleted is excluded as well.
-    /// Takes precedence over <see cref="IncludeAdosSubunitInheritance"/>: a deleted ADOS entity, and an active ADOS entity
-    /// under a deleted main unit, are always excluded, whether or not ADOS subunit inheritance is enabled.
+    /// Only the party's own deletion status is checked, not its main unit's: an active subunit of a deleted main unit is kept
+    /// when the connection is given by the subunit itself. In FromOthers, connections that a subunit inherits from a deleted
+    /// main unit are excluded, since the main unit that gave them is deleted. ToOthers does not apply this rule: a query from an
+    /// active subunit still returns connections inherited from its deleted main unit (see issue #4921).
+    /// Takes precedence over <see cref="IncludeAdosSubunitInheritance"/>: a deleted ADOS entity is always excluded, whether or not
+    /// ADOS subunit inheritance is enabled.
     /// </summary>
     public bool ExcludeDeleted { get; init; } = false;
 
@@ -131,6 +134,13 @@ public sealed class ConnectionQueryFilter
     /// reversible via feature toggle without clearing stored parent references.
     /// </summary>
     public bool IncludeAdosSubunitInheritance { get; set; } = false;
+
+    /// <summary>
+    /// Gets or sets a value indicating whether Altinn 2 roles should be excluded from the result.
+    /// When <c>true</c>, assignments of Altinn 2 roles and rolemap-derived roles (which are all Altinn 2 roles)
+    /// are excluded. Set by <see cref="ConnectionQuery"/> from the application lifecycle feature configuration.
+    /// </summary>
+    public bool ExcludeAltinn2Roles { get; set; } = false;
 
     /// <summary>
     /// Returns true if at least one filter is provided.

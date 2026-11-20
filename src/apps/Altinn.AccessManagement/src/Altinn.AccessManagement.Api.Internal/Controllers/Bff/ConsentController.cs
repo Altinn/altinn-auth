@@ -202,7 +202,7 @@ namespace Altinn.AccessManagement.Api.Internal.Controllers.Bff
 
             if (consentRequest.Value.ValidTo < DateTimeOffset.Now)
             {
-                ValidationErrorBuilder validationErrorsBuilder = default;
+                ValidationProblemBuilder validationErrorsBuilder = default;
                 validationErrorsBuilder.Add(ValidationErrors.TimeNotInFuture, "ValidTo");
                 if (validationErrorsBuilder.TryBuild(out var beforeErrorREsult))
                 {

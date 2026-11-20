@@ -1,0 +1,14 @@
+meta {
+	name: 06_ClientDelegationRequiresViaParty
+	seq: 6
+}
+
+auth {
+	mode: inherit
+}
+
+docs {
+	GIVEN an admin-scoped caller
+	WHEN the request sets access-restriction ClientDelegation without urn:altinn:via-party:organization:identifier-no
+	THEN the decision is Indeterminate with status missing-attribute
+}

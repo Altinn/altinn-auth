@@ -1,4 +1,5 @@
-﻿using Altinn.AccessMgmt.FFB.Jobs.Models;
+﻿using Altinn.AccessMgmt.FFB.Config;
+using Altinn.AccessMgmt.FFB.Jobs.Models;
 using Dapper;
 using Npgsql;
 
@@ -6,8 +7,9 @@ namespace Altinn.AccessMgmt.FFB.Jobs;
 
 /// <summary>
 /// Manually installs or rolls back the activity log schema in a test environment, using the SQL
-/// generated from the ActivityLog and ActivityTypeCatalog EF migrations but without the
-/// <c>__EFMigrationsHistory</c> bookkeeping — EF still considers the migrations unapplied.
+/// generated from the ActivityLog, ActivityTypeCatalog and ActivityLogBackfillLastId EF
+/// migrations but without the <c>__EFMigrationsHistory</c> bookkeeping — EF still considers the
+/// migrations unapplied.
 /// Intended for trying the triggers, analysis and backfill in larger environments before the
 /// real migrations ship. The dbo.activitytype catalog table is created but left unseeded
 /// (seeding happens via StaticDataIngest when the release deploys); the runtime resolves the
@@ -23,11 +25,6 @@ public static class ActivityLogSchemaJob
     public const string JobName = "ActivityLogSchema";
 
     private const string MigrationId = "20260901142849_ActivityLog";
-
-    // Default-deny any environment not on this list: the migration-ran check below cannot
-    // tell a test database from a production one that simply has not been migrated yet, so
-    // a configured production connection must never reach the scripts.
-    private static readonly string[] AllowedEnvironments = ["Local", "AT22", "AT23", "AT24", "YT01", "TT02"];
 
     public static async Task InstallAsync(DuoRepo repo, JobRun run, CancellationToken ct)
     {
@@ -88,12 +85,15 @@ public static class ActivityLogSchemaJob
 
     private static bool DeniedEnvironment(JobRun run)
     {
-        if (AllowedEnvironments.Contains(run.Environment, StringComparer.OrdinalIgnoreCase))
+        // Default-deny any environment that is not a known test environment: the migration-ran check
+        // cannot tell a test database from a production one that simply has not been migrated yet, so
+        // a configured production connection must never reach the scripts.
+        if (TestEnvironments.Contains(run.Environment))
         {
             return false;
         }
 
-        run.AddLog($"Environment '{run.Environment}' is not an allowed test environment for manual schema changes (allowed: {string.Join(", ", AllowedEnvironments)}).", isError: true);
+        run.AddLog($"Environment '{run.Environment}' is not an allowed test environment for manual schema changes (allowed: {string.Join(", ", TestEnvironments.Names)}).", isError: true);
         return true;
     }
 

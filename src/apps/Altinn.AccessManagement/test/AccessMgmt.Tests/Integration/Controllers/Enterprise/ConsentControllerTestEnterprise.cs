@@ -1212,7 +1212,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers.Enterprise
             AltinnValidationProblemDetails problemDetails = JsonSerializer.Deserialize<AltinnValidationProblemDetails>(responseContent, _jsonOptions);
 
             Assert.Equal("AM-00006", problemDetails.ErrorCode.ToString());
-            Assert.Equal("Invalid consent metadata", problemDetails.Detail.ToString());
+            Assert.Equal("Invalid consent metadata", problemDetails.Title);
             Assert.Empty(problemDetails.Errors);
             Assert.Equal("inntektsaar", problemDetails.Extensions["key"].ToString());
         }

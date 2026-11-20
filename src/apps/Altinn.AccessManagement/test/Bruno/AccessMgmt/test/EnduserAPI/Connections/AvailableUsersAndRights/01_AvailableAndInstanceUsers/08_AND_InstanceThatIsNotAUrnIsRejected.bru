@@ -19,7 +19,7 @@ params:query {
 docs {
   AND an instance identifier that is not a URN is rejected.
 
-  Expects 400 with error code STD-00000 and validation error AM.VLD-00007 whose path
+  Expects 400 with error code STD-00000 and validation error AM.VLD-00009 whose path
   points at the instance query parameter.
 }
 
@@ -44,7 +44,7 @@ tests {
     expect(body.code).to.equal("STD-00000");
     expect(body.validationErrors).to.be.an("array").with.lengthOf(1);
     const err = body.validationErrors[0];
-    expect(err.code).to.equal("AM.VLD-00007");
+    expect(err.code).to.equal("AM.VLD-00009");
     expect(err.paths).to.deep.equal(["$QUERY/instance"]);
     expect(err.instance).to.include("urn:altinn:instance-id:");
   });

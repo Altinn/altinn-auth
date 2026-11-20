@@ -210,6 +210,28 @@ public class AssignmentServiceClearAssignmentsInAfterLifeTest : IClassFixture<Ap
     }
 
     [Fact]
+    public async Task RemovesBankruptcyEstateAdministratorAssignment_WhenDeadPersonIsTo()
+    {
+        // Left in place, the role would make the ER import grant the dead person access to every new bankruptcy estate.
+        var assignmentId = Guid.CreateVersion7();
+        await Fixture.QueryDb(async db =>
+        {
+            db.Assignments.Add(new Assignment { Id = assignmentId, FromId = OtherPerson.Id, ToId = DeadPerson.Id, RoleId = RoleConstants.BankruptcyEstateAdministrator });
+            await db.SaveChangesAsync(TestAudit, TestContext.Current.CancellationToken);
+        });
+
+        using var scope = Fixture.Services.CreateScope();
+        var svc = ResolveService(scope);
+        await svc.ClearAssignmentsInAfterLife(DeadPerson.Id, TestAudit, TestContext.Current.CancellationToken);
+
+        await Fixture.QueryDb(async db =>
+        {
+            var remaining = await db.Assignments.AsNoTracking().FirstOrDefaultAsync(a => a.Id == assignmentId);
+            Assert.Null(remaining);
+        });
+    }
+
+    [Fact]
     public async Task DoesNotRemoveUnrelatedRoleAssignment()
     {
         var assignmentId = Guid.CreateVersion7();

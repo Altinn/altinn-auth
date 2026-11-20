@@ -94,6 +94,11 @@ public class AuthorizedPartiesController(
 
             return Unauthorized("Unknown user type");
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            // The caller has gone away. That is not a server error, so it must not reach the catch-all below.
+            return StatusCode(StatusCodes.Status499ClientClosedRequest);
+        }
         catch (Exception ex)
         {
             logger.LogError(500, ex, "Unexpected internal exception occurred during GetEnduserAuthorizedParties");

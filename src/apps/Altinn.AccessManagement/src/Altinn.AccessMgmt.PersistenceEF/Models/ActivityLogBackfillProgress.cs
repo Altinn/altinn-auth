@@ -27,6 +27,11 @@ public class ActivityLogBackfillProgress
     public DateTimeOffset? Cursor { get; set; }
 
     /// <summary>
+    /// The last source id the backfill has walked past; a resumed run continues after it.
+    /// </summary>
+    public Guid? LastId { get; set; }
+
+    /// <summary>
     /// When the backfill finished for this source.
     /// </summary>
     public DateTimeOffset? CompletedAt { get; set; }

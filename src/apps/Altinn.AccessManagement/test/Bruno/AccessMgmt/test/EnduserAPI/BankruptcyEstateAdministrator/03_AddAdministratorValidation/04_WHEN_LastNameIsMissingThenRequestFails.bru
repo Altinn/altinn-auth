@@ -1,0 +1,52 @@
+meta {
+  name: 04_WHEN_LastNameIsMissingThenRequestFails
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/administrators?party={{party}}
+  body: json
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+body:json {
+  {
+    "personIdentifier": "{{personIdentifier}}"
+  }
+}
+
+docs {
+  WHEN the bostyrer gives the assistant's SSN without a last name. Expects 400 with a
+  required-field error on /LastName.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  bru.setVar("party", td.BOSTYRER.partyUuid);
+  bru.setVar("personIdentifier", td.user_LUN_ANALYSE_GÅSTOL.pid);
+
+  await helpers.loginAs(td.BOSTYRER);
+}
+
+tests {
+  test("WHEN the last name is missing, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN the error body reports a validation error on /LastName", function() {
+    const body = res.getBody();
+    expect(body.code).to.equal("STD-00000");
+    expect(body.validationErrors).to.be.an("array").that.is.not.empty;
+    expect(body.validationErrors.flatMap(e => e.paths)).to.include("/LastName");
+  });
+}

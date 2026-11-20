@@ -1,4 +1,4 @@
-using Altinn.ResourceRegistry;
+﻿using Altinn.ResourceRegistry;
 using Microsoft.IdentityModel.Logging;
 
 WebApplication app = ResourceRegistryHost.Create(args);

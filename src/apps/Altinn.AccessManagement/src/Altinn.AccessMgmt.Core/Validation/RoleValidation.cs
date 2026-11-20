@@ -16,6 +16,6 @@ public static class RoleValidation
             return null;
         }
 
-        return (ref ValidationErrorBuilder errors) => errors.Add(ValidationErrors.RoleNotExists, $"QUERY/{paramName}");
+        return (ref ValidationProblemBuilder errors) => errors.Add(ValidationErrors.RoleNotExists, $"QUERY/{paramName}");
     };
 }

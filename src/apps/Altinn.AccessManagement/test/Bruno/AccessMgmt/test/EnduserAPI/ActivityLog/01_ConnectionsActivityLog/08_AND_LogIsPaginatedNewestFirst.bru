@@ -1,0 +1,66 @@
+meta {
+  name: 08_AND_LogIsPaginatedNewestFirst
+  type: http
+  seq: 8
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/connections/activitylog?party={{party}}&direction=from&to={{to}}&pageSize=1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  direction: from
+  to: {{to}}
+  pageSize: 1
+}
+
+docs {
+  AND the log is paginated: with `pageSize=1` the first page holds the newest entry,
+  and `links.next` points to `pageNo=1` with the same filters.
+
+  The next link is built from the host the service sees, which behind the platform
+  gateway is an internal host name, so only its path and query are checked here. The next
+  step asks for page 1 directly.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().connections;
+
+  bru.setVar("party", td.delegator.partyUuid);
+  bru.setVar("to", td.receiver.partyUuid);
+
+  await loginAs(td.delegator);
+}
+
+script:post-response {
+  const body = res.getBody();
+  if (body && body.data && body.data[0]) {
+    bru.setVar("al_firstPageEntryId", body.data[0].id);
+    bru.setVar("al_firstPageEntryWhen", body.data[0].when);
+  }
+}
+
+tests {
+  const { parseLink } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const body = res.getBody();
+
+  test("AND the first page returns 200 with one entry", function() {
+    expect(res.status).to.equal(200);
+    expect(body.data).to.have.lengthOf(1);
+  });
+
+  test("AND the next link asks for page 1 with the same filters", function() {
+    expect(body.links.next).to.be.a("string");
+    const next = parseLink(body.links.next);
+    expect(next.path).to.equal("/accessmanagement/api/v2/enduser/connections/activitylog");
+    expect(next.query.pageNo).to.equal("1");
+    expect(next.query.pageSize).to.equal("1");
+    expect(next.query.party).to.equal(bru.getVar("party"));
+    expect(next.query.direction).to.equal("from");
+    expect(next.query.to).to.equal(bru.getVar("to"));
+  });
+}

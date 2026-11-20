@@ -1,0 +1,42 @@
+meta {
+  name: 01_WHEN_PersonWithoutEstatesChecksOwnParty
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/estates/any?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+docs {
+  WHEN a person who is not a bostyrer runs the estate check for their own party. Expects 200
+  with the body `false`.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  bru.setVar("party", td.creditor_VILJESTERK_GRANDIS.partyUuid);
+
+  await helpers.loginAs(td.creditor_VILJESTERK_GRANDIS);
+}
+
+tests {
+  test("WHEN the person checks their own party, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the person has no bankruptcy estates", function() {
+    expect(res.getBody()).to.equal(false);
+  });
+}

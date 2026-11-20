@@ -52,13 +52,13 @@ public interface IAssignmentService
 
     /// <summary>
     /// Validates whether revoking the specified assignment will result in cascading revocations of related assignments. 
-    /// If three are cascading effects, these are captured as validation errors in the returned ValidationErrorBuilder.
+    /// If three are cascading effects, these are captured as validation errors in the returned ValidationProblemBuilder.
     /// </summary>
     /// <param name="assignmentId">The unique identifier of the assignment to check for cascading revocation effects.</param>
     /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
-    /// <returns>A ValidationErrorBuilder with any any validation errors representing a cascading revocation due to a dependency. 
+    /// <returns>A ValidationProblemBuilder with any any validation errors representing a cascading revocation due to a dependency. 
     /// If no dependencys are found, the error builder will be empty. meaning a delete can be performed without cascading effects.</returns>
-    Task<ValidationErrorBuilder> CheckCascadingAssignmentRevoke(Guid assignmentId, CancellationToken cancellationToken);
+    Task<ValidationProblemBuilder> CheckCascadingAssignmentRevoke(Guid assignmentId, CancellationToken cancellationToken);
 
     /// <summary>
     /// Gets assignment and creates if not exits

@@ -1,0 +1,22 @@
+meta {
+  name: Access Packages
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/authentication/api/v1/systemregister/{systemId}/accesspackages
+  body: none
+  auth: inherit
+}
+
+vars:pre-request {
+  systemId: 314126181_Forretningsfører
+}
+
+docs {
+  [h1]
+  
+  
+  her er dokumentasjon
+}

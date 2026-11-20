@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using Altinn.ResourceRegistry.TestUtils;
 
 namespace Altinn.ResourceRegistry.Tests

@@ -1,4 +1,4 @@
-<Project>
+﻿<Project>
 
     <!-- Skips test execution for assemblies that declare
          <HasIntegrationTests>false</HasIntegrationTests> when the CI integration lane

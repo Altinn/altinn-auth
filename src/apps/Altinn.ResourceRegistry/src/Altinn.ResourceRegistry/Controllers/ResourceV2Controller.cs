@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using Altinn.AccessMgmt.Core.Utils.Helper;
 using Altinn.Authorization.ServiceDefaults;
 using Altinn.ResourceRegistry.Core.Configuration;
@@ -7,7 +7,7 @@ using Altinn.ResourceRegistry.Core.Services.Interfaces;
 using Altinn.ResourceRegistry.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using static Altinn.ResourceRegistry.Core.Constants.AltinnXacmlConstants;
+using static Altinn.Authorization.Xacml.Constants.AltinnXacmlConstants;
 
 namespace Altinn.ResourceRegistry.Controllers
 {

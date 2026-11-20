@@ -1,7 +1,7 @@
 ﻿#nullable enable
 
 using System.Text.Json.Serialization;
-using Altinn.Authorization.Models.Register;
+using Altinn.Authorization.Api.Contracts.Register;
 
 namespace Altinn.Authorization.Models.ResourceRegistry;
 

@@ -1,4 +1,4 @@
-﻿module.exports = {
+module.exports = {
   env: "tt02",
   package_to_delegate: {
     package_urn: "urn:altinn:accesspackage:skattegrunnlag",

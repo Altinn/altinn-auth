@@ -38,7 +38,7 @@ public static class ActivityTypeConstants
     /// status-null fallback row. Returns <see langword="null"/> for combinations
     /// without a catalog entry.
     /// </summary>
-    public static ConstantDefinition<ActivityType>? Resolve(ActivityLogType type, ActivityLogSubtype? subtype, ActivityLogTrigger trigger, RequestStatus? status)
+    public static ConstantDefinition<ActivityType>? Resolve(ActivityLogType type, ActivityLogSubtype? subtype, ActivityLogTrigger trigger, RequestStatusV2? status)
     {
         if (status is not null && ByKey.Value.TryGetValue((type, subtype, trigger, status), out var exact))
         {
@@ -48,7 +48,7 @@ public static class ActivityTypeConstants
         return ByKey.Value.TryGetValue((type, subtype, trigger, null), out var fallback) ? fallback : null;
     }
 
-    private static readonly Lazy<IReadOnlyDictionary<(ActivityLogType, ActivityLogSubtype?, ActivityLogTrigger, RequestStatus?), ConstantDefinition<ActivityType>>> ByKey =
+    private static readonly Lazy<IReadOnlyDictionary<(ActivityLogType, ActivityLogSubtype?, ActivityLogTrigger, RequestStatusV2?), ConstantDefinition<ActivityType>>> ByKey =
         new(() => AllEntities().ToDictionary(d => (d.Entity.Type, d.Entity.Subtype, d.Entity.Trigger, d.Entity.Status)));
 
     #region Assignment
@@ -443,7 +443,7 @@ public static class ActivityTypeConstants
             Type = ActivityLogType.Request,
             Subtype = ActivityLogSubtype.Package,
             Trigger = ActivityLogTrigger.Created,
-            Status = RequestStatus.Draft,
+            Status = RequestStatusV2.Draft,
             Name = "Utkast til forespørsel om tilgangspakke opprettet",
             Description = "Et utkast til forespørsel om tilgangspakke ble opprettet, men er ikke sendt ennå.",
         },
@@ -465,7 +465,7 @@ public static class ActivityTypeConstants
             Type = ActivityLogType.Request,
             Subtype = ActivityLogSubtype.Package,
             Trigger = ActivityLogTrigger.Created,
-            Status = RequestStatus.Pending,
+            Status = RequestStatusV2.Pending,
             Name = "Forespørsel om tilgangspakke sendt",
             Description = "Forespørselen om tilgangspakke ble sendt til mottakeren for behandling.",
         },
@@ -508,7 +508,7 @@ public static class ActivityTypeConstants
             Type = ActivityLogType.Request,
             Subtype = ActivityLogSubtype.Package,
             Trigger = ActivityLogTrigger.Updated,
-            Status = RequestStatus.Pending,
+            Status = RequestStatusV2.Pending,
             Name = "Utkast til forespørsel om tilgangspakke sendt",
             Description = "Utkastet ble bekreftet og forespørselen sendt til mottakeren for behandling.",
         },
@@ -530,7 +530,7 @@ public static class ActivityTypeConstants
             Type = ActivityLogType.Request,
             Subtype = ActivityLogSubtype.Package,
             Trigger = ActivityLogTrigger.Updated,
-            Status = RequestStatus.Approved,
+            Status = RequestStatusV2.Approved,
             Name = "Forespørsel om tilgangspakke godkjent",
             Description = "Mottakeren godkjente forespørselen, og tilgangen ble opprettet.",
         },
@@ -543,6 +543,28 @@ public static class ActivityTypeConstants
     };
 
     /// <summary>
+    /// Request / Package / Updated to PartialApprove — the recipient approved the request, but the access given does not match what was requested.
+    /// </summary>
+    public static ConstantDefinition<ActivityType> RequestPackageUpdatedPartialApprove { get; } = new ConstantDefinition<ActivityType>("fa78024b-beb7-4730-9040-ea6d69f9c16f")
+    {
+        Entity = new()
+        {
+            Type = ActivityLogType.Request,
+            Subtype = ActivityLogSubtype.Package,
+            Trigger = ActivityLogTrigger.Updated,
+            Status = RequestStatusV2.PartialApprove,
+            Name = "Forespørsel om tilgangspakke delvis godkjent",
+            Description = "Mottakeren godkjente forespørselen, men tilgangen som ble gitt samsvarer ikke med det som ble forespurt.",
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Access package request partially approved"),
+            KeyValuePair.Create("Description", "The recipient approved the request, but the access given does not match what was requested.")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Førespurnad om tilgangspakke delvis godkjend"),
+            KeyValuePair.Create("Description", "Mottakaren godkjende førespurnaden, men tilgangen som vart gitt samsvarer ikkje med det som vart førespurt.")),
+    };
+
+    /// <summary>
     /// Request / Package / Updated to Rejected — the recipient rejected the request.
     /// </summary>
     public static ConstantDefinition<ActivityType> RequestPackageUpdatedRejected { get; } = new ConstantDefinition<ActivityType>("815978d1-42a0-4b2d-94ec-9de231d17a1e")
@@ -552,7 +574,7 @@ public static class ActivityTypeConstants
             Type = ActivityLogType.Request,
             Subtype = ActivityLogSubtype.Package,
             Trigger = ActivityLogTrigger.Updated,
-            Status = RequestStatus.Rejected,
+            Status = RequestStatusV2.Rejected,
             Name = "Forespørsel om tilgangspakke avslått",
             Description = "Mottakeren avslo forespørselen.",
         },
@@ -574,7 +596,7 @@ public static class ActivityTypeConstants
             Type = ActivityLogType.Request,
             Subtype = ActivityLogSubtype.Package,
             Trigger = ActivityLogTrigger.Updated,
-            Status = RequestStatus.Withdrawn,
+            Status = RequestStatusV2.Withdrawn,
             Name = "Forespørsel om tilgangspakke trukket",
             Description = "Avsenderen trakk forespørselen tilbake.",
         },
@@ -638,7 +660,7 @@ public static class ActivityTypeConstants
             Type = ActivityLogType.Request,
             Subtype = ActivityLogSubtype.Resource,
             Trigger = ActivityLogTrigger.Created,
-            Status = RequestStatus.Draft,
+            Status = RequestStatusV2.Draft,
             Name = "Utkast til forespørsel om enkelttjeneste opprettet",
             Description = "Et utkast til forespørsel om enkelttjeneste ble opprettet, men er ikke sendt ennå.",
         },
@@ -660,7 +682,7 @@ public static class ActivityTypeConstants
             Type = ActivityLogType.Request,
             Subtype = ActivityLogSubtype.Resource,
             Trigger = ActivityLogTrigger.Created,
-            Status = RequestStatus.Pending,
+            Status = RequestStatusV2.Pending,
             Name = "Forespørsel om enkelttjeneste sendt",
             Description = "Forespørselen om enkelttjeneste ble sendt til mottakeren for behandling.",
         },
@@ -703,7 +725,7 @@ public static class ActivityTypeConstants
             Type = ActivityLogType.Request,
             Subtype = ActivityLogSubtype.Resource,
             Trigger = ActivityLogTrigger.Updated,
-            Status = RequestStatus.Pending,
+            Status = RequestStatusV2.Pending,
             Name = "Utkast til forespørsel om enkelttjeneste sendt",
             Description = "Utkastet ble bekreftet og forespørselen sendt til mottakeren for behandling.",
         },
@@ -725,7 +747,7 @@ public static class ActivityTypeConstants
             Type = ActivityLogType.Request,
             Subtype = ActivityLogSubtype.Resource,
             Trigger = ActivityLogTrigger.Updated,
-            Status = RequestStatus.Approved,
+            Status = RequestStatusV2.Approved,
             Name = "Forespørsel om enkelttjeneste godkjent",
             Description = "Mottakeren godkjente forespørselen, og tilgangen ble opprettet.",
         },
@@ -738,6 +760,28 @@ public static class ActivityTypeConstants
     };
 
     /// <summary>
+    /// Request / Resource / Updated to PartialApprove — the recipient approved the request, but the access given does not match what was requested.
+    /// </summary>
+    public static ConstantDefinition<ActivityType> RequestResourceUpdatedPartialApprove { get; } = new ConstantDefinition<ActivityType>("ec902a84-63a4-4e86-9a73-1bc27dedd4e0")
+    {
+        Entity = new()
+        {
+            Type = ActivityLogType.Request,
+            Subtype = ActivityLogSubtype.Resource,
+            Trigger = ActivityLogTrigger.Updated,
+            Status = RequestStatusV2.PartialApprove,
+            Name = "Forespørsel om enkelttjeneste delvis godkjent",
+            Description = "Mottakeren godkjente forespørselen, men tilgangen som ble gitt samsvarer ikke med det som ble forespurt.",
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Single service request partially approved"),
+            KeyValuePair.Create("Description", "The recipient approved the request, but the access given does not match what was requested.")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Førespurnad om enkeltteneste delvis godkjend"),
+            KeyValuePair.Create("Description", "Mottakaren godkjende førespurnaden, men tilgangen som vart gitt samsvarer ikkje med det som vart førespurt.")),
+    };
+
+    /// <summary>
     /// Request / Resource / Updated to Rejected — the recipient rejected the request.
     /// </summary>
     public static ConstantDefinition<ActivityType> RequestResourceUpdatedRejected { get; } = new ConstantDefinition<ActivityType>("f590cb1b-84eb-4e10-971f-96e2a8c51c27")
@@ -747,7 +791,7 @@ public static class ActivityTypeConstants
             Type = ActivityLogType.Request,
             Subtype = ActivityLogSubtype.Resource,
             Trigger = ActivityLogTrigger.Updated,
-            Status = RequestStatus.Rejected,
+            Status = RequestStatusV2.Rejected,
             Name = "Forespørsel om enkelttjeneste avslått",
             Description = "Mottakeren avslo forespørselen.",
         },
@@ -769,7 +813,7 @@ public static class ActivityTypeConstants
             Type = ActivityLogType.Request,
             Subtype = ActivityLogSubtype.Resource,
             Trigger = ActivityLogTrigger.Updated,
-            Status = RequestStatus.Withdrawn,
+            Status = RequestStatusV2.Withdrawn,
             Name = "Forespørsel om enkelttjeneste trukket",
             Description = "Avsenderen trakk forespørselen tilbake.",
         },

@@ -1,0 +1,48 @@
+meta {
+  name: 01_WHEN_UserIsUnknownThenRequestFails
+  type: http
+  seq: 1
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/administrators?party={{party}}&user={{user}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  user: {{user}}
+}
+
+docs {
+  WHEN the bostyrer revokes a party uuid that does not exist. Expects 400 with validation
+  error AM.VLD-00006 (entity does not exist) on QUERY/to.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  bru.setVar("party", td.BOSTYRER.partyUuid);
+  bru.setVar("user", helpers.unknownPartyUuid);
+
+  await helpers.loginAs(td.BOSTYRER);
+}
+
+tests {
+  test("WHEN the user is unknown, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN the error body reports validation error AM.VLD-00006 on QUERY/to", function() {
+    const body = res.getBody();
+    expect(body.code).to.equal("STD-00000");
+    const err = body.validationErrors.find(e => e.code === "AM.VLD-00006");
+    expect(err, "expected validation error AM.VLD-00006").to.not.be.undefined;
+    expect(err.paths).to.include("QUERY/to");
+  });
+}

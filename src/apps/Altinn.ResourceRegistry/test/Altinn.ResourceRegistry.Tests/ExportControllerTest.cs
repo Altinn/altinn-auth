@@ -1,3 +1,5 @@
+﻿using System.Net;
+using Altinn.ResourceRegistry.Tests.Utils;
 using Altinn.ResourceRegistry.TestUtils;
 
 namespace Altinn.ResourceRegistry.Tests
@@ -19,7 +21,10 @@ namespace Altinn.ResourceRegistry.Tests
 
             string responseContent = await response.Content.ReadAsStringAsync();
             // System.IO.File.WriteAllText("rdf.ttl", responseContent);
-            Assert.NotNull(responseContent);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+            // The export returns error text with status 200 when a resource fails to map, so parse it
+            RdfTestHelper.ParseTurtle(responseContent);
         }
     }
 }

@@ -110,7 +110,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers
 
             AltinnProblemDetails actual = JsonSerializer.Deserialize<AltinnProblemDetails>(
                 await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), _jsonOptions)!;
-            Assert.Equal("The Entitytype is not supported", actual.Detail);
+            Assert.Equal("The Entitytype is not supported", actual.Title);
         }
 
         [Fact]
@@ -136,7 +136,7 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers
 
             AltinnProblemDetails actual = JsonSerializer.Deserialize<AltinnProblemDetails>(
                 await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken), _jsonOptions)!;
-            Assert.Equal("The EntityVariant is not found or not valid for the given EntityType", actual.Detail);
+            Assert.Equal("The EntityVariant is not found or not valid for the given EntityType", actual.Title);
         }
 
         [Fact]

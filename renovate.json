@@ -1,4 +1,4 @@
-﻿{
+{
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "local>Altinn/renovate-config"
@@ -144,14 +144,31 @@
       ]
     },
     {
-      "matchManagers": [
+      "matchDatasources": [
         "docker"
       ],
       "matchPackageNames": [
         "mcr.microsoft.com/dotnet/*"
       ],
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "digest",
+        "pinDigest"
+      ],
       "groupName": ".NET Images",
       "groupSlug": "dotnet-images"
+    },
+    {
+      "description": "Container registries such as MCR publish no release timestamp for a digest. With minimumReleaseAge and the default timestamp-required behaviour such updates are never considered stable and stay pending forever.",
+      "matchDatasources": [
+        "docker"
+      ],
+      "matchUpdateTypes": [
+        "digest",
+        "pinDigest"
+      ],
+      "minimumReleaseAgeBehaviour": "timestamp-optional"
     },
     {
       "matchManagers": [

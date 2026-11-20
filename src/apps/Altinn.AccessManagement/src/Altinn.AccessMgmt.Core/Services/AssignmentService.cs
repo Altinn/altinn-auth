@@ -1,10 +1,9 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
-using Altinn.AccessManagement.Core.Constants;
+using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessManagement.Core.Models;
-using Altinn.AccessManagement.Core.Models.Rights;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessMgmt.Core.Models;
@@ -19,6 +18,7 @@ using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.ProblemDetails;
+using Altinn.Authorization.Xacml.Constants;
 using Altinn.Urn;
 using Altinn.Urn.Json;
 using Microsoft.EntityFrameworkCore;
@@ -138,7 +138,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
 
         if (!onlyRemoveA2Packages || assignment.Audit_ChangedBySystem == SystemEntityConstants.Altinn2RoleImportSystem.Id)
         {
-            ValidationErrorBuilder errors = await CheckCascadingAssignmentRevoke(assignment.Id, cancellationToken);
+            ValidationProblemBuilder errors = await CheckCascadingAssignmentRevoke(assignment.Id, cancellationToken);
 
             // if no existing dependencies remove assignment
             if (errors.IsEmpty)
@@ -477,7 +477,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
     /// <inheritdoc/>
     public async Task<ProblemInstance> DeleteAssignment(Guid fromEntityId, Guid toEntityId, string roleCode, bool cascade = false, CancellationToken cancellationToken = default)
     {
-        ValidationErrorBuilder errors = default;
+        ValidationProblemBuilder errors = default;
         ValidationProblemInstance errorResult = default;
 
         var fromEntity = await db.Entities.FirstOrDefaultAsync(t => t.Id == fromEntityId, cancellationToken);
@@ -546,16 +546,16 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
     /// <param name="assignmentId">The id of the assignment to delete</param>
     /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
     /// <returns>dependencies on the assignment taht will be revoked together with the assignment if it is removed</returns>
-    public async Task<ValidationErrorBuilder> CheckCascadingAssignmentRevoke(Guid assignmentId, CancellationToken cancellationToken)
+    public async Task<ValidationProblemBuilder> CheckCascadingAssignmentRevoke(Guid assignmentId, CancellationToken cancellationToken)
     {
-        ValidationErrorBuilder errors = default;
+        ValidationProblemBuilder errors = default;
 
         var packages = await db.AssignmentPackages.AsNoTracking()
                     .Where(t => t.AssignmentId == assignmentId)
                     .ToListAsync(cancellationToken);
         if (packages != null && packages.Any())
         {
-            errors.Add(ValidationErrors.AssignmentIsActiveInOneOrMoreDelegations, "$QUERY/cascade", [new("packages", string.Join(",", packages.Select(p => p.Id.ToString())))]);
+            errors.Add(ValidationErrors.AssignmentHasActiveConnections, "$QUERY/cascade", [new("packages", string.Join(",", packages.Select(p => p.Id.ToString())))]);
         }
 
         var resources = await db.AssignmentResources.AsNoTracking()
@@ -563,7 +563,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
             .ToListAsync(cancellationToken);
         if (resources != null && resources.Any())
         {
-            errors.Add(ValidationErrors.AssignmentIsActiveInOneOrMoreDelegations, "$QUERY/cascade", [new("resources", string.Join(",", resources.Select(p => p.Id.ToString())))]);
+            errors.Add(ValidationErrors.AssignmentHasActiveConnections, "$QUERY/cascade", [new("resources", string.Join(",", resources.Select(p => p.Id.ToString())))]);
         }
 
         var instances = await db.AssignmentInstances.AsNoTracking()
@@ -571,7 +571,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
             .ToListAsync(cancellationToken);
         if (instances != null && instances.Any())
         {
-            errors.Add(ValidationErrors.AssignmentIsActiveInOneOrMoreDelegations, "$QUERY/cascade", [new("resources", string.Join(",", instances.Select(p => p.Id.ToString())))]);
+            errors.Add(ValidationErrors.AssignmentHasActiveConnections, "$QUERY/cascade", [new("resources", string.Join(",", instances.Select(p => p.Id.ToString())))]);
         }
 
         var delegationsFromAssingment = await db.Delegations.AsNoTracking()
@@ -579,7 +579,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
             .ToListAsync(cancellationToken);
         if (delegationsFromAssingment != null && delegationsFromAssingment.Any())
         {
-            errors.Add(ValidationErrors.AssignmentIsActiveInOneOrMoreDelegations, "$QUERY/cascade", [new("delegations", string.Join(",", delegationsFromAssingment.Select(p => p.Id.ToString())))]);
+            errors.Add(ValidationErrors.AssignmentHasActiveConnections, "$QUERY/cascade", [new("delegations", string.Join(",", delegationsFromAssingment.Select(p => p.Id.ToString())))]);
         }
 
         var delegationsToAssignment = await db.Delegations.AsNoTracking()
@@ -587,7 +587,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
             .ToListAsync(cancellationToken);
         if (delegationsToAssignment != null && delegationsToAssignment.Any())
         {
-            errors.Add(ValidationErrors.AssignmentIsActiveInOneOrMoreDelegations, "$QUERY/cascade", [new("delegations", string.Join(",", delegationsToAssignment.Select(p => p.Id.ToString())))]);
+            errors.Add(ValidationErrors.AssignmentHasActiveConnections, "$QUERY/cascade", [new("delegations", string.Join(",", delegationsToAssignment.Select(p => p.Id.ToString())))]);
         }
 
         return errors;
@@ -596,7 +596,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
     /// <inheritdoc/>
     public async Task<ProblemInstance> DeleteAssignment(Guid assignmentId, bool cascade = false, AuditValues audit = null, CancellationToken cancellationToken = default)
     {
-        ValidationErrorBuilder errors = default;
+        ValidationProblemBuilder errors = default;
         ValidationProblemInstance errorResult = default;
 
         var existingAssignment = await GetAssignment(assignmentId, cancellationToken: cancellationToken);
@@ -650,7 +650,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
     /// <inheritdoc/>
     public async Task<Result<Assignment>> GetOrCreateAssignment(Guid fromEntityId, Guid toEntityId, string roleCode, CancellationToken cancellationToken = default)
     {
-        ValidationErrorBuilder errors = default;
+        ValidationProblemBuilder errors = default;
 
         var fromEntity = await db.Entities.SingleAsync(t => t.Id == fromEntityId, cancellationToken);
         var toEntity = await db.Entities.SingleAsync(t => t.Id == toEntityId, cancellationToken);
@@ -826,9 +826,22 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
     /// <summary>
     /// Removes all assignments tied to a deceased person. This includes all rightHolder assignments or migrated Altinn 2 assignments where the deadPerson is either the from or to party,
     /// as well as all agent assignments where the deadPerson is the agent. Removing the agent assignment will cascade to removing all client delegations for that agent.
+    /// The bankruptcy estate administrator (konkursbo-tilgangsstyrer) role is removed as well, so the ER import does not grant the deadPerson access to new bankruptcy estates.
     /// </summary>
     public async Task ClearAssignmentsInAfterLife(Guid deadPerson, AuditValues audit, CancellationToken cancellationToken)
     {
+        var currentTransaction = db.Database.CurrentTransaction is not null;
+        await using var transaction = currentTransaction ? null : await db.Database.BeginTransactionAsync(cancellationToken);
+
+        // Lock the parties the dead person administers bankruptcy estates for, before reading anything, so an ER import
+        // granting estate access through one of them either commits first, and its grants are removed below, or waits and
+        // then finds the administrator relationship gone. See BankruptcyEstateDelegationService.LockEstateAdministratorParties.
+        var estateAdministratorParties = await db.Assignments.AsNoTracking()
+           .Where(t => t.ToId == deadPerson && t.RoleId == RoleConstants.BankruptcyEstateAdministrator)
+           .Select(t => t.FromId)
+           .ToListAsync(cancellationToken);
+        await BankruptcyEstateDelegationService.LockEstateAdministratorParties(db, estateAdministratorParties, cancellationToken);
+
         // Find all assignments where toId or fromId is deadPerson, and the role is one of the rightHolder roles used for delegations in Altinn, or Altinn 2 roles migrated to Altinn 3.
         List<Assignment> assignmentsToRevoke = await db.Assignments.AsNoTracking()
              .Where(t => t.ToId == deadPerson || t.FromId == deadPerson)
@@ -843,14 +856,25 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
            .Where(t => t.ToId == deadPerson && t.RoleId == RoleConstants.Agent)
            .ToListAsync(cancellationToken);
 
-        if (!assignmentsToRevoke.Any() && !agentAssignments.Any())
+        // All assignments where deadPerson is bankruptcy estate administrator should be removed, otherwise the ER import gives deadPerson access to every new estate of the estate administrator party.
+        List<Assignment> bankruptcyEstateAdministratorAssignments = await db.Assignments.AsNoTracking()
+           .Where(t => t.ToId == deadPerson && t.RoleId == RoleConstants.BankruptcyEstateAdministrator)
+           .ToListAsync(cancellationToken);
+
+        if (!assignmentsToRevoke.Any() && !agentAssignments.Any() && !bankruptcyEstateAdministratorAssignments.Any())
         {
             return;
         }
 
         db.Assignments.RemoveRange(assignmentsToRevoke);
         db.Assignments.RemoveRange(agentAssignments);
-        db.SaveChanges(audit);
+        db.Assignments.RemoveRange(bankruptcyEstateAdministratorAssignments);
+        await db.SaveChangesAsync(audit, cancellationToken);
+
+        if (transaction is { })
+        {
+            await transaction.CommitAsync(cancellationToken);
+        }
     }
 
     /// <inheritdoc />
@@ -871,7 +895,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
         return db.SaveChanges(audit);
     }
 
-    private static void ValidatePartyIsNotNull(Guid id, Entity entity, ref ValidationErrorBuilder errors, string param)
+    private static void ValidatePartyIsNotNull(Guid id, Entity entity, ref ValidationProblemBuilder errors, string param)
     {
         if (entity is null)
         {
@@ -879,7 +903,7 @@ public class AssignmentService(AppDbContext db, ConnectionQuery connectionQuery)
         }
     }
 
-    private static void ValidatePartyIsOrg(Entity entity, ref ValidationErrorBuilder errors, string param)
+    private static void ValidatePartyIsOrg(Entity entity, ref ValidationProblemBuilder errors, string param)
     {
         if (entity is not null && !entity.Type.Name.Equals("Organisasjon", StringComparison.InvariantCultureIgnoreCase))
         {

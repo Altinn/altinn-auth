@@ -51,5 +51,22 @@ namespace Altinn.AccessManagement.Core.Helpers.Extensions
             enumValue = default;
             return false;
         }
+
+        /// <summary>
+        /// Maps an enum value like AutoMapper does: to the member of <typeparamref name="TTarget"/> with the same name ignoring case, otherwise to the same numeric value.
+        /// </summary>
+        /// <param name="value">The value to map</param>
+        /// <typeparam name="TTarget">The enum to map to</typeparam>
+        /// <returns>The member of <typeparamref name="TTarget"/> with the same name, or the same numeric value</returns>
+        public static TTarget MapByNameOrValue<TTarget>(this Enum value)
+            where TTarget : struct, Enum
+        {
+            if (Enum.TryParse(value.ToString(), ignoreCase: true, out TTarget result))
+            {
+                return result;
+            }
+
+            return (TTarget)Enum.ToObject(typeof(TTarget), value);
+        }
     }
 }

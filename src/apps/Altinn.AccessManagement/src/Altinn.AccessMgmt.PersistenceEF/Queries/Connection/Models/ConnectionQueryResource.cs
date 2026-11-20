@@ -1,4 +1,6 @@
-﻿namespace Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
+﻿using Altinn.Authorization.Api.Contracts.ResourceRegistry.Enums;
+
+namespace Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 
 /// <summary>
 /// Basic Resource reference for Connection Query
@@ -19,4 +21,14 @@ public sealed class ConnectionQueryResource
     /// RefId
     /// </summary>
     public string RefId { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Whether the resource can be delegated
+    /// </summary>
+    public bool Delegable { get; init; }
+
+    /// <summary>
+    /// Access list mode of the resource
+    /// </summary>
+    public ResourceAccessListMode AccessListMode { get; init; }
 }

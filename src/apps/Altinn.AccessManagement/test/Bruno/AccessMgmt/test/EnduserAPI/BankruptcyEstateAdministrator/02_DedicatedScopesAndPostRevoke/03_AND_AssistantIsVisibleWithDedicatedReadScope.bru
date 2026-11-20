@@ -1,0 +1,46 @@
+meta {
+  name: 03_AND_AssistantIsVisibleWithDedicatedReadScope
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/administrators?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+docs {
+  AND the bostyrer lists the administrators with a token carrying only
+  altinn:bankruptcyestatedelegations.read. Expects 200 with the assistant listed.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  bru.setVar("party", td.BOSTYRER.partyUuid);
+
+  await helpers.loginAs(td.BOSTYRER, helpers.scopes.bankruptcyEstateRead);
+}
+
+tests {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  const td = helpers.testdata();
+
+  test("AND the dedicated read scope lists the administrators, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the assistant is listed", function() {
+    const entry = helpers.findAdministrator(res.getBody(), td.user_LUN_ANALYSE_GÅSTOL.partyUuid);
+    expect(entry, "expected the assistant to be listed").to.not.be.undefined;
+  });
+}

@@ -1,4 +1,4 @@
-﻿variable "TAG" {
+variable "TAG" {
   default = "latest"
 }
 

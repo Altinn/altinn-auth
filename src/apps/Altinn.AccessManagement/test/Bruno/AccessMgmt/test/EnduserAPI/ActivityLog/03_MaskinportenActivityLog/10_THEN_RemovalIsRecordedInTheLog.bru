@@ -1,0 +1,57 @@
+meta {
+  name: 10_THEN_RemovalIsRecordedInTheLog
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/maskinporten/activitylog?party={{party}}&direction=from&to={{to}}&trigger=Deleted&pageSize=50
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  direction: from
+  to: {{to}}
+  trigger: Deleted
+  pageSize: 50
+}
+
+docs {
+  THEN the removal is recorded: the supplier relation and the resource each have a
+  Deleted entry.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().maskinporten;
+
+  bru.setVar("party", td.consumer.partyUuid);
+  bru.setVar("to", td.supplier.partyUuid);
+
+  await loginAs(td.consumer.dagligleder);
+}
+
+tests {
+  const { activityTypes, entriesFor } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const body = res.getBody();
+
+  test("THEN the log returns 200 with only Deleted entries", function() {
+    expect(res.status).to.equal(200);
+    body.data.forEach(e => expect(e.trigger).to.equal("Deleted"));
+  });
+
+  test("THEN the supplier relation is recorded as removed", function() {
+    const entries = entriesFor(body, bru.getVar("al_supplierAssignmentId"));
+    expect(entries).to.have.lengthOf(1);
+    expect(entries[0].activityTypeId).to.equal(activityTypes.roleAssignmentDeleted);
+  });
+
+  test("THEN the resource is recorded as removed", function() {
+    const entries = entriesFor(body, bru.getVar("al_supplierResourceItemId"));
+    expect(entries).to.have.lengthOf(1);
+    expect(entries[0].activityTypeId).to.equal(activityTypes.resourceRemoved);
+    expect(entries[0].resourceName).to.be.a("string").that.is.not.empty;
+  });
+}

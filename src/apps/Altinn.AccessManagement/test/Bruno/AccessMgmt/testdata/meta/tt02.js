@@ -31,10 +31,11 @@ module.exports = {
       resourceName: "Bruno automatisert test ressurs for direktedelegering",
       resourceRefId: "devtest_gar_bruno_direct_resource",
     },
-    infrastruktur: {
-      id: "75978efe-2437-421e-8c77-dd61925c7ba4",
-      urn: "urn:altinn:accesspackage:infrastruktur",
-      name: "Infrastruktur",
+    // A package with no resources linked. Few qualify in TT02, where resources keep being added.
+    packageWithoutResources: {
+      id: "ec492675-3a48-4ad9-b864-2d6865020642",
+      urn: "urn:altinn:accesspackage:reparasjon-og-installasjon-av-maskiner-og-utstyr",
+      name: "Reparasjon og installasjon av maskiner og utstyr",
     },
   },
   areas: {

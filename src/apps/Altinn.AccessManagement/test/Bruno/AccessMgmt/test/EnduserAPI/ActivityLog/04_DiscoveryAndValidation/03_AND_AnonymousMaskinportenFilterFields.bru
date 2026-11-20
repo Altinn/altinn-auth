@@ -1,0 +1,29 @@
+meta {
+  name: 03_AND_AnonymousMaskinportenFilterFields
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/maskinporten/activitylog/filter/fields
+  body: none
+  auth: none
+}
+
+docs {
+  AND anyone reads the filter fields of the maskinporten area without a token.
+
+  `GET /accessmanagement/api/v2/enduser/maskinporten/activitylog/filter/fields` is static metadata, anonymous and
+  cached for an hour. The values are the valid `{field}` values for
+  `GET .../activitylog/filter/{field}`.
+}
+
+tests {
+  test("THEN the maskinporten filter fields return 200 without a token", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN the maskinporten area offers exactly its own fields", function() {
+    expect(res.getBody()).to.deep.equal(["From","To","By","Resource","Source","ActivityType"]);
+  });
+}

@@ -1,4 +1,4 @@
-﻿// test/helpers/assertHelper.js
+// test/helpers/assertHelper.js
 
 /**
  * Normalize an array of strings to lowercase

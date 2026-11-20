@@ -186,6 +186,26 @@
         public const string SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE = "altinn:accessmanagement/enduser:connections:toothers.write";
 
         /// <summary>
+        /// Bankruptcy estate administration read end-user scope giving access to read operations on behalf of bankruptcy-estate administrators.
+        /// </summary>
+        public const string SCOPE_ENDUSER_BANKRUPTCYDELEGATION_READ = "altinn:bankruptcyestatedelegations.read";
+
+        /// <summary>
+        /// Bankruptcy estate administration write end-user scope giving access to write operations on behalf of bankruptcy-estate administrators.
+        /// </summary>
+        public const string SCOPE_ENDUSER_BANKRUPTCYDELEGATION_WRITE = "altinn:bankruptcyestatedelegations.write";
+
+        /// <summary>
+        /// Policy tag for authorizing bankruptcy estate administration API read access
+        /// </summary>
+        public const string POLICY_BANKRUPTCYDELEGATION_READ = "BANKRUPTCYESTATEDELEGATIONS_READ";
+
+        /// <summary>
+        /// Policy tag for authorizing bankruptcy estate administration API write access
+        /// </summary>
+        public const string POLICY_BANKRUPTCYDELEGATION_WRITE = "BANKRUPTCYESTATEDELEGATIONS_WRITE";
+
+        /// <summary>
         /// Policy tag for authorizing enduser requests API read access
         /// </summary>
         public const string POLICY_ENDUSER_REQUESTS_READ = "POLICY_ENDUSER_REQUESTS_READ";

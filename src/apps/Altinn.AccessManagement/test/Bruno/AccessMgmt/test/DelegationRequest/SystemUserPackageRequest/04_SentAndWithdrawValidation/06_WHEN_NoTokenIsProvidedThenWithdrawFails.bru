@@ -19,7 +19,7 @@ docs {
 }
 
 script:pre-request {
-  bru.setVar("unknownRequestId", require("crypto").randomUUID());
+  bru.setVar("unknownRequestId", require("uuid").v4());
 }
 
 tests {

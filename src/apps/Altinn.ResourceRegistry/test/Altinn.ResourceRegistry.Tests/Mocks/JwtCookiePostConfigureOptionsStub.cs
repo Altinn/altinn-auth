@@ -1,4 +1,4 @@
-using AltinnCore.Authentication.JwtCookie;
+﻿using AltinnCore.Authentication.JwtCookie;
 
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Extensions.Options;

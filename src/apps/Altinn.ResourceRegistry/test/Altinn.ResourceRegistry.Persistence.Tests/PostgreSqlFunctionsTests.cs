@@ -1,4 +1,4 @@
-using Altinn.ResourceRegistry.TestUtils;
+﻿using Altinn.ResourceRegistry.TestUtils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Npgsql;

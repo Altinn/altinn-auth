@@ -1,4 +1,4 @@
-﻿-- Baseline DDL for the consent schema: the enum types, the consentrequest /
+-- Baseline DDL for the consent schema: the enum types, the consentrequest /
 -- consentright / consentevent / context / metadata / resourceattribute tables,
 -- their primary keys and indexes, and the grants to platform_authorization.
 -- Generated from 'pg_dump --schema-only --schema=consent' of the established

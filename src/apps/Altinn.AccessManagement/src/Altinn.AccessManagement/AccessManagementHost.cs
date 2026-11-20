@@ -19,6 +19,7 @@ using Altinn.AccessMgmt.Core.Authorization;
 using Altinn.AccessMgmt.Core.Extensions;
 using Altinn.AccessMgmt.Core.Notifications;
 using Altinn.AccessMgmt.Core.Outbox;
+using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.Authorization.Api.Contracts.Register;
 using Altinn.Authorization.Host.Database;
@@ -66,7 +67,7 @@ internal static partial class AccessManagementHost
     public static WebApplication Create(string[] args)
     {
         Log.CreateAltinnHost(Logger);
-        var builder = AltinnHost.CreateWebApplicationBuilder("access-management", args, opts => opts.ConfigureEnabledServices(services => services.DisableApplicationInsights()));
+        var builder = AltinnHost.CreateWebApplicationBuilder("access-management", args);
         builder.ConfigureAppsettings();
         builder.ConfigureLibsHost();
         builder.Services.AddMemoryCache();
@@ -80,35 +81,9 @@ internal static partial class AccessManagementHost
 
         builder.ConfigureLibsIntegrations();
         builder.ConfigureAppsettings();
-
-        if (!builder.Environment.IsDevelopment())
-        {
-            if (builder.Configuration.GetValue<string>("ApplicationInsights:InstrumentationKey") is var key && !string.IsNullOrEmpty(key))
-            {
-                var npgsqlMinDurationMs = builder.Configuration.GetValue("Telemetry:NpgsqlMinimumDurationMs", 100);
-
-                builder.Services.AddOpenTelemetry()
-                    .UseAzureMonitor(m =>
-                    {
-                        m.ConnectionString = string.Format("InstrumentationKey={0}", key);
-                    })
-                    .WithTracing(tracing =>
-                    {
-                        tracing
-                            .AddProcessor(sp => new ApiVersionRouteProcessor(sp.GetRequiredService<IHttpContextAccessor>()))
-                            .AddProcessor(sp => new NpgsqlProcessor(
-                                TimeSpan.FromMilliseconds(npgsqlMinDurationMs),
-                                sp.GetRequiredService<IHttpContextAccessor>()));
-                    });
-            }
-        }
-
-        builder.Services.AddSingleton<AuthorizedPartiesTelemetry>();
-        builder.Services.ConfigureOpenTelemetryMeterProvider(provider => provider
-            .AddMeter(AuthorizedPartiesTelemetry.MeterName));
+        builder.ConfigureOtel();
 
         var connectionStrings = GetConnectionStrings(builder.Configuration);
-
         builder.AddAltinnDatabase(opt =>
         {
             opt.Enabled = connectionStrings.Valid;
@@ -163,6 +138,26 @@ internal static partial class AccessManagementHost
         builder.AddAccessManagementInternal();
 
         return builder.Build();
+    }
+
+    private static void ConfigureOtel(this WebApplicationBuilder builder)
+    {
+        if (!builder.Environment.IsDevelopment())
+        {
+            // ServiceDefaults already wires up UseAzureMonitor (and the base tracing
+            // pipeline) when ApplicationInsights isn't disabled, so this only needs to
+            // append AM's own processors to whatever TracerProviderBuilder ends up built.
+            var npgsqlMinDurationMs = builder.Configuration.GetValue("Telemetry:NpgsqlMinimumDurationMs", 100);
+            builder.Services.ConfigureOpenTelemetryTracerProvider(tracing => tracing
+                .AddProcessor(sp => new ApiVersionRouteProcessor(sp.GetRequiredService<IHttpContextAccessor>()))
+                .AddProcessor(sp => new NpgsqlProcessor(
+                    TimeSpan.FromMilliseconds(npgsqlMinDurationMs),
+                    sp.GetRequiredService<IHttpContextAccessor>())));
+        }
+
+        builder.Services.AddSingleton<AuthorizedPartiesTelemetry>();
+        builder.Services.ConfigureOpenTelemetryMeterProvider(provider => provider
+            .AddMeter(AuthorizedPartiesTelemetry.MeterName));
     }
 
     private static (string AppSource, string MigrationSource, bool Valid) GetConnectionStrings(ConfigurationManager configuration)
@@ -315,11 +310,19 @@ internal static partial class AccessManagementHost
         });
 
         builder.Services.AddUrnSwaggerSupport();
+
+        // Describes NonExhaustiveEnum<T> as the string it serializes to, instead of an object.
+        // Becomes AddNonExhaustiveSupport() with ModelUtils.Swashbuckle 3.x.
+        builder.Services.AddAuthorizationModelUtilsSwaggerSupport();
     }
 
     private static void ConfigureAppsettings(this WebApplicationBuilder builder)
     {
         var config = builder.Configuration;
+
+        // Before anything reads the constants: some cache lookups on first use.
+        ConstantLookup.IsProd = builder.Services.GetAltinnServiceDescriptor().Environment.IsProd;
+
         builder.Services.Configure<AccessManagementAppsettings>(builder.Configuration.Bind);
         builder.Services.Configure<GeneralSettings>(config.GetSection("GeneralSettings"));
         builder.Services.Configure<PlatformSettings>(config.GetSection("PlatformSettings"));
@@ -401,6 +404,10 @@ internal static partial class AccessManagementHost
             .AddPolicy(AuthzConstants.SCOPE_PORTAL_ENDUSER, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_PORTAL_ENDUSER])))
             .AddPolicy(AuthzConstants.SCOPE_SERVICEOWNER_PACKAGE_DELEGATION_WRITE, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_SERVICEOWNER_PACKAGE_DELEGATION_WRITE])))
             .AddPolicy(AuthzConstants.SCOPE_SERVICEOWNER_RESOURCE_DELEGATION_WRITE, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_SERVICEOWNER_RESOURCE_DELEGATION_WRITE])))
+            .AddPolicy(AuthzConstants.SCOPE_ENDUSER_BANKRUPTCYDELEGATION_READ, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_BANKRUPTCYDELEGATION_READ])))
+            .AddPolicy(AuthzConstants.SCOPE_ENDUSER_BANKRUPTCYDELEGATION_WRITE, policy => policy.Requirements.Add(new ScopeAccessRequirement([AuthzConstants.SCOPE_PORTAL_ENDUSER, AuthzConstants.SCOPE_ENDUSER_BANKRUPTCYDELEGATION_WRITE])))
+            .AddPolicy(AuthzConstants.POLICY_BANKRUPTCYDELEGATION_READ, policy => policy.Requirements.Add(new EndUserResourceAccessRequirement("read", "altinn_bankruptcy_estate_admin")))
+            .AddPolicy(AuthzConstants.POLICY_BANKRUPTCYDELEGATION_WRITE, policy => policy.Requirements.Add(new EndUserResourceAccessRequirement("write", "altinn_bankruptcy_estate_admin")))
             .AddPolicy(AuthzConstants.POLICY_ENDUSER_CONNECTIONS_BIDRECTIONAL_READ, policy =>
             {
                 policy.AddRequirementConditionalScope(

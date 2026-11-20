@@ -1,0 +1,145 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.Threading;
+using System.Threading.Tasks;
+using Altinn.Authorization.ProblemDetails;
+using Altinn.Platform.Authentication.Core.Models;
+using Altinn.Platform.Authentication.Core.Models.AccessPackages;
+using Altinn.Platform.Authentication.Core.Models.Parties;
+using Altinn.Platform.Authentication.Core.Models.SystemUsers;
+using Altinn.Platform.Authentication.Core.SystemRegister.Models;
+using Altinn.Platform.Authentication.Services.Interfaces;
+using Altinn.Register.Contracts.V1;
+
+namespace Altinn.Platform.Authentication.Tests.Mocks
+{
+    /// <summary>
+    /// The service that supports the SystemUser CRUD APIcontroller
+    /// </summary>
+    [ExcludeFromCodeCoverage]
+    public class RequestSystemUserServiceMock : IRequestSystemUser
+    {
+        /// <summary>
+        /// The Constructor
+        /// </summary>
+        public RequestSystemUserServiceMock()
+        {
+        }
+
+        public Task<Result<bool>> ApproveAndCreateAgentSystemUser(Guid requestId, int partyId, int userId, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Result<bool>> ApproveAndCreateSystemUser(Guid requestId, int partyId, int userId, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Result<AgentRequestSystemResponse>> CreateAgentRequest(CreateAgentRequestSystemUser createClientRequest, OrganisationNumber vendorOrgNo)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Result<RequestSystemResponse>> CreateRequest(CreateRequestSystemUser createRequest, OrganisationNumber vendorOrgNo, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Result<bool>> DeleteRequestByRequestId(Guid requestId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Result<Page<RequestSystemResponse, Guid>>> GetAllRequestsForVendor(OrganisationNumber vendorOrgNo, string systemId, Page<Guid>.Request continueRequest, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Result<AgentRequestSystemResponse>> GetAgentRequestByExternalRef(ExternalRequestId externalRequestId, OrganisationNumber vendorOrgNo)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Result<AgentRequestSystemResponse>> GetAgentRequestByGuid(Guid requestId, OrganisationNumber vendorOrgNo)
+        {
+            throw new NotImplementedException();
+        }
+
+        public async Task<Result<string>> GetRedirectByRequestId(Guid requestId)
+        {
+            return await Task.FromResult("https://smartcloudaltinn.azurewebsites.net/request");
+        }
+
+        public async Task<Result<string>> GetRedirectByAgentRequestId(Guid agentRequestId)
+        {
+            return await Task.FromResult("https://smartcloudaltinn.azurewebsites.net/agentrequest");
+        }
+
+        public Task<Result<RequestSystemResponse>> GetRequestByExternalRef(ExternalRequestId externalRequestId, OrganisationNumber vendorOrgNo)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Result<RequestSystemResponse>> GetRequestByGuid(Guid requestId, OrganisationNumber vendorOrgNo)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Result<RequestSystemResponse>> GetRequestByPartyAndRequestId(int party, Guid requestId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Result<bool>> RejectAgentSystemUser(int party, Guid requestId, int userId, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Result<bool>> RejectSystemUser(int party, Guid requestId, int userId, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Result<Page<AgentRequestSystemResponse, Guid>>> GetAllAgentRequestsForVendor(OrganisationNumber vendorOrgNo, string systemId, Page<Guid>.Request continueRequest, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Result<AgentRequestSystemResponse>> GetAgentRequestByPartyAndRequestId(int party, Guid requestId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Result<RequestSystemResponseInternal>> CheckUserAuthorizationAndGetRequest(Guid requestId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Result<RequestSystemResponseInternal>> CheckUserAuthorizationAndGetAgentRequest(Guid requestId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Result<bool>> EscalateApprovalSystemUser(Guid requestId, int party, int userId, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task<Result<bool>> EscalateApprovalAgentSystemUser(Guid requestId, int party, int userId, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        Task<Result<List<RequestSystemResponse>>> IRequestSystemUser.GetPendingStandardRequests(string orgno, int userId, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+
+        Task<Result<List<AgentRequestSystemResponse>>> IRequestSystemUser.GetPendingAgentRequests(string orgno, int userId, CancellationToken cancellationToken)
+        {
+            throw new NotImplementedException();
+        }
+    }
+}

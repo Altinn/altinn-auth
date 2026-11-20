@@ -1,0 +1,49 @@
+meta {
+  name: 04_THEN_AssistantNoLongerHoldsThatPackage
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{assistant}}&from={{estateId}}&to={{assistant}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{assistant}}
+  from: {{estateId}}
+  to: {{assistant}}
+}
+
+docs {
+  THEN the assistant no longer holds konkursbo-skrivetilgang from the estate, and still holds
+  the other two estate packages.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  bru.setVar("assistant", td.user_LUN_ANALYSE_GÅSTOL.partyUuid);
+  bru.setVar("estateId", td.BOSTYRER.client_BLAUT_FRYKTLØS_ØGLE_KONKURSBO.partyUuid);
+
+  await helpers.loginAs(td.user_LUN_ANALYSE_GÅSTOL);
+}
+
+tests {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+
+  test("THEN the assistant's packages from the estate can be listed, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("THEN konkursbo-skrivetilgang is gone and the other estate packages remain", function() {
+    const urns = res.getBody().data.map(item => item.package.urn);
+    expect(urns).to.not.include("urn:altinn:accesspackage:konkursbo-skrivetilgang");
+    expect(urns).to.include.members(helpers.estatePackageUrns.filter(u => u !== "urn:altinn:accesspackage:konkursbo-skrivetilgang"));
+  });
+}

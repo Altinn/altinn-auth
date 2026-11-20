@@ -1,4 +1,5 @@
-﻿using Altinn.AccessManagement.TestUtils.Fixtures;
+﻿using System.Data.Common;
+using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
@@ -7,6 +8,7 @@ using Altinn.AccessMgmt.PersistenceEF.Queries.Connection;
 using Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using DelegationPackage = Altinn.AccessMgmt.PersistenceEF.Models.DelegationPackage;
 using DelegationResource = Altinn.AccessMgmt.PersistenceEF.Models.DelegationResource;
 
@@ -1242,10 +1244,11 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
-    public async Task GetConnectionsFromOthers_ExcludeDeletedTrue_ExcludesDeletedPartiesAndSubunitsOfDeletedMainUnit(bool withFromFilter)
+    public async Task GetConnectionsFromOthers_ExcludeDeletedTrue_ExcludesDeletedPartiesButKeepsActiveSubunitOfDeletedMainUnit(bool withFromFilter)
     {
         // Without a party filter the subunits are nested in the enricher; with up to 20 party ids they are nested in SQL.
-        // Both paths must give the same result.
+        // Both paths must give the same result. Only the party's own status counts: the active subunit of a deleted main unit
+        // keeps the access it gave directly, but nothing is inherited from the deleted main unit.
         string[] allParties = ["Slettet Hovedenhet", "Slettet Hovedenhet - Avd", "Aktiv Hovedenhet", "Aktiv Hovedenhet - Slettet Avd", "Aktiv Hovedenhet - Aktiv Avd"];
 
         var filter = new ConnectionQueryFilter
@@ -1261,8 +1264,12 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
         var dbResult = await _query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
         var fromIds = dbResult.Select(r => r.FromId).ToHashSet();
 
-        Assert.DoesNotContain(TestDataSet.GetEntity("Slettet Hovedenhet").Id, fromIds);
-        Assert.DoesNotContain(TestDataSet.GetEntity("Slettet Hovedenhet - Avd").Id, fromIds);
+        var deletedMainUnitId = TestDataSet.GetEntity("Slettet Hovedenhet").Id;
+        var activeSubunitOfDeletedId = TestDataSet.GetEntity("Slettet Hovedenhet - Avd").Id;
+
+        Assert.DoesNotContain(deletedMainUnitId, fromIds);
+        Assert.Contains(dbResult, r => r.FromId == activeSubunitOfDeletedId && r.Reason != ConnectionReason.Hierarchy);
+        Assert.DoesNotContain(dbResult, r => r.FromId == activeSubunitOfDeletedId && r.ViaId == deletedMainUnitId);
         Assert.DoesNotContain(TestDataSet.GetEntity("Aktiv Hovedenhet - Slettet Avd").Id, fromIds);
         Assert.Contains(TestDataSet.GetEntity("Aktiv Hovedenhet").Id, fromIds);
         Assert.Contains(dbResult, r => r.FromId == TestDataSet.GetEntity("Aktiv Hovedenhet - Aktiv Avd").Id && r.Reason == ConnectionReason.Hierarchy);
@@ -1347,10 +1354,10 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
     [InlineData(false, true)]
     [InlineData(true, false)]
     [InlineData(true, true)]
-    public async Task GetConnectionsFromOthers_ExcludeDeletedTrue_ExcludesAdosEntityUnderDeletedMainUnitRegardlessOfAdosInheritance(bool adosSubunitInheritance, bool withFromFilter)
+    public async Task GetConnectionsFromOthers_ExcludeDeletedTrue_KeepsActiveAdosEntityUnderDeletedMainUnitRegardlessOfAdosInheritance(bool adosSubunitInheritance, bool withFromFilter)
     {
-        // ExcludeDeleted on the main unit takes precedence over ADOS subunit inheritance: the active ADOS entity is removed
-        // even when inheritance is disabled and it would otherwise be a top-level party of its own.
+        // Only the party's own status counts: the active ADOS entity keeps the access it gave directly, whether or not
+        // inheritance is enabled, but nothing is inherited from its deleted main unit.
         var query = new ConnectionQuery(_db, adosSubunitInheritanceEnabled: adosSubunitInheritance);
         string[] parties = ["ADOS Slettet Hovedenhet", "ADOS Under Slettet Hovedenhet", "Aktiv Hovedenhet"];
 
@@ -1366,8 +1373,12 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
 
         var dbResult = await query.GetConnectionsFromOthersAsync(filter, TestContext.Current.CancellationToken);
 
-        Assert.DoesNotContain(dbResult, r => r.FromId == TestDataSet.GetEntity("ADOS Slettet Hovedenhet").Id);
-        Assert.DoesNotContain(dbResult, r => r.FromId == TestDataSet.GetEntity("ADOS Under Slettet Hovedenhet").Id);
+        var deletedMainUnitId = TestDataSet.GetEntity("ADOS Slettet Hovedenhet").Id;
+        var adosEntityId = TestDataSet.GetEntity("ADOS Under Slettet Hovedenhet").Id;
+
+        Assert.DoesNotContain(dbResult, r => r.FromId == deletedMainUnitId);
+        Assert.Contains(dbResult, r => r.FromId == adosEntityId && r.Reason != ConnectionReason.Hierarchy);
+        Assert.DoesNotContain(dbResult, r => r.FromId == adosEntityId && r.ViaId == deletedMainUnitId);
         Assert.Contains(dbResult, r => r.FromId == TestDataSet.GetEntity("Aktiv Hovedenhet").Id);
     }
 
@@ -1404,8 +1415,9 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
     }
 
     [Fact]
-    public async Task GetConnectionsToOthers_ExcludeDeletedTrue_ExcludesDeletedRecipients()
+    public async Task GetConnectionsToOthers_ExcludeDeletedTrue_ExcludesDeletedRecipientsButKeepsActiveSubunitOfDeletedMainUnit()
     {
+        // Only the recipient's own status counts, not the status of its main unit.
         var filter = new ConnectionQueryFilter
         {
             FromIds = new[] { TestDataSet.GetEntity("Aktiv Hovedenhet").Id },
@@ -1416,7 +1428,7 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
         var dbResult = await _query.GetConnectionsToOthersAsync(filter, TestContext.Current.CancellationToken);
 
         Assert.DoesNotContain(dbResult, r => r.ToId == TestDataSet.GetEntity("Slettet Hovedenhet").Id);
-        Assert.DoesNotContain(dbResult, r => r.ToId == TestDataSet.GetEntity("Slettet Hovedenhet - Avd").Id);
+        Assert.Contains(dbResult, r => r.ToId == TestDataSet.GetEntity("Slettet Hovedenhet - Avd").Id);
         Assert.Contains(dbResult, r => r.ToId == TestDataSet.GetEntity("Dagny").Id);
     }
 
@@ -1519,6 +1531,104 @@ public class ConnectionQueryTests : IClassFixture<EfDatabaseFixture>, IAsyncLife
 
         // AppControlledRightholder role should be included when explicitly requested
         Assert.Contains(dbResult, r => r.FromId == skrikId && r.RoleId == RoleConstants.AppControlledRightholder.Id);
+    }
+
+    #endregion
+
+    #region Cancellation
+
+    [Theory]
+    [InlineData(ConnectionQueryDirection.FromOthers, false)]
+    [InlineData(ConnectionQueryDirection.FromOthers, true)]
+    [InlineData(ConnectionQueryDirection.ToOthers, true)]
+    public async Task GetConnectionsAsync_RunsEveryCommandAsync(ConnectionQueryDirection direction, bool withPartyFilter)
+    {
+        var interceptor = new CommandModeInterceptor();
+        await using var db = CreateDbContext(interceptor);
+        var query = new ConnectionQuery(db);
+
+        await query.GetConnectionsAsync(CreateFullFilter(direction, withPartyFilter), direction, TestContext.Current.CancellationToken);
+
+        // A synchronous command blocks a thread and cannot observe the request token,
+        // so an abandoned request would keep its thread and database connection.
+        Assert.True(interceptor.AsyncCommands > 0);
+        Assert.Equal(0, interceptor.SyncCommands);
+    }
+
+    [Theory]
+    [InlineData(ConnectionQueryDirection.FromOthers, false)]
+    [InlineData(ConnectionQueryDirection.FromOthers, true)]
+    [InlineData(ConnectionQueryDirection.ToOthers, true)]
+    public async Task GetConnectionsAsync_CancelledToken_ThrowsOperationCanceledException(ConnectionQueryDirection direction, bool withPartyFilter)
+    {
+        var interceptor = new CommandModeInterceptor();
+        await using var db = CreateDbContext(interceptor);
+        var query = new ConnectionQuery(db);
+        var cancelled = new CancellationToken(canceled: true);
+
+        // Cancellation must reach the caller as cancellation, not as the InvalidOperationException that wraps real failures.
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            () => query.GetConnectionsAsync(CreateFullFilter(direction, withPartyFilter), direction, cancelled));
+
+        Assert.Equal(0, interceptor.SyncCommands);
+        Assert.Equal(0, interceptor.AsyncCommands);
+    }
+
+    private AppDbContext CreateDbContext(CommandModeInterceptor interceptor)
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseNpgsql(_fixture.Db.Admin.ToString())
+            .AddInterceptors(interceptor)
+            .Options;
+
+        return new AppDbContext(options);
+    }
+
+    private static ConnectionQueryFilter CreateFullFilter(ConnectionQueryDirection direction, bool withPartyFilter)
+    {
+        var petter = new[] { TestDataSet.GetEntity("Petter").Id };
+        var baker = new[] { TestDataSet.GetEntity("Baker Johnsen").Id };
+
+        // Everything switched on, so the base query, the party-filter lookups and every loader run.
+        return new ConnectionQueryFilter
+        {
+            FromIds = direction == ConnectionQueryDirection.ToOthers || withPartyFilter ? baker : null,
+            ToIds = direction == ConnectionQueryDirection.FromOthers ? petter : null,
+            IncludeKeyRole = true,
+            IncludeDelegation = true,
+            IncludeMainUnitConnections = true,
+            IncludeSubConnections = true,
+            IncludePackages = true,
+            IncludeResources = true,
+            IncludeDelegationResources = true,
+            IncludeInstances = true,
+            EnrichEntities = true,
+            EnrichPackageResources = true,
+        };
+    }
+
+    /// <summary>
+    /// Counts how commands are executed, and observes the token on asynchronous commands
+    /// the way the driver does once a query is running.
+    /// </summary>
+    private sealed class CommandModeInterceptor : DbCommandInterceptor
+    {
+        public int SyncCommands { get; private set; }
+
+        public int AsyncCommands { get; private set; }
+
+        public override InterceptionResult<DbDataReader> ReaderExecuting(DbCommand command, CommandEventData eventData, InterceptionResult<DbDataReader> result)
+        {
+            SyncCommands++;
+            return base.ReaderExecuting(command, eventData, result);
+        }
+
+        public override ValueTask<InterceptionResult<DbDataReader>> ReaderExecutingAsync(DbCommand command, CommandEventData eventData, InterceptionResult<DbDataReader> result, CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            AsyncCommands++;
+            return base.ReaderExecutingAsync(command, eventData, result, cancellationToken);
+        }
     }
 
     #endregion

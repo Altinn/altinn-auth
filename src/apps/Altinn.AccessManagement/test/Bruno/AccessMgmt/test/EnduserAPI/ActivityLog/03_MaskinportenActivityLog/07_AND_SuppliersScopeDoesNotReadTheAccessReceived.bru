@@ -1,0 +1,37 @@
+meta {
+  name: 07_AND_SuppliersScopeDoesNotReadTheAccessReceived
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/maskinporten/activitylog?party={{party}}&direction=to&pageSize=1
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  direction: to
+  pageSize: 1
+}
+
+docs {
+  AND a token with only `enduser:maskinportensuppliers.read` cannot read the access the
+  party has received (`direction=to` needs `enduser:maskinportenconsumers.read`).
+}
+
+script:pre-request {
+  const { loginAs, scopes, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().maskinporten;
+
+  bru.setVar("party", td.consumer.partyUuid);
+
+  await loginAs(td.consumer.dagligleder, scopes.maskinportenSuppliersRead);
+}
+
+tests {
+  test("AND the suppliers scope is refused on direction=to with 403", function() {
+    expect(res.status).to.equal(403);
+  });
+}

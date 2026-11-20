@@ -1,14 +1,11 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Altinn.AccessManagement.Core.Clients.Interfaces;
-using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Enums;
 using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessManagement.Core.Helpers.Extensions;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Models.Profile;
-using Altinn.AccessManagement.Core.Models.Register;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
-using Altinn.AccessManagement.Core.Models.Rights;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Enums;
@@ -17,6 +14,10 @@ using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.Authorization.ABAC;
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
+using Altinn.Authorization.Api.Contracts.Authorization;
+using Altinn.Authorization.Api.Contracts.Register;
+using Altinn.Authorization.Xacml;
+using Altinn.Authorization.Xacml.Constants;
 using Altinn.Urn;
 using Altinn.Urn.Json;
 using Microsoft.EntityFrameworkCore;
@@ -88,7 +89,7 @@ namespace Altinn.AccessManagement.Core.Services
 
             XacmlPolicy policy = await GetPolicy(rightsQuery.Resource.AuthorizationReference, cancellationToken);
 
-            int minimumAuthenticationLevel = PolicyHelper.GetMinimumAuthenticationLevelFromXacmlPolicy(policy);
+            int minimumAuthenticationLevel = XacmlPolicyHelper.GetMinimumAuthenticationLevelFromXacmlPolicy(policy);
             RightSourceType policyType = (rightsQuery.Resource.ResourceType == ResourceType.AltinnApp || rightsQuery.Resource.ResourceType == ResourceType.MigratedApp) ? RightSourceType.AppPolicy : RightSourceType.ResourceRegistryPolicy;
             EnrichRightsDictionaryWithRightsFromPolicy(result, policy, policyType, rightsQuery.To, minimumAuthenticationLevel: minimumAuthenticationLevel, returnAllPolicyRights: false, getDelegableRights: true);
 

@@ -42,9 +42,9 @@ public static class TestSigningCertificate
     private static X509Certificate2 CreateCertificate()
     {
         // The RSA instance is only needed to build and sign the temporary certificate. Once the
-        // PFX bytes are exported and re-imported with EphemeralKeySet the returned certificate
-        // owns its own key material, so we dispose the original RSA (and the temp cert) here to
-        // avoid leaking CNG / OpenSSL handles across large test runs.
+        // PFX bytes are exported and re-imported the returned certificate owns its own key
+        // material, so we dispose the original RSA (and the temp cert) here to avoid leaking
+        // CNG / OpenSSL handles across large test runs.
         using var rsa = RSA.Create(2048);
 
         var req = new CertificateRequest(
@@ -63,6 +63,13 @@ public static class TestSigningCertificate
         return X509CertificateLoader.LoadPkcs12(
             temp.Export(X509ContentType.Pfx),
             password: null,
-            keyStorageFlags: X509KeyStorageFlags.EphemeralKeySet);
+            keyStorageFlags: KeyStorageFlags);
     }
+
+    // macOS throws PlatformNotSupportedException for EphemeralKeySet. The default there
+    // imports into a temporary keychain that is not persisted, which serves the same purpose.
+    private static X509KeyStorageFlags KeyStorageFlags =>
+        OperatingSystem.IsMacOS()
+            ? X509KeyStorageFlags.DefaultKeySet
+            : X509KeyStorageFlags.EphemeralKeySet;
 }

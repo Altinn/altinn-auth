@@ -1,4 +1,4 @@
-<Project>
+﻿<Project>
     <Import Project="..\..\Directory.Build.props" />
 
     <PropertyGroup>
@@ -16,6 +16,8 @@
              project whose graph contains the package, so this sits in the vertical's props
              (here and in test/). Remove both with the last AutoMapper reference. -->
         <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-rvv3-g6hj-g44x" />
+        <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-6vhm-j9h7-f9gh" />
+        <NuGetAuditSuppress Include="https://github.com/advisories/GHSA-gpwp-5797-mjff" />
     </ItemGroup>
 
 </Project>

@@ -18,10 +18,12 @@ params:query {
 }
 
 docs {
-  THEN the same filter with match=all returns only the CCR client. It covers
-  both packages across both ways in: the lonn package through the regnskapsforer
-  role and the skattegrunnlag package through the grant on its rightholder relation.
-  The rightholder client holds only the granted package and drops out.
+  THEN the same filter with match=all returns only clients holding both packages.
+  The CCR client holds the lonn package through the regnskapsforer role and the
+  skattegrunnlag package through the grant on its rightholder relation. The
+  rightholder client is returned only when the test data marks it as a CCR client
+  of the facilitator too (client_B.alsoCcrClientOfFacilitator); in AT22 and TT02 it is.
+  None of the clients step 07 found holding only one of the packages is returned.
 }
 
 script:pre-request {
@@ -42,12 +44,24 @@ tests {
     expect(res.status).to.equal(200);
   });
 
-  test("THEN the CCR client is returned and the rightholder client is not", function() {
+  test("THEN the CCR client is returned, and the rightholder client when it is also a CCR client", function() {
     const data = res.getBody().data;
     const clientA = td.REGN_Organisasjon.REGN_Org_Clients.client_A.partyUuid.toLowerCase();
-    const clientB = td.REGN_Organisasjon.REGN_Org_Clients.client_B.partyUuid.toLowerCase();
+    const fixtureB = td.REGN_Organisasjon.REGN_Org_Clients.client_B;
+    const holdsBoth = fixtureB.alsoCcrClientOfFacilitator === true;
     expect(data.some(item => item.client.id.toLowerCase() === clientA), "expected the CCR client in the all mode list").to.be.true;
-    expect(data.some(item => item.client.id.toLowerCase() === clientB), "the rightholder client holds only one of the packages").to.be.false;
+    expect(data.some(item => item.client.id.toLowerCase() === fixtureB.partyUuid.toLowerCase()), holdsBoth
+      ? "the rightholder client is also a CCR client and holds both packages"
+      : "the rightholder client holds only one of the packages").to.equal(holdsBoth);
+  });
+
+  test("AND no client that holds only one of the packages is returned", function() {
+    const singlePackageClientIds = JSON.parse(bru.getVar("singlePackageClientIds") || "[]");
+    expect(singlePackageClientIds, "step 07 records the clients holding only one package").to.not.be.empty;
+    const returned = res.getBody().data
+      .filter(item => singlePackageClientIds.includes(item.client.id.toLowerCase()))
+      .map(item => item.client.name);
+    expect(returned, "match=all returned clients that hold only one of the packages").to.be.empty;
   });
 
   test("AND every returned client holds both filter packages", function() {

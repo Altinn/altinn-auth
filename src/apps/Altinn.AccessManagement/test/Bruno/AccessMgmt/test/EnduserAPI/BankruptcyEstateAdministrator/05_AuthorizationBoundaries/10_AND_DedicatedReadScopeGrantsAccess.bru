@@ -1,0 +1,42 @@
+meta {
+  name: 10_AND_DedicatedReadScopeGrantsAccess
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/estates/any?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+docs {
+  AND the same estate check succeeds with a token carrying only the dedicated read scope.
+  Expects 200 with the body `true`.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  bru.setVar("party", td.BOSTYRER.partyUuid);
+
+  await helpers.loginAs(td.BOSTYRER, helpers.scopes.bankruptcyEstateRead);
+}
+
+tests {
+  test("AND the dedicated read scope makes the estate check return 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the bostyrer has bankruptcy estates", function() {
+    expect(res.getBody()).to.equal(true);
+  });
+}

@@ -1,4 +1,4 @@
-﻿import { Chalk } from "chalk";
+import { Chalk } from "chalk";
 import { globby } from "globby";
 import { Octokit } from "@octokit/action";
 import { $, retry } from "zx";

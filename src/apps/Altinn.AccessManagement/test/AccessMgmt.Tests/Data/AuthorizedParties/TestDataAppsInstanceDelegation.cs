@@ -1,7 +1,8 @@
 ﻿using System.Text.Json;
-using Altinn.AccessManagement.Models;
 using Altinn.AccessManagement.Tests.Util;
 using Altinn.AccessManagement.Tests.Utils;
+using Altinn.Authorization.Api.Contracts.AccessManagement;
+using Altinn.Authorization.Api.Contracts.AccessManagement.Apps;
 using Altinn.Authorization.ProblemDetails;
 
 namespace Altinn.AccessManagement.Tests.Data;
@@ -305,7 +306,8 @@ public static class TestDataAppsInstanceDelegation
             ErrorDetails expectedDetail = JsonSerializer.Deserialize<ErrorDetails>(expectedExtensionList[i].GetRawText(), JsonOptions);
             ErrorDetails actualDetail = JsonSerializer.Deserialize<ErrorDetails>(actualExtensionList[i].GetRawText(), JsonOptions);
             Assert.Equal(expectedDetail.Code, actualDetail.Code);
-            Assert.Equal(expectedDetail.Detail, actualDetail.Detail);
+            Assert.Equal(expectedDetail.Title, actualDetail.Title);
+            Assert.Null(actualDetail.Detail);
 
             if (expectedDetail.Paths == null)
             {
@@ -327,6 +329,8 @@ public static class TestDataAppsInstanceDelegation
     internal class ErrorDetails
     {
         public string Code { get; set; }
+
+        public string Title { get; set; }
 
         public string Detail { get; set; }
 

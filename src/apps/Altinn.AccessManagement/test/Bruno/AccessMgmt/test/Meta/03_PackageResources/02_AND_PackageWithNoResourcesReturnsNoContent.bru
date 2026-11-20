@@ -22,7 +22,7 @@ docs {
 script:pre-request {
   const td = require("./testdata/meta/" + bru.getEnvVar("tokenEnv") + ".js");
 
-  bru.setVar("packageId", td.packages.infrastruktur.id);
+  bru.setVar("packageId", td.packages.packageWithoutResources.id);
 }
 
 tests {

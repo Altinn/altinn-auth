@@ -113,4 +113,25 @@ public class EndUserResourceAccessHandlerTest
         context.HasSucceeded.Should().BeTrue();
         httpContext.Items["HasRequestedPermission"].Should().Be(true);
     }
+
+    [Theory]
+    [InlineData("Party")]
+    [InlineData("PARTY")]
+    public async Task HandleRequirement_PartyParamInOtherCase_IsSentToPdp(string paramName)
+    {
+        // Query keys are case-insensitive everywhere else (model binding, GetPartyParam), so the
+        // decision request must find the party too instead of throwing.
+        var party = Guid.NewGuid();
+        var (handler, pdp, _) = CreateSut($"?{paramName}={party}");
+        XacmlJsonRequestRoot sent = null;
+        pdp.Setup(p => p.GetDecisionForRequest(It.IsAny<XacmlJsonRequestRoot>()))
+           .Callback<XacmlJsonRequestRoot>(r => sent = r)
+           .ReturnsAsync(new XacmlJsonResponse { Response = [new() { Decision = "Permit" }] });
+        var context = Ctx(new EndUserResourceAccessRequirement("read", "res", false));
+
+        await handler.HandleAsync(context);
+
+        context.HasSucceeded.Should().BeTrue();
+        sent.Request.Resource.SelectMany(r => r.Attribute).Should().Contain(a => a.Value == party.ToString());
+    }
 }

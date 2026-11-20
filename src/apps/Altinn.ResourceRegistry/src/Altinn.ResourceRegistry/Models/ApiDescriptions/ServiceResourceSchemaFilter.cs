@@ -1,4 +1,4 @@
-#nullable enable
+﻿#nullable enable
 
 using Altinn.ResourceRegistry.Core.Models;
 using Microsoft.OpenApi;

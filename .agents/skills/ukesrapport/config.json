@@ -1,0 +1,84 @@
+{
+  "timezone": "Europe/Oslo",
+  "areaOrder": [
+    "access-management",
+    "access-management-frontend",
+    "authorization",
+    "authentication",
+    "consent",
+    "register",
+    "resource-registry",
+    "auditlog",
+    "packages",
+    "libs",
+    "tools",
+    "infra",
+    "devex",
+    "docs"
+  ],
+  "areaNames": {
+    "access-management": "Tilgangsstyring",
+    "access-management-frontend": "Tilgangsstyring – brukerflate",
+    "authorization": "Autorisasjon (PDP)",
+    "authentication": "Autentisering og systembruker",
+    "consent": "Samtykke",
+    "register": "Register",
+    "resource-registry": "Ressursregister",
+    "auditlog": "Revisjonslogg",
+    "packages": "NuGet-pakker (PEP og ABAC)",
+    "libs": "Felles biblioteker",
+    "tools": "Verktøy",
+    "infra": "Plattform, CI/CD og infrastruktur",
+    "devex": "Utviklermiljø og repo-verktøy",
+    "docs": "Dokumentasjon"
+  },
+  "repos": [
+    {
+      "name": "Altinn/altinn-auth",
+      "defaultArea": null,
+      "pathAreas": {
+        "src/apps/Altinn.AccessManagement/": "access-management",
+        "src/apps/Altinn.Authorization/": "authorization",
+        "src/apps/Altinn.Authentication/": "authentication",
+        "src/apps/Altinn.ResourceRegistry/": "resource-registry",
+        "src/apps/Altinn.Register/": "register",
+        "src/apps/Altinn.Mockporten/": "devex",
+        "src/pkgs/": "packages",
+        "src/libs/": "libs",
+        "src/tools/": "tools",
+        "infra/": "infra",
+        ".github/workflows/": "infra",
+        ".github/actions/": "infra",
+        "docs/": "docs",
+        "": "devex"
+      }
+    },
+    {
+      "name": "Altinn/altinn-access-management-frontend",
+      "defaultArea": "access-management-frontend",
+      "pathAreas": {}
+    },
+    {
+      "name": "Altinn/altinn-authorization-utils",
+      "defaultArea": "libs",
+      "pathAreas": {
+        "src/pkgs/": "libs",
+        "src/tools/": "devex",
+        "": "devex"
+      }
+    },
+    {
+      "name": "Altinn/altinn-register",
+      "defaultArea": "register",
+      "pathAreas": {}
+    }
+  ],
+  "exclude": {
+    "authorLogins": ["dependabot", "renovate", "github-actions", "altinn-renovate"],
+    "titlePatterns": ["^release(\\(|:)", "^(chore|fix|build)\\(deps(-dev)?\\)", "^chore: release", "^Update dependency ", "^Bump "]
+  },
+  "releases": {
+    "source": "github-releases",
+    "deployTracked": false
+  }
+}

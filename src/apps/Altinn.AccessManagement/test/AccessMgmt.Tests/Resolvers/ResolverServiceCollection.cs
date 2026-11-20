@@ -7,7 +7,9 @@ using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.Resolvers;
 using Altinn.AccessManagement.Tests.Mocks;
 using Altinn.AccessManagement.TestUtils.Mocks;
+using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.Common.AccessToken.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Altinn.AccessManagement.Tests.Resolvers;
@@ -38,6 +40,9 @@ public static class ResolverServiceCollection
     public static void DefaultServiceCollection(IServiceCollection services)
     {
         services.AddMemoryCache();
+
+        // AltinnResourceResolver needs a context for its resource id leaf. Unit tests never reach that leaf, and EF opens no connection until a query runs.
+        services.AddDbContext<AppDbContext>(options => options.UseNpgsql("Host=localhost;Database=unused"));
         services.AddTransient<IDelegationRequests, DelegationRequestService>();
         services.AddTransient<IAttributeResolver, UrnResolver>();
 

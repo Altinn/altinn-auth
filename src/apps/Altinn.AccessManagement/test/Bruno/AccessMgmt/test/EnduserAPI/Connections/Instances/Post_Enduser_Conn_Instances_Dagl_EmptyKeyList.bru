@@ -63,7 +63,7 @@ tests {
     const actions = body.actions;
     
     expect(res.status).to.equal(400); 
-    assert.equal(body.detail, 'No right key provided');
+    assert.equal(body.title, 'No right key provided');
     assert.equal(body.code, 'AM-00033');
   });
 }
