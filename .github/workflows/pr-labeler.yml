@@ -1,0 +1,77 @@
+name: "Label pull requests"
+
+# Sets area/* on pull requests, the same labels issues use (docs/adr/0004-issue-and-label-model.md):
+# - from the paths the PR changes, with the rules in .github/labeler.yml
+# - from the issues the PR closes ("Fixes #123", or linked under Development)
+# Labels are only added, never removed. A label removed by hand comes back on the next push
+# or edit if a rule still matches.
+#
+# pull_request_target gives a token that can label PRs from forks. Nothing here checks out
+# or runs PR code: labeler reads its rules from the base branch through the API.
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, edited, ready_for_review]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: write
+
+concurrency:
+  group: pr-labeler-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  label:
+    name: Label pull request
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Area from changed paths
+        uses: actions/labeler@bf12e9b00b37c5c0ca2b87b79b2daf7891dbda13 # v7.0.0
+        with:
+          sync-labels: false
+
+      # Release PRs list every issue in the release as closed, which says nothing about their area.
+      - name: Area from linked issues
+        if: ${{ !startsWith(github.head_ref, 'release-please--') }}
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const number = context.payload.pull_request.number;
+            const { repository } = await github.graphql(`
+              query ($owner: String!, $repo: String!, $number: Int!) {
+                repository(owner: $owner, name: $repo) {
+                  pullRequest(number: $number) {
+                    labels(first: 100) { nodes { name } }
+                    closingIssuesReferences(first: 25) {
+                      nodes {
+                        number
+                        repository { nameWithOwner }
+                        labels(first: 100) { nodes { name } }
+                      }
+                    }
+                  }
+                }
+              }`, { owner, repo, number });
+
+            const pr = repository.pullRequest;
+            const self = `${owner}/${repo}`.toLowerCase();
+            const current = new Set(pr.labels.nodes.map((l) => l.name));
+            const wanted = new Set();
+            for (const issue of pr.closingIssuesReferences.nodes) {
+              // Labels belong to a repo, and adding an unknown one would create it here.
+              if (issue.repository.nameWithOwner.toLowerCase() !== self) continue;
+              for (const { name } of issue.labels.nodes) {
+                if (name.startsWith("area/")) wanted.add(name);
+              }
+            }
+
+            const add = [...wanted].filter((name) => !current.has(name));
+            if (add.length === 0) {
+              core.info("No new area labels from linked issues.");
+              return;
+            }
+            await github.rest.issues.addLabels({ owner, repo, issue_number: number, labels: add });
+            core.info(`Added from linked issues: ${add.join(", ")}`);
