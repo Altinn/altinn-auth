@@ -73,9 +73,41 @@ async Task Init()
     var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     await dbContext.Database.MigrateAsync(cts.Token);
     await Altinn.AccessMgmt.PersistenceEF.Data.StaticDataIngest.IngestAll(dbContext);
+    await EnsureActivityLogPartitions(dbContext, cts.Token);
 
     var registerImport = scope.ServiceProvider.GetRequiredService<RegisterHostedService>();
     await registerImport.EnsureDbIsIngestWithRegisterData(cts.Token);
+}
+
+// Tops up the activity log's monthly partitions on every deploy. A skipped month does not fail
+// the deploy: its writes still land in the default partition, and the rows there must be moved
+// out by hand before the partition can be created. Nor does a lock or statement timeout: the
+// buffer runs months ahead, so the next deploy can just try again.
+async Task EnsureActivityLogPartitions(AppDbContext dbContext, CancellationToken cancellationToken)
+{
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    Altinn.AccessMgmt.PersistenceEF.Data.ActivityLogPartitionResult result;
+    try
+    {
+        result = await Altinn.AccessMgmt.PersistenceEF.Data.ActivityLogPartitionMaintenance.EnsureMonthPartitions(dbContext, cancellationToken: cancellationToken);
+    }
+    catch (Npgsql.PostgresException ex) when (ex.SqlState is Npgsql.PostgresErrorCodes.LockNotAvailable or Npgsql.PostgresErrorCodes.QueryCanceled && !cancellationToken.IsCancellationRequested)
+    {
+        logger.LogWarning(ex, "Activity log partition maintenance timed out ({SqlState}) and rolled back; the next deploy tries again. If this repeats, check dbo.activitylog_default for rows and for long-running queries on dbo.activitylog.", ex.SqlState);
+        return;
+    }
+
+    if (result.Skipped > 0)
+    {
+        logger.LogWarning(
+            "Activity log partition maintenance: {Created} partition(s) created, {Skipped} month(s) still have no partition because the default partition holds rows in their range.",
+            result.Created,
+            result.Skipped);
+    }
+    else
+    {
+        logger.LogInformation("Activity log partition maintenance: {Created} partition(s) created.", result.Created);
+    }
 }
 
 /// <summary>

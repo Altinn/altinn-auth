@@ -1,6 +1,7 @@
 ﻿using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
+using Altinn.AccessMgmt.PersistenceEF.Data;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.AccessMgmt.PersistenceEF.Queries;
@@ -21,6 +22,7 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
     private static readonly AuditValues Seeder = new(SystemEntityConstants.StaticDataIngest, SystemEntityConstants.StaticDataIngest);
 
     private readonly EfDatabaseFixture _fixture;
+    private readonly DbContextOptions<AppDbContext> _options;
     private readonly AppDbContext _db;
     private readonly ActivityLogQuery _query;
 
@@ -28,11 +30,11 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
     {
         _fixture = fixture;
 
-        var options = new DbContextOptionsBuilder<AppDbContext>()
+        _options = new DbContextOptionsBuilder<AppDbContext>()
             .UseNpgsql(fixture.Db.Admin.ToString())
             .Options;
 
-        _db = new AppDbContext(options);
+        _db = new AppDbContext(_options);
         _query = new ActivityLogQuery(_db);
     }
 
@@ -598,4 +600,126 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
             from.Id, direction: null, new ActivityLogQueryFilter(), 100, 0, TestContext.Current.CancellationToken);
         Assert.Contains(connections.Items, e => e.ItemId == assignment.Id);
     }
+
+    [Fact]
+    public async Task EnsureMonthPartitions_CreatesPartitionsAheadAndIsIdempotent()
+    {
+        // Further ahead than the migration's 24-month buffer, so the call has months to create.
+        const int monthsAhead = ActivityLogPartitionMaintenance.DefaultMonthsAhead + 6;
+
+        string partition;
+
+        // One transaction, so now() — and with it the horizon — is the same for every statement
+        // even if the test runs across a month boundary. Partition DDL is transactional, so the
+        // rollback leaves the shared database as it was.
+        await using (var transaction = await _db.Database.BeginTransactionAsync(TestContext.Current.CancellationToken))
+        {
+            partition = await PartitionName(monthsAhead);
+            Assert.False(await PartitionExists(partition), $"{partition} should not exist before the call");
+            var missing = await MissingMonthPartitions(monthsAhead);
+            Assert.True(missing > 0);
+
+            var first = await ActivityLogPartitionMaintenance.EnsureMonthPartitions(_db, monthsAhead, TestContext.Current.CancellationToken);
+            Assert.Equal(new ActivityLogPartitionResult(missing, 0), first);
+            Assert.True(await PartitionExists(partition), $"{partition} should exist after the call");
+
+            var second = await ActivityLogPartitionMaintenance.EnsureMonthPartitions(_db, monthsAhead, TestContext.Current.CancellationToken);
+            Assert.Equal(new ActivityLogPartitionResult(0, 0), second);
+
+            await transaction.RollbackAsync(TestContext.Current.CancellationToken);
+        }
+
+        // The call ran in the caller's transaction, so nothing it created survives the rollback.
+        Assert.False(await PartitionExists(partition), $"{partition} should be gone after the rollback");
+    }
+
+    [Fact]
+    public async Task EnsureMonthPartitions_SkipsMonthWithRowsInDefaultPartition()
+    {
+        const int monthsAhead = ActivityLogPartitionMaintenance.DefaultMonthsAhead + 6;
+        const int blockedMonth = ActivityLogPartitionMaintenance.DefaultMonthsAhead + 4;
+
+        await using var transaction = await _db.Database.BeginTransactionAsync(TestContext.Current.CancellationToken);
+
+        var partition = await PartitionName(blockedMonth);
+        Assert.False(await PartitionExists(partition), $"{partition} should not exist before the call");
+
+        // With no partition for that month yet, the row is routed to the default partition.
+        var when = await _db.Database
+            .SqlQuery<DateTimeOffset>($"SELECT date_trunc('month', now() + make_interval(months => {blockedMonth})) + interval '1 day' AS \"Value\"")
+            .SingleAsync(TestContext.Current.CancellationToken);
+        _db.ActivityLogs.Add(new ActivityLog
+        {
+            Type = ActivityLogType.Assignment,
+            Trigger = ActivityLogTrigger.Created,
+            When = when,
+            ItemId = Guid.CreateVersion7(),
+        });
+        await _db.SaveChangesAsync(Seeder, TestContext.Current.CancellationToken);
+
+        var result = await ActivityLogPartitionMaintenance.EnsureMonthPartitions(_db, monthsAhead, TestContext.Current.CancellationToken);
+
+        Assert.Equal(1, result.Skipped);
+        Assert.False(await PartitionExists(partition), $"{partition} should still be missing");
+    }
+
+    [Fact]
+    public async Task EnsureMonthPartitions_WithoutCallerTransaction_CommitsPartitions()
+    {
+        // Further ahead than the other partition tests, so their "missing before" checks are not
+        // affected should cleanup ever fail.
+        const int monthsAhead = ActivityLogPartitionMaintenance.DefaultMonthsAhead + 12;
+
+        Assert.Null(_db.Database.CurrentTransaction);
+        var before = await ChildPartitions(_db);
+
+        try
+        {
+            // No caller transaction: the method opens and commits its own, as Init() relies on.
+            var result = await ActivityLogPartitionMaintenance.EnsureMonthPartitions(_db, monthsAhead, TestContext.Current.CancellationToken);
+            Assert.Equal(0, result.Skipped);
+            Assert.True(result.Created > 0);
+
+            // A fresh context on its own connection only sees committed partitions.
+            await using var fresh = new AppDbContext(_options);
+            var created = (await ChildPartitions(fresh)).Except(before).ToList();
+            Assert.Equal(result.Created, created.Count);
+        }
+        finally
+        {
+            // Drop what the test committed, by comparing against the partitions that existed
+            // before, so the cleanup holds even if the call ran across a month boundary.
+            foreach (var partition in (await ChildPartitions(_db)).Except(before))
+            {
+                var sql = "DROP TABLE IF EXISTS dbo." + partition;
+                await _db.Database.ExecuteSqlRawAsync(sql, TestContext.Current.CancellationToken);
+            }
+        }
+    }
+
+    private static Task<List<string>> ChildPartitions(AppDbContext db) => db.Database
+        .SqlQuery<string>($"""
+            SELECT c.relname AS "Value"
+            FROM pg_inherits i
+            JOIN pg_class c ON c.oid = i.inhrelid
+            WHERE i.inhparent = 'dbo.activitylog'::regclass
+            """)
+        .ToListAsync(TestContext.Current.CancellationToken);
+
+    private Task<string> PartitionName(int monthsAhead) => _db.Database
+        .SqlQuery<string>($"SELECT 'dbo.activitylog_p' || to_char(now() + make_interval(months => {monthsAhead}), 'YYYYMM') AS \"Value\"")
+        .SingleAsync(TestContext.Current.CancellationToken);
+
+    private Task<bool> PartitionExists(string partition) => _db.Database
+        .SqlQuery<bool>($"SELECT to_regclass({partition}) IS NOT NULL AS \"Value\"")
+        .SingleAsync(TestContext.Current.CancellationToken);
+
+    /// <summary>Months from now up to the horizon that have no partition, as the function counts them.</summary>
+    private Task<int> MissingMonthPartitions(int monthsAhead) => _db.Database
+        .SqlQuery<int>($"""
+            SELECT count(*)::int AS "Value"
+            FROM generate_series(date_trunc('month', now()), now() + make_interval(months => {monthsAhead}), interval '1 month') AS month
+            WHERE to_regclass('dbo.activitylog_p' || to_char(month, 'YYYYMM')) IS NULL
+            """)
+        .SingleAsync(TestContext.Current.CancellationToken);
 }
