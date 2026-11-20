@@ -6,7 +6,7 @@ using Altinn.AccessManagement.Core.Models;
 using Altinn.Authorization.ABAC.Xacml;
 using Altinn.Authorization.ABAC.Xacml.JsonProfile;
 using Microsoft.AspNetCore.Authorization;
-using static Altinn.AccessManagement.Core.Constants.AltinnXacmlConstants;
+using static Altinn.Authorization.Xacml.Constants.AltinnXacmlConstants;
 
 namespace Altinn.AccessManagement.Api.Enduser.Authorization.Helper
 {
@@ -195,14 +195,21 @@ namespace Altinn.AccessManagement.Api.Enduser.Authorization.Helper
                     // Checks that the user meets the minimum authentication level
                     if (Convert.ToInt32(usersAuthenticationLevel) < Convert.ToInt32(minAuthenticationLevel))
                     {
-                        // A logged in system user always has authentication level 3. The system user obligation
-                        // can only relax the general requirement, never tighten it. When the policy has the system
-                        // user obligation, the fixed level is also checked against the general requirement, since
-                        // the token does not necessarily carry an authlevel claim.
-                        XacmlJsonAttributeAssignment attributeMinLvAuthSystemUser = IsSystemUser(user) ? GetObligation(PolicyObligationMinAuthnLevelSystemUser, obligationList) : null;
+                        bool isSystemUser = IsSystemUser(user);
+
+                        // A logged in system user always has authentication level 3. The token does not
+                        // necessarily carry an authlevel claim, so the fixed level is checked against the general
+                        // requirement without needing the system user obligation.
+                        if (isSystemUser && Convert.ToInt32(minAuthenticationLevel) <= SystemUserAuthenticationLevel)
+                        {
+                            return true;
+                        }
+
+                        // The general requirement is above the fixed system user level. The system user
+                        // obligation lets the service owner allow system users anyway.
+                        XacmlJsonAttributeAssignment attributeMinLvAuthSystemUser = isSystemUser ? GetObligation(PolicyObligationMinAuthnLevelSystemUser, obligationList) : null;
                         if (attributeMinLvAuthSystemUser == null
-                            || (Convert.ToInt32(attributeMinLvAuthSystemUser.Value) > SystemUserAuthenticationLevel
-                                && Convert.ToInt32(minAuthenticationLevel) > SystemUserAuthenticationLevel))
+                            || (Convert.ToInt32(attributeMinLvAuthSystemUser.Value) > SystemUserAuthenticationLevel))
                         {
                             return false;
                         }

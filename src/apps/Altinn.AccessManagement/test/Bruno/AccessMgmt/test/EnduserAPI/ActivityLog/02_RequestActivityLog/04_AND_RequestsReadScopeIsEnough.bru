@@ -1,0 +1,37 @@
+meta {
+  name: 04_AND_RequestsReadScopeIsEnough
+  type: http
+  seq: 4
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/request/activitylog?party={{party}}&direction=from&itemId={{al_requestId}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  direction: from
+  itemId: {{al_requestId}}
+}
+
+docs {
+  AND a token with only `altinn:accessmanagement/enduser:requests.read` reads the log.
+}
+
+script:pre-request {
+  const { loginAs, scopes, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().request;
+
+  bru.setVar("party", td.requester.partyUuid);
+
+  await loginAs(td.requester, scopes.sluttbrukerdelegationrequestread);
+}
+
+tests {
+  test("AND the requests read scope reads the log with 200", function() {
+    expect(res.status).to.equal(200);
+    expect(res.getBody().data).to.have.lengthOf(1);
+  });
+}

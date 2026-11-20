@@ -66,6 +66,12 @@ The reference is `test/EnduserAPI/ClientDelegationsV2/` (v2 client delegation):
   full problem body: status, `code`, `validationErrors[].code`, and the parameter the
   error points at. Authorization negatives (401/403) assert the status only, since those
   responses carry no problem body.
+- A suite whose seed data exists only in some environments skips itself elsewhere: each
+  step calls a `helpers.js` guard that runs `bru.runner.skipRequest()` unless `tokenEnv` is
+  supported. `test/EnduserAPI/BankruptcyEstateAdministrator/` runs in AT22 and TT02.
+- Leave out negatives that would leave lasting state in the shared environment, such as
+  failed person lookups, which lock the caller out of lookups for an hour. Cover those in
+  unit or integration tests instead.
 
 ## Using them as a spec for C# tests
 

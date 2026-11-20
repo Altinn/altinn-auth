@@ -1,4 +1,6 @@
-﻿namespace Altinn.Authorization.Api.Contracts.AccessManagement;
+﻿using Altinn.Authorization.Api.Contracts.ResourceRegistry.Enums;
+
+namespace Altinn.Authorization.Api.Contracts.AccessManagement;
 
 /// <summary>
 /// Extended Resource
@@ -31,6 +33,11 @@ public class ResourceDto
     public string Description { get; set; }
 
     /// <summary>
+    /// Description of the rights the resource grants
+    /// </summary>
+    public string? RightDescription { get; set; }
+
+    /// <summary>
     /// Reference identifier
     /// </summary>
     public string RefId { get; set; }
@@ -44,6 +51,16 @@ public class ResourceDto
     /// Type
     /// </summary>
     public ResourceTypeDto Type { get; set; }
+
+    /// <summary>
+    /// Whether the resource can be delegated, as imported from the Resource Registry
+    /// </summary>
+    public bool Delegable { get; set; } = true;
+
+    /// <summary>
+    /// Access list mode, as imported from the Resource Registry
+    /// </summary>
+    public ResourceAccessListMode AccessListMode { get; set; }
 
     public class ResourceDtoCheck
     {

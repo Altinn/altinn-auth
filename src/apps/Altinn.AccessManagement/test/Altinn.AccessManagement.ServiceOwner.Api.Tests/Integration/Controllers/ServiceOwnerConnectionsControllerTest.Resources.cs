@@ -3,6 +3,7 @@ using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Xml.Linq;
 using Altinn.AccessManagement.Core.Constants;
+using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Repositories.Interfaces;
 using Altinn.AccessManagement.Core.Services.Interfaces;
 using Altinn.AccessManagement.TestUtils;
@@ -10,6 +11,7 @@ using Altinn.AccessManagement.TestUtils.Data;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessMgmt.Core;
+using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
@@ -75,6 +77,14 @@ public partial class ServiceOwnerConnectionsControllerTest
 
         private static readonly Guid TtdResourceId = Guid.Parse("0196b130-0000-7000-8000-000000000006");
 
+        /// <summary>
+        /// Not delegable locally and unknown to the resource registry mock, so only a local read of Delegable refuses it
+        /// as not delegable; a registry lookup would answer InvalidResource.
+        /// </summary>
+        private const string LocalOnlyNonDelegableResource = "skd_local_only_not_delegable";
+
+        private static readonly Guid LocalOnlyNonDelegableResourceId = Guid.Parse("0196b130-0000-7000-8000-000000000007");
+
         public AddRevokeResources(ApiFixture fixture)
         {
             Fixture = fixture;
@@ -109,6 +119,17 @@ public partial class ServiceOwnerConnectionsControllerTest
                     RefId = NonDelegableResource,
                     TypeId = resource.TypeId,
                     ProviderId = SkatteetatenProviderId,
+                    Delegable = false,
+                });
+                db.Resources.Add(new Resource()
+                {
+                    Id = LocalOnlyNonDelegableResourceId,
+                    Name = "Lokal ressurs uten delegeringsadgang",
+                    Description = "Resource owned by the test service owner, not delegable and unknown to the resource registry mock",
+                    RefId = LocalOnlyNonDelegableResource,
+                    TypeId = resource.TypeId,
+                    ProviderId = SkatteetatenProviderId,
+                    Delegable = false,
                 });
                 db.SaveChanges();
 
@@ -253,11 +274,15 @@ public partial class ServiceOwnerConnectionsControllerTest
             return assignment;
         }
 
-        private static async Task AssertProblemCode(HttpResponseMessage response, string expectedCode)
+        private static async Task AssertProblemCode(HttpResponseMessage response, string expectedCode, string expectedDetail = null)
         {
             var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>(TestContext.Current.CancellationToken);
             Assert.NotNull(problemDetails);
             Assert.Equal(expectedCode, problemDetails.Extensions["code"].ToString());
+            if (expectedDetail is not null)
+            {
+                Assert.Equal(expectedDetail, problemDetails.Detail);
+            }
         }
 
         /// <summary>
@@ -451,17 +476,88 @@ public partial class ServiceOwnerConnectionsControllerTest
         }
 
         /// <summary>
-        /// A service owner that does not own the resource cannot delegate it.
+        /// A service owner that does not own the resource cannot delegate it, and is told who owns it and which
+        /// organization its token is for.
         /// </summary>
         [Fact]
         public async Task AddResource_AsOtherServiceOwner_Returns403ResourceDelegationNotAuthorized()
         {
             var request = CreateRequest(Organization(TestData.FredriksonsFabrikk), Organization(TestData.SvendsenAutomobil), await GetAvailableRightKeys());
 
-            var response = await CreateClient(TestData.BakerJohnsen.Entity.OrganizationIdentifier).PostAsJsonAsync($"{Route}/resources", request, TestContext.Current.CancellationToken);
+            var response = await CreateClient(TestData.BakerJohnsen.Entity.OrganizationIdentifier, orgCode: null).PostAsJsonAsync($"{Route}/resources", request, TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-            await AssertProblemCode(response, "AM-00048");
+            await AssertProblemCode(
+                response,
+                "AM-00048",
+                $"Resource '{Resource}' is owned by skd ({TestData.StorMektigTenesteeier.Entity.OrganizationIdentifier}), but the token is for {TestData.BakerJohnsen.Entity.OrganizationIdentifier}");
+        }
+
+        /// <summary>
+        /// Every endpoint checks the resource type before ownership: a MaskinportenSchema resource cannot be
+        /// delegated here whoever asks, so a service owner that does not own it gets that answer rather than 403.
+        /// </summary>
+        [Theory]
+        [InlineData("resources/rights")]
+        [InlineData("resources")]
+        [InlineData("resources/revoke")]
+        public async Task AnyEndpoint_ForMaskinportenSchemaResource_AsOtherServiceOwner_Returns400ResourceNotDelegable(string endpoint)
+        {
+            var client = CreateClient(TestData.BakerJohnsen.Entity.OrganizationIdentifier);
+
+            var response = endpoint == "resources/rights"
+                ? await client.GetAsync($"{Route}/{endpoint}?resource={MaskinportenSchemaResource}", TestContext.Current.CancellationToken)
+                : await client.PostAsJsonAsync($"{Route}/{endpoint}", CreateMaskinportenSchemaRequest(), TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            await AssertProblemCode(
+                response,
+                "AM-00042",
+                $"Resource '{MaskinportenSchemaResource}' is of type MaskinportenSchema, which cannot be delegated through this API");
+        }
+
+        /// <summary>
+        /// The rights lookup and the add endpoint check the Delegable flag before ownership, so a
+        /// service owner that does not own a non-delegable resource gets that answer rather than 403.
+        /// </summary>
+        [Theory]
+        [InlineData("resources/rights")]
+        [InlineData("resources")]
+        public async Task RightsAndAdd_ForNonDelegableResource_AsOtherServiceOwner_Returns400ResourceNotDelegable(string endpoint)
+        {
+            var client = CreateClient(TestData.BakerJohnsen.Entity.OrganizationIdentifier);
+
+            var response = endpoint == "resources/rights"
+                ? await client.GetAsync($"{Route}/{endpoint}?resource={NonDelegableResource}", TestContext.Current.CancellationToken)
+                : await client.PostAsJsonAsync($"{Route}/{endpoint}", CreateRequest(Organization(TestData.FredriksonsFabrikk), Organization(TestData.RegnskapNorge), ["read"], NonDelegableResource), TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            await AssertProblemCode(
+                response,
+                "AM-00042",
+                $"Resource '{NonDelegableResource}' is marked as not delegable in the Resource Registry");
+        }
+
+        /// <summary>
+        /// The Delegable flag is read from the local resource, so a resource the resource registry does not know is
+        /// still refused when it is not delegable locally, and before ownership.
+        /// </summary>
+        [Theory]
+        [InlineData("resources/rights")]
+        [InlineData("resources")]
+        public async Task RightsAndAdd_ForLocallyNonDelegableResource_AsOtherServiceOwner_Returns400ResourceNotDelegable(string endpoint)
+        {
+            var client = CreateClient(TestData.BakerJohnsen.Entity.OrganizationIdentifier);
+
+            var response = endpoint == "resources/rights"
+                ? await client.GetAsync($"{Route}/{endpoint}?resource={LocalOnlyNonDelegableResource}", TestContext.Current.CancellationToken)
+                : await client.PostAsJsonAsync($"{Route}/{endpoint}", CreateRequest(Organization(TestData.FredriksonsFabrikk), Organization(TestData.RegnskapNorge), ["read"], LocalOnlyNonDelegableResource), TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            await AssertProblemCode(
+                response,
+                "AM-00042",
+                $"Resource '{LocalOnlyNonDelegableResource}' is marked as not delegable in the Resource Registry");
         }
 
         /// <summary>
@@ -476,6 +572,20 @@ public partial class ServiceOwnerConnectionsControllerTest
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
             await AssertProblemCode(response, "AM-00021");
+        }
+
+        /// <summary>
+        /// A party cannot delegate to itself.
+        /// </summary>
+        [Fact]
+        public async Task AddResource_ToSameParty_Returns400SelfDelegationNotAllowed()
+        {
+            var request = CreateRequest(Organization(TestData.FredriksonsFabrikk), Organization(TestData.FredriksonsFabrikk), await GetAvailableRightKeys());
+
+            var response = await CreateClient().PostAsJsonAsync($"{Route}/resources", request, TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            await AssertProblemCode(response, "AM-00053");
         }
 
         [Fact]
@@ -613,6 +723,41 @@ public partial class ServiceOwnerConnectionsControllerTest
         }
 
         /// <summary>
+        /// Revoke does not check the resource registry's Delegable flag, so the service owner can still revoke a
+        /// delegation of a resource that has since been marked as not delegable.
+        /// </summary>
+        [Fact]
+        public async Task RevokeResource_ForNonDelegableResource_DelegatedByServiceOwner_Returns204AndRemovesAssignmentResource()
+        {
+            await Fixture.QueryDb(async db =>
+            {
+                var assignment = new Assignment()
+                {
+                    FromId = TestData.BodilFarmor.Id,
+                    ToId = TestData.Milena.Id,
+                    RoleId = RoleConstants.Rightholder,
+                };
+                db.Assignments.Add(assignment);
+                db.AssignmentResources.Add(new AssignmentResource()
+                {
+                    AssignmentId = assignment.Id,
+                    ResourceId = NonDelegableResourceId,
+                    PolicyPath = "skd/taxreport/delegationpolicy.xml",
+                    PolicyVersion = "1.0",
+                });
+                await db.SaveChangesAsync(new AuditValues(TestData.StorMektigTenesteeier.Id), TestContext.Current.CancellationToken);
+            });
+
+            var request = CreateRequest(Person(TestData.BodilFarmor), Person(TestData.Milena), resource: NonDelegableResource);
+
+            var response = await CreateClient().PostAsJsonAsync($"{Route}/resources/revoke", request, TestContext.Current.CancellationToken);
+
+            var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.NoContent, $"Expected NoContent but got {response.StatusCode}. Response body: {content}");
+            Assert.Null(await GetAssignmentResource(TestData.BodilFarmor.Id, TestData.Milena.Id, NonDelegableResourceId));
+        }
+
+        /// <summary>
         /// Revoking a delegation that does not exist is a no-op.
         /// </summary>
         [Fact]
@@ -682,7 +827,7 @@ public partial class ServiceOwnerConnectionsControllerTest
         }
 
         /// <summary>
-        /// A resource the service owner owns, but which the resource registry marks as not delegable, is refused by
+        /// A resource the service owner owns, but which is marked as not delegable, is refused by
         /// the rights lookup as well, so it does not advertise rights that the add endpoint refuses to delegate.
         /// </summary>
         [Fact]
@@ -692,6 +837,71 @@ public partial class ServiceOwnerConnectionsControllerTest
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
             await AssertProblemCode(response, "AM-00042");
+        }
+
+        /// <summary>
+        /// A resource the service owner owns, but which is not delegable, is refused before anything is written.
+        /// </summary>
+        [Fact]
+        public async Task AddResource_ForNonDelegableResource_Returns400ResourceNotDelegable()
+        {
+            var request = CreateRequest(Organization(TestData.FredriksonsFabrikk), Organization(TestData.SvendsenAutomobil), ["some-right-key"], NonDelegableResource);
+
+            var response = await CreateClient().PostAsJsonAsync($"{Route}/resources", request, TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            await AssertProblemCode(response, "AM-00042");
+            Assert.Null(await GetRightholderAssignment(TestData.FredriksonsFabrikk.Id, TestData.SvendsenAutomobil.Id));
+        }
+
+        /// <summary>
+        /// Calls the service directly, so the controller's own check of the local resource's Delegable value does not answer first:
+        /// the service refuses the resource because the local resource is not delegable.
+        /// </summary>
+        [Fact]
+        public async Task Service_GetResourceRights_ForNonDelegableLocalResource_ReturnsResourceNotDelegable()
+        {
+            using var scope = Fixture.Server.Services.CreateScope();
+            var service = scope.ServiceProvider.GetRequiredService<IServiceOwnerConnectionService>();
+
+            var result = await service.GetResourceRights(LocalOnlyNonDelegableResource, cancellationToken: TestContext.Current.CancellationToken);
+
+            Assert.True(result.IsProblem);
+            Assert.Equal(Problems.ResourceNotDelegable.ErrorCode, result.Problem.ErrorCode);
+        }
+
+        /// <summary>
+        /// Calls the service directly, so the controller's own check of the local resource's Delegable value does not answer first:
+        /// the service refuses the resource because the local resource is not delegable, before anything is written.
+        /// </summary>
+        [Fact]
+        public async Task Service_AddResource_ForNonDelegableLocalResource_ReturnsResourceNotDelegable()
+        {
+            using var scope = Fixture.Server.Services.CreateScope();
+            var service = scope.ServiceProvider.GetRequiredService<IServiceOwnerConnectionService>();
+
+            Resource resource = null;
+            await Fixture.QueryDb(async db =>
+            {
+                resource = await db.Resources.AsNoTracking().Include(r => r.Type).SingleAsync(r => r.Id == LocalOnlyNonDelegableResourceId, TestContext.Current.CancellationToken);
+            });
+
+            var result = await service.AddResource(
+                TestData.FredriksonsFabrikk.Id,
+                TestData.SvendsenAutomobil.Id,
+                resource,
+                ["some-right-key"],
+                TestData.StorMektigTenesteeier.Id,
+                options =>
+                {
+                    options.AllowedWriteFromEntityTypes = [EntityTypeConstants.Organization, EntityTypeConstants.Person];
+                    options.AllowedWriteToEntityTypes = [EntityTypeConstants.Organization, EntityTypeConstants.Person];
+                },
+                TestContext.Current.CancellationToken);
+
+            Assert.True(result.IsProblem);
+            Assert.Equal(Problems.ResourceNotDelegable.ErrorCode, result.Problem.ErrorCode);
+            Assert.Null(await GetRightholderAssignment(TestData.FredriksonsFabrikk.Id, TestData.SvendsenAutomobil.Id));
         }
 
         /// <summary>

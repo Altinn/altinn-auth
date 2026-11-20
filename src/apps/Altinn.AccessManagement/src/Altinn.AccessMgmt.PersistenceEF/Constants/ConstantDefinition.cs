@@ -87,6 +87,12 @@ public sealed class ConstantDefinition<T>(Guid id)
     }
 
     /// <summary>
+    /// Gets whether this constant exists only outside production. Supported for packages only. A direct reference
+    /// such as <c>PackageConstants.Agriculture</c> is not filtered.
+    /// </summary>
+    public bool TestOnly { get; init; }
+
+    /// <summary>
     /// Implicitly converts a <see cref="ConstantDefinition{T}"/> to its unique identifier <see cref="Guid"/>.
     /// </summary>
     /// <param name="def">The constant definition.</param>

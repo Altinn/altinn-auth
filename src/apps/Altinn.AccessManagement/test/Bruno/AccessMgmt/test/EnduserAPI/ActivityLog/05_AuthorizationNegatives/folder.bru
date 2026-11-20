@@ -1,0 +1,34 @@
+meta {
+  name: 05_AuthorizationNegatives
+  seq: 5
+}
+
+auth {
+  mode: inherit
+}
+
+docs {
+  Scenario: The log is refused to everyone who may not read it for the party
+
+    When the delegator reads its own log with direction=via
+    Then it is refused
+    And an unknown direction is refused
+    And an empty party is refused
+    And a party that is not a uuid is refused
+    And a party that does not exist is refused
+    And a token with an unrelated scope is refused
+    And an enterprise token is refused
+    And the service owner cannot read an enduser's request log
+    And a token that is not a JWT is rejected with 401
+    And a private person cannot read the Maskinporten log
+    And filter values without a direction are refused
+
+  Every refusal is a 403 with no body, except the token that is not a JWT, which fails
+  authentication with 401. The party and direction checks run in authorization, before the
+  query is validated, which is why a bad party or direction is 403 and not 400.
+
+  Which scope reads which direction is covered by the controller integration tests
+  (ActivityLogControllerTest), which run on every pull request. This scenario keeps the
+  checks that depend on the deployed environment: the party authorization against the
+  real authorization service, and the token types.
+}

@@ -1,0 +1,47 @@
+meta {
+  name: 06_WHEN_BodyIsNotValidJsonThenRequestFails
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/administrators?party={{party}}
+  body: text
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+headers {
+  Content-Type: application/json
+}
+
+body:text {
+  { "personIdentifier": 
+}
+
+docs {
+  WHEN the bostyrer sends a body that is not valid JSON. Model binding rejects it before the
+  controller runs. Expects 400; the body format comes from ASP.NET Core, so only the status
+  is asserted.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  bru.setVar("party", td.BOSTYRER.partyUuid);
+
+  await helpers.loginAs(td.BOSTYRER);
+}
+
+tests {
+  test("WHEN the body is not valid JSON, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+}

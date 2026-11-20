@@ -1,0 +1,39 @@
+meta {
+  name: 14_WHEN_DelegatorRemovesTheConnection
+  type: http
+  seq: 14
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{party}}&from={{party}}&to={{to}}&cascade=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{to}}
+  cascade: true
+}
+
+docs {
+  WHEN the delegator removes the connection to the receiver, with the access package on
+  it (cascade=true). This is also the cleanup of the scenario.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().connections;
+
+  bru.setVar("party", td.delegator.partyUuid);
+  bru.setVar("to", td.receiver.partyUuid);
+
+  await loginAs(td.delegator);
+}
+
+tests {
+  test("WHEN the connection is removed, the request returns 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

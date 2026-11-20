@@ -7,13 +7,20 @@ using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.TestUtils;
+using Altinn.AccessManagement.TestUtils.Concurrency;
 using Altinn.AccessManagement.TestUtils.Data;
 using Altinn.AccessManagement.TestUtils.Fixtures;
+using Altinn.AccessMgmt.Core.Services;
+using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
+using Altinn.AccessMgmt.PersistenceEF.Contexts;
+using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Npgsql;
 using ContractsV2 = Altinn.Authorization.Api.Contracts.AccessManagement.V2;
 
 namespace Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers.V2;
@@ -23,6 +30,12 @@ public class ClientDelegationControllerTest
     public const string Route = "accessmanagement/api/v2/enduser/clientdelegations";
 
     public static readonly JsonSerializerOptions SerializerOptions = new() { PropertyNameCaseInsensitive = true };
+
+    private const string DelegationUniqueIndex = "ix_delegation_fromid_toid_facilitatorid";
+
+    private static readonly TimeSpan Timeout = TimeSpan.FromSeconds(30);
+
+    private static readonly AuditValues TestAudit = new(SystemEntityConstants.StaticDataIngest, SystemEntityConstants.StaticDataIngest);
 
     #region GET accessmanagement/api/v2/enduser/clientdelegations/my/clients
 
@@ -1759,6 +1772,305 @@ public class ClientDelegationControllerTest
                 Assert.Contains("$QUERY/agent", error.Paths);
             });
         }
+    }
+
+    /// <summary>
+    /// Repeated entries in one batch and concurrent package and resource delegations for the same
+    /// client and agent must all land on one delegation row instead of failing on its unique index.
+    /// </summary>
+    [IntegrationTest]
+    public class DelegateToAgentWithRepeatedAndConcurrentRequests : IClassFixture<ApiFixture>
+    {
+        public DelegateToAgentWithRepeatedAndConcurrentRequests(ApiFixture fixture)
+        {
+            Fixture = fixture;
+            Fixture.EnsureSeedOnce<DelegateToAgentWithRepeatedAndConcurrentRequests>(SeedAccountantClientWithAgents);
+        }
+
+        public ApiFixture Fixture { get; }
+
+        private HttpClient CreateClient()
+        {
+            var client = Fixture.Server.CreateClient();
+            var token = TestTokenGenerator.CreateToken(new ClaimsIdentity("mock"), claims =>
+            {
+                claims.Add(new Claim(AltinnCoreClaimTypes.PartyUuid, TestEntities.PersonPaula.Id.ToString()));
+                claims.Add(new Claim("scope", $"{AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_READ} {AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_WRITE}"));
+            });
+
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            return client;
+        }
+
+        [Fact]
+        public async Task DelegateAccessPackage_WithRepeatedRoleAndPackageInPayload_Returns200WithSingleDelegationPackage()
+        {
+            var client = CreateClient();
+
+            var response = await client.PostAsJsonAsync(
+                $"{Route}/agents/accesspackages?party={TestEntities.OrganizationVerdiqAS}&client={TestEntities.OrganizationNordisAS}&agent={TestEntities.PersonOrjan}",
+                new DelegationBatchInputDto()
+                {
+                    Values = [
+                        new()
+                        {
+                            Role = RoleConstants.Accountant.Entity.Code,
+                            Packages = [PackageConstants.Customs.Entity.Urn, PackageConstants.Customs.Entity.Urn]
+                        },
+                        new()
+                        {
+                            Role = RoleConstants.Accountant.Entity.Code,
+                            Packages = [PackageConstants.Customs.Entity.Urn]
+                        }
+                    ]
+                },
+                TestContext.Current.CancellationToken
+            );
+
+            var data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+            var result = JsonSerializer.Deserialize<List<DelegationDto>>(data);
+            Assert.Equal(3, result.Count);
+            Assert.Single(result, r => r.Changed);
+
+            // One delegation and one delegation package row despite the repeated entries.
+            await Fixture.QueryDb(static async db =>
+            {
+                var delegations = await db.Delegations
+                    .Include(d => d.DelegationPackages)
+                    .Where(d => d.FacilitatorId == TestEntities.OrganizationVerdiqAS.Id && d.To.ToId == TestEntities.PersonOrjan.Id)
+                    .ToListAsync(TestContext.Current.CancellationToken);
+
+                var delegation = Assert.Single(delegations);
+                var delegationPackage = Assert.Single(delegation.DelegationPackages);
+                Assert.Equal(PackageConstants.Customs.Id, delegationPackage.PackageId);
+            });
+        }
+
+        /// <summary>
+        /// A package and a resource delegation for a client and agent without a delegation run at the same time.
+        /// The barrier holds both first saves until both have read the missing delegation, so both stage a new
+        /// delegation row and one of them is certain to hit the unique index. Expects the losing call to clear its
+        /// change tracker, read the committed delegation instead of creating it again, and succeed.
+        /// </summary>
+        [Fact]
+        public async Task DelegatePackageAndResource_RacingToCreateDelegation_RetriesOnCommittedDelegation()
+        {
+            using var barrier = new SaveBarrier(participants: 2, Timeout);
+            var (packages, packagesProbe) = InScope(
+                barrier,
+                service => service.DelegateAccessPackageToAgent(
+                    TestEntities.OrganizationVerdiqAS,
+                    TestEntities.OrganizationNordisAS,
+                    TestEntities.PersonPaula,
+                    new DelegationBatchInputDto()
+                    {
+                        Values = [new() { Role = RoleConstants.Accountant.Entity.Code, Packages = [PackageConstants.Customs.Entity.Urn] }]
+                    },
+                    ClientDelegationParameterNames.V2,
+                    TestContext.Current.CancellationToken));
+            var (resources, resourcesProbe) = InScope(
+                barrier,
+                service => service.DelegateResourceToAgent(
+                    TestEntities.OrganizationVerdiqAS,
+                    TestEntities.OrganizationNordisAS,
+                    TestEntities.PersonPaula,
+                    new ContractsV2.ResourceDelegationBatchInputDto()
+                    {
+                        Values = [new() { Role = RoleConstants.Accountant.Entity.Code, Resources = [TestData.MattilsynetBakeryService.RefId] }]
+                    },
+                    TestContext.Current.CancellationToken));
+
+            await Task.WhenAll(packages, resources).WaitAsync(Timeout, TestContext.Current.CancellationToken);
+            Assert.False((await packages).IsProblem, (await packages).Problem?.Detail);
+            Assert.False((await resources).IsProblem, (await resources).Problem?.Detail);
+
+            var probes = new[] { await packagesProbe, await resourcesProbe };
+
+            // Both calls read the delegation as missing and staged a new row before either saved.
+            Assert.All(probes, p => Assert.Single(p.Saves.First().OfType<Altinn.AccessMgmt.PersistenceEF.Models.Delegation>()));
+
+            // Exactly one call lost the race on the delegation's unique index.
+            var loser = Assert.Single(probes, p => !p.Failures.IsEmpty);
+            var winner = Assert.Single(probes, p => p.Failures.IsEmpty);
+            var conflict = Assert.IsType<PostgresException>(Assert.Single(loser.Failures).InnerException);
+            Assert.Equal(PostgresErrorCodes.UniqueViolation, conflict.SqlState);
+            Assert.Equal(DelegationUniqueIndex, conflict.ConstraintName);
+            Assert.Single(winner.Saves);
+
+            // The retry found the committed delegation instead of staging it again.
+            Assert.Equal(2, loser.Saves.Count);
+            Assert.Empty(loser.Saves.Last().OfType<Altinn.AccessMgmt.PersistenceEF.Models.Delegation>());
+
+            await Fixture.QueryDb(static async db =>
+            {
+                var delegations = await db.Delegations
+                    .Include(d => d.DelegationPackages)
+                    .Include(d => d.DelegationResources)
+                    .Where(d => d.FacilitatorId == TestEntities.OrganizationVerdiqAS.Id && d.To.ToId == TestEntities.PersonPaula.Id)
+                    .ToListAsync(TestContext.Current.CancellationToken);
+
+                var delegation = Assert.Single(delegations);
+                Assert.Equal(PackageConstants.Customs.Id, Assert.Single(delegation.DelegationPackages).PackageId);
+                Assert.Equal(TestData.MattilsynetBakeryService.Id, Assert.Single(delegation.DelegationResources).ResourceId);
+            });
+        }
+
+        /// <summary>
+        /// Runs the operation on a thread of its own, with its own scope and therefore its own connection, and
+        /// attaches the barrier to that scope's context.
+        /// </summary>
+        private (Task<T> Result, Task<SaveProbe> Probe) InScope<T>(SaveBarrier barrier, Func<IClientDelegationService, Task<T>> operation)
+        {
+            var probe = new TaskCompletionSource<SaveProbe>(TaskCreationOptions.RunContinuationsAsynchronously);
+            var result = Task.Run(async () =>
+            {
+                using var scope = Fixture.Services.CreateEFScope(TestAudit);
+                probe.SetResult(barrier.Attach(scope.ServiceProvider.GetRequiredService<AppDbContext>()));
+                return await operation(scope.ServiceProvider.GetRequiredService<IClientDelegationService>());
+            });
+
+            return (result, probe.Task);
+        }
+    }
+
+    /// <summary>
+    /// Every save fails on the delegation's unique index, as if another request kept committing the delegation
+    /// first. Expects the delegate endpoints to give up after three attempts and answer 409 Conflict with
+    /// <see cref="Problems.ConcurrentPersistenceConflict"/>, and nothing to be saved.
+    /// </summary>
+    [IntegrationTest]
+    public class DelegateToAgentWithPersistentConflict : IClassFixture<ApiFixture>
+    {
+        public DelegateToAgentWithPersistentConflict(ApiFixture fixture)
+        {
+            Fixture = fixture;
+            Fixture.ConfigureServices(services =>
+            {
+                services.AddSingleton(new FailEverySave(DelegationUniqueIndex) { Enabled = false });
+                services.AddScoped(sp =>
+                {
+                    var db = sp.GetRequiredService<AppDbContextFactory>().CreateDbContext();
+                    sp.GetRequiredService<FailEverySave>().Attach(db);
+                    return db;
+                });
+            });
+            Fixture.EnsureSeedOnce<DelegateToAgentWithPersistentConflict>(SeedAccountantClientWithAgents);
+        }
+
+        public ApiFixture Fixture { get; }
+
+        private FailEverySave Conflict => Fixture.Services.GetRequiredService<FailEverySave>();
+
+        private HttpClient CreateClient()
+        {
+            var client = Fixture.Server.CreateClient();
+            var token = TestTokenGenerator.CreateToken(new ClaimsIdentity("mock"), claims =>
+            {
+                claims.Add(new Claim(AltinnCoreClaimTypes.PartyUuid, TestEntities.PersonPaula.Id.ToString()));
+                claims.Add(new Claim("scope", $"{AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_READ} {AuthzConstants.SCOPE_ENDUSER_CLIENTDELEGATION_WRITE}"));
+            });
+
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            return client;
+        }
+
+        [Fact]
+        public async Task DelegateAccessPackage_WhenEverySaveConflicts_Returns409AfterThreeAttempts()
+        {
+            await AssertConflictAfterThreeAttempts(client => client.PostAsJsonAsync(
+                $"{Route}/agents/accesspackages?party={TestEntities.OrganizationVerdiqAS}&client={TestEntities.OrganizationNordisAS}&agent={TestEntities.PersonPaula}",
+                new DelegationBatchInputDto()
+                {
+                    Values = [new() { Role = RoleConstants.Accountant.Entity.Code, Packages = [PackageConstants.Customs.Entity.Urn] }]
+                },
+                TestContext.Current.CancellationToken));
+        }
+
+        [Fact]
+        public async Task DelegateResource_WhenEverySaveConflicts_Returns409AfterThreeAttempts()
+        {
+            await AssertConflictAfterThreeAttempts(client => client.PostAsJsonAsync(
+                $"{Route}/agents/resources?party={TestEntities.OrganizationVerdiqAS}&client={TestEntities.OrganizationNordisAS}&agent={TestEntities.PersonPaula}",
+                new ContractsV2.ResourceDelegationBatchInputDto()
+                {
+                    Values = [new() { Role = RoleConstants.Accountant.Entity.Code, Resources = [TestData.MattilsynetBakeryService.RefId] }]
+                },
+                TestContext.Current.CancellationToken));
+        }
+
+        private async Task AssertConflictAfterThreeAttempts(Func<HttpClient, Task<HttpResponseMessage>> send)
+        {
+            var client = CreateClient();
+            var attemptsBefore = Conflict.Attempts;
+
+            HttpResponseMessage response;
+            Conflict.Enabled = true;
+            try
+            {
+                response = await send(client);
+            }
+            finally
+            {
+                Conflict.Enabled = false;
+            }
+
+            var data = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.Conflict, response.StatusCode);
+            var problem = JsonSerializer.Deserialize<AltinnProblemDetails>(data, SerializerOptions);
+            Assert.Equal(Problems.ConcurrentPersistenceConflict.ErrorCode, problem.ErrorCode);
+            Assert.Equal(3, Conflict.Attempts - attemptsBefore);
+
+            await Fixture.QueryDb(static async db =>
+            {
+                Assert.False(await db.Delegations.AnyAsync(d => d.FacilitatorId == TestEntities.OrganizationVerdiqAS.Id, TestContext.Current.CancellationToken));
+            });
+        }
+    }
+
+    /// <summary>
+    /// Nordis is an accounting client of Verdiq, with the customs package and the bakery service as a single
+    /// resource. Paula and Ørjan are agents of Verdiq without any delegations.
+    /// </summary>
+    private static void SeedAccountantClientWithAgents(AppDbContext db)
+    {
+        var accountantFromNordisToVerdiq = new Assignment()
+        {
+            FromId = TestEntities.OrganizationNordisAS.Id,
+            ToId = TestEntities.OrganizationVerdiqAS.Id,
+            RoleId = RoleConstants.Accountant,
+        };
+
+        db.Assignments.Add(accountantFromNordisToVerdiq);
+        db.Assignments.Add(new Assignment()
+        {
+            FromId = TestEntities.OrganizationVerdiqAS.Id,
+            ToId = TestEntities.PersonPaula,
+            RoleId = RoleConstants.Agent,
+        });
+        db.Assignments.Add(new Assignment()
+        {
+            FromId = TestEntities.OrganizationVerdiqAS.Id,
+            ToId = TestEntities.PersonOrjan,
+            RoleId = RoleConstants.Agent,
+        });
+
+        db.AssignmentPackages.Add(new()
+        {
+            AssignmentId = accountantFromNordisToVerdiq.Id,
+            PackageId = PackageConstants.Customs.Id,
+        });
+
+        db.AssignmentResources.Add(new AssignmentResource()
+        {
+            AssignmentId = accountantFromNordisToVerdiq.Id,
+            ResourceId = TestData.MattilsynetBakeryService.Id,
+            PolicyPath = "mattilsynet-baker-konditorvare/delegationpolicy.xml",
+            PolicyVersion = "1.0",
+        });
+
+        db.SaveChanges();
     }
 
     #endregion

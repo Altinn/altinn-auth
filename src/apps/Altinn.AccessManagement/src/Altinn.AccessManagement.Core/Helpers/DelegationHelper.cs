@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Enums;
 using Altinn.AccessManagement.Core.Helpers.Extensions;
 using Altinn.AccessManagement.Core.Models;
@@ -11,6 +10,7 @@ using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.ABAC.Constants;
 using Altinn.Authorization.ABAC.Xacml;
+using Altinn.Authorization.Xacml.Constants;
 using Altinn.Platform.Register.Enums;
 using Altinn.Platform.Register.Models;
 using Altinn.Urn.Json;
@@ -1064,25 +1064,6 @@ namespace Altinn.AccessManagement.Core.Helpers
                 Action = right.Action,
                 Status = RevokeStatus.NotRevoked
             });
-        }
-
-        /// <summary>
-        /// Checks if AccessList feature is enabled and applicable for the given right, resource, and fromParty. The AccessListMode feature is currently enabled only for orgs.
-        /// </summary>
-        /// <param name="right">The right to be delegated</param>
-        /// <param name="resource">The resource we are making delegations for</param>
-        /// <param name="fromParty">The party we are making delegations on behalf of</param>
-        /// <returns>True if Access List authorization mode is enabled and applicable</returns>
-        public static bool IsAccessListModeEnabledAndApplicable(Right right, ServiceResource resource, Party fromParty)
-        {
-            if (right.CanDelegate.HasValue && right.CanDelegate.Value
-                && resource.AccessListMode == Enums.ResourceRegistry.ResourceAccessListMode.Enabled
-                && fromParty.PartyTypeName == PartyType.Organisation)
-            {
-                return true;
-            }
-
-            return false;
         }
 
         public static (UuidType Type, Guid Uuid) GetUserUuidFromUserProfile(MinimalParty party)

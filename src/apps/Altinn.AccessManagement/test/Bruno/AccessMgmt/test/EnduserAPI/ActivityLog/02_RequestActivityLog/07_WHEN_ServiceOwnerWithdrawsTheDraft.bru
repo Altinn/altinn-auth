@@ -1,0 +1,29 @@
+meta {
+  name: 07_WHEN_ServiceOwnerWithdrawsTheDraft
+  type: http
+  seq: 7
+}
+
+put {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/delegationrequests/{{al_requestId}}/withdraw
+  body: none
+  auth: inherit
+}
+
+docs {
+  WHEN the service owner withdraws the draft it created. This is also the cleanup of
+  the scenario: requests cannot be deleted, so every run leaves one withdrawn request.
+}
+
+script:pre-request {
+  const { loginAsServiceOwner } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+
+  await loginAsServiceOwner();
+}
+
+tests {
+  test("WHEN the draft is withdrawn, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+    expect(res.getBody()).to.equal("Withdrawn");
+  });
+}

@@ -21,7 +21,7 @@ public class InputValidation(
 {
     public async Task<Result<Entity>> SanitizeToInput(Guid party, Guid? toParty, PersonInput personInput, Action<SanitizeOptions> configureSanitizeOptions, CancellationToken cancellationToken = default)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
         var options = new SanitizeOptions();
         configureSanitizeOptions(options);
 
@@ -95,7 +95,7 @@ public class InputValidation(
     {
         ArgumentNullException.ThrowIfNull(person);
 
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
         int authUserId = AuthenticationHelper.GetUserId(httpContextAccessor.HttpContext);
 
         if (string.IsNullOrWhiteSpace(person.PersonIdentifier))

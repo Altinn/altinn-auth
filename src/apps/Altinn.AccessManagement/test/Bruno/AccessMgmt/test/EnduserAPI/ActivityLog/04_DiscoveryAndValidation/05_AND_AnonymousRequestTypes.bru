@@ -1,0 +1,38 @@
+meta {
+  name: 05_AND_AnonymousRequestTypes
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/request/activitylog/types
+  body: none
+  auth: none
+}
+
+headers {
+  Accept-Language: nb
+}
+
+docs {
+  AND the request area lists only request types, here in Norwegian bokmål.
+}
+
+tests {
+  const { activityTypes } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const body = res.getBody();
+
+  test("AND the request types return 200 without a token", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND they hold only request types", function() {
+    expect(body).to.be.an("array").that.is.not.empty;
+    body.forEach(t => expect(t.type).to.equal("Request"));
+  });
+
+  test("AND the names are in Norwegian bokmål", function() {
+    const t = body.find(x => x.id === activityTypes.requestCreated);
+    expect(t.name).to.equal("Forespørsel opprettet");
+  });
+}

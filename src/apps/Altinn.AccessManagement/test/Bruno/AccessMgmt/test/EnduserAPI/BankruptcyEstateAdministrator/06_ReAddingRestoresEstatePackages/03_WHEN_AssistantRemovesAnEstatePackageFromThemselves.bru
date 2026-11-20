@@ -1,0 +1,42 @@
+meta {
+  name: 03_WHEN_AssistantRemovesAnEstatePackageFromThemselves
+  type: http
+  seq: 3
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/accesspackages?party={{assistant}}&from={{estateId}}&to={{assistant}}&package=urn:altinn:accesspackage:konkursbo-skrivetilgang
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{assistant}}
+  from: {{estateId}}
+  to: {{assistant}}
+  package: urn:altinn:accesspackage:konkursbo-skrivetilgang
+}
+
+docs {
+  WHEN the assistant removes konkursbo-skrivetilgang from their own connection from the
+  estate BLAUT FRYKTLØS ØGLE KONKURSBO. Expects 204.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  bru.setVar("assistant", td.user_LUN_ANALYSE_GÅSTOL.partyUuid);
+  bru.setVar("estateId", td.BOSTYRER.client_BLAUT_FRYKTLØS_ØGLE_KONKURSBO.partyUuid);
+
+  await helpers.loginAs(td.user_LUN_ANALYSE_GÅSTOL);
+}
+
+tests {
+  test("WHEN the assistant removes the package, the request returns 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

@@ -1,6 +1,7 @@
 ﻿#nullable enable
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
+using Altinn.Authorization.Api.Contracts.ResourceRegistry.Enums;
 
 namespace Altinn.Authorization.Models.ResourceRegistry;
 

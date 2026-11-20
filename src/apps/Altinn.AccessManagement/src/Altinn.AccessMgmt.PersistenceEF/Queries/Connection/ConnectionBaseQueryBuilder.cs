@@ -53,7 +53,11 @@ internal class ConnectionBaseQueryBuilder
         return (viaSet, viaRoleSet, roleSet, roleSetExclude);
     }
 
-    internal IQueryable<ConnectionQueryBaseRecord> FromOthers(AppDbContext db, ConnectionQueryFilter filter, bool doChildNesting, bool applyFromFilter)
+    /// <summary>
+    /// Builds the base query for connections from others to the to-party.
+    /// Asynchronous because a party filter combined with delegations needs two lookups before the query can be built.
+    /// </summary>
+    internal async Task<IQueryable<ConnectionQueryBaseRecord>> FromOthersAsync(AppDbContext db, ConnectionQueryFilter filter, bool doChildNesting, bool applyFromFilter, CancellationToken ct)
     {
         var toId = filter.ToIds.First();
         var fromSet = filter.FromIds?.Count > 0 ? new HashSet<Guid>(filter.FromIds) : null;
@@ -62,22 +66,22 @@ internal class ConnectionBaseQueryBuilder
 
         if (fromSet != null && filter.IncludeDelegation)
         {
-            var parentIds = db.Entities
+            var parentIds = await db.Entities
                 .Where(e => fromSet.Distinct().Contains(e.Id) && e.ParentId != null
                     && (filter.IncludeAdosSubunitInheritance || e.VariantId != EntityVariantConstants.ADOS.Id))
                 .AsNoTracking()
                 .Select(e => e.ParentId.Value)
                 .Distinct()
-                .ToList();
+                .ToListAsync(ct);
             fromSetForDelegation.UnionWith(parentIds);
 
-            var enksOfInnh = db.Assignments
+            var enksOfInnh = await db.Assignments
                 .AsNoTracking()
                 .Where(a => fromSet.Distinct().Contains(a.ToId))
                 .Where(a => a.RoleId == RoleConstants.Innehaver.Id)
                 .Select(a => a.FromId)
                 .Distinct()
-                .ToList();
+                .ToListAsync(ct);
             fromSetForDelegation.UnionWith(enksOfInnh);
         }
 

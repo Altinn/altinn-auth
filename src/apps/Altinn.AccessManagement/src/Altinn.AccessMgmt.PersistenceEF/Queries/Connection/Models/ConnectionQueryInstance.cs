@@ -1,4 +1,6 @@
-﻿namespace Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
+﻿using Altinn.Authorization.Api.Contracts.ResourceRegistry.Enums;
+
+namespace Altinn.AccessMgmt.PersistenceEF.Queries.Connection.Models;
 
 /// <summary>
 /// Basic Instance reference for Connection Query
@@ -29,4 +31,14 @@ public sealed class ConnectionQueryInstance
     /// Gets the reference ID of the resource associated with this instance.
     /// </summary>
     public string ResourceRefId { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Whether the resource associated with this instance can be delegated
+    /// </summary>
+    public bool ResourceDelegable { get; init; }
+
+    /// <summary>
+    /// Access list mode of the resource associated with this instance
+    /// </summary>
+    public ResourceAccessListMode ResourceAccessListMode { get; init; }
 }

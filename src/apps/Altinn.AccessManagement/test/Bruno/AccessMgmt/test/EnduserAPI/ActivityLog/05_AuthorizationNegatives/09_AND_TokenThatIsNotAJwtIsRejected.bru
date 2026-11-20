@@ -1,0 +1,38 @@
+meta {
+  name: 09_AND_TokenThatIsNotAJwtIsRejected
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/connections/activitylog?party={{party}}&direction=from
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  direction: from
+}
+
+docs {
+  AND a bearer token that is not a JWT at all fails authentication: 401.
+
+  A three-part token that only looks like a JWT (for example `abc.def.ghi`) currently
+  returns 500 from every Access Management endpoint, not only the activity log. That is
+  a platform defect and is not asserted here.
+}
+
+script:pre-request {
+  const { testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata();
+
+  bru.setVar("party", td.connections.delegator.partyUuid);
+  bru.setVar("bearerToken", "not-a-jwt");
+}
+
+tests {
+  test("AND the request is refused with 401", function() {
+    expect(res.status).to.equal(401);
+  });
+}

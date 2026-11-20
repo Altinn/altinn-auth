@@ -1,0 +1,40 @@
+meta {
+  name: 01_GIVEN_NoSupplierRelation
+  type: http
+  seq: 1
+}
+
+delete {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/maskinporten/suppliers?party={{party}}&supplier={{supplierOrgNo}}&cascade=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  supplier: {{supplierOrgNo}}
+  cascade: true
+}
+
+docs {
+  GIVEN the consumer has no supplier relation to the supplier.
+
+  Reset step: removes a relation left over from an earlier or crashed run, with the
+  resources delegated on it (cascade=true). Idempotent, returns 204.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().maskinporten;
+
+  bru.setVar("party", td.consumer.partyUuid);
+  bru.setVar("supplierOrgNo", td.supplier.orgNo);
+
+  await loginAs(td.consumer.dagligleder);
+}
+
+tests {
+  test("GIVEN no supplier relation, the reset delete returns 204", function() {
+    expect(res.status).to.equal(204);
+  });
+}

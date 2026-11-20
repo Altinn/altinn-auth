@@ -1,13 +1,14 @@
-﻿using Altinn.AccessMgmt.Core.Utils;
+﻿using Altinn.AccessManagement.Core.Errors;
+using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.Core.Validation;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
+using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.ProblemDetails;
 
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 
 namespace Altinn.AccessMgmt.Core.Services
 {
@@ -126,7 +127,7 @@ namespace Altinn.AccessMgmt.Core.Services
             }
 
             Assignment adminAssignment = null;
-            await SaveWithRetryOnConflict(
+            if (await TrySaveWithRetryOnConflict(
                 async () =>
                 {
                     await LockEstateAdministratorParties(db, [partyUuid], cancellationToken);
@@ -146,7 +147,10 @@ namespace Altinn.AccessMgmt.Core.Services
                     var estateIds = await GetBankruptcyEstateIds(partyUuid, cancellationToken);
                     await GrantEstateAccess(estateIds.Select(estateId => (estateId, toUuid)).ToList(), cancellationToken);
                 },
-                cancellationToken);
+                cancellationToken) is { } conflict)
+            {
+                return conflict;
+            }
 
             return DtoMapper.Convert(adminAssignment);
         }
@@ -178,34 +182,37 @@ namespace Altinn.AccessMgmt.Core.Services
         /// committed.
         /// Constraint failures can still happen against writers that do not take the lock, such as a concurrent
         /// insert of the same assignment, and the import can deadlock with another batch. On any of these the
-        /// transaction is rolled back and the changes are staged again against the committed rows.
+        /// transaction is rolled back when it is disposed uncommitted, and the changes are staged again against the
+        /// committed rows.
         /// </summary>
-        private async Task<int> SaveWithRetryOnConflict(Func<Task> stageChanges, CancellationToken cancellationToken)
-        {
-            for (var attempt = 1; ; attempt++)
-            {
-                await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
-                try
+        private Task<int> SaveWithRetryOnConflict(Func<Task> stageChanges, CancellationToken cancellationToken) =>
+            db.RetryOnConcurrentWriteConflict(
+                async () =>
                 {
+                    await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
                     await stageChanges();
                     var changed = await db.SaveChangesAsync(cancellationToken);
                     await transaction.CommitAsync(cancellationToken);
                     return changed;
-                }
-                catch (Exception ex) when (attempt < MaxSaveAttempts && IsConcurrentWriteConflict(ex))
-                {
-                    await transaction.RollbackAsync(cancellationToken);
-                    db.ChangeTracker.Clear();
-                }
+                },
+                MaxSaveAttempts);
+
+        /// <summary>
+        /// Same as <see cref="SaveWithRetryOnConflict"/>, for the API. If the conflict remains after the last attempt,
+        /// returns a 409 problem instead of throwing, so the caller can try again.
+        /// </summary>
+        private async Task<ProblemInstance?> TrySaveWithRetryOnConflict(Func<Task> stageChanges, CancellationToken cancellationToken)
+        {
+            try
+            {
+                await SaveWithRetryOnConflict(stageChanges, cancellationToken);
+                return null;
+            }
+            catch (Exception ex) when (ex.IsConcurrentWriteConflict())
+            {
+                return Problems.ConcurrentPersistenceConflict;
             }
         }
-
-        private static bool IsConcurrentWriteConflict(Exception ex) =>
-            ex is DbUpdateConcurrencyException
-            || (ex as PostgresException ?? ex.InnerException as PostgresException) is
-            {
-                SqlState: PostgresErrorCodes.UniqueViolation or PostgresErrorCodes.ForeignKeyViolation or PostgresErrorCodes.DeadlockDetected
-            };
 
         /// <summary>
         /// Locks the entity rows of the estate administrator parties (bostyrer) until the transaction ends. Every
@@ -389,7 +396,7 @@ namespace Altinn.AccessMgmt.Core.Services
         ];
 
         /// <inheritdoc />
-        public async Task<ValidationProblemInstance?> RevokeBankruptcyEstateAdministrator(Guid partyUuid, Guid toUuid, Action<ConnectionOptions> configureConnections, CancellationToken cancellationToken = default)
+        public async Task<ProblemInstance?> RevokeBankruptcyEstateAdministrator(Guid partyUuid, Guid toUuid, Action<ConnectionOptions> configureConnections, CancellationToken cancellationToken = default)
         {
             var options = new ConnectionOptions(configureConnections);
             (Entity from, Entity to) = await GetFromAndToEntities(partyUuid, toUuid, cancellationToken);
@@ -399,7 +406,7 @@ namespace Altinn.AccessMgmt.Core.Services
                 return problem;
             }
 
-            await SaveWithRetryOnConflict(
+            return await TrySaveWithRetryOnConflict(
                 async () =>
                 {
                     await LockEstateAdministratorParties(db, [partyUuid], cancellationToken);
@@ -417,8 +424,6 @@ namespace Altinn.AccessMgmt.Core.Services
                     }
                 },
                 cancellationToken);
-
-            return null;
         }
     }
 
@@ -469,7 +474,7 @@ namespace Altinn.AccessMgmt.Core.Services
         /// <param name="configureConnections">An action to configure connection options.</param>
         /// <param name="cancellationToken">A token to monitor for cancellation requests.</param>
         /// <returns>A result containing the revoked assignment.</returns>
-        Task<ValidationProblemInstance?> RevokeBankruptcyEstateAdministrator(Guid partyUuid, Guid toUuid, Action<ConnectionOptions> configureConnections, CancellationToken cancellationToken = default);
+        Task<ProblemInstance?> RevokeBankruptcyEstateAdministrator(Guid partyUuid, Guid toUuid, Action<ConnectionOptions> configureConnections, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// For each (estate, estate administrator party) relation, gives every bankruptcy estate administrator of

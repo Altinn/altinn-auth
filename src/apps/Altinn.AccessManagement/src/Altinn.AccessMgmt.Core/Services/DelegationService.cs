@@ -1,6 +1,6 @@
-﻿using Altinn.AccessMgmt.Core.Services.Contracts;
+﻿using Altinn.AccessManagement.Core.Errors;
+using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
-using Altinn.AccessMgmt.Core.Utils.Models;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
@@ -325,7 +325,7 @@ public class DelegationService(AppDbContext db, IAssignmentService assignmentSer
     /// <inheritdoc/>
     public async Task<ProblemInstance> DeleteDelegation(Guid delegationId, CancellationToken cancellationToken)
     {
-        ValidationErrorBuilder errors = default;
+        ValidationProblemBuilder errors = default;
 
         var existingDelegation = await GetDelegation(delegationId, cancellationToken: cancellationToken);
         if (existingDelegation == null)

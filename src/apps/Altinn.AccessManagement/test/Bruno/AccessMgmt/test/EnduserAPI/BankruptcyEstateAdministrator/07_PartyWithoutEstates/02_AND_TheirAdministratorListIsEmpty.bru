@@ -1,0 +1,41 @@
+meta {
+  name: 02_AND_TheirAdministratorListIsEmpty
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/bankruptcyestate/administrators?party={{party}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+}
+
+docs {
+  AND the person's administrator list is empty. Expects 200 with an empty data array.
+}
+
+script:pre-request {
+  const helpers = require("./test/EnduserAPI/BankruptcyEstateAdministrator/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
+  const td = helpers.testdata();
+
+  bru.setVar("party", td.creditor_VILJESTERK_GRANDIS.partyUuid);
+
+  await helpers.loginAs(td.creditor_VILJESTERK_GRANDIS);
+}
+
+tests {
+  test("AND the administrators can be listed, the request returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND the list is empty", function() {
+    expect(res.getBody().data).to.be.an("array").that.is.empty;
+  });
+}

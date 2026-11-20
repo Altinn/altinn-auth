@@ -16,6 +16,7 @@ spec:
       serviceAccountName: am-init
       restartPolicy: Never
       securityContext:
+        runAsNonRoot: true
         runAsUser: 1000
         runAsGroup: 3000
 
@@ -25,6 +26,9 @@ spec:
           imagePullPolicy: Always
           securityContext:
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: [ALL]
 
           resources:
             requests:

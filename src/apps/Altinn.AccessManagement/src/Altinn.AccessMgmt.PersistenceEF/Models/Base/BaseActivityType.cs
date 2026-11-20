@@ -39,7 +39,7 @@ public class BaseActivityType : BaseAudit, IEntityId, IEntityName
     /// The request status the entry applies to, or <see langword="null"/> for any status
     /// (the fallback row when no status-specific entry exists).
     /// </summary>
-    public RequestStatus? Status { get; set; }
+    public RequestStatusV2? Status { get; set; }
 
     /// <summary>
     /// Display name.

@@ -2050,5 +2050,11 @@ GRANT SELECT, INSERT, UPDATE, DELETE, TRIGGER, REFERENCES ON TABLE dbo_history.a
 CREATE UNIQUE INDEX ix_activitytype_type_subtype_trigger_status ON dbo.activitytype (type, subtype, trigger, status) NULLS NOT DISTINCT;
 
 
+ALTER TABLE dbo.activitylogbackfillprogress ADD lastid uuid;
+
+GRANT SELECT, INSERT, UPDATE, DELETE, TRIGGER, REFERENCES ON TABLE dbo.activitylogbackfillprogress TO platform_authorization;
+GRANT SELECT, INSERT, UPDATE, DELETE, TRIGGER, REFERENCES ON TABLE dbo.activitylogbackfillprogress TO platform_authorization_admin;
+
+
 COMMIT;
 

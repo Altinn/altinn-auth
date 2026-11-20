@@ -2,6 +2,7 @@
 using System.Net;
 using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Exceptions;
+using Altinn.Platform.Authorization.Helpers;
 using Altinn.Platform.Authorization.Repositories.Interface;
 using Altinn.Platform.Storage.Interface.Models;
 using Microsoft.Extensions.Options;
@@ -34,7 +35,7 @@ namespace Altinn.Platform.Authorization.Repositories
         /// <inheritdoc/>
         public async Task<AuthInfo> GetAuthInfo(string instanceId)
         {
-            HttpResponseMessage response = await _storageClient.GetAsync($"instances/{instanceId}/process/authinfo");
+            HttpResponseMessage response = await DependencyCall.SendAsync(DependencyCall.Storage, () => _storageClient.GetAsync($"instances/{instanceId}/process/authinfo"));
             if (response.StatusCode == HttpStatusCode.OK)
             {
                 string responseData = await response.Content.ReadAsStringAsync();

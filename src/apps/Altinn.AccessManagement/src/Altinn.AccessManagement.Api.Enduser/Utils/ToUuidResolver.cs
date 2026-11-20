@@ -82,8 +82,8 @@ public sealed class ToUuidResolver
             var profile = await _userProfileLookupService.GetUserProfile(authUserId, lookup, lastName);
             if (profile == null)
             {
-                ValidationErrorBuilder errors = default;
-                errors.Add(AccessMgmt.Core.Utils.Models.ValidationErrors.InvalidQueryParameter, ["/personIdentifier", "/lastName"], [new("personInput", ValidationErrorMessageTexts.PersonIdentifierLastNameInvalid)]);
+                ValidationProblemBuilder errors = default;
+                errors.Add(ValidationErrors.InvalidQueryParameter, ["/personIdentifier", "/lastName"], [new("personInput", ValidationErrorMessageTexts.PersonIdentifierLastNameInvalid)]);
                 errors.TryToActionResult(out ActionResult errorResult);
                 return new ResolveToUuidResult(Guid.Empty, errorResult);
             }

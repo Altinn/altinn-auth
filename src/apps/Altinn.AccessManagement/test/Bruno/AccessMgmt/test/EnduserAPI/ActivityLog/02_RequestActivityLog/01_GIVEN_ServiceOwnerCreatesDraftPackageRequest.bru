@@ -1,0 +1,53 @@
+meta {
+  name: 01_GIVEN_ServiceOwnerCreatesDraftPackageRequest
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/delegationrequests/package
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+    "from": "urn:altinn:person:identifier-no:{{requesterPid}}",
+    "to": "urn:altinn:organization:identifier-no:{{orgNo}}",
+    "package": "{{package}}"
+  }
+}
+
+docs {
+  GIVEN the service owner creates a draft package request: the requester (from) asks the
+  organization (to) for the package.
+
+  Expects 202 with the request in status Draft. When an open draft for the same parties
+  and package exists from an earlier or crashed run, that draft is returned instead. The
+  request id is the itemId of the request's entries in the log.
+}
+
+script:pre-request {
+  const { loginAsServiceOwner, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().request;
+
+  bru.setVar("requesterPid", td.requester.pid);
+  bru.setVar("orgNo", td.organization.orgNo);
+  bru.setVar("package", td.package);
+
+  await loginAsServiceOwner();
+}
+
+script:post-response {
+  const body = res.getBody();
+  if (body && body.id) {
+    bru.setVar("al_requestId", body.id);
+  }
+}
+
+tests {
+  test("GIVEN the draft is created, the request returns 202 in status Draft", function() {
+    expect(res.status).to.equal(202);
+    expect(res.getBody().status).to.equal("Draft");
+  });
+}

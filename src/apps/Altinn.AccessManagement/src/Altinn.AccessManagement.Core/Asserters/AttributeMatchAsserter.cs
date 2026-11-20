@@ -1,6 +1,6 @@
-﻿using Altinn.AccessManagement.Core.Constants;
-using Altinn.AccessManagement.Core.Models;
+﻿using Altinn.AccessManagement.Core.Models;
 using Altinn.AccessManagement.Core.Resolvers;
+using Altinn.Authorization.Xacml.Constants;
 
 namespace Altinn.AccessManagement.Core.Asserters;
 

@@ -3,7 +3,7 @@ variable "TAG" {
 }
 
 group "default" {
-  targets = []
+  targets = ["build"]
 }
 
 target "build" {
@@ -17,7 +17,7 @@ target "build" {
     aspnet-runtime = "target:aspnet-runtime"
   }
 
-  dockerfile-inline = "FROM aspnet-runtime\nENV I_AM_TEST=true"
+  dockerfile = "src/apps/Altinn.Authentication/containers/Dockerfile.${app}"
   platforms  = ["linux/amd64"]
   tags       = ["ghcr.io/altinn/altinn-auth/authentication-${app}:${TAG}"]
 }

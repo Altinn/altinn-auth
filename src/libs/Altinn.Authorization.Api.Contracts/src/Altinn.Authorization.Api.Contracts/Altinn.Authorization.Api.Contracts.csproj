@@ -1,6 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="Altinn.Authorization.ModelUtils" />
     <PackageReference Include="Altinn.Authorization.ProblemDetails" />
     <PackageReference Include="Altinn.Urn" />
     <PackageReference Include="Altinn.Urn.Swashbuckle" />

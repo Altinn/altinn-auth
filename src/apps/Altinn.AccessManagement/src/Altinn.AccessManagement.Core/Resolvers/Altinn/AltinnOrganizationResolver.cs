@@ -1,7 +1,7 @@
-﻿using Altinn.AccessManagement.Core.Constants;
-using Altinn.AccessManagement.Core.Resolvers;
+﻿using Altinn.AccessManagement.Core.Resolvers;
 using Altinn.AccessManagement.Core.Resolvers.Extensions;
 using Altinn.AccessManagement.Core.Services.Interfaces;
+using Altinn.Authorization.Xacml.Constants;
 
 namespace Altinn.AccessManagement.Resolvers;
 

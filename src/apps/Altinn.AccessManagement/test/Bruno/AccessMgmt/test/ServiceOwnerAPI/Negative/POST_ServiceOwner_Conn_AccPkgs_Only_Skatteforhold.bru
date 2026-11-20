@@ -49,7 +49,7 @@ tests {
   
   test(requestName + "|HttpStatus.Forbidden", function() {
     expect(res.status).to.equal(403);
-    expect(body.detail).to.equal('Service owner is not authorized to delegate this access package');
+    expect(body.title).to.equal('Service owner is not authorized to delegate this access package');
   });
   
 }

@@ -1,4 +1,5 @@
 ﻿using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
+using Altinn.Authorization.ModelUtils;
 
 namespace Altinn.Authorization.Api.Contracts.AccessManagement.ActivityLog;
 
@@ -32,8 +33,9 @@ public class ActivityTypeDto
 
     /// <summary>
     /// The request status the entry applies to, or null for any status.
+    /// Clients must accept values they do not know.
     /// </summary>
-    public RequestStatus? Status { get; set; }
+    public NonExhaustiveEnum<RequestStatusV2>? Status { get; set; }
 
     /// <summary>
     /// Display name.

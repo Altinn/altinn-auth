@@ -11,7 +11,6 @@ using Altinn.Platform.Authentication.Core.Models.Rights.ConnectionsDtos;
 using Altinn.Platform.Authentication.Core.Models.SystemUsers;
 using Altinn.Platform.Authentication.Core.SystemRegister.Models;
 using Altinn.Platform.Authentication.Model;
-using Microsoft.FeatureManagement;
 
 namespace Altinn.Platform.Authentication.Services.Interfaces;
 #nullable enable
@@ -184,11 +183,10 @@ public interface ISystemUserService
     /// Returns a list of clients available for a facilitator,
     /// </summary>
     /// <param name="facilitator">the guid id of the logged in user, representing the Facilitator</param>
-    /// <param name="packages">An array of access package URNs. Only clients associated with at least one of these access packages will be included in the result.</param>
-    /// <param name="featureManager">FeatureManager</param>
+    /// <param name="packages">An array of access package URNs. Only clients holding all of these access packages will be included in the result.</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>List of Clients</returns>
-    Task<Result<List<ExternalClientDto>>> GetClientsForFacilitator(Guid facilitator, List<string>? packages, IFeatureManager featureManager, CancellationToken cancellationToken = default);
+    Task<Result<List<ExternalClientDto>>> GetClientsForFacilitator(Guid facilitator, List<string>? packages, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Delegate access packages to a system user.
@@ -224,7 +222,7 @@ public interface ISystemUserService
 
     /// <summary>
     /// Validate that the Rights is both a subset of the Default Rights registered on the System, and at least one Right is selected.
-    /// Also ensure that if any of the new Rights have sub-resources, that the sub-resources are equal to the registered Rights.
+    /// Also ensure that each Right names exactly one resource. Two resources in one Right are rejected, even when the System has the same Right.
     /// Finally ensure the resources are still usable in the resource registry: present, of a supported resource type
     /// and delegable.
     /// </summary>

@@ -6,7 +6,7 @@ terraform {
     }
     tls = {
       source  = "hashicorp/tls"
-      version = "4.4.1"
+      version = "4.4.2"
     }
     azurerm = {
       source  = "hashicorp/azurerm"
@@ -246,7 +246,5 @@ resource "azurerm_management_lock" "delete" {
   for_each = { for lock in [
     azurerm_public_ip_prefix.ipv4,
     azurerm_public_ip_prefix.ipv6,
-    azurerm_virtual_network_gateway.vpn,
-    azurerm_storage_account.storage
   ] : lock.name => lock.id }
 }

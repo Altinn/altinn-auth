@@ -2,6 +2,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json.Serialization;
 using Altinn.AccessManagement.Core.Enums.ResourceRegistry;
+using Altinn.Authorization.Api.Contracts.ResourceRegistry.Enums;
 
 namespace Altinn.AccessManagement.Core.Models.ResourceRegistry
 {

@@ -50,6 +50,6 @@ tests {
     const body = res.getBody();
     expect(body.status).to.equal(400);
     expect(body.code).to.equal("AM-00028");
-    expect(body.detail).to.equal("Not authorized for delegation");
+    expect(body.title).to.equal("Not authorized for delegation");
   });
 }

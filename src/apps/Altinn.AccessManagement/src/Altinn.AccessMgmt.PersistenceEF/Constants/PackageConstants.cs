@@ -53,6 +53,12 @@ public static class PackageConstants
         => ConstantLookup.TryGetById(typeof(PackageConstants), id, out result);
 
     /// <summary>
+    /// Whether the <see cref="Package"/> with this id is available in this environment.
+    /// </summary>
+    public static bool IsAvailable(Guid id)
+        => ConstantLookup.IsAvailable<Package>(typeof(PackageConstants), id);
+
+    /// <summary>
     /// Try to get <see cref="Role"/> by Urn.
     /// </summary>
     public static bool TryGetByUrn(string urn, [NotNullWhen(true)] out ConstantDefinition<Package>? result)
@@ -945,14 +951,14 @@ public static class PackageConstants
     /// - <c>Id:</c> d3ba7bba-195b-4b69-ae68-df20ecd57097
     /// - <c>URN:</c> urn:altinn:accesspackage:tilskudd-stotte-erstatning
     /// - <c>Provider:</c> Altinn3
-    /// - <c>Description:</c> Denne tilgangspakken gir fullmakter til tjenester knyttet til å søke tilskudd, støtte og erstatning. Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmakten gir.
+    /// - <c>Description:</c> Denne tilgangspakken gir fullmakter til tjenester knyttet til å søke og rapportere på tilskudd, støtte og erstatning. Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmakten gir.
     /// </remarks>
     public static ConstantDefinition<Package> GrantSupportCompensation { get; } = new ConstantDefinition<Package>("d3ba7bba-195b-4b69-ae68-df20ecd57097")
     {
         Entity = new()
         {
             Name = "Tilskudd, støtte og erstatning",
-            Description = "Denne tilgangspakken gir fullmakter til tjenester knyttet til å søke tilskudd, støtte og erstatning. Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmakten gir.",
+            Description = "Denne tilgangspakken gir fullmakter til tjenester knyttet til å søke og rapportere på tilskudd, støtte og erstatning. Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmakten gir.",
             Urn = "urn:altinn:accesspackage:tilskudd-stotte-erstatning",
             Code = "tilskudd-stotte-erstatning",
             IsDelegable = true,
@@ -964,11 +970,11 @@ public static class PackageConstants
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Grant, support and compensation"),
-            KeyValuePair.Create("Description", "This access package provides authorizations for services related to applying for grants, support and compensation. In the event of regulatory changes or the introduction of new digital services, there may be changes in the access that the authorization provides.")
+            KeyValuePair.Create("Description", "This access package provides authorizations for services related to applying for and reporting on grants, support and compensation. In the event of regulatory changes or the introduction of new digital services, there may be changes in the access that the authorization provides.")
         ),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Tilskot, støtte og erstatning"),
-            KeyValuePair.Create("Description", "Denne tilgangspakken gir fullmakter til tenester knytt til å søkje tilskot, støtte og erstatning. Ved regelverksendringar eller innføring av nye digitale tenester kan det bli endringar i tilgangar som fullmakta gir.")
+            KeyValuePair.Create("Description", "Denne tilgangspakken gir fullmakter til tenester knytt til å søkje og rapportere på tilskot, støtte og erstatning. Ved regelverksendringar eller innføring av nye digitale tenester kan det bli endringar i tilgangar som fullmakta gir.")
         ),
     };
 
@@ -4699,6 +4705,41 @@ public static class PackageConstants
             KeyValuePair.Create("Name", "Skattegrunnlag"),
             KeyValuePair.Create("Description", "Denne tilgangspakken gir fullmakter til tenester knytt til innhenting av skattegrunnlag. Ved regelverksendringar eller innføring av nye digitale tenester kan det bli endringar i tilgangar som fullmakta gir.")
         ),
+    };
+
+    /// <summary>
+    /// Represents the 'Skattegrunnlag - Utvidet tilgang' access package. Test only, for Skatteetaten's proof of concept (#4128).
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 01a1b014-d16c-71d9-b145-e7508f7c8279
+    /// - <c>URN:</c> urn:altinn:accesspackage:skattegrunnlag-utvidet-tilgang
+    /// - <c>Provider:</c> Altinn3
+    /// - <c>Description:</c> Denne tilgangspakken gir tilganger til å rapportere tredjepartsopplysninger på vegne av oppgavegiver for de skattegrunnlagsordningene som er listet her. Tilgangspakken gir også utvidede tilganger til å se alle innsendinger og tilbakemeldinger for oppgavegiveren, også når andre har sendt inn.
+    /// </remarks>
+    public static ConstantDefinition<Package> TaxBaseExtendedAccess { get; } = new ConstantDefinition<Package>("01a1b014-d16c-71d9-b145-e7508f7c8279")
+    {
+        Entity = new()
+        {
+            Name = "Skattegrunnlag - Utvidet tilgang",
+            Description = "Denne tilgangspakken gir tilganger til å rapportere tredjepartsopplysninger på vegne av oppgavegiver for de skattegrunnlagsordningene som er listet her. Tilgangspakken gir også utvidede tilganger til å se alle innsendinger og tilbakemeldinger for oppgavegiveren, også når andre har sendt inn.",
+            Urn = "urn:altinn:accesspackage:skattegrunnlag-utvidet-tilgang",
+            Code = "skattegrunnlag-utvidet-tilgang",
+            IsDelegable = true,
+            IsAvailableForServiceOwners = true,
+            IsAssignable = true,
+            EntityTypeId = EntityTypeConstants.Organization,
+            ProviderId = ProviderConstants.Altinn3,
+            AreaId = AreaConstants.TaxFeesAccountingAndCustoms,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Tax base - Extended access"),
+            KeyValuePair.Create("Description", "This access package provides access to report third-party information on behalf of the reporting entity for the tax base schemes listed here. The access package also provides extended access to see all submissions and feedback for the reporting entity, also when others have submitted them.")
+        ),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Skattegrunnlag - Utvida tilgang"),
+            KeyValuePair.Create("Description", "Denne tilgangspakken gir tilgangar til å rapportere tredjepartsopplysningar på vegner av oppgåvegivar for dei skattegrunnlagsordningane som er lista her. Tilgangspakken gir også utvida tilgangar til å sjå alle innsendingar og tilbakemeldingar for oppgåvegivaren, også når andre har sendt inn.")
+        ),
+        TestOnly = true,
     };
 
     /// <summary>

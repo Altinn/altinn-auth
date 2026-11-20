@@ -48,6 +48,6 @@ tests {
     const testdata = require(`./testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`); 
     const data = res.getBody();
     expect(res.status).to.equal(400);
-    expect(data.validationErrors[0].detail).to.equal("Assignment is active in one or more connections.");
+    expect(data.validationErrors[0].title).to.equal("Assignment is active in one or more connections.");
   });
 }

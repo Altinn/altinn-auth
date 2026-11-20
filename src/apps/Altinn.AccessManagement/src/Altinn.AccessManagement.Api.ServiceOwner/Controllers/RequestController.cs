@@ -1,17 +1,18 @@
 ﻿using System.Net.Mime;
 using Altinn.AccessManagement.Api.ServiceOwner.Validation;
-using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Configuration;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessMgmt.Core;
 using Altinn.AccessMgmt.Core.Audit;
 using Altinn.AccessMgmt.Core.Services.Contracts;
+using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 using Altinn.Authorization.ProblemDetails;
+using Altinn.Authorization.Xacml.Constants;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
@@ -30,7 +31,6 @@ public class RequestController(
     IEntityService entityService,
     IResourceService resourceService,
     IAuditAccessor auditAccessor,
-    IResourceRegistryClient resourceRegistryClient,
     IOptions<GeneralSettings> generalSettings
     ) : ControllerBase
 {
@@ -61,7 +61,7 @@ public class RequestController(
     public async Task<IActionResult> GetRequestStatus([FromRoute] Guid id, CancellationToken ct = default)
     {
         var result = await requestService.GetRequest(id, ct);
-        return result.IsSuccess ? Ok(result.Value.Status) : result.Problem.ToActionResult();
+        return result.IsSuccess ? Ok(DtoMapper.ConvertToV1Status(result.Value.Status)) : result.Problem.ToActionResult();
     }
 
     /// <summary>
@@ -87,18 +87,18 @@ public class RequestController(
 
         if (request.By.Id == auditAccessor.AuditValues.ChangedBy)
         {
-            if (request.Status == RequestStatus.Draft || request.Status == RequestStatus.Pending)
+            if (request.Status == RequestStatusV2.Draft || request.Status == RequestStatusV2.Pending)
             {
-                var res = await requestService.UpdateRequest(request.From.Id, request.Id, RequestStatus.Withdrawn, ct);
+                var res = await requestService.UpdateRequest(request.From.Id, request.Id, RequestStatusV2.Withdrawn, ct);
                 if (res.IsSuccess)
                 {
-                    return Ok(res.Value.Status);
+                    return Ok(DtoMapper.ConvertToV1Status(res.Value.Status));
                 }
 
                 return res.Problem.ToActionResult();
             }
 
-            ValidationErrorBuilder errorBuilder = default;
+            ValidationProblemBuilder errorBuilder = default;
             errorBuilder.Add(ValidationErrors.RequestUnsupportedStatusUpdate, "/status", [new("status", $"Unable to withdraw request with status '{request.Status}'")]);
             errorBuilder.TryBuild(out var problem);
             if (problem != null)
@@ -123,7 +123,7 @@ public class RequestController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> CreateResourceRequest([FromBody] RequestResourceDto data, CancellationToken ct = default)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         var fromResult = await GetEntity(data.From, "/from", ct);
         fromResult.Problems(ref errorBuilder);
@@ -147,7 +147,7 @@ public class RequestController(
             fromId: fromResult.Entity.Id,
             byId: auditAccessor.AuditValues.ChangedBy,
             roleId: RoleConstants.Rightholder.Id,
-            status: RequestStatus.Draft,
+            status: RequestStatusV2.Draft,
             resourceRef: new RequestReferenceDto() { ReferenceId = data.Resource },
             ct: ct
             );
@@ -166,7 +166,7 @@ public class RequestController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> CreatePackageRequest([FromBody] RequestPackageDto data, CancellationToken ct = default)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         if (string.IsNullOrEmpty(data.Package))
         {
@@ -207,7 +207,7 @@ public class RequestController(
             fromId: fromResult.Entity.Id,
             byId: auditAccessor.AuditValues.ChangedBy,
             roleId: RoleConstants.Rightholder.Id,
-            status: RequestStatus.Draft,
+            status: RequestStatusV2.Draft,
             package: new RequestReferenceDto() { Id = packageObj!.Id, ReferenceId = packageObj.Entity.Urn },
             ct: ct
             );
@@ -226,7 +226,7 @@ public class RequestController(
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> CreateRequest([FromBody] CreateServiceOwnerRequest input, CancellationToken ct = default)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
         var resourceParamName = "resource";
         var packageParamName = "package";
 
@@ -266,7 +266,7 @@ public class RequestController(
                 fromId: toResult.Entity.Id,
                 byId: auditAccessor.AuditValues.ChangedBy,
                 roleId: RoleConstants.Rightholder.Id,
-                status: RequestStatus.Draft,
+                status: RequestStatusV2.Draft,
                 resourceRef: input.Resource,
                 ct: ct
             );
@@ -279,7 +279,7 @@ public class RequestController(
                 fromId: toResult.Entity.Id,
                 byId: auditAccessor.AuditValues.ChangedBy,
                 roleId: RoleConstants.Rightholder.Id,
-                status: RequestStatus.Draft,
+                status: RequestStatusV2.Draft,
                 package: input.Package,
                 ct: ct
             );
@@ -291,9 +291,9 @@ public class RequestController(
         return problemDetails;
     }
 
-    private async Task<IActionResult> CreateResourceRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, RequestStatus status, RequestReferenceDto resourceRef, CancellationToken ct = default)
+    private async Task<IActionResult> CreateResourceRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, RequestStatusV2 status, RequestReferenceDto resourceRef, CancellationToken ct = default)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
         var paramName = "resource";
 
         var resource = await resourceService.GetResource(resourceRef, ct);
@@ -302,21 +302,9 @@ public class RequestController(
             errorBuilder.Add(ValidationErrorDescriptors.RequestedResourceNotFound, paramName, [new(paramName, $"Resource with reference ID '{resourceRef.ReferenceId}' was not found.")]);
         }
 
-        try
+        if (resource is { Delegable: false })
         {
-            var serviceResource = await resourceRegistryClient.GetResource(resourceRef.ReferenceId, ct);
-
-            if (serviceResource is { Delegable: false })
-            {
-                errorBuilder.Add(ValidationErrors.ResourceIsNotDelegable, paramName, [new(paramName, $"Resource with reference ID '{resourceRef.ReferenceId}' is not delegable.")]);
-            }
-        }
-        catch (HttpRequestException)
-        {
-            // Registry unreachable: don't gate the user's request on registry availability.
-            // The earlier resource-lookup arm already validated that the resource is known to
-            // us locally. Only fail when the registry positively confirms the resource is
-            // non-delegable (the `Delegable: false` arm above).
+            errorBuilder.Add(ValidationErrors.ResourceIsNotDelegable, paramName, [new(paramName, $"Resource with reference ID '{resourceRef.ReferenceId}' is not delegable.")]);
         }
 
         if (errorBuilder.TryBuild(out var problem))
@@ -346,6 +334,7 @@ public class RequestController(
             byId: byId,
             roleId: roleId,
             resourceId: resource.Id,
+            requestedRightKeys: null,
             status: status,
             ct: ct
         );
@@ -355,14 +344,15 @@ public class RequestController(
             return result.Problem.ToActionResult();
         }
 
-        result.Value.Links = BuildLinks(result.Value.Id);
+        var request = DtoMapper.ConvertToV1(result.Value);
+        request.Links = BuildLinks(request.Id);
 
-        return Accepted(result.Value);
+        return Accepted(request);
     }
 
-    private async Task<IActionResult> CreatePackageRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, RequestStatus status, RequestReferenceDto package, CancellationToken ct = default)
+    private async Task<IActionResult> CreatePackageRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, RequestStatusV2 status, RequestReferenceDto package, CancellationToken ct = default)
     {
-        ValidationErrorBuilder errorBuilder = default;
+        ValidationProblemBuilder errorBuilder = default;
 
         if (!PackageConstants.TryGetByAll(package.ReferenceId, out var packageObj))
         {
@@ -394,17 +384,18 @@ public class RequestController(
             return result.Problem.ToActionResult();
         }
 
-        result.Value.Links = BuildLinks(result.Value.Id);
+        var request = DtoMapper.ConvertToV1(result.Value);
+        request.Links = BuildLinks(request.Id);
 
-        return Accepted(result.Value);
+        return Accepted(request);
     }
 
-    private delegate void ValidationRule(ref ValidationErrorBuilder errors);
+    private delegate void ValidationRule(ref ValidationProblemBuilder errors);
 
     private async Task<(Entity Entity, ValidationRule Problems)> GetEntity(string urn, string paramName, CancellationToken ct = default)
     {
         var accumulatedErrors = new List<ValidationRule>();
-        ValidationRule errorBuilderFunc = (ref ValidationErrorBuilder errors) =>
+        ValidationRule errorBuilderFunc = (ref ValidationProblemBuilder errors) =>
         {
             foreach (var error in accumulatedErrors)
             {
@@ -414,7 +405,7 @@ public class RequestController(
 
         if (!ValidUrn(urn))
         {
-            accumulatedErrors.Add((ref ValidationErrorBuilder errorBuilder) => errorBuilder.Add(ValidationErrorDescriptors.InvalidUrn, paramName, [new(paramName, $"Urn {urn} is not valid")]));
+            accumulatedErrors.Add((ref ValidationProblemBuilder errorBuilder) => errorBuilder.Add(ValidationErrorDescriptors.InvalidUrn, paramName, [new(paramName, $"Urn {urn} is not valid")]));
             return (null, errorBuilderFunc);
         }
 
@@ -424,7 +415,7 @@ public class RequestController(
 
         if (!ValidUrns.Contains(key))
         {
-            accumulatedErrors.Add((ref ValidationErrorBuilder errorBuilder) => errorBuilder.Add(ValidationErrorDescriptors.InvalidUrn, $"/{paramName}", [new(paramName, $"Urn {urn} is not valid")]));
+            accumulatedErrors.Add((ref ValidationProblemBuilder errorBuilder) => errorBuilder.Add(ValidationErrorDescriptors.InvalidUrn, $"/{paramName}", [new(paramName, $"Urn {urn} is not valid")]));
             return (null, errorBuilderFunc);
         }
 
@@ -438,7 +429,7 @@ public class RequestController(
 
         if (entity == null)
         {
-            accumulatedErrors.Add((ref ValidationErrorBuilder errorBuilder) => errorBuilder.Add(ValidationErrorDescriptors.NotFound, $"/{paramName}", [new(paramName, $"Entity not found with matcing urn '{urn}'")]));
+            accumulatedErrors.Add((ref ValidationProblemBuilder errorBuilder) => errorBuilder.Add(ValidationErrorDescriptors.NotFound, $"/{paramName}", [new(paramName, $"Entity not found with matcing urn '{urn}'")]));
         }
 
         return (entity, errorBuilderFunc);
