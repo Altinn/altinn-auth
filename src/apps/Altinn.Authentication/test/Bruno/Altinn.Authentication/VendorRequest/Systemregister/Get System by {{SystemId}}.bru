@@ -12,9 +12,6 @@ get {
 
 vars:pre-request {
   systemId: 
-  Sneha Sirure
-    1:54 PM
-  12605031_E2E test - urn:altinn:accesspackage:revisormedarbeiderAnsvarlig Revisor005c1a0d-b27d-45cc-b092-54882767dcb7
   ~systemId: 312605031_78f336c7-3a71-4910-b131-9e42f086d6c9
   ~systemId: 312605031_AlleRelevanteKlientDelegeringsPakker
   ~systemId: 310574775_TwoRedirectUrlsTest
@@ -43,7 +40,6 @@ script:pre-request {
   
   var token = await TestToolsTokenGenerator.getToken(); // Fetch and store the token
   bru.setEnvVar("bearer_token", token);
-  console.log(token)
   
   const auth_orgNo = bru.getEnvVar("auth_orgNo"); // Retrieve it from the environment
   const system_name = bru.getEnvVar("system_name"); // Retrieve system_name as well

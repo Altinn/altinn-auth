@@ -7,20 +7,11 @@ meta {
 post {
   url: {{baseUrl}}/accessmanagement/api/v1/internal/systemuserclientdelegation?party={{party}}
   body: json
-  auth: bearer
+  auth: inherit
 }
 
 params:query {
   party: {{party}}
-}
-
-headers {
-  Authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IkQ4RDg2N0M3RDUyMTM2MEY0RjM1Q0Q1MTU4MEM0OUEwNTE2NUQ0RTEiLCJ4NXQiOiIyTmhueDlVaE5nOVBOYzFSV0F4Sm9GRmwxT0UiLCJ0eXAiOiJKV1QifQ.eyJuYW1laWQiOiIzNDE4OTUiLCJ1cm46YWx0aW5uOnVzZXJpZCI6IjM0MTg5NSIsInVybjphbHRpbm46cGFydHk6dXVpZCI6ImQyYzE0OWQ4LTllODUtNDdkNS04NjZiLTU4N2NjMGVjM2NmYiIsInVybjphbHRpbm46cGFydHlpZCI6NTA4OTE1MDIsInVybjphbHRpbm46YXV0aGVudGljYXRlbWV0aG9kIjoiSWRwb3J0ZW5UZXN0SWQiLCJ1cm46YWx0aW5uOmF1dGhsZXZlbCI6MywianRpIjoiYmJkZWJkODItZTIwOC00YjAyLWI1ZTMtZjlkNmVjYzNmNjM0Iiwic2NvcGUiOiJhbHRpbm46cG9ydGFsL2VuZHVzZXIiLCJuYmYiOjE3NDMxNzA3MzMsImV4cCI6MTc0MzE3MjUzMywiaWF0IjoxNzQzMTcwNzMzfQ.KHCs349FM7XkWj2nvFd9ISo8BaxZZ8CIsD
-  ~: 
-}
-
-auth:bearer {
-  token: 
 }
 
 body:json {
