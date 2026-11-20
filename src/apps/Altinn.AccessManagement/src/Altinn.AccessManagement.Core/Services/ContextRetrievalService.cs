@@ -355,6 +355,7 @@ public class ContextRetrievalService : IContextRetrievalService
     /// <inheritdoc/>
     public async Task<List<RightDto>> GetResourcePolicyV2(string resourceRegistryId, string languageCode = "nb", CancellationToken cancellationToken = default)
     {
+        languageCode = ToResourceRegistryLanguage(languageCode);
         string cacheKey = $"rrRkId:{resourceRegistryId}:{languageCode}";
 
         if (!_memoryCache.TryGetValue(cacheKey, out List<RightDto> resourceKeys))
@@ -570,4 +571,17 @@ public class ContextRetrievalService : IContextRetrievalService
 
         return userprofile;
     }
+
+    /// <summary>
+    /// Resource Registry names rights by the two-letter language codes in Accept-Language (nb, nn, en),
+    /// while Access Management carries ISO 639-2 codes (nob, nno, eng) once TranslationMiddleware has run.
+    /// Anything else is passed through, and an empty code means bokmål.
+    /// </summary>
+    private static string ToResourceRegistryLanguage(string languageCode) => languageCode?.Trim().ToLowerInvariant() switch
+    {
+        null or "" or "nob" or "no" => "nb",
+        "nno" => "nn",
+        "eng" => "en",
+        var code => code,
+    };
 }

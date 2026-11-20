@@ -1,4 +1,5 @@
-﻿using Altinn.AccessMgmt.PersistenceEF.Utils;
+﻿using Altinn.AccessMgmt.Core.Constants.Translation;
+using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 
 namespace Altinn.AccessMgmt.Core.Extensions;
@@ -251,6 +252,66 @@ public static class DeepTranslationExtensions
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Translates ResourceDtos in place, with nested Provider and Type, looking up each distinct
+    /// resource once and applying the result to every instance that shares its id. Use this where
+    /// a response repeats the same resource, for example across connections and subconnections.
+    /// A text field the mapping left empty stays empty, so a compact resource (id, name and
+    /// reference only) keeps its shape in every language.
+    /// </summary>
+    public static async ValueTask TranslateDistinctInPlaceAsync(
+        this IEnumerable<ResourceDto> resources,
+        ITranslationService translationService,
+        string languageCode,
+        bool allowPartial = true)
+    {
+        if (resources == null || string.IsNullOrWhiteSpace(languageCode) || languageCode == TranslationConstants.DefaultLanguageCode)
+        {
+            return;
+        }
+
+        foreach (var group in resources.Where(r => r != null).GroupBy(r => r.Id))
+        {
+            var first = group.First();
+            var firstShape = ShapeOf(first);
+
+            var translated = await first.TranslateDeepAsync(translationService, languageCode, allowPartial);
+            var (name, description, rightDescription) = (translated.Name, translated.Description, translated.RightDescription);
+
+            ApplyText(translated, firstShape, name, description, rightDescription);
+
+            foreach (var other in group.Skip(1))
+            {
+                ApplyText(other, ShapeOf(other), name, description, rightDescription);
+
+                if (other.Provider != null)
+                {
+                    other.Provider = translated.Provider ?? await other.Provider.TranslateDeepAsync(translationService, languageCode, allowPartial);
+                }
+
+                if (other.Type != null)
+                {
+                    other.Type = translated.Type ?? await translationService.TranslateAsync(other.Type, languageCode, allowPartial);
+                }
+            }
+        }
+    }
+
+    private static (bool Name, bool Description, bool RightDescription) ShapeOf(ResourceDto resource)
+        => (resource.Name != null, resource.Description != null, resource.RightDescription != null);
+
+    /// <summary>
+    /// Applies translated text to one resource instance and keeps the fields that instance had:
+    /// a field it had takes the translation, or keeps its own text when there is none, and a
+    /// field it lacked stays empty.
+    /// </summary>
+    private static void ApplyText(ResourceDto target, (bool Name, bool Description, bool RightDescription) shape, string name, string description, string rightDescription)
+    {
+        target.Name = shape.Name ? name ?? target.Name : null;
+        target.Description = shape.Description ? description ?? target.Description : null;
+        target.RightDescription = shape.RightDescription ? rightDescription ?? target.RightDescription : null;
     }
 
     /// <summary>
