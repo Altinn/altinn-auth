@@ -53,7 +53,7 @@ namespace Altinn.Authorization.Services.Implementation
             if (!_memoryCache.TryGetValue(cacheKey, out ServiceResource resource))
             {
                 string apiurl = $"resource/{resourceId}";
-                HttpResponseMessage response = await _resourceRegistry.Client.GetAsync(apiurl, cancellationToken);
+                HttpResponseMessage response = await DependencyCall.SendAsync(DependencyCall.ResourceRegistry, () => _resourceRegistry.Client.GetAsync(apiurl, cancellationToken), cancellationToken);
 
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
@@ -72,7 +72,7 @@ namespace Altinn.Authorization.Services.Implementation
             if (!_memoryCache.TryGetValue(cacheKey, out XacmlPolicy policy))
             {
                 string apiurl = $"resource/{resourceId}/policy";
-                HttpResponseMessage response = await _resourceRegistry.Client.GetAsync(apiurl, cancellationToken);
+                HttpResponseMessage response = await DependencyCall.SendAsync(DependencyCall.ResourceRegistry, () => _resourceRegistry.Client.GetAsync(apiurl, cancellationToken), cancellationToken);
 
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
@@ -97,7 +97,7 @@ namespace Altinn.Authorization.Services.Implementation
             {
                 string apiurl = $"access-lists/memberships?party={partyUrn}&resource={resourceIdUrn}";
                 string accessToken = _accessTokenGenerator.GenerateAccessToken("platform", "authorization");
-                HttpResponseMessage response = await _resourceRegistry.Client.GetAsync(apiurl, platformAccessToken: accessToken, cancellationToken: cancellationToken);
+                HttpResponseMessage response = await DependencyCall.SendAsync(DependencyCall.ResourceRegistry, () => _resourceRegistry.Client.GetAsync(apiurl, platformAccessToken: accessToken, cancellationToken: cancellationToken), cancellationToken);
 
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
@@ -118,7 +118,7 @@ namespace Altinn.Authorization.Services.Implementation
             {
                 string apiurl = $"access-lists/get-by-member?party={partyUrn}";
                 string accessToken = _accessTokenGenerator.GenerateAccessToken("platform", "authorization");
-                HttpResponseMessage response = await _resourceRegistry.Client.GetAsync(apiurl, platformAccessToken: accessToken, cancellationToken: cancellationToken);
+                HttpResponseMessage response = await DependencyCall.SendAsync(DependencyCall.ResourceRegistry, () => _resourceRegistry.Client.GetAsync(apiurl, platformAccessToken: accessToken, cancellationToken: cancellationToken), cancellationToken);
 
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
