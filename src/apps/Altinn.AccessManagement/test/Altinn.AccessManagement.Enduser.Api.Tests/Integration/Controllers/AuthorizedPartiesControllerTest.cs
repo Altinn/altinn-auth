@@ -523,6 +523,28 @@ public class AuthorizedPartiesControllerTest : IClassFixture<ApiFixture>
     }
 
     /// <summary>
+    /// The includeSubParties and includeInactiveParties filters are only applied when the
+    /// AuthorizedParties.SubAndInactivePartiesFilters feature flag is enabled, which it is not in this class.
+    /// Until then the subunit stays nested under the main unit even when the caller asks for no subunits.
+    /// </summary>
+    [Fact]
+    public async Task GetAuthorizedParties_FiltersFeatureDisabled_IncludeSubPartiesFalse_Returns200WithSubunitNested()
+    {
+        HttpClient client = CreatePortalClient(TestEntities.PersonPaula);
+
+        HttpResponseMessage response = await client.GetAsync($"{Route}?includeSubParties=false&includeInactiveParties=false", TestContext.Current.CancellationToken);
+        string content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {content}");
+
+        PaginatedResult<AuthorizedPartyDto> result = JsonSerializer.Deserialize<PaginatedResult<AuthorizedPartyDto>>(content, JsonOptions);
+        Assert.NotNull(result);
+
+        AuthorizedPartyDto mainUnit = result.Items.FirstOrDefault(p => p.PartyUuid == TestEntities.MainUnitKarlstad.Id);
+        Assert.NotNull(mainUnit);
+        Assert.Contains(mainUnit.Subunits, s => s.PartyUuid == TestEntities.SubunitKarlstad.Id);
+    }
+
+    /// <summary>
     /// Paula holds an instance delegation on the Karlstad main unit. The authorized-parties response
     /// surfaces that instance on the main unit but must not inherit it onto the nested subunit, even
     /// though roles and access packages are inherited. Guards the instance-exclusion half of the
