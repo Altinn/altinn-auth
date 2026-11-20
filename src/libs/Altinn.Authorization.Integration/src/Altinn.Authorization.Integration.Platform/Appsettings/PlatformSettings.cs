@@ -75,6 +75,13 @@
             public class TestToolOptions : EndpointOptions
             {
                 /// <summary>
+                /// Gets or sets the full URL of the test tool's platform access token endpoint
+                /// (<c>Platform:Token:TestTool:PlatformAccessTokenUrl</c>). When set, it is used as is instead of
+                /// <see cref="EndpointOptions.Endpoint"/> + <c>/api/GetPlatformAccessToken</c>.
+                /// </summary>
+                public Uri PlatformAccessTokenUrl { get; set; }
+
+                /// <summary>
                 /// Gets or sets the username for authenticating with the test tool.
                 /// </summary>
                 public string Username { get; set; }
