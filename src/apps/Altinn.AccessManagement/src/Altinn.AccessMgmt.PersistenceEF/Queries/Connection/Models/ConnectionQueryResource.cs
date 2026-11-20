@@ -23,6 +23,12 @@ public sealed class ConnectionQueryResource
     public string RefId { get; init; } = string.Empty;
 
     /// <summary>
+    /// Who last changed the assignment resource row, and when. Only set for resources assigned directly
+    /// when <see cref="ConnectionQueryFilter.IncludeChangeInfo"/> is <c>true</c>.
+    /// </summary>
+    public ConnectionQueryChangeInfo ChangeInfo { get; init; }
+
+    /// <summary>
     /// Whether the resource can be delegated
     /// </summary>
     public bool Delegable { get; init; }
