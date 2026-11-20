@@ -1,5 +1,6 @@
 ﻿
 using Altinn.ResourceRegistry.Core.AccessLists;
+using Altinn.ResourceRegistry.Core.Aggregates;
 using Altinn.ResourceRegistry.TestUtils;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;

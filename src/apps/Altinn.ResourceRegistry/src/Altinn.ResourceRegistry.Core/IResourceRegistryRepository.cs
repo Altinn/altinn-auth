@@ -30,14 +30,37 @@ namespace Altinn.ResourceRegistry.Core
         /// </summary>
         /// <param name="id">The resource identifier to delete</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> for cancelling the async process.</param>
-        Task<ServiceResource> DeleteResource(string id, CancellationToken cancellationToken = default);
+        /// <returns>The deleted resource and when it was deleted, or <see langword="null"/> if the resource does not exist</returns>
+        Task<DeletedResource> DeleteResource(string id, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Deletes a resource from the resource registry, and runs <paramref name="beforeCommit"/> before the deletion commits
+        /// </summary>
+        /// <remarks>
+        /// The resource identifier stays locked until the deletion commits, so it cannot be created again
+        /// and the resource cannot be updated while <paramref name="beforeCommit"/> runs. If it throws, the
+        /// deletion is rolled back.
+        /// </remarks>
+        /// <param name="id">The resource identifier to delete</param>
+        /// <param name="beforeCommit">Runs with the time of the deletion, before the deletion commits</param>
+        /// <param name="cancellationToken">A <see cref="CancellationToken"/> for cancelling the async process.</param>
+        /// <returns>The deleted resource and when it was deleted, or <see langword="null"/> if the resource does not exist</returns>
+        Task<DeletedResource> DeleteResource(string id, Func<DateTimeOffset, CancellationToken, Task> beforeCommit, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Gets when a resource was deleted, if the identifier belongs to a deleted resource
+        /// </summary>
+        /// <param name="id">The resource identifier</param>
+        /// <param name="cancellationToken">A <see cref="CancellationToken"/> for cancelling the async process.</param>
+        /// <returns>The time of deletion, or <see langword="null"/> if the resource exists or never existed</returns>
+        Task<DateTimeOffset?> GetResourceDeletedAt(string id, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Updates a service resource in the resource registry if it pass all validation checks
         /// </summary>
         /// <param name="resource">Service resource model for update in the resource registry</param>
         /// <param name="cancellationToken">A <see cref="CancellationToken"/> for cancelling the async process.</param>
-        /// <returns>The result of the operation</returns>
+        /// <returns>The updated resource, or <see langword="null"/> if the resource does not exist or has been deleted</returns>
         Task<ServiceResource> UpdateResource(ServiceResource resource, CancellationToken cancellationToken = default);
 
         /// <summary>
