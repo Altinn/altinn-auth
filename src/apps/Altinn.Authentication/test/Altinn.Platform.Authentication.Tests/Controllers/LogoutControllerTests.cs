@@ -416,6 +416,32 @@ namespace Altinn.Platform.Authentication.Tests.Controllers
             AssertionUtil.AssertAuthenticationEvent(eventQueue, expectedAuthenticationEvent, Moq.Times.Never());
         }
 
+        /// <summary>
+        /// Frontchannel logout with a cookie that is not a JWT
+        /// Event log : the audit event cannot be built, which is logged and does not fail the logout
+        /// </summary>
+        [Fact]
+        public async Task Logout_FrontChannel_MalformedCookie_StillOk()
+        {
+            _eventQueue.Setup(q => q.EnqueueAuthenticationEvent(It.IsAny<string>()));
+
+            _featureManager
+                .Setup(m => m.IsEnabledAsync("AuditLog"))
+                .Returns(Task.FromResult(true));
+
+            HttpClient client = CreateClient();
+
+            HttpRequestMessage requestMessage = new HttpRequestMessage(HttpMethod.Get, "/authentication/api/v1/frontchannel_logout");
+            SetupUtil.AddAuthCookie(requestMessage, "not-a-jwt");
+
+            // Act
+            HttpResponseMessage response = await client.SendAsync(requestMessage);
+
+            // Assert
+            Assert.Equal(System.Net.HttpStatusCode.OK, response.StatusCode);
+            _eventQueue.Verify(q => q.EnqueueAuthenticationEvent(It.IsAny<string>()), Moq.Times.Never());
+        }
+
         private static string GetConfigPath()
         {
             string unitTestFolder = Path.GetDirectoryName(new Uri(typeof(AuthenticationControllerTests).Assembly.Location).LocalPath)!; // assembly location always has a directory

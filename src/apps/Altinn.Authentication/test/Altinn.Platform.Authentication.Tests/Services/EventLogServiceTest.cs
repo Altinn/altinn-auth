@@ -15,6 +15,9 @@ using Altinn.Platform.Authentication.Tests.Mocks;
 using Azure.Messaging;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Logging.Testing;
 using Microsoft.Extensions.Time.Testing;
 using Microsoft.FeatureManagement;
 using Moq;
@@ -143,9 +146,108 @@ namespace Altinn.Platform.Authentication.Tests.Services
             queueMock.Verify(r => r.EnqueueAuthenticationEvent(It.IsAny<string>()), Times.Never);
         }
 
-        private static IEventLog GetEventLogService(IEventsQueueClient queueMock, TimeProvider timeProviderMock)
+        [Fact]
+        public async Task QueueAuthenticationEvent_EnqueueFails_LogsErrorAndDoesNotThrow()
         {
-            var service = new EventLogService(queueMock, timeProviderMock);
+            // Arrange
+            UserAuthenticationModel authenticatedUser = GetAuthenticationModel(SecurityLevel.QuiteSensitive, AuthenticationMethod.AltinnPIN, 45321);
+            InvalidOperationException queueFailure = new("queue unavailable");
+
+            Mock<IEventsQueueClient> queueMock = new();
+            queueMock
+                .Setup(q => q.EnqueueAuthenticationEvent(It.IsAny<string>())).ReturnsAsync(new QueuePostReceipt { Success = false, Exception = queueFailure });
+
+            FakeLogger<EventLogService> logger = new();
+            var service = GetEventLogService(queueMock.Object, timeProviderMock, logger);
+
+            // Act
+            await service.CreateAuthenticationEventAsync(GetAuditLogEnabled(), authenticatedUser, AuthenticationEventType.Authenticate, new Mock<HttpContext>().Object);
+
+            // Assert
+            FakeLogRecord record = Assert.Single(logger.Collector.GetSnapshot());
+            Assert.Equal(LogLevel.Error, record.Level);
+            Assert.Same(queueFailure, record.Exception);
+            Assert.Contains("Authenticate", record.Message);
+        }
+
+        [Fact]
+        public async Task QueueAuthenticationEvent_EnqueueThrows_LogsErrorAndDoesNotThrow()
+        {
+            // Arrange
+            UserAuthenticationModel authenticatedUser = GetAuthenticationModel(SecurityLevel.QuiteSensitive, AuthenticationMethod.AltinnPIN, 45321);
+
+            Mock<IEventsQueueClient> queueMock = new();
+            queueMock
+                .Setup(q => q.EnqueueAuthenticationEvent(It.IsAny<string>())).ThrowsAsync(new InvalidOperationException("queue unavailable"));
+
+            FakeLogger<EventLogService> logger = new();
+            var service = GetEventLogService(queueMock.Object, timeProviderMock, logger);
+
+            // Act
+            await service.CreateAuthenticationEventAsync(GetAuditLogEnabled(), authenticatedUser, AuthenticationEventType.Logout, new Mock<HttpContext>().Object);
+
+            // Assert
+            FakeLogRecord record = Assert.Single(logger.Collector.GetSnapshot());
+            Assert.Equal(LogLevel.Error, record.Level);
+            Assert.IsType<InvalidOperationException>(record.Exception);
+            Assert.Contains("Logout", record.Message);
+        }
+
+        [Fact]
+        public async Task QueueAuthenticationEvent_MalformedToken_LogsErrorAndDoesNotQueue()
+        {
+            // Arrange
+            Mock<IEventsQueueClient> queueMock = new();
+            FakeLogger<EventLogService> logger = new();
+            var service = GetEventLogService(queueMock.Object, timeProviderMock, logger);
+
+            // Act
+            await service.CreateAuthenticationEventAsync(GetAuditLogEnabled(), "not-a-jwt", AuthenticationEventType.Logout, IPAddress.Parse("244.233.12.2"));
+
+            // Assert
+            queueMock.Verify(r => r.EnqueueAuthenticationEvent(It.IsAny<string>()), Times.Never);
+            FakeLogRecord record = Assert.Single(logger.Collector.GetSnapshot());
+            Assert.Equal(LogLevel.Error, record.Level);
+            Assert.NotNull(record.Exception);
+            Assert.Contains("Logout", record.Message);
+        }
+
+        [Fact]
+        public async Task QueueAuthenticationEvent_FeatureCheckThrows_LogsErrorAndDoesNotThrow()
+        {
+            // Arrange
+            Mock<IEventsQueueClient> queueMock = new();
+            Mock<IFeatureManager> featureManagerMock = new();
+            featureManagerMock
+                .Setup(m => m.IsEnabledAsync("AuditLog"))
+                .ThrowsAsync(new InvalidOperationException("feature store unavailable"));
+
+            FakeLogger<EventLogService> logger = new();
+            var service = GetEventLogService(queueMock.Object, timeProviderMock, logger);
+
+            // Act
+            await service.CreateAuthenticationEventAsync(featureManagerMock.Object, "not-used", AuthenticationEventType.Refresh, IPAddress.Parse("244.233.12.2"));
+
+            // Assert
+            queueMock.Verify(r => r.EnqueueAuthenticationEvent(It.IsAny<string>()), Times.Never);
+            FakeLogRecord record = Assert.Single(logger.Collector.GetSnapshot());
+            Assert.Equal(LogLevel.Error, record.Level);
+            Assert.IsType<InvalidOperationException>(record.Exception);
+            Assert.Contains("Refresh", record.Message);
+        }
+
+        private static IFeatureManager GetAuditLogEnabled()
+        {
+            Mock<IFeatureManager> featureManageMock = new();
+            featureManageMock
+                .Setup(m => m.IsEnabledAsync("AuditLog"))
+                .Returns(Task.FromResult(true));
+            return featureManageMock.Object;
+        }
+
+        private static IEventLog GetEventLogService(IEventsQueueClient queueMock, TimeProvider timeProviderMock, ILogger<EventLogService>? logger = null)
+        {
+            var service = new EventLogService(queueMock, timeProviderMock, logger ?? NullLogger<EventLogService>.Instance);
             return service;
         }
 

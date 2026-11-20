@@ -126,7 +126,7 @@ Both faces ultimately call the **token issuer** (`TokenIssuerService` / the `Gen
 
 - **Token signing**: certificates from Azure Key Vault, selected with a rollover delay so a freshly-published cert propagates to verifiers before it signs. Public keys served at JWKS.
 - **Sessions**: session handles are random 256-bit values, stored only as an HMAC-SHA256 with a server-side pepper; refresh tokens rotate with reuse-detection.
-- **Audit**: authentication events are enqueued to Azure Storage Queue, gated by the `AuditLog` feature flag.
+- **Audit**: authentication events are enqueued to Azure Storage Queue, gated by the `AuditLog` feature flag. Every write is awaited; a failure to build or queue an event, or to evaluate the flag, is logged as an error with its event type and never fails the request. `EventsQueueClient` cuts each write off at a 10-second deadline (queue creation and send together, with short retries inside it), so an unavailable queue adds at most about 10 seconds to sign-in, refresh, logout or token exchange.
 - **Observability**: OpenTelemetry tracing + metrics across all assemblies, exported to Application Insights. Structured logging via `Logging:LogLevel`.
 - **Health**: `GET /health` (liveness). (Readiness/dependency checks are a known gap — see [operations.md](operations.md).)
 

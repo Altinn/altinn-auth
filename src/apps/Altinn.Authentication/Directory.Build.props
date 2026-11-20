@@ -29,7 +29,7 @@
     list once it is fixed, so new warnings of that kind fail the build again.
   -->
   <PropertyGroup>
-    <WarningsNotAsErrors>$(WarningsNotAsErrors);CS0219;CS0618;CS1570;CS1573;CS4014;CS8600;CS8601;CS8602;CS8603;CS8604;CS8618;CS8619;CS8625;CS8767;CS9113;ASPDEPR005;SYSLIB0057</WarningsNotAsErrors>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);CS0219;CS0618;CS1570;CS1573;CS8600;CS8601;CS8602;CS8603;CS8604;CS8618;CS8619;CS8625;CS8767;CS9113;ASPDEPR005;SYSLIB0057</WarningsNotAsErrors>
   </PropertyGroup>
 
 </Project>
