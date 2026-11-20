@@ -304,6 +304,109 @@ public class AuthorizationEventDuplicateTrackerTest : IDisposable
         Assert.Equal(AuthorizationEventDuplicateKind.None, Track(tracker, other));
     }
 
+    [Fact]
+    public void Classify_DoesNotRememberTheEvent()
+    {
+        var tracker = CreateTracker();
+
+        Assert.Equal(AuthorizationEventDuplicateKind.None, tracker.Classify(CreateEvent(), []).Kind);
+        Assert.Equal(AuthorizationEventDuplicateKind.None, tracker.Classify(CreateEvent(), []).Kind);
+    }
+
+    [Fact]
+    public void Remember_MakesRepeatsDuplicates()
+    {
+        var tracker = CreateTracker();
+
+        tracker.Remember(tracker.Classify(CreateEvent(traceId: "trace-1"), []));
+
+        Assert.Equal(AuthorizationEventDuplicateKind.SameTrace, tracker.Classify(CreateEvent(traceId: "trace-1"), []).Kind);
+        Assert.Equal(AuthorizationEventDuplicateKind.Window, tracker.Classify(CreateEvent(traceId: "trace-2"), []).Kind);
+    }
+
+    [Fact]
+    public void Remember_WindowRunsFromWhenTheEventWasClassified()
+    {
+        var tracker = CreateTracker();
+
+        AuthorizationEventClassification classification = tracker.Classify(CreateEvent(traceId: "trace-1"), []);
+        _timeProvider.Advance(TimeSpan.FromSeconds(50));
+        tracker.Remember(classification);
+        _timeProvider.Advance(TimeSpan.FromSeconds(15));
+
+        // 65 seconds after the event, 15 after it was remembered.
+        Assert.Equal(AuthorizationEventDuplicateKind.None, tracker.Classify(CreateEvent(traceId: "trace-2"), []).Kind);
+    }
+
+    [Fact]
+    public void Remember_RepeatFromOtherTrace_RemembersThatTrace()
+    {
+        var tracker = CreateTracker();
+        tracker.Remember(tracker.Classify(CreateEvent(traceId: "trace-1"), []));
+
+        AuthorizationEventClassification repeat = tracker.Classify(CreateEvent(traceId: "trace-2"), []);
+        tracker.Remember(repeat);
+
+        Assert.Equal(AuthorizationEventDuplicateKind.Window, repeat.Kind);
+        Assert.Equal(AuthorizationEventDuplicateKind.SameTrace, tracker.Classify(CreateEvent(traceId: "trace-2"), []).Kind);
+    }
+
+    [Fact]
+    public void Remember_RepeatFromOtherTrace_ItsTraceExpiresWithTheEventItRepeats()
+    {
+        var tracker = CreateTracker();
+        tracker.Remember(tracker.Classify(CreateEvent(traceId: "trace-1"), []));
+        _timeProvider.Advance(TimeSpan.FromSeconds(50));
+        tracker.Remember(tracker.Classify(CreateEvent(traceId: "trace-2"), []));
+
+        // Either side of the end of the window of the event in trace-1.
+        _timeProvider.Advance(TimeSpan.FromSeconds(5));
+        Assert.Equal(AuthorizationEventDuplicateKind.SameTrace, tracker.Classify(CreateEvent(traceId: "trace-2"), []).Kind);
+        _timeProvider.Advance(TimeSpan.FromSeconds(10));
+        Assert.Equal(AuthorizationEventDuplicateKind.None, tracker.Classify(CreateEvent(traceId: "trace-2"), []).Kind);
+    }
+
+    [Fact]
+    public void Track_RepeatFromOtherTrace_ItsTraceExpiresWithTheEventItRepeats()
+    {
+        var tracker = CreateTracker();
+        Track(tracker, CreateEvent(traceId: "trace-1"));
+        _timeProvider.Advance(TimeSpan.FromSeconds(50));
+        Track(tracker, CreateEvent(traceId: "trace-2"));
+        _timeProvider.Advance(TimeSpan.FromSeconds(15));
+
+        Assert.Equal(AuthorizationEventDuplicateKind.None, Track(tracker, CreateEvent(traceId: "trace-2")));
+    }
+
+    [Fact]
+    public void Classify_IgnoresEventsSeenOnlyByTrack()
+    {
+        // Track remembers events whether or not they were queued, so they must not count when dropping.
+        var tracker = CreateTracker();
+        Track(tracker, CreateEvent(traceId: "trace-1"));
+
+        Assert.Equal(AuthorizationEventDuplicateKind.None, tracker.Classify(CreateEvent(traceId: "trace-1"), []).Kind);
+        Assert.Equal(AuthorizationEventDuplicateKind.None, tracker.Classify(CreateEvent(traceId: "trace-2"), []).Kind);
+    }
+
+    [Fact]
+    public void Remember_EventAlreadyRemembered_KeepsItsEarlierTime()
+    {
+        // Two sends of the same new event in flight at once: both are classified before either is remembered.
+        var tracker = CreateTracker();
+        AuthorizationEventClassification first = tracker.Classify(CreateEvent(traceId: "trace-1"), []);
+        _timeProvider.Advance(TimeSpan.FromSeconds(10));
+        AuthorizationEventClassification second = tracker.Classify(CreateEvent(traceId: "trace-2"), []);
+
+        tracker.Remember(first);
+        tracker.Remember(second);
+        _timeProvider.Advance(TimeSpan.FromSeconds(55));
+
+        // 65 seconds after the first, 55 after the second: the window runs from the first.
+        Assert.Equal(AuthorizationEventDuplicateKind.None, second.Kind);
+        Assert.Equal(AuthorizationEventDuplicateKind.None, tracker.Classify(CreateEvent(traceId: "trace-3"), []).Kind);
+    }
+
     private static AuthorizationEventDuplicateKind Track(AuthorizationEventDuplicateTracker tracker, AuthorizationEvent authorizationEvent, params string[] resourceInstanceIds) =>
         tracker.Track(authorizationEvent, resourceInstanceIds);
 
