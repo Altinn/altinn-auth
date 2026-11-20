@@ -501,7 +501,7 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
         // The regular surface always hides the Supplier-role (Maskinporten schema) events,
         // from entries and filter values alike.
         var entries = await service.GetConnectionsActivityLog(
-            from.Id, direction: null, new ActivityLogQueryFilter(), 100, 0, TestContext.Current.CancellationToken);
+            from.Id, direction: null, new ActivityLogQueryFilter(), 100, 0, cancellationToken: TestContext.Current.CancellationToken);
         Assert.DoesNotContain(entries.Items, e => e.ItemId == supplierAssignment.Id);
         Assert.Contains(entries.Items, e => e.ItemId == rightholderAssignment.Id);
 
@@ -512,7 +512,7 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
 
         // The maskinporten surface serves only that slice — the two can never mix.
         var mps = await service.GetMaskinportenSchemaActivityLog(
-            from.Id, direction: null, new ActivityLogQueryFilter(), 100, 0, TestContext.Current.CancellationToken);
+            from.Id, direction: null, new ActivityLogQueryFilter(), 100, 0, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Contains(mps.Items, e => e.ItemId == supplierAssignment.Id);
         Assert.DoesNotContain(mps.Items, e => e.ItemId == rightholderAssignment.Id);
 
@@ -578,11 +578,11 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
 
         // A type filter outside the slice narrows to nothing — it never widens the surface.
         var requestsWithAssignmentType = await service.GetRequestActivityLog(
-            from.Id, direction: null, new ActivityLogQueryFilter { Types = [ActivityLogType.Assignment] }, 100, 0, TestContext.Current.CancellationToken);
+            from.Id, direction: null, new ActivityLogQueryFilter { Types = [ActivityLogType.Assignment] }, 100, 0, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Empty(requestsWithAssignmentType.Items);
 
         var connectionsWithRequestType = await service.GetConnectionsActivityLog(
-            from.Id, direction: null, new ActivityLogQueryFilter { Types = [ActivityLogType.Request] }, 100, 0, TestContext.Current.CancellationToken);
+            from.Id, direction: null, new ActivityLogQueryFilter { Types = [ActivityLogType.Request] }, 100, 0, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Empty(connectionsWithRequestType.Items);
 
         // Catalog combinations outside the slice clamp the same way instead of degrading to
@@ -595,7 +595,7 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
 
         // The slice's own surface still serves its events.
         var connections = await service.GetConnectionsActivityLog(
-            from.Id, direction: null, new ActivityLogQueryFilter(), 100, 0, TestContext.Current.CancellationToken);
+            from.Id, direction: null, new ActivityLogQueryFilter(), 100, 0, cancellationToken: TestContext.Current.CancellationToken);
         Assert.Contains(connections.Items, e => e.ItemId == assignment.Id);
     }
 }

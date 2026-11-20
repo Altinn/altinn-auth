@@ -50,4 +50,11 @@ public class BaseActivityType : BaseAudit, IEntityId, IEntityName
     /// One-sentence description of what the event means.
     /// </summary>
     public string Description { get; set; }
+
+    /// <summary>
+    /// Sentence template describing one concrete event, filled from the log entry's name
+    /// snapshots: {from}, {to}, {via}, {by}, {role}, {package} and {resource}. Written in the
+    /// third person so it reads the same from either side of the relation.
+    /// </summary>
+    public string Text { get; set; }
 }
