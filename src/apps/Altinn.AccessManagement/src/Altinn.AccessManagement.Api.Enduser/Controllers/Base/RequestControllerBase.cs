@@ -555,6 +555,12 @@ public abstract class RequestControllerBase<TRequest, TStatus>(
             return delegationCheck.Problem.ToActionResult();
         }
 
+        var delegableRightKeys = delegationCheck.Value.Rights
+            .Where(r => r.Result)
+            .Select(r => r.Right.Key)
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+
         if (rightKeys is { Count: > 0 })
         {
             var userProblem = RequestApproval.ValidateUserCanDelegate(rightKeys, delegationCheck.Value.Rights, jsonPointer);
@@ -565,11 +571,7 @@ public abstract class RequestControllerBase<TRequest, TStatus>(
         }
         else
         {
-            rightKeys = delegationCheck.Value.Rights
-                .Where(r => r.Result)
-                .Select(r => r.Right.Key)
-                .Distinct(StringComparer.Ordinal)
-                .ToList();
+            rightKeys = delegableRightKeys;
 
             if (rightKeys.Count == 0)
             {
@@ -605,7 +607,7 @@ public abstract class RequestControllerBase<TRequest, TStatus>(
             return result.Problem.ToActionResult();
         }
 
-        var status = RequestApproval.DetermineStatus(request.RequestedRightKeys, selectedRightKeys);
+        var status = RequestApproval.DetermineStatus(request.RequestedRightKeys, selectedRightKeys, delegableRightKeys);
         var updateResult = await RequestService.ApproveResourceRequest(partyUuid, request.Id, status, rightKeys, ct);
         if (updateResult.IsProblem)
         {

@@ -80,6 +80,7 @@ public class RequestControllerTest
         private const string TestResourceRefId = "create-resource-test-1";
         private const string TestMaskinportenSchemaResourceRefId = "create-resource-test-2";
         private const string TestNonDelegableResourceRefId = "create-resource-test-not-delegable";
+        private static readonly Guid PendingWithRightKeysId = Guid.Parse("0196b001-0000-7000-8000-000000000003");
 
         public CreateResourceRequest(ApiFixture fixture)
         {
@@ -122,6 +123,28 @@ public class RequestControllerTest
                 });
 
                 db.SaveChanges();
+
+                // A pending request for specific rights, which only version 2 can create.
+                // HildeStrand is chair of the board of BakerJohnsen (seeded via TestData.Assignments).
+                var assignment = new RequestAssignment
+                {
+                    FromId = TestData.HildeStrand.Id,
+                    ToId = TestData.BakerJohnsen.Id,
+                    ById = TestData.HildeStrand.Id,
+                    RoleId = RoleConstants.Rightholder,
+                };
+                db.RequestAssignments.Add(assignment);
+                db.SaveChanges();
+
+                db.RequestAssignmentResources.Add(new RequestAssignmentResource
+                {
+                    Id = PendingWithRightKeysId,
+                    AssignmentId = assignment.Id,
+                    ResourceId = TestResourceId,
+                    Status = RequestStatusV2.Pending,
+                    RequestedRightKeys = ["read"],
+                });
+                db.SaveChanges();
             });
         }
 
@@ -161,6 +184,35 @@ public class RequestControllerTest
                 TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task WhilePendingWithRightKeys_Returns409_AndKeepsPendingRequest()
+        {
+            // v1 always asks for the whole resource, so the seeded pending request for specific rights makes it
+            // return 409 instead of the pending request.
+            var ct = TestContext.Current.CancellationToken;
+            var client = CreateSystemClient(Fixture, TestData.HildeStrand.Id);
+            var response = await client.PostAsync(
+                $"{Route}/resource?party={TestData.HildeStrand.Id}&to={TestData.BakerJohnsen.Id}&resource={TestResourceRefId}",
+                null,
+                ct);
+
+            var content = await response.Content.ReadAsStringAsync(ct);
+            Assert.True(response.StatusCode == HttpStatusCode.Conflict, $"Expected Conflict but got {response.StatusCode}. Response body: {content}");
+            var problem = JsonSerializer.Deserialize<AltinnProblemDetails>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            Assert.Equal(Problems.PendingRequestWithOtherRightKeys.ErrorCode, problem.ErrorCode);
+
+            await Fixture.QueryDb(async db =>
+            {
+                var stored = await db.RequestAssignmentResources
+                    .Where(r => r.Assignment.FromId == TestData.HildeStrand.Id && r.ResourceId == TestResourceId)
+                    .ToListAsync(ct);
+                var pending = Assert.Single(stored);
+                Assert.Equal(PendingWithRightKeysId, pending.Id);
+                Assert.Equal(RequestStatusV2.Pending, pending.Status);
+                Assert.Equal(["read"], pending.RequestedRightKeys);
+            });
         }
 
         [Fact]
