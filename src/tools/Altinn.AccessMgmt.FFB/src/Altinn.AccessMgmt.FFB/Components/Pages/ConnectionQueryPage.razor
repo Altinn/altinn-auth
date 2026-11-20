@@ -66,6 +66,7 @@
                 <MudCheckBox @bind-Value="_includeDelegation" Label="Delegering" Color="Color.Primary" Dense="true" />
                 <MudCheckBox @bind-Value="_includeKeyRole" Label="Key role" Color="Color.Primary" Dense="true" />
                 <MudCheckBox @bind-Value="_includeSubConnections" Label="Sub-connections" Color="Color.Primary" Dense="true" />
+                <MudCheckBox @bind-Value="_includeInnehaverConnections" Label="Innehaver (ENK)" Color="Color.Primary" Dense="true" />
                 <MudCheckBox @bind-Value="_includeMainUnitConnections" Label="Hovedenhet" Color="Color.Primary" Dense="true" />
                 <MudCheckBox @bind-Value="_includePackages" Label="Pakker" Color="Color.Secondary" Dense="true" />
                 <MudCheckBox @bind-Value="_includeResources" Label="Ressurser" Color="Color.Secondary" Dense="true" />
@@ -310,6 +311,7 @@
     private bool _includeDelegation = true;
     private bool _includeKeyRole = true;
     private bool _includeSubConnections = true;
+    private bool _includeInnehaverConnections = true;
     private bool _includeMainUnitConnections = true;
     private bool _includePackages;
     private bool _includeResources;
@@ -383,6 +385,7 @@
                 IncludeDelegation = _includeDelegation,
                 IncludeKeyRole = _includeKeyRole,
                 IncludeSubConnections = _includeSubConnections,
+                IncludeInnehaverConnections = _includeInnehaverConnections,
                 IncludeMainUnitConnections = _includeMainUnitConnections,
                 ExcludeDeleted = _excludeDeleted,
                 EnrichEntities = true,

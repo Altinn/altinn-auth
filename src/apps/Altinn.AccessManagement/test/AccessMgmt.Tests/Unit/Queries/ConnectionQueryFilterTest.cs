@@ -116,6 +116,7 @@ public class ConnectionQueryFilterTest
         filter.IncludeDelegation.Should().BeTrue();
         filter.IncludeKeyRole.Should().BeTrue();
         filter.IncludeSubConnections.Should().BeTrue();
+        filter.IncludeInnehaverConnections.Should().BeTrue();
         filter.IncludeMainUnitConnections.Should().BeTrue();
     }
 }
