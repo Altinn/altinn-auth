@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Text.Json;
+using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessMgmt.Core.Appsettings;
@@ -150,6 +151,39 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
         var second = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, null, RequestStatusV2.Pending, TestContext.Current.CancellationToken)).Value;
 
         Assert.Equal(first.Id, second.Id);
+    }
+
+    [Fact]
+    public async Task CreateRequestAssignmentResource_CalledAgainWithSameRightKeysInOtherOrder_ReturnsExistingPendingRequest()
+    {
+        var resource = await SeedUniqueResource();
+
+        var first = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, ["key-a", "key-b"], RequestStatusV2.Pending, TestContext.Current.CancellationToken)).Value;
+        var second = await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, ["key-b", "key-a", "key-b"], RequestStatusV2.Pending, TestContext.Current.CancellationToken);
+
+        Assert.False(second.IsProblem);
+        Assert.Equal(first.Id, second.Value.Id);
+    }
+
+    [Theory]
+    [InlineData(new[] { "key-a" }, new[] { "key-b" })]
+    [InlineData(new[] { "key-a" }, new[] { "key-a", "key-b" })]
+    [InlineData(new[] { "key-a" }, null)]
+    [InlineData(null, new[] { "key-a" })]
+    public async Task CreateRequestAssignmentResource_CalledAgainWithOtherRightKeys_ReturnsConflictAndKeepsPendingRequest(string[]? pendingKeys, string[]? newKeys)
+    {
+        var resource = await SeedUniqueResource();
+        var first = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, pendingKeys, RequestStatusV2.Pending, TestContext.Current.CancellationToken)).Value;
+
+        var second = await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, newKeys, RequestStatusV2.Pending, TestContext.Current.CancellationToken);
+
+        Assert.True(second.IsProblem);
+        Assert.Equal(Problems.PendingRequestWithOtherRightKeys.ErrorCode, second.Problem.ErrorCode);
+        var stored = Assert.Single(await _db.RequestAssignmentResources.AsNoTracking()
+            .Where(r => r.ResourceId == resource.Id)
+            .ToListAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(first.Id, stored.Id);
+        Assert.Equal(pendingKeys, stored.RequestedRightKeys);
     }
     #endregion
 

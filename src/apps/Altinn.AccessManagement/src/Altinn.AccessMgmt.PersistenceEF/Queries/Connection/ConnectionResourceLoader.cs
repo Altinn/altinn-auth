@@ -32,9 +32,15 @@ internal class ConnectionResourceLoader(AppDbContext db)
     {
         var resourceSet = filter.ResourceIds?.Count > 0 ? new HashSet<Guid>(filter.ResourceIds) : null;
 
-        var assignmentResources = await db.AssignmentResources
-            .Where(ai => rightholderAssignmentIds.Contains(ai.AssignmentId))
-            .Select(ai => new { ai.AssignmentId, ai.Id, ai.ResourceId })
+        var assignmentResourceQuery = db.AssignmentResources
+            .Where(ai => rightholderAssignmentIds.Contains(ai.AssignmentId));
+
+        // Keep the projection covered by the (assignmentid) INCLUDE (id, resourceid) index unless change info is asked for.
+        var assignmentResourceRows = filter.IncludeChangeInfo
+            ? assignmentResourceQuery.Select(ai => new AssignmentRow { AssignmentId = ai.AssignmentId, Id = ai.Id, ResourceId = ai.ResourceId, ValidFrom = ai.Audit_ValidFrom, ChangedBy = ai.Audit_ChangedBy })
+            : assignmentResourceQuery.Select(ai => new AssignmentRow { AssignmentId = ai.AssignmentId, Id = ai.Id, ResourceId = ai.ResourceId, ValidFrom = null, ChangedBy = null });
+
+        var assignmentResources = await assignmentResourceRows
             .WhereIf(resourceSet is not null, x => resourceSet!.Contains(x.ResourceId))
             .Join(db.Resources, x => x.ResourceId, r => r.Id, (x, r) => new
             {
@@ -43,7 +49,9 @@ internal class ConnectionResourceLoader(AppDbContext db)
                 r.Name,
                 r.RefId,
                 r.Delegable,
-                r.AccessListMode
+                r.AccessListMode,
+                x.ValidFrom,
+                x.ChangedBy
             })
             .AsNoTracking()
             .ToListAsync(ct);
@@ -51,30 +59,23 @@ internal class ConnectionResourceLoader(AppDbContext db)
         SortedList<Guid, List<ConnectionQueryResource>> resourcesByAssignment = [];
         foreach (var ai in assignmentResources)
         {
+            var resource = new ConnectionQueryResource()
+            {
+                Id = ai.Id,
+                Name = ai.Name,
+                RefId = ai.RefId,
+                Delegable = ai.Delegable,
+                AccessListMode = ai.AccessListMode,
+                ChangeInfo = ai.ValidFrom.HasValue ? new ConnectionQueryChangeInfo(ai.ValidFrom.Value, ai.ChangedBy) : null
+            };
+
             if (resourcesByAssignment.TryGetValue(ai.AssignmentId, out var list))
             {
-                list.Add(new ConnectionQueryResource()
-                {
-                    Id = ai.Id,
-                    Name = ai.Name,
-                    RefId = ai.RefId,
-                    Delegable = ai.Delegable,
-                    AccessListMode = ai.AccessListMode
-                });
+                list.Add(resource);
             }
             else
             {
-                resourcesByAssignment[ai.AssignmentId] =
-                [
-                    new ConnectionQueryResource()
-                    {
-                        Id = ai.Id,
-                        Name = ai.Name,
-                        RefId = ai.RefId,
-                        Delegable = ai.Delegable,
-                        AccessListMode = ai.AccessListMode
-                    }
-                ];
+                resourcesByAssignment[ai.AssignmentId] = [resource];
             }
         }
 
@@ -97,9 +98,15 @@ internal class ConnectionResourceLoader(AppDbContext db)
         var instanceSet = filter.InstanceIds?.Count > 0 ? new HashSet<string>(filter.InstanceIds) : null;
         var resourceSet = filter.ResourceIds?.Count > 0 ? new HashSet<Guid>(filter.ResourceIds) : null;
 
-        var assignmentInstances = await db.AssignmentInstances
-            .Where(ai => rightholderAssignmentIds.Contains(ai.AssignmentId))
-            .Select(ai => new { ai.AssignmentId, ai.Id, ai.ResourceId, ai.InstanceId })
+        var assignmentInstanceQuery = db.AssignmentInstances
+            .Where(ai => rightholderAssignmentIds.Contains(ai.AssignmentId));
+
+        // Keep the projection covered by the (assignmentid) INCLUDE (id, resourceid, instanceid) index unless change info is asked for.
+        var assignmentInstanceRows = filter.IncludeChangeInfo
+            ? assignmentInstanceQuery.Select(ai => new AssignmentRow { AssignmentId = ai.AssignmentId, Id = ai.Id, ResourceId = ai.ResourceId, InstanceId = ai.InstanceId, ValidFrom = ai.Audit_ValidFrom, ChangedBy = ai.Audit_ChangedBy })
+            : assignmentInstanceQuery.Select(ai => new AssignmentRow { AssignmentId = ai.AssignmentId, Id = ai.Id, ResourceId = ai.ResourceId, InstanceId = ai.InstanceId, ValidFrom = null, ChangedBy = null });
+
+        var assignmentInstances = await assignmentInstanceRows
             .WhereIf(instanceSet is not null, x => instanceSet!.Contains(x.InstanceId))
             .WhereIf(resourceSet is not null, x => resourceSet!.Contains(x.ResourceId))
             .Join(db.Resources, x => x.ResourceId, r => r.Id, (x, r) => new
@@ -111,7 +118,9 @@ internal class ConnectionResourceLoader(AppDbContext db)
                 ResourceName = r.Name,
                 ResourceRefId = r.RefId,
                 ResourceDelegable = r.Delegable,
-                ResourceAccessListMode = r.AccessListMode
+                ResourceAccessListMode = r.AccessListMode,
+                x.ValidFrom,
+                x.ChangedBy
             })
             .AsNoTracking()
             .ToListAsync(ct);
@@ -119,34 +128,25 @@ internal class ConnectionResourceLoader(AppDbContext db)
         SortedList<Guid, List<ConnectionQueryInstance>> instancesByAssignment = [];
         foreach (var ai in assignmentInstances)
         {
+            var instance = new ConnectionQueryInstance()
+            {
+                Id = ai.Id,
+                ResourceId = ai.ResourceId,
+                InstanceId = ai.InstanceId,
+                ResourceName = ai.ResourceName,
+                ResourceRefId = ai.ResourceRefId,
+                ResourceDelegable = ai.ResourceDelegable,
+                ResourceAccessListMode = ai.ResourceAccessListMode,
+                ChangeInfo = ai.ValidFrom.HasValue ? new ConnectionQueryChangeInfo(ai.ValidFrom.Value, ai.ChangedBy) : null
+            };
+
             if (instancesByAssignment.TryGetValue(ai.AssignmentId, out var list))
             {
-                list.Add(new ConnectionQueryInstance()
-                {
-                    Id = ai.Id,
-                    ResourceId = ai.ResourceId,
-                    InstanceId = ai.InstanceId,
-                    ResourceName = ai.ResourceName,
-                    ResourceRefId = ai.ResourceRefId,
-                    ResourceDelegable = ai.ResourceDelegable,
-                    ResourceAccessListMode = ai.ResourceAccessListMode
-                });
+                list.Add(instance);
             }
             else
             {
-                instancesByAssignment[ai.AssignmentId] =
-                [
-                    new ConnectionQueryInstance()
-                    {
-                        Id = ai.Id,
-                        ResourceId = ai.ResourceId,
-                        InstanceId = ai.InstanceId,
-                        ResourceName = ai.ResourceName,
-                        ResourceRefId = ai.ResourceRefId,
-                        ResourceDelegable = ai.ResourceDelegable,
-                        ResourceAccessListMode = ai.ResourceAccessListMode
-                    }
-                ];
+                instancesByAssignment[ai.AssignmentId] = [instance];
             }
         }
 
@@ -230,5 +230,20 @@ internal class ConnectionResourceLoader(AppDbContext db)
         }
 
         return allKeys;
+    }
+
+    private sealed class AssignmentRow
+    {
+        public Guid AssignmentId { get; init; }
+
+        public Guid Id { get; init; }
+
+        public Guid ResourceId { get; init; }
+
+        public string InstanceId { get; init; }
+
+        public DateTimeOffset? ValidFrom { get; init; }
+
+        public Guid? ChangedBy { get; init; }
     }
 }

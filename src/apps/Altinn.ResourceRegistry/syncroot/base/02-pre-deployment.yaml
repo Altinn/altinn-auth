@@ -5,7 +5,7 @@ metadata:
 spec:
   interval: 60m
   path: ./fake
-  prune: true
+  prune: false
   wait: true
   force: true
   targetNamespace: product-resource-registry

@@ -226,6 +226,113 @@ public class RequestControllerTest
         }
 
         [Fact]
+        public async Task WhilePendingWithRightKeys_SameKeysReturnPending_OtherKeysOrWholeResourceReturn409()
+        {
+            // LarsBakke is managing director of BakerJohnsen (seeded via TestData.Assignments), and no other test
+            // here sends a request between them.
+            var (delegableKeys, _) = await GetPolicyKeys();
+            var client = CreateClient(Fixture, TestData.LarsBakke.Id);
+            var url = $"{Route}/resource?party={TestData.LarsBakke.Id}&to={TestData.BakerJohnsen.Id}&resource={Resource}";
+            var ct = TestContext.Current.CancellationToken;
+
+            var created = await ReadCreated(await client.PostAsJsonAsync(url, new RequestedRightKeysDto { RequestedRightKeys = [delegableKeys[0]] }, ct));
+
+            // The same keys again, with a duplicate, return the pending request
+            var again = await ReadCreated(await client.PostAsJsonAsync(url, new RequestedRightKeysDto { RequestedRightKeys = [delegableKeys[0], delegableKeys[0]] }, ct));
+            Assert.Equal(created.Id, again.Id);
+
+            // Other keys, and the whole resource, are refused instead of returning the pending request
+            await AssertPendingRequestWithOtherRightKeys(await client.PostAsJsonAsync(url, new RequestedRightKeysDto { RequestedRightKeys = [delegableKeys[1]] }, ct));
+            await AssertPendingRequestWithOtherRightKeys(await client.PostAsJsonAsync(url, new RequestedRightKeysDto { RequestedRightKeys = [delegableKeys[0], delegableKeys[1]] }, ct));
+            await AssertPendingRequestWithOtherRightKeys(await client.PostAsync(url, null, ct));
+
+            // The pending request is unchanged
+            var getResponse = await client.GetAsync($"{Route}?party={TestData.LarsBakke.Id}&id={created.Id}", ct);
+            var fetched = await ReadCreated(getResponse);
+            Assert.Equal([delegableKeys[0]], fetched.Resource.RequestedRightKeys);
+        }
+
+        [Fact]
+        public async Task WhilePendingForWholeResource_RightKeysReturn409()
+        {
+            // ArneLund is a board member of SvendsenAutomobil (seeded via TestData.Assignments), and no other test
+            // here sends a request between them.
+            var (delegableKeys, _) = await GetPolicyKeys();
+            var client = CreateClient(Fixture, TestData.ArneLund.Id);
+            var url = $"{Route}/resource?party={TestData.ArneLund.Id}&to={TestData.SvendsenAutomobil.Id}&resource={Resource}";
+            var ct = TestContext.Current.CancellationToken;
+
+            var created = await ReadCreated(await client.PostAsync(url, null, ct));
+            var again = await ReadCreated(await client.PostAsync(url, null, ct));
+            Assert.Equal(created.Id, again.Id);
+
+            await AssertPendingRequestWithOtherRightKeys(await client.PostAsJsonAsync(url, new RequestedRightKeysDto { RequestedRightKeys = [delegableKeys[0]] }, ct));
+        }
+
+        [Fact]
+        public async Task WithMisspelledField_Returns400_AndCreatesNoRequest()
+        {
+            // The approve body calls the field rightKeys. Sent here, it used to be ignored, giving a request for the
+            // whole resource. GreteHolm is chair of the board of SvendsenAutomobil (seeded via TestData.Assignments).
+            var (delegableKeys, _) = await GetPolicyKeys();
+            var client = CreateClient(Fixture, TestData.GreteHolm.Id);
+            using var body = new StringContent($$"""{ "rightKeys": ["{{delegableKeys[0]}}"] }""", Encoding.UTF8, MediaTypeNames.Application.Json);
+
+            var response = await client.PostAsync(
+                $"{Route}/resource?party={TestData.GreteHolm.Id}&to={TestData.SvendsenAutomobil.Id}&resource={Resource}",
+                body,
+                TestContext.Current.CancellationToken);
+
+            var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.BadRequest, $"Expected BadRequest but got {response.StatusCode}. Response body: {content}");
+            Assert.Contains("rightKeys", content, StringComparison.Ordinal);
+
+            await Fixture.QueryDb(async db =>
+            {
+                var created = await db.RequestAssignmentResources
+                    .AnyAsync(r => r.Assignment.FromId == TestData.GreteHolm.Id, TestContext.Current.CancellationToken);
+                Assert.False(created);
+            });
+        }
+
+        [Fact]
+        public async Task WithEmptyObjectOrEmptyList_IsForWholeResource()
+        {
+            // Rejecting unknown fields leaves {} and an empty list as they were: a request for the whole resource,
+            // the same as no body. MortenDahl is managing director of SvendsenAutomobil (seeded via
+            // TestData.Assignments), and no other test here sends a request between them.
+            var client = CreateClient(Fixture, TestData.MortenDahl.Id);
+            var url = $"{Route}/resource?party={TestData.MortenDahl.Id}&to={TestData.SvendsenAutomobil.Id}&resource={Resource}";
+            var ct = TestContext.Current.CancellationToken;
+
+            using var emptyObject = new StringContent("{}", Encoding.UTF8, MediaTypeNames.Application.Json);
+            var created = await ReadCreated(await client.PostAsync(url, emptyObject, ct));
+            Assert.Equal(RequestStatusV2.Pending, created.Status.Value);
+            Assert.Null(created.Resource.RequestedRightKeys);
+
+            // An empty list is the whole resource too, so it returns the same pending request instead of 409
+            using var emptyList = new StringContent("""{ "requestedRightKeys": [] }""", Encoding.UTF8, MediaTypeNames.Application.Json);
+            var again = await ReadCreated(await client.PostAsync(url, emptyList, ct));
+            Assert.Equal(created.Id, again.Id);
+            Assert.Null(again.Resource.RequestedRightKeys);
+        }
+
+        private static async Task<RequestDtoV2> ReadCreated(HttpResponseMessage response)
+        {
+            var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {content}");
+            return JsonSerializer.Deserialize<RequestDtoV2>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        }
+
+        private static async Task AssertPendingRequestWithOtherRightKeys(HttpResponseMessage response)
+        {
+            var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.Conflict, $"Expected Conflict but got {response.StatusCode}. Response body: {content}");
+            var problem = JsonSerializer.Deserialize<AltinnProblemDetails>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            Assert.Equal(Problems.PendingRequestWithOtherRightKeys.ErrorCode, problem.ErrorCode);
+        }
+
+        [Fact]
         public async Task GetSentRequests_UnderV2Route_Returns200()
         {
             var client = CreateClient(Fixture, TestData.KnutVik.Id);
@@ -386,6 +493,9 @@ public class RequestControllerTest
         private static readonly Guid DelegationChangedAfterwardsId = Guid.Parse("0196b0d2-0000-7000-8000-000000000010");
         private static readonly Guid HistoryId = Guid.Parse("0196b0d2-0000-7000-8000-000000000011");
         private static readonly Guid ReadThroughV1Id = Guid.Parse("0196b0d2-0000-7000-8000-000000000012");
+        private static readonly Guid WholeResourceAllSelectedId = Guid.Parse("0196b0d2-0000-7000-8000-000000000013");
+        private static readonly Guid EmptyObjectBodyId = Guid.Parse("0196b0d2-0000-7000-8000-000000000014");
+        private static readonly Guid EmptyListBodyId = Guid.Parse("0196b0d2-0000-7000-8000-000000000015");
 
         public ApproveResourceRequest(ApiFixture fixture)
         {
@@ -413,6 +523,9 @@ public class RequestControllerTest
                 AddResourceRequest(db, DelegationChangedAfterwardsId, TestData.StorMektigTenesteeier.Id, [roleKeys[0]]);
                 AddResourceRequest(db, HistoryId, TestData.LarsBakke.Id, [roleKeys[0], roleKeys[1]]);
                 AddResourceRequest(db, ReadThroughV1Id, TestData.HanSoloEnterprise.Id, [roleKeys[0], roleKeys[1]]);
+                AddResourceRequest(db, WholeResourceAllSelectedId, TestData.HildeStrand.Id, null);
+                AddResourceRequest(db, EmptyObjectBodyId, TestData.GreteHolm.Id, [roleKeys[0], roleKeys[1]]);
+                AddResourceRequest(db, EmptyListBodyId, TestData.ArneLund.Id, [roleKeys[0], roleKeys[1]]);
 
                 var packageAssignment = new RequestAssignment
                 {
@@ -445,6 +558,29 @@ public class RequestControllerTest
             return rightKeys is null
                 ? await client.PutAsync(ApproveUrl(id), null, TestContext.Current.CancellationToken)
                 : await client.PutAsJsonAsync(ApproveUrl(id), new ApproveRequestDto { RightKeys = rightKeys }, TestContext.Current.CancellationToken);
+        }
+
+        /// <summary>
+        /// The rights <see cref="TestData.MalinEmilie"/> can delegate for the app on behalf of Dumbo, sorted, from the
+        /// delegation check endpoint, the same check the approval runs.
+        /// </summary>
+        private async Task<List<string>> GetDelegableRightKeys()
+        {
+            var client = Fixture.Server.CreateClient();
+            var token = TestTokenGenerator.CreateToken(new ClaimsIdentity("mock"), claims =>
+            {
+                claims.Add(new Claim(AltinnCoreClaimTypes.PartyUuid, TestData.MalinEmilie.Id.ToString()));
+                claims.Add(new Claim("scope", AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE));
+            });
+            client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+
+            var response = await client.GetAsync(
+                $"accessmanagement/api/v1/enduser/connections/resources/delegationcheck?party={TestData.DumboAdventures.Id}&resource={AppResource}",
+                TestContext.Current.CancellationToken);
+            Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+            var check = await response.Content.ReadFromJsonAsync<ResourceCheckDto>(TestContext.Current.CancellationToken);
+            return [.. check.Rights.Where(r => r.Result).Select(r => r.Right.Key).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
         }
 
         private static async Task<RequestDtoV2> ReadRequest(HttpResponseMessage response)
@@ -568,6 +704,22 @@ public class RequestControllerTest
         }
 
         [Fact]
+        public async Task WithSelectionOfEveryDelegableRightForWholeResource_IsApproved()
+        {
+            var delegable = await GetDelegableRightKeys();
+            Assert.True(delegable.Count > 1, "The test needs more than one delegable right to select them in another order.");
+
+            // Every right Malin can delegate, in reverse order and with a duplicate, gives the same as no selection
+            List<string> selection = [.. Enumerable.Reverse(delegable), delegable[0]];
+            var request = await ReadRequest(await Approve(WholeResourceAllSelectedId, selection));
+
+            Assert.Equal(RequestStatusV2.Approved, request.Status.Value);
+            Assert.Null(request.Resource.RequestedRightKeys);
+            Assert.Equal(delegable.Order(StringComparer.Ordinal), request.Resource.ApprovedRightKeys.Order(StringComparer.Ordinal));
+            Assert.Equal(delegable.Order(StringComparer.Ordinal), GetDelegatedRightKeys(Fixture, TestData.HildeStrand).Order(StringComparer.Ordinal));
+        }
+
+        [Fact]
         public async Task WithoutSelectionForWholeResource_GivesEveryRightTheUserCanDelegate_AndIsApproved()
         {
             var (roleKeys, orgOnlyKeys) = GetAppPolicyKeys();
@@ -593,6 +745,48 @@ public class RequestControllerTest
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
             var error = Assert.Single((await ReadProblem(response)).Errors);
             Assert.Equal(ValidationErrors.RightKeyNotFound.ErrorCode, error.ErrorCode);
+        }
+
+        [Fact]
+        public async Task WithMisspelledField_Returns400_AndGivesNothing()
+        {
+            // The request body calls the field requestedRightKeys. Sent here, it used to be ignored, so the approval
+            // gave everything that was requested instead of the selection.
+            var (roleKeys, _) = GetAppPolicyKeys();
+            var client = CreateClient(Fixture, TestData.MalinEmilie.Id);
+            using var body = new StringContent($$"""{ "requestedRightKeys": ["{{roleKeys[0]}}"] }""", Encoding.UTF8, MediaTypeNames.Application.Json);
+
+            var response = await client.PutAsync(ApproveUrl(InvalidSelectionId), body, TestContext.Current.CancellationToken);
+
+            var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.BadRequest, $"Expected BadRequest but got {response.StatusCode}. Response body: {content}");
+            Assert.Contains("requestedRightKeys", content, StringComparison.Ordinal);
+            Assert.False(HasDelegationPolicy(Fixture, TestData.RpcAS));
+            Assert.Equal(RequestStatusV2.Pending, (await GetRequest(InvalidSelectionId)).Status.Value);
+        }
+
+        [Fact]
+        public Task WithEmptyObject_IsNoSelection_GivesRequestedRights_AndIsApproved()
+            => AssertNoSelection(EmptyObjectBodyId, TestData.GreteHolm, "{}");
+
+        [Fact]
+        public Task WithEmptyList_IsNoSelection_GivesRequestedRights_AndIsApproved()
+            => AssertNoSelection(EmptyListBodyId, TestData.ArneLund, """{ "rightKeys": [] }""");
+
+        /// <summary>
+        /// Rejecting unknown fields leaves {} and an empty list as they were: no selection, the same as no body.
+        /// </summary>
+        private async Task AssertNoSelection(Guid id, ConstantDefinition<Entity> requester, string json)
+        {
+            var (roleKeys, _) = GetAppPolicyKeys();
+            var client = CreateClient(Fixture, TestData.MalinEmilie.Id);
+            using var body = new StringContent(json, Encoding.UTF8, MediaTypeNames.Application.Json);
+
+            var request = await ReadRequest(await client.PutAsync(ApproveUrl(id), body, TestContext.Current.CancellationToken));
+
+            Assert.Equal(RequestStatusV2.Approved, request.Status.Value);
+            Assert.Equal([roleKeys[0], roleKeys[1]], request.Resource.ApprovedRightKeys.Order(StringComparer.Ordinal));
+            Assert.Equal([roleKeys[0], roleKeys[1]], GetDelegatedRightKeys(Fixture, requester).Order(StringComparer.Ordinal));
         }
 
         [Fact]

@@ -14,14 +14,20 @@ public static class RequestApproval
     /// The status a resource request gets when it is approved.
     /// <list type="bullet">
     /// <item>No selection: what was requested is given, so the request is <see cref="RequestStatusV2.Approved"/>.</item>
-    /// <item>A selection for a request for the whole resource (no requested rights): <see cref="RequestStatusV2.PartialApprove"/>.</item>
+    /// <item>A selection for a request for the whole resource (no requested rights): <see cref="RequestStatusV2.Approved"/>
+    /// when it holds every right the approver can delegate, in any order, the same as giving no selection; otherwise
+    /// <see cref="RequestStatusV2.PartialApprove"/>.</item>
     /// <item>A selection with exactly the requested rights, in any order: <see cref="RequestStatusV2.Approved"/>.</item>
     /// <item>Any other selection, with fewer, other or more rights than requested: <see cref="RequestStatusV2.PartialApprove"/>.</item>
     /// </list>
     /// </summary>
     /// <param name="requestedRightKeys">The rights requested; null or empty when the whole resource was requested</param>
     /// <param name="selectedRightKeys">The rights the approver selected; null or empty when no selection was made</param>
-    public static RequestStatusV2 DetermineStatus(IEnumerable<string>? requestedRightKeys, IEnumerable<string>? selectedRightKeys)
+    /// <param name="delegableRightKeys">
+    /// The rights the approver can delegate for the resource, from the delegation check. Used only for a selection
+    /// on a request for the whole resource.
+    /// </param>
+    public static RequestStatusV2 DetermineStatus(IEnumerable<string>? requestedRightKeys, IEnumerable<string>? selectedRightKeys, IEnumerable<string> delegableRightKeys)
     {
         var selected = selectedRightKeys?.ToHashSet(StringComparer.Ordinal) ?? [];
         if (selected.Count == 0)
@@ -32,7 +38,7 @@ public static class RequestApproval
         var requested = requestedRightKeys?.ToHashSet(StringComparer.Ordinal) ?? [];
         if (requested.Count == 0)
         {
-            return RequestStatusV2.PartialApprove;
+            return selected.SetEquals(delegableRightKeys) ? RequestStatusV2.Approved : RequestStatusV2.PartialApprove;
         }
 
         return selected.SetEquals(requested) ? RequestStatusV2.Approved : RequestStatusV2.PartialApprove;
