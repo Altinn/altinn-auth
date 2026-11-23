@@ -11,4 +11,4 @@ spec:
     kind: OCIRepository
     name: manifests
   dependsOn:
-    - name: 'pre-deploy'
+    - name: 'access-management-pre-deploy'
