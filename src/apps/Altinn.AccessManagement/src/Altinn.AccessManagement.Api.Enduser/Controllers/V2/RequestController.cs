@@ -148,4 +148,41 @@ public class RequestController(
 
         return Ok(ConvertRequest(result.Value));
     }
+
+    /// <summary>
+    /// Change the rights (right keys) asked for in a pending resource request, replacing the ones it asked for before.
+    /// Only the party that sent the request can change it, and only while it is pending. Each right key must exist in the
+    /// policy of the resource and be delegable, and at least one is required: to ask for the whole resource instead, withdraw
+    /// the request and send a new one. Sending the rights the request already asks for leaves it unchanged.
+    /// The recipient is not notified again.
+    /// </summary>
+    /// <param name="party">The party that sent the request</param>
+    /// <param name="id">The request to change</param>
+    /// <param name="input">The rights to ask for instead</param>
+    /// <param name="ct">Cancellation token</param>
+    [HttpPut("sent/resource")]
+    [FeatureGate(AccessMgmtFeatureFlags.EnableRequestAssignmentResource)]
+    [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.EnduserApi)]
+    [Authorize(Policy = AuthzConstants.POLICY_ENDUSER_REQUESTS_WRITE)]
+    [Authorize(Policy = AuthzConstants.POLICY_ACCESS_MANAGEMENT_ENDUSER_WRITE)]
+    [ProducesResponseType<RequestDtoV2>(StatusCodes.Status200OK, MediaTypeNames.Application.Json)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    public async Task<ActionResult<RequestDtoV2>> UpdateResourceRequest(
+        [FromQuery][Required] Guid party,
+        [FromQuery][Required] Guid id,
+        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] RequestedRightKeysDto? input,
+        CancellationToken ct = default
+        )
+    {
+        // A missing body is accepted here so it gets the same 400 as a body without right keys, instead of 415.
+        var result = await RequestService.UpdateResourceRequestRightKeys(party, id, input?.RequestedRightKeys, ct);
+        if (result.IsProblem)
+        {
+            return result.Problem.ToActionResult();
+        }
+
+        return Ok(ConvertRequest(result.Value));
+    }
 }

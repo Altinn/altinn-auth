@@ -83,6 +83,18 @@ public interface IRequestService
     Task<Result<AccessRequest>> ApproveResourceRequest(Guid partyUuid, Guid requestId, RequestStatusV2 status, IEnumerable<string> approvedRightKeys, CancellationToken ct = default);
 
     /// <summary>
+    /// Replaces the rights asked for in a pending resource request. Only the party that sent the request can change it,
+    /// and only while it is pending. The rights are validated as when a request is created, and at least one is required:
+    /// a request cannot be changed to ask for the whole resource. The same rights in any order, or with duplicates,
+    /// leave the request unchanged. No notification is sent.
+    /// </summary>
+    /// <param name="partyUuid">The party changing the request, which must be the party that sent it</param>
+    /// <param name="requestId">The request to change</param>
+    /// <param name="rightKeys">The right keys to ask for instead</param>
+    /// <param name="ct">Cancellation token</param>
+    Task<Result<AccessRequest>> UpdateResourceRequestRightKeys(Guid partyUuid, Guid requestId, IEnumerable<string>? rightKeys, CancellationToken ct = default);
+
+    /// <summary>
     /// Creates a new request
     /// A Request from Kari by NAV to BakerAS for Taxes.
     /// Will create an Assignment from BakerAS to Kari with an AssignmentPackage for Taxes.
