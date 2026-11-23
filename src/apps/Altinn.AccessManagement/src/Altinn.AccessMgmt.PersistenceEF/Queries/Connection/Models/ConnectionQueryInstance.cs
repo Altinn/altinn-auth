@@ -33,6 +33,12 @@ public sealed class ConnectionQueryInstance
     public string ResourceRefId { get; init; } = string.Empty;
 
     /// <summary>
+    /// Who last changed the assignment instance row, and when. Only set when
+    /// <see cref="ConnectionQueryFilter.IncludeChangeInfo"/> is <c>true</c>.
+    /// </summary>
+    public ConnectionQueryChangeInfo ChangeInfo { get; init; }
+
+    /// <summary>
     /// Whether the resource associated with this instance can be delegated
     /// </summary>
     public bool ResourceDelegable { get; init; }
