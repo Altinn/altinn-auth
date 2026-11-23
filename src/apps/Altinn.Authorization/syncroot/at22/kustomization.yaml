@@ -18,11 +18,11 @@ patches:
 
   - target:
       kind: Kustomization
-      name: deploy
+      name: deployment
     patch: |-
       apiVersion: kustomize.toolkit.fluxcd.io/v1
       kind: Kustomization
       metadata:
-        name: deploy
+        name: deployment
       spec:
         path: ./deploy/at22
