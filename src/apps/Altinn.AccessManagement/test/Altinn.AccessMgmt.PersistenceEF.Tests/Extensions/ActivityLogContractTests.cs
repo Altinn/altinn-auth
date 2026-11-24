@@ -1,6 +1,7 @@
 ﻿using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.Authorization.Api.Contracts.AccessManagement.ActivityLog;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
@@ -89,6 +90,16 @@ public class ActivityLogContractTests
             Assert.Contains("INSERT INTO dbo.activitylog", sql);
             Assert.Contains("IF to_regclass('dbo.activitylog') IS NULL THEN RETURN NULL; END IF;", sql);
         }
+    }
+
+    [Fact]
+    public void RequestAssignmentResourceUpdateTrigger_FiresOnRequestedRightKeysAndWritesRightsChanged()
+    {
+        var sql = string.Join("\n", ActivityLogTriggerScripts.ForTable("dbo", "requestassignmentresource"));
+
+        Assert.Contains("WHEN (OLD.status IS DISTINCT FROM NEW.status OR OLD.requestedrightkeys IS DISTINCT FROM NEW.requestedrightkeys)", sql);
+        Assert.Contains("CASE WHEN v_status_changed THEN 2 ELSE 4 END", sql);
+        Assert.Equal(4, (int)ActivityLogTrigger.RightsChanged);
     }
 
     [Fact]

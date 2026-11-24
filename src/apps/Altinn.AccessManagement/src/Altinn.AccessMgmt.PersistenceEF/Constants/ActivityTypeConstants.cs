@@ -826,6 +826,27 @@ public static class ActivityTypeConstants
     };
 
     /// <summary>
+    /// Request / Resource / RightsChanged (any status) — the sender changed which rights the request is for.
+    /// </summary>
+    public static ConstantDefinition<ActivityType> RequestResourceRightsChanged { get; } = new ConstantDefinition<ActivityType>("01a20d5f-04c7-743e-9739-31e34c3f8fe4")
+    {
+        Entity = new()
+        {
+            Type = ActivityLogType.Request,
+            Subtype = ActivityLogSubtype.Resource,
+            Trigger = ActivityLogTrigger.RightsChanged,
+            Name = "Forespørsel om enkelttjeneste endret",
+            Description = "Avsenderen endret hvilke rettigheter forespørselen gjelder.",
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Single service request changed"),
+            KeyValuePair.Create("Description", "The sender changed which rights the request is for.")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Førespurnad om enkeltteneste endra"),
+            KeyValuePair.Create("Description", "Avsendaren endra kva rettar førespurnaden gjeld.")),
+    };
+
+    /// <summary>
     /// Request / Resource / Deleted — the single service request was removed.
     /// </summary>
     public static ConstantDefinition<ActivityType> RequestResourceDeleted { get; } = new ConstantDefinition<ActivityType>("a3052a8c-8f2b-44c5-ae0e-3983e6ff212e")

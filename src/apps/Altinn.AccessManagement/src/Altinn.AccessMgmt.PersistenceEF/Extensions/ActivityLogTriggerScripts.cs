@@ -12,7 +12,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Extensions;
 /// <list type="bullet">
 /// <item>Numeric literals map to the API contract enums and must stay in sync:
 /// type 1=Assignment 2=Delegation 3=Request; subtype 1=Package 2=Resource 3=Instance;
-/// trigger 1=Created 2=Updated 3=Deleted; status = <c>RequestStatusV2</c>.</item>
+/// trigger 1=Created 2=Updated 3=Deleted 4=RightsChanged; status = <c>RequestStatusV2</c>.</item>
 /// <item>Insert triggers read attribution from the <c>audit_*</c> columns stamped by the audit
 /// BEFORE-trigger; update triggers read the <c>app.*</c> GUCs directly (raw-SQL writers do not
 /// refresh the audit columns on UPDATE); delete triggers read the <c>session_audit_context</c>
@@ -57,6 +57,26 @@ public static class ActivityLogTriggerScripts
         DO $$ BEGIN IF NOT EXISTS (SELECT * FROM pg_trigger t WHERE t.tgname ILIKE 'activitylog_{table}_{op}_trg' AND t.tgrelid = to_regclass('dbo.{table}')) THEN
         CREATE {(op == "delete" ? "CONSTRAINT " : string.Empty)}TRIGGER activitylog_{table}_{op}_trg AFTER {op.ToUpperInvariant()} ON dbo.{table}
         {(op == "delete" ? "DEFERRABLE INITIALLY DEFERRED " : string.Empty)}FOR EACH ROW {(when is null ? string.Empty : when + " ")}EXECUTE FUNCTION dbo.activitylog_{table}_{op}_fn();
+        END IF; END $$;
+        """;
+
+    /// <summary>
+    /// Like <see cref="CreateTrigger"/>, for a <c>WHEN</c> condition that uses a column added after
+    /// the activity log migration. These scripts are not versioned: every migration that touches the
+    /// table emits the current SQL, including the original activity log migration, which runs before
+    /// the column exists when a fresh database is built. Until then the trigger gets
+    /// <paramref name="fallbackWhen"/>; the migration that introduced <paramref name="when"/> drops the
+    /// trigger so that it is created again with the full condition.
+    /// </summary>
+    private static string CreateTriggerWhenColumnExists(string table, string op, string requiredColumn, string when, string fallbackWhen) => $"""
+        DO $$ BEGIN IF NOT EXISTS (SELECT * FROM pg_trigger t WHERE t.tgname ILIKE 'activitylog_{table}_{op}_trg' AND t.tgrelid = to_regclass('dbo.{table}')) THEN
+        IF EXISTS (SELECT * FROM information_schema.columns c WHERE c.table_schema = 'dbo' AND c.table_name = '{table}' AND c.column_name = '{requiredColumn}') THEN
+        CREATE TRIGGER activitylog_{table}_{op}_trg AFTER {op.ToUpperInvariant()} ON dbo.{table}
+        FOR EACH ROW {when} EXECUTE FUNCTION dbo.activitylog_{table}_{op}_fn();
+        ELSE
+        CREATE TRIGGER activitylog_{table}_{op}_trg AFTER {op.ToUpperInvariant()} ON dbo.{table}
+        FOR EACH ROW {fallbackWhen} EXECUTE FUNCTION dbo.activitylog_{table}_{op}_fn();
+        END IF;
         END IF; END $$;
         """;
 
@@ -134,7 +154,12 @@ public static class ActivityLogTriggerScripts
             RequestAssignmentResourceInsertFn,
             CreateTrigger("requestassignmentresource", "insert"),
             RequestAssignmentResourceUpdateFn,
-            CreateTrigger("requestassignmentresource", "update", "WHEN (OLD.status IS DISTINCT FROM NEW.status)"),
+            CreateTriggerWhenColumnExists(
+                "requestassignmentresource",
+                "update",
+                requiredColumn: "requestedrightkeys",
+                when: "WHEN (OLD.status IS DISTINCT FROM NEW.status OR OLD.requestedrightkeys IS DISTINCT FROM NEW.requestedrightkeys)",
+                fallbackWhen: "WHEN (OLD.status IS DISTINCT FROM NEW.status)"),
             RequestAssignmentResourceDeleteFn,
             CreateTrigger("requestassignmentresource", "delete"),
         ],
@@ -805,8 +830,12 @@ public static class ActivityLogTriggerScripts
         v_ra RECORD;
         v_from RECORD;
         v_to RECORD;
+        v_status_changed boolean;
         BEGIN
         IF to_regclass('dbo.activitylog') IS NULL THEN RETURN NULL; END IF;
+        -- A status change is logged as Updated (2), as before; a change of only the requested
+        -- right keys is logged as RightsChanged (4) with both key lists in details.
+        v_status_changed := OLD.status IS DISTINCT FROM NEW.status;
         SELECT current_setting('app.changed_by', false) INTO v_by;
         SELECT current_setting('app.changed_by_system', false) INTO v_bysystem;
         SELECT current_setting('app.change_operation_id', false) INTO v_operation;
@@ -818,12 +847,15 @@ public static class ActivityLogTriggerScripts
         fromid, fromname, fromtype, toid, toname, totype, roleid, rolename,
         resourceid, resourcename, itemid, parentid, details
         ) VALUES (
-        3, 2, 2, NEW.status, now(),
+        3, 2, CASE WHEN v_status_changed THEN 2 ELSE 4 END, NEW.status, now(),
         v_by, dbo.activitylog_entity_name(v_by), v_bysystem, v_operation,
         v_ra.o_fromid, v_from.o_name, v_from.o_type, v_ra.o_toid, v_to.o_name, v_to.o_type,
         v_ra.o_roleid, dbo.activitylog_role_name(v_ra.o_roleid),
         NEW.resourceid, dbo.activitylog_resource_name(NEW.resourceid), NEW.id, NEW.assignmentid,
-        NULLIF(jsonb_strip_nulls(jsonb_build_object('previousStatus', OLD.status, 'action', NEW.action, 'requestedById', v_ra.o_byid)), '{}'::jsonb)
+        CASE WHEN v_status_changed
+        THEN NULLIF(jsonb_strip_nulls(jsonb_build_object('previousStatus', OLD.status, 'action', NEW.action, 'requestedById', v_ra.o_byid)), '{}'::jsonb)
+        ELSE NULLIF(jsonb_strip_nulls(jsonb_build_object('previousRequestedRightKeys', OLD.requestedrightkeys, 'requestedRightKeys', NEW.requestedrightkeys, 'action', NEW.action, 'requestedById', v_ra.o_byid)), '{}'::jsonb)
+        END
         );
         RETURN NULL;
         END;
