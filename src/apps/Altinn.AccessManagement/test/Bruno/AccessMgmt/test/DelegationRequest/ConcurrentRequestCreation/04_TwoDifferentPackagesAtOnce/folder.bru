@@ -1,0 +1,18 @@
+meta {
+	name: 04_TwoDifferentPackagesAtOnce
+	seq: 4
+}
+
+docs {
+	Scenario: The requester asks for two different packages at once
+
+		Given the approver has no pending request from the requester for either package
+		When the requester asks for both packages at the same time
+		Then both calls return 200, with one request each
+		And the requester has exactly one pending request per package
+		Finally the approver rejects the pending requests to clean up
+
+	Both calls queue the same pending notification to the approver, so one of them collides
+	on the outbox and has to retry (`SaveChangesWithOutboxRetry`, #3937). A 500 here means that
+	retry is broken. This already works today, so the scenario runs in every enabled environment.
+}

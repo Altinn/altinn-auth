@@ -1,0 +1,54 @@
+meta {
+	name: 04_AND_ApproverHasExactlyOnePendingRequestForThePackage
+	type: http
+	seq: 4
+}
+
+get {
+	url: {{baseUrl}}/accessmanagement/api/v2/enduser/request/received?party={{party}}&from={{from}}&status=Pending&type=package
+	body: none
+	auth: inherit
+}
+
+params:query {
+	party: {{party}}
+	from: {{from}}
+	status: Pending
+	type: package
+}
+
+docs {
+	AND the approver is asked only once: exactly one pending request for the package.
+
+	GET /accessmanagement/api/v2/enduser/request/received?party=<approver>&from=<requester>&status=Pending&type=package
+}
+
+script:pre-request {
+	const { skipOutsideEnabledEnvironments, testdata, loginAs } = require("./test/DelegationRequest/ConcurrentRequestCreation/helpers.js");
+	if (skipOutsideEnabledEnvironments({ waitsForFix: true })) {
+		return;
+	}
+
+	const td = testdata();
+
+	bru.setVar("party", td.approver.partyUuid);
+	bru.setVar("from", td.requester.partyUuid);
+
+	await loginAs(td.approver);
+}
+
+tests {
+	if (require("./test/DelegationRequest/ConcurrentRequestCreation/helpers.js").isSkipped()) {
+		return;
+	}
+
+	const { testdata, isFor } = require("./test/DelegationRequest/ConcurrentRequestCreation/helpers.js");
+
+	test("AND the received requests can be listed, the request returns 200", function() {
+		expect(res.status).to.equal(200);
+	});
+
+	test("AND the approver has exactly one pending request for the package", function() {
+		expect(res.getBody().data.filter(r => isFor(r, testdata().packages[0]))).to.have.length(1);
+	});
+}

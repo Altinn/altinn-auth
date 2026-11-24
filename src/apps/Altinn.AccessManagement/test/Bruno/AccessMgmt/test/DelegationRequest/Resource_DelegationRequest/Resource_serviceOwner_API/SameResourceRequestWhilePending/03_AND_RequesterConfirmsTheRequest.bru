@@ -1,0 +1,59 @@
+meta {
+	name: 03_AND_RequesterConfirmsTheRequest
+	type: http
+	seq: 3
+}
+
+put {
+	url: {{baseUrl}}/accessmanagement/api/v1/enduser/request/draft/confirm?party={{party}}&id={{sop_requestId}}
+	body: none
+	auth: inherit
+}
+
+params:query {
+	party: {{party}}
+	id: {{sop_requestId}}
+}
+
+docs {
+	AND the requester confirms the draft, so the request becomes Pending and the organization
+	is asked.
+
+	PUT /accessmanagement/api/v1/enduser/request/draft/confirm?party=<requester>&id=<request id>
+
+	Only the party the request is from can confirm it. Returns 200 with the request in status
+	Pending.
+}
+
+script:pre-request {
+	const { skipOutsideEnabledEnvironments, testdata, loginAsRequester } = require("./utils/serviceOwnerRequestWhilePending.js");
+	if (skipOutsideEnabledEnvironments()) {
+		return;
+	}
+
+	const td = testdata();
+
+	if (!bru.getVar("sop_requestId")) {
+		throw new Error("sop_requestId is not set: run the scenario from step 01, and check that step 02 succeeded.");
+	}
+
+	bru.setVar("party", td.requester.partyUuid);
+
+	await loginAsRequester(td);
+}
+
+tests {
+	if (require("./utils/serviceOwnerRequestWhilePending.js").isSkipped()) {
+		return;
+	}
+
+	test("AND the draft is confirmed, the request returns 200", function() {
+		expect(res.status).to.equal(200);
+	});
+
+	test("AND the request is now pending", function() {
+		const body = res.getBody();
+		expect(body.id).to.equal(bru.getVar("sop_requestId"));
+		expect(body.status).to.equal("Pending");
+	});
+}

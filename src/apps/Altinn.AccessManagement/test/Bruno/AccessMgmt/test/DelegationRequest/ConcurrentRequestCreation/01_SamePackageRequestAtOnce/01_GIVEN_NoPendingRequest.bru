@@ -1,0 +1,67 @@
+meta {
+	name: 01_GIVEN_NoPendingRequest
+	type: http
+	seq: 1
+}
+
+get {
+	url: {{baseUrl}}/accessmanagement/api/v2/enduser/request/received?party={{party}}&from={{from}}&status=Pending&type=package
+	body: none
+	auth: inherit
+}
+
+params:query {
+	party: {{party}}
+	from: {{from}}
+	status: Pending
+	type: package
+}
+
+docs {
+	GIVEN the approver has no pending request from the requester for the package.
+
+	GET /accessmanagement/api/v2/enduser/request/received?party=<approver>&from=<requester>&status=Pending&type=package
+
+	Idempotent reset: the post-response script rejects every pending request for the package, so
+	leftovers from earlier or crashed runs, including duplicates the bug in #3931 created,
+	never break the scenario.
+}
+
+script:pre-request {
+	const { skipOutsideEnabledEnvironments, testdata, loginAs, clearScenarioVars } = require("./test/DelegationRequest/ConcurrentRequestCreation/helpers.js");
+	if (skipOutsideEnabledEnvironments({ waitsForFix: true })) {
+		return;
+	}
+
+	const td = testdata();
+
+	clearScenarioVars();
+	bru.setVar("party", td.approver.partyUuid);
+	bru.setVar("from", td.requester.partyUuid);
+
+	await loginAs(td.approver);
+}
+
+script:post-response {
+	if (require("./test/DelegationRequest/ConcurrentRequestCreation/helpers.js").isSkipped()) {
+		return;
+	}
+
+	const axios = require("axios");
+	const { testdata, rejectPending } = require("./test/DelegationRequest/ConcurrentRequestCreation/helpers.js");
+
+	if (res.status === 200) {
+		const td = testdata();
+		await rejectPending(axios, td, res.getBody().data, [td.packages[0]]);
+	}
+}
+
+tests {
+	if (require("./test/DelegationRequest/ConcurrentRequestCreation/helpers.js").isSkipped()) {
+		return;
+	}
+
+	test("GIVEN the received requests can be listed through v2, the request returns 200", function() {
+		expect(res.status).to.equal(200);
+	});
+}

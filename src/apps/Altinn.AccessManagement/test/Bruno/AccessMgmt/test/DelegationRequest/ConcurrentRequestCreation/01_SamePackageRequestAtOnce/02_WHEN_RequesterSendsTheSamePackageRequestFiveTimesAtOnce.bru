@@ -1,0 +1,81 @@
+meta {
+	name: 02_WHEN_RequesterSendsTheSamePackageRequestFiveTimesAtOnce
+	type: http
+	seq: 2
+}
+
+get {
+	url: {{baseUrl}}/accessmanagement/api/v2/enduser/request/sent?party={{party}}&to={{to}}&status=Pending&type=package
+	body: none
+	auth: inherit
+}
+
+params:query {
+	party: {{party}}
+	to: {{to}}
+	status: Pending
+	type: package
+}
+
+docs {
+	WHEN the requester sends the same package request five times at the same time, like a user
+	clicking the button repeatedly.
+
+	POST /accessmanagement/api/v2/enduser/request/package?party=<requester>&to=<approver>&package=<urn>
+
+	Sending the same request again while it is pending returns the pending request, so every
+	call should return 200 with the same id.
+
+	The calls under test are sent at the same time from the pre-request script, with axios and
+	Promise.all, because the Bruno runner sends the requests of a collection one after another.
+	Their status codes and bodies are stored in `cc_results` for the tests below and the later
+	steps. The request of this step itself only lists the requester's pending requests afterwards.
+
+	The race is not certain to happen on every run, since the calls travel over the network. A
+	failing run proves the bug; a passing run makes it unlikely, but does not prove it is gone.
+}
+
+script:pre-request {
+	const axios = require("axios");
+	const { skipOutsideEnabledEnvironments, testdata, loginAs, sendAtOnce, storeResults, paths, parallelCalls } = require("./test/DelegationRequest/ConcurrentRequestCreation/helpers.js");
+	if (skipOutsideEnabledEnvironments({ waitsForFix: true })) {
+		return;
+	}
+
+	const td = testdata();
+
+	bru.setVar("party", td.requester.partyUuid);
+	bru.setVar("to", td.approver.partyUuid);
+
+	await loginAs(td.requester.innehaver);
+
+	const query = `party=${td.requester.partyUuid}&to=${td.approver.partyUuid}`;
+	const calls = Array.from({ length: parallelCalls }, () => ({
+		path: `${paths.v2}/package?${query}&package=${encodeURIComponent(td.packages[0])}`,
+		body: null,
+	}));
+	storeResults(await sendAtOnce(axios, calls, `${paths.v2}/sent?${query}&status=Pending&type=package`));
+}
+
+tests {
+	if (require("./test/DelegationRequest/ConcurrentRequestCreation/helpers.js").isSkipped()) {
+		return;
+	}
+
+	const { readResults } = require("./test/DelegationRequest/ConcurrentRequestCreation/helpers.js");
+	const results = readResults("02");
+
+	test("WHEN every call returns 200, none 409 or 500", function() {
+		expect(results.map(r => r.status)).to.deep.equal(results.map(() => 200));
+	});
+
+	test("THEN every call returns the same request", function() {
+		expect(new Set(results.map(r => r.body && r.body.id)).size).to.equal(1);
+	});
+
+	test("AND the request is pending for the package", function() {
+		const { testdata } = require("./test/DelegationRequest/ConcurrentRequestCreation/helpers.js");
+		expect(results[0].body.status).to.equal("Pending");
+		expect(results[0].body.package.referenceId).to.equal(testdata().packages[0]);
+	});
+}

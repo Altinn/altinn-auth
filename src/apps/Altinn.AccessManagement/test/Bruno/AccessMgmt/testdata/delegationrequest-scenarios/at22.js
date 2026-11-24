@@ -1,5 +1,7 @@
 // Personas for the delegation request scenarios under test/DelegationRequest/DraftAndCounts,
-// test/DelegationRequest/ServiceOwnerDelegationRequests and test/DelegationRequest/ResourceRequestRightKeysV2.
+// test/DelegationRequest/ServiceOwnerDelegationRequests, test/DelegationRequest/ResourceRequestRightKeysV2,
+// test/DelegationRequest/ConcurrentRequestCreation, and the SameResourceRequestWhilePending and
+// SamePackageRequestWhilePending scenarios under the Resource and AccPkg service owner API folders.
 // Personas come from the shared AT22 fixtures wherever one exists, so ids are not copied.
 // The two persons of the service owner delegation requests exist elsewhere only under
 // testdata/manualtests, which an automated suite should not depend on, so they are kept here.
@@ -36,5 +38,30 @@ module.exports = {
     requester: beOmTilgang.Bot_Org,
     // Private person asked to grant access to the resource.
     approver: beOmTilgang.Bot_person,
+  },
+
+  concurrentRequestCreation: {
+    // Delegable resource owned by ttd, with at least two rights the approver can delegate.
+    resource: beOmTilgang.resource_to_delegate.resource_id_privatperson,
+    // Two assignable packages for a person. The first is the one requested repeatedly.
+    packages: [
+      beOmTilgang.package_to_delegate.package_id_privatperson,
+      beOmTilgang.package_to_delegate.package_id_privatperson_withdraw,
+    ],
+    // Organization asking for access, acting through its innehaver. It is connected to the approver.
+    requester: beOmTilgang.Bot_Org,
+    // Private person asked to grant access.
+    approver: beOmTilgang.Bot_person,
+  },
+
+  serviceOwnerRequestWhilePending: {
+    // Delegable resource owned by ttd.
+    resource: beOmTilgang.resource_to_delegate.resource_id_privatperson,
+    // Assignable package for an organization.
+    package: beOmTilgang.package_to_delegate.package_id_virksomhet,
+    // Private person the service owner asks access for. Confirms and withdraws the requests.
+    requester: beOmTilgang.Bot_person_serviceowner,
+    // Organization asked to grant access.
+    organization: beOmTilgang.Bot_Org_for_serviceowner,
   },
 };

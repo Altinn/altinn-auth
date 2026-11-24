@@ -1,0 +1,79 @@
+meta {
+	name: 02_WHEN_RequesterAsksForTwoPackagesAtOnce
+	type: http
+	seq: 2
+}
+
+get {
+	url: {{baseUrl}}/accessmanagement/api/v2/enduser/request/sent?party={{party}}&to={{to}}&status=Pending&type=package
+	body: none
+	auth: inherit
+}
+
+params:query {
+	party: {{party}}
+	to: {{to}}
+	status: Pending
+	type: package
+}
+
+docs {
+	WHEN the requester asks for two different packages at the same time.
+
+	POST /accessmanagement/api/v2/enduser/request/package?party=<requester>&to=<approver>&package=<urn>
+	once for each package.
+
+	The calls under test are sent at the same time from the pre-request script, with axios and
+	Promise.all, because the Bruno runner sends the requests of a collection one after another.
+	Their status codes and bodies are stored in `cc_results` for the tests below and the later
+	steps. The request of this step itself only lists the requester's pending requests afterwards.
+
+	The race is not certain to happen on every run, since the calls travel over the network. A
+	failing run proves the bug; a passing run makes it unlikely, but does not prove it is gone.
+}
+
+script:pre-request {
+	const axios = require("axios");
+	const { skipOutsideEnabledEnvironments, testdata, loginAs, sendAtOnce, storeResults, paths, parallelCalls } = require("./test/DelegationRequest/ConcurrentRequestCreation/helpers.js");
+	if (skipOutsideEnabledEnvironments()) {
+		return;
+	}
+
+	const td = testdata();
+
+	bru.setVar("party", td.requester.partyUuid);
+	bru.setVar("to", td.approver.partyUuid);
+
+	await loginAs(td.requester.innehaver);
+
+	const query = `party=${td.requester.partyUuid}&to=${td.approver.partyUuid}`;
+	const calls = td.packages.map(p => ({
+		path: `${paths.v2}/package?${query}&package=${encodeURIComponent(p)}`,
+		body: null,
+	}));
+	storeResults(await sendAtOnce(axios, calls, `${paths.v2}/sent?${query}&status=Pending&type=package`));
+}
+
+tests {
+	if (require("./test/DelegationRequest/ConcurrentRequestCreation/helpers.js").isSkipped()) {
+		return;
+	}
+
+	const { readResults } = require("./test/DelegationRequest/ConcurrentRequestCreation/helpers.js");
+	const results = readResults("02");
+
+	const { testdata } = require("./test/DelegationRequest/ConcurrentRequestCreation/helpers.js");
+
+	test("WHEN both calls return 200, none 500", function() {
+		expect(results.map(r => r.status)).to.deep.equal([200, 200]);
+	});
+
+	test("THEN each call returns its own pending request for the package it asked for", function() {
+		const packages = testdata().packages;
+		expect(results[0].body.id).to.not.equal(results[1].body.id);
+		results.forEach((r, i) => {
+			expect(r.body.status).to.equal("Pending");
+			expect(r.body.package.referenceId).to.equal(packages[i]);
+		});
+	});
+}

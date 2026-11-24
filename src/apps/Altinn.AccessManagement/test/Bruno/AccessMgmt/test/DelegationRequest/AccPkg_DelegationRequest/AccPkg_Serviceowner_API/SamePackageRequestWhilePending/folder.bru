@@ -1,0 +1,49 @@
+meta {
+	name: SamePackageRequestWhilePending
+	seq: 99
+}
+
+auth {
+	mode: inherit
+}
+
+docs {
+	Scenario: The service owner creates the same package request again after the requester confirmed it (#5028)
+
+		Given the requester has no open request for the package
+		And the service owner creates a package request for the requester
+		And the requester confirms it, so it is Pending
+		When the service owner creates the same package request again
+		Then no new request is created
+		And the requester has exactly one open request for the package, the pending one
+		Finally the requester withdraws the open requests to clean up
+
+	Today the check for an existing request only looks at drafts, so a new draft is created
+	beside the pending request, and the party can be asked twice.
+
+	## Expected behaviour
+
+	The issue asks for duplicates to be prevented, not for a particular response. The WHEN step
+	accepts either 202 with the pending request that already exists, or 409, and fails on 202
+	with a new request. Narrow it once the fix settles on one response.
+
+	## Run order
+
+	`seq: 99` runs this scenario after the other steps in this folder. Its GIVEN and CLEANUP
+	steps withdraw every open request from the requester for the package, including what the steps
+	above may leave pending.
+
+	## Environments and the fix
+
+	Every step starts with `skipOutsideEnabledEnvironments()` from
+	`utils/serviceOwnerRequestWhilePending.js`: `enabledEnvironments` lists where the personas are
+	verified, `fixedEnvironments` where the fix for #5028 is deployed. The scenario runs only where
+	both apply, so the post-deployment run stays green until the fix is out.
+
+	## Tokens and fixtures
+
+	Personas live in `testdata/delegationrequest-scenarios/<tokenEnv>.js` under
+	`serviceOwnerRequestWhilePending`. The service owner steps use a Maskinporten enterprise token
+	for ttd with `altinn:serviceowner/delegationrequests.write`, the requester steps a personal
+	token with `altinn:portal/enduser`.
+}

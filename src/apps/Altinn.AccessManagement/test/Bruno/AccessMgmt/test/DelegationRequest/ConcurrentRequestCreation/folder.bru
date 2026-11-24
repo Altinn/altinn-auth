@@ -1,0 +1,49 @@
+meta {
+	name: ConcurrentRequestCreation
+	seq: 12
+}
+
+auth {
+	mode: inherit
+}
+
+docs {
+	# Creating the same request several times at once (#3931)
+
+	When the frontend calls the create endpoint several times in quick succession, the calls can
+	all read that no request exists yet and all create one. The result is several pending
+	requests for the same package or resource, and the approver is asked more than once.
+	These scenarios send identical or conflicting create calls at the same time and check that
+	the API ends with one pending request, never answers 500, and gives each caller the same
+	request.
+
+	Each subfolder is one scenario. The files inside are the scenario steps, named
+	`NN_GIVEN|WHEN|THEN|AND|CLEANUP_...` and ordered by `seq`. A scenario starts from a known
+	state, rejects what it created, and can run standalone or repeatedly.
+
+	## What these scenarios cannot check
+
+	The bug also queues duplicate notifications in the outbox. No API exposes the outbox, so the
+	scenarios only check the requests. And since the calls travel over the network, the race is
+	not certain to happen on every run: a failing run proves the bug, a passing run does not
+	prove it is gone.
+
+	## Environments and the fix
+
+	The Azure DevOps post-deployment run executes the whole `test` folder in every environment.
+	Every step starts with `skipOutsideEnabledEnvironments()` from `helpers.js`:
+
+	- `enabledEnvironments`: where AccessManagement.Enduser.RequestV2Api is on and the seed data
+		is verified.
+	- `fixedEnvironments`: where the fix for #3931 is deployed. Scenarios 01, 02 and 03 expect the
+		fixed behaviour and are skipped everywhere else. Add an environment when the fix reaches it.
+		Scenario 04 checks what already works today and runs in every enabled environment.
+
+	## Tokens and fixtures
+
+	Personas live in `testdata/delegationrequest-scenarios/<tokenEnv>.js` under
+	`concurrentRequestCreation`, from the `be-om-tilgang` fixtures. The requester is an
+	organisation acting through its innehaver, the approver a private person connected to it.
+	The pair and resource are shared with `ResourceRequestRightKeysV2`; the GIVEN steps of both
+	suites reject what the other leaves pending.
+}

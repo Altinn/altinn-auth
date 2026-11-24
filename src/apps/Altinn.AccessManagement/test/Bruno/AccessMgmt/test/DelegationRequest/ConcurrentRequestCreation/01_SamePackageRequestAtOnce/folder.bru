@@ -1,0 +1,17 @@
+meta {
+	name: 01_SamePackageRequestAtOnce
+	seq: 1
+}
+
+docs {
+	Scenario: The requester sends the same package request several times at once
+
+		Given the approver has no pending request from the requester for the package
+		When the requester sends the same package request five times at the same time
+		Then every call returns 200 with the same pending request
+		And the requester has exactly one pending request for the package
+		And the approver has exactly one pending request for the package
+		Finally the approver rejects the pending requests to clean up
+
+	Skipped until the fix for #3931 is deployed: today the calls can create several requests.
+}

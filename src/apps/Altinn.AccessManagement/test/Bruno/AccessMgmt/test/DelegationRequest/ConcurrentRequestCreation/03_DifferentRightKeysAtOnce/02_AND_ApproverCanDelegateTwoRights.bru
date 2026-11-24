@@ -1,0 +1,67 @@
+meta {
+	name: 02_AND_ApproverCanDelegateTwoRights
+	type: http
+	seq: 2
+}
+
+get {
+	url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources/delegationcheck?party={{party}}&resource={{resource}}
+	body: none
+	auth: inherit
+}
+
+params:query {
+	party: {{party}}
+	resource: {{resource}}
+}
+
+docs {
+	AND the approver can delegate at least two rights on the resource.
+
+	GET /accessmanagement/api/v1/enduser/connections/resources/delegationcheck?party=<approver>&resource=<id>
+
+	Right keys are hashes from the resource policy, so the scenario looks them up instead of
+	hard-coding them: the first delegable key is stored as `cc_keyA` and the second as `cc_keyB`.
+}
+
+script:pre-request {
+	const { skipOutsideEnabledEnvironments, testdata, loginAs } = require("./test/DelegationRequest/ConcurrentRequestCreation/helpers.js");
+	if (skipOutsideEnabledEnvironments({ waitsForFix: true })) {
+		return;
+	}
+
+	const td = testdata();
+
+	bru.setVar("party", td.approver.partyUuid);
+	bru.setVar("resource", td.resource);
+
+	await loginAs(td.approver);
+}
+
+script:post-response {
+	if (require("./test/DelegationRequest/ConcurrentRequestCreation/helpers.js").isSkipped()) {
+		return;
+	}
+
+	const { delegableKeys } = require("./test/DelegationRequest/ConcurrentRequestCreation/helpers.js");
+	const keys = res.status === 200 ? delegableKeys(res.getBody()) : [];
+
+	bru.setVar("cc_keyA", keys[0] || null);
+	bru.setVar("cc_keyB", keys[1] || null);
+}
+
+tests {
+	if (require("./test/DelegationRequest/ConcurrentRequestCreation/helpers.js").isSkipped()) {
+		return;
+	}
+
+	const { delegableKeys } = require("./test/DelegationRequest/ConcurrentRequestCreation/helpers.js");
+
+	test("AND the delegation check returns 200", function() {
+		expect(res.status).to.equal(200);
+	});
+
+	test("AND the approver can delegate at least two rights on the resource", function() {
+		expect(delegableKeys(res.getBody())).to.have.length.of.at.least(2);
+	});
+}

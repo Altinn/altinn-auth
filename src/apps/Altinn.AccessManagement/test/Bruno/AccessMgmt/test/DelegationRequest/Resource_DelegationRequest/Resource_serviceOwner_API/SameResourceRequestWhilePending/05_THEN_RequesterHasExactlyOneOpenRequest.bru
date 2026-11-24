@@ -1,0 +1,55 @@
+meta {
+	name: 05_THEN_RequesterHasExactlyOneOpenRequest
+	type: http
+	seq: 5
+}
+
+get {
+	url: {{baseUrl}}/accessmanagement/api/v1/enduser/request/sent?party={{party}}&status=Draft&status=Pending&type=resource
+	body: none
+	auth: inherit
+}
+
+params:query {
+	party: {{party}}
+	status: Draft
+	status: Pending
+	type: resource
+}
+
+docs {
+	THEN the requester has exactly one open request for the resource: the one they confirmed, still
+	Pending. A draft next to it is the bug in #5028.
+
+	GET /accessmanagement/api/v1/enduser/request/sent?party=<requester>&status=Draft&status=Pending&type=resource
+}
+
+script:pre-request {
+	const { skipOutsideEnabledEnvironments, testdata, loginAsRequester } = require("./utils/serviceOwnerRequestWhilePending.js");
+	if (skipOutsideEnabledEnvironments()) {
+		return;
+	}
+
+	const td = testdata();
+
+	bru.setVar("party", td.requester.partyUuid);
+
+	await loginAsRequester(td);
+}
+
+tests {
+	if (require("./utils/serviceOwnerRequestWhilePending.js").isSkipped()) {
+		return;
+	}
+
+	const { testdata, isFor } = require("./utils/serviceOwnerRequestWhilePending.js");
+
+	test("THEN the sent requests can be listed, the request returns 200", function() {
+		expect(res.status).to.equal(200);
+	});
+
+	test("THEN there is exactly one open request for the resource, the pending one", function() {
+		const open = res.getBody().data.filter(r => isFor(r, testdata().resource));
+		expect(open.map(r => `${r.status} ${r.id}`)).to.deep.equal([`Pending ${bru.getVar("sop_requestId")}`]);
+	});
+}
