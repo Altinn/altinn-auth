@@ -32,7 +32,7 @@ function skipOutsideEnabledEnvironments() {
 
 	bru.setVar("sop_skipped", "true");
 	console.log(enabledEnvironments.includes(env)
-		? `Skipped: this scenario waits for the fix for #5028. Add "${env}" to fixedEnvironments in helpers.js to run it.`
+		? `Skipped: this scenario waits for the fix for #5028. Add "${env}" to fixedEnvironments in utils/serviceOwnerRequestWhilePending.js to run it.`
 		: `Skipped: the #5028 scenarios are not enabled in "${env}".`);
 	bru.runner.skipRequest();
 	return true;

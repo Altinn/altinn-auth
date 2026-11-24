@@ -1,0 +1,66 @@
+meta {
+	name: 04_CLEANUP_RequesterWithdrawsThePendingRequests
+	type: http
+	seq: 4
+}
+
+get {
+	url: {{baseUrl}}/accessmanagement/api/v2/enduser/request/sent?party={{party}}&to={{to}}&status=Pending&type=package
+	body: none
+	auth: inherit
+}
+
+params:query {
+	party: {{party}}
+	to: {{to}}
+	status: Pending
+	type: package
+}
+
+docs {
+	CLEANUP the requester withdraws every pending request to the approver for either package, so the
+	scenario can be rerun. Requests cannot be deleted. All of them are withdrawn, not only the one
+	the scenario expects, because while #3931 is unfixed a run can leave duplicates behind.
+	Withdrawing, unlike rejecting, sends no notifications.
+
+	GET /accessmanagement/api/v2/enduser/request/sent?party=<requester>&to=<approver>&status=Pending&type=package
+	followed by PUT /accessmanagement/api/v2/enduser/request/sent/withdraw?party=<requester>&id=<id> for each.
+}
+
+script:pre-request {
+	const { skipOutsideEnabledEnvironments, testdata, loginAs } = require("./test/DelegationRequest/ConcurrentRequestCreation/helpers.js");
+	if (skipOutsideEnabledEnvironments()) {
+		return;
+	}
+
+	const td = testdata();
+
+	bru.setVar("party", td.requester.partyUuid);
+	bru.setVar("to", td.approver.partyUuid);
+
+	await loginAs(td.requester.innehaver);
+}
+
+script:post-response {
+	if (require("./test/DelegationRequest/ConcurrentRequestCreation/helpers.js").isSkipped()) {
+		return;
+	}
+
+	const axios = require("axios");
+	const { testdata, withdrawPending } = require("./test/DelegationRequest/ConcurrentRequestCreation/helpers.js");
+
+	if (res.status === 200) {
+		const td = testdata();
+		await withdrawPending(axios, td, res.getBody().data, td.packages);
+	}
+}
+
+tests {
+	if (require("./test/DelegationRequest/ConcurrentRequestCreation/helpers.js").isSkipped()) {
+		return;
+	}
+
+	test("CLEANUP the sent requests can be listed, the request returns 200", function() {
+		expect(res.status).to.equal(200);
+	});
+}

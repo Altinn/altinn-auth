@@ -11,7 +11,7 @@ docs {
 		Then every call returns 200 with the same pending request
 		And the requester has exactly one pending request for the resource
 		And the approver has exactly one pending request for the resource
-		Finally the approver rejects the pending requests to clean up
+		Finally the requester withdraws the pending requests to clean up
 
 	Skipped until the fix for #3931 is deployed: today the calls can create several requests.
 }

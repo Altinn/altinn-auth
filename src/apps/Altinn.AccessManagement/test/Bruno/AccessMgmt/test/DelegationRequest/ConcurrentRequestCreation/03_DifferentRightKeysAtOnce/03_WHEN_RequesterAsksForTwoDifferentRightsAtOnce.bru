@@ -76,6 +76,7 @@ tests {
 
 	test("THEN the losing call is told a request with other rights is pending (AM-00054)", function() {
 		const loser = results.find(r => r.status === 409);
+		expect(loser, "no call was answered with 409: both requests were created (#3931)").to.exist;
 		expect(loser.body.code).to.equal("AM-00054");
 	});
 }

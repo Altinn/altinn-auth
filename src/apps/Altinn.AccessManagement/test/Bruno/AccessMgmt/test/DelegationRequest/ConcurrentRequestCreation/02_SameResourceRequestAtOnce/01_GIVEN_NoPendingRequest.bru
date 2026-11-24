@@ -5,26 +5,26 @@ meta {
 }
 
 get {
-	url: {{baseUrl}}/accessmanagement/api/v2/enduser/request/received?party={{party}}&from={{from}}&status=Pending&type=resource
+	url: {{baseUrl}}/accessmanagement/api/v2/enduser/request/sent?party={{party}}&to={{to}}&status=Pending&type=resource
 	body: none
 	auth: inherit
 }
 
 params:query {
 	party: {{party}}
-	from: {{from}}
+	to: {{to}}
 	status: Pending
 	type: resource
 }
 
 docs {
-	GIVEN the approver has no pending request from the requester for the resource.
+	GIVEN the requester has no pending request to the approver for the resource.
 
-	GET /accessmanagement/api/v2/enduser/request/received?party=<approver>&from=<requester>&status=Pending&type=resource
+	GET /accessmanagement/api/v2/enduser/request/sent?party=<requester>&to=<approver>&status=Pending&type=resource
 
-	Idempotent reset: the post-response script rejects every pending request for the resource, so
+	Idempotent reset: the post-response script withdraws every pending request for the resource, so
 	leftovers from earlier or crashed runs, including duplicates the bug in #3931 created,
-	never break the scenario.
+	never break the scenario. Withdrawing sends no notifications.
 }
 
 script:pre-request {
@@ -36,10 +36,10 @@ script:pre-request {
 	const td = testdata();
 
 	clearScenarioVars();
-	bru.setVar("party", td.approver.partyUuid);
-	bru.setVar("from", td.requester.partyUuid);
+	bru.setVar("party", td.requester.partyUuid);
+	bru.setVar("to", td.approver.partyUuid);
 
-	await loginAs(td.approver);
+	await loginAs(td.requester.innehaver);
 }
 
 script:post-response {
@@ -48,11 +48,11 @@ script:post-response {
 	}
 
 	const axios = require("axios");
-	const { testdata, rejectPending } = require("./test/DelegationRequest/ConcurrentRequestCreation/helpers.js");
+	const { testdata, withdrawPending } = require("./test/DelegationRequest/ConcurrentRequestCreation/helpers.js");
 
 	if (res.status === 200) {
 		const td = testdata();
-		await rejectPending(axios, td, res.getBody().data, [td.resource]);
+		await withdrawPending(axios, td, res.getBody().data, [td.resource]);
 	}
 }
 
@@ -61,7 +61,7 @@ tests {
 		return;
 	}
 
-	test("GIVEN the received requests can be listed through v2, the request returns 200", function() {
+	test("GIVEN the sent requests can be listed through v2, the request returns 200", function() {
 		expect(res.status).to.equal(200);
 	});
 }

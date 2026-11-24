@@ -19,7 +19,7 @@ docs {
 
 	Each subfolder is one scenario. The files inside are the scenario steps, named
 	`NN_GIVEN|WHEN|THEN|AND|CLEANUP_...` and ordered by `seq`. A scenario starts from a known
-	state, rejects what it created, and can run standalone or repeatedly.
+	state, withdraws what it created, and can run standalone or repeatedly.
 
 	## What these scenarios cannot check
 
@@ -45,5 +45,6 @@ docs {
 	`concurrentRequestCreation`, from the `be-om-tilgang` fixtures. The requester is an
 	organisation acting through its innehaver, the approver a private person connected to it.
 	The pair and resource are shared with `ResourceRequestRightKeysV2`; the GIVEN steps of both
-	suites reject what the other leaves pending.
+	suites close what the other leaves pending. The scenarios clean up by withdrawing as the requester,
+	not by rejecting as the approver, so they send no notifications.
 }

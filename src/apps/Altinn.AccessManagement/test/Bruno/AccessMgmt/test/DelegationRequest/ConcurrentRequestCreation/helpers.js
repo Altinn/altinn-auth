@@ -141,17 +141,19 @@ function isFor(request, reference) {
 		|| (request.resource && request.resource.referenceId === reference);
 }
 
-// Rejects, with the approver's token, every pending request in the list that is for one of the
-// references. Rejects all of them, not only the first: while #3931 is unfixed, a scenario can
-// leave several pending requests for the same package or resource behind.
-async function rejectPending(axios, td, pendingRequests, references) {
+// Withdraws, with the requester's token, every pending request in the list that is for one of the
+// references. Withdraws all of them, not only the first: while #3931 is unfixed, a scenario can
+// leave several pending requests for the same package or resource behind. Withdrawing, unlike
+// rejecting, removes the request from the pending notification to the approver and queues no
+// notification to the requester, so the runs send no notifications.
+async function withdrawPending(axios, td, pendingRequests, references) {
 	const baseUrl = bru.getEnvVar("baseUrl");
 	const headers = { Authorization: `Bearer ${bru.getVar("bearerToken")}` };
 
 	const stale = (pendingRequests || []).filter(r => references.some(ref => isFor(r, ref)));
 	for (const request of stale) {
 		await axios.put(
-			`${baseUrl}${paths.v2}/received/reject?party=${td.approver.partyUuid}&id=${request.id}`,
+			`${baseUrl}${paths.v2}/sent/withdraw?party=${td.requester.partyUuid}&id=${request.id}`,
 			null,
 			{ headers, validateStatus: () => true });
 	}
@@ -175,6 +177,6 @@ module.exports = {
 	storeResults,
 	readResults,
 	isFor,
-	rejectPending,
+	withdrawPending,
 	delegableKeys,
 };
