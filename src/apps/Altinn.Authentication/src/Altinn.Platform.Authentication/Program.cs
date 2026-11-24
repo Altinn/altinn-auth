@@ -89,8 +89,9 @@ public partial class Program
               Forwarded-For: {XForwardedFor}
               Forwarded-Host: {XForwardedHost}
               Client-IP: {ClientIp}
+              Host: {Host}
             """)]
-        private static partial void DebugForwardedHeaders(ILogger logger, string stage, string? xForwardedFor, string? xForwardedHost, string clientIp);
+        private static partial void DebugForwardedHeaders(ILogger logger, string stage, string? xForwardedFor, string? xForwardedHost, string clientIp, string host);
 
         public static void DebugForwardedHeaders(ILogger logger, string stage, HttpRequest request)
         {
@@ -99,7 +100,8 @@ public partial class Program
                 stage,
                 string.Join(", ", request.Headers["X-Forwarded-For"].AsEnumerable()),
                 request.Headers["X-Forwarded-Host"].FirstOrDefault(),
-                request.HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown");
+                request.HttpContext.Connection.RemoteIpAddress?.ToString() ?? "<null>",
+                request.Host.Value ?? "<null>");
         }
     }
 }
