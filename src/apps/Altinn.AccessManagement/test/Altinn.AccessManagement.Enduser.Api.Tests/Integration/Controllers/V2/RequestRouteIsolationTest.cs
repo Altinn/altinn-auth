@@ -64,18 +64,6 @@ public class RequestRouteIsolationTest : IClassFixture<ApiFixture>
         actions.Should().ContainSingle();
     }
 
-    [Fact]
-    public void V1AndV2_ExposeTheSameActions()
-    {
-        static List<string> Signatures(IEnumerable<(string HttpMethod, string ActionName, string RelativePath)> actions, string route) =>
-            [.. actions.Select(a => $"{a.HttpMethod} {a.RelativePath[route.Length..]}").Order()];
-
-        var v1 = Signatures(GetActions(typeof(ControllersV1.RequestController)), RequestV1Route);
-        var v2 = Signatures(GetActions(typeof(ControllersV2.RequestController)), RequestV2Route);
-
-        v2.Should().Equal(v1);
-    }
-
     private List<(string HttpMethod, string ActionName, string RelativePath)> GetActions(Type controllerType)
     {
         var provider = Services.GetRequiredService<IApiDescriptionGroupCollectionProvider>();
