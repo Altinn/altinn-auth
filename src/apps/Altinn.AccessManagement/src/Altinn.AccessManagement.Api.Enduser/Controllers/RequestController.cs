@@ -4,7 +4,6 @@ using System.Security.Claims;
 using Altinn.AccessManagement.Api.Enduser.Controllers.Base;
 using Altinn.AccessManagement.Api.Enduser.Models;
 using Altinn.AccessManagement.Api.Enduser.Utils;
-using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Helpers;
@@ -48,7 +47,6 @@ public class RequestController(
     ConnectionQuery connectionQuery,
     IResourceService resourceService,
     IEntityService entityService,
-    IResourceRegistryClient resourceRegistryClient,
     IPDP pdp
     ) : RequestControllerBase<RequestDto, RequestStatus>(
     requestService,
@@ -57,7 +55,6 @@ public class RequestController(
     connectionQuery,
     resourceService,
     entityService,
-    resourceRegistryClient,
     pdp
     )
 {
@@ -70,8 +67,8 @@ public class RequestController(
     protected override RequestDto ConvertRequest(AccessRequest request) => DtoMapper.ConvertToV1(request);
 
     /// <summary>
-    /// Filters on the version 1 statuses. <see cref="RequestDto.Status"/> reports <see cref="RequestStatusV2.PartialApprove"/>
-    /// as <see cref="RequestStatus.Approved"/>, so filtering on Approved also includes PartialApprove.
+    /// Filters on the version 1 statuses. <see cref="RequestDto.Status"/> reports <see cref="RequestStatusV2.ApprovedWithAdjustments"/>
+    /// as <see cref="RequestStatus.Approved"/>, so filtering on Approved also includes ApprovedWithAdjustments.
     /// </summary>
     protected override IEnumerable<RequestStatusV2> GetStatusFilter(RequestStatus[]? status)
         => status == null || status.Length == 0 ? DefaultStatusFilter : DtoMapper.ConvertFromV1StatusFilter(status);
@@ -116,6 +113,7 @@ public class RequestController(
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status409Conflict, MediaTypeNames.Application.Json)]
     public async Task<IActionResult> CreateResourceRequest(
         [FromQuery][Required] Guid party,
         [FromQuery][Required] Guid to,

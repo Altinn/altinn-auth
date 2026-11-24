@@ -82,21 +82,21 @@ public class ActivityTypeConstantsTests
     }
 
     [Fact]
-    public void Resolve_PackagePartialApprove_ResolvesItsOwnEntry()
+    public void Resolve_PackageApprovedWithAdjustments_ResolvesItsOwnEntry()
     {
-        var resolved = ActivityTypeConstants.Resolve(ActivityLogType.Request, ActivityLogSubtype.Package, ActivityLogTrigger.Updated, RequestStatusV2.PartialApprove);
+        var resolved = ActivityTypeConstants.Resolve(ActivityLogType.Request, ActivityLogSubtype.Package, ActivityLogTrigger.Updated, RequestStatusV2.ApprovedWithAdjustments);
 
         Assert.NotNull(resolved);
-        Assert.Equal(ActivityTypeConstants.RequestPackageUpdatedPartialApprove.Id, resolved.Id);
+        Assert.Equal(ActivityTypeConstants.RequestPackageUpdatedApprovedWithAdjustments.Id, resolved.Id);
     }
 
     [Fact]
-    public void Resolve_ResourcePartialApprove_ResolvesItsOwnEntry()
+    public void Resolve_ResourceApprovedWithAdjustments_ResolvesItsOwnEntry()
     {
-        var resolved = ActivityTypeConstants.Resolve(ActivityLogType.Request, ActivityLogSubtype.Resource, ActivityLogTrigger.Updated, RequestStatusV2.PartialApprove);
+        var resolved = ActivityTypeConstants.Resolve(ActivityLogType.Request, ActivityLogSubtype.Resource, ActivityLogTrigger.Updated, RequestStatusV2.ApprovedWithAdjustments);
 
         Assert.NotNull(resolved);
-        Assert.Equal(ActivityTypeConstants.RequestResourceUpdatedPartialApprove.Id, resolved.Id);
+        Assert.Equal(ActivityTypeConstants.RequestResourceUpdatedApprovedWithAdjustments.Id, resolved.Id);
     }
 
     [Fact]

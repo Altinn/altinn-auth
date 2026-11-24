@@ -24,6 +24,7 @@ using AltinnCore.Authentication.JwtCookie;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc.ApiExplorer;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Microsoft.FeatureManagement;
@@ -91,6 +92,11 @@ internal static class ResourceRegistryHost
                     options.RequireHttpsMetadata = false;
                 }
             });
+
+        services.AddHybridCache(options =>
+        {
+            options.MaximumPayloadBytes = 1024 * 1024 * 32; // 32 MB
+        });
 
         services.AddUrnSwaggerSupport();
         services.AddHttpClient<IOrgListClient, OrgListClient>();

@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Text.Json;
+using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.TestUtils.Fixtures;
 using Altinn.AccessManagement.TestUtils.Mocks;
 using Altinn.AccessMgmt.Core.Appsettings;
@@ -151,6 +152,39 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
 
         Assert.Equal(first.Id, second.Id);
     }
+
+    [Fact]
+    public async Task CreateRequestAssignmentResource_CalledAgainWithSameRightKeysInOtherOrder_ReturnsExistingPendingRequest()
+    {
+        var resource = await SeedUniqueResource();
+
+        var first = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, ["key-a", "key-b"], RequestStatusV2.Pending, TestContext.Current.CancellationToken)).Value;
+        var second = await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, ["key-b", "key-a", "key-b"], RequestStatusV2.Pending, TestContext.Current.CancellationToken);
+
+        Assert.False(second.IsProblem);
+        Assert.Equal(first.Id, second.Value.Id);
+    }
+
+    [Theory]
+    [InlineData(new[] { "key-a" }, new[] { "key-b" })]
+    [InlineData(new[] { "key-a" }, new[] { "key-a", "key-b" })]
+    [InlineData(new[] { "key-a" }, null)]
+    [InlineData(null, new[] { "key-a" })]
+    public async Task CreateRequestAssignmentResource_CalledAgainWithOtherRightKeys_ReturnsConflictAndKeepsPendingRequest(string[]? pendingKeys, string[]? newKeys)
+    {
+        var resource = await SeedUniqueResource();
+        var first = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, pendingKeys, RequestStatusV2.Pending, TestContext.Current.CancellationToken)).Value;
+
+        var second = await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, newKeys, RequestStatusV2.Pending, TestContext.Current.CancellationToken);
+
+        Assert.True(second.IsProblem);
+        Assert.Equal(Problems.PendingRequestWithOtherRightKeys.ErrorCode, second.Problem.ErrorCode);
+        var stored = Assert.Single(await _db.RequestAssignmentResources.AsNoTracking()
+            .Where(r => r.ResourceId == resource.Id)
+            .ToListAsync(TestContext.Current.CancellationToken));
+        Assert.Equal(first.Id, stored.Id);
+        Assert.Equal(pendingKeys, stored.RequestedRightKeys);
+    }
     #endregion
 
     #region CreateRequestAssignmentResource with right keys
@@ -220,14 +254,14 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
     {
         var created = await CreatePendingResourceRequest(["key-a", "key-b"]);
 
-        var result = await _requestService.ApproveResourceRequest(OrgFrom.Id, created.Id, RequestStatusV2.PartialApprove, ["key-b", "key-c", "key-b"], TestContext.Current.CancellationToken);
+        var result = await _requestService.ApproveResourceRequest(OrgFrom.Id, created.Id, RequestStatusV2.ApprovedWithAdjustments, ["key-b", "key-c", "key-b"], TestContext.Current.CancellationToken);
         var stored = await _db.RequestAssignmentResources.AsNoTracking().SingleAsync(r => r.Id == created.Id, TestContext.Current.CancellationToken);
 
         Assert.False(result.IsProblem);
-        Assert.Equal(RequestStatusV2.PartialApprove, result.Value.Status);
+        Assert.Equal(RequestStatusV2.ApprovedWithAdjustments, result.Value.Status);
         Assert.Equal(["key-b", "key-c"], result.Value.ApprovedRightKeys);
         Assert.Equal(["key-a", "key-b"], result.Value.RequestedRightKeys);
-        Assert.Equal(RequestStatusV2.PartialApprove, stored.Status);
+        Assert.Equal(RequestStatusV2.ApprovedWithAdjustments, stored.Status);
         Assert.Equal(["key-b", "key-c"], stored.ApprovedRightKeys);
     }
 
@@ -248,7 +282,7 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
     public async Task ApproveResourceRequest_AlreadyPartlyApproved_ReturnsProblem()
     {
         var created = await CreatePendingResourceRequest(["key-a"]);
-        await _requestService.ApproveResourceRequest(OrgFrom.Id, created.Id, RequestStatusV2.PartialApprove, ["key-b"], TestContext.Current.CancellationToken);
+        await _requestService.ApproveResourceRequest(OrgFrom.Id, created.Id, RequestStatusV2.ApprovedWithAdjustments, ["key-b"], TestContext.Current.CancellationToken);
 
         var again = await _requestService.ApproveResourceRequest(OrgFrom.Id, created.Id, RequestStatusV2.Approved, ["key-a"], TestContext.Current.CancellationToken);
         var rejected = await _requestService.UpdateRequest(OrgFrom.Id, created.Id, RequestStatusV2.Rejected, TestContext.Current.CancellationToken);
@@ -256,7 +290,7 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
 
         Assert.True(again.IsProblem);
         Assert.True(rejected.IsProblem);
-        Assert.Equal(RequestStatusV2.PartialApprove, stored.Status);
+        Assert.Equal(RequestStatusV2.ApprovedWithAdjustments, stored.Status);
         Assert.Equal(["key-b"], stored.ApprovedRightKeys);
     }
 
@@ -281,14 +315,14 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
     }
 
     [Fact]
-    public async Task ApproveResourceRequest_PartialApprove_WritesReviewedNotification()
+    public async Task ApproveResourceRequest_ApprovedWithAdjustments_WritesReviewedNotification()
     {
         var created = await CreatePendingResourceRequest(["key-a"]);
 
-        await _requestService.ApproveResourceRequest(OrgFrom.Id, created.Id, RequestStatusV2.PartialApprove, ["key-b"], TestContext.Current.CancellationToken);
+        await _requestService.ApproveResourceRequest(OrgFrom.Id, created.Id, RequestStatusV2.ApprovedWithAdjustments, ["key-b"], TestContext.Current.CancellationToken);
 
         var resource = await GetReviewedResource(created.Resource.Id);
-        Assert.Equal(RequestStatusV2.PartialApprove, resource.RequestStatus);
+        Assert.Equal(RequestStatusV2.ApprovedWithAdjustments, resource.RequestStatus);
         Assert.True(resource.IsApproved);
     }
 
@@ -370,12 +404,12 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
     // Runs the handler on the stored outbox message, so the status is followed from the request
     // through the database and into the email text.
     [Fact]
-    public async Task RequestReviewedNotificationHandler_PartiallyApprovedResource_EmailSaysApprovedWithAdjustments()
+    public async Task RequestReviewedNotificationHandler_ResourceApprovedWithAdjustments_EmailSaysApprovedWithAdjustments()
     {
-        var resourceName = $"Delvis godkjent tjeneste {Guid.CreateVersion7()}";
+        var resourceName = $"Tjeneste godkjent med justeringer {Guid.CreateVersion7()}";
         var resource = await SeedUniqueResource(resourceName);
         var created = (await _requestService.CreateResourceRequest(OrgFrom.Id, PersonTo.Id, PersonTo.Id, RoleConstants.Rightholder.Id, resource.Id, ["key-a"], RequestStatusV2.Pending, TestContext.Current.CancellationToken)).Value;
-        await _requestService.ApproveResourceRequest(OrgFrom.Id, created.Id, RequestStatusV2.PartialApprove, ["key-b"], TestContext.Current.CancellationToken);
+        await _requestService.ApproveResourceRequest(OrgFrom.Id, created.Id, RequestStatusV2.ApprovedWithAdjustments, ["key-b"], TestContext.Current.CancellationToken);
 
         var outbox = await _db.OutboxMessages.AsNoTracking()
             .Where(m => m.Handler == RequestReviewedNotification.Handler)

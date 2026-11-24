@@ -6,6 +6,7 @@ using Altinn.Authorization.Api.Contracts.Authorization;
 using Altinn.Authorization.Enums;
 using Altinn.Platform.Authorization.Clients;
 using Altinn.Platform.Authorization.Configuration;
+using Altinn.Platform.Authorization.Helpers;
 using Altinn.Platform.Authorization.Models.AccessManagement;
 using Altinn.Platform.Authorization.Services.Interface;
 using AltinnCore.Authentication.Utils;
@@ -40,11 +41,14 @@ public class AccessManagementWrapper : IAccessManagementWrapper
     /// <inheritdoc/>
     public async Task<IEnumerable<DelegationChangeDto>> GetAllDelegationChanges(DelegationChangeInputDto input, CancellationToken cancellationToken = default)
     {
-        var response = await _client.Client.SendAsync(
-            new(HttpMethod.Post, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), "policyinformation/getdelegationchanges"))
-            {
-                Content = new StringContent(JsonSerializer.Serialize(input), Encoding.UTF8, MediaTypeNames.Application.Json)
-            },
+        var response = await DependencyCall.SendAsync(
+            DependencyCall.AccessManagement,
+            () => _client.Client.SendAsync(
+                new(HttpMethod.Post, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), "policyinformation/getdelegationchanges"))
+                {
+                    Content = new StringContent(JsonSerializer.Serialize(input), Encoding.UTF8, MediaTypeNames.Application.Json)
+                },
+                cancellationToken),
             cancellationToken);
 
         if (response.IsSuccessStatusCode)
@@ -123,8 +127,11 @@ public class AccessManagementWrapper : IAccessManagementWrapper
 
         if (!_memoryCache.TryGetValue(cacheKey, out PipResponseDto result))
         {
-            var response = await _client.Client.SendAsync(
-                new(HttpMethod.Get, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), $"policyinformation/roles-and-accesspackages?to={to}&from={from}&accessRestriction={accessRestriction}{ViaPartyQuery(viaPartyOrganizationNumber)}")),
+            var response = await DependencyCall.SendAsync(
+                DependencyCall.AccessManagement,
+                () => _client.Client.SendAsync(
+                    new(HttpMethod.Get, new Uri(new Uri(_client.Settings.Value.ApiAccessManagementEndpoint), $"policyinformation/roles-and-accesspackages?to={to}&from={from}&accessRestriction={accessRestriction}{ViaPartyQuery(viaPartyOrganizationNumber)}")),
+                    cancellationToken),
                 cancellationToken);
 
             if (response.IsSuccessStatusCode)

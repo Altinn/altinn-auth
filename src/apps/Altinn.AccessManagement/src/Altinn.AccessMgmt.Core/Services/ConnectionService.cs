@@ -34,6 +34,7 @@ using Altinn.Authorization.Api.Contracts.ResourceRegistry.Enums;
 using Altinn.Authorization.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Microsoft.FeatureManagement;
 using Npgsql;
 
 namespace Altinn.AccessMgmt.Core.Services;
@@ -51,7 +52,8 @@ public partial class ConnectionService(
     IRoleService roleService,
     ITranslationService translationService,
     ISingleRightsService singleRightsService,
-    AppLifecycleFeatures lifecycleFeatures) : IConnectionService
+    AppLifecycleFeatures lifecycleFeatures,
+    IFeatureManager featureManager) : IConnectionService
 {
     public async Task<Result<IEnumerable<ConnectionDto>>> Get(Guid party, Guid? fromId, Guid? toId, bool includeClientDelegations = true, bool includeAgentConnections = true, bool includeAccessPackages = false, bool includeResources = false, bool includeInstances = false, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default)
     {
@@ -281,6 +283,8 @@ public partial class ConnectionService(
             ? ConnectionQueryDirection.ToOthers
             : ConnectionQueryDirection.FromOthers;
 
+        var includeChangeInfo = await IsChangeInfoEnabled(cancellationToken);
+
         var resources = await connectionQuery.GetConnectionsAsync(
             new ConnectionQueryFilter()
             {
@@ -295,12 +299,14 @@ public partial class ConnectionService(
                 EnrichPackageResources = false,
                 IncludeDelegation = true,
                 IncludeDelegationResources = true,
+                IncludeChangeInfo = includeChangeInfo,
             },
             direction,
             cancellationToken
         );
 
-        return DtoMapper.ConvertResources(resources);
+        var performers = await GetPerformers(resources, includeChangeInfo, cancellationToken);
+        return DtoMapper.ConvertResources(resources, performers);
     }
 
     public async Task<Result<IEnumerable<InstancePermissionDto>>> GetResourceInstances(Guid party, Guid? fromId, Guid? toId, Guid? resourceId, string instanceId, Action<ConnectionOptions> configureConnections = null, CancellationToken cancellationToken = default)
@@ -322,6 +328,8 @@ public partial class ConnectionService(
             ? ConnectionQueryDirection.ToOthers
             : ConnectionQueryDirection.FromOthers;
 
+        var includeChangeInfo = await IsChangeInfoEnabled(cancellationToken);
+
         var instances = await connectionQuery.GetConnectionsAsync(
             new ConnectionQueryFilter()
             {
@@ -338,15 +346,48 @@ public partial class ConnectionService(
                 IncludePackages = false,
                 EnrichPackageResources = false,
                 IncludeDelegation = false,
+                IncludeChangeInfo = includeChangeInfo,
             },
             direction,
             cancellationToken
         );
 
-        return await MapConnectionsToInstancePermissions(instances, cancellationToken);
+        var performers = await GetPerformers(instances, includeChangeInfo, cancellationToken);
+        return MapConnectionsToInstancePermissions(instances, performers);
     }
 
-    private async Task<List<InstancePermissionDto>> MapConnectionsToInstancePermissions(IEnumerable<ConnectionQueryExtendedRecord> connections, CancellationToken cancellationToken)
+    /// <summary>
+    /// Whether to read who last changed each access and when. Checked per request, so the extra load can be
+    /// turned off at runtime with <see cref="AccessMgmtFeatureFlags.EnableEnduserConnectionsChangeInfo"/>.
+    /// </summary>
+    private Task<bool> IsChangeInfoEnabled(CancellationToken cancellationToken) =>
+        featureManager.IsEnabledAsync(AccessMgmtFeatureFlags.EnableEnduserConnectionsChangeInfo, cancellationToken);
+
+    /// <summary>
+    /// Looks up everyone who last changed the packages, resources and instances on the connections, in one query.
+    /// Used in both directions; <see cref="DtoMapper.ConvertAuditEntity"/> keeps personal identifiers out of the response.
+    /// Returns <c>null</c> without walking the connections when change info is turned off, and makes no query when no change is recorded.
+    /// </summary>
+    private async Task<IReadOnlyDictionary<Guid, Entity>> GetPerformers(IEnumerable<ConnectionQueryExtendedRecord> connections, bool includeChangeInfo, CancellationToken cancellationToken)
+    {
+        if (!includeChangeInfo)
+        {
+            return null;
+        }
+
+        var ids = DtoMapper.CollectChangedBy(connections);
+        if (ids.Count == 0)
+        {
+            return new Dictionary<Guid, Entity>();
+        }
+
+        return await dbContext.Entities
+            .AsNoTracking()
+            .Where(e => ids.Contains(e.Id))
+            .ToDictionaryAsync(e => e.Id, cancellationToken);
+    }
+
+    private static List<InstancePermissionDto> MapConnectionsToInstancePermissions(IEnumerable<ConnectionQueryExtendedRecord> connections, IReadOnlyDictionary<Guid, Entity> performers)
     {
         var result = new List<InstancePermissionDto>();
 
@@ -362,13 +403,20 @@ public partial class ConnectionService(
 
             var dto = new InstancePermissionDto
             {
-                Resource = new ResourceDto { Id = firstInstance.ResourceId, RefId = firstInstance.ResourceRefId, Name = firstInstance.ResourceName },
+                Resource = new ResourceDto
+                {
+                    Id = firstInstance.ResourceId,
+                    RefId = firstInstance.ResourceRefId,
+                    Name = firstInstance.ResourceName,
+                    Delegable = firstInstance.ResourceDelegable,
+                    AccessListMode = firstInstance.ResourceAccessListMode
+                },
                 Instance = new InstanceDto
                 {
                     RefId = firstInstance.InstanceId,
                     Type = null // TODO: InstanceType support to be added later
                 },
-                Permissions = group.Select(x => DtoMapper.ConvertToPermission(x.Connection)).ToList()
+                Permissions = group.Select(x => DtoMapper.ConvertToPermission(x.Connection, x.Instance.ChangeInfo, performers)).ToList()
             };
 
             result.Add(dto);
@@ -509,6 +557,8 @@ public partial class ConnectionService(
             ? ConnectionQueryDirection.ToOthers
             : ConnectionQueryDirection.FromOthers;
 
+        var includeChangeInfo = await IsChangeInfoEnabled(cancellationToken);
+
         var connections = await connectionQuery.GetConnectionsAsync(
         new ConnectionQueryFilter()
         {
@@ -522,13 +572,15 @@ public partial class ConnectionService(
             IncludePackages = true,
             IncludeResources = false,
             EnrichPackageResources = false,
-            ExcludeDeleted = false
+            ExcludeDeleted = false,
+            IncludeChangeInfo = includeChangeInfo,
         },
         direction,
         cancellationToken
         );
 
-        return DtoMapper.ConvertPackages(connections);
+        var performers = await GetPerformers(connections, includeChangeInfo, cancellationToken);
+        return DtoMapper.ConvertPackages(connections, performers);
     }
 
     public async Task<Result<AssignmentPackageDto>> AddPackage(Guid fromId, Guid toId, Guid packageId, Action<ConnectionOptions> configureConnection = null, CancellationToken cancellationToken = default)
@@ -1013,14 +1065,6 @@ public partial class ConnectionService(
         // isMaskinPortenSchema is used later to add denial reasons, so we only set it when we want to deny
         bool isMaskinPortenSchema = isMaskinPortenSchemaResource && !allowMaskinportenSchema;
 
-        // Fetch Resourcemetadata
-        ServiceResource resourceMetadata = await contextRetrievalService.GetResource(resource, cancellationToken);
-
-        if (resourceMetadata is null)
-        {
-            return Problems.InvalidResource;
-        }
-
         List<RightDto> rightKeys = await contextRetrievalService.GetResourcePolicyV2(resource, languageCode, cancellationToken);
 
         if (rightKeys is null)
@@ -1028,8 +1072,8 @@ public partial class ConnectionService(
             return Problems.MissingMetadata;
         }
 
-        ResourceAccessListMode accessListMode = resourceMetadata.AccessListMode;
-        bool isResourceDelegable = ignoreDelegableFlag || resourceMetadata.Delegable;
+        ResourceAccessListMode accessListMode = resourceDto.AccessListMode;
+        bool isResourceDelegable = ignoreDelegableFlag || resourceDto.Delegable;
 
         // Decompose policy into resource/tasks
         List<Models.Right> rights = DelegationCheckHelper.DecomposePolicy(policy, resource);
@@ -1086,20 +1130,14 @@ public partial class ConnectionService(
             isMaskinPortenSchema = true;
         }
 
-        ServiceResource resourceMetadata = await contextRetrievalService.GetResource(resource, cancellationToken);
-        if (resourceMetadata is null)
-        {
-            return Problems.InvalidResource;
-        }
-
         List<RightDto> rightKeys = await contextRetrievalService.GetResourcePolicyV2(resource, languageCode, cancellationToken);
         if (rightKeys is null)
         {
             return Problems.MissingMetadata;
         }
 
-        ResourceAccessListMode accessListMode = resourceMetadata.AccessListMode;
-        bool isResourceDelegable = resourceMetadata.Delegable;
+        ResourceAccessListMode accessListMode = resourceDto.AccessListMode;
+        bool isResourceDelegable = resourceDto.Delegable;
 
         List<Models.Right> rights = DelegationCheckHelper.DecomposePolicy(policy, resource);
 
@@ -1673,42 +1711,19 @@ public partial class ConnectionService(
 
     private async Task<ResourceDto> FetchResource(string resource, CancellationToken cancellationToken)
     {
-        Resource resourceObj = await dbContext.Resources.AsNoTracking().SingleOrDefaultAsync(r => r.RefId == resource, cancellationToken);
+        Resource resourceObj = await dbContext.Resources
+            .AsNoTracking()
+            .Include(r => r.Type)
+            .Include(r => r.Provider)
+                .ThenInclude(p => p.Type)
+            .SingleOrDefaultAsync(r => r.RefId == resource, cancellationToken);
 
         if (resourceObj is null)
         {
             throw new ValidationException($"Resource with id '{resource}' not found");
         }
 
-        Provider provider = await dbContext.Providers.AsNoTracking().SingleOrDefaultAsync(p => p.Id == resourceObj.ProviderId, cancellationToken);
-        ProviderTypeConstants.TryGetById(provider.TypeId, out var providerType);
-        PersistenceEF.Models.ResourceType resourceType = await dbContext.ResourceTypes.SingleOrDefaultAsync(rt => rt.Id == resourceObj.TypeId, cancellationToken);
-
-        ProviderDto providerDto = new ProviderDto
-        {
-            Id = provider.Id,
-            Code = provider.Code,
-            LogoUrl = provider.LogoUrl,
-            Name = provider.Name,
-            RefId = provider.RefId,
-            TypeId = provider.TypeId,
-            Type = new ProviderTypeDto { Id = providerType.Id, Name = providerType.Entity.Name }
-        };
-
-        ResourceDto resourceDto = new ResourceDto
-        {
-            Id = resourceObj.Id,
-            Name = resourceObj.Name,
-            Description = resourceObj.Description,
-            RightDescription = resourceObj.RightDescription,
-            Provider = providerDto,
-            ProviderId = provider.Id,
-            RefId = resourceObj.RefId,
-            TypeId = resourceObj.TypeId,
-            Type = new ResourceTypeDto { Id = resourceType.Id, Name = resourceType.Name }
-        };
-
-        return resourceDto;
+        return DtoMapper.Convert(resourceObj);
     }
 
     private async Task<XacmlPolicy> GetPolicy(string resource, CancellationToken cancellationToken = default)

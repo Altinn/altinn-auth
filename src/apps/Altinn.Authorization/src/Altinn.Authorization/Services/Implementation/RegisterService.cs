@@ -7,6 +7,7 @@ using Altinn.Common.AccessTokenClient.Services;
 using Altinn.Platform.Authorization.Configuration;
 using Altinn.Platform.Authorization.Exceptions;
 using Altinn.Platform.Authorization.Extensions;
+using Altinn.Platform.Authorization.Helpers;
 using Altinn.Platform.Authorization.Services.Interfaces;
 using Altinn.Platform.Register.Models;
 using AltinnCore.Authentication.Utils;
@@ -54,8 +55,10 @@ namespace Altinn.Platform.Authorization.Services
         /// <inheritdoc/>
         public async Task<Party> GetParty(int partyId, CancellationToken cancellationToken = default)
         {
-            return await GetPartiesAsync(new List<int> { partyId }, false, cancellationToken)
-                .ContinueWith(task => task.Result.FirstOrDefault(), cancellationToken);
+            // Awaited instead of continued with: a continuation that reads Result wraps a failed lookup in an
+            // AggregateException, which hides from the caller what kind of failure it was.
+            List<Party> parties = await GetPartiesAsync(new List<int> { partyId }, false, cancellationToken);
+            return parties.FirstOrDefault();
         }
 
         /// <inheritdoc/>
@@ -86,7 +89,7 @@ namespace Altinn.Platform.Authorization.Services
             string accessToken = _accessTokenGenerator.GenerateAccessToken("platform", "authorization");
             StringContent requestBody = new StringContent(JsonSerializer.Serialize(partyUuidsNotInCache), Encoding.UTF8, "application/json");
 
-            HttpResponseMessage response = await _client.PostAsync(endpointUrl, requestBody, token, accessToken, cancellationToken);
+            HttpResponseMessage response = await DependencyCall.SendAsync(DependencyCall.Register, () => _client.PostAsync(endpointUrl, requestBody, token, accessToken, cancellationToken), cancellationToken);
             string responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
             List<Party> remainingParties = new();
@@ -139,7 +142,7 @@ namespace Altinn.Platform.Authorization.Services
             string accessToken = _accessTokenGenerator.GenerateAccessToken("platform", "authorization");
             StringContent requestBody = new StringContent(JsonSerializer.Serialize(partyIdsNotInCache), Encoding.UTF8, "application/json");
 
-            HttpResponseMessage response = await _client.PostAsync(endpointUrl, requestBody, token, accessToken, cancellationToken);
+            HttpResponseMessage response = await DependencyCall.SendAsync(DependencyCall.Register, () => _client.PostAsync(endpointUrl, requestBody, token, accessToken, cancellationToken), cancellationToken);
             string responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
             List<Party> remainingParties = new();
@@ -195,7 +198,7 @@ namespace Altinn.Platform.Authorization.Services
                 StringContent content = new StringContent(JsonSerializer.Serialize(partyLookup));
                 content.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
 
-                HttpResponseMessage response = await _client.PostAsync(endpointUrl, content, bearerToken, accessToken, cancellationToken);
+                HttpResponseMessage response = await DependencyCall.SendAsync(DependencyCall.Register, () => _client.PostAsync(endpointUrl, content, bearerToken, accessToken, cancellationToken), cancellationToken);
 
                 if (response.StatusCode == HttpStatusCode.OK)
                 {

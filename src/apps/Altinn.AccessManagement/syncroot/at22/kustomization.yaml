@@ -29,7 +29,7 @@ patches:
 
   - target:
       kind: Kustomization
-      name: deploy
+      name: deploy 
     patch: |-
       apiVersion: kustomize.toolkit.fluxcd.io/v1
       kind: Kustomization

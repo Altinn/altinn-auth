@@ -204,6 +204,32 @@ public partial class ServiceOwnerConnectionsControllerTest
         }
 
         [Fact]
+        public async Task AddPackage_ToSameParty_Returns400SelfDelegationNotAllowed()
+        {
+            // Arrange
+            var client = CreateClient();
+
+            ServiceOwnerConnectionPartyUrn.PersonId party = ServiceOwnerConnectionPartyUrn.PersonId.Create(PersonIdentifier.Parse(TestData.VegardSolberg.Entity.PersonIdentifier));
+            AccessPackageUrn.AccessPackage package = AccessPackageUrn.AccessPackage.Create(new AccessPackageIdentifier(PackageConstants.InnbyggerSkatteforholdPrivatpersoner.Entity.Code));
+
+            ServiceOwnerAccessPackageDelegation request = new()
+            {
+                From = party,
+                To = party,
+                PackageUrn = package
+            };
+
+            // Act
+            var response = await client.PostAsJsonAsync($"{Route}/accesspackages", request, TestContext.Current.CancellationToken);
+
+            // Assert
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+            var problemDetails = await response.Content.ReadFromJsonAsync<ProblemDetails>(TestContext.Current.CancellationToken);
+            Assert.NotNull(problemDetails);
+            Assert.Equal("AM-00053", problemDetails.Extensions["code"].ToString());
+        }
+
+        [Fact]
         public async Task AddPackage_ToOrganisation_Returns200WithCreatedAssignmentPackage()
         {
             // Arrange

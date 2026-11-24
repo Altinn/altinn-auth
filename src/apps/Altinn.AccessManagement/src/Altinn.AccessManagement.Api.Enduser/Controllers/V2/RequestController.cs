@@ -1,7 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Net.Mime;
 using Altinn.AccessManagement.Api.Enduser.Controllers.Base;
-using Altinn.AccessManagement.Core.Clients.Interfaces;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Helpers;
 using Altinn.AccessMgmt.Core;
@@ -42,7 +41,6 @@ public class RequestController(
     ConnectionQuery connectionQuery,
     IResourceService resourceService,
     IEntityService entityService,
-    IResourceRegistryClient resourceRegistryClient,
     IPDP pdp
     ) : RequestControllerBase<RequestDtoV2, RequestStatusV2>(
     requestService,
@@ -51,7 +49,6 @@ public class RequestController(
     connectionQuery,
     resourceService,
     entityService,
-    resourceRegistryClient,
     pdp
     )
 {
@@ -69,7 +66,8 @@ public class RequestController(
     /// The selection may include rights that were not requested. Each right key must exist in the policy of the
     /// resource and be delegable by the authenticated user on behalf of the party.
     /// Without a selection, what was requested is given. The request becomes Approved when what is given matches
-    /// what was requested, and PartialApprove otherwise; a selection for a request for the whole resource gives PartialApprove.
+    /// what was requested, and ApprovedWithAdjustments otherwise. For a request for the whole resource, selecting every right the
+    /// authenticated user can delegate gives Approved, and selecting only some of them gives ApprovedWithAdjustments.
     /// </summary>
     /// <param name="party">The party approving, which must be the recipient of the request</param>
     /// <param name="id">The request to approve</param>
@@ -98,6 +96,8 @@ public class RequestController(
     /// <summary>
     /// Create request for a resource on behalf of a party, optionally naming the rights being requested.
     /// Each right key must exist in the policy of the resource and be delegable.
+    /// Sending the same request again returns the pending request. If a pending request for the resource asks for
+    /// other rights, the response is 409, and that request must be withdrawn before a new one is sent.
     /// </summary>
     [HttpPost("resource")]
     [FeatureGate(AccessMgmtFeatureFlags.EnableRequestAssignmentResource)]
@@ -108,6 +108,7 @@ public class RequestController(
     [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status400BadRequest, MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType<AltinnProblemDetails>(StatusCodes.Status409Conflict, MediaTypeNames.Application.Json)]
     public async Task<IActionResult> CreateResourceRequest(
         [FromQuery][Required] Guid party,
         [FromQuery][Required] Guid to,

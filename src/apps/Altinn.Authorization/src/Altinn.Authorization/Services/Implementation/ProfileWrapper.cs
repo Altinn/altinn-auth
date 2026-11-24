@@ -2,6 +2,7 @@
 using System.Net;
 using System.Text.Json;
 using Altinn.Platform.Authorization.Clients;
+using Altinn.Platform.Authorization.Helpers;
 using Altinn.Platform.Authorization.Services.Interface;
 using Altinn.Platform.Profile.Models;
 
@@ -35,7 +36,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
             {
                 string endpointUrl = $"internal/user";
 
-                var response = await _profileClient.Client.PostAsJsonAsync(endpointUrl, new { UserId = userId }, cancellationToken);
+                var response = await DependencyCall.SendAsync(DependencyCall.Profile, () => _profileClient.Client.PostAsJsonAsync(endpointUrl, new { UserId = userId }, cancellationToken), cancellationToken);
                 string responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.StatusCode == HttpStatusCode.OK)
@@ -60,7 +61,7 @@ namespace Altinn.Platform.Authorization.Services.Implementation
             {
                 string endpointUrl = $"internal/user";
 
-                var response = await _profileClient.Client.PostAsJsonAsync(endpointUrl, new { Ssn = personId }, cancellationToken);
+                var response = await DependencyCall.SendAsync(DependencyCall.Profile, () => _profileClient.Client.PostAsJsonAsync(endpointUrl, new { Ssn = personId }, cancellationToken), cancellationToken);
                 string responseContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
                 if (response.StatusCode == HttpStatusCode.OK)

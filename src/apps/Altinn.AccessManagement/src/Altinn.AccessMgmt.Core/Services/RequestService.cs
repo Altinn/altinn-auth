@@ -184,9 +184,9 @@ public class RequestService(
     /// <inheritdoc/>
     public async Task<Result<AccessRequest>> ApproveResourceRequest(Guid partyUuid, Guid requestId, RequestStatusV2 status, IEnumerable<string> approvedRightKeys, CancellationToken ct = default)
     {
-        if (status is not (RequestStatusV2.Approved or RequestStatusV2.PartialApprove))
+        if (status is not (RequestStatusV2.Approved or RequestStatusV2.ApprovedWithAdjustments))
         {
-            throw new ArgumentOutOfRangeException(nameof(status), status, "A request can only be approved with the status Approved or PartialApprove.");
+            throw new ArgumentOutOfRangeException(nameof(status), status, "A request can only be approved with the status Approved or ApprovedWithAdjustments.");
         }
 
         ArgumentNullException.ThrowIfNull(approvedRightKeys);
@@ -488,6 +488,15 @@ public class RequestService(
             .Include(r => r.Assignment)
             .FirstOrDefaultAsync(r => r.AssignmentId == assignment.Id && r.ResourceId == resourceId && r.Status == initialStatus, ct);
 
+        var normalizedRightKeys = NormalizeRightKeys(requestedRightKeys);
+
+        // Sending the same request again returns the existing one. A request for other rights, or for the whole
+        // resource instead of specific rights or the other way round, would otherwise be dropped without a word.
+        if (request is { } && !SameRightKeys(NormalizeRightKeys(request.RequestedRightKeys), normalizedRightKeys))
+        {
+            return Problems.PendingRequestWithOtherRightKeys;
+        }
+
         if (request is null)
         {
             request = new RequestAssignmentResource
@@ -495,7 +504,7 @@ public class RequestService(
                 Status = initialStatus,
                 AssignmentId = assignment.Id,
                 ResourceId = resourceId,
-                RequestedRightKeys = NormalizeRightKeys(requestedRightKeys),
+                RequestedRightKeys = normalizedRightKeys,
             };
             db.RequestAssignmentResources.Add(request);
 
@@ -537,6 +546,20 @@ public class RequestService(
     {
         var keys = rightKeys?.Distinct(StringComparer.Ordinal).ToList();
         return keys is { Count: > 0 } ? keys : null;
+    }
+
+    /// <summary>
+    /// Whether two normalized lists of right keys ask for the same rights, ignoring order.
+    /// Null, a request for the whole resource, only matches null.
+    /// </summary>
+    private static bool SameRightKeys(IEnumerable<string>? existing, IEnumerable<string>? requested)
+    {
+        if (existing is null || requested is null)
+        {
+            return existing is null && requested is null;
+        }
+
+        return existing.ToHashSet(StringComparer.Ordinal).SetEquals(requested);
     }
 
     private async Task<Result<AccessRequest>> CreatePackageRequest(RequestAssignment assignment, string package, RequestStatusV2 initialStatus = RequestStatusV2.Pending, CancellationToken ct = default)
@@ -607,7 +630,7 @@ public class RequestService(
                 break;
 
             case RequestStatusV2.Approved:
-            case RequestStatusV2.PartialApprove:
+            case RequestStatusV2.ApprovedWithAdjustments:
             case RequestStatusV2.Rejected:
             case RequestStatusV2.Withdrawn:
                 AddUnsupportedStatusError(request, status, ref errorBuilder);
@@ -646,7 +669,7 @@ public class RequestService(
                 break;
 
             case RequestStatusV2.Approved:
-            case RequestStatusV2.PartialApprove:
+            case RequestStatusV2.ApprovedWithAdjustments:
             case RequestStatusV2.Rejected:
                 if (request.To.Id != partyUuid)
                 {
@@ -726,7 +749,7 @@ public class RequestService(
             );
         }
 
-        var isReviewed = status is RequestStatusV2.Approved or RequestStatusV2.PartialApprove or RequestStatusV2.Rejected;
+        var isReviewed = status is RequestStatusV2.Approved or RequestStatusV2.ApprovedWithAdjustments or RequestStatusV2.Rejected;
         var notifyRequester = !await IsSystemUser(request.Assignment.FromId, ct);
         if (notifyRequester && isReviewed)
         {
@@ -831,7 +854,7 @@ public class RequestService(
             );
         }
 
-        var isReviewed = status is RequestStatusV2.Approved or RequestStatusV2.PartialApprove or RequestStatusV2.Rejected;
+        var isReviewed = status is RequestStatusV2.Approved or RequestStatusV2.ApprovedWithAdjustments or RequestStatusV2.Rejected;
         var notifyRequester = !await IsSystemUser(request.Assignment.FromId, ct);
         if (notifyRequester && isReviewed)
         {

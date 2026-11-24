@@ -15,57 +15,74 @@ public class RequestApprovalTest
     [Fact]
     public void DetermineStatus_NoSelection_ForRequestedRights_ReturnsApproved()
     {
-        RequestApproval.DetermineStatus(["read", "write"], null).Should().Be(RequestStatusV2.Approved);
+        RequestApproval.DetermineStatus(["read", "write"], null, []).Should().Be(RequestStatusV2.Approved);
     }
 
     [Fact]
     public void DetermineStatus_NoSelection_ForWholeResource_ReturnsApproved()
     {
-        RequestApproval.DetermineStatus(null, null).Should().Be(RequestStatusV2.Approved);
+        RequestApproval.DetermineStatus(null, null, []).Should().Be(RequestStatusV2.Approved);
     }
 
     [Fact]
     public void DetermineStatus_EmptySelection_IsTreatedAsNoSelection()
     {
-        RequestApproval.DetermineStatus(["read"], []).Should().Be(RequestStatusV2.Approved);
-        RequestApproval.DetermineStatus(null, []).Should().Be(RequestStatusV2.Approved);
+        RequestApproval.DetermineStatus(["read"], [], []).Should().Be(RequestStatusV2.Approved);
+        RequestApproval.DetermineStatus(null, [], []).Should().Be(RequestStatusV2.Approved);
     }
 
     [Fact]
     public void DetermineStatus_SelectionMatchingRequest_InOtherOrderAndWithDuplicates_ReturnsApproved()
     {
-        RequestApproval.DetermineStatus(["read", "write"], ["write", "read", "write"]).Should().Be(RequestStatusV2.Approved);
+        RequestApproval.DetermineStatus(["read", "write"], ["write", "read", "write"], []).Should().Be(RequestStatusV2.Approved);
     }
 
     [Fact]
-    public void DetermineStatus_SelectionWithFewerRights_ReturnsPartialApprove()
+    public void DetermineStatus_SelectionWithFewerRights_ReturnsApprovedWithAdjustments()
     {
-        RequestApproval.DetermineStatus(["read", "write"], ["read"]).Should().Be(RequestStatusV2.PartialApprove);
+        RequestApproval.DetermineStatus(["read", "write"], ["read"], []).Should().Be(RequestStatusV2.ApprovedWithAdjustments);
     }
 
     [Fact]
-    public void DetermineStatus_SelectionWithMoreRights_ReturnsPartialApprove()
+    public void DetermineStatus_SelectionWithMoreRights_ReturnsApprovedWithAdjustments()
     {
-        RequestApproval.DetermineStatus(["read"], ["read", "write"]).Should().Be(RequestStatusV2.PartialApprove);
+        RequestApproval.DetermineStatus(["read"], ["read", "write"], []).Should().Be(RequestStatusV2.ApprovedWithAdjustments);
     }
 
     [Fact]
-    public void DetermineStatus_SelectionWithOtherRights_ReturnsPartialApprove()
+    public void DetermineStatus_SelectionWithOtherRights_ReturnsApprovedWithAdjustments()
     {
-        RequestApproval.DetermineStatus(["read"], ["write"]).Should().Be(RequestStatusV2.PartialApprove);
+        RequestApproval.DetermineStatus(["read"], ["write"], []).Should().Be(RequestStatusV2.ApprovedWithAdjustments);
     }
 
     [Fact]
-    public void DetermineStatus_SelectionForWholeResource_ReturnsPartialApprove()
+    public void DetermineStatus_SelectionForWholeResource_WithSomeDelegableRights_ReturnsApprovedWithAdjustments()
     {
-        RequestApproval.DetermineStatus(null, ["read"]).Should().Be(RequestStatusV2.PartialApprove);
-        RequestApproval.DetermineStatus([], ["read"]).Should().Be(RequestStatusV2.PartialApprove);
+        RequestApproval.DetermineStatus(null, ["read"], ["read", "write"]).Should().Be(RequestStatusV2.ApprovedWithAdjustments);
+        RequestApproval.DetermineStatus([], ["read"], ["read", "write"]).Should().Be(RequestStatusV2.ApprovedWithAdjustments);
+    }
+
+    [Fact]
+    public void DetermineStatus_SelectionForWholeResource_WithEveryDelegableRight_InOtherOrderAndWithDuplicates_ReturnsApproved()
+    {
+        RequestApproval.DetermineStatus(null, ["write", "read", "write"], ["read", "write"]).Should().Be(RequestStatusV2.Approved);
+        RequestApproval.DetermineStatus([], ["write", "read"], ["read", "write"]).Should().Be(RequestStatusV2.Approved);
+    }
+
+    [Fact]
+    public void DetermineStatus_SelectionForRequestedRights_IgnoresDelegableRights()
+    {
+        // Every delegable right selected, but more than was requested
+        RequestApproval.DetermineStatus(["read"], ["read", "write"], ["read", "write"]).Should().Be(RequestStatusV2.ApprovedWithAdjustments);
+
+        // Exactly what was requested, but fewer than the approver could give
+        RequestApproval.DetermineStatus(["read"], ["read"], ["read", "write"]).Should().Be(RequestStatusV2.Approved);
     }
 
     [Fact]
     public void DetermineStatus_ComparesKeysCaseSensitively()
     {
-        RequestApproval.DetermineStatus(["read"], ["READ"]).Should().Be(RequestStatusV2.PartialApprove);
+        RequestApproval.DetermineStatus(["read"], ["READ"], []).Should().Be(RequestStatusV2.ApprovedWithAdjustments);
     }
 
     // ── ValidateUserCanDelegate ─────────────────────────────────────────────

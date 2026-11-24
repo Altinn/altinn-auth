@@ -16,6 +16,7 @@ using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Models;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
+using Altinn.Authorization.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using static Altinn.AccessManagement.Enduser.Api.Tests.Integration.Controllers.RequestApprovalTestData;
@@ -78,6 +79,8 @@ public class RequestControllerTest
         private static readonly Guid TestResourceId = Guid.Parse("0196b001-0000-7000-8000-000000000002");
         private const string TestResourceRefId = "create-resource-test-1";
         private const string TestMaskinportenSchemaResourceRefId = "create-resource-test-2";
+        private const string TestNonDelegableResourceRefId = "create-resource-test-not-delegable";
+        private static readonly Guid PendingWithRightKeysId = Guid.Parse("0196b001-0000-7000-8000-000000000003");
 
         public CreateResourceRequest(ApiFixture fixture)
         {
@@ -108,6 +111,39 @@ public class RequestControllerTest
                     TypeId = TestData.MaskinportenSchemaResourceType.Id,
                 });
 
+                db.Resources.Add(new Resource
+                {
+                    Id = Guid.CreateVersion7(),
+                    Name = "CreateResourceTestNotDelegable",
+                    Description = "Test resource that is not delegable",
+                    RefId = TestNonDelegableResourceRefId,
+                    ProviderId = ProviderConstants.ResourceRegistry,
+                    TypeId = TestResourceType.Id,
+                    Delegable = false,
+                });
+
+                db.SaveChanges();
+
+                // A pending request for specific rights, which only version 2 can create.
+                // HildeStrand is chair of the board of BakerJohnsen (seeded via TestData.Assignments).
+                var assignment = new RequestAssignment
+                {
+                    FromId = TestData.HildeStrand.Id,
+                    ToId = TestData.BakerJohnsen.Id,
+                    ById = TestData.HildeStrand.Id,
+                    RoleId = RoleConstants.Rightholder,
+                };
+                db.RequestAssignments.Add(assignment);
+                db.SaveChanges();
+
+                db.RequestAssignmentResources.Add(new RequestAssignmentResource
+                {
+                    Id = PendingWithRightKeysId,
+                    AssignmentId = assignment.Id,
+                    ResourceId = TestResourceId,
+                    Status = RequestStatusV2.Pending,
+                    RequestedRightKeys = ["read"],
+                });
                 db.SaveChanges();
             });
         }
@@ -148,6 +184,53 @@ public class RequestControllerTest
                 TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        }
+
+        [Fact]
+        public async Task WhilePendingWithRightKeys_Returns409_AndKeepsPendingRequest()
+        {
+            // v1 always asks for the whole resource, so the seeded pending request for specific rights makes it
+            // return 409 instead of the pending request.
+            var ct = TestContext.Current.CancellationToken;
+            var client = CreateSystemClient(Fixture, TestData.HildeStrand.Id);
+            var response = await client.PostAsync(
+                $"{Route}/resource?party={TestData.HildeStrand.Id}&to={TestData.BakerJohnsen.Id}&resource={TestResourceRefId}",
+                null,
+                ct);
+
+            var content = await response.Content.ReadAsStringAsync(ct);
+            Assert.True(response.StatusCode == HttpStatusCode.Conflict, $"Expected Conflict but got {response.StatusCode}. Response body: {content}");
+            var problem = JsonSerializer.Deserialize<AltinnProblemDetails>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            Assert.Equal(Problems.PendingRequestWithOtherRightKeys.ErrorCode, problem.ErrorCode);
+
+            await Fixture.QueryDb(async db =>
+            {
+                var stored = await db.RequestAssignmentResources
+                    .Where(r => r.Assignment.FromId == TestData.HildeStrand.Id && r.ResourceId == TestResourceId)
+                    .ToListAsync(ct);
+                var pending = Assert.Single(stored);
+                Assert.Equal(PendingWithRightKeysId, pending.Id);
+                Assert.Equal(RequestStatusV2.Pending, pending.Status);
+                Assert.Equal(["read"], pending.RequestedRightKeys);
+            });
+        }
+
+        [Fact]
+        public async Task CreateRequest_WithNonDelegableResource_Returns400ResourceIsNotDelegable()
+        {
+            // KnutVik er styremedlem i BakerJohnsen (seeded via TestData.Assignments)
+            var client = CreateSystemClient(Fixture, TestData.KnutVik.Id);
+
+            var response = await client.PostAsync(
+                $"{Route}/resource?party={TestData.KnutVik.Id}&to={TestData.BakerJohnsen.Id}&resource={TestNonDelegableResourceRefId}",
+                null,
+                TestContext.Current.CancellationToken);
+
+            Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+
+            var problem = await response.Content.ReadFromJsonAsync<AltinnValidationProblemDetails>(TestContext.Current.CancellationToken);
+            Assert.NotNull(problem);
+            Assert.Contains(problem.Errors, e => e.ErrorCode == ValidationErrors.ResourceIsNotDelegable.ErrorCode);
         }
 
         [Fact]
@@ -948,7 +1031,7 @@ public class RequestControllerTest
 
     /// <summary>
     /// Version 1 approves exactly what was requested: the requested rights when the request names them,
-    /// otherwise every right the user can delegate. A body is ignored, and the request is never PartialApprove.
+    /// otherwise every right the user can delegate. A body is ignored, and the request is never ApprovedWithAdjustments.
     /// See <see cref="RequestApprovalTestData"/> for the setup.
     /// </summary>
     [IntegrationTest]
@@ -1273,23 +1356,23 @@ public class RequestControllerTest
 
     #endregion
 
-    #region PartialApprove — v1 reports it as Approved, StatusV2 carries it
+    #region ApprovedWithAdjustments — v1 reports it as Approved, StatusV2 carries it
 
     /// <summary>
     /// v1 clients may check <see cref="RequestDto.Status"/> exhaustively, so a request stored as
-    /// <see cref="RequestStatus.PartialApprove"/> is reported as Approved there, and as PartialApprove in StatusV2.
+    /// <see cref="RequestStatus.ApprovedWithAdjustments"/> is reported as Approved there, and as ApprovedWithAdjustments in StatusV2.
     /// Own fixture, so the seeded request does not change counts in the shared read-only collection.
     /// </summary>
     [IntegrationTest]
-    public class PartialApproveRequest : IClassFixture<ApiFixture>
+    public class ApprovedWithAdjustmentsRequest : IClassFixture<ApiFixture>
     {
-        private static readonly Guid PartialApproveRequestId = Guid.Parse("0196b0d0-0000-7000-8000-000000000001");
+        private static readonly Guid ApprovedWithAdjustmentsRequestId = Guid.Parse("0196b0d0-0000-7000-8000-000000000001");
 
-        public PartialApproveRequest(ApiFixture fixture)
+        public ApprovedWithAdjustmentsRequest(ApiFixture fixture)
         {
             Fixture = fixture;
             EnableFeatureFlags(fixture);
-            fixture.EnsureSeedOnce<PartialApproveRequest>(db =>
+            fixture.EnsureSeedOnce<ApprovedWithAdjustmentsRequest>(db =>
             {
                 var reqAssignment = new RequestAssignment
                 {
@@ -1303,10 +1386,10 @@ public class RequestControllerTest
 
                 db.RequestAssignmentPackages.Add(new RequestAssignmentPackage
                 {
-                    Id = PartialApproveRequestId,
+                    Id = ApprovedWithAdjustmentsRequestId,
                     AssignmentId = reqAssignment.Id,
                     PackageId = PackageConstants.Agriculture.Id,
-                    Status = RequestStatusV2.PartialApprove,
+                    Status = RequestStatusV2.ApprovedWithAdjustments,
                 });
                 db.SaveChanges();
             });
@@ -1327,7 +1410,7 @@ public class RequestControllerTest
             using var doc = JsonDocument.Parse(json);
             foreach (var item in doc.RootElement.GetProperty("data").EnumerateArray())
             {
-                if (item.GetProperty("id").GetGuid() == PartialApproveRequestId)
+                if (item.GetProperty("id").GetGuid() == ApprovedWithAdjustmentsRequestId)
                 {
                     return item.Clone();
                 }
@@ -1337,18 +1420,18 @@ public class RequestControllerTest
         }
 
         [Fact]
-        public async Task GetRequest_StatusIsApprovedAndStatusV2IsPartialApprove()
+        public async Task GetRequest_StatusIsApprovedAndStatusV2IsApprovedWithAdjustments()
         {
             var client = CreateSystemClient(Fixture, TestData.BakerJohnsen.Id);
 
             var response = await client.GetAsync(
-                $"{Route}?party={TestData.BakerJohnsen.Id}&id={PartialApproveRequestId}",
+                $"{Route}?party={TestData.BakerJohnsen.Id}&id={ApprovedWithAdjustmentsRequestId}",
                 TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
             Assert.Equal("Approved", doc.RootElement.GetProperty("status").GetString());
-            Assert.Equal("PartialApprove", doc.RootElement.GetProperty("statusV2").GetString());
+            Assert.Equal("ApprovedWithAdjustments", doc.RootElement.GetProperty("statusV2").GetString());
         }
 
         [Fact]
@@ -1358,7 +1441,7 @@ public class RequestControllerTest
 
             Assert.NotNull(item);
             Assert.Equal("Approved", item.Value.GetProperty("status").GetString());
-            Assert.Equal("PartialApprove", item.Value.GetProperty("statusV2").GetString());
+            Assert.Equal("ApprovedWithAdjustments", item.Value.GetProperty("statusV2").GetString());
         }
 
         [Fact]
@@ -1378,13 +1461,13 @@ public class RequestControllerTest
         }
 
         [Fact]
-        public async Task GetReceived_FilterOnPartialApprove_Returns400()
+        public async Task GetReceived_FilterOnApprovedWithAdjustments_Returns400()
         {
-            // PartialApprove is not a version 1 status, so version 1 does not accept it as a filter
+            // ApprovedWithAdjustments is not a version 1 status, so version 1 does not accept it as a filter
             var client = CreateSystemClient(Fixture, TestData.BakerJohnsen.Id);
 
             var response = await client.GetAsync(
-                $"{Route}/received?party={TestData.BakerJohnsen.Id}&status=PartialApprove",
+                $"{Route}/received?party={TestData.BakerJohnsen.Id}&status=ApprovedWithAdjustments",
                 TestContext.Current.CancellationToken);
 
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
