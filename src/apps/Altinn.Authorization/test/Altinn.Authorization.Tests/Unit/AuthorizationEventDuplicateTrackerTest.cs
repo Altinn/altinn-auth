@@ -390,6 +390,23 @@ public class AuthorizationEventDuplicateTrackerTest : IDisposable
     }
 
     [Fact]
+    public void Remember_ConcurrentSendsCompletingInReverseOrder_WindowRunsFromTheFirst()
+    {
+        // From review: the later send completing first must not move the window to its time.
+        var tracker = CreateTracker();
+        AuthorizationEventClassification first = tracker.Classify(CreateEvent(traceId: "trace-1"), []);
+        _timeProvider.Advance(TimeSpan.FromSeconds(10));
+        AuthorizationEventClassification second = tracker.Classify(CreateEvent(traceId: "trace-2"), []);
+
+        tracker.Remember(second);
+        tracker.Remember(first);
+        _timeProvider.Advance(TimeSpan.FromSeconds(55));
+
+        // 65 seconds after the first, 55 after the second: the window runs from the first.
+        Assert.Equal(AuthorizationEventDuplicateKind.None, tracker.Classify(CreateEvent(traceId: "trace-3"), []).Kind);
+    }
+
+    [Fact]
     public void Remember_EventAlreadyRemembered_KeepsItsEarlierTime()
     {
         // Two sends of the same new event in flight at once: both are classified before either is remembered.

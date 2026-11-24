@@ -119,11 +119,11 @@ namespace Altinn.Platform.Authorization.Services.Implementation
             lock (_gate)
             {
                 rotatedEarly = _confirmed.RotateIfNeeded(now);
-                _confirmed.AddIfNotSeen(classification.TraceKey, classification.WindowStartTicks, now);
+                _confirmed.RememberEarliest(classification.TraceKey, classification.WindowStartTicks, now);
 
                 if (classification.Kind == AuthorizationEventDuplicateKind.None)
                 {
-                    _confirmed.AddIfNotSeen(classification.EventKey, classification.WindowStartTicks, now);
+                    _confirmed.RememberEarliest(classification.EventKey, classification.WindowStartTicks, now);
                 }
             }
 
@@ -287,13 +287,22 @@ namespace Altinn.Platform.Authorization.Services.Implementation
 
             public void Set(ulong key, long windowStart) => _current[key] = windowStart;
 
-            public void AddIfNotSeen(ulong key, long windowStart, long now)
+            public void RememberEarliest(ulong key, long windowStart, long now)
             {
-                // A key remembered meanwhile, by a concurrent event, keeps its earlier time.
-                if (!TryGetSeen(key, now, out _))
+                // Sends can complete in any order, so a key remembered meanwhile by a concurrent event
+                // keeps whichever time is earlier: the window runs from the first occurrence. A time
+                // whose window has already passed, after a slow send, is not worth a slot.
+                if (now - windowStart >= windowTicks)
                 {
-                    _current[key] = windowStart;
+                    return;
                 }
+
+                if (TryGetSeen(key, now, out long seen) && seen <= windowStart)
+                {
+                    return;
+                }
+
+                _current[key] = windowStart;
             }
 
             private void Rotate(long now)
