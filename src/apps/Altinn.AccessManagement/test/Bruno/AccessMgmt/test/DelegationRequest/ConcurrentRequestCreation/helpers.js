@@ -146,23 +146,41 @@ function isFor(request, reference) {
 // leave several pending requests for the same package or resource behind. Withdrawing, unlike
 // rejecting, removes the request from the pending notification to the approver and queues no
 // notification to the requester, so the runs send no notifications.
+// Every withdrawal is attempted. The ones that did not answer 200 are returned and stored in
+// `cc_withdrawFailures`, which assertWithdrawn() checks in the tests of the GIVEN and CLEANUP steps, so an
+// incomplete reset fails the step instead of passing silently.
 async function withdrawPending(axios, td, pendingRequests, references) {
 	const baseUrl = bru.getEnvVar("baseUrl");
 	const headers = { Authorization: `Bearer ${bru.getVar("bearerToken")}` };
 
 	const stale = (pendingRequests || []).filter(r => references.some(ref => isFor(r, ref)));
+	const failures = [];
 	for (const request of stale) {
-		await axios.put(
+		const response = await axios.put(
 			`${baseUrl}${paths.v2}/sent/withdraw?party=${td.requester.partyUuid}&id=${request.id}`,
 			null,
 			{ headers, validateStatus: () => true });
+		if (response.status !== 200) {
+			failures.push(`${request.id}: ${response.status}`);
+		}
 	}
+
+	bru.setVar("cc_withdrawFailures", JSON.stringify(failures));
+	return failures;
 }
 
 // The right keys in a delegation check response that the user can delegate, without duplicates.
 function delegableKeys(check) {
 	const rights = (check && check.rights) || [];
 	return [...new Set(rights.filter(r => r.result === true).map(r => r.right.key))];
+}
+
+// Fails the current test when a withdrawal in this step's post-response script did not answer
+// 200, or when the post-response script did not get as far as withdrawing.
+function assertWithdrawn() {
+	const raw = bru.getVar("cc_withdrawFailures");
+	expect(raw, "the pending requests were not listed, so nothing was withdrawn").to.be.a("string");
+	expect(JSON.parse(raw), "withdrawals that did not answer 200").to.deep.equal([]);
 }
 
 module.exports = {
@@ -178,5 +196,6 @@ module.exports = {
 	readResults,
 	isFor,
 	withdrawPending,
+	assertWithdrawn,
 	delegableKeys,
 };

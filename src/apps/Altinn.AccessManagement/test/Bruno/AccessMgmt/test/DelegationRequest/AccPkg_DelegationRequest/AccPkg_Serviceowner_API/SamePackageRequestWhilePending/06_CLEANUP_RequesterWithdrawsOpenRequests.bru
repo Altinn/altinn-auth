@@ -46,6 +46,7 @@ script:post-response {
 	const axios = require("axios");
 	const { testdata, withdrawOpen } = require("./utils/serviceOwnerRequestWhilePending.js");
 
+	bru.setVar("sop_withdrawFailures", null);
 	if (res.status === 200) {
 		const td = testdata();
 		await withdrawOpen(axios, td, res.getBody().data, td.package);
@@ -59,5 +60,9 @@ tests {
 
 	test("CLEANUP the sent requests can be listed, the request returns 200", function() {
 		expect(res.status).to.equal(200);
+	});
+
+	test("CLEANUP every pending request found was withdrawn", function() {
+		require("./utils/serviceOwnerRequestWhilePending.js").assertWithdrawn();
 	});
 }

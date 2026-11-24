@@ -50,9 +50,17 @@ tests {
 	});
 
 	test("THEN only the winning request is pending, with the right it asked for", function() {
-		const winner = readResults("03").find(r => r.status === 200);
+		// The calls were sent in this order: the first asked for cc_keyA, the second for cc_keyB.
+		const results = readResults("03");
+		const winnerIndex = results.findIndex(r => r.status === 200);
+		expect(winnerIndex, "no call was answered with 200").to.not.equal(-1);
+		const winner = results[winnerIndex];
+		const askedFor = [bru.getVar(winnerIndex === 0 ? "cc_keyA" : "cc_keyB")];
+
+		expect(winner.body.resource.requestedRightKeys, "the winning call's response").to.deep.equal(askedFor);
+
 		const pending = res.getBody().data.filter(r => isFor(r, testdata().resource));
 		expect(pending.map(r => r.id)).to.deep.equal([winner.body.id]);
-		expect(pending[0].resource.requestedRightKeys).to.deep.equal(winner.body.resource.requestedRightKeys);
+		expect(pending[0].resource.requestedRightKeys, "the pending request").to.deep.equal(askedFor);
 	});
 }

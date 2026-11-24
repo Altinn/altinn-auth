@@ -50,6 +50,7 @@ script:post-response {
 	const axios = require("axios");
 	const { testdata, withdrawPending } = require("./test/DelegationRequest/ConcurrentRequestCreation/helpers.js");
 
+	bru.setVar("cc_withdrawFailures", null);
 	if (res.status === 200) {
 		const td = testdata();
 		await withdrawPending(axios, td, res.getBody().data, [td.packages[0]]);
@@ -63,5 +64,9 @@ tests {
 
 	test("GIVEN the sent requests can be listed through v2, the request returns 200", function() {
 		expect(res.status).to.equal(200);
+	});
+
+	test("GIVEN every pending request found was withdrawn", function() {
+		require("./test/DelegationRequest/ConcurrentRequestCreation/helpers.js").assertWithdrawn();
 	});
 }

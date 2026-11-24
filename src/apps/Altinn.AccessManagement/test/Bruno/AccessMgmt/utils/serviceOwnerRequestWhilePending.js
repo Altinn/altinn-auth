@@ -102,16 +102,34 @@ function isFor(request, reference) {
 // Withdraws, with the requester's token, every open (Draft or Pending) request in the list that
 // is for the reference. Withdraws all of them: while #5028 is unfixed, a run leaves a draft
 // beside the pending request.
+// Every withdrawal is attempted. The ones that did not answer 200 are returned and stored in
+// `sop_withdrawFailures`, which assertWithdrawn() checks in the tests of the GIVEN and CLEANUP steps, so an
+// incomplete reset fails the step instead of passing silently.
 async function withdrawOpen(axios, td, openRequests, reference) {
 	const baseUrl = bru.getEnvVar("baseUrl");
 	const headers = { Authorization: `Bearer ${bru.getVar("bearerToken")}` };
 
+	const failures = [];
 	for (const request of (openRequests || []).filter(r => isFor(r, reference))) {
-		await axios.put(
+		const response = await axios.put(
 			`${baseUrl}${paths.enduser}/sent/withdraw?party=${td.requester.partyUuid}&id=${request.id}`,
 			null,
 			{ headers, validateStatus: () => true });
+		if (response.status !== 200) {
+			failures.push(`${request.id}: ${response.status}`);
+		}
 	}
+
+	bru.setVar("sop_withdrawFailures", JSON.stringify(failures));
+	return failures;
+}
+
+// Fails the current test when a withdrawal in this step's post-response script did not answer
+// 200, or when the post-response script did not get as far as withdrawing.
+function assertWithdrawn() {
+	const raw = bru.getVar("sop_withdrawFailures");
+	expect(raw, "the pending requests were not listed, so nothing was withdrawn").to.be.a("string");
+	expect(JSON.parse(raw), "withdrawals that did not answer 200").to.deep.equal([]);
 }
 
 module.exports = {
@@ -124,4 +142,5 @@ module.exports = {
 	clearScenarioVars,
 	isFor,
 	withdrawOpen,
+	assertWithdrawn,
 };
