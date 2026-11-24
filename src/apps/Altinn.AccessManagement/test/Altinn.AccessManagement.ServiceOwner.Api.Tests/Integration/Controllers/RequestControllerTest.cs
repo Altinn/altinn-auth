@@ -711,11 +711,11 @@ public class RequestControllerTest
         }
 
         /// <summary>
-        /// The service owner API may be checked exhaustively, so PartialApprove is reported as Approved.
+        /// The service owner API may be checked exhaustively, so ApprovedWithAdjustments is reported as Approved.
         /// The create response carries StatusV2 next to Status.
         /// </summary>
         [Fact]
-        public async Task GetRequestStatus_ForPartialApproveRequest_ReturnsApproved()
+        public async Task GetRequestStatus_ForApprovedWithAdjustmentsRequest_ReturnsApproved()
         {
             var client = CreateReadWriteClient(Fixture, TestData.NAV.Entity.OrganizationIdentifier);
 
@@ -738,7 +738,7 @@ public class RequestControllerTest
             await Fixture.QueryDb(async db =>
             {
                 var request = await db.RequestAssignmentResources.SingleAsync(r => r.Id == id, TestContext.Current.CancellationToken);
-                request.Status = RequestStatusV2.PartialApprove;
+                request.Status = RequestStatusV2.ApprovedWithAdjustments;
                 await db.SaveChangesAsync(TestContext.Current.CancellationToken);
             });
 

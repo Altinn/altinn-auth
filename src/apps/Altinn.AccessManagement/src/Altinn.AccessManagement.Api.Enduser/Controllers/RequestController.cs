@@ -67,8 +67,8 @@ public class RequestController(
     protected override RequestDto ConvertRequest(AccessRequest request) => DtoMapper.ConvertToV1(request);
 
     /// <summary>
-    /// Filters on the version 1 statuses. <see cref="RequestDto.Status"/> reports <see cref="RequestStatusV2.PartialApprove"/>
-    /// as <see cref="RequestStatus.Approved"/>, so filtering on Approved also includes PartialApprove.
+    /// Filters on the version 1 statuses. <see cref="RequestDto.Status"/> reports <see cref="RequestStatusV2.ApprovedWithAdjustments"/>
+    /// as <see cref="RequestStatus.Approved"/>, so filtering on Approved also includes ApprovedWithAdjustments.
     /// </summary>
     protected override IEnumerable<RequestStatusV2> GetStatusFilter(RequestStatus[]? status)
         => status == null || status.Length == 0 ? DefaultStatusFilter : DtoMapper.ConvertFromV1StatusFilter(status);

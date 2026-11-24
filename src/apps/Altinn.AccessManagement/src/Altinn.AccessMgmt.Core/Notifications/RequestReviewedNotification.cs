@@ -47,7 +47,7 @@ public static class RequestReviewedNotification
     /// Optional identifier of the package being reviewed.
     /// </param>
     /// <param name="requestStatus">
-    /// The outcome of the review: approved, partially approved or rejected.
+    /// The outcome of the review: approved, approved with adjustments or rejected.
     /// </param>
     /// <param name="notifyInSeconds">
     /// The delay, in seconds, before the outbox message should be processed.
@@ -249,5 +249,5 @@ public static class RequestReviewedNotification
     /// messages written before <c>RequestStatus</c> existed can still be read.
     /// </summary>
     private static bool IsApproved(RequestStatusV2 requestStatus)
-        => requestStatus is RequestStatusV2.Approved or RequestStatusV2.PartialApprove;
+        => requestStatus is RequestStatusV2.Approved or RequestStatusV2.ApprovedWithAdjustments;
 }

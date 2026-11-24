@@ -145,7 +145,7 @@ public class SystemUserRequestController(
         return result.IsSuccess ? Ok(DtoMapper.ConvertToV1(result.Value)) : result.Problem.ToActionResult();
     }
 
-    private static readonly RequestStatusV2[] DefaultStatusFilter = [RequestStatusV2.Draft, RequestStatusV2.Pending, RequestStatusV2.Approved, RequestStatusV2.PartialApprove, RequestStatusV2.Rejected, RequestStatusV2.Withdrawn];
+    private static readonly RequestStatusV2[] DefaultStatusFilter = [RequestStatusV2.Draft, RequestStatusV2.Pending, RequestStatusV2.Approved, RequestStatusV2.ApprovedWithAdjustments, RequestStatusV2.Rejected, RequestStatusV2.Withdrawn];
 
     private static bool IsValidOrganizationNumber(string organization)
         => OrganizationNumber.TryParse(organization, null, out _);

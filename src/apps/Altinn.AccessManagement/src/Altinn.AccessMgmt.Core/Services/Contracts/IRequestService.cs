@@ -77,7 +77,7 @@ public interface IRequestService
     /// </summary>
     /// <param name="partyUuid">The party approving, which must be the recipient of the request</param>
     /// <param name="requestId">The request to approve</param>
-    /// <param name="status"><see cref="RequestStatusV2.Approved"/> or <see cref="RequestStatusV2.PartialApprove"/>, see <see cref="RequestApproval.DetermineStatus"/></param>
+    /// <param name="status"><see cref="RequestStatusV2.Approved"/> or <see cref="RequestStatusV2.ApprovedWithAdjustments"/>, see <see cref="RequestApproval.DetermineStatus"/></param>
     /// <param name="approvedRightKeys">The right keys that were delegated</param>
     /// <param name="ct">Cancellation token</param>
     Task<Result<AccessRequest>> ApproveResourceRequest(Guid partyUuid, Guid requestId, RequestStatusV2 status, IEnumerable<string> approvedRightKeys, CancellationToken ct = default);

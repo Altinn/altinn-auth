@@ -184,9 +184,9 @@ public class RequestService(
     /// <inheritdoc/>
     public async Task<Result<AccessRequest>> ApproveResourceRequest(Guid partyUuid, Guid requestId, RequestStatusV2 status, IEnumerable<string> approvedRightKeys, CancellationToken ct = default)
     {
-        if (status is not (RequestStatusV2.Approved or RequestStatusV2.PartialApprove))
+        if (status is not (RequestStatusV2.Approved or RequestStatusV2.ApprovedWithAdjustments))
         {
-            throw new ArgumentOutOfRangeException(nameof(status), status, "A request can only be approved with the status Approved or PartialApprove.");
+            throw new ArgumentOutOfRangeException(nameof(status), status, "A request can only be approved with the status Approved or ApprovedWithAdjustments.");
         }
 
         ArgumentNullException.ThrowIfNull(approvedRightKeys);
@@ -630,7 +630,7 @@ public class RequestService(
                 break;
 
             case RequestStatusV2.Approved:
-            case RequestStatusV2.PartialApprove:
+            case RequestStatusV2.ApprovedWithAdjustments:
             case RequestStatusV2.Rejected:
             case RequestStatusV2.Withdrawn:
                 AddUnsupportedStatusError(request, status, ref errorBuilder);
@@ -669,7 +669,7 @@ public class RequestService(
                 break;
 
             case RequestStatusV2.Approved:
-            case RequestStatusV2.PartialApprove:
+            case RequestStatusV2.ApprovedWithAdjustments:
             case RequestStatusV2.Rejected:
                 if (request.To.Id != partyUuid)
                 {
@@ -749,7 +749,7 @@ public class RequestService(
             );
         }
 
-        var isReviewed = status is RequestStatusV2.Approved or RequestStatusV2.PartialApprove or RequestStatusV2.Rejected;
+        var isReviewed = status is RequestStatusV2.Approved or RequestStatusV2.ApprovedWithAdjustments or RequestStatusV2.Rejected;
         var notifyRequester = !await IsSystemUser(request.Assignment.FromId, ct);
         if (notifyRequester && isReviewed)
         {
@@ -854,7 +854,7 @@ public class RequestService(
             );
         }
 
-        var isReviewed = status is RequestStatusV2.Approved or RequestStatusV2.PartialApprove or RequestStatusV2.Rejected;
+        var isReviewed = status is RequestStatusV2.Approved or RequestStatusV2.ApprovedWithAdjustments or RequestStatusV2.Rejected;
         var notifyRequester = !await IsSystemUser(request.Assignment.FromId, ct);
         if (notifyRequester && isReviewed)
         {
