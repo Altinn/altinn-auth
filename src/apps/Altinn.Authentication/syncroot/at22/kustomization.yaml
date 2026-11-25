@@ -37,4 +37,3 @@ patches:
         name: deploy
       spec:
         path: ./deploy/at22
-  

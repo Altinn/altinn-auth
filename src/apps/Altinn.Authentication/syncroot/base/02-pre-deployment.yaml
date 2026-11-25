@@ -5,7 +5,7 @@ metadata:
 spec:
   interval: 60m
   path: ./fake
-  prune: false 
+  prune: false
   wait: true
   force: true
   targetNamespace: product-authentication
