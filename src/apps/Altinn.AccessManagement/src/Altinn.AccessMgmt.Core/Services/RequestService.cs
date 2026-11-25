@@ -280,6 +280,13 @@ public class RequestService(
                 return changedProblem;
             }
 
+            // A concurrent PUT with the same rights may have committed while this one waited for the lock.
+            // Saving the same list again would change no row, so return the request as it is.
+            if (SameRightKeys(entity.RequestedRightKeys, normalizedRightKeys))
+            {
+                return await GetRequest(requestId, ct);
+            }
+
             entity.RequestedRightKeys = normalizedRightKeys;
             if (await db.SaveChangesAsync(ct) == 0)
             {
