@@ -22,6 +22,14 @@ app with manifests, and uses the tagged commit's existing manifest artifact.
 The artifact must already have been built and pushed by CI. The release workflow
 does not rebuild it.
 
+`release-app.yml` delegates draft creation to `repoctl ci draft-release`, keeping
+the full Git history and git-cliff installation for changelog generation. RepoCtl
+rejects existing tags and drafts for the selected app, generates a changelog for
+the app and its shared-library dependencies, and creates an unpublished draft.
+Versions default to today's UTC date. Overrides must be real dates in `YYYY.MM.DD`
+form, optionally followed by a nonzero three-digit suffix, for example
+`2026.11.25.001`.
+
 While release deployment is being stabilised, the workflow also accepts manual
 dispatch with a required `tag` input. Select `main` to use the latest workflow
 and shared action fixes; the app metadata and artifact SHA still come from the
