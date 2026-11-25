@@ -1,0 +1,31 @@
+meta {
+  name: 04_ResourceNotDelegable
+  seq: 4
+}
+
+docs {
+  Scenario: The resource delegation endpoints refuse a resource that cannot be delegated
+
+    When another service owner looks up the rights for it the request fails as not delegable, not forbidden
+    When another service owner delegates it the request fails as not delegable, not forbidden
+    When the rights for a MaskinportenSchema resource are looked up the request fails
+    When a MaskinportenSchema resource is delegated the request fails
+
+  The Delegable flag is imported from the Resource Registry to the local resource
+  (#4896, #4852), and the endpoints read it from there. The resource type and the
+  Delegable flag rule a resource out whoever asks, so both are checked before ownership
+  (#4842): a service owner that does not own the resource gets 400 AM-00042, not
+  403 AM-00048.
+
+  The resources are owned by ttd and have delegable=false in the Resource Registry. They
+  must also be imported to Access Management; if a step returns 400 AM-00027 instead, the
+  resource is missing locally.
+
+  The owner being refused a non-delegable resource is covered by the k6 test
+  service-owner-connections-not-delegable.js in altinn-platform-validation-tests, so this
+  scenario only covers what that test does not: the check order against a service owner
+  that does not own the resource, and the MaskinportenSchema type.
+
+  None of the steps writes anything: every request is rejected before a delegation is
+  created, so the scenario needs no reset or cleanup.
+}

@@ -13,6 +13,11 @@ module.exports = {
     // Delegable GenericAccessResource owned by digdir, with read and write rights.
     resource: "k6-serviceowner-resource-delegation",
     unknownResource: "bruno-serviceowner-scenarios-unknown-resource",
+    // Resources owned by ttd, which has no organization number in the Resource Registry, so
+    // ownership is matched on the token's org claim. Both have delegable=false; the second is a
+    // MaskinportenSchema. Shared with testdata/be-om-tilgang and testdata/maksinporten-delegation.
+    notDelegableResource: "ttd-bruno-test-non-delegable-ressurs",
+    maskinportenSchemaResource: "ttd-bruno-maskinporten-non-delegable-ressurs",
     grantor: {
       name: "GUL KALV",
       pid: "27920999617",

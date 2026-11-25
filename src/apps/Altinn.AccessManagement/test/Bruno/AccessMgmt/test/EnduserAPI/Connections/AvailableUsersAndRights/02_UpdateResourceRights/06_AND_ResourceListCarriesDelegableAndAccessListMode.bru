@@ -1,0 +1,55 @@
+meta {
+  name: 06_AND_ResourceListCarriesDelegableAndAccessListMode
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections/resources?party={{party}}&from={{party}}&to={{to}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{to}}
+}
+
+docs {
+  AND the resources the delegator has given the receiver include the resource, and the
+  resource carries `delegable` and `accessListMode`. Access Management reads both from its
+  local copy of the resource instead of the Resource Registry (#4860); the response
+  embeds them since #4848, and #5048 asks for them to be asserted.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/Connections/AvailableUsersAndRights/helpers.js");
+  const td = testdata();
+
+  bru.setVar("party", td.delegator.partyUuid);
+  bru.setVar("to", td.receiver.partyUuid);
+  bru.setVar("resource", td.resource.refId);
+
+  await loginAs(td.delegator);
+}
+
+tests {
+  const { testdata } = require("./test/EnduserAPI/Connections/AvailableUsersAndRights/helpers.js");
+  const td = testdata();
+
+  test("THEN the resource list returns 200 and includes the resource", function() {
+    expect(res.status).to.equal(200);
+    const entry = (res.getBody() || []).find(p => p.resource.refId === td.resource.refId);
+    expect(entry, "expected the delegated resource in the list").to.not.be.undefined;
+  });
+
+  test("THEN the resource carries delegable and accessListMode", function() {
+    const resource = (res.getBody() || []).find(p => p.resource.refId === td.resource.refId).resource;
+    // The resource is delegable and does not use access lists in the Resource Registry.
+    // Access Management reads both from its local copy of the resource (#4860, #5048).
+    // accessListMode is serialized as a number here: 0 is Disabled, 1 is Enabled.
+    expect(resource.delegable).to.equal(true);
+    expect(resource.accessListMode).to.equal(0);
+  });
+}

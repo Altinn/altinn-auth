@@ -11,6 +11,7 @@ docs {
     And the delegator checks which rights on the resource can be delegated
     When the delegator sets read and write on the resource for the receiver
     Then the receiver holds read and write as direct rights
+    And the resource list and the connection carry delegable and accessListMode
     When the delegator narrows the rights to read
     Then the receiver holds only read
     And a right key the delegator cannot delegate is rejected

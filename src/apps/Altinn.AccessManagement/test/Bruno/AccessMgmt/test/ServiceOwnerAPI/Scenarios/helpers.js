@@ -14,8 +14,11 @@ const scopes = {
 
 // Service owners from sharedtestdata.js. digdir owns the delegated resource; the
 // connections API compares the organization number in the token's consumer claim with
-// the resource provider's. skd owns none of the resources the scenarios use.
+// the resource provider's. ttd owns the non-delegable resources; it has no organization
+// number in the Resource Registry, so it is matched on the token's org claim. skd owns
+// none of the resources the scenarios use.
 const serviceOwners = {
+  ttd: sharedtestdata.serviceOwners.ttd,
   digdir: sharedtestdata.serviceOwners.digdir,
   skd: sharedtestdata.serviceOwners.skd,
 };

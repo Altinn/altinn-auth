@@ -42,6 +42,15 @@ tests {
     expect(res.getBody().resource.refId).to.equal(td.resource.refId);
   });
 
+  test("THEN the resource carries delegable and accessListMode", function() {
+    const resource = res.getBody().resource;
+    // The resource is delegable and does not use access lists in the Resource Registry.
+    // Access Management reads both from its local copy of the resource (#4860, #5048).
+    // accessListMode is serialized as a number here: 0 is Disabled, 1 is Enabled.
+    expect(resource.delegable).to.equal(true);
+    expect(resource.accessListMode).to.equal(0);
+  });
+
   test("THEN read and write are the direct rights, and there are no indirect rights", function() {
     const body = res.getBody();
     expect(body.indirectRights).to.be.an("array").that.is.empty;

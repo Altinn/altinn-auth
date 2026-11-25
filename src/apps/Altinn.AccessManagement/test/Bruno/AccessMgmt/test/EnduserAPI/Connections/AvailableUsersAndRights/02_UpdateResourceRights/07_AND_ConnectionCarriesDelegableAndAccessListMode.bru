@@ -1,0 +1,64 @@
+meta {
+  name: 07_AND_ConnectionCarriesDelegableAndAccessListMode
+  type: http
+  seq: 7
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/enduser/connections?party={{party}}&from={{party}}&to={{to}}&includeResources=true
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  from: {{party}}
+  to: {{to}}
+  includeResources: true
+}
+
+docs {
+  AND the connection from the delegator to the receiver, asked for with
+  `includeResources=true`, lists the resource with `delegable` and `accessListMode`,
+  read from the local copy of the resource (#4860, #5048).
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/Connections/AvailableUsersAndRights/helpers.js");
+  const td = testdata();
+
+  bru.setVar("party", td.delegator.partyUuid);
+  bru.setVar("to", td.receiver.partyUuid);
+  bru.setVar("resource", td.resource.refId);
+
+  await loginAs(td.delegator);
+}
+
+tests {
+  const { testdata } = require("./test/EnduserAPI/Connections/AvailableUsersAndRights/helpers.js");
+  const td = testdata();
+
+  function findResource() {
+    for (const connection of res.getBody().data || []) {
+      const resource = (connection.resources || []).find(r => r.refId === td.resource.refId);
+      if (resource) {
+        return resource;
+      }
+    }
+    return undefined;
+  }
+
+  test("THEN the connections request returns 200 and a connection lists the resource", function() {
+    expect(res.status).to.equal(200);
+    expect(findResource(), "expected the delegated resource on a connection").to.not.be.undefined;
+  });
+
+  test("THEN the resource carries delegable and accessListMode", function() {
+    const resource = findResource();
+    // The resource is delegable and does not use access lists in the Resource Registry.
+    // Access Management reads both from its local copy of the resource (#4860, #5048).
+    // accessListMode is serialized as a number here: 0 is Disabled, 1 is Enabled.
+    expect(resource.delegable).to.equal(true);
+    expect(resource.accessListMode).to.equal(0);
+  });
+}

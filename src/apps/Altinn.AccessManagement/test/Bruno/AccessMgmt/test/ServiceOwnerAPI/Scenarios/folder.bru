@@ -29,8 +29,9 @@ docs {
 
   Every step mints a Maskinporten enterprise token through `helpers.js`
   (`loginAsServiceOwner(serviceOwner, scope)`). The service owners come from
-  `testdata/sharedtestdata.js`: digdir owns the delegated resource and skd does not. The
-  resource and the two persons come from `testdata/serviceowner-scenarios/<env>.js`.
+  `testdata/sharedtestdata.js`: digdir owns the delegated resource and skd does not; ttd
+  owns the non-delegable resources used in 04_ResourceNotDelegable. The resources and the
+  two persons come from `testdata/serviceowner-scenarios/<env>.js`.
 
   ## Environments
 

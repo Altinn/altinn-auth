@@ -1,0 +1,52 @@
+meta {
+  name: 01_WHEN_OtherServiceOwnerLooksUpRightsForNonDelegableResourceThenNotDelegableWins
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/connections/resources/rights?resource={{notDelegableResource}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  resource: {{notDelegableResource}}
+}
+
+docs {
+  WHEN a service owner that does not own a non-delegable resource looks up its rights the
+  request fails with 400 AM-00042, not 403 AM-00048: the Delegable flag is checked before
+  ownership.
+}
+
+script:pre-request {
+  const { td, loginAsServiceOwner, scopes, serviceOwners } = require("./test/ServiceOwnerAPI/Scenarios/helpers.js");
+  const data = td();
+
+  bru.setVar("grantorPid", data.resourceDelegation.grantor.pid);
+  bru.setVar("recipientPid", data.resourceDelegation.recipient.pid);
+  bru.setVar("notDelegableResource", data.resourceDelegation.notDelegableResource);
+
+  await loginAsServiceOwner(serviceOwners.skd, scopes.resourceDelegationWrite);
+}
+
+tests {
+  const { td } = require("./test/ServiceOwnerAPI/Scenarios/helpers.js");
+
+  test("WHEN another service owner looks up the rights for a non-delegable resource, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN the problem body carries AM-00042", function() {
+    const body = res.getBody();
+    expect(body.status).to.equal(400);
+    expect(body.code).to.equal("AM-00042");
+    expect(body.detail).to.equal("Resource '" + td().resourceDelegation.notDelegableResource + "' is marked as not delegable in the Resource Registry");
+  });
+
+  test("AND the ownership check is not reached", function() {
+    expect(res.status).to.not.equal(403);
+    expect(res.getBody().code).to.not.equal("AM-00048");
+  });
+}
