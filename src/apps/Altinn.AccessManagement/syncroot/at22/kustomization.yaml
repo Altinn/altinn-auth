@@ -29,7 +29,7 @@ patches:
 
   - target:
       kind: Kustomization
-      name: deploy 
+      name: deploy
     patch: |-
       apiVersion: kustomize.toolkit.fluxcd.io/v1
       kind: Kustomization
@@ -37,4 +37,3 @@ patches:
         name: deploy
       spec:
         path: ./deploy/at22
-  
