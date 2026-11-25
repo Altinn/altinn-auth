@@ -37,7 +37,7 @@ jobs:
     outputs:
       matrix: ${{ steps.find-verticals.outputs.matrix }}
       any: ${{ steps.find-verticals.outputs.any }}
-      apps: ${{ steps.app-ids.outputs.ids }}
+      apps: ${{ join(fromJSON(steps.find-apps.outputs.matrix).include.*.id, ' ') }}
       apps-any: ${{ steps.find-apps.outputs.any }}
 
     steps:
@@ -55,15 +55,6 @@ jobs:
         run: repoctl ci find-verticals --filter full --kind app
         env:
           GITHUB_TOKEN: ${{ github.token }}
-
-      - name: Get app vertical IDs
-        id: app-ids
-        shell: bash
-        env:
-          MATRIX: ${{ steps.find-apps.outputs.matrix }}
-        run: |
-          ids=$(jq -r '[.include[].id] | join(" ")' <<< "$MATRIX")
-          echo "ids=$ids" >> "$GITHUB_OUTPUT"
 
       - name: Print find-verticals output
         run: printf '%s\n' "$MATRIX" | jq -C .
@@ -134,7 +125,9 @@ jobs:
     steps:
       - name: Init
         uses: $/.github/actions/init
-      
+        with:
+          install_flux: true
+
       # -warnaserror on both steps: NuGet audit warnings (NU19xx) are raised by
       # restore, compiler and analyzer warnings by build. Either one turns the
       # vertical red, so the build is clean or it fails.
@@ -171,9 +164,6 @@ jobs:
       
       - name: Setup buildx
         uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
-
-      - name: Setup Flux CLI
-        uses: fluxcd/flux2/action@3fa784edd773d56630bb9f62645e08f70c2cff0a # v2.10.0
 
       - name: Login to GHCR
         uses: docker/login-action@8aa5831fb8d48d8f76594c7ddde61ae58019f550 # v4.8.0
@@ -245,9 +235,8 @@ jobs:
     steps:
       - name: Init
         uses: $/.github/actions/init
-
-      - name: Setup Flux CLI
-        uses: fluxcd/flux2/action@3fa784edd773d56630bb9f62645e08f70c2cff0a # v2.10.0
+        with:
+          install_flux: true
 
       - name: Deploy built apps
         uses: $/.github/actions/deploy-apps
