@@ -31,6 +31,7 @@ in
 {
   # https://devenv.sh/packages/
   packages = [
+    pkgs.actionlint
     pkgs.prek
     pkgs.docker-compose
     pkgs.pnpm
