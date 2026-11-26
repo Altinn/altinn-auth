@@ -60,28 +60,6 @@ public static class ActivityLogTriggerScripts
         END IF; END $$;
         """;
 
-    /// <summary>
-    /// Like <see cref="CreateTrigger"/>, for a <c>WHEN</c> condition that uses a column added after
-    /// the activity log migration. These scripts are not versioned: every migration that touches the
-    /// table emits the current SQL, including the original activity log migration, which runs before
-    /// the column exists when a fresh database is built. Until then the trigger gets
-    /// <paramref name="fallbackWhen"/>; the migration that introduced <paramref name="when"/> drops the
-    /// trigger so that it is created again with the full condition. The trigger function must not
-    /// name the column directly either: read it through <c>to_jsonb(OLD)</c>/<c>to_jsonb(NEW)</c>, or
-    /// every update fails on a schema without the column, also when rolling back past it.
-    /// </summary>
-    private static string CreateTriggerWhenColumnExists(string table, string op, string requiredColumn, string when, string fallbackWhen) => $"""
-        DO $$ BEGIN IF NOT EXISTS (SELECT * FROM pg_trigger t WHERE t.tgname ILIKE 'activitylog_{table}_{op}_trg' AND t.tgrelid = to_regclass('dbo.{table}')) THEN
-        IF EXISTS (SELECT * FROM information_schema.columns c WHERE c.table_schema = 'dbo' AND c.table_name = '{table}' AND c.column_name = '{requiredColumn}') THEN
-        CREATE TRIGGER activitylog_{table}_{op}_trg AFTER {op.ToUpperInvariant()} ON dbo.{table}
-        FOR EACH ROW {when} EXECUTE FUNCTION dbo.activitylog_{table}_{op}_fn();
-        ELSE
-        CREATE TRIGGER activitylog_{table}_{op}_trg AFTER {op.ToUpperInvariant()} ON dbo.{table}
-        FOR EACH ROW {fallbackWhen} EXECUTE FUNCTION dbo.activitylog_{table}_{op}_fn();
-        END IF;
-        END IF; END $$;
-        """;
-
     private static readonly Dictionary<string, IReadOnlyList<string>> Scripts = new(StringComparer.Ordinal)
     {
         ["assignment"] =
@@ -156,12 +134,7 @@ public static class ActivityLogTriggerScripts
             RequestAssignmentResourceInsertFn,
             CreateTrigger("requestassignmentresource", "insert"),
             RequestAssignmentResourceUpdateFn,
-            CreateTriggerWhenColumnExists(
-                "requestassignmentresource",
-                "update",
-                requiredColumn: "requestedrightkeys",
-                when: "WHEN (OLD.status IS DISTINCT FROM NEW.status OR OLD.requestedrightkeys IS DISTINCT FROM NEW.requestedrightkeys)",
-                fallbackWhen: "WHEN (OLD.status IS DISTINCT FROM NEW.status)"),
+            CreateTrigger("requestassignmentresource", "update", "WHEN (OLD.status IS DISTINCT FROM NEW.status OR to_jsonb(OLD)->'requestedrightkeys' IS DISTINCT FROM to_jsonb(NEW)->'requestedrightkeys')"),
             RequestAssignmentResourceDeleteFn,
             CreateTrigger("requestassignmentresource", "delete"),
         ],

@@ -22,8 +22,9 @@ public static class ActivityLogExtensions
     /// Functions are replaced, but a trigger is only created if it does not exist, so a migration that
     /// changes a trigger's <c>WHEN</c> condition must drop that trigger first
     /// (see <c>ActivityLogRequestRightKeysChanged</c>). The scripts are not versioned, so the original activity
-    /// log migration also emits the current SQL; a <c>WHEN</c> condition on a column added later needs
-    /// <c>ActivityLogTriggerScripts.CreateTriggerWhenColumnExists</c>.
+    /// log migration also emits the current SQL; trigger conditions and functions that use a column added
+    /// later must read it through <c>to_jsonb(OLD)</c>/<c>to_jsonb(NEW)</c>, so they work before the column
+    /// exists and after a rollback past it.
     /// </remarks>
     public static EntityTypeBuilder EnableActivityLog(this EntityTypeBuilder builder)
     {
