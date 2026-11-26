@@ -292,26 +292,42 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
             ResourceId = resource.Id,
             Action = "rightkeys-test",
             Status = RequestStatusV2.Pending,
-            RequestedRightKeys = ["key-read"],
+            RequestedRightKeys = null,
         };
         _db.RequestAssignments.Add(request);
         _db.RequestAssignmentResources.Add(requestResource);
         await _db.SaveChangesAsync(Seeder, TestContext.Current.CancellationToken);
 
-        // Changing the keys while the status stays Pending gives one RightsChanged row.
+        // Changing the keys while the status stays Pending gives one RightsChanged row per change:
+        // first from null (the whole resource) to specific rights, then to other rights.
         var tracked = await _db.RequestAssignmentResources.FirstAsync(t => t.Id == requestResource.Id, TestContext.Current.CancellationToken);
+        tracked.RequestedRightKeys = ["key-read"];
+        await _db.SaveChangesAsync(Seeder, TestContext.Current.CancellationToken);
+
         tracked.RequestedRightKeys = ["key-read", "key-write"];
         await _db.SaveChangesAsync(Seeder, TestContext.Current.CancellationToken);
 
-        var changed = await SingleEvent(requestResource.Id, ActivityLogTrigger.RightsChanged);
-        Assert.Equal(ActivityLogType.Request, changed.Type);
-        Assert.Equal(ActivityLogSubtype.Resource, changed.Subtype);
-        Assert.Equal(RequestStatusV2.Pending, changed.Status);
-        Assert.Equal(request.Id, changed.ParentId);
-        Assert.Equal(resource.Name, changed.ResourceName);
-        Assert.Contains("\"previousRequestedRightKeys\": [\"key-read\"]", changed.Details);
-        Assert.Contains("\"requestedRightKeys\": [\"key-read\", \"key-write\"]", changed.Details);
-        Assert.DoesNotContain("previousStatus", changed.Details);
+        var changes = await _db.ActivityLogs.AsNoTracking()
+            .Where(t => t.ItemId == requestResource.Id && t.Trigger == ActivityLogTrigger.RightsChanged)
+            .ToListAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(2, changes.Count);
+        Assert.All(changes, changed =>
+        {
+            Assert.Equal(ActivityLogType.Request, changed.Type);
+            Assert.Equal(ActivityLogSubtype.Resource, changed.Subtype);
+            Assert.Equal(RequestStatusV2.Pending, changed.Status);
+            Assert.Equal(request.Id, changed.ParentId);
+            Assert.Equal(resource.Name, changed.ResourceName);
+            Assert.Contains("\"action\": \"rightkeys-test\"", changed.Details);
+            Assert.DoesNotContain("previousStatus", changed.Details);
+        });
+
+        // The previous null is kept as an explicit JSON null, not left out.
+        var fromWholeResource = Assert.Single(changes, e => e.Details!.Contains("\"requestedRightKeys\": [\"key-read\"]"));
+        Assert.Contains("\"previousRequestedRightKeys\": null", fromWholeResource.Details);
+
+        var toMoreRights = Assert.Single(changes, e => e.Details!.Contains("\"requestedRightKeys\": [\"key-read\", \"key-write\"]"));
+        Assert.Contains("\"previousRequestedRightKeys\": [\"key-read\"]", toMoreRights.Details);
 
         // Writing the same keys again fires no trigger. Raw SQL, since EF sends no UPDATE for an unchanged value.
         await using (var transaction = await _db.Database.BeginTransactionAsync(TestContext.Current.CancellationToken))
@@ -341,7 +357,7 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
         var events = await _db.ActivityLogs.AsNoTracking()
             .Where(t => t.ItemId == requestResource.Id)
             .ToListAsync(TestContext.Current.CancellationToken);
-        Assert.Equal(3, events.Count);
+        Assert.Equal(4, events.Count);
     }
 
     [Fact]

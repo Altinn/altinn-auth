@@ -812,6 +812,7 @@ public static class ActivityLogTriggerScripts
         -- right keys is logged as RightsChanged (4) with both key lists in details. The keys are read
         -- through to_jsonb(OLD/NEW), since PostgreSQL resolves every OLD/NEW field in the INSERT, even
         -- in a CASE branch that is not taken, and requestedrightkeys does not exist on older schemas.
+        -- Both key lists are always written: null keys mean the whole resource, so a JSON null is kept.
         v_status_changed := OLD.status IS DISTINCT FROM NEW.status;
         SELECT current_setting('app.changed_by', false) INTO v_by;
         SELECT current_setting('app.changed_by_system', false) INTO v_bysystem;
@@ -831,7 +832,8 @@ public static class ActivityLogTriggerScripts
         NEW.resourceid, dbo.activitylog_resource_name(NEW.resourceid), NEW.id, NEW.assignmentid,
         CASE WHEN v_status_changed
         THEN NULLIF(jsonb_strip_nulls(jsonb_build_object('previousStatus', OLD.status, 'action', NEW.action, 'requestedById', v_ra.o_byid)), '{}'::jsonb)
-        ELSE NULLIF(jsonb_strip_nulls(jsonb_build_object('previousRequestedRightKeys', to_jsonb(OLD)->'requestedrightkeys', 'requestedRightKeys', to_jsonb(NEW)->'requestedrightkeys','action', NEW.action, 'requestedById', v_ra.o_byid)), '{}'::jsonb)
+        ELSE jsonb_build_object('previousRequestedRightKeys', to_jsonb(OLD)->'requestedrightkeys', 'requestedRightKeys', to_jsonb(NEW)->'requestedrightkeys')
+        || jsonb_strip_nulls(jsonb_build_object('action', NEW.action, 'requestedById', v_ra.o_byid))
         END
         );
         RETURN NULL;
