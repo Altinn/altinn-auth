@@ -44,7 +44,7 @@ script:post-response {
   const data = res.getBody();
     expect(data).to.exist;
       expect(data.id).to.exist;
-    bru.setEnvVar("resourcerequestId", data.id);
+    bru.setVar("resourcerequestId", data.id);
 }
 
 tests {

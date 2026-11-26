@@ -47,7 +47,7 @@ script:post-response {
   let data = typeof res.body === "string" ? JSON.parse(res.body) : res.body;
   if (Array.isArray(data) && data.length > 0) {
    const assignmentId = data[0].delegation.toId;
-   bru.setEnvVar("toId", assignmentId);
+   bru.setVar("toId", assignmentId);
   }
 }
 

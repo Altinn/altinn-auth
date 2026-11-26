@@ -47,7 +47,7 @@ tests {
   test("Access package delegation from Revisor-client org to systemuser ", function() {
   const testdata = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
       const data = res.getBody();
-      var delegationId = bru.getEnvVar("delegationId");
+      var delegationId = bru.getVar("delegationId");
     
      const conn = data.find(item => item.id === delegationId);
     expect(conn).to.have.property('id', delegationId);

@@ -55,7 +55,7 @@ tests {
   
      const data = res.getBody();
     
-     const package = data.data.find(item => item.package.id === bru.getEnvVar("packageId"));
+     const package = data.data.find(item => item.package.id === bru.getVar("packageId"));
      expect(package).to.exist;
     
     console.log("testestest");

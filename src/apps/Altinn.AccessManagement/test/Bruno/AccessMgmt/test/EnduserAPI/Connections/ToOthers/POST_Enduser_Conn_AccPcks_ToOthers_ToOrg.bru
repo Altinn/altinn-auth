@@ -50,7 +50,7 @@ const token = await testTokenGenerator.getToken(getTokenParameters);
 script:post-response {
   const data = res.getBody();
   const packageId = data.packageId;
-  bru.setEnvVar("packageId", packageId)
+  bru.setVar("packageId", packageId)
 }
 
 tests {

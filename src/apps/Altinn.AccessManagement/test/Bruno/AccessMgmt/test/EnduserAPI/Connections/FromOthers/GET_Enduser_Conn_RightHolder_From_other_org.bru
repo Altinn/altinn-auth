@@ -49,7 +49,7 @@ tests {
   test("GET access package which was delegated from Org1 to Org2 : FromOthers", function() {
     const sharedtestdata = require(`./testdata/sharedtestdata.js`);
       const testdata = require(`./testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
-    var packageId = bru.getEnvVar("packageId");
+    var packageId = bru.getVar("packageId");
      const data = res.getBody();
     
      const conn = data.data.find(item => item.party.id === testdata.hovedorg_delegates_tilgangspakke.partyuuid.toLowerCase());

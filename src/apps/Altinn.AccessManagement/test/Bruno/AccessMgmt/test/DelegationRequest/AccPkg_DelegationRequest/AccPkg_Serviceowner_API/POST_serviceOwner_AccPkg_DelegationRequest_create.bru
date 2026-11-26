@@ -48,7 +48,7 @@ script:post-response {
   const data = res.getBody();
     expect(data).to.exist;
       expect(data.id).to.exist;
-    bru.setEnvVar("tilgangspakkequestId", data.id);
+    bru.setVar("tilgangspakkequestId", data.id);
 }
 
 tests {
@@ -64,11 +64,11 @@ tests {
       
        // 2. Verify and save requestId
      expect(data).to.have.property("id");
-     bru.setEnvVar("tilgangspakkeserviceowner_requestId", data.id);
+     bru.setVar("tilgangspakkeserviceowner_requestId", data.id);
       
       // 3. Verify and save status
     expect(data).to.have.property("status");
-    bru.setEnvVar("expectedStatus", data.status);
+    bru.setVar("expectedStatus", data.status);
       
     });
 }
