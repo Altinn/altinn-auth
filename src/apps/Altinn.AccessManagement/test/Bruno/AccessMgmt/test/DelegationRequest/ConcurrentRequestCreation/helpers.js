@@ -1,4 +1,4 @@
-// Shared helpers for the concurrent request creation scenarios (#3931).
+// Shared helpers for the concurrent request creation scenarios (#3931, #3937).
 // Requires inside a helper module resolve relative to this file, unlike requires in
 // .bru scripts, which resolve from the collection root.
 const tokenGenerator = require("../../../TestToolsTokenGenerator.js");
@@ -8,25 +8,15 @@ const paths = {
 	v2: "/accessmanagement/api/v2/enduser/request",
 };
 
-// How many identical calls a scenario sends at once, like a user clicking the button repeatedly.
-const parallelCalls = 5;
-
 // Environments where AccessManagement.Enduser.RequestV2Api is on and the seed data is verified.
 const enabledEnvironments = ["at22"];
 
-// Environments where the fix for #3931 is deployed. The scenarios that expect one request
-// where today two can be created are skipped everywhere else, so the post-deployment run
-// stays green until the fix is out. Add an environment here when the fix reaches it.
-const fixedEnvironments = [];
-
-// Skips the current request outside the enabled environments, and, for a scenario that
-// waits for the fix, outside the environments where it is deployed. Returns true when skipped,
-// so the step can return before it loads seed data. bru.runner.skipRequest() only marks the
-// request as skipped: the rest of the pre-request script still runs.
-function skipOutsideEnabledEnvironments(options) {
+// Skips the current request outside the enabled environments. Returns true when skipped, so the
+// step can return before it loads seed data. bru.runner.skipRequest() only marks the request as
+// skipped: the rest of the pre-request script still runs.
+function skipOutsideEnabledEnvironments() {
 	const env = bru.getEnvVar("tokenEnv");
-	const waitsForFix = options && options.waitsForFix;
-	if (enabledEnvironments.includes(env) && (!waitsForFix || fixedEnvironments.includes(env))) {
+	if (enabledEnvironments.includes(env)) {
 		bru.setVar("cc_skipped", null);
 		return false;
 	}
@@ -37,9 +27,7 @@ function skipOutsideEnabledEnvironments(options) {
 
 	// Outside the collection runner, as when a single request is sent from the Bruno app, the
 	// request may still go out, without a token, and answer 401. Say why in the console.
-	console.log(waitsForFix && enabledEnvironments.includes(env)
-		? `Skipped: this scenario waits for the fix for #3931. Add "${env}" to fixedEnvironments in helpers.js to run it.`
-		: `Skipped: ConcurrentRequestCreation is not enabled in "${env}".`);
+	console.log(`Skipped: ConcurrentRequestCreation is not enabled in "${env}".`);
 	bru.runner.skipRequest();
 	return true;
 }
@@ -65,7 +53,6 @@ function person(p) {
 function testdata() {
 	const data = require(`../../../testdata/delegationrequest-scenarios/${bru.getEnvVar("tokenEnv")}.js`).concurrentRequestCreation;
 	return {
-		resource: data.resource,
 		packages: data.packages,
 		requester: {
 			name: data.requester.name,
@@ -92,9 +79,7 @@ async function loginAs(persona) {
 // Clears the variables the steps pass between them, so a step never acts on a value
 // left behind by an earlier run.
 function clearScenarioVars() {
-	for (const name of ["cc_results", "cc_keyA", "cc_keyB"]) {
-		bru.setVar(name, null);
-	}
+	bru.setVar("cc_results", null);
 }
 
 // Sends the calls at the same time with the current bearer token, and returns the status and
@@ -135,20 +120,18 @@ function readResults(step) {
 	return JSON.parse(raw);
 }
 
-// True when a request in a list is for the given package urn or resource id.
+// True when a request in a list is for the given package urn.
 function isFor(request, reference) {
-	return (request.package && request.package.referenceId === reference)
-		|| (request.resource && request.resource.referenceId === reference);
+	return Boolean(request.package && request.package.referenceId === reference);
 }
 
 // Withdraws, with the requester's token, every pending request in the list that is for one of the
-// references. Withdraws all of them, not only the first: while #3931 is unfixed, a scenario can
-// leave several pending requests for the same package or resource behind. Withdrawing, unlike
-// rejecting, removes the request from the pending notification to the approver and queues no
-// notification to the requester, so the runs send no notifications.
+// references, including duplicates left by concurrent creation. Withdrawing, unlike rejecting,
+// removes the request from the pending notification to the approver and queues no notification
+// to the requester, so the runs send no notifications.
 // Every withdrawal is attempted. The ones that did not answer 200 are returned and stored in
-// `cc_withdrawFailures`, which assertWithdrawn() checks in the tests of the GIVEN and CLEANUP steps, so an
-// incomplete reset fails the step instead of passing silently.
+// `cc_withdrawFailures`, which assertWithdrawn() checks in the tests of the GIVEN and CLEANUP
+// steps, so an incomplete reset fails the step instead of passing silently.
 async function withdrawPending(axios, td, pendingRequests, references) {
 	const baseUrl = bru.getEnvVar("baseUrl");
 	const headers = { Authorization: `Bearer ${bru.getVar("bearerToken")}` };
@@ -169,12 +152,6 @@ async function withdrawPending(axios, td, pendingRequests, references) {
 	return failures;
 }
 
-// The right keys in a delegation check response that the user can delegate, without duplicates.
-function delegableKeys(check) {
-	const rights = (check && check.rights) || [];
-	return [...new Set(rights.filter(r => r.result === true).map(r => r.right.key))];
-}
-
 // Fails the current test when a withdrawal in this step's post-response script did not answer
 // 200, or when the post-response script did not get as far as withdrawing.
 function assertWithdrawn() {
@@ -185,7 +162,6 @@ function assertWithdrawn() {
 
 module.exports = {
 	paths,
-	parallelCalls,
 	skipOutsideEnabledEnvironments,
 	isSkipped,
 	testdata,
@@ -197,5 +173,4 @@ module.exports = {
 	isFor,
 	withdrawPending,
 	assertWithdrawn,
-	delegableKeys,
 };

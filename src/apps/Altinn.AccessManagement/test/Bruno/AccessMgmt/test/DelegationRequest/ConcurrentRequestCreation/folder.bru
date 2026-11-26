@@ -8,43 +8,42 @@ auth {
 }
 
 docs {
-	# Creating the same request several times at once (#3931)
+	# Creating requests at the same time (#3931, #3937)
 
-	When the frontend calls the create endpoint several times in quick succession, the calls can
-	all read that no request exists yet and all create one. The result is several pending
-	requests for the same package or resource, and the approver is asked more than once.
-	These scenarios send identical or conflicting create calls at the same time and check that
-	the API ends with one pending request, never answers 500, and gives each caller the same
-	request.
+	When a requester sends requests for different packages at the same time, each request queues
+	the same pending notification to the approver. The calls collide on the outbox
+	(`uq_outboxmessage_refid_pending`), and the losing call has to retry and add its package to
+	the notification the other call committed (`SaveChangesWithOutboxRetry`, #3937). These
+	scenarios check in a deployed environment that both calls succeed and both requests are
+	created. A 500 means the retry is broken.
+
+	Duplicate requests from the same request sent several times at once are not covered: they
+	do not cause technical errors, and handling them is not part of #3931.
 
 	Each subfolder is one scenario. The files inside are the scenario steps, named
 	`NN_GIVEN|WHEN|THEN|AND|CLEANUP_...` and ordered by `seq`. A scenario starts from a known
 	state, withdraws what it created, and can run standalone or repeatedly.
 
-	## What these scenarios cannot check
+	## Parallel calls
 
-	The bug also queues duplicate notifications in the outbox. No API exposes the outbox, so the
-	scenarios only check the requests. And since the calls travel over the network, the race is
-	not certain to happen on every run: a failing run proves the bug, a passing run does not
-	prove it is gone.
+	The Bruno runner sends the requests of a collection one after another, so the WHEN step sends
+	the calls from its pre-request script with axios and `Promise.all`, over connections opened
+	beforehand so they reach the server together. The request of the WHEN step itself only lists
+	the pending requests afterwards. Collisions depend on timing, so a passing run makes a broken
+	retry unlikely but does not rule it out.
 
-	## Environments and the fix
+	## Environments
 
 	The Azure DevOps post-deployment run executes the whole `test` folder in every environment.
-	Every step starts with `skipOutsideEnabledEnvironments()` from `helpers.js`:
-
-	- `enabledEnvironments`: where AccessManagement.Enduser.RequestV2Api is on and the seed data
-		is verified.
-	- `fixedEnvironments`: where the fix for #3931 is deployed. Scenarios 01, 02 and 03 expect the
-		fixed behaviour and are skipped everywhere else. Add an environment when the fix reaches it.
-		Scenario 04 checks what already works today and runs in every enabled environment.
+	Every step starts with `skipOutsideEnabledEnvironments()` from `helpers.js`, which skips the
+	request outside `enabledEnvironments`: where AccessManagement.Enduser.RequestV2Api is on and
+	the seed data is verified.
 
 	## Tokens and fixtures
 
 	Personas live in `testdata/delegationrequest-scenarios/<tokenEnv>.js` under
 	`concurrentRequestCreation`, from the `be-om-tilgang` fixtures. The requester is an
 	organisation acting through its innehaver, the approver a private person connected to it.
-	The pair and resource are shared with `ResourceRequestRightKeysV2`; the GIVEN steps of both
-	suites close what the other leaves pending. The scenarios clean up by withdrawing as the requester,
-	not by rejecting as the approver, so they send no notifications.
+	The scenarios clean up by withdrawing as the requester, not by rejecting as the approver, so
+	they send no notifications.
 }

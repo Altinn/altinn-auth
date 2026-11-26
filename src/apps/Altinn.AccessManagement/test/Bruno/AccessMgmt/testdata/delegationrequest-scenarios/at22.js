@@ -41,9 +41,7 @@ module.exports = {
   },
 
   concurrentRequestCreation: {
-    // Delegable resource owned by ttd, with at least two rights the approver can delegate.
-    resource: beOmTilgang.resource_to_delegate.resource_id_privatperson,
-    // Two assignable packages for a person. The first is the one requested repeatedly.
+    // Two assignable packages for a person, requested at the same time.
     packages: [
       beOmTilgang.package_to_delegate.package_id_privatperson,
       beOmTilgang.package_to_delegate.package_id_privatperson_withdraw,

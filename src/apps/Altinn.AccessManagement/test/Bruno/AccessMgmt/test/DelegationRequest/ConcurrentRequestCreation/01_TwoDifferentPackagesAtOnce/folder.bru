@@ -1,6 +1,6 @@
 meta {
-	name: 04_TwoDifferentPackagesAtOnce
-	seq: 4
+	name: 01_TwoDifferentPackagesAtOnce
+	seq: 1
 }
 
 docs {
@@ -14,5 +14,5 @@ docs {
 
 	Both calls queue the same pending notification to the approver, so one of them collides
 	on the outbox and has to retry (`SaveChangesWithOutboxRetry`, #3937). A 500 here means that
-	retry is broken. This already works today, so the scenario runs in every enabled environment.
+	retry is broken.
 }

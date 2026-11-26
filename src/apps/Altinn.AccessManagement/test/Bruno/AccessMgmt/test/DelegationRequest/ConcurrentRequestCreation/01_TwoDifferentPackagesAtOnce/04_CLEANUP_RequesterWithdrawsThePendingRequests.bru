@@ -19,8 +19,8 @@ params:query {
 
 docs {
 	CLEANUP the requester withdraws every pending request to the approver for either package, so the
-	scenario can be rerun. Requests cannot be deleted. All of them are withdrawn, not only the one
-	the scenario expects, because while #3931 is unfixed a run can leave duplicates behind.
+	scenario can be rerun. Requests cannot be deleted. All of them are withdrawn, not only the ones
+	the scenario created, so a crashed run never leaves the next one with a pending request.
 	Withdrawing, unlike rejecting, sends no notifications.
 
 	GET /accessmanagement/api/v2/enduser/request/sent?party=<requester>&to=<approver>&status=Pending&type=package
