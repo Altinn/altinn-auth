@@ -1,0 +1,45 @@
+name: Report Flux deployment
+
+on:
+  repository_dispatch:
+    types:
+      - Kustomization/deploy.product-access-management
+      - Kustomization/deploy.product-authentication
+      - Kustomization/deploy.product-authorization
+      - Kustomization/deploy.product-resource-registry
+
+permissions:
+  contents: read
+  deployments: write
+
+concurrency:
+  group: flux-deployment-${{ github.event.action }}-${{ github.event.client_payload.metadata.env }}
+  cancel-in-progress: false
+
+jobs:
+  report:
+    name: Report reconciliation outcome
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      # Use trusted workflow code, never the revision supplied in the event.
+      - name: Checkout main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Init
+        uses: $/.github/actions/init
+        with:
+          checkout: false
+
+      # TODO: Remove full Flux payload logging after callback setup is verified.
+      - name: Log Flux payload
+        run: jq -C '.' "$GITHUB_EVENT_PATH"
+
+      - name: Update deployment status
+        # TODO: Move event handling and status reporting into RepoCtl.
+        run: bash .github/scripts/report-flux-deployment.sh
+        env:
+          GH_TOKEN: ${{ github.token }}
