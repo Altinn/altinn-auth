@@ -45,7 +45,7 @@ jobs:
           fetch_depth: 0 # we need full history for generating the changelog with git-cliff
 
       - name: Install git-cliff
-        uses: taiki-e/install-action@cfdb7ed4ccc7c7dce37759eae89dc5674b469b39 # v2.90.3
+        uses: taiki-e/install-action@fe3acb53a98b62c772db35de75ce0e4595e7ca8c # v2.90.8
         with:
           # renovate: datasource=crate depName=git-cliff
           tool: git-cliff@2.14.2
