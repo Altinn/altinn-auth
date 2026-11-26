@@ -58,7 +58,8 @@ module.exports =
       "name": "TILGIVENDE PERIODE",
       "userId": 21167067,
       "partyId": 50942237,
-      "partyUuid": "f44a36e8-62ab-419c-bd0b-f8098ddd7e5d"
+      "partyUuid": "f44a36e8-62ab-419c-bd0b-f8098ddd7e5d",
+      "expectedPackageResourceRights": { "read": true, "write": true, "delete": false, "instantiate": true, "sign": false, "confirm": false }
     },
     "tilgangstyrer_entity_med_enkeltrettighet": {
       "name": "RAKRYGGET BLOMSTRETE APE",
