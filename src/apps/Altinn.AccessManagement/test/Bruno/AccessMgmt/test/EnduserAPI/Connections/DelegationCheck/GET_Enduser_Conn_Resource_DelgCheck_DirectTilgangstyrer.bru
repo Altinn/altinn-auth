@@ -53,8 +53,10 @@ tests {
     const expectedNumPackages = 6;
     assert.lengthOf(rights, expectedNumPackages, `Expected response data to contain all ${expectedNumPackages} available packages giving access to the resource`);
     
-    for (let i = 0; i < rights.Length; i++) {
-      assert.isTrue(rights[i].result, "expected all rights to be available");
+    // Tilgangsstyrer only permits running the check; the results depend on the
+    // individual rights granted in each environment, so only assert the shape.
+    for (let i = 0; i < rights.length; i++) {
+      assert.isBoolean(rights[i].result, "expected each right to have a boolean result");
     }
   });
 }
