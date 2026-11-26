@@ -85,8 +85,8 @@ public interface IRequestService
     /// <summary>
     /// Replaces the rights asked for in a pending resource request. Only the party that sent the request can change it,
     /// and only while it is pending. The rights are validated as when a request is created, and at least one is required:
-    /// a request cannot be changed to ask for the whole resource. The same rights in any order, or with duplicates,
-    /// leave the request unchanged. No notification is sent.
+    /// a request cannot be changed to ask for the whole resource. Duplicates are removed and the rights are stored in
+    /// the order given, as when a request is created. No notification is sent.
     /// </summary>
     /// <param name="partyUuid">The party changing the request, which must be the party that sent it</param>
     /// <param name="requestId">The request to change</param>

@@ -36,11 +36,11 @@ docs {
 	The body `{ "requestedRightKeys": [...] }` replaces the rights the request asks for, and is
 	validated as when a request is created: AM.VLD-00054 for a key that is not in the policy and
 	AM.VLD-00055 for one that is not delegable. Unknown fields give 400. At least one key is
-	required: no body or `{}` gives 400 with a required-field error, and an empty list 400 with
-	AM.VLD-00023. To ask for the whole resource instead, withdraw the request and send a new one.
+	required: no body, `{}` or an empty list gives 400 with AM.VLD-00023.
+	To ask for the whole resource instead, withdraw the request and send a new one.
 	A party other than the requester gives 400 with AM.VLD-00044, a request that is no longer
-	pending 400 with AM.VLD-00064, and a package request 400 with AM.VLD-00057. Sending the
-	rights the request already asks for returns it unchanged.
+	pending 400 with AM.VLD-00036, and the id of a package request 400 with AM.VLD-00035, as
+	for an unknown id. The rights are stored in the order given.
 
 	The recipient is not notified again. Returns 200 with the changed v2 request, still pending
 	and with the same id.

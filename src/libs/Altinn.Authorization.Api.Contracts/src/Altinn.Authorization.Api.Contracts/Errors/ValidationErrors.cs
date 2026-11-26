@@ -342,11 +342,4 @@ public static class ValidationErrors
     /// </summary>
     public static ValidationErrorDescriptor ResourceNotRevocableViaClientDelegation { get; }
         = _factory.Create(63, "Resource is delegated through a client delegation.");
-
-    /// <summary>
-    /// Gets a validation error descriptor for when a request is changed after it has left the status Pending,
-    /// for example because it was approved, rejected or withdrawn.
-    /// </summary>
-    public static ValidationErrorDescriptor RequestNotPending { get; }
-        = _factory.Create(64, "Only a pending request can be changed.");
 }

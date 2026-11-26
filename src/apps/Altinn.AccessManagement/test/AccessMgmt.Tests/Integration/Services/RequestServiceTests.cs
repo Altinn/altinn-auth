@@ -8,7 +8,6 @@ using Altinn.AccessMgmt.Core.Models;
 using Altinn.AccessMgmt.Core.Notifications;
 using Altinn.AccessMgmt.Core.Outbox;
 using Altinn.AccessMgmt.Core.Services;
-using Altinn.AccessMgmt.Core.Utils.Helper;
 using Altinn.AccessMgmt.PersistenceEF.Audit;
 using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
@@ -19,7 +18,6 @@ using Altinn.Authorization.Api.Contracts.AccessManagement.Request;
 using Altinn.Authorization.Integration.Platform;
 using Altinn.Authorization.Integration.Platform.Notification;
 using Altinn.Authorization.Integration.Platform.Notification.Models;
-using Altinn.Authorization.ProblemDetails;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -326,130 +324,6 @@ public class RequestServiceTests : IClassFixture<EfDatabaseFixture>, IAsyncLifet
         var resource = await GetReviewedResource(created.Resource.Id);
         Assert.Equal(RequestStatusV2.ApprovedWithAdjustments, resource.RequestStatus);
         Assert.True(resource.IsApproved);
-    }
-
-    #endregion
-
-    #region UpdateResourceRequestRightKeys — row lock
-
-    // The update validates the keys against the policy, so these tests use an app whose policy the
-    // PolicyRetrievalPointMock has. Each test gets its own requester, so the requests don't share an assignment.
-    private const string AppResourceRefId = "app_skd_sirius-skattemelding-v1";
-
-    private static List<string> GetDelegableAppKeys()
-    {
-        var policy = new PolicyRetrievalPointMock().GetPolicyAsync("skd", "sirius-skattemelding-v1").GetAwaiter().GetResult();
-        return [.. policy.Rules.Take(4).SelectMany(rule => DelegationCheckHelper.CalculateRightKeys(rule, AppResourceRefId)).Distinct().Order(StringComparer.Ordinal)];
-    }
-
-    private async Task<AccessRequest> CreatePendingAppRequest(IEnumerable<string> requestedRightKeys)
-    {
-        var ct = TestContext.Current.CancellationToken;
-        var resource = await _db.Resources.AsNoTracking().FirstOrDefaultAsync(r => r.RefId == AppResourceRefId, ct);
-        if (resource is null)
-        {
-            resource = new Resource
-            {
-                Id = Guid.CreateVersion7(),
-                Name = "RequestTest App",
-                Description = "RequestTest App",
-                RefId = AppResourceRefId,
-                ProviderId = ProviderConstants.ResourceRegistry.Id,
-                TypeId = TestResourceType.Id,
-            };
-            _db.Resources.Add(resource);
-        }
-
-        var requester = new Entity
-        {
-            Id = Guid.CreateVersion7(),
-            TypeId = EntityTypeConstants.Person,
-            VariantId = EntityVariantConstants.Person,
-            Name = "RequestTest Requester",
-            RefId = $"REQ-TEST-{Guid.CreateVersion7()}",
-        };
-        _db.Entities.Add(requester);
-        await _db.SaveChangesAsync(TestAudit);
-        _db.ChangeTracker.Clear();
-
-        var created = (await _requestService.CreateResourceRequest(OrgFrom.Id, requester.Id, requester.Id, RoleConstants.Rightholder.Id, resource.Id, requestedRightKeys, RequestStatusV2.Pending, ct)).Value;
-
-        // In the API every request gets a new context. Without this, the update would get the tracked entity
-        // from the creation instead of reading the row under the lock.
-        _db.ChangeTracker.Clear();
-        return created;
-    }
-
-    /// <summary>
-    /// Opens a second connection that locks the request row and applies <paramref name="change"/> without committing,
-    /// starts <paramref name="update"/>, waits until it is blocked on the row lock, and then commits the change.
-    /// The update has then read the request as it was before the change, and has to see the change under the lock.
-    /// </summary>
-    private async Task<T> RunWhileRowIsLocked<T>(Guid requestId, Action<RequestAssignmentResource> change, Func<Task<T>> update)
-    {
-        var ct = TestContext.Current.CancellationToken;
-        var options = new DbContextOptionsBuilder<AppDbContext>().UseNpgsql(_fixture.Db.Admin.ToString()).Options;
-        await using var other = new AppDbContext(options) { AuditAccessor = new AuditAccessor { AuditValues = TestAudit } };
-
-        await using var transaction = await other.Database.BeginTransactionAsync(ct);
-        await other.Database.ExecuteSqlAsync($"SELECT id FROM dbo.requestassignmentresource WHERE id = {requestId} FOR UPDATE", ct);
-        var entity = await other.RequestAssignmentResources.SingleAsync(r => r.Id == requestId, ct);
-        change(entity);
-        await other.SaveChangesAsync(TestAudit, ct);
-
-        var updateTask = update();
-
-        // pg_locks, not pg_stat_activity: the latter is a snapshot that stays the same for the rest of this transaction.
-        var deadline = DateTime.UtcNow.AddSeconds(10);
-        while (!await other.Database
-            .SqlQuery<bool>($"SELECT EXISTS (SELECT 1 FROM pg_locks WHERE NOT granted AND pg_backend_pid() = ANY(pg_blocking_pids(pid))) AS \"Value\"")
-            .SingleAsync(ct))
-        {
-            Assert.False(updateTask.IsCompleted, "The update finished without waiting for the row lock.");
-            Assert.True(DateTime.UtcNow < deadline, "The update did not wait for the row lock within 10 seconds.");
-            await Task.Delay(50, ct);
-        }
-
-        await transaction.CommitAsync(ct);
-        return await updateTask;
-    }
-
-    [Fact]
-    public async Task UpdateResourceRequestRightKeys_RejectedWhileWaitingForTheLock_ReturnsRequestNotPendingAndKeepsTheRejection()
-    {
-        var keys = GetDelegableAppKeys();
-        var created = await CreatePendingAppRequest([keys[0]]);
-
-        var result = await RunWhileRowIsLocked(
-            created.Id,
-            entity => entity.Status = RequestStatusV2.Rejected,
-            () => _requestService.UpdateResourceRequestRightKeys(created.From.Id, created.Id, [keys[1]], TestContext.Current.CancellationToken));
-        var stored = await _db.RequestAssignmentResources.AsNoTracking().SingleAsync(r => r.Id == created.Id, TestContext.Current.CancellationToken);
-
-        Assert.True(result.IsProblem);
-        var problem = Assert.IsType<ValidationProblemInstance>(result.Problem);
-        Assert.Contains(problem.Errors, e => e.ErrorCode == ValidationErrors.RequestNotPending.ErrorCode);
-        Assert.Equal(RequestStatusV2.Rejected, stored.Status);
-        Assert.Equal([keys[0]], stored.RequestedRightKeys);
-    }
-
-    [Fact]
-    public async Task UpdateResourceRequestRightKeys_SameKeysCommittedWhileWaitingForTheLock_ReturnsTheRequest()
-    {
-        var keys = GetDelegableAppKeys();
-        var created = await CreatePendingAppRequest([keys[0]]);
-        List<string> newKeys = [keys[0], keys[1]];
-
-        var result = await RunWhileRowIsLocked(
-            created.Id,
-            entity => entity.RequestedRightKeys = [.. newKeys],
-            () => _requestService.UpdateResourceRequestRightKeys(created.From.Id, created.Id, newKeys, TestContext.Current.CancellationToken));
-        var stored = await _db.RequestAssignmentResources.AsNoTracking().SingleAsync(r => r.Id == created.Id, TestContext.Current.CancellationToken);
-
-        Assert.False(result.IsProblem);
-        Assert.Equal(newKeys, result.Value.RequestedRightKeys);
-        Assert.Equal(RequestStatusV2.Pending, stored.Status);
-        Assert.Equal(newKeys, stored.RequestedRightKeys);
     }
 
     #endregion
