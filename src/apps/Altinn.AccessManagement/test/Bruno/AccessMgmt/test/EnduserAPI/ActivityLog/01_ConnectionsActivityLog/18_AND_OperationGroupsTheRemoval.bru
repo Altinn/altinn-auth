@@ -1,0 +1,57 @@
+meta {
+  name: 18_AND_OperationGroupsTheRemoval
+  type: http
+  seq: 18
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v2/enduser/connections/activitylog?party={{party}}&direction=from&operation={{al_removalOperationId}}&pageSize=50
+  body: none
+  auth: inherit
+}
+
+params:query {
+  party: {{party}}
+  direction: from
+  operation: {{al_removalOperationId}}
+  pageSize: 50
+}
+
+docs {
+  AND filtering on the removal's `operation` returns every entry that one user action
+  wrote, and nothing else: the role assignment and the access package removed by the
+  cascade, but not the grants, which were separate requests.
+}
+
+script:pre-request {
+  const { loginAs, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const td = testdata().connections;
+
+  bru.setVar("party", td.delegator.partyUuid);
+  bru.setVar("to", td.receiver.partyUuid);
+
+  await loginAs(td.delegator);
+}
+
+tests {
+  const { entriesFor } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const body = res.getBody();
+  const operation = bru.getVar("al_removalOperationId");
+
+  test("AND the operation filter returns 200", function() {
+    expect(res.status).to.equal(200);
+  });
+
+  test("AND every entry belongs to the removal's operation", function() {
+    body.data.forEach(e => expect(e.operationId, `operationId of ${e.id}`).to.equal(operation));
+  });
+
+  test("AND the operation holds both removals and neither grant", function() {
+    const assignment = entriesFor(body, bru.getVar("al_assignmentId"));
+    const pkg = entriesFor(body, bru.getVar("al_assignmentPackageId"));
+    expect(assignment).to.have.lengthOf(1);
+    expect(pkg).to.have.lengthOf(1);
+    expect(assignment[0].trigger).to.equal("Deleted");
+    expect(pkg[0].trigger).to.equal("Deleted");
+  });
+}

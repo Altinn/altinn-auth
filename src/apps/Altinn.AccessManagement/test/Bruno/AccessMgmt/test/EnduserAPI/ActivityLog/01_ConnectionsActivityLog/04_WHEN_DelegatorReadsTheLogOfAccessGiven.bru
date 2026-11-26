@@ -39,7 +39,9 @@ docs {
     lacks the scope for the direction, or omits the direction.
 
   THEN this run's role assignment and access package are recorded as created, by the
-  delegator, through the enduser API, with the activity type from the catalog.
+  delegator, through the enduser API, with the activity type from the catalog. Each entry
+  has a `text`: its catalog template filled from the name snapshots, in Bokmål when no
+  `Accept-Language` is sent.
 }
 
 script:pre-request {
@@ -53,7 +55,7 @@ script:pre-request {
 }
 
 tests {
-  const { activityTypes, entriesFor, isNewestFirst, rightholderRoleId, sameId, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const { activityTypes, entriesFor, expectedText, isNewestFirst, isRenderedText, rightholderRoleId, sameId, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
   const td = testdata().connections;
   const body = res.getBody();
 
@@ -93,6 +95,7 @@ tests {
     expect(sameId(e.byId, td.delegator.partyUuid), "byId").to.equal(true);
     expect(e.sourceName).to.equal("EnduserApi");
     expect(e.operationId).to.be.a("string").that.is.not.empty;
+    bru.setVar("al_assignmentCreatedAt", e.when);
   });
 
   test("THEN the access package is recorded as created under the role assignment", function() {
@@ -107,5 +110,18 @@ tests {
     expect(e.packageId).to.be.a("string").that.is.not.empty;
     expect(e.packageName).to.be.a("string").that.is.not.empty;
     expect(sameId(e.byId, td.delegator.partyUuid), "byId").to.equal(true);
+  });
+
+  test("THEN every entry carries its text as a filled-in sentence", function() {
+    body.data.forEach(e => expect(isRenderedText(e.text), `text of ${e.id}: ${e.text}`).to.equal(true));
+  });
+
+  test("THEN the role assignment and the access package read as sentences in Bokmål", function() {
+    const assignment = entriesFor(body, bru.getVar("al_assignmentId"))[0];
+    const pkg = entriesFor(body, bru.getVar("al_assignmentPackageId"))[0];
+    expect(assignment.text).to.equal(expectedText(assignment));
+    expect(pkg.text).to.equal(expectedText(pkg));
+    bru.setVar("al_assignmentText", assignment.text);
+    bru.setVar("al_assignmentPackageText", pkg.text);
   });
 }
