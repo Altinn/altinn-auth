@@ -4,38 +4,6 @@
   "pull-request-title-pattern": "release${scope}:${component} ${version}",
   "separate-pull-requests": true,
   "packages": {
-    "src/apps/Altinn.AccessManagement": {
-      "package-name": "Altinn.AccessManagement",
-      "extra-files": [
-        {
-          "type": "yaml",
-          "path": "manifests/deploy/{tt02,prod}/kustomization.yaml",
-          "glob": true,
-          "jsonpath": "$.images[?(@.name==\u0027ghcr.io/altinn/altinn-auth/access-management\u0027)].newTag"
-        },
-        {
-          "type": "yaml",
-          "path": "manifests/deploy/{tt02,prod}/kustomization.yaml",
-          "glob": true,
-          "jsonpath": "$.labels[?(@.pairs)].pairs[\u0027app.kubernetes.io/version\u0027]"
-        }
-      ]
-    },
-    "src/apps/Altinn.Authorization": {
-      "package-name": "Altinn.Authorization",
-      "extra-files": [
-        {
-          "type": "yaml",
-          "path": "manifests/deploy/{tt02,prod}/kustomization.yaml",
-          "jsonpath": "$.images[?(@.name==\u0027ghcr.io/altinn/altinn-auth/authorization\u0027)].newTag"
-        },
-        {
-          "type": "yaml",
-          "path": "manifests/deploy/{tt02,prod}/kustomization.yaml",
-          "jsonpath": "$.labels[?(@.pairs)].pairs[\u0027app.kubernetes.io/version\u0027]"
-        }
-      ]
-    },
     "src/pkgs/Altinn.Authorization.ABAC": {
       "component": "Altinn.Authorization.ABAC",
       "bump-minor-pre-major": true,
