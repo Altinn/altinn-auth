@@ -50,8 +50,9 @@ tests {
     expect(res.status).to.equal(200);
     assert.isNotEmpty(rights, "Expected data in response body to NOT be empty array");
     
-    const expectedNumPackages = 6;
-    assert.lengthOf(rights, expectedNumPackages, `Expected response data to contain all ${expectedNumPackages} available packages giving access to the resource`);
+    const expectedActions = ["read", "write", "delete", "instantiate", "sign", "confirm"];
+    assert.lengthOf(rights, expectedActions.length, `Expected a right for each of the ${expectedActions.length} actions in the resource's policy`);
+    expect(rights.map(item => item.right.action.value)).to.have.members(expectedActions);
     
     // Tilgangsstyrer only permits running the check; the results depend on the
     // individual rights granted in each environment, so only assert the shape.

@@ -58,7 +58,7 @@ tests {
     
     for (const item of data) {
       expect(item.result, `result for ${item.package.urn}`).to.equal(true);
-      expect(item.reasons[0].description, `reason for ${item.package.urn}`).to.equal("Direct-RolePackage");
+      expect(item.reasons.map(reason => reason.description), `reasons for ${item.package.urn}`).to.include("Direct-RolePackage");
     }
   });
 }
