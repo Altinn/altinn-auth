@@ -66,7 +66,9 @@ public static class ActivityLogTriggerScripts
     /// table emits the current SQL, including the original activity log migration, which runs before
     /// the column exists when a fresh database is built. Until then the trigger gets
     /// <paramref name="fallbackWhen"/>; the migration that introduced <paramref name="when"/> drops the
-    /// trigger so that it is created again with the full condition.
+    /// trigger so that it is created again with the full condition. The trigger function must not
+    /// name the column directly either: read it through <c>to_jsonb(OLD)</c>/<c>to_jsonb(NEW)</c>, or
+    /// every update fails on a schema without the column, also when rolling back past it.
     /// </summary>
     private static string CreateTriggerWhenColumnExists(string table, string op, string requiredColumn, string when, string fallbackWhen) => $"""
         DO $$ BEGIN IF NOT EXISTS (SELECT * FROM pg_trigger t WHERE t.tgname ILIKE 'activitylog_{table}_{op}_trg' AND t.tgrelid = to_regclass('dbo.{table}')) THEN
@@ -834,7 +836,9 @@ public static class ActivityLogTriggerScripts
         BEGIN
         IF to_regclass('dbo.activitylog') IS NULL THEN RETURN NULL; END IF;
         -- A status change is logged as Updated (2), as before; a change of only the requested
-        -- right keys is logged as RightsChanged (4) with both key lists in details.
+        -- right keys is logged as RightsChanged (4) with both key lists in details. The keys are read
+        -- through to_jsonb(OLD/NEW), since PostgreSQL resolves every OLD/NEW field in the INSERT, even
+        -- in a CASE branch that is not taken, and requestedrightkeys does not exist on older schemas.
         v_status_changed := OLD.status IS DISTINCT FROM NEW.status;
         SELECT current_setting('app.changed_by', false) INTO v_by;
         SELECT current_setting('app.changed_by_system', false) INTO v_bysystem;
@@ -854,7 +858,7 @@ public static class ActivityLogTriggerScripts
         NEW.resourceid, dbo.activitylog_resource_name(NEW.resourceid), NEW.id, NEW.assignmentid,
         CASE WHEN v_status_changed
         THEN NULLIF(jsonb_strip_nulls(jsonb_build_object('previousStatus', OLD.status, 'action', NEW.action, 'requestedById', v_ra.o_byid)), '{}'::jsonb)
-        ELSE NULLIF(jsonb_strip_nulls(jsonb_build_object('previousRequestedRightKeys', OLD.requestedrightkeys, 'requestedRightKeys', NEW.requestedrightkeys, 'action', NEW.action, 'requestedById', v_ra.o_byid)), '{}'::jsonb)
+        ELSE NULLIF(jsonb_strip_nulls(jsonb_build_object('previousRequestedRightKeys', to_jsonb(OLD)->'requestedrightkeys', 'requestedRightKeys', to_jsonb(NEW)->'requestedrightkeys','action', NEW.action, 'requestedById', v_ra.o_byid)), '{}'::jsonb)
         END
         );
         RETURN NULL;

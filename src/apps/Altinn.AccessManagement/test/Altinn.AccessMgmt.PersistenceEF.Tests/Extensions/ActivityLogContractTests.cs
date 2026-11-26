@@ -100,6 +100,16 @@ public class ActivityLogContractTests
         Assert.Contains("WHEN (OLD.status IS DISTINCT FROM NEW.status OR OLD.requestedrightkeys IS DISTINCT FROM NEW.requestedrightkeys)", sql);
         Assert.Contains("CASE WHEN v_status_changed THEN 2 ELSE 4 END", sql);
         Assert.Equal(4, (int)ActivityLogTrigger.RightsChanged);
+
+        // The function is also installed on schemas without the column (a fresh database before the
+        // column migration, or a rollback past it), so it must not name the column directly.
+        var function = Assert.Single(
+            ActivityLogTriggerScripts.ForTable("dbo", "requestassignmentresource"),
+            s => s.Contains("CREATE OR REPLACE FUNCTION dbo.activitylog_requestassignmentresource_update_fn()"));
+        Assert.DoesNotContain("OLD.requestedrightkeys", function, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("NEW.requestedrightkeys", function, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("to_jsonb(OLD)->'requestedrightkeys'", function);
+        Assert.Contains("to_jsonb(NEW)->'requestedrightkeys'", function);
     }
 
     [Fact]
