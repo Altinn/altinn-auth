@@ -28,9 +28,9 @@ namespace Altinn.AccessMgmt.Core.Tests.Integration.HostedServices.Services;
 [IntegrationTest]
 public class RoleSyncServiceTest : IClassFixture<ApiFixture>
 {
-    private static readonly Guid Bostyrer = Guid.Parse("b0a7e5c1-0003-4000-8000-000000000001");
-    private static readonly Guid Administrator = Guid.Parse("b0a7e5c1-0003-4000-8000-000000000002");
-    private static readonly Guid Estate = Guid.Parse("b0a7e5c1-0003-4000-8000-000000000003");
+    private static readonly Guid Bostyrer = Guid.Parse("01a2180b-8bf8-7039-8edb-0852ffa20e18");
+    private static readonly Guid Administrator = Guid.Parse("01a2180b-8c05-7828-896d-732d3775469f");
+    private static readonly Guid Estate = Guid.Parse("01a2180b-8c05-7038-aede-6a7821fe4075");
 
     private static readonly FakeRegister Register = new();
 
