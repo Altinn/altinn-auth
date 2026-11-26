@@ -215,6 +215,96 @@ public class RequestService(
     }
 
     /// <inheritdoc/>
+    public async Task<Result<AccessRequest>> UpdateResourceRequestRightKeys(Guid partyUuid, Guid requestId, IEnumerable<string>? rightKeys, CancellationToken ct = default)
+    {
+        var requestResult = await GetRequest(requestId, ct);
+        if (requestResult.IsProblem)
+        {
+            return requestResult.Problem;
+        }
+
+        var request = requestResult.Value;
+        ValidationProblemBuilder errors = default;
+
+        if (request.From.Id != partyUuid)
+        {
+            errors.Add(ValidationErrors.RequestUnauthorizedStatusUpdate, "$QUERY/party", [new("party", $"Only the party that sent request {request.Id} can change it.")]);
+        }
+        else if (request.Type != "resource")
+        {
+            errors.Add(ValidationErrors.RightKeysNotAllowedForRequestType, "$QUERY/id", [new("id", $"Request {request.Id} is not a resource request.")]);
+        }
+        else if (request.Status != RequestStatusV2.Pending)
+        {
+            errors.Add(ValidationErrors.RequestNotPending, "$QUERY/id", [new("id", $"Request {request.Id} is {request.Status}.")]);
+        }
+        else if (rightKeys is null)
+        {
+            errors.Add(ValidationErrors.Required, "/requestedRightKeys");
+        }
+        else if (NormalizeRightKeys(rightKeys) is null)
+        {
+            errors.Add(ValidationErrors.EmptyList, "/requestedRightKeys");
+        }
+
+        if (errors.TryBuild(out var problem))
+        {
+            return problem;
+        }
+
+        var rightKeysProblem = await ValidateResourceRightKeys(request.Resource.ReferenceId, rightKeys, ct);
+        if (rightKeysProblem is { })
+        {
+            return rightKeysProblem;
+        }
+
+        var normalizedRightKeys = NormalizeRightKeys(rightKeys);
+        if (SameRightKeys(NormalizeRightKeys(request.RequestedRightKeys), normalizedRightKeys))
+        {
+            return request;
+        }
+
+        // Lock the request until the change is committed, and check the status again under the lock, so an approval,
+        // rejection or withdrawal that commits first is not overwritten. No new pending notification is queued:
+        // the recipient was already told about the request, and the notification does not list the rights.
+        var currentTransaction = db.Database.CurrentTransaction is not null;
+        await using (var transaction = currentTransaction ? null : await db.Database.BeginTransactionAsync(ct))
+        {
+            await db.Database.ExecuteSqlAsync($"SELECT id FROM dbo.requestassignmentresource WHERE id = {requestId} FOR UPDATE", ct);
+
+            var entity = await db.RequestAssignmentResources.FirstOrDefaultAsync(r => r.Id == requestId, ct);
+            if (entity is not { Status: RequestStatusV2.Pending })
+            {
+                errors.Add(ValidationErrors.RequestNotPending, "$QUERY/id", [new("id", $"Request {requestId} is {entity?.Status.ToString() ?? "gone"}.")]);
+                errors.TryBuild(out var changedProblem);
+                return changedProblem;
+            }
+
+            // A concurrent PUT with the same rights may have committed while this one waited for the lock.
+            // Saving the same list again would change no row, so return the request as it is.
+            if (SameRightKeys(entity.RequestedRightKeys, normalizedRightKeys))
+            {
+                return await GetRequest(requestId, ct);
+            }
+
+            entity.RequestedRightKeys = normalizedRightKeys;
+            if (await db.SaveChangesAsync(ct) == 0)
+            {
+                errors.Add(ValidationErrors.DbNoRowsAffected, nameof(db.RequestAssignmentResources));
+                errors.TryBuild(out var savedProblem);
+                return savedProblem;
+            }
+
+            if (transaction is { })
+            {
+                await transaction.CommitAsync(ct);
+            }
+        }
+
+        return await GetRequest(requestId, ct);
+    }
+
+    /// <inheritdoc/>
     public async Task<Result<AccessRequest>> CreateResourceRequest(Guid toId, Guid fromId, Guid byId, Guid roleId, Guid resourceId, IEnumerable<string>? requestedRightKeys, RequestStatusV2 status = RequestStatusV2.Pending, CancellationToken ct = default)
     {
         var systemUserProblem = await ValidateRecipientNotSystemUser(toId, ct);
@@ -492,9 +582,10 @@ public class RequestService(
 
         // Sending the same request again returns the existing one. A request for other rights, or for the whole
         // resource instead of specific rights or the other way round, would otherwise be dropped without a word.
+        // The problem names the pending request, so the client can update or withdraw it.
         if (request is { } && !SameRightKeys(NormalizeRightKeys(request.RequestedRightKeys), normalizedRightKeys))
         {
-            return Problems.PendingRequestWithOtherRightKeys;
+            return Problems.PendingRequestWithOtherRightKeys.Create([new("requestId", request.Id.ToString())]);
         }
 
         if (request is null)

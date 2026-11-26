@@ -1,0 +1,63 @@
+meta {
+	name: 06_WHEN_RequesterChangesTheRequestToNoRightsThenTheChangeFails
+	type: http
+	seq: 6
+}
+
+put {
+	url: {{baseUrl}}/accessmanagement/api/v2/enduser/request/sent/resource?party={{party}}&id={{rk_requestId}}
+	body: json
+	auth: inherit
+}
+
+params:query {
+	party: {{party}}
+	id: {{rk_requestId}}
+}
+
+headers {
+	Content-Type: application/json
+	Accept: application/json
+}
+
+body:json {
+	{
+		"requestedRightKeys": []
+	}
+}
+
+docs {
+	WHEN the requester tries to change the request to ask for no rights, the change fails with
+	400 and AM.VLD-00023 pointing at `/requestedRightKeys`. A request cannot be changed to ask
+	for the whole resource; it must be withdrawn and sent again. The request is unchanged.
+
+	PUT /accessmanagement/api/v2/enduser/request/sent/resource?party=<requester>&id=<request>
+}
+
+script:pre-request {
+	const { skipOutsideEnabledEnvironments, testdata, loginAs, requireVar } = require("./test/DelegationRequest/ResourceRequestRightKeysV2/helpers.js");
+	if (skipOutsideEnabledEnvironments()) {
+		return;
+	}
+
+	const td = testdata();
+
+	requireVar("rk_requestId", "03");
+	bru.setVar("party", td.requester.partyUuid);
+
+	await loginAs(td.requester.innehaver);
+}
+
+tests {
+	test("WHEN the list of rights is empty, the request returns 400", function() {
+		expect(res.status).to.equal(400);
+	});
+
+	test("THEN AM.VLD-00023 points at the empty list", function() {
+		const body = res.getBody();
+		expect(body.validationErrors).to.be.an("array").that.is.not.empty;
+		const error = body.validationErrors.find(e => e.code === "AM.VLD-00023");
+		expect(error, "validation error AM.VLD-00023").to.exist;
+		expect(error.paths.some(p => p.endsWith("/requestedRightKeys")), "path ending in /requestedRightKeys").to.equal(true);
+	});
+}

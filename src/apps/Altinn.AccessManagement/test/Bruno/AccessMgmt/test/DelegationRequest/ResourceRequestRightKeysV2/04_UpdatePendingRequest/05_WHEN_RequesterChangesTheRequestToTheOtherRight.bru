@@ -1,0 +1,75 @@
+meta {
+	name: 05_WHEN_RequesterChangesTheRequestToTheOtherRight
+	type: http
+	seq: 5
+}
+
+put {
+	url: {{baseUrl}}/accessmanagement/api/v2/enduser/request/sent/resource?party={{party}}&id={{rk_requestId}}
+	body: json
+	auth: inherit
+}
+
+params:query {
+	party: {{party}}
+	id: {{rk_requestId}}
+}
+
+headers {
+	Content-Type: application/json
+	Accept: application/json
+}
+
+body:json {
+	{
+		"requestedRightKeys": ["{{rk_keyB}}"]
+	}
+}
+
+docs {
+	WHEN the requester changes the pending request to ask for the other right instead.
+
+	PUT /accessmanagement/api/v2/enduser/request/sent/resource?party=<requester>&id=<request>
+
+	Scope `altinn:portal/enduser` or `altinn:accessmanagement/enduser:requests.write`. `party`
+	must be the party that sent the request, and the request must be a pending resource request.
+	The body `{ "requestedRightKeys": [...] }` replaces the rights the request asks for, and is
+	validated as when a request is created: AM.VLD-00054 for a key that is not in the policy and
+	AM.VLD-00055 for one that is not delegable. Unknown fields give 400. At least one key is
+	required: no body or `{}` gives 400 with a required-field error, and an empty list 400 with
+	AM.VLD-00023. To ask for the whole resource instead, withdraw the request and send a new one.
+	A party other than the requester gives 400 with AM.VLD-00044, a request that is no longer
+	pending 400 with AM.VLD-00064, and a package request 400 with AM.VLD-00057. Sending the
+	rights the request already asks for returns it unchanged.
+
+	The recipient is not notified again. Returns 200 with the changed v2 request, still pending
+	and with the same id.
+}
+
+script:pre-request {
+	const { skipOutsideEnabledEnvironments, testdata, loginAs, requireVar } = require("./test/DelegationRequest/ResourceRequestRightKeysV2/helpers.js");
+	if (skipOutsideEnabledEnvironments()) {
+		return;
+	}
+
+	const td = testdata();
+
+	requireVar("rk_requestId", "03");
+	requireVar("rk_keyB", "02");
+	bru.setVar("party", td.requester.partyUuid);
+
+	await loginAs(td.requester.innehaver);
+}
+
+tests {
+	test("WHEN the request is changed, the request returns 200", function() {
+		expect(res.status).to.equal(200);
+	});
+
+	test("THEN it is the same request, still pending, asking for the other right", function() {
+		const body = res.getBody();
+		expect(body.id).to.equal(bru.getVar("rk_requestId"));
+		expect(body.status).to.equal("Pending");
+		expect(body.resource.requestedRightKeys).to.deep.equal([bru.getVar("rk_keyB")]);
+	});
+}

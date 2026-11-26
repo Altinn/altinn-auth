@@ -1,0 +1,65 @@
+meta {
+	name: 04_WHEN_RequesterAsksForAnotherRightThenTheConflictNamesThePendingRequest
+	type: http
+	seq: 4
+}
+
+post {
+	url: {{baseUrl}}/accessmanagement/api/v2/enduser/request/resource?party={{party}}&to={{to}}&resource={{resource}}
+	body: json
+	auth: inherit
+}
+
+params:query {
+	party: {{party}}
+	to: {{to}}
+	resource: {{resource}}
+}
+
+headers {
+	Content-Type: application/json
+	Accept: application/json
+}
+
+body:json {
+	{
+		"requestedRightKeys": ["{{rk_keyB}}"]
+	}
+}
+
+docs {
+	WHEN the requester sends a new request for another right while the first one is pending,
+	the request fails with 409 and AM-00054. The problem names the pending request in
+	`requestId`, so the client can change that request instead of sending a new one.
+
+	POST /accessmanagement/api/v2/enduser/request/resource?party=<requester>&to=<approver>&resource=<id>
+}
+
+script:pre-request {
+	const { skipOutsideEnabledEnvironments, testdata, loginAs, requireVar } = require("./test/DelegationRequest/ResourceRequestRightKeysV2/helpers.js");
+	if (skipOutsideEnabledEnvironments()) {
+		return;
+	}
+
+	const td = testdata();
+
+	requireVar("rk_requestId", "03");
+	requireVar("rk_keyB", "02");
+	bru.setVar("party", td.requester.partyUuid);
+	bru.setVar("to", td.approver.partyUuid);
+	bru.setVar("resource", td.resource);
+
+	await loginAs(td.requester.innehaver);
+}
+
+tests {
+	test("WHEN another right is asked for while a request is pending, the request returns 409", function() {
+		expect(res.status).to.equal(409);
+	});
+
+	test("THEN AM-00054 names the pending request", function() {
+		const body = res.getBody();
+		expect(body.code).to.equal("AM-00054");
+		expect(body.requestId).to.equal(bru.getVar("rk_requestId"));
+	});
+}

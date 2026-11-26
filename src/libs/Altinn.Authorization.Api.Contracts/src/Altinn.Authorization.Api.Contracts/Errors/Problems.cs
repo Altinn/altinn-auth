@@ -228,7 +228,8 @@ public static class Problems
 
     /// <summary>
     /// Gets a <see cref="ProblemDescriptor"/> for a resource request that would replace a pending request for the
-    /// same resource with other rights. The pending request must be withdrawn before a new one is sent.
+    /// same resource with other rights. The pending request must be withdrawn before a new one is sent, or, in
+    /// version 2 of the enduser API, updated. The extension <c>requestId</c> holds the id of the pending request.
     /// </summary>
     public static ProblemDescriptor PendingRequestWithOtherRightKeys { get; }
     = _factory.Create(54, HttpStatusCode.Conflict, "A pending request for this resource already exists with other rights. Withdraw it before sending a new request.");

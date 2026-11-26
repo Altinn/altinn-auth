@@ -242,9 +242,9 @@ public class RequestControllerTest
             Assert.Equal(created.Id, again.Id);
 
             // Other keys, and the whole resource, are refused instead of returning the pending request
-            await AssertPendingRequestWithOtherRightKeys(await client.PostAsJsonAsync(url, new RequestedRightKeysDto { RequestedRightKeys = [delegableKeys[1]] }, ct));
-            await AssertPendingRequestWithOtherRightKeys(await client.PostAsJsonAsync(url, new RequestedRightKeysDto { RequestedRightKeys = [delegableKeys[0], delegableKeys[1]] }, ct));
-            await AssertPendingRequestWithOtherRightKeys(await client.PostAsync(url, null, ct));
+            await AssertPendingRequestWithOtherRightKeys(await client.PostAsJsonAsync(url, new RequestedRightKeysDto { RequestedRightKeys = [delegableKeys[1]] }, ct), created.Id);
+            await AssertPendingRequestWithOtherRightKeys(await client.PostAsJsonAsync(url, new RequestedRightKeysDto { RequestedRightKeys = [delegableKeys[0], delegableKeys[1]] }, ct), created.Id);
+            await AssertPendingRequestWithOtherRightKeys(await client.PostAsync(url, null, ct), created.Id);
 
             // The pending request is unchanged
             var getResponse = await client.GetAsync($"{Route}?party={TestData.LarsBakke.Id}&id={created.Id}", ct);
@@ -266,7 +266,7 @@ public class RequestControllerTest
             var again = await ReadCreated(await client.PostAsync(url, null, ct));
             Assert.Equal(created.Id, again.Id);
 
-            await AssertPendingRequestWithOtherRightKeys(await client.PostAsJsonAsync(url, new RequestedRightKeysDto { RequestedRightKeys = [delegableKeys[0]] }, ct));
+            await AssertPendingRequestWithOtherRightKeys(await client.PostAsJsonAsync(url, new RequestedRightKeysDto { RequestedRightKeys = [delegableKeys[0]] }, ct), created.Id);
         }
 
         [Fact]
@@ -324,12 +324,16 @@ public class RequestControllerTest
             return JsonSerializer.Deserialize<RequestDtoV2>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
         }
 
-        private static async Task AssertPendingRequestWithOtherRightKeys(HttpResponseMessage response)
+        private static async Task AssertPendingRequestWithOtherRightKeys(HttpResponseMessage response, Guid pendingRequestId)
         {
             var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.True(response.StatusCode == HttpStatusCode.Conflict, $"Expected Conflict but got {response.StatusCode}. Response body: {content}");
             var problem = JsonSerializer.Deserialize<AltinnProblemDetails>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             Assert.Equal(Problems.PendingRequestWithOtherRightKeys.ErrorCode, problem.ErrorCode);
+
+            // The problem names the pending request, so the client can change or withdraw it
+            using var json = JsonDocument.Parse(content);
+            Assert.Equal(pendingRequestId.ToString(), json.RootElement.GetProperty("requestId").GetString());
         }
 
         [Fact]
@@ -919,6 +923,223 @@ public class RequestControllerTest
             Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
             var error = Assert.Single((await ReadProblem(response)).Errors);
             Assert.Equal(ValidationErrors.RightKeysNotAllowedForRequestType.ErrorCode, error.ErrorCode);
+        }
+    }
+
+    #endregion
+
+    #region PUT /sent/resource — Change the right keys of a pending request
+
+    /// <summary>
+    /// The requester changes the rights asked for in a pending request. Every request is seeded from its own person to
+    /// <see cref="TestData.DumboAdventures"/> for <see cref="RequestApprovalTestData.AppResource"/>, so the tests do not
+    /// share requests.
+    /// </summary>
+    [IntegrationTest]
+    public class UpdateResourceRequest : IClassFixture<ApiFixture>
+    {
+        private static readonly Guid OtherKeysId = Guid.Parse("0196b0d3-0000-7000-8000-000000000001");
+        private static readonly Guid SameKeysId = Guid.Parse("0196b0d3-0000-7000-8000-000000000002");
+        private static readonly Guid WholeResourceId = Guid.Parse("0196b0d3-0000-7000-8000-000000000003");
+        private static readonly Guid OtherRequesterId = Guid.Parse("0196b0d3-0000-7000-8000-000000000004");
+        private static readonly Guid ApprovedId = Guid.Parse("0196b0d3-0000-7000-8000-000000000005");
+        private static readonly Guid PackageRequestId = Guid.Parse("0196b0d3-0000-7000-8000-000000000006");
+        private static readonly Guid NoKeysId = Guid.Parse("0196b0d3-0000-7000-8000-000000000007");
+        private static readonly Guid InvalidKeysId = Guid.Parse("0196b0d3-0000-7000-8000-000000000008");
+
+        public UpdateResourceRequest(ApiFixture fixture)
+        {
+            Fixture = fixture;
+            Fixture.ConfigureServices(services =>
+            {
+                services.AddSingleton<IPolicyRetrievalPoint, PolicyRetrievalPointMock>();
+            });
+            Fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.EnableRequestAssignmentResource);
+            Fixture.WithEnabledFeatureFlag(AccessMgmtFeatureFlags.EnableEnduserRequestV2Api);
+            Fixture.EnsureSeedOnce<UpdateResourceRequest>(db =>
+            {
+                var (roleKeys, _) = GetAppPolicyKeys();
+
+                AddResourceRequest(db, OtherKeysId, TestData.SiljeHaugen.Id, [roleKeys[0]]);
+                AddResourceRequest(db, SameKeysId, TestData.EinarBerg.Id, [roleKeys[0], roleKeys[1]]);
+                AddResourceRequest(db, WholeResourceId, TestData.ToneKvam.Id, null);
+                AddResourceRequest(db, OtherRequesterId, TestData.BjornMoe.Id, [roleKeys[0]]);
+                AddResourceRequest(db, ApprovedId, TestData.RandiLie.Id, [roleKeys[0]], RequestStatusV2.Approved);
+                AddResourceRequest(db, NoKeysId, TestData.VegardSolberg.Id, [roleKeys[0]]);
+                AddResourceRequest(db, InvalidKeysId, TestData.IngerNygard.Id, [roleKeys[0]]);
+
+                var packageAssignment = new RequestAssignment
+                {
+                    FromId = TestData.AstridJohansen.Id,
+                    ToId = TestData.DumboAdventures.Id,
+                    ById = TestData.AstridJohansen.Id,
+                    RoleId = RoleConstants.Rightholder,
+                };
+                db.RequestAssignments.Add(packageAssignment);
+                db.SaveChanges();
+
+                db.RequestAssignmentPackages.Add(new RequestAssignmentPackage
+                {
+                    Id = PackageRequestId,
+                    AssignmentId = packageAssignment.Id,
+                    PackageId = PackageConstants.Agriculture.Id,
+                    Status = RequestStatusV2.Pending,
+                });
+                db.SaveChanges();
+            });
+        }
+
+        public ApiFixture Fixture { get; }
+
+        private static string UpdateUrl(Guid requester, Guid id) => $"{Route}/sent/resource?party={requester}&id={id}";
+
+        private Task<HttpResponseMessage> Update(ConstantDefinition<Entity> requester, Guid id, IEnumerable<string> rightKeys) =>
+            CreateClient(Fixture, requester.Id).PutAsJsonAsync(
+                UpdateUrl(requester.Id, id),
+                new RequestedRightKeysDto { RequestedRightKeys = rightKeys },
+                TestContext.Current.CancellationToken);
+
+        private Task<HttpResponseMessage> UpdateWithJson(ConstantDefinition<Entity> requester, Guid id, string json)
+        {
+            var body = new StringContent(json, Encoding.UTF8, MediaTypeNames.Application.Json);
+            return CreateClient(Fixture, requester.Id).PutAsync(UpdateUrl(requester.Id, id), body, TestContext.Current.CancellationToken);
+        }
+
+        private static async Task<RequestDtoV2> ReadRequest(HttpResponseMessage response)
+        {
+            var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Response body: {content}");
+            return JsonSerializer.Deserialize<RequestDtoV2>(content, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+        }
+
+        private static async Task AssertValidationError(HttpResponseMessage response, ValidationErrorDescriptor expected)
+        {
+            var content = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(response.StatusCode == HttpStatusCode.BadRequest, $"Expected BadRequest but got {response.StatusCode}. Response body: {content}");
+            var problem = await ReadProblem(response);
+            Assert.Contains(problem.Errors, e => e.ErrorCode == expected.ErrorCode);
+        }
+
+        private async Task<List<string>?> GetStoredRightKeys(Guid id)
+        {
+            List<string>? keys = null;
+            await Fixture.QueryDb(async db =>
+            {
+                var request = await db.RequestAssignmentResources.AsNoTracking().SingleAsync(r => r.Id == id, TestContext.Current.CancellationToken);
+                keys = request.RequestedRightKeys;
+            });
+            return keys;
+        }
+
+        [Fact]
+        public async Task WithOtherRightKeys_ReplacesThem_StaysPending_AndQueuesNoNotification()
+        {
+            var (roleKeys, _) = GetAppPolicyKeys();
+
+            var updated = await ReadRequest(await Update(TestData.SiljeHaugen, OtherKeysId, [roleKeys[1], roleKeys[2]]));
+
+            Assert.Equal(OtherKeysId, updated.Id);
+            Assert.Equal(RequestStatusV2.Pending, updated.Status.Value);
+            Assert.Equal([roleKeys[1], roleKeys[2]], updated.Resource.RequestedRightKeys);
+            Assert.Equal([roleKeys[1], roleKeys[2]], await GetStoredRightKeys(OtherKeysId));
+
+            // The recipient was told about the request when it was sent, so changing it queues no new notification
+            await Fixture.QueryDb(async db =>
+            {
+                var refId = $"{RequestPendingNotification.Handler}_{TestData.SiljeHaugen.Id}_{TestData.DumboAdventures.Id}";
+                Assert.False(await db.OutboxMessages.AnyAsync(o => o.RefId == refId, TestContext.Current.CancellationToken));
+            });
+        }
+
+        [Fact]
+        public async Task WithTheSameRightKeysInOtherOrderAndWithDuplicates_Returns200_AndLeavesTheRequestUnchanged()
+        {
+            var (roleKeys, _) = GetAppPolicyKeys();
+
+            var updated = await ReadRequest(await Update(TestData.EinarBerg, SameKeysId, [roleKeys[1], roleKeys[0], roleKeys[1]]));
+
+            Assert.Equal([roleKeys[0], roleKeys[1]], updated.Resource.RequestedRightKeys);
+            Assert.Equal([roleKeys[0], roleKeys[1]], await GetStoredRightKeys(SameKeysId));
+        }
+
+        [Fact]
+        public async Task ForWholeResource_AsksForTheGivenRightKeysInstead()
+        {
+            var (roleKeys, _) = GetAppPolicyKeys();
+
+            var updated = await ReadRequest(await Update(TestData.ToneKvam, WholeResourceId, [roleKeys[0]]));
+
+            Assert.Equal([roleKeys[0]], updated.Resource.RequestedRightKeys);
+        }
+
+        [Fact]
+        public async Task ByAnotherParty_Returns400_AndLeavesTheRequestUnchanged()
+        {
+            // The recipient cannot change the request either, only the requester
+            var (roleKeys, _) = GetAppPolicyKeys();
+            var client = CreateClient(Fixture, TestData.MalinEmilie.Id);
+
+            var response = await client.PutAsJsonAsync(
+                UpdateUrl(TestData.DumboAdventures.Id, OtherRequesterId),
+                new RequestedRightKeysDto { RequestedRightKeys = [roleKeys[1]] },
+                TestContext.Current.CancellationToken);
+
+            await AssertValidationError(response, ValidationErrors.RequestUnauthorizedStatusUpdate);
+            Assert.Equal([roleKeys[0]], await GetStoredRightKeys(OtherRequesterId));
+        }
+
+        [Fact]
+        public async Task ForApprovedRequest_Returns400RequestNotPending_AndLeavesTheRequestUnchanged()
+        {
+            var (roleKeys, _) = GetAppPolicyKeys();
+
+            var response = await Update(TestData.RandiLie, ApprovedId, [roleKeys[1]]);
+
+            await AssertValidationError(response, ValidationErrors.RequestNotPending);
+            Assert.Equal([roleKeys[0]], await GetStoredRightKeys(ApprovedId));
+        }
+
+        [Fact]
+        public async Task ForPackageRequest_Returns400RightKeysNotAllowedForRequestType()
+        {
+            var (roleKeys, _) = GetAppPolicyKeys();
+
+            var response = await Update(TestData.AstridJohansen, PackageRequestId, [roleKeys[0]]);
+
+            await AssertValidationError(response, ValidationErrors.RightKeysNotAllowedForRequestType);
+        }
+
+        [Fact]
+        public async Task WithoutRightKeys_Returns400_AndLeavesTheRequestUnchanged()
+        {
+            // A request cannot be changed to ask for the whole resource: it must be withdrawn and sent again
+            var (roleKeys, _) = GetAppPolicyKeys();
+            var client = CreateClient(Fixture, TestData.VegardSolberg.Id);
+
+            var noBody = await client.PutAsync(UpdateUrl(TestData.VegardSolberg.Id, NoKeysId), null, TestContext.Current.CancellationToken);
+            await AssertValidationError(noBody, ValidationErrors.Required);
+
+            await AssertValidationError(await UpdateWithJson(TestData.VegardSolberg, NoKeysId, "{}"), ValidationErrors.Required);
+            await AssertValidationError(await UpdateWithJson(TestData.VegardSolberg, NoKeysId, """{ "requestedRightKeys": [] }"""), ValidationErrors.EmptyList);
+
+            Assert.Equal([roleKeys[0]], await GetStoredRightKeys(NoKeysId));
+        }
+
+        [Fact]
+        public async Task WithInvalidRightKeysOrMisspelledField_Returns400_AndLeavesTheRequestUnchanged()
+        {
+            var (roleKeys, orgOnlyKeys) = GetAppPolicyKeys();
+
+            await AssertValidationError(await Update(TestData.IngerNygard, InvalidKeysId, ["no-such-key"]), ValidationErrors.RightKeyNotFound);
+            await AssertValidationError(await Update(TestData.IngerNygard, InvalidKeysId, [orgOnlyKeys[0]]), ValidationErrors.RightKeyNotDelegable);
+
+            // The approve body calls the field rightKeys
+            var misspelled = await UpdateWithJson(TestData.IngerNygard, InvalidKeysId, $$"""{ "rightKeys": ["{{roleKeys[1]}}"] }""");
+            var content = await misspelled.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+            Assert.True(misspelled.StatusCode == HttpStatusCode.BadRequest, $"Expected BadRequest but got {misspelled.StatusCode}. Response body: {content}");
+            Assert.Contains("rightKeys", content, StringComparison.Ordinal);
+
+            Assert.Equal([roleKeys[0]], await GetStoredRightKeys(InvalidKeysId));
         }
     }
 

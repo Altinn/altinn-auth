@@ -1,0 +1,72 @@
+meta {
+	name: 03_WHEN_RequesterRequestsOneRight
+	type: http
+	seq: 3
+}
+
+post {
+	url: {{baseUrl}}/accessmanagement/api/v2/enduser/request/resource?party={{party}}&to={{to}}&resource={{resource}}
+	body: json
+	auth: inherit
+}
+
+params:query {
+	party: {{party}}
+	to: {{to}}
+	resource: {{resource}}
+}
+
+headers {
+	Content-Type: application/json
+	Accept: application/json
+}
+
+body:json {
+	{
+		"requestedRightKeys": ["{{rk_keyA}}"]
+	}
+}
+
+docs {
+	WHEN the requester asks the approver for one right on the resource.
+
+	POST /accessmanagement/api/v2/enduser/request/resource?party=<requester>&to=<approver>&resource=<id>
+
+	Returns 200 with the pending v2 request. The id is stored as `rk_requestId` for the
+	following steps.
+}
+
+script:pre-request {
+	const { skipOutsideEnabledEnvironments, testdata, loginAs, requireVar } = require("./test/DelegationRequest/ResourceRequestRightKeysV2/helpers.js");
+	if (skipOutsideEnabledEnvironments()) {
+		return;
+	}
+
+	const td = testdata();
+
+	requireVar("rk_keyA", "02");
+	bru.setVar("party", td.requester.partyUuid);
+	bru.setVar("to", td.approver.partyUuid);
+	bru.setVar("resource", td.resource);
+
+	await loginAs(td.requester.innehaver);
+}
+
+script:post-response {
+	const body = res.getBody();
+	if (res.status === 200 && body && body.id) {
+		bru.setVar("rk_requestId", body.id);
+	}
+}
+
+tests {
+	test("WHEN the request is created through v2, the request returns 200", function() {
+		expect(res.status).to.equal(200);
+	});
+
+	test("THEN the request is pending and asks for the one right", function() {
+		const body = res.getBody();
+		expect(body.status).to.equal("Pending");
+		expect(body.resource.requestedRightKeys).to.deep.equal([bru.getVar("rk_keyA")]);
+	});
+}

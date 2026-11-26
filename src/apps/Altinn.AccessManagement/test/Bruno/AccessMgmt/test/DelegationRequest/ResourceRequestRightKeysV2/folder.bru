@@ -24,6 +24,9 @@ docs {
 
 	- `POST v2/enduser/request/resource`: create a resource request, optionally with
 		`{ "requestedRightKeys": [...] }`.
+	- `PUT v2/enduser/request/sent/resource`: change the rights asked for in a pending
+		resource request, with `{ "requestedRightKeys": [...] }`. Only the requester can change it,
+		at least one key is required, and the recipient is not notified again.
 	- `PUT v2/enduser/request/received/approve`: approve, optionally with
 		`{ "rightKeys": [...] }` selecting the rights to give. The status becomes Approved or
 		ApprovedWithAdjustments.

@@ -1,0 +1,17 @@
+meta {
+	name: 04_UpdatePendingRequest
+	seq: 4
+}
+
+docs {
+	Scenario: The requester changes the rights asked for in a pending request
+
+		Given the approver has no pending request from the requester for the resource
+		And the approver can delegate at least two rights on the resource
+		When the requester asks for one right on the resource through v2
+		And the requester asks for another right in a new request, the request fails with 409 naming the pending request
+		And the requester changes the pending request to ask for the other right instead
+		And the requester tries to change the request to ask for no rights, the change fails
+		Then the approver sees the pending request with the other right
+		Finally the approver rejects the request to clean up
+}
