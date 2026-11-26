@@ -697,6 +697,51 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
         }
     }
 
+    [Fact]
+    public async Task EnsureMonthPartitions_GivesUpOnLockContention_AndRollsBack()
+    {
+        // Missing months in this horizon force an ATTACH, which needs ACCESS EXCLUSIVE on the
+        // default partition. Further ahead than the other partition tests, so they are unaffected.
+        const int monthsAhead = ActivityLogPartitionMaintenance.DefaultMonthsAhead + 18;
+
+        var before = await ChildPartitions(_db);
+
+        // A reader on another connection holds ACCESS SHARE on the default partition.
+        await using var blocker = new AppDbContext(_options);
+        await using var blockerTransaction = await blocker.Database.BeginTransactionAsync(TestContext.Current.CancellationToken);
+        await blocker.Database.ExecuteSqlRawAsync("LOCK TABLE dbo.activitylog_default IN ACCESS SHARE MODE", TestContext.Current.CancellationToken);
+
+        try
+        {
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            var ex = await Assert.ThrowsAsync<Npgsql.PostgresException>(
+                () => ActivityLogPartitionMaintenance.EnsureMonthPartitions(_db, monthsAhead, TestContext.Current.CancellationToken));
+            stopwatch.Stop();
+
+            Assert.Equal(Npgsql.PostgresErrorCodes.LockNotAvailable, ex.SqlState);
+
+            // Bounded by lock_timeout, not by the statement or command timeout.
+            var lockTimeout = TimeSpan.FromSeconds(ActivityLogPartitionMaintenance.LockTimeoutSeconds);
+            Assert.InRange(stopwatch.Elapsed, lockTimeout - TimeSpan.FromSeconds(1), lockTimeout + TimeSpan.FromSeconds(10));
+        }
+        finally
+        {
+            await blockerTransaction.RollbackAsync(TestContext.Current.CancellationToken);
+        }
+
+        // The method's own transaction was rolled back, and the context is usable again.
+        Assert.Null(_db.Database.CurrentTransaction);
+        var after = await ChildPartitions(_db);
+        var leaked = after.Except(before).ToList();
+        foreach (var partition in leaked)
+        {
+            var sql = "DROP TABLE IF EXISTS dbo." + partition;
+            await _db.Database.ExecuteSqlRawAsync(sql, TestContext.Current.CancellationToken);
+        }
+
+        Assert.Empty(leaked);
+    }
+
     private static Task<List<string>> ChildPartitions(AppDbContext db) => db.Database
         .SqlQuery<string>($"""
             SELECT c.relname AS "Value"
