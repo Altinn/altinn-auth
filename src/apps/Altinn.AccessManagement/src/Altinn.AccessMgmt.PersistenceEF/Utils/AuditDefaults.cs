@@ -94,4 +94,9 @@ public static class AuditDefaults
     /// Outbox
     /// </summary>
     public const string Outbox = "2b0e4b45-b5ac-41a9-b063-bba1dc9410e6";
+
+    /// <summary>
+    /// BankruptcyEstateAdministratorSync
+    /// </summary>
+    public const string BankruptcyEstateAdministratorSync = "01a217e5-6adb-7723-9780-5cf141ed5225";
 }
