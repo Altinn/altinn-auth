@@ -4,7 +4,7 @@ This guide covers the full lifecycle of migrating a running service from the pla
 
 ![Architecture overview](dis_and_platform.png)
 
-**Current state:** APIM routes all traffic to the platform cluster Traefik. Apps on DIS use proxy services to forward inter-service calls to apps still running on the platform cluster. DIS accesses shared infrastructure (platform Key Vault, App Configuration) via RBAC; databases and storage via an open firewall rule.
+**Current state:** APIM routes all traffic to the platform cluster Traefik. Apps on DIS reach apps still running on the platform cluster through per-service nginx shims, configured in [altinn-platform-dis-proxies](https://github.com/Altinn/altinn-platform-dis-proxies) (`dis-to-legacy/`). DIS accesses shared infrastructure (platform Key Vault, App Configuration) via RBAC; databases and storage via an open firewall rule.
 
 ---
 
@@ -14,7 +14,7 @@ This guide covers the full lifecycle of migrating a running service from the pla
 |-------|------|
 | 1. Deploy and verify | App running on DIS, all infrastructure in place |
 | 2. Shift traffic platform → DIS | Gradually move incoming traffic to the DIS instance |
-| 3. Remove DIS proxy forwarding | Stop the DIS instance from forwarding calls to platform |
+| 3. Shift DIS-internal traffic | Point DIS callers at the migrated app instead of the legacy cluster |
 | 4. Switch backend in APIM | Cut API Management over to the DIS endpoint |
 | 5. Remove app from platform | Decommission the platform-cluster deployment |
 
@@ -26,9 +26,11 @@ Follow [deploy-app-to-DIS.md](deploy-app-to-DIS.md) for the full per-environment
 
 - [ ] Pod is Running: `kubectl get pods -n <namespace>`
 - [ ] Health endpoint responds: `GET /health/` returns 200
-- [ ] RBAC terraform applied; DIS managed identity has the required role assignments
-- [ ] DIS proxy endpoints configured in `environment.env`
-- [ ] Platform Key Vault / App Configuration access granted
+- [ ] DIS managed identities have the required role assignments — terraform where the app has it (Access Management, Authorization), added manually where it does not (Resource Registry, Authentication)
+- [ ] The app's service endpoints still point at `altinn-<service>.default.svc.cluster.local` — the DIS `HTTPRoute` resolves them, so there is nothing proxy-specific in `environment.env`
+- [ ] `trusted_proxies` in the `clusterinfo` ConfigMap includes the APIM address
+- [ ] Platform Key Vault / App Configuration access granted, certificates included
+- [ ] `accesstoken` and `altinn-appsettings-secret` resolve in the DIS namespace
 - [ ] Smoke test passes in the target environment
 
 ---
@@ -38,7 +40,7 @@ Follow [deploy-app-to-DIS.md](deploy-app-to-DIS.md) for the full per-environment
 Traffic comes from two distinct directions and must be handled separately:
 
 - **External/ingress traffic** arrives via APIM → platform Traefik → app. This is shifted at the APIM level (see below).
-- **Internal traffic** comes from other platform-cluster apps calling this service by its in-cluster DNS name (e.g. `altinn-access-management.default.svc.cluster.local`). This is shifted via the **platform-cluster proxy** — a feature-flagged nginx proxy that sits in front of the app's Kubernetes Service and gradually routes calls to the DIS-hosted instance. See feature [#5001](https://github.com/Altinn/altinn-auth/issues/5001) for how the proxy works and the per-app tasks.
+- **Internal traffic from the platform cluster** comes from other platform-cluster apps calling this service by its in-cluster DNS name (e.g. `altinn-access-management.default.svc.cluster.local`). This is shifted via the **platform-cluster proxy** — a feature-flagged nginx proxy that sits in front of the app's Kubernetes Service and gradually routes calls to the DIS-hosted instance. See feature [#5001](https://github.com/Altinn/altinn-auth/issues/5001) for how the proxy works and the per-app tasks.
 
 ### 2a — Internal traffic (platform-cluster proxy)
 
@@ -74,16 +76,18 @@ Once weight reaches 100 %:
 
 ---
 
-## Phase 3 — Remove DIS proxy forwarding to platform (100 % → 0 %)
+## Phase 3 — Shift DIS-internal traffic from legacy to DIS (100/0 → 0/100)
 
-While services were being migrated to DIS, the DIS cluster used proxy endpoints to forward calls to services still running on the platform cluster. Now that this service is live on DIS, reduce the DIS-to-platform proxy forwarding.
+Callers inside the DIS cluster reach a service by its legacy name in the `default` namespace (`altinn-access-management.default.svc.cluster.local`). An `HTTPRoute` on that name splits the traffic between the legacy cluster, through the service's own nginx shim, and the migrated app in its DIS namespace. This phase moves that split.
 
-> This step applies per service, as each upstream dependency migrates to DIS. Remove all proxy forwarding for a given service only after that service itself has completed phase 2.
+Everything here is in [altinn-platform-dis-proxies](https://github.com/Altinn/altinn-platform-dis-proxies), `dis-to-legacy/`. **Nothing in this repository changes** — no `environment.env` edit, no redeploy.
 
-- [ ] Remove or disable the DIS proxy endpoint(s) for this service in `environment.env` for the relevant environment(s)
-- [ ] Deploy the config change
-- [ ] Verify the service continues to function without the proxy
-- [ ] Once all services have migrated to DIS, the trusted proxies configuration (`Altinn__ClusterInfo__TrustedProxies`) can also be removed from the deployment manifests
+> This applies per service, as each upstream dependency migrates to DIS. Shift a given service only after that service itself has completed phase 2.
+
+- [ ] Both legs allow the same callers before any weight moves — `teams/autorisasjon/<service>/proxy/allowed-clients.yaml` for the shim leg, and the app's own `AuthorizationPolicy` in `manifests/deploy/base/0*-linkerd.yaml` for the direct leg, which carries the *original* caller's identity. Getting one and not the other works perfectly at `100/0` and fails the moment weight crosses: immediate **HTTP 403**, pods still Ready
+- [ ] Uncomment the `backendRefs[1]` patch for the service in `envs/<env>/autorisasjon/kustomization.yaml` and raise the DIS weight in steps — `90/10`, `50/50`, `0/100` — watching the service between each. The numbers are relative, legacy first
+- [ ] Verify the service serves DIS-internal traffic at `0/100`
+- [ ] Once all services have migrated to DIS, the DIS proxies drop out of `Altinn__ClusterInfo__TrustedProxies` — but APIM stays in front of the app, so its address must remain trusted
 
 ---
 
@@ -105,7 +109,7 @@ Once all traffic is confirmed flowing through DIS and APIM points to DIS:
 - [ ] Set `proxy.<env>.removeApp: true` in the platform-cluster Helm chart (requires `routeInternal: true` and `weight.dis: 100` already in place) — this removes the app's Deployment/DaemonSet and switches Traefik's IngressRoute to target the proxy Service in one atomic deploy, with no manual manifest deletion needed
 - [ ] Verify the app continues to serve traffic after the removal (internal callers via the proxy → DIS, external callers via DIS Traefik)
 - [ ] Remove the platform backend from APIM (optional cleanup)
-- [ ] Revoke platform-cluster RBAC and managed-identity role assignments for the service (Terraform)
+- [ ] Revoke platform-cluster RBAC and managed-identity role assignments for the service — terraform where the app has it, manually otherwise
 - [ ] Clean up platform Key Vault access for the service's managed identity (once all services have migrated, platform Key Vault entries for DIS identities can be removed)
 - [ ] Update the per-environment deployment checklist in the epic to mark this environment done
 
