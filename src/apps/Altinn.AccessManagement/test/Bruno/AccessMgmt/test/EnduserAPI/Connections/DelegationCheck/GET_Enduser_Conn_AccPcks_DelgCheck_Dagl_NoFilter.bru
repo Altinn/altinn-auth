@@ -19,6 +19,10 @@ headers {
 }
 
 script:pre-request {
+  const helpers = require("./test/EnduserAPI/Connections/DelegationCheck/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
   const sharedtestdata = require(`./testdata/sharedtestdata.js`);
   const testdata = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
   

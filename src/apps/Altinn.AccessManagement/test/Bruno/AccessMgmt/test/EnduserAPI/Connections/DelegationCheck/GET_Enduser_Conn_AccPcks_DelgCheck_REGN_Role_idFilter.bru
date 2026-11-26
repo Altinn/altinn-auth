@@ -22,6 +22,10 @@ headers {
 }
 
 script:pre-request {
+  const helpers = require("./test/EnduserAPI/Connections/DelegationCheck/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
   const sharedtestdata = require(`./testdata/sharedtestdata.js`);
   const testdata = require(`./testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
   
@@ -48,8 +52,16 @@ tests {
     const data = body.data;
     
     expect(res.status).to.equal(200);
-    expect(data[0].result).to.equal(false)
     
+    const expectedPackageIds = [
+      "955d5779-3e2b-4098-b11d-0431dc41ddbe", // regnskapsforer-med-signeringsrettighet
+      "a5f7f72a-9b89-445d-85bb-06f678a3d4d1"  // regnskapsforer-uten-signeringsrettighet
+    ];
+    expect(data).to.have.lengthOf(expectedPackageIds.length);
+    expect(data.map(item => item.package.id)).to.have.members(expectedPackageIds);
     
+    for (const item of data) {
+      expect(item.result, `result for ${item.package.urn}`).to.equal(false);
+    }
   });
 }

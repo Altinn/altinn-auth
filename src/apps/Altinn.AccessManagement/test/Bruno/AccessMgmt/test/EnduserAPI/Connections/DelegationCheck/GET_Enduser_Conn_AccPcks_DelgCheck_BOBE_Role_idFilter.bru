@@ -21,6 +21,10 @@ headers {
 }
 
 script:pre-request {
+  const helpers = require("./test/EnduserAPI/Connections/DelegationCheck/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
   const sharedtestdata = require(`./testdata/sharedtestdata.js`);
   const testdata = require(`./testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
   
@@ -49,9 +53,16 @@ tests {
     expect(res.status).to.equal(200);
     assert.isNotEmpty(data, "Expected data in response body to NOT be empty array");
     
-    const expectedNumPackages = 2;
-    expect(data[0].result).to.equal(true)
-    expect(data[0].reasons[0].description).to.equal("Direct-RolePackage");
+    const expectedPackageIds = [
+      "0e219609-02c6-44e6-9c80-fe2c1997940e", // konkursbo-skrivetilgang
+      "5ef836c7-69cc-4ea8-84d6-fb933cc4fc5c"  // konkursbo-lesetilgang
+    ];
+    expect(data).to.have.lengthOf(expectedPackageIds.length);
+    expect(data.map(item => item.package.id)).to.have.members(expectedPackageIds);
     
+    for (const item of data) {
+      expect(item.result, `result for ${item.package.urn}`).to.equal(true);
+      expect(item.reasons.map(reason => reason.description), `reasons for ${item.package.urn}`).to.include("Direct-RolePackage");
+    }
   });
 }
