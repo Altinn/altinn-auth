@@ -34,6 +34,10 @@ runs:
         VERTICALS: ${{ inputs.verticals }}
         ENVIRONMENTS: ${{ inputs.environments }}
         SOURCE_SHA: ${{ inputs.sha }}
-        GH_TOKEN: ${{ inputs.token }}
-        ACTION_PATH: ${{ github.action_path }}
-      run: node --experimental-strip-types "$ACTION_PATH/deploy.mts"
+        GITHUB_TOKEN: ${{ inputs.token }}
+      run: >-
+        repoctl ci promote-app
+        --verticals "$VERTICALS"
+        --environments "$ENVIRONMENTS"
+        --sha "$SOURCE_SHA"
+        --registry ghcr.io/altinn/altinn-auth
