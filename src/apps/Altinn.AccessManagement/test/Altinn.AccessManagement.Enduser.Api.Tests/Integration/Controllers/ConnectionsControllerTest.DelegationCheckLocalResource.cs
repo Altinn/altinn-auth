@@ -329,11 +329,15 @@ public partial class ConnectionsControllerTest
         request.Resource.Value.IsResourceId(out var resourceId) && resourceId.ToString() == resourceRefId;
 
     /// <summary>
-    /// The action an access-list request asks about, without its URN prefix, such as <c>read</c>.
+    /// The action-id value an access-list request asks about, such as <c>read</c>.
     /// </summary>
+    /// <remarks>
+    /// Returned exactly as sent, not trimmed to its last segment: the PDP compares this value with the access list's
+    /// action filters as it is, so an action sent as a full URN never matches a filter like <c>read</c> (#5084).
+    /// </remarks>
     private static string ActionName(AccessListAuthorizationRequest request) =>
         request.Action.Value is { } action && action.IsActionId(out var actionId)
-            ? actionId.ToString().Split(':')[^1]
+            ? actionId.ToString()
             : null;
 
     /// <summary>
