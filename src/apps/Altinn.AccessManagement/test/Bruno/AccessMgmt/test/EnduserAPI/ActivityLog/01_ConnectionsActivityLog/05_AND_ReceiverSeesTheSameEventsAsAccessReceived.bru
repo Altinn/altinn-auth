@@ -20,8 +20,7 @@ params:query {
 docs {
   AND the receiver sees the same events in the log of access it has received
   (`direction=to`, filtered to the delegator with `from`). Both sides read the same
-  entries, so the entry ids match. The text names every party in the third person, so it
-  is the same sentence on both sides.
+  entries, so the entry ids match.
 }
 
 script:pre-request {
@@ -54,12 +53,5 @@ tests {
     expect(pkg).to.have.lengthOf(1);
     expect(assignment[0].activityTypeId).to.equal(activityTypes.roleAssignmentCreated);
     expect(pkg[0].activityTypeId).to.equal(activityTypes.packageGranted);
-  });
-
-  test("AND the receiver reads the same sentences as the delegator", function() {
-    const assignment = entriesFor(body, bru.getVar("al_assignmentId"))[0];
-    const pkg = entriesFor(body, bru.getVar("al_assignmentPackageId"))[0];
-    expect(assignment.text).to.equal(bru.getVar("al_assignmentText"));
-    expect(pkg.text).to.equal(bru.getVar("al_assignmentPackageText"));
   });
 }

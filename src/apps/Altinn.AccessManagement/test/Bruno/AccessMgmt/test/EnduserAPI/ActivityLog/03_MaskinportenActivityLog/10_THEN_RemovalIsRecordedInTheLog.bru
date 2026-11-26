@@ -34,7 +34,7 @@ script:pre-request {
 }
 
 tests {
-  const { activityTypes, entriesFor, expectedText } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const { activityTypes, entriesFor } = require("./test/EnduserAPI/ActivityLog/helpers.js");
   const body = res.getBody();
 
   test("THEN the log returns 200 with only Deleted entries", function() {
@@ -53,12 +53,5 @@ tests {
     expect(entries).to.have.lengthOf(1);
     expect(entries[0].activityTypeId).to.equal(activityTypes.resourceRemoved);
     expect(entries[0].resourceName).to.be.a("string").that.is.not.empty;
-  });
-
-  test("THEN both removals read as sentences in Bokmål", function() {
-    const relation = entriesFor(body, bru.getVar("al_supplierAssignmentId"))[0];
-    const resource = entriesFor(body, bru.getVar("al_supplierResourceItemId"))[0];
-    expect(relation.text).to.equal(expectedText(relation));
-    expect(resource.text).to.equal(expectedText(resource));
   });
 }

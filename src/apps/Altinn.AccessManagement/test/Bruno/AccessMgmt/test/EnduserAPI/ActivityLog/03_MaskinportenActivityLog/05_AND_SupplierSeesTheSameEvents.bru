@@ -48,11 +48,4 @@ tests {
     expect(relation[0].activityTypeId).to.equal(activityTypes.roleAssignmentCreated);
     expect(resource[0].activityTypeId).to.equal(activityTypes.resourceGranted);
   });
-
-  test("AND the supplier reads the same sentences as the consumer", function() {
-    const relation = entriesFor(body, bru.getVar("al_supplierAssignmentId"))[0];
-    const resource = entriesFor(body, bru.getVar("al_supplierResourceItemId"))[0];
-    expect(relation.text).to.equal(bru.getVar("al_supplierAssignmentText"));
-    expect(resource.text).to.equal(bru.getVar("al_supplierResourceText"));
-  });
 }

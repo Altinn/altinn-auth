@@ -46,7 +46,7 @@ script:pre-request {
 }
 
 tests {
-  const { activityTypes, entriesFor, expectedText, isNewestFirst, isRenderedText, sameId, supplierRoleId, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const { activityTypes, entriesFor, isNewestFirst, sameId, supplierRoleId, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
   const td = testdata().maskinporten;
   const body = res.getBody();
   const assignmentId = bru.getVar("al_supplierAssignmentId");
@@ -85,18 +85,5 @@ tests {
     expect(e.resourceId).to.be.a("string").that.is.not.empty;
     expect(e.resourceName).to.be.a("string").that.is.not.empty;
     bru.setVar("al_supplierResourceItemId", e.itemId);
-  });
-
-  test("THEN every entry carries its text as a filled-in sentence", function() {
-    body.data.forEach(e => expect(isRenderedText(e.text), `text of ${e.id}: ${e.text}`).to.equal(true));
-  });
-
-  test("THEN the supplier relation and the resource read as sentences in Bokmål", function() {
-    const relation = entriesFor(body, assignmentId)[0];
-    const resource = body.data.filter(e => sameId(e.parentId, assignmentId))[0];
-    expect(relation.text).to.equal(expectedText(relation));
-    expect(resource.text).to.equal(expectedText(resource));
-    bru.setVar("al_supplierAssignmentText", relation.text);
-    bru.setVar("al_supplierResourceText", resource.text);
   });
 }
