@@ -52,7 +52,10 @@ tests {
   
      const data = res.getBody();
     
-     const conn = data.data.find(item => item.roles[0].code === "rettighetshaver");
+     // Only check the party this suite added the person from: they may be rettighetshaver for others.
+     const conn = data.data.find(item =>
+       item.party.id === testdata.vassen_riktig_tiger_as.partyuuid.toLowerCase() &&
+       item.roles.some(role => role.code === "rettighetshaver"));
      expect(conn).to.not.exist;
   });
 }
