@@ -1,0 +1,14 @@
+apiVersion: notification.toolkit.fluxcd.io/v1beta3
+kind: Alert
+metadata:
+  name: github
+spec:
+  providerRef:
+    name: github
+  eventMetadata:
+    env: at22
+  # info includes errors as well as successful reconciliation events.
+  eventSeverity: info
+  eventSources:
+    - kind: Kustomization
+      name: deploy

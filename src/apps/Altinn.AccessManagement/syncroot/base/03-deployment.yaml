@@ -4,6 +4,11 @@ metadata:
   name: deploy
 spec:
   interval: 60m
+  timeout: 10m
+  # Health-check all reconciled resources before reporting success, so deployment
+  # callbacks reflect readiness of the whole bundle rather than manifest application.
+  # Resources that do not become healthy within the timeout fail reconciliation.
+  wait: true
   path: ./fake
   prune: false
   targetNamespace: product-access-management

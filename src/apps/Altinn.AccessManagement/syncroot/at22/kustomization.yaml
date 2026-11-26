@@ -3,6 +3,8 @@ kind: Kustomization
 namespace: product-access-management
 resources:
   - ../base
+  - 01-github-provider.yaml
+  - 02-github-alert.yaml
 patches:
   - target:
       kind: OCIRepository
