@@ -95,3 +95,56 @@ creating deployments or promoting artifacts. It uses `flux tag artifact` for
 promotion. Init must install a RepoCtl version that provides `ci promote-app`,
 and callers must opt into Flux setup with Init's `install_flux: true`. Deployment records created before a
 failure remain pending.
+
+## Flux deployment callbacks
+
+`flux-deployment-status.yml` accepts the native Flux `githubdispatch` event types
+`Kustomization/deploy.product-<app-slug>` for Access Management, Authentication,
+Authorization and Resource Registry. It checks out trusted `main` and installs
+RepoCtl through Init. Event handling currently lives in
+`.github/scripts/report-flux-deployment.sh`, pending migration to RepoCtl.
+
+The Flux Alert must include `spec.eventMetadata.env`, such as `at22` or `tt02`.
+The callback uses `client_payload.metadata.originRevision` (the OCI artifact's
+source Git SHA, either bare or `<ref>@sha1:<sha>`), never the callback workflow's
+SHA or the OCI digest. It updates only the newest `deploy` request for the exact
+`<app-slug>/<env>` environment, and only when that request matches the source SHA.
+Unknown applications and environments are rejected; missing deployments and
+callbacks for older deployment requests are ignored.
+
+`info/ReconciliationSucceeded` posts `success`. Error events with reasons
+`BuildFailed`, `ValidationFailed`, `HealthCheckFailed`, `PruneFailed`,
+`ReconciliationFailed` or `ArtifactFailed` post `failure`. Other events are
+ignored. Duplicate states and inactive deployments are left alone; a retry can
+change `failure` to `success`, and a later reconciliation failure can change
+`success` to `failure`. Callbacks must carry an origin revision to be correlated;
+source failures that never produce a deploy event cannot be reported this way.
+
+Before enabling the Flux Alert, configure the final `deploy` Kustomization with
+`wait: true` or explicit workload health checks and an appropriate timeout.
+Otherwise reconciliation success only establishes that manifests were applied.
+The Flux `githubdispatch` Provider requires authentication to dispatch events to
+this repository. The receiving workflow uses its own `deployments: write` token.
+Neither the Provider/Alert nor workload health checks are configured by this change.
+
+For a manual dispatch test after the workflow lands on `main`, send this shape
+using an existing deployment's real source SHA and target environment:
+
+```json
+{
+  "event_type": "Kustomization/deploy.product-access-management",
+  "client_payload": {
+    "involvedObject": {
+      "kind": "Kustomization",
+      "name": "deploy",
+      "namespace": "product-access-management"
+    },
+    "severity": "info",
+    "reason": "ReconciliationSucceeded",
+    "metadata": {
+      "env": "at22",
+      "originRevision": "1111111111111111111111111111111111111111"
+    }
+  }
+}
+```
