@@ -39,9 +39,11 @@ public interface IDelegationService
     Task<bool> AddPackageToDelegation(Guid userId, Guid delegationId, Guid packageId, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Create a delegation and required assignments for system agent flow
+    /// Create a delegation and required assignments for system agent flow.
+    /// Returns a validation problem when the request names an unknown client or package, an agent that is not an agent system user,
+    /// or a role or package the client has not given the facilitator.
     /// </summary>
-    Task<IEnumerable<CreateDelegationResponseDto>> CreateClientDelegation(CreateSystemDelegationRequestDto request, Guid facilitatorPartyId, CancellationToken cancellationToken = default);
+    Task<Result<List<CreateDelegationResponseDto>>> CreateClientDelegation(CreateSystemDelegationRequestDto request, Guid facilitatorPartyId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Create a delegation and required assignments for imported clint roles from A2

@@ -21,7 +21,7 @@ self-contained; none of them is a wall of text.
 | 7 | [AWESOME_ASSERTIONS_GUIDELINES.md](AWESOME_ASSERTIONS_GUIDELINES.md) | When and how to use AwesomeAssertions |
 | 8 | [COVERAGE.md](COVERAGE.md) | Running coverage locally, per-assembly targets (reported, not gated) |
 | 9 | [CI.md](CI.md) | How tests run in the pipeline, Microsoft Testing Platform (MTP), artifacts |
-| 10 | [BRUNO_API_TESTS.md](BRUNO_API_TESTS.md) | The Bruno API collections — manual/exploratory API tests that double as a behavioral spec for the C# integration tests |
+| 10 | [BRUNO_API_TESTS.md](BRUNO_API_TESTS.md) | The Bruno API collections — post-deployment smoke tests in Azure DevOps and manual/exploratory API tests, which double as a behavioral spec for the C# integration tests |
 | 11 | [../SONARCLOUD.md](../SONARCLOUD.md) | Retained analysis configuration; scheduled scans removed |
 
 ## TL;DR for newcomers

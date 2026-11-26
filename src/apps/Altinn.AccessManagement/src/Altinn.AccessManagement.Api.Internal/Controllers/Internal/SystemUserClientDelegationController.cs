@@ -98,10 +98,14 @@ public class SystemUserClientDelegationController(
     [AuditJWTClaimToDb(Claim = AltinnCoreClaimTypes.PartyUuid, System = AuditDefaults.InternalApi)]
     public async Task<ActionResult<IEnumerable<CreateDelegationResponseDto>>> PostClientDelegation([FromQuery] Guid party, [FromBody] CreateSystemDelegationRequestDto request, CancellationToken cancellationToken = default)
     {
-        var delegations = await delegationService.CreateClientDelegation(request, party, cancellationToken);
+        var result = await delegationService.CreateClientDelegation(request, party, cancellationToken);
+        if (result.IsProblem)
+        {
+            return result.Problem.ToActionResult();
+        }
 
         // Remark: Kan ikke garantere at det KUN er delegeringer som er opprettet i denne handlingen som blir returnert.
-        return Ok(delegations);
+        return Ok(result.Value);
     }
 
     /// <summary>

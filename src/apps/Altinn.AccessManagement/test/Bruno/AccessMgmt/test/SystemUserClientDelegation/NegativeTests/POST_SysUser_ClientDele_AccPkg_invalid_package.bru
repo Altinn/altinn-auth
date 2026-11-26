@@ -53,7 +53,8 @@ const token = await testTokenGenerator.getToken(getTokenParameters);
 }
 
 tests {
-  test("Invalid access package delegation from client org to systemuser should give 500 with error message ", function() {
-    expect(res.status).to.equal(500);
+  test("Invalid access package delegation from client org to systemuser should give 400 with an invalid package error", function() {
+    expect(res.status).to.equal(400);
+    expect(res.body.validationErrors.map(e => e.code)).to.include('AM.VLD-00030');
   });
 }

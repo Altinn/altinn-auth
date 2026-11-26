@@ -54,7 +54,8 @@ const token = await testTokenGenerator.getToken(getTokenParameters);
 }
 
 tests {
-  test("Forretningsforer access package delegation from non_BBL_client org to systemuser should return 500", function() {
-    expect(res.status).to.equal(500);
+  test("Forretningsforer access package delegation from non_BBL_client org to systemuser should return 400 with a missing assignment error", function() {
+    expect(res.status).to.equal(400);
+    expect(res.body.validationErrors.map(e => e.code)).to.include('AM.VLD-00032');
   });
 }
