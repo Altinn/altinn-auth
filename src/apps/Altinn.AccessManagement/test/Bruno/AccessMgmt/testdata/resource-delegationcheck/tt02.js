@@ -59,6 +59,8 @@ module.exports =
       "userId": 2087214,
       "partyId": 51193529,
       "partyUuid": "8ea6e533-6b54-411f-a6f6-870b7081998b",
+      // The rights this person holds on packageResourceId in tt02 (no rights), as observed on 2026-11-26.
+      // Nothing in the suite grants or removes them: update these if someone changes the person's rights.
       "expectedPackageResourceRights": { "read": false, "write": false, "delete": false, "instantiate": false, "sign": false, "confirm": false }
     },
     "tilgangstyrer_entity_med_enkeltrettighet": {

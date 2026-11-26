@@ -59,6 +59,8 @@ module.exports =
       "userId": 21167067,
       "partyId": 50942237,
       "partyUuid": "f44a36e8-62ab-419c-bd0b-f8098ddd7e5d",
+      // The rights this person holds on packageResourceId in at22 (read, write and instantiate), as observed on 2026-11-26.
+      // Nothing in the suite grants or removes them: update these if someone changes the person's rights.
       "expectedPackageResourceRights": { "read": true, "write": true, "delete": false, "instantiate": true, "sign": false, "confirm": false }
     },
     "tilgangstyrer_entity_med_enkeltrettighet": {

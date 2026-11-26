@@ -20,6 +20,10 @@ headers {
 }
 
 script:pre-request {
+  const helpers = require("./test/EnduserAPI/Connections/DelegationCheck/helpers.js");
+  if (helpers.skipOutsideSupportedEnvironments()) {
+    return;
+  }
   const sharedtestdata = require(`./testdata/sharedtestdata.js`);
   const testdata = require(`./testdata/resource-delegationcheck/${bru.getEnvVar("tokenEnv")}.js`);
   
@@ -52,11 +56,12 @@ tests {
     expect(res.status).to.equal(200);
     assert.isNotEmpty(rights, "Expected data in response body to NOT be empty array");
     
-    const expectedNumPackages = 6;
-    assert.lengthOf(rights, expectedNumPackages, `Expected response data to contain all ${expectedNumPackages} available packages giving access to the resource`);
+    const expectedActions = ["read", "write", "delete", "instantiate", "sign", "confirm"];
+    assert.lengthOf(rights, expectedActions.length, `Expected a right for each of the ${expectedActions.length} actions in the resource's policy`);
+    expect(rights.map(item => item.right.action.value)).to.have.members(expectedActions);
     
-    for (let i = 0; i < rights.length; i++) {
-      assert.isTrue(rights[i].result, "expected all rights to be available");
+    for (const item of rights) {
+      expect(item.result, `result for ${item.right.action.value}`).to.equal(true);
     }
   });
 }

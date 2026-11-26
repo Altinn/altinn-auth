@@ -50,6 +50,7 @@ tests {
   const testdata = require(`./testdata/person-accesspackage-delegation/${bru.getEnvVar("tokenEnv")}.js`);
   test("GET_Enduser_Connections_Person_ToOthers_Deleted", function() {
   
+     expect(res.status).to.equal(200);
      const data = res.getBody();
     
      // Only check the person this suite added: the party may have rettighetshaver connections to others.
