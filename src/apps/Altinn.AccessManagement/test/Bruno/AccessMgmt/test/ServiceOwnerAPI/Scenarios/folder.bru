@@ -35,8 +35,10 @@ docs {
 
   ## Environments
 
-  Written for and verified on AT22. TT02 has its own seed file. There the scenarios need
-  the API gateway to route serviceowner/authorizedparties and the three
+  Verified on AT22 and TT02, each with its own seed file. The scenarios need the API
+  gateway to route serviceowner/authorizedparties and the three
   serviceowner/connections/resources endpoints, and the feature flag
-  AccessMgmt.Controller.ServiceOwner.ResourceDelegation to be on.
+  AccessMgmt.Controller.ServiceOwner.ResourceDelegation to be on. Both are in place in
+  AT22 and TT02, so no folder skips its requests there. An environment without them needs
+  a skip guard like the one in EnduserAPI/ActivityLog/folder.bru.
 }
