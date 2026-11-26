@@ -49,7 +49,7 @@ script:post-response {
   let data = typeof res.body === "string" ? JSON.parse(res.body) : res.body;
   if (Array.isArray(data) && data.length > 0) {
    const assignmentId = data[0].delegation.toId;
-   bru.setEnvVar("toId", assignmentId);
+   bru.setVar("toId", assignmentId);
   }
 }
 
@@ -57,7 +57,7 @@ tests {
   test("Client org has delegated to systembruker", function() {
   const testdata = require(`./testdata/systemuser-clientdelegation/${bru.getEnvVar("tokenEnv")}.js`);
       const data = res.getBody();
-      var delegationId = bru.getEnvVar("delegationId");
+      var delegationId = bru.getVar("delegationId");
       expect(res.status).to.equal(200);
       expect(res.body).to.empty
       

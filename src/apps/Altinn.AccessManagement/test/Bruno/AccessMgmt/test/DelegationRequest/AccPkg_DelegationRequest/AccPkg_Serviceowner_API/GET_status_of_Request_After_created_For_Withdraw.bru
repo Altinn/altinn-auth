@@ -41,7 +41,7 @@ tests {
       
         expect(data).to.exist;
         const actualStatus = typeof data === "string" ? data : String(data);
-        expect(actualStatus).to.equal(bru.getEnvVar("expectedStatus"));
+        expect(actualStatus).to.equal(bru.getVar("expectedStatus"));
         
       });
 }

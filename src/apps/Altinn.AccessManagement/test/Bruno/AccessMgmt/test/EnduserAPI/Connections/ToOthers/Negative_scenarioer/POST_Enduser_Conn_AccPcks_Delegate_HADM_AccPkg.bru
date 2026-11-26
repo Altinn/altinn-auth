@@ -47,13 +47,13 @@ script:pre-request {
 script:post-response {
   const data = res.getBody();
   const packageId = data.packageId;
-  bru.setEnvVar("packageId", packageId)
+  bru.setVar("packageId", packageId)
 }
 
 tests {
   test("Delegate access package which can be delegated only fra HADM of org1 to org2 : ToOthers", function() {
     const data = res.getBody();
-    var packageId = bru.getEnvVar("packageId");
+    var packageId = bru.getVar("packageId");
     
     expect(res.status).to.equal(400);
     expect(data.validationErrors[0]).to.have.property('title', "One or more packages is not assignable to receipient.");

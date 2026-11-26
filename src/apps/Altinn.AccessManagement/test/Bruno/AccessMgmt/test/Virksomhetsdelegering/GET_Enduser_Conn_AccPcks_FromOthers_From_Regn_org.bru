@@ -51,7 +51,7 @@ tests {
     const sharedtestdata = require(`./testdata/sharedtestdata.js`);
       const testdata = require(`./testdata/enduser/${bru.getEnvVar("tokenEnv")}.js`);
      const data = res.getBody();
-    var packageId = bru.getEnvVar("packageId");
+    var packageId = bru.getVar("packageId");
     const conn = data.data.find(item => item.package.id === packageId);
     expect(conn).to.exist;
       expect(res.status).to.equal(200);

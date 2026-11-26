@@ -56,11 +56,11 @@ tests {
       
        // 2. Verify and save requestId
      expect(data).to.have.property("id");
-     bru.setEnvVar("serviceowner_requestId", data.id);
+     bru.setVar("serviceowner_requestId", data.id);
       
       // 3. Verify and save status
     expect(data).to.have.property("status");
-    bru.setEnvVar("expectedStatus", data.status);
+    bru.setVar("expectedStatus", data.status);
       
     });
 }

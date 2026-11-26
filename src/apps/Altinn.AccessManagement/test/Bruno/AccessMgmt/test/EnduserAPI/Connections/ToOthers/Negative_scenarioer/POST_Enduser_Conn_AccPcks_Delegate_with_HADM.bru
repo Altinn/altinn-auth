@@ -48,13 +48,13 @@ const token = await testTokenGenerator.getToken(getTokenParameters);
 script:post-response {
   const data = res.getBody();
   const packageId = data.packageId;
-  bru.setEnvVar("packageId", packageId)
+  bru.setVar("packageId", packageId)
 }
 
 tests {
   test("Delegate access package from org1 to org2 with HADM role : ToOthers", function() {
     const data = res.getBody();
-    var packageId = bru.getEnvVar("packageId");
+    var packageId = bru.getVar("packageId");
     
     expect(res.status).to.equal(200);
     expect(data).to.have.property('packageId', packageId);
