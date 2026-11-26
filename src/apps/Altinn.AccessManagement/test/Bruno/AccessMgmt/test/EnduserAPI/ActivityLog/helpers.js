@@ -23,7 +23,82 @@ const activityTypes = {
   packageRequestWithdrawn: "43400193-44eb-49dd-b715-7220abb631f1",
 };
 
-const rightholderRoleId = "42cae370-2dc1-4fdc-9c67-c2f4b0f0f829";
+// The sentence template per activity type and language, copied from ActivityTypeConstants
+// for the types these scenarios produce. Kept as literals on purpose: a changed wording
+// should fail here and be updated deliberately.
+const entryTexts = {
+  [activityTypes.roleAssignmentCreated]: {
+    nob: "{to} fikk rollen «{role}» hos {from} tildelt av {by}",
+    nno: "{to} fekk rolla «{role}» hos {from} tildelt av {by}",
+    eng: "{to} was given the role “{role}” at {from} by {by}",
+  },
+  [activityTypes.roleAssignmentDeleted]: {
+    nob: "Rollen «{role}» for {to} hos {from} ble fjernet av {by}",
+    nno: "Rolla «{role}» for {to} hos {from} vart fjerna av {by}",
+    eng: "The role “{role}” for {to} at {from} was removed by {by}",
+  },
+  [activityTypes.packageGranted]: {
+    nob: "{to} fikk tilgangspakken «{package}» hos {from} tildelt av {by}",
+    nno: "{to} fekk tilgangspakken «{package}» hos {from} tildelt av {by}",
+    eng: "{to} was granted the access package “{package}” at {from} by {by}",
+  },
+  [activityTypes.packageRemoved]: {
+    nob: "Tilgangspakken «{package}» for {to} hos {from} ble fjernet av {by}",
+    nno: "Tilgangspakken «{package}» for {to} hos {from} vart fjerna av {by}",
+    eng: "The access package “{package}” for {to} at {from} was removed by {by}",
+  },
+  [activityTypes.resourceGranted]: {
+    nob: "{to} fikk enkelttjenesten «{resource}» hos {from} tildelt av {by}",
+    nno: "{to} fekk enkelttenesta «{resource}» hos {from} tildelt av {by}",
+    eng: "{to} was granted the single service “{resource}” at {from} by {by}",
+  },
+  [activityTypes.resourceRemoved]: {
+    nob: "Enkelttjenesten «{resource}» for {to} hos {from} ble fjernet av {by}",
+    nno: "Enkelttenesta «{resource}» for {to} hos {from} vart fjerna av {by}",
+    eng: "The single service “{resource}” for {to} at {from} was removed by {by}",
+  },
+  [activityTypes.packageRequestDraftCreated]: {
+    nob: "{by} opprettet et utkast til forespørsel om tilgangspakken «{package}» for {to} hos {from}",
+    nno: "{by} oppretta eit utkast til førespurnad om tilgangspakken «{package}» for {to} hos {from}",
+    eng: "{by} created a draft request for the access package “{package}” for {to} at {from}",
+  },
+  [activityTypes.packageRequestWithdrawn]: {
+    nob: "{by} trakk tilbake forespørselen om tilgangspakken «{package}» for {to} hos {from}",
+    nno: "{by} trekte tilbake førespurnaden om tilgangspakken «{package}» for {to} hos {from}",
+    eng: "{by} withdrew the request for the access package “{package}” for {to} at {from}",
+  },
+};
+
+const unknownName = { nob: "ukjent", nno: "ukjend", eng: "unknown" };
+
+// The sentence the API should return for an entry: its type's template filled from the
+// entry's own name snapshots, so the check holds whatever names the environment has.
+// language is the three-letter code; Bokmål when omitted, as the API defaults to.
+function expectedText(entry, language) {
+  const lang = language || "nob";
+  const templates = entryTexts[entry.activityTypeId];
+  if (!templates) {
+    throw new Error(`no entry text in helpers.js for activity type ${entry.activityTypeId}`);
+  }
+  const template = templates[lang];
+  const names = {
+    from: entry.fromName,
+    to: entry.toName,
+    via: entry.viaName,
+    by: entry.byName,
+    role: entry.roleName,
+    package: entry.packageName,
+    resource: entry.resourceName,
+  };
+  return template.replace(/\{(\w+)\}/g, (_, key) => (names[key] && names[key].trim()) ? names[key] : unknownName[lang]);
+}
+
+// Whether an entry text is filled in: a non-empty sentence with no placeholder left.
+function isRenderedText(text) {
+  return typeof text === "string" && text.trim().length > 0 && !/\{\w+\}/.test(text);
+}
+
+const rightholderRoleId ="42cae370-2dc1-4fdc-9c67-c2f4b0f0f829";
 const supplierRoleId = "961f6ebb-ecf7-4fc6-ab5a-ca0841db4931";
 
 // Returns the scenario personas for the environment the run targets.
@@ -87,7 +162,9 @@ function parseLink(link) {
 module.exports = {
   activityTypes,
   entriesFor,
+  expectedText,
   isNewestFirst,
+  isRenderedText,
   loginAs,
   loginAsServiceOwner,
   parseLink,

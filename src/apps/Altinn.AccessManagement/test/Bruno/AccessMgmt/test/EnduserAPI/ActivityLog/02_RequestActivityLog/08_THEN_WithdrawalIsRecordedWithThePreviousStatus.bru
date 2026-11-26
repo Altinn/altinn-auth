@@ -33,7 +33,7 @@ script:pre-request {
 }
 
 tests {
-  const { activityTypes } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const { activityTypes, expectedText } = require("./test/EnduserAPI/ActivityLog/helpers.js");
   const body = res.getBody();
 
   test("THEN the log returns 200 with one withdrawal", function() {
@@ -49,5 +49,10 @@ tests {
     expect(e.status).to.equal("Withdrawn");
     expect(e.activityTypeId).to.equal(activityTypes.packageRequestWithdrawn);
     expect(e.details.previousStatus).to.equal(1);
+  });
+
+  test("THEN the withdrawal reads as a sentence in Bokmål", function() {
+    const e = body.data[0];
+    expect(e.text).to.equal(expectedText(e));
   });
 }
