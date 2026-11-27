@@ -217,34 +217,30 @@ public class RequestService(
     /// <inheritdoc/>
     public async Task<Result<AccessRequest>> UpdateResourceRequestRightKeys(Guid partyUuid, Guid requestId, IEnumerable<string>? rightKeys, CancellationToken ct = default)
     {
-        var requestResult = await GetRequest(requestId, ct);
-        if (requestResult.IsProblem)
-        {
-            return requestResult.Problem;
-        }
-
-        var request = requestResult.Value;
         ValidationProblemBuilder errors = default;
 
-        if (request.From.Id != partyUuid)
-        {
-            errors.Add(ValidationErrors.RequestUnauthorizedStatusUpdate, "$QUERY/party", [new("party", $"Only the party that sent request {request.Id} can change it.")]);
-        }
-        else if (request.Type != "resource")
-        {
-            errors.Add(ValidationErrors.RightKeysNotAllowedForRequestType, "$QUERY/id", [new("id", $"Request {request.Id} is not a resource request.")]);
-        }
-        else if (request.Status != RequestStatusV2.Pending)
-        {
-            errors.Add(ValidationErrors.RequestNotPending, "$QUERY/id", [new("id", $"Request {request.Id} is {request.Status}.")]);
-        }
-        else if (rightKeys is null)
-        {
-            errors.Add(ValidationErrors.Required, "/requestedRightKeys");
-        }
-        else if (NormalizeRightKeys(rightKeys) is null)
+        var normalizedRightKeys = NormalizeRightKeys(rightKeys);
+        if (normalizedRightKeys is null)
         {
             errors.Add(ValidationErrors.EmptyList, "/requestedRightKeys");
+            errors.TryBuild(out var noRightKeys);
+            return noRightKeys;
+        }
+
+        // Only resource requests are looked up, so the id of a package request is not found.
+        var request = await db.RequestAssignmentResources
+            .Include(r => r.Assignment)
+            .Include(r => r.Resource)
+            .FirstOrDefaultAsync(r => r.Id == requestId, ct);
+
+        if (request is null)
+        {
+            errors.Add(ValidationErrors.RequestNotFound);
+        }
+        else
+        {
+            RequireParty(request.Assignment.FromId, partyUuid, requestId, ref errors);
+            RequireStatus(request.Status, RequestStatusV2.Pending, requestId, ref errors);
         }
 
         if (errors.TryBuild(out var problem))
@@ -252,54 +248,16 @@ public class RequestService(
             return problem;
         }
 
-        var rightKeysProblem = await ValidateResourceRightKeys(request.Resource.ReferenceId, rightKeys, ct);
+        var rightKeysProblem = await ValidateResourceRightKeys(request.Resource.RefId, rightKeys, ct);
         if (rightKeysProblem is { })
         {
             return rightKeysProblem;
         }
 
-        var normalizedRightKeys = NormalizeRightKeys(rightKeys);
-        if (SameRightKeys(NormalizeRightKeys(request.RequestedRightKeys), normalizedRightKeys))
-        {
-            return request;
-        }
-
-        // Lock the request until the change is committed, and check the status again under the lock, so an approval,
-        // rejection or withdrawal that commits first is not overwritten. No new pending notification is queued:
+        // The keys are stored in the order given, as when a request is created. No new pending notification is queued:
         // the recipient was already told about the request, and the notification does not list the rights.
-        var currentTransaction = db.Database.CurrentTransaction is not null;
-        await using (var transaction = currentTransaction ? null : await db.Database.BeginTransactionAsync(ct))
-        {
-            await db.Database.ExecuteSqlAsync($"SELECT id FROM dbo.requestassignmentresource WHERE id = {requestId} FOR UPDATE", ct);
-
-            var entity = await db.RequestAssignmentResources.FirstOrDefaultAsync(r => r.Id == requestId, ct);
-            if (entity is not { Status: RequestStatusV2.Pending })
-            {
-                errors.Add(ValidationErrors.RequestNotPending, "$QUERY/id", [new("id", $"Request {requestId} is {entity?.Status.ToString() ?? "gone"}.")]);
-                errors.TryBuild(out var changedProblem);
-                return changedProblem;
-            }
-
-            // A concurrent PUT with the same rights may have committed while this one waited for the lock.
-            // Saving the same list again would change no row, so return the request as it is.
-            if (SameRightKeys(entity.RequestedRightKeys, normalizedRightKeys))
-            {
-                return await GetRequest(requestId, ct);
-            }
-
-            entity.RequestedRightKeys = normalizedRightKeys;
-            if (await db.SaveChangesAsync(ct) == 0)
-            {
-                errors.Add(ValidationErrors.DbNoRowsAffected, nameof(db.RequestAssignmentResources));
-                errors.TryBuild(out var savedProblem);
-                return savedProblem;
-            }
-
-            if (transaction is { })
-            {
-                await transaction.CommitAsync(ct);
-            }
-        }
+        request.RequestedRightKeys = normalizedRightKeys;
+        await db.SaveChangesAsync(ct);
 
         return await GetRequest(requestId, ct);
     }
@@ -795,6 +753,28 @@ public class RequestService(
             $"$QUERY/{paramName}",
             [new(paramName, $"Unable to update {request.Id} from {request.Status} to {status}")]
         );
+    }
+
+    /// <summary>
+    /// Adds an error unless <paramref name="partyUuid"/> is the party the operation requires, such as the sender of the request.
+    /// </summary>
+    private static void RequireParty(Guid expectedPartyId, Guid partyUuid, Guid requestId, ref ValidationProblemBuilder errors)
+    {
+        if (expectedPartyId != partyUuid)
+        {
+            errors.Add(ValidationErrors.RequestUnauthorizedStatusUpdate, "$QUERY/party", [new("party", $"Party cannot change request {requestId}.")]);
+        }
+    }
+
+    /// <summary>
+    /// Adds an error unless the request has the status the operation requires.
+    /// </summary>
+    private static void RequireStatus(RequestStatusV2 actual, RequestStatusV2 expected, Guid requestId, ref ValidationProblemBuilder errors)
+    {
+        if (actual != expected)
+        {
+            errors.Add(ValidationErrors.RequestUnsupportedStatusUpdate, "$QUERY/id", [new("id", $"Request {requestId} is {actual}, expected {expected}.")]);
+        }
     }
 
     /// <summary>

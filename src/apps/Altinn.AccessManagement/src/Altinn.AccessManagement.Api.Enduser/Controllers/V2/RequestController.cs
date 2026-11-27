@@ -153,7 +153,7 @@ public class RequestController(
     /// Change the rights (right keys) asked for in a pending resource request, replacing the ones it asked for before.
     /// Only the party that sent the request can change it, and only while it is pending. Each right key must exist in the
     /// policy of the resource and be delegable, and at least one is required: to ask for the whole resource instead, withdraw
-    /// the request and send a new one. Sending the rights the request already asks for leaves it unchanged.
+    /// the request and send a new one. The rights are stored in the order given.
     /// The recipient is not notified again.
     /// </summary>
     /// <param name="party">The party that sent the request</param>

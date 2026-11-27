@@ -1052,14 +1052,15 @@ public class RequestControllerTest
         }
 
         [Fact]
-        public async Task WithTheSameRightKeysInOtherOrderAndWithDuplicates_Returns200_AndLeavesTheRequestUnchanged()
+        public async Task WithTheSameRightKeysInOtherOrderAndWithDuplicates_StoresTheGivenOrderWithoutDuplicates()
         {
+            // The keys are stored in the order given, as when a request is created
             var (roleKeys, _) = GetAppPolicyKeys();
 
             var updated = await ReadRequest(await Update(TestData.EinarBerg, SameKeysId, [roleKeys[1], roleKeys[0], roleKeys[1]]));
 
-            Assert.Equal([roleKeys[0], roleKeys[1]], updated.Resource.RequestedRightKeys);
-            Assert.Equal([roleKeys[0], roleKeys[1]], await GetStoredRightKeys(SameKeysId));
+            Assert.Equal([roleKeys[1], roleKeys[0]], updated.Resource.RequestedRightKeys);
+            Assert.Equal([roleKeys[1], roleKeys[0]], await GetStoredRightKeys(SameKeysId));
         }
 
         [Fact]
@@ -1089,24 +1090,25 @@ public class RequestControllerTest
         }
 
         [Fact]
-        public async Task ForApprovedRequest_Returns400RequestNotPending_AndLeavesTheRequestUnchanged()
+        public async Task ForApprovedRequest_Returns400_AndLeavesTheRequestUnchanged()
         {
             var (roleKeys, _) = GetAppPolicyKeys();
 
             var response = await Update(TestData.RandiLie, ApprovedId, [roleKeys[1]]);
 
-            await AssertValidationError(response, ValidationErrors.RequestNotPending);
+            await AssertValidationError(response, ValidationErrors.RequestUnsupportedStatusUpdate);
             Assert.Equal([roleKeys[0]], await GetStoredRightKeys(ApprovedId));
         }
 
         [Fact]
-        public async Task ForPackageRequest_Returns400RightKeysNotAllowedForRequestType()
+        public async Task ForPackageRequest_Returns400RequestNotFound()
         {
+            // Only resource requests are looked up, so the id of a package request is not found
             var (roleKeys, _) = GetAppPolicyKeys();
 
             var response = await Update(TestData.AstridJohansen, PackageRequestId, [roleKeys[0]]);
 
-            await AssertValidationError(response, ValidationErrors.RightKeysNotAllowedForRequestType);
+            await AssertValidationError(response, ValidationErrors.RequestNotFound);
         }
 
         [Fact]
@@ -1117,9 +1119,9 @@ public class RequestControllerTest
             var client = CreateClient(Fixture, TestData.VegardSolberg.Id);
 
             var noBody = await client.PutAsync(UpdateUrl(TestData.VegardSolberg.Id, NoKeysId), null, TestContext.Current.CancellationToken);
-            await AssertValidationError(noBody, ValidationErrors.Required);
+            await AssertValidationError(noBody, ValidationErrors.EmptyList);
 
-            await AssertValidationError(await UpdateWithJson(TestData.VegardSolberg, NoKeysId, "{}"), ValidationErrors.Required);
+            await AssertValidationError(await UpdateWithJson(TestData.VegardSolberg, NoKeysId, "{}"), ValidationErrors.EmptyList);
             await AssertValidationError(await UpdateWithJson(TestData.VegardSolberg, NoKeysId, """{ "requestedRightKeys": [] }"""), ValidationErrors.EmptyList);
 
             Assert.Equal([roleKeys[0]], await GetStoredRightKeys(NoKeysId));
