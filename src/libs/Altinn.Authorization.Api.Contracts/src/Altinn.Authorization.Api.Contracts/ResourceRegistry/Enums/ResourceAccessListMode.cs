@@ -1,4 +1,6 @@
-﻿namespace Altinn.Authorization.Api.Contracts.ResourceRegistry.Enums;
+﻿using System.Text.Json.Serialization;
+
+namespace Altinn.Authorization.Api.Contracts.ResourceRegistry.Enums;
 
 /// <summary>
 /// Access list mode of a resource in the resource registry.
@@ -8,7 +10,10 @@
 /// The resource registry compiles it into its own assembly as a linked file, so a new value added
 /// here reaches both services in the same change. Both serialize the value by name, and access
 /// management stores it by name in its database, so values must never be renamed.
+/// The converter is on the type, so every contract that carries the value, such as
+/// <c>ResourceDto</c>, writes it by name too, not only the properties that declare a converter.
 /// </remarks>
+[JsonConverter(typeof(JsonStringEnumConverter))]
 public enum ResourceAccessListMode
 {
     /// <summary>

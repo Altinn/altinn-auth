@@ -145,16 +145,41 @@ public partial class ConnectionsControllerTest
 
         private async Task<T> GetOk<T>(string url)
         {
+            string body = await GetOkBody(url);
+
+            T result = JsonSerializer.Deserialize<T>(body, JsonOpts);
+            Assert.NotNull(result);
+            return result;
+        }
+
+        private async Task<string> GetOkBody(string url)
+        {
             ContextRetrievalCalls.Clear();
             HttpClient client = CreateClient(TestData.MalinEmilie.Id, AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_WRITE);
             HttpResponseMessage response = await client.GetAsync(url, TestContext.Current.CancellationToken);
 
             string body = await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
             Assert.True(response.StatusCode == HttpStatusCode.OK, $"Expected OK but got {response.StatusCode}. Body: {body}");
+            return body;
+        }
 
-            T result = JsonSerializer.Deserialize<T>(body, JsonOpts);
-            Assert.NotNull(result);
-            return result;
+        /// <summary>
+        /// The response carries the local resource's flags, and writes the access list mode by name, as the
+        /// Resource Registry does, not as a number (#5132).
+        /// </summary>
+        [Fact]
+        public async Task CheckResource_WhenLocalResourceAccessListModeEnabled_ReturnsResourceWithAccessListModeAsString()
+        {
+            string body = await GetOkBody(
+                $"{Route}/resources/delegationcheck?party={TestData.DumboAdventures.Id}&resource={TestData.NavSykepengerSykmelding.RefId}");
+
+            using JsonDocument document = JsonDocument.Parse(body);
+            JsonElement resource = document.RootElement.GetProperty("resource");
+
+            JsonElement accessListMode = resource.GetProperty("accessListMode");
+            Assert.Equal(JsonValueKind.String, accessListMode.ValueKind);
+            Assert.Equal("Enabled", accessListMode.GetString());
+            Assert.True(resource.GetProperty("delegable").GetBoolean());
         }
 
         /// <summary>
