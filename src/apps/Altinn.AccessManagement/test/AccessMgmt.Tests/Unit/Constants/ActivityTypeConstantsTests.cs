@@ -48,6 +48,11 @@ public class ActivityTypeConstantsTests
             }
         }
 
+        foreach (var status in Enum.GetValues<RequestStatusV2>())
+        {
+            data.Add(ActivityLogType.Request, ActivityLogSubtype.Resource, ActivityLogTrigger.RightsChanged, status);
+        }
+
         return data;
     }
 
@@ -97,6 +102,15 @@ public class ActivityTypeConstantsTests
 
         Assert.NotNull(resolved);
         Assert.Equal(ActivityTypeConstants.RequestResourceUpdatedApprovedWithAdjustments.Id, resolved.Id);
+    }
+
+    [Fact]
+    public void Resolve_ResourceRightsChanged_ResolvesItsOwnEntry()
+    {
+        var resolved = ActivityTypeConstants.Resolve(ActivityLogType.Request, ActivityLogSubtype.Resource, ActivityLogTrigger.RightsChanged, RequestStatusV2.Pending);
+
+        Assert.NotNull(resolved);
+        Assert.Equal(ActivityTypeConstants.RequestResourceRightsChanged.Id, resolved.Id);
     }
 
     [Fact]

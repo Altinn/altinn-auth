@@ -27,4 +27,9 @@ public enum ActivityLogTrigger
     /// The record was deleted, directly or through a cascading delete.
     /// </summary>
     Deleted = 3,
+
+    /// <summary>
+    /// The requested rights of a request child record changed while its status stayed the same.
+    /// </summary>
+    RightsChanged = 4,
 }

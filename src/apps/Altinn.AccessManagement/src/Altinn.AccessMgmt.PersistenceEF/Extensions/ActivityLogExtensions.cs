@@ -18,7 +18,13 @@ public static class ActivityLogExtensions
     /// The EF model differ does not scaffold operations for custom annotation changes, so to
     /// (re)generate the trigger SQL, bump <see cref="ActivityLogEFConfiguration.Version"/> and add a
     /// migration containing <c>migrationBuilder.AlterTable(name, schema).Annotation(AnnotationName, Version)</c>
-    /// for each activity-logged table (mirroring how the audit triggers are regenerated).
+    /// for each activity-logged table whose trigger SQL changed (mirroring how the audit triggers are regenerated).
+    /// Functions are replaced, but a trigger is only created if it does not exist, so a migration that
+    /// changes a trigger's <c>WHEN</c> condition must drop that trigger first
+    /// (see <c>ActivityLogRequestRightKeysChanged</c>). The scripts are not versioned, so the original activity
+    /// log migration also emits the current SQL; trigger conditions and functions that use a column added
+    /// later must read it through <c>to_jsonb(OLD)</c>/<c>to_jsonb(NEW)</c>, so they work before the column
+    /// exists and after a rollback past it.
     /// </remarks>
     public static EntityTypeBuilder EnableActivityLog(this EntityTypeBuilder builder)
     {
@@ -51,5 +57,5 @@ public static class ActivityLogEFConfiguration
     /// <summary>
     /// Increment this when activity log trigger SQL changes
     /// </summary>
-    public const int Version = 1;
+    public const int Version = 2;
 }

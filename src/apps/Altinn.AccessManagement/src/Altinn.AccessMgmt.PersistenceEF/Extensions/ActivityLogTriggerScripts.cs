@@ -12,7 +12,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Extensions;
 /// <list type="bullet">
 /// <item>Numeric literals map to the API contract enums and must stay in sync:
 /// type 1=Assignment 2=Delegation 3=Request; subtype 1=Package 2=Resource 3=Instance;
-/// trigger 1=Created 2=Updated 3=Deleted; status = <c>RequestStatusV2</c>.</item>
+/// trigger 1=Created 2=Updated 3=Deleted 4=RightsChanged; status = <c>RequestStatusV2</c>.</item>
 /// <item>Insert triggers read attribution from the <c>audit_*</c> columns stamped by the audit
 /// BEFORE-trigger; update triggers read the <c>app.*</c> GUCs directly (raw-SQL writers do not
 /// refresh the audit columns on UPDATE); delete triggers read the <c>session_audit_context</c>
@@ -134,7 +134,7 @@ public static class ActivityLogTriggerScripts
             RequestAssignmentResourceInsertFn,
             CreateTrigger("requestassignmentresource", "insert"),
             RequestAssignmentResourceUpdateFn,
-            CreateTrigger("requestassignmentresource", "update", "WHEN (OLD.status IS DISTINCT FROM NEW.status)"),
+            CreateTrigger("requestassignmentresource", "update", "WHEN (OLD.status IS DISTINCT FROM NEW.status OR to_jsonb(OLD)->'requestedrightkeys' IS DISTINCT FROM to_jsonb(NEW)->'requestedrightkeys')"),
             RequestAssignmentResourceDeleteFn,
             CreateTrigger("requestassignmentresource", "delete"),
         ],
@@ -805,8 +805,15 @@ public static class ActivityLogTriggerScripts
         v_ra RECORD;
         v_from RECORD;
         v_to RECORD;
+        v_status_changed boolean;
         BEGIN
         IF to_regclass('dbo.activitylog') IS NULL THEN RETURN NULL; END IF;
+        -- A status change is logged as Updated (2), as before; a change of only the requested
+        -- right keys is logged as RightsChanged (4) with both key lists in details. The keys are read
+        -- through to_jsonb(OLD/NEW), since PostgreSQL resolves every OLD/NEW field in the INSERT, even
+        -- in a CASE branch that is not taken, and requestedrightkeys does not exist on older schemas.
+        -- Both key lists are always written: null keys mean the whole resource, so a JSON null is kept.
+        v_status_changed := OLD.status IS DISTINCT FROM NEW.status;
         SELECT current_setting('app.changed_by', false) INTO v_by;
         SELECT current_setting('app.changed_by_system', false) INTO v_bysystem;
         SELECT current_setting('app.change_operation_id', false) INTO v_operation;
@@ -818,12 +825,16 @@ public static class ActivityLogTriggerScripts
         fromid, fromname, fromtype, toid, toname, totype, roleid, rolename,
         resourceid, resourcename, itemid, parentid, details
         ) VALUES (
-        3, 2, 2, NEW.status, now(),
+        3, 2, CASE WHEN v_status_changed THEN 2 ELSE 4 END, NEW.status, now(),
         v_by, dbo.activitylog_entity_name(v_by), v_bysystem, v_operation,
         v_ra.o_fromid, v_from.o_name, v_from.o_type, v_ra.o_toid, v_to.o_name, v_to.o_type,
         v_ra.o_roleid, dbo.activitylog_role_name(v_ra.o_roleid),
         NEW.resourceid, dbo.activitylog_resource_name(NEW.resourceid), NEW.id, NEW.assignmentid,
-        NULLIF(jsonb_strip_nulls(jsonb_build_object('previousStatus', OLD.status, 'action', NEW.action, 'requestedById', v_ra.o_byid)), '{}'::jsonb)
+        CASE WHEN v_status_changed
+        THEN NULLIF(jsonb_strip_nulls(jsonb_build_object('previousStatus', OLD.status, 'action', NEW.action, 'requestedById', v_ra.o_byid)), '{}'::jsonb)
+        ELSE jsonb_build_object('previousRequestedRightKeys', to_jsonb(OLD)->'requestedrightkeys', 'requestedRightKeys', to_jsonb(NEW)->'requestedrightkeys')
+        || jsonb_strip_nulls(jsonb_build_object('action', NEW.action, 'requestedById', v_ra.o_byid))
+        END
         );
         RETURN NULL;
         END;

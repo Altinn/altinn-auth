@@ -19,7 +19,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("Altinn:AuditVersion", 3)
-                .HasAnnotation("ProductVersion", "10.0.12")
+                .HasAnnotation("ProductVersion", "10.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -484,7 +484,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.ToTable("assignment", "dbo");
 
                     b
-                        .HasAnnotation("Altinn:ActivityLogVersion", 1)
+                        .HasAnnotation("Altinn:ActivityLogVersion", 2)
                         .HasAnnotation("Altinn:AuditVersion", 3);
                 });
 
@@ -562,7 +562,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.ToTable("assignmentinstance", "dbo");
 
                     b
-                        .HasAnnotation("Altinn:ActivityLogVersion", 1)
+                        .HasAnnotation("Altinn:ActivityLogVersion", 2)
                         .HasAnnotation("Altinn:AuditVersion", 3);
                 });
 
@@ -613,7 +613,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.ToTable("assignmentpackage", "dbo");
 
                     b
-                        .HasAnnotation("Altinn:ActivityLogVersion", 1)
+                        .HasAnnotation("Altinn:ActivityLogVersion", 2)
                         .HasAnnotation("Altinn:AuditVersion", 3);
                 });
 
@@ -681,7 +681,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.ToTable("assignmentresource", "dbo");
 
                     b
-                        .HasAnnotation("Altinn:ActivityLogVersion", 1)
+                        .HasAnnotation("Altinn:ActivityLogVersion", 2)
                         .HasAnnotation("Altinn:AuditVersion", 3);
                 });
 
@@ -2620,7 +2620,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.ToTable("delegation", "dbo");
 
                     b
-                        .HasAnnotation("Altinn:ActivityLogVersion", 1)
+                        .HasAnnotation("Altinn:ActivityLogVersion", 2)
                         .HasAnnotation("Altinn:AuditVersion", 3);
                 });
 
@@ -2682,7 +2682,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.ToTable("delegationpackage", "dbo");
 
                     b
-                        .HasAnnotation("Altinn:ActivityLogVersion", 1)
+                        .HasAnnotation("Altinn:ActivityLogVersion", 2)
                         .HasAnnotation("Altinn:AuditVersion", 3);
                 });
 
@@ -2740,7 +2740,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.ToTable("delegationresource", "dbo");
 
                     b
-                        .HasAnnotation("Altinn:ActivityLogVersion", 1)
+                        .HasAnnotation("Altinn:ActivityLogVersion", 2)
                         .HasAnnotation("Altinn:AuditVersion", 3);
                 });
 
@@ -3601,7 +3601,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.ToTable("requestassignment", "dbo");
 
                     b
-                        .HasAnnotation("Altinn:ActivityLogVersion", 1)
+                        .HasAnnotation("Altinn:ActivityLogVersion", 2)
                         .HasAnnotation("Altinn:AuditVersion", 3);
                 });
 
@@ -3657,7 +3657,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.ToTable("requestassignmentpackage", "dbo");
 
                     b
-                        .HasAnnotation("Altinn:ActivityLogVersion", 1)
+                        .HasAnnotation("Altinn:ActivityLogVersion", 2)
                         .HasAnnotation("Altinn:AuditVersion", 3);
                 });
 
@@ -3725,7 +3725,7 @@ namespace Altinn.AccessMgmt.PersistenceEF.Migrations
                     b.ToTable("requestassignmentresource", "dbo");
 
                     b
-                        .HasAnnotation("Altinn:ActivityLogVersion", 1)
+                        .HasAnnotation("Altinn:ActivityLogVersion", 2)
                         .HasAnnotation("Altinn:AuditVersion", 3);
                 });
 

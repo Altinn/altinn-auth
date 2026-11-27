@@ -266,6 +266,101 @@ public class ActivityLogTests : IClassFixture<EfDatabaseFixture>, IAsyncLifetime
     }
 
     [Fact]
+    public async Task RequestResourceRightKeysUpdate_WritesRightsChangedEventWithBothKeyLists()
+    {
+        var (from, to, _) = await SeedAssignment();
+
+        var resourceType = new ResourceType { Id = Guid.CreateVersion7(), Name = $"activitylog-rt-{Guid.NewGuid():N}" };
+        var resource = new Resource
+        {
+            Id = Guid.CreateVersion7(),
+            Name = "Aktivitetslogg Forespurt Ressurs",
+            RefId = $"activitylog-resource-{Guid.NewGuid():N}",
+            Description = "Test resource for activity log",
+            TypeId = resourceType.Id,
+            ProviderId = ProviderConstants.Altinn3,
+        };
+        _db.Set<ResourceType>().Add(resourceType);
+        _db.Set<Resource>().Add(resource);
+        await _db.SaveChangesAsync(Seeder, TestContext.Current.CancellationToken);
+
+        var request = new RequestAssignment { Id = Guid.CreateVersion7(), FromId = from.Id, ToId = to.Id, RoleId = RoleConstants.Rightholder, ById = from.Id };
+        var requestResource = new RequestAssignmentResource
+        {
+            Id = Guid.CreateVersion7(),
+            AssignmentId = request.Id,
+            ResourceId = resource.Id,
+            Action = "rightkeys-test",
+            Status = RequestStatusV2.Pending,
+            RequestedRightKeys = null,
+        };
+        _db.RequestAssignments.Add(request);
+        _db.RequestAssignmentResources.Add(requestResource);
+        await _db.SaveChangesAsync(Seeder, TestContext.Current.CancellationToken);
+
+        // Changing the keys while the status stays Pending gives one RightsChanged row per change:
+        // first from null (the whole resource) to specific rights, then to other rights.
+        var tracked = await _db.RequestAssignmentResources.FirstAsync(t => t.Id == requestResource.Id, TestContext.Current.CancellationToken);
+        tracked.RequestedRightKeys = ["key-read"];
+        await _db.SaveChangesAsync(Seeder, TestContext.Current.CancellationToken);
+
+        tracked.RequestedRightKeys = ["key-read", "key-write"];
+        await _db.SaveChangesAsync(Seeder, TestContext.Current.CancellationToken);
+
+        var changes = await _db.ActivityLogs.AsNoTracking()
+            .Where(t => t.ItemId == requestResource.Id && t.Trigger == ActivityLogTrigger.RightsChanged)
+            .ToListAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(2, changes.Count);
+        Assert.All(changes, changed =>
+        {
+            Assert.Equal(ActivityLogType.Request, changed.Type);
+            Assert.Equal(ActivityLogSubtype.Resource, changed.Subtype);
+            Assert.Equal(RequestStatusV2.Pending, changed.Status);
+            Assert.Equal(request.Id, changed.ParentId);
+            Assert.Equal(resource.Name, changed.ResourceName);
+            Assert.Contains("\"action\": \"rightkeys-test\"", changed.Details);
+            Assert.DoesNotContain("previousStatus", changed.Details);
+        });
+
+        // The previous null is kept as an explicit JSON null, not left out.
+        var fromWholeResource = Assert.Single(changes, e => e.Details!.Contains("\"requestedRightKeys\": [\"key-read\"]"));
+        Assert.Contains("\"previousRequestedRightKeys\": null", fromWholeResource.Details);
+
+        var toMoreRights = Assert.Single(changes, e => e.Details!.Contains("\"requestedRightKeys\": [\"key-read\", \"key-write\"]"));
+        Assert.Contains("\"previousRequestedRightKeys\": [\"key-read\"]", toMoreRights.Details);
+
+        // Writing the same keys again fires no trigger. Raw SQL, since EF sends no UPDATE for an unchanged value.
+        await using (var transaction = await _db.Database.BeginTransactionAsync(TestContext.Current.CancellationToken))
+        {
+            await _db.Database.ExecuteSqlAsync(
+                $"""
+                SELECT set_config('app.changed_by', {((Guid)SystemEntityConstants.StaticDataIngest).ToString()}, true),
+                    set_config('app.changed_by_system', {((Guid)SystemEntityConstants.StaticDataIngest).ToString()}, true),
+                    set_config('app.change_operation_id', {Guid.CreateVersion7().ToString()}, true);
+                UPDATE dbo.requestassignmentresource SET requestedrightkeys = ARRAY['key-read', 'key-write'] WHERE id = {requestResource.Id};
+                """,
+                TestContext.Current.CancellationToken);
+
+            await transaction.CommitAsync(TestContext.Current.CancellationToken);
+        }
+
+        // A status change is still logged as Updated only, with the details it had before.
+        tracked = await _db.RequestAssignmentResources.FirstAsync(t => t.Id == requestResource.Id, TestContext.Current.CancellationToken);
+        tracked.Status = RequestStatusV2.Approved;
+        await _db.SaveChangesAsync(Seeder, TestContext.Current.CancellationToken);
+
+        var updated = await SingleEvent(requestResource.Id, ActivityLogTrigger.Updated);
+        Assert.Equal(RequestStatusV2.Approved, updated.Status);
+        Assert.Contains("previousStatus", updated.Details);
+        Assert.DoesNotContain("requestedRightKeys", updated.Details);
+
+        var events = await _db.ActivityLogs.AsNoTracking()
+            .Where(t => t.ItemId == requestResource.Id)
+            .ToListAsync(TestContext.Current.CancellationToken);
+        Assert.Equal(4, events.Count);
+    }
+
+    [Fact]
     public async Task AssignmentResourceUpdate_PolicyChangesProduceNoEvent()
     {
         var (_, _, assignment) = await SeedAssignment();
