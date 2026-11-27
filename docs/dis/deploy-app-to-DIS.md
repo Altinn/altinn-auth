@@ -65,21 +65,26 @@ Wait for `Running` status before continuing.
 
 ### 2. Update RBAC terraform for DIS service principals
 
-DIS creates an `ApplicationIdentity` resource per app. After the first deployment the `servicePrincipalId` is populated in its status. There are two per app: the app itself and the pre-deploy job — both are needed.
+DIS creates an `ApplicationIdentity` resource per app. After the first deployment the `principalId` is populated in its status. There is usually one for the app itself and one for the pre-deploy job, and some apps have more. Add all of them.
 
 ```bash
 kubectl get applicationidentity -n <namespace> <name> -o yaml
-# look for: status.servicePrincipalId
+# look for: status.principalId
 ```
 
-To list all identities in the namespace at once:
+To list all identities in the namespace at once (works in bash and PowerShell):
 
 ```bash
-kubectl get applicationidentity -n <namespace> \
-  -o jsonpath='{range .items[*]}{.metadata.name}: {.status.servicePrincipalId}{"\n"}{end}'
+kubectl get applicationidentity -n <namespace> -o custom-columns=NAME:.metadata.name,ID:.status.principalId
 ```
 
-Append the DIS `servicePrincipalId` values to the existing `module "rbac_platform_app"` block in the app's `infra/main.tf` (Azure DevOps). If the app has a Key Vault, also add `Key Vault Secrets User` entries for the DIS principal IDs in the `key_vault_roles` list. Apply the terraform.
+Use `principalId`, not `clientId`. Role assignments need the principal (object) ID.
+
+If the app's terraform is in this repository (`src/apps/<App>/infra/`), add the `principalId` values to `platform_workflow_principal_ids` in `infra/<env>.tfvars`. `module "rbac_platform_app"` in `infra/main.tf` loops over that list, so `main.tf` does not change. Where the app has a Key Vault, `key_vault_roles` already gives every ID in the list `Key Vault Secrets User`.
+
+If the app's terraform is in Azure DevOps, append the values to the `module "rbac_platform_app"` block in its `infra/main.tf`. If the app has a Key Vault, also add `Key Vault Secrets User` entries for the IDs in the `key_vault_roles` list.
+
+Apply the terraform.
 
 ### 3. Configure DIS proxy
 
