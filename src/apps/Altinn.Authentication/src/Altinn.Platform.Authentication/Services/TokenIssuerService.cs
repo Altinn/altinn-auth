@@ -10,6 +10,7 @@ using System.Threading.Tasks;
 using Altinn.Platform.Authentication.Configuration;
 using Altinn.Platform.Authentication.Core.Models.Oidc;
 using Altinn.Platform.Authentication.Core.Services.Interfaces;
+using Altinn.Platform.Authentication.Helpers;
 using Altinn.Platform.Authentication.Services.Interfaces;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
@@ -42,13 +43,8 @@ namespace Altinn.Platform.Authentication.Services
         {
             List<X509Certificate2> certificates = await _certificateProvider.GetCertificates();
 
-            X509Certificate2 certificate = GetLatestCertificateWithRolloverDelay(
-                certificates, _generalSettings.JwtSigningCertificateRolloverDelayHours);
-
-            if (!certificate.HasPrivateKey)
-            {
-                throw new InvalidOperationException("Selected JWT signing certificate has no private key.");
-            }
+            X509Certificate2 certificate = SigningCertificateSelector.Select(
+                certificates, _generalSettings.JwtSigningCertificateRolloverDelayHours, _timeProvider.GetUtcNow());
 
             JwtSecurityTokenHandler tokenHandler = new();
             SecurityTokenDescriptor tokenDescriptor = new()
@@ -66,29 +62,6 @@ namespace Altinn.Platform.Authentication.Services
             string serializedToken = tokenHandler.WriteToken(token);
 
             return serializedToken;
-        }
-
-        private X509Certificate2 GetLatestCertificateWithRolloverDelay(
-         List<X509Certificate2> certificates, int rolloverDelayHours)
-        {
-            // Limit to certs older than the rollover delay (UTC)
-            DateTime rolloverCutoffUtc = _timeProvider.GetUtcNow().AddHours(-rolloverDelayHours).UtcDateTime;
-            List<X509Certificate2> potentialCerts = certificates.Where(c => c.NotBefore.ToUniversalTime() <= rolloverCutoffUtc).ToList();
-
-            // If no certs could be found, then widen the search to any usable certificate.
-            if (potentialCerts.Count == 0)
-            {
-                var nowUtc = _timeProvider.GetUtcNow().UtcDateTime;
-                potentialCerts = [.. certificates.Where(c => c.NotBefore.ToUniversalTime() <= nowUtc)];
-            }
-
-            // Of the potential certs, return the newest one.
-            if (potentialCerts.Count == 0)
-            {
-                throw new InvalidOperationException("No valid JWT signing certificate available.");
-            }
-
-            return potentialCerts.OrderByDescending(c => c.NotBefore).First();
         }
     }
 }
