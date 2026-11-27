@@ -51,6 +51,10 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
         var removeEstateAdministrators = new List<(Guid EstateId, Guid EstateAdministratorPartyId)>();
         var options = new AuditValues(SystemEntityConstants.RegisterImportSystem);
 
+        // Estate access derived from the ER role import is audited as its own system entity, so the audit trail
+        // tells it apart from the role import itself.
+        var estateAccessOptions = new AuditValues(SystemEntityConstants.BankruptcyEstateAdministratorSync);
+
         using var scope = _serviceProvider.CreateEFScope(options);
         var appDbContextFactory = scope.ServiceProvider.GetRequiredService<AppDbContextFactory>();
         var ingestService = scope.ServiceProvider.GetRequiredService<IIngestService>();
@@ -167,11 +171,11 @@ public class RoleSyncService : BaseSyncService, IRoleSyncService
             var result = 0;
             result += await SetParents(appDbContextFactory, addParent, cancellationToken);
             result += await IngestAssigments(ingestService, addAssignments, options, cancellationToken);
-            result += await GrantEstateAccessToAdministrators(addEstateAdministrators, options, cancellationToken);
+            result += await GrantEstateAccessToAdministrators(addEstateAdministrators, estateAccessOptions, cancellationToken);
 
             result += await RemoveParents(appDbContextFactory, removeParent, cancellationToken);
             result += await RemoveAssignments(appDbContextFactory, removeAssignments, cancellationToken);
-            result += await RevokeEstateAccessFromAdministrators(removeEstateAdministrators, options, cancellationToken);
+            result += await RevokeEstateAccessFromAdministrators(removeEstateAdministrators, estateAccessOptions, cancellationToken);
 
             seen.Clear();
             addParent.Clear();

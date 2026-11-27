@@ -531,5 +531,33 @@ public static class SystemEntityConstants
             KeyValuePair.Create("Name", "Outbox")),
     };
 
+    /// <summary>
+    /// Represents the BankruptcyEstateAdministratorSync system entity, which grants and revokes the estate access of
+    /// bankruptcy estate administrators when the Central Coordinating Register (ER) import gives an estate
+    /// administrator party (bostyrer) a new estate (konkursbo) or removes one.
+    /// </summary>
+    /// <remarks>
+    /// - <c>Id:</c> 01a217e5-6adb-7723-9780-5cf141ed5225
+    /// - <c>Name:</c> BankruptcyEstateAdministratorSync
+    /// - <c>RefId:</c> sys-bankruptcy-estate-administrator-sync
+    /// - <c>TypeId:</c> Internal entity type
+    /// - <c>VariantId:</c> Standard variant
+    /// </remarks>
+    public static ConstantDefinition<Entity> BankruptcyEstateAdministratorSync { get; } = new ConstantDefinition<Entity>(AuditDefaults.BankruptcyEstateAdministratorSync)
+    {
+        Entity = new()
+        {
+            Name = nameof(AuditDefaults.BankruptcyEstateAdministratorSync),
+            RefId = "sys-bankruptcy-estate-administrator-sync",
+            ParentId = null,
+            TypeId = EntityTypeConstants.Internal,
+            VariantId = EntityVariantConstants.Standard,
+        },
+        EN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Bankruptcy Estate Administrator Sync")),
+        NN = TranslationEntryList.Create(
+            KeyValuePair.Create("Name", "Synkronisering av konkursbuadministratorar")),
+    };
+
     #endregion
 }
