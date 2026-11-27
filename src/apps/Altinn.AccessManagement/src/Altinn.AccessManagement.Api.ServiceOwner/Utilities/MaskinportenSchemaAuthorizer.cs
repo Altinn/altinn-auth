@@ -9,7 +9,9 @@ namespace Altinn.AccessManagement.Api.ServiceOwner.Utilities
     public static class MaskinportenSchemaAuthorizer
     {
         /// <summary>
-        /// Authorization of whether the provided claims is authorized for lookup of delegations of the given scope
+        /// Authorization of whether the provided claims is authorized for lookup of delegations of the given scope,
+        /// based on the <c>consumer_prefix</c> claims in the token. Used while
+        /// <c>AccessManagement.Maskinporten.ValidateScopePrefixWithApi</c> is off.
         /// </summary>
         /// <param name="scope">The scope to authorize for delegation lookup</param>
         /// <param name="claims">The claims principal of the authenticated organization</param>
@@ -29,7 +31,13 @@ namespace Altinn.AccessManagement.Api.ServiceOwner.Utilities
             return HasAuthorizedScopePrefixClaim(new[] { scope }, claims);
         }
 
-        private static bool HasDelegationsAdminScope(ClaimsPrincipal claims)
+        /// <summary>
+        /// Whether the claims principal has the admin scope for the delegations lookup, which allows
+        /// lookup of delegations for any scope.
+        /// </summary>
+        /// <param name="claims">The claims principal of the authenticated organization</param>
+        /// <returns>bool</returns>
+        public static bool HasDelegationsAdminScope(ClaimsPrincipal claims)
         {
             return HasScope(claims, AuthzConstants.SCOPE_MASKINPORTEN_DELEGATIONS_ADMIN);
         }

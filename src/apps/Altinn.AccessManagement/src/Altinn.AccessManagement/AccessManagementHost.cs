@@ -192,6 +192,8 @@ internal static partial class AccessManagementHost
             return appsettings.Platform;
         });
 
+        builder.Services.AddSamarbeidsportalen(opts => builder.Configuration.GetSection("SamarbeidsportalenSettings").Bind(opts));
+
         return builder;
     }
 

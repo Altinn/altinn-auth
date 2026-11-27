@@ -3,10 +3,15 @@ using Altinn.AccessManagement.Api.ServiceOwner.Models;
 using Altinn.AccessManagement.Api.ServiceOwner.Utilities;
 using Altinn.AccessManagement.Core.Constants;
 using Altinn.AccessManagement.Core.Models;
+using Altinn.AccessManagement.Core.Models.Consent;
 using Altinn.AccessManagement.Core.Models.ResourceRegistry;
 using Altinn.AccessManagement.Core.Services.Interfaces;
+using Altinn.AccessMgmt.Core;
+using Altinn.AccessMgmt.Core.Utils;
+using Altinn.Authorization.Integration.Platform.Samarbeidsportalen;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.FeatureManagement;
 
 namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers
 {
@@ -19,16 +24,22 @@ namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers
     {
         private readonly ILogger<MaskinportenDelegationsController> _logger;
         private readonly IMaskinportenDelegationLookupService _delegation;
+        private readonly IFeatureManager _featureManager;
+        private readonly IScopePrefixValidator _scopePrefixValidator;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="MaskinportenDelegationsController"/> class.
         /// </summary>
         public MaskinportenDelegationsController(
             ILogger<MaskinportenDelegationsController> logger,
-            IMaskinportenDelegationLookupService delegationLookupService)
+            IMaskinportenDelegationLookupService delegationLookupService,
+            IFeatureManager featureManager,
+            IScopePrefixValidator scopePrefixValidator)
         {
             _logger = logger;
             _delegation = delegationLookupService;
+            _featureManager = featureManager;
+            _scopePrefixValidator = scopePrefixValidator;
         }
 
         /// <summary>
@@ -47,7 +58,22 @@ namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers
         [ProducesResponseType(500)]
         public async Task<ActionResult<List<MPDelegationExternal>>> GetMaskinportenDelegations([FromQuery] string? supplierOrg, [FromQuery] string? consumerOrg, [FromQuery] string? scope, CancellationToken cancellationToken)
         {
-            if (!MaskinportenSchemaAuthorizer.IsAuthorizedDelegationLookupAccess(scope, HttpContext.User))
+            bool isAuthorized;
+            try
+            {
+                isAuthorized = await IsAuthorizedDelegationLookupAccess(scope, cancellationToken);
+            }
+            catch (ScopePrefixDataUnavailableException ex)
+            {
+                // Fail closed: without the prefix list we can't tell which scopes the caller owns.
+                _logger.LogError(ex, "GetMaskinportenDelegations could not check the scope against the prefixes the caller owns");
+                return new ObjectResult(ProblemDetailsFactory.CreateProblemDetails(
+                    HttpContext,
+                    statusCode: StatusCodes.Status500InternalServerError,
+                    title: "Could not check which Maskinporten scope prefixes the caller owns"));
+            }
+
+            if (!isAuthorized)
             {
                 ProblemDetails result;
                 if (string.IsNullOrWhiteSpace(scope))
@@ -94,6 +120,54 @@ namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers
             {
                 _logger.LogError(ex, "GetMaskinportenDelegation failed to fetch delegations");
                 return new ObjectResult(ProblemDetailsFactory.CreateProblemDetails(HttpContext));
+            }
+        }
+
+        /// <summary>
+        /// Whether the caller may look up delegations of <paramref name="scope"/>. The admin scope may look up any scope.
+        /// Others must own the scope's prefix: from Samarbeidsportalen when
+        /// <see cref="AccessMgmtFeatureFlags.MaskinportenValidateScopePrefixWithApi"/> is on, otherwise from the
+        /// <c>consumer_prefix</c> claims in the token.
+        /// </summary>
+        /// <exception cref="ScopePrefixDataUnavailableException">The flag is on and no usable prefix list is available.</exception>
+        private async Task<bool> IsAuthorizedDelegationLookupAccess(string? scope, CancellationToken cancellationToken)
+        {
+            if (!await _featureManager.IsEnabledAsync(AccessMgmtFeatureFlags.MaskinportenValidateScopePrefixWithApi))
+            {
+                return MaskinportenSchemaAuthorizer.IsAuthorizedDelegationLookupAccess(scope, User);
+            }
+
+            if (MaskinportenSchemaAuthorizer.HasDelegationsAdminScope(User))
+            {
+                return true;
+            }
+
+            if (string.IsNullOrWhiteSpace(scope))
+            {
+                return false;
+            }
+
+            IReadOnlyList<string> unownedScopes = await _scopePrefixValidator.GetUnownedScopes(GetConsumerOrgNo(), [scope], cancellationToken);
+            return unownedScopes.Count == 0;
+        }
+
+        /// <summary>
+        /// Organization number of the caller, from the <c>consumer</c> claim, or <c>null</c> if it is missing or malformed.
+        /// An organization number of <c>null</c> owns no prefixes.
+        /// </summary>
+        private string? GetConsumerOrgNo()
+        {
+            try
+            {
+                return OrgUtil.GetAuthenticatedParty(User) is ConsentPartyUrn.OrganizationId consumer
+                    ? consumer.Value.ToString()
+                    : null;
+            }
+            catch (Exception ex) when (ex is FormatException or InvalidOperationException)
+            {
+                // FormatException: not a valid organization number.
+                // InvalidOperationException: valid JSON, but not an object with string values.
+                return null;
             }
         }
 
