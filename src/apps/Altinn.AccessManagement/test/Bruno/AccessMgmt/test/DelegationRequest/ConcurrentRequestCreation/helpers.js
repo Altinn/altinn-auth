@@ -1,0 +1,176 @@
+// Shared helpers for the concurrent request creation scenarios (#3931, #3937).
+// Requires inside a helper module resolve relative to this file, unlike requires in
+// .bru scripts, which resolve from the collection root.
+const tokenGenerator = require("../../../TestToolsTokenGenerator.js");
+const sharedtestdata = require("../../../testdata/sharedtestdata.js");
+
+const paths = {
+	v2: "/accessmanagement/api/v2/enduser/request",
+};
+
+// Environments where AccessManagement.Enduser.RequestV2Api is on and the seed data is verified.
+const enabledEnvironments = ["at22"];
+
+// Skips the current request outside the enabled environments. Returns true when skipped, so the
+// step can return before it loads seed data. bru.runner.skipRequest() only marks the request as
+// skipped: the rest of the pre-request script still runs.
+function skipOutsideEnabledEnvironments() {
+	const env = bru.getEnvVar("tokenEnv");
+	if (enabledEnvironments.includes(env)) {
+		bru.setVar("cc_skipped", null);
+		return false;
+	}
+
+	// Read by isSkipped() in the post-response script and the tests, which still run when a
+	// single request is sent from the Bruno app instead of the collection runner.
+	bru.setVar("cc_skipped", "true");
+
+	// Outside the collection runner, as when a single request is sent from the Bruno app, the
+	// request may still go out, without a token, and answer 401. Say why in the console.
+	console.log(`Skipped: ConcurrentRequestCreation is not enabled in "${env}".`);
+	bru.runner.skipRequest();
+	return true;
+}
+
+// True when the pre-request script of the current step skipped it. The post-response script and
+// the tests return early then, instead of failing on a 401 or on results that were never stored.
+function isSkipped() {
+	return bru.getVar("cc_skipped") === "true";
+}
+
+// Maps a person entry from the shared testdata files to the shape the steps use.
+// Party UUIDs are lowercased because the API returns them in lowercase.
+function person(p) {
+	return {
+		pid: p.pid,
+		userId: p.userid,
+		partyId: p.partyid,
+		partyUuid: p.partyuuid.toLowerCase(),
+	};
+}
+
+// Returns the scenario personas for the environment the run targets.
+function testdata() {
+	const data = require(`../../../testdata/delegationrequest-scenarios/${bru.getEnvVar("tokenEnv")}.js`).concurrentRequestCreation;
+	return {
+		packages: data.packages,
+		requester: {
+			name: data.requester.name,
+			partyUuid: data.requester.partyuuid.toLowerCase(),
+			innehaver: person(data.requester.innehaver),
+		},
+		approver: person(data.approver),
+	};
+}
+
+// Mints a personal token for a persona and stores it as the collection bearer token.
+async function loginAs(persona) {
+	const token = await tokenGenerator.getToken({
+		auth_userId: persona.userId,
+		auth_partyId: persona.partyId,
+		auth_partyUuid: persona.partyUuid,
+		auth_ssn: persona.pid,
+		auth_tokenType: sharedtestdata.authTokenType.personal,
+		auth_scopes: sharedtestdata.auth_scopes.portalEnduser,
+	});
+	bru.setVar("bearerToken", token);
+}
+
+// Clears the variables the steps pass between them, so a step never acts on a value
+// left behind by an earlier run.
+function clearScenarioVars() {
+	bru.setVar("cc_results", null);
+}
+
+// Sends the calls at the same time with the current bearer token, and returns the status and
+// body of each, in the order given. Never throws on an error status, so a 409 or a 500 is
+// reported by the tests instead of failing the script.
+//
+// The calls go over connections opened beforehand by as many parallel GETs of warmUpPath.
+// Without that, each call first opens a connection of its own, the TLS handshakes spread the
+// calls out in time, and they rarely reach the server close enough together to collide.
+async function sendAtOnce(axios, calls, warmUpPath) {
+	const https = require("https");
+	const baseUrl = bru.getEnvVar("baseUrl");
+	const headers = { Authorization: `Bearer ${bru.getVar("bearerToken")}` };
+	const httpsAgent = new https.Agent({ keepAlive: true, maxSockets: calls.length });
+
+	await Promise.all(calls.map(() =>
+		axios.get(`${baseUrl}${warmUpPath}`, { headers, httpsAgent, validateStatus: () => true })));
+
+	const responses = await Promise.all(calls.map(call =>
+		axios.post(`${baseUrl}${call.path}`, call.body, { headers, httpsAgent, validateStatus: () => true })));
+	httpsAgent.destroy();
+
+	return responses.map(r => ({ status: r.status, body: r.data }));
+}
+
+// Stores the results of sendAtOnce for the later steps. Bruno variables are kept as strings.
+function storeResults(results) {
+	bru.setVar("cc_results", JSON.stringify(results));
+}
+
+// Reads the results the WHEN step stored, and fails clearly when it did not run.
+function readResults(step) {
+	const raw = bru.getVar("cc_results");
+	if (!raw) {
+		throw new Error(`cc_results is not set: run the scenario from step 01, and check that step ${step} succeeded.`);
+	}
+
+	return JSON.parse(raw);
+}
+
+// True when a request in a list is for the given package urn.
+function isFor(request, reference) {
+	return Boolean(request.package && request.package.referenceId === reference);
+}
+
+// Withdraws, with the requester's token, every pending request in the list that is for one of the
+// references, including duplicates left by concurrent creation. Withdrawing, unlike rejecting,
+// removes the request from the pending notification to the approver and queues no notification
+// to the requester, so the runs send no notifications.
+// Every withdrawal is attempted. The ones that did not answer 200 are returned and stored in
+// `cc_withdrawFailures`, which assertWithdrawn() checks in the tests of the GIVEN and CLEANUP
+// steps, so an incomplete reset fails the step instead of passing silently.
+async function withdrawPending(axios, td, pendingRequests, references) {
+	const baseUrl = bru.getEnvVar("baseUrl");
+	const headers = { Authorization: `Bearer ${bru.getVar("bearerToken")}` };
+
+	const stale = (pendingRequests || []).filter(r => references.some(ref => isFor(r, ref)));
+	const failures = [];
+	for (const request of stale) {
+		const response = await axios.put(
+			`${baseUrl}${paths.v2}/sent/withdraw?party=${td.requester.partyUuid}&id=${request.id}`,
+			null,
+			{ headers, validateStatus: () => true });
+		if (response.status !== 200) {
+			failures.push(`${request.id}: ${response.status}`);
+		}
+	}
+
+	bru.setVar("cc_withdrawFailures", JSON.stringify(failures));
+	return failures;
+}
+
+// Fails the current test when a withdrawal in this step's post-response script did not answer
+// 200, or when the post-response script did not get as far as withdrawing.
+function assertWithdrawn() {
+	const raw = bru.getVar("cc_withdrawFailures");
+	expect(raw, "the pending requests were not listed, so nothing was withdrawn").to.be.a("string");
+	expect(JSON.parse(raw), "withdrawals that did not answer 200").to.deep.equal([]);
+}
+
+module.exports = {
+	paths,
+	skipOutsideEnabledEnvironments,
+	isSkipped,
+	testdata,
+	loginAs,
+	clearScenarioVars,
+	sendAtOnce,
+	storeResults,
+	readResults,
+	isFor,
+	withdrawPending,
+	assertWithdrawn,
+};

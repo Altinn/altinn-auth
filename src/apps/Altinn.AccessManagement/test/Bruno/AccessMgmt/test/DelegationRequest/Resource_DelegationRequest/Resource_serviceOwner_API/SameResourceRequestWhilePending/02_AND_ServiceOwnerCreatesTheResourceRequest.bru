@@ -1,0 +1,77 @@
+meta {
+	name: 02_AND_ServiceOwnerCreatesTheResourceRequest
+	type: http
+	seq: 2
+}
+
+post {
+	url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/delegationrequests/resource
+	body: json
+	auth: inherit
+}
+
+headers {
+	Content-Type: application/json
+	Accept: application/json
+}
+
+body:json {
+	{
+		"from": "urn:altinn:person:identifier-no:{{requesterPid}}",
+		"to": "urn:altinn:organization:identifier-no:{{orgNo}}",
+		"resource": "{{reference}}"
+	}
+}
+
+docs {
+	AND the service owner creates a resource request: the requester (`from`) would receive access,
+	the organization (`to`) is asked to grant it.
+
+	POST /accessmanagement/api/v1/serviceowner/delegationrequests/resource
+
+	Scope `altinn:serviceowner/delegationrequests.write`. Returns 202 with the request in status
+	Draft. The request id is kept for the next steps.
+}
+
+script:pre-request {
+	const { skipOutsideEnabledEnvironments, testdata, loginAsServiceOwner } = require("./utils/serviceOwnerRequestWhilePending.js");
+	if (skipOutsideEnabledEnvironments()) {
+		return;
+	}
+
+	const td = testdata();
+
+	bru.setVar("requesterPid", td.requester.pid);
+	bru.setVar("orgNo", td.organization.orgNo);
+	bru.setVar("reference", td.resource);
+
+	await loginAsServiceOwner();
+}
+script:post-response {
+	if (require("./utils/serviceOwnerRequestWhilePending.js").isSkipped()) {
+		return;
+	}
+
+	const body = res.getBody();
+	if (res.status === 202 && body && body.id) {
+		bru.setVar("sop_requestId", body.id);
+	}
+}
+
+tests {
+	if (require("./utils/serviceOwnerRequestWhilePending.js").isSkipped()) {
+		return;
+	}
+
+	const { testdata } = require("./utils/serviceOwnerRequestWhilePending.js");
+
+	test("AND the resource request is created, the request returns 202", function() {
+		expect(res.status).to.equal(202);
+	});
+
+	test("AND the request is a draft for the resource", function() {
+		const body = res.getBody();
+		expect(body.status).to.equal("Draft");
+		expect(body.resource.referenceId).to.equal(testdata().resource);
+	});
+}

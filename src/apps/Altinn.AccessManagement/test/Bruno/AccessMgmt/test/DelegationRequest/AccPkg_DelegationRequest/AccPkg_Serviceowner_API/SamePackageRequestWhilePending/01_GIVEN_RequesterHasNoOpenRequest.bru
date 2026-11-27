@@ -1,0 +1,70 @@
+meta {
+	name: 01_GIVEN_RequesterHasNoOpenRequest
+	type: http
+	seq: 1
+}
+
+get {
+	url: {{baseUrl}}/accessmanagement/api/v1/enduser/request/sent?party={{party}}&status=Draft&status=Pending&type=package
+	body: none
+	auth: inherit
+}
+
+params:query {
+	party: {{party}}
+	status: Draft
+	status: Pending
+	type: package
+}
+
+docs {
+	GIVEN the requester has no open (Draft or Pending) request for the package.
+
+	GET /accessmanagement/api/v1/enduser/request/sent?party=<requester>&status=Draft&status=Pending&type=package
+
+	Idempotent reset: the post-response script withdraws every open request for the package, so
+	leftovers from earlier or crashed runs, including the extra drafts the bug in #5028 creates,
+	never break the scenario. The requester can withdraw both drafts and pending requests.
+}
+
+script:pre-request {
+	const { skipOutsideEnabledEnvironments, testdata, loginAsRequester, clearScenarioVars } = require("./utils/serviceOwnerRequestWhilePending.js");
+	if (skipOutsideEnabledEnvironments()) {
+		return;
+	}
+
+	const td = testdata();
+
+	clearScenarioVars();
+	bru.setVar("party", td.requester.partyUuid);
+
+	await loginAsRequester(td);
+}
+script:post-response {
+	if (require("./utils/serviceOwnerRequestWhilePending.js").isSkipped()) {
+		return;
+	}
+
+	const axios = require("axios");
+	const { testdata, withdrawOpen } = require("./utils/serviceOwnerRequestWhilePending.js");
+
+	bru.setVar("sop_withdrawFailures", null);
+	if (res.status === 200) {
+		const td = testdata();
+		await withdrawOpen(axios, td, res.getBody().data, td.package);
+	}
+}
+
+tests {
+	if (require("./utils/serviceOwnerRequestWhilePending.js").isSkipped()) {
+		return;
+	}
+
+	test("GIVEN the sent requests can be listed, the request returns 200", function() {
+		expect(res.status).to.equal(200);
+	});
+
+	test("GIVEN every pending request found was withdrawn", function() {
+		require("./utils/serviceOwnerRequestWhilePending.js").assertWithdrawn();
+	});
+}

@@ -1,0 +1,68 @@
+meta {
+	name: 06_CLEANUP_RequesterWithdrawsOpenRequests
+	type: http
+	seq: 6
+}
+
+get {
+	url: {{baseUrl}}/accessmanagement/api/v1/enduser/request/sent?party={{party}}&status=Draft&status=Pending&type=resource
+	body: none
+	auth: inherit
+}
+
+params:query {
+	party: {{party}}
+	status: Draft
+	status: Pending
+	type: resource
+}
+
+docs {
+	CLEANUP the requester withdraws every open request for the resource, so the scenario can be rerun.
+	Requests cannot be deleted. All of them are withdrawn, not only the one the scenario expects,
+	because while #5028 is unfixed a run leaves a draft beside the pending request.
+
+	GET /accessmanagement/api/v1/enduser/request/sent?party=<requester>&status=Draft&status=Pending&type=resource
+	followed by PUT /accessmanagement/api/v1/enduser/request/sent/withdraw?party=<requester>&id=<id> for each.
+}
+
+script:pre-request {
+	const { skipOutsideEnabledEnvironments, testdata, loginAsRequester } = require("./utils/serviceOwnerRequestWhilePending.js");
+	if (skipOutsideEnabledEnvironments()) {
+		return;
+	}
+
+	const td = testdata();
+
+	bru.setVar("party", td.requester.partyUuid);
+
+	await loginAsRequester(td);
+}
+script:post-response {
+	if (require("./utils/serviceOwnerRequestWhilePending.js").isSkipped()) {
+		return;
+	}
+
+	const axios = require("axios");
+	const { testdata, withdrawOpen } = require("./utils/serviceOwnerRequestWhilePending.js");
+
+	bru.setVar("sop_withdrawFailures", null);
+	if (res.status === 200) {
+		const td = testdata();
+		await withdrawOpen(axios, td, res.getBody().data, td.resource);
+	}
+}
+
+tests {
+	if (require("./utils/serviceOwnerRequestWhilePending.js").isSkipped()) {
+		return;
+	}
+
+	test("CLEANUP the sent requests can be listed, the request returns 200", function() {
+		expect(res.status).to.equal(200);
+	});
+
+	test("CLEANUP every pending request found was withdrawn", function() {
+		require("./utils/serviceOwnerRequestWhilePending.js").assertWithdrawn();
+	});
+}
