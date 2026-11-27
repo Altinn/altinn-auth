@@ -20,6 +20,13 @@
         public const string AuditLogDuplicateMeasurement = nameof(AuditLogDuplicateMeasurement);
 
         /// <summary>
+        /// Feature flag for whether duplicate authorization events are dropped instead of queued for the
+        /// audit log. Which duplicates is set by <see cref="AuditLogDeduplicationSettings.SuppressScope"/>.
+        /// Off by default: dropping changes what the audit log records, see ADR-0003 in this vertical.
+        /// </summary>
+        public const string AuditLogDuplicateSuppression = nameof(AuditLogDuplicateSuppression);
+
+        /// <summary>
         /// Feature flag for whether authorization of SystemUsers should include authorization through access packages
         /// </summary>
         public const string SystemUserAccessPackageAuthorization = nameof(SystemUserAccessPackageAuthorization);
