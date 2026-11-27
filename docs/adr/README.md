@@ -35,3 +35,4 @@ Each folder numbers its own ADRs from `0001`. A repository that is moved into th
 | [0002](0002-tool-neutral-agent-contract.md) | Tool-neutral agent contract: `AGENTS.md` as the single source | Accepted |
 | [0003](0003-one-ai-review-bot.md) | One AI review bot, Copilot code review, advisory only | Accepted |
 | [0004](0004-issue-and-label-model.md) | One issue and label model for the monorepo | Accepted |
+| [0005](0005-planning-and-flow.md) | How work is planned and flows on the shared board | Proposed |
