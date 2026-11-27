@@ -14,6 +14,7 @@ using Altinn.ResourceRegistry.Controllers;
 using Altinn.ResourceRegistry.TestUtils;
 using Microsoft.Extensions.DependencyInjection;
 using Altinn.ResourceRegistry.Core;
+using Altinn.ResourceRegistry.Core.AccessLists;
 using Altinn.ResourceRegistry.Tests.Mocks;
 using Altinn.ResourceRegistry.Core.Services.Interfaces;
 using Microsoft.Extensions.Caching.Hybrid;
@@ -222,7 +223,7 @@ namespace Altinn.ResourceRegistry.Tests
             var serviceOwners = new Mock<IServiceOwnerService>();
             serviceOwners.Setup(s => s.GetServiceOwners(It.IsAny<CancellationToken>())).ReturnsAsync(ServiceOwnerLookup.Empty);
 
-            var service = new ResourceRegistryService(repository.Object, Mock.Of<IPolicyRepository>(), Mock.Of<IApplications>(), serviceOwners.Object, CreateHybridCache());
+            var service = new ResourceRegistryService(repository.Object, Mock.Of<IPolicyRepository>(), Mock.Of<IApplications>(), serviceOwners.Object, Mock.Of<IAccessListsRepository>(), CreateHybridCache());
 
             // Act – two identical calls. includeApps:false isolates the cached inner list.
             var first = await service.GetResourceList(includeApps: false, includeExpired: false, includeMigratedApps: false, cancellationToken: cancellationToken);
