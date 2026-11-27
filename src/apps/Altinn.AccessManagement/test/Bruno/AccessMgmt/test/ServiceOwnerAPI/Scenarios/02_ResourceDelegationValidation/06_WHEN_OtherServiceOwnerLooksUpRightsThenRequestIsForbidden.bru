@@ -1,0 +1,44 @@
+meta {
+  name: 06_WHEN_OtherServiceOwnerLooksUpRightsThenRequestIsForbidden
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/connections/resources/rights?resource={{resource}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  resource: {{resource}}
+}
+
+docs {
+  WHEN a service owner that does not own a delegable resource looks up its rights the
+  request is forbidden: 403 AM-00048. Ownership is decided by comparing the organization
+  number in the token's consumer claim with the resource provider's organization number.
+}
+
+script:pre-request {
+  const { td, loginAsServiceOwner, scopes, serviceOwners } = require("./test/ServiceOwnerAPI/Scenarios/helpers.js");
+  const data = td();
+
+  bru.setVar("grantorPid", data.resourceDelegation.grantor.pid);
+  bru.setVar("recipientPid", data.resourceDelegation.recipient.pid);
+  bru.setVar("resource", data.resourceDelegation.resource);
+
+  await loginAsServiceOwner(serviceOwners.skd, scopes.resourceDelegationWrite);
+}
+
+tests {
+  test("WHEN another service owner looks up the rights, the request returns 403", function() {
+    expect(res.status).to.equal(403);
+  });
+
+  test("THEN the problem body carries AM-00048", function() {
+    const body = res.getBody();
+    expect(body.status).to.equal(403);
+    expect(body.code).to.equal("AM-00048");
+  });
+}

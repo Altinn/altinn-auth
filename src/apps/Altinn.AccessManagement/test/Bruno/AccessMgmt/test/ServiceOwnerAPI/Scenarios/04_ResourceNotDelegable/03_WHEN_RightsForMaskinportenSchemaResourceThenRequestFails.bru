@@ -1,0 +1,46 @@
+meta {
+  name: 03_WHEN_RightsForMaskinportenSchemaResourceThenRequestFails
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/serviceowner/connections/resources/rights?resource={{maskinportenSchemaResource}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  resource: {{maskinportenSchemaResource}}
+}
+
+docs {
+  WHEN the rights for a MaskinportenSchema resource are looked up the request fails with
+  400 AM-00042. The type is checked before the Delegable flag, so the detail names the type.
+}
+
+script:pre-request {
+  const { td, loginAsServiceOwner, scopes, serviceOwners } = require("./test/ServiceOwnerAPI/Scenarios/helpers.js");
+  const data = td();
+
+  bru.setVar("grantorPid", data.resourceDelegation.grantor.pid);
+  bru.setVar("recipientPid", data.resourceDelegation.recipient.pid);
+  bru.setVar("maskinportenSchemaResource", data.resourceDelegation.maskinportenSchemaResource);
+
+  await loginAsServiceOwner(serviceOwners.ttd, scopes.resourceDelegationWrite);
+}
+
+tests {
+  const { td } = require("./test/ServiceOwnerAPI/Scenarios/helpers.js");
+
+  test("WHEN the rights for a MaskinportenSchema resource are looked up, the request returns 400", function() {
+    expect(res.status).to.equal(400);
+  });
+
+  test("THEN the problem body carries AM-00042", function() {
+    const body = res.getBody();
+    expect(body.status).to.equal(400);
+    expect(body.code).to.equal("AM-00042");
+    expect(body.detail).to.equal("Resource '" + td().resourceDelegation.maskinportenSchemaResource + "' is of type MaskinportenSchema, which cannot be delegated through this API");
+  });
+}

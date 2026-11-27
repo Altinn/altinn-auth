@@ -11,6 +11,8 @@ docs {
     When an unknown resource is delegated the request fails
     When another service owner revokes a delegation on the resource the request is forbidden
     When the token lacks the resource delegation scope the request is forbidden
+    When another service owner looks up the rights for the resource the request is forbidden
+    When another service owner delegates the resource the request is forbidden
 
   None of the steps writes anything: every request is rejected before a delegation is
   created or removed, so the scenario needs no reset or cleanup.
