@@ -43,7 +43,7 @@ script:pre-request {
 }
 
 tests {
-  const { activityTypes, sameId, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
+  const { activityTypes, expectedText, sameId, testdata } = require("./test/EnduserAPI/ActivityLog/helpers.js");
   const td = testdata().request;
   const body = res.getBody();
 
@@ -77,5 +77,10 @@ tests {
     expect(e.byName).to.be.a("string").that.is.not.empty;
     expect(e.details).to.be.an("object");
     expect(e.details.requestedById).to.be.a("string").that.is.not.empty;
+  });
+
+  test("THEN the draft reads as a sentence in Bokmål, naming the service owner", function() {
+    const e = body.data[0];
+    expect(e.text).to.equal(expectedText(e));
   });
 }
