@@ -193,4 +193,10 @@ public static class AccessMgmtFeatureFlags
     /// <c>auditInfo</c> is then <c>null</c>.
     /// </summary>
     public const string EnableEnduserConnectionsChangeInfo = "AccessManagement.Enduser.ConnectionsChangeInfo";
+
+    /// <summary>
+    /// Checks the scope in a service owner's lookup on <c>maskinporten/delegations</c> against the prefixes
+    /// the organization owns in Samarbeidsportalen, instead of the <c>consumer_prefix</c> claims in the token.
+    /// </summary>
+    public const string MaskinportenValidateScopePrefixWithApi = "AccessManagement.Maskinporten.ValidateScopePrefixWithApi";
 }
