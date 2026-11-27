@@ -150,25 +150,6 @@ public interface IContextRetrievalService
     Task<List<ServiceResource>> GetResources(CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Gets a list of all available resources including Altinn Apps, Altinn 2 services and resources from the Resource Registry
-    /// </summary>
-    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
-    /// <returns>The resource list</returns>
-    Task<List<ServiceResource>> GetResourceList(CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Gets a single resource from the list of all available resources including Altinn Apps, Altinn 2 services and resources from the Resource Registry, if it exists.
-    /// </summary>
-    /// <param name="resourceId">The resource id</param>
-    /// <param name="org">Org code of the resource/app owner</param>
-    /// <param name="app">The app name</param>
-    /// <param name="serviceCode">Tha Altinn 2 Service Code</param>
-    /// <param name="serviceEditionCode">The Altinn 2 Service Edition Code</param>
-    /// <param name="cancellationToken">The <see cref="CancellationToken"/></param>
-    /// <returns>The resource if exists</returns>
-    Task<ServiceResource> GetResourceFromResourceList(string resourceId = null, string org = null, string app = null, string serviceCode = null, string serviceEditionCode = null, CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// Gets a Party based on partyId if the party is in the users reporteelist
     /// </summary>
     /// <param name="userId">The id of the authenticated user</param>
