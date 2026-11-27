@@ -54,7 +54,7 @@ tests {
     expect(res.status).to.equal(200);
     assert.isNotEmpty(data, "Expected data in response body to NOT be empty array");
     
-    // 147: konkursbo-tilgangsstyrer became a role (#4418), and the test-only skattegrunnlag-utvidet-tilgang was added (#4917).
+    // 147: konkursbo-tilgangsstyrer became a role (#4418), and skattegrunnlag-utvidet-tilgang was added (#4917).
     const expectedNumPackages = 147;
     assert.lengthOf(data, expectedNumPackages, `Expected response data to contain all ${expectedNumPackages} available packages`);
     

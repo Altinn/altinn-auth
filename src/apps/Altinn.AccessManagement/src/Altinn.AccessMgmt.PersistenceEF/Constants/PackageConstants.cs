@@ -4708,7 +4708,7 @@ public static class PackageConstants
     };
 
     /// <summary>
-    /// Represents the 'Skattegrunnlag - Utvidet tilgang' access package. Test only, for Skatteetaten's proof of concept (#4128).
+    /// Represents the 'Skattegrunnlag - Utvidet tilgang' access package.
     /// </summary>
     /// <remarks>
     /// - <c>Id:</c> 01a1b014-d16c-71d9-b145-e7508f7c8279
