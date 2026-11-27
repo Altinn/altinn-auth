@@ -4680,14 +4680,14 @@ public static class PackageConstants
     /// - <c>Id:</c> 4c859601-9b2b-4662-af39-846f4117ad7a
     /// - <c>URN:</c> urn:altinn:accesspackage:skattegrunnlag
     /// - <c>Provider:</c> Altinn3
-    /// - <c>Description:</c> Denne tilgangspakken gir fullmakter til tjenester knyttet til innhenting av skattegrunnlag. Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmakten gir.
+    /// - <c>Description:</c> Denne tilgangspakken gir tilgang til tjenester knyttet til rapportering av tredjepartsopplysninger. Opplysningene i rapporteringstjenestene har beskyttelsesbehov, og derfor gjelder følgende: Personer og systembrukere som får delegert tilgangspakken direkte fra oppgavegiver, får tilgang til å lese egne og andres innsendinger og tilbakemeldinger for samme oppgavegiver. Revisorer, regnskapsførere, forretningsførere for eiendom som er registrert på oppgavegiver i Enhetsregisteret, har allerede tilgang til å rapportere, og til å lese sine og andres innsendinger og tilbakemeldinger. Virksomheter som får delegert tilgangspakken, får tilgang til å lese egne innsendinger og tilbakemeldinger. Hvis en virksomhet skal ha tilgang til å se andres innsendinger og tilbakemeldinger på vegne av samme oppgavegiver, må oppgavegiveren delegere tilgangspakken «Skattegrunnlag - Utvidet tilgang» til denne virksomheten. Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmakten gir.
     /// </remarks>
     public static ConstantDefinition<Package> TaxBase { get; } = new ConstantDefinition<Package>("4c859601-9b2b-4662-af39-846f4117ad7a")
     {
         Entity = new()
         {
             Name = "Skattegrunnlag",
-            Description = "Denne tilgangspakken gir fullmakter til tjenester knyttet til innhenting av skattegrunnlag. Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmakten gir.",
+            Description = "Denne tilgangspakken gir tilgang til tjenester knyttet til rapportering av tredjepartsopplysninger. Opplysningene i rapporteringstjenestene har beskyttelsesbehov, og derfor gjelder følgende: Personer og systembrukere som får delegert tilgangspakken direkte fra oppgavegiver, får tilgang til å lese egne og andres innsendinger og tilbakemeldinger for samme oppgavegiver. Revisorer, regnskapsførere, forretningsførere for eiendom som er registrert på oppgavegiver i Enhetsregisteret, har allerede tilgang til å rapportere, og til å lese sine og andres innsendinger og tilbakemeldinger. Virksomheter som får delegert tilgangspakken, får tilgang til å lese egne innsendinger og tilbakemeldinger. Hvis en virksomhet skal ha tilgang til å se andres innsendinger og tilbakemeldinger på vegne av samme oppgavegiver, må oppgavegiveren delegere tilgangspakken «Skattegrunnlag - Utvidet tilgang» til denne virksomheten. Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmakten gir.",
             Urn = "urn:altinn:accesspackage:skattegrunnlag",
             Code = "skattegrunnlag",
             IsDelegable = true,
@@ -4699,11 +4699,11 @@ public static class PackageConstants
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Tax base"),
-            KeyValuePair.Create("Description", "This access package provides authorizations for services related to the collection of tax basis information. In the event of regulatory changes or the introduction of new digital services, there may be changes in the access that the authorization provides.")
+            KeyValuePair.Create("Description", "This access package provides access to services related to reporting of third-party information. The information in the reporting services requires protection, and therefore the following applies: Persons and system users who are delegated the access package directly by the reporting entity get access to read their own and others' submissions and feedback for the same reporting entity. Auditors, accountants and property managers registered on the reporting entity in the Central Coordinating Register for Legal Entities already have access to report, and to read their own and others' submissions and feedback. Organizations that are delegated the access package get access to read their own submissions and feedback. If an organization is to have access to see others' submissions and feedback on behalf of the same reporting entity, the reporting entity must delegate the access package «Tax base - Extended access» to this organization. In the event of regulatory changes or the introduction of new digital services, there may be changes in the access that the authorization provides.")
         ),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Skattegrunnlag"),
-            KeyValuePair.Create("Description", "Denne tilgangspakken gir fullmakter til tenester knytt til innhenting av skattegrunnlag. Ved regelverksendringar eller innføring av nye digitale tenester kan det bli endringar i tilgangar som fullmakta gir.")
+            KeyValuePair.Create("Description", "Denne tilgangspakken gir tilgang til tenester knytt til rapportering av tredjepartsopplysningar. Opplysningane i rapporteringstenestene har behov for vern, og difor gjeld følgjande: Personar og systembrukarar som får delegert tilgangspakken direkte frå oppgåvegivar, får tilgang til å lese eigne og andre sine innsendingar og tilbakemeldingar for same oppgåvegivar. Revisorar, rekneskapsførarar og forretningsførarar for eigedom som er registrerte på oppgåvegivar i Einingsregisteret, har allereie tilgang til å rapportere, og til å lese sine og andre sine innsendingar og tilbakemeldingar. Verksemder som får delegert tilgangspakken, får tilgang til å lese eigne innsendingar og tilbakemeldingar. Dersom ei verksemd skal ha tilgang til å sjå andre sine innsendingar og tilbakemeldingar på vegner av same oppgåvegivar, må oppgåvegivaren delegere tilgangspakken «Skattegrunnlag - Utvida tilgang» til denne verksemda. Ved regelverksendringar eller innføring av nye digitale tenester kan det bli endringar i tilgangar som fullmakta gir.")
         ),
     };
 
@@ -4714,14 +4714,14 @@ public static class PackageConstants
     /// - <c>Id:</c> 01a1b014-d16c-71d9-b145-e7508f7c8279
     /// - <c>URN:</c> urn:altinn:accesspackage:skattegrunnlag-utvidet-tilgang
     /// - <c>Provider:</c> Altinn3
-    /// - <c>Description:</c> Denne tilgangspakken gir tilganger til å rapportere tredjepartsopplysninger på vegne av oppgavegiver for de skattegrunnlagsordningene som er listet her. Tilgangspakken gir også utvidede tilganger til å se alle innsendinger og tilbakemeldinger for oppgavegiveren, også når andre har sendt inn.
+    /// - <c>Description:</c> Denne tilgangspakken gir tilgang til tjenester knyttet til rapportering av tredjepartsopplysninger. Opplysningene i rapporteringstjenestene har beskyttelsesbehov, og denne tilgangspakken gir virksomheter utvidet tilgang til også å lese andres innsendinger og tilbakemeldinger for samme oppgavegiver. Noen aktører har allerede utvidet tilgang og har ikke behov for denne tilgangspakken. Dette gjelder revisorer, regnskapsførere, forretningsførere for eiendom som er registrert på oppgavegiver i Enhetsregisteret, og personer eller systembrukere som har fått delegert tilgangspakken «Skattegrunnlag» direkte fra oppgavegiver. Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmakten gir.
     /// </remarks>
     public static ConstantDefinition<Package> TaxBaseExtendedAccess { get; } = new ConstantDefinition<Package>("01a1b014-d16c-71d9-b145-e7508f7c8279")
     {
         Entity = new()
         {
             Name = "Skattegrunnlag - Utvidet tilgang",
-            Description = "Denne tilgangspakken gir tilganger til å rapportere tredjepartsopplysninger på vegne av oppgavegiver for de skattegrunnlagsordningene som er listet her. Tilgangspakken gir også utvidede tilganger til å se alle innsendinger og tilbakemeldinger for oppgavegiveren, også når andre har sendt inn.",
+            Description = "Denne tilgangspakken gir tilgang til tjenester knyttet til rapportering av tredjepartsopplysninger. Opplysningene i rapporteringstjenestene har beskyttelsesbehov, og denne tilgangspakken gir virksomheter utvidet tilgang til også å lese andres innsendinger og tilbakemeldinger for samme oppgavegiver. Noen aktører har allerede utvidet tilgang og har ikke behov for denne tilgangspakken. Dette gjelder revisorer, regnskapsførere, forretningsførere for eiendom som er registrert på oppgavegiver i Enhetsregisteret, og personer eller systembrukere som har fått delegert tilgangspakken «Skattegrunnlag» direkte fra oppgavegiver. Ved regelverksendringer eller innføring av nye digitale tjenester kan det bli endringer i tilganger som fullmakten gir.",
             Urn = "urn:altinn:accesspackage:skattegrunnlag-utvidet-tilgang",
             Code = "skattegrunnlag-utvidet-tilgang",
             IsDelegable = true,
@@ -4733,11 +4733,11 @@ public static class PackageConstants
         },
         EN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Tax base - Extended access"),
-            KeyValuePair.Create("Description", "This access package provides access to report third-party information on behalf of the reporting entity for the tax base schemes listed here. The access package also provides extended access to see all submissions and feedback for the reporting entity, also when others have submitted them.")
+            KeyValuePair.Create("Description", "This access package provides access to services related to reporting of third-party information. The information in the reporting services requires protection, and this access package gives organizations extended access to also read others' submissions and feedback for the same reporting entity. Some actors already have extended access and do not need this access package. This applies to auditors, accountants and property managers registered on the reporting entity in the Central Coordinating Register for Legal Entities, and to persons or system users who have been delegated the access package «Tax base» directly by the reporting entity. In the event of regulatory changes or the introduction of new digital services, there may be changes in the access that the authorization provides.")
         ),
         NN = TranslationEntryList.Create(
             KeyValuePair.Create("Name", "Skattegrunnlag - Utvida tilgang"),
-            KeyValuePair.Create("Description", "Denne tilgangspakken gir tilgangar til å rapportere tredjepartsopplysningar på vegner av oppgåvegivar for dei skattegrunnlagsordningane som er lista her. Tilgangspakken gir også utvida tilgangar til å sjå alle innsendingar og tilbakemeldingar for oppgåvegivaren, også når andre har sendt inn.")
+            KeyValuePair.Create("Description", "Denne tilgangspakken gir tilgang til tenester knytt til rapportering av tredjepartsopplysningar. Opplysningane i rapporteringstenestene har behov for vern, og denne tilgangspakken gir verksemder utvida tilgang til også å lese andre sine innsendingar og tilbakemeldingar for same oppgåvegivar. Nokre aktørar har allereie utvida tilgang og har ikkje behov for denne tilgangspakken. Dette gjeld revisorar, rekneskapsførarar og forretningsførarar for eigedom som er registrerte på oppgåvegivar i Einingsregisteret, og personar eller systembrukarar som har fått delegert tilgangspakken «Skattegrunnlag» direkte frå oppgåvegivar. Ved regelverksendringar eller innføring av nye digitale tenester kan det bli endringar i tilgangar som fullmakta gir.")
         ),
         TestOnly = true,
     };
