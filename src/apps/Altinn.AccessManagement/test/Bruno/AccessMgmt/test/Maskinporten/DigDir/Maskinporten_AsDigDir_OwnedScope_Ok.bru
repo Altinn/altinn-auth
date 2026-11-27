@@ -1,0 +1,49 @@
+meta {
+  name: Maskinporten_AsDigDir_OwnedScope_Ok
+  seq: 6
+}
+
+get {
+  url: {{baseUrl}}/accessmanagement/api/v1/maskinporten/delegations?scope={{scope}}
+  body: none
+  auth: inherit
+}
+
+params:query {
+  scope: {{scope}}
+}
+
+headers {
+  Accept: application/json
+}
+
+script:pre-request {
+  const testdata = require(`./testdata/maskinportenschema/${bru.getEnvVar("tokenEnv")}testdata.js`);
+  const sharedtestdata = require(`./testdata/sharedtestdata.js`);
+  bru.setVar("scope", sharedtestdata.scopes.k6Read);
+  
+  var getTokenParameters = {
+    auth_org: testdata.digdir.partyid,
+    auth_orgNo: testdata.digdir.orgno,
+    auth_tokenType: sharedtestdata.authTokenType.enterprise,
+    auth_scopes: sharedtestdata.auth_scopes.maskinportenDelegations
+  }
+  
+  const testTokenGenerator = require(`./TestToolsTokenGenerator.js`);
+  const token = await testTokenGenerator.getToken(getTokenParameters);
+  bru.setVar("bearerToken",  token);
+}
+
+tests {
+  // Should be the same as the .bru request file. Used as prefix in test name which also shows in test result in pipeline.
+  const requestName = "Maskinporten_AsDigDir_OwnedScope_Ok";
+  const body = res.getBody();
+  
+  // DigDir owns the "test" prefix in the Samarbeidsportalen metadata API, so the lookup is allowed without the admin scope.
+  test(requestName + "|HttpStatus.OK and Body.Data contain expected delegation", function() {
+    expect(res.status).to.equal(200);
+    assert.isArray(body, 'Response should be an array');
+    assert.isTrue(body.some(item => item.resourceid === 'ttd-am-k6'), 'Expected a delegation for ttd-am-k6');
+    body.forEach(item => assert.include(item.scopes, bru.getVar("scope")));
+  });
+}

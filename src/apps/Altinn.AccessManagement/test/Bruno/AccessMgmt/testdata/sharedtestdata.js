@@ -2,7 +2,9 @@ module.exports =
 {
     "scopes": {
         "read": "altinn:instances:read",
-        "k6Read": "test:am/k6.read"
+        "k6Read": "test:am/k6.read",
+        "notOwnedByDigdir": "afp:am/bruno.read",
+        "prefixLookalike": "testx:am/k6.read"
     },
     "auth_scopes": {
         "portalEnduser": "altinn:portal/enduser",
