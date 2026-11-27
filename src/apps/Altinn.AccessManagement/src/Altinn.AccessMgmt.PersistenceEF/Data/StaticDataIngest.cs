@@ -214,6 +214,7 @@ public static partial class StaticDataIngest
                 activityType.Status = seed.Entity.Status;
                 activityType.Name = seed.Entity.Name;
                 activityType.Description = seed.Entity.Description;
+                activityType.Text = seed.Entity.Text;
             },
             cancellationToken
         );

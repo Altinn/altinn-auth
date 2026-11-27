@@ -18,6 +18,7 @@ public class ActivityTypeConfiguration : IEntityTypeConfiguration<ActivityType>
 
         builder.Property(p => p.Name).IsRequired();
         builder.Property(p => p.Description).IsRequired();
+        builder.Property(p => p.Text).IsRequired();
 
         builder.HasIndex(p => new { p.Type, p.Subtype, p.Trigger, p.Status })
             .IsUnique()

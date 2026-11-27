@@ -51,11 +51,12 @@ public abstract class ActivityLogAreaControllerBase(IActivityLogService activity
             return error;
         }
 
+        var languageCode = this.GetLanguageCode();
         var result = area.Slice switch
         {
-            ActivityLogSlice.Maskinporten => await activityLogService.GetMaskinportenSchemaActivityLog(query.Party, direction, filter, size, page, cancellationToken),
-            ActivityLogSlice.Request => await activityLogService.GetRequestActivityLog(query.Party, direction, filter, size, page, cancellationToken),
-            _ => await activityLogService.GetConnectionsActivityLog(query.Party, direction, filter, size, page, cancellationToken),
+            ActivityLogSlice.Maskinporten => await activityLogService.GetMaskinportenSchemaActivityLog(query.Party, direction, filter, size, page, languageCode, cancellationToken),
+            ActivityLogSlice.Request => await activityLogService.GetRequestActivityLog(query.Party, direction, filter, size, page, languageCode, cancellationToken),
+            _ => await activityLogService.GetConnectionsActivityLog(query.Party, direction, filter, size, page, languageCode, cancellationToken),
         };
 
         return Ok(PaginatedResult.Create(result.Items, result.HasMore ? NextLink(size, page + 1) : null));
