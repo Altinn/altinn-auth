@@ -81,6 +81,17 @@ public class ScopePrefixValidatorTest
         Assert.Equal(["altinn:test", "skd:test"], result);
     }
 
+    [Fact]
+    public async Task NoOrganization_OwnsNoPrefixes_WithoutFetchingList()
+    {
+        _client.Fail();
+
+        var result = await _target.GetUnownedScopes(null, ["altinn:test", "skd:test"], TestContext.Current.CancellationToken);
+
+        Assert.Equal(["altinn:test", "skd:test"], result);
+        Assert.Equal(0, _client.CallCount);
+    }
+
     [Theory]
     [InlineData("skdx:test")] // longer prefix that starts with an owned one
     [InlineData("skd")] // the prefix alone, with no scope name

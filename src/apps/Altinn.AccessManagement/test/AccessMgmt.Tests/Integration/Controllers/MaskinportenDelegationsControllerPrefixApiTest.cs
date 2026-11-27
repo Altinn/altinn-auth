@@ -148,6 +148,9 @@ namespace Altinn.AccessManagement.Tests.Integration.Controllers
         [InlineData(null)] // no consumer claim
         [InlineData("not json")]
         [InlineData("""{ "authority":"iso6523-actorid-upis", "ID":"0192:12345"}""")] // not a valid organization number
+        [InlineData("null")] // valid JSON, but not an object
+        [InlineData("[]")]
+        [InlineData("""{ "authority":"iso6523-actorid-upis", "ID":991825827}""")] // ID is not a string
         public async Task MissingOrMalformedConsumerClaim_ReturnsForbidden(string? consumerClaim)
         {
             ClaimsPrincipal principal = PrincipalUtil.GetClaimsPrincipal("SERVICEOWNER", ServiceOwnerOrgNumber, LookupScope);

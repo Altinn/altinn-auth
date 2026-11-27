@@ -43,6 +43,12 @@ internal sealed partial class ScopePrefixValidator
     /// <inheritdoc/>
     public async ValueTask<IReadOnlyList<string>> GetUnownedScopes(string? organizationNumber, IEnumerable<string> scopes, CancellationToken cancellationToken = default)
     {
+        // No organization owns no prefixes, so the list isn't needed. This also avoids failing when it is unavailable.
+        if (organizationNumber is null)
+        {
+            return scopes.ToList();
+        }
+
         var lookup = await GetLookup(cancellationToken);
         var ownedPrefixes = lookup.GetPrefixes(organizationNumber);
 

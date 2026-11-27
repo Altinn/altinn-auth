@@ -163,8 +163,10 @@ namespace Altinn.AccessManagement.Api.ServiceOwner.Controllers
                     ? consumer.Value.ToString()
                     : null;
             }
-            catch (FormatException)
+            catch (Exception ex) when (ex is FormatException or InvalidOperationException)
             {
+                // FormatException: not a valid organization number.
+                // InvalidOperationException: valid JSON, but not an object with string values.
                 return null;
             }
         }
