@@ -66,21 +66,34 @@ public class ConnectionsControllerTest : IClassFixture<ApiFixture>
             services.AddSingleton<IExternalClient, ExternalClientMock>();
         });
 
-        fixture.EnsureSeedOnce<ConnectionsControllerTest>(async db =>
+        // Synchronous: EnsureSeedOnce takes Action<AppDbContext>, so an async lambda would be async void.
+        fixture.EnsureSeedOnce<ConnectionsControllerTest>(db =>
         {
-            db.Parties.AddRange(TestData.Parties);
-            await db.SaveChangesAsync();
+            db.Assignments.Add(new Assignment
+            {
+                FromId = TestEntities.OrganizationVerdiqAS.Id,
+                ToId = TestEntities.PersonPaula.Id,
+                RoleId = RoleConstants.Agent,
+            });
+            db.SaveChanges();
         });
 
-        _client = fixture.CreateTestClient(c =>
-            c.DefaultRequestHeaders.Authorization =
-                new AuthenticationHeaderValue("Bearer", TestTokens.ForUser(1337)));
+        var token = TestTokenGenerator.CreateToken(new ClaimsIdentity("mock"), claims =>
+        {
+            claims.Add(new Claim(AltinnCoreClaimTypes.PartyUuid, TestEntities.OrganizationVerdiqAS.Id.ToString()));
+            claims.Add(new Claim("scope", AuthzConstants.SCOPE_ENDUSER_CONNECTIONS_TOOTHERS_READ));
+        });
+
+        _client = fixture.BuildConfiguration(c =>
+            c.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token));
     }
 
     [Fact]
-    public async Task GetConnection_ForExistingParty_Returns200()
+    public async Task GetConnections_ForSeededAssignment_Returns200()
     {
-        var response = await _client.GetAsync("/accessmanagement/api/v1/connections/42");
+        // The scope check applies only when `from` or `to` equals `party`; from = party needs the to-others scope.
+        var party = TestEntities.OrganizationVerdiqAS.Id;
+        var response = await _client.GetAsync($"/accessmanagement/api/v1/enduser/connections?party={party}&from={party}");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
@@ -90,7 +103,7 @@ public class ConnectionsControllerTest : IClassFixture<ApiFixture>
 ### Rules
 
 1. **Wire up the fixture in the constructor.** After the first
-   `CreateClient()` the host is frozen.
+   `BuildConfiguration()` or `Server.CreateClient()` the host is frozen.
 2. **Seed once.** Use `EnsureSeedOnce<TKey>` so re-entrant test classes don't
    duplicate data.
 3. **One `HttpClient` per class, stored in a field.** Don't build a new one

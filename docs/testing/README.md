@@ -21,7 +21,7 @@ self-contained; none of them is a wall of text.
 | 7 | [AWESOME_ASSERTIONS_GUIDELINES.md](AWESOME_ASSERTIONS_GUIDELINES.md) | When and how to use AwesomeAssertions |
 | 8 | [COVERAGE.md](COVERAGE.md) | Running coverage locally, per-assembly targets (reported, not gated) |
 | 9 | [CI.md](CI.md) | How tests run in the pipeline, Microsoft Testing Platform (MTP), artifacts |
-| 10 | [BRUNO_API_TESTS.md](BRUNO_API_TESTS.md) | The Bruno API collections — manual/exploratory API tests that double as a behavioral spec for the C# integration tests |
+| 10 | [BRUNO_API_TESTS.md](BRUNO_API_TESTS.md) | The Bruno API collections — API tests against the deployed environments, run in Azure DevOps after deployment and by hand, that double as a behavioral spec for the C# integration tests |
 | 11 | [../SONARCLOUD.md](../SONARCLOUD.md) | Retained analysis configuration; scheduled scans removed |
 
 ## TL;DR for newcomers
@@ -37,7 +37,8 @@ self-contained; none of them is a wall of text.
   **working Docker or Podman** on your machine. See
   [GETTING_STARTED.md](GETTING_STARTED.md).
 - **Shared test code** lives in `Altinn.AccessManagement.TestUtils`
-  (fixtures, mocks, test certificates, token generator).
+  (fixtures, mocks, baseline seed data, token generator) and, for the test
+  signing certificate and Postgres engine, in `src/libs/Altinn.Authorization.Testing`.
 - **Run everything:** `dotnet test` from the repo root.
 - **Run with coverage locally:** `pwsh eng/testing/run-coverage.ps1`.
 - **Coverage targets (reported, not gated):** per-assembly line-coverage targets in
