@@ -166,6 +166,9 @@ public partial class ConnectionsControllerTest
                 claims.Add(new Claim("scope", string.Join(" ", scopes)));
             });
             client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+
+            // The assertions look rights up by their English names (read, access, subscribe).
+            client.DefaultRequestHeaders.Add("Accept-Language", "en");
             return client;
         }
 

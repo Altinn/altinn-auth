@@ -9,6 +9,7 @@ using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -581,7 +582,8 @@ public class MaskinportenSupplierServiceTests : IClassFixture<ApiFixture>
             audit ?? Mock.Of<IAuditAccessor>(),
             connection ?? Mock.Of<IConnectionService>(),
             singleRights ?? Mock.Of<ISingleRightsService>(),
-            entity ?? Mock.Of<IEntityService>());
+            entity ?? Mock.Of<IEntityService>(),
+            scope.ServiceProvider.GetRequiredService<ITranslationService>());
 
         return await act(service);
     }

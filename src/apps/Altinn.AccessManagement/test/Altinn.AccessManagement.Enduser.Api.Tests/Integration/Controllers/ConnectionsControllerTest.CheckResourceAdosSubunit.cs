@@ -122,6 +122,7 @@ public partial class ConnectionsControllerTest
                 claims.Add(new Claim("scope", string.Join(" ", scopes)));
             });
             client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            client.DefaultRequestHeaders.Add("Accept-Language", "en"); // assertions use the English right name "read"
             return client;
         }
 
@@ -251,6 +252,7 @@ public partial class ConnectionsControllerTest
                 claims.Add(new Claim("scope", string.Join(" ", scopes)));
             });
             client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+            client.DefaultRequestHeaders.Add("Accept-Language", "en"); // assertions use the English right name "read"
             return client;
         }
 

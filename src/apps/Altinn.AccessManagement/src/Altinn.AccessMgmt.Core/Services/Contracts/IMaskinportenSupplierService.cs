@@ -52,12 +52,14 @@ public interface IMaskinportenSupplierService
     /// <param name="consumerId">The consumer organization ID</param>
     /// <param name="supplierId">Optional supplier filter</param>
     /// <param name="resourceId">Optional resource filter</param>
+    /// <param name="languageCode">Language for resource texts (ISO 639-2, e.g. "eng"); bokmål when empty</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>List of resource permissions</returns>
     Task<Result<IEnumerable<ResourcePermissionDto>>> GetSupplierResources(
         Guid consumerId,
         Guid? supplierId = null,
         Guid? resourceId = null,
+        string languageCode = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
@@ -66,12 +68,14 @@ public interface IMaskinportenSupplierService
     /// <param name="supplierId">The supplier organization ID</param>
     /// <param name="consumerId">Optional consumer filter</param>
     /// <param name="resourceId">Optional resource filter</param>
+    /// <param name="languageCode">Language for resource texts (ISO 639-2, e.g. "eng"); bokmål when empty</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>List of resource permissions</returns>
     Task<Result<IEnumerable<ResourcePermissionDto>>> GetConsumerResources(
         Guid supplierId,
         Guid? consumerId = null,
         Guid? resourceId = null,
+        string languageCode = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>

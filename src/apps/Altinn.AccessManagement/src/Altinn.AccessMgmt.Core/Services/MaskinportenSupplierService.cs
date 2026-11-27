@@ -1,5 +1,6 @@
 ﻿using Altinn.AccessManagement.Core.Errors;
 using Altinn.AccessManagement.Core.Services.Interfaces;
+using Altinn.AccessMgmt.Core.Extensions;
 using Altinn.AccessMgmt.Core.Services.Contracts;
 using Altinn.AccessMgmt.Core.Utils;
 using Altinn.AccessMgmt.Core.Validation;
@@ -8,6 +9,7 @@ using Altinn.AccessMgmt.PersistenceEF.Constants;
 using Altinn.AccessMgmt.PersistenceEF.Contexts;
 using Altinn.AccessMgmt.PersistenceEF.Extensions;
 using Altinn.AccessMgmt.PersistenceEF.Models;
+using Altinn.AccessMgmt.PersistenceEF.Utils;
 using Altinn.Authorization.Api.Contracts.AccessManagement;
 using Altinn.Authorization.Api.Contracts.AccessManagement.Enums;
 using Altinn.Authorization.ProblemDetails;
@@ -23,7 +25,8 @@ public class MaskinportenSupplierService(
     IAuditAccessor auditAccessor,
     IConnectionService connectionService,
     ISingleRightsService singleRightsService,
-    IEntityService entityService) : IMaskinportenSupplierService
+    IEntityService entityService,
+    ITranslationService translationService) : IMaskinportenSupplierService
 {
     private const string MaskinportenSchemaTypeName = "MaskinportenSchema";
 
@@ -217,6 +220,7 @@ public class MaskinportenSupplierService(
         Guid consumerId,
         Guid? supplierId = null,
         Guid? resourceId = null,
+        string languageCode = null,
         CancellationToken cancellationToken = default)
     {
         var consumer = await GetEntity(consumerId, cancellationToken);
@@ -262,6 +266,8 @@ public class MaskinportenSupplierService(
             })
             .ToList();
 
+        await groupedByResource.Select(r => r.Resource).TranslateDistinctInPlaceAsync(translationService, languageCode);
+
         return groupedByResource;
     }
 
@@ -270,6 +276,7 @@ public class MaskinportenSupplierService(
         Guid supplierId,
         Guid? consumerId = null,
         Guid? resourceId = null,
+        string languageCode = null,
         CancellationToken cancellationToken = default)
     {
         var supplier = await GetEntity(supplierId, cancellationToken);
@@ -314,6 +321,8 @@ public class MaskinportenSupplierService(
                 }).ToList()
             })
             .ToList();
+
+        await groupedByResource.Select(r => r.Resource).TranslateDistinctInPlaceAsync(translationService, languageCode);
 
         return groupedByResource;
     }
