@@ -1215,7 +1215,7 @@ public partial class ConnectionService(
                 {
                     Subject = PartyUrn.PartyUuid.Create(fromParty.PartyUuid),
                     Resource = ResourceIdUrn.ResourceId.Create(ResourceIdentifier.CreateUnchecked(resource)),
-                    Action = ActionUrn.ActionId.Create(ActionIdentifier.Parse(rightKey.Action.Urn()))
+                    Action = ActionUrn.ActionId.Create(ActionIdentifier.CreateUnchecked(rightKey.Action.Value))
                 };
 
                 AccessListAuthorizationResponse accessListAuthorizationResponse = await accessListsAuthorizationClient.AuthorizePartyForAccessList(accessListAuthorizationRequest, cancellationToken);
