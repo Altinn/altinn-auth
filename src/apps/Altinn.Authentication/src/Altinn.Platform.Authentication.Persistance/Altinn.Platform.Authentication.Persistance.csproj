@@ -4,6 +4,12 @@
 		<TargetFramework>net10.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+		<!--
+		  Clear of the import warning baseline in Directory.Build.props (#4597), so opt out of it and
+		  let CI's -warnaserror apply again: only NuGet audit advisories stay non-fatal.
+		  Drop this once the baseline is removed.
+		-->
+		<WarningsNotAsErrors>NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<GenerateEmbeddedFilesManifest>true</GenerateEmbeddedFilesManifest>
 	</PropertyGroup>
