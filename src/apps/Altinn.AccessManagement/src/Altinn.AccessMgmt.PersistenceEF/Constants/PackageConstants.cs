@@ -4739,7 +4739,6 @@ public static class PackageConstants
             KeyValuePair.Create("Name", "Skattegrunnlag - Utvida tilgang"),
             KeyValuePair.Create("Description", "Denne tilgangspakken gir tilgang til tenester knytt til rapportering av tredjepartsopplysningar. Opplysningane i rapporteringstenestene har behov for vern, og denne tilgangspakken gir verksemder utvida tilgang til også å lese andre sine innsendingar og tilbakemeldingar for same oppgåvegivar. Nokre aktørar har allereie utvida tilgang og har ikkje behov for denne tilgangspakken. Dette gjeld revisorar, rekneskapsførarar og forretningsførarar for eigedom som er registrerte på oppgåvegivar i Einingsregisteret, og personar eller systembrukarar som har fått delegert tilgangspakken «Skattegrunnlag» direkte frå oppgåvegivar. Ved regelverksendringar eller innføring av nye digitale tenester kan det bli endringar i tilgangar som fullmakta gir.")
         ),
-        TestOnly = true,
     };
 
     /// <summary>
