@@ -144,7 +144,7 @@ namespace Altinn.AccessMgmt.Core.Services
                         db.Assignments.Add(adminAssignment);
                     }
 
-                    var estateIds = await GetBankruptcyEstateIds(partyUuid, cancellationToken);
+                    var estateIds = await GetActiveBankruptcyEstateIds(partyUuid, cancellationToken);
                     await GrantEstateAccess(estateIds.Select(estateId => (estateId, toUuid)).ToList(), cancellationToken);
                 },
                 cancellationToken) is { } conflict)
@@ -274,11 +274,30 @@ namespace Altinn.AccessMgmt.Core.Services
                 .ToList();
         }
 
+        /// <summary>
+        /// Gets every estate (konkursbo) the party is estate administrator (bostyrer) for, active or not. Used when
+        /// access is revoked, so older delegations on estates that are no longer active are removed as well.
+        /// </summary>
         private async Task<List<Guid>> GetBankruptcyEstateIds(Guid party, CancellationToken cancellationToken)
         {
             return await db.Assignments
                 .AsNoTracking()
                 .Where(a => a.ToId == party && a.RoleId == RoleConstants.EstateAdministrator)
+                .Select(a => a.FromId)
+                .Distinct()
+                .ToListAsync(cancellationToken);
+        }
+
+        /// <summary>
+        /// Gets the active estates (konkursbo) the party is estate administrator (bostyrer) for. An estate is active
+        /// when its entity is not deleted (<c>IsDeleted</c> is false). Used when a bankruptcy estate
+        /// administrator is added, so access is only delegated for estates that are still in use.
+        /// </summary>
+        private async Task<List<Guid>> GetActiveBankruptcyEstateIds(Guid party, CancellationToken cancellationToken)
+        {
+            return await db.Assignments
+                .AsNoTracking()
+                .Where(a => a.ToId == party && a.RoleId == RoleConstants.EstateAdministrator && !a.From.IsDeleted)
                 .Select(a => a.FromId)
                 .Distinct()
                 .ToListAsync(cancellationToken);
@@ -457,7 +476,8 @@ namespace Altinn.AccessMgmt.Core.Services
         Task<Result<List<BankruptcyEstateAdministratorDto>>> GetBankruptcyEstateAdministrators(Guid partyUuid, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Adds a bankruptcy estate administrator to a given party.
+        /// Adds a bankruptcy estate administrator to a given party, and gives the administrator the estate
+        /// administrator packages on the party's active estates (konkursbo), those that are not deleted.
         /// </summary>
         /// <param name="partyUuid">The unique identifier of the party.</param>
         /// <param name="toUuid">The unique identifier of the administrator to add.</param>
@@ -467,7 +487,8 @@ namespace Altinn.AccessMgmt.Core.Services
         Task<Result<AssignmentDto>> AddBankruptcyEstateAdministrator(Guid partyUuid, Guid toUuid, Action<ConnectionOptions> configureConnections, CancellationToken cancellationToken = default);
 
         /// <summary>
-        /// Revokes a bankruptcy estate administrator from a given party.
+        /// Revokes a bankruptcy estate administrator from a given party, and removes the administrator's access on
+        /// all of the party's estates (konkursbo), including those that are no longer active.
         /// </summary>
         /// <param name="partyUuid">The unique identifier of the party.</param>
         /// <param name="toUuid">The unique identifier of the administrator to revoke.</param>

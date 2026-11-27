@@ -62,6 +62,11 @@ public class BankruptcyDelegationControllerTest
     private static readonly Guid EstateOne = Guid.Parse("b0a7e5c1-0002-4000-8000-000000000001");
     private static readonly Guid EstateTwo = Guid.Parse("b0a7e5c1-0002-4000-8000-000000000002");
 
+    /// <summary>
+    /// An estate (konkursbo) that is deleted in ER and so not active. Seeded by <see cref="SeedClosedEstate"/>.
+    /// </summary>
+    private static readonly Guid ClosedEstate = Guid.Parse("01a21a00-5095-7000-8000-000000000001");
+
     private const string UlrikUsername = "ulrikukjent";
 
     private static readonly Guid[] AssistantIds = [ExistingAdmin, AssistantAnne, AssistantArne, AssistantAstrid, AssistantAsle, AssistantAud];
@@ -103,6 +108,19 @@ public class BankruptcyDelegationControllerTest
             db.Assignments.Add(new Assignment { FromId = LawyerBodil, ToId = assistant, RoleId = RoleConstants.Rightholder });
         }
 
+        db.SaveChanges();
+    }
+
+    /// <summary>
+    /// Seeds <see cref="ClosedEstate"/>, a deleted estate (not active) that still has Bodil as <c>bostyrer</c>.
+    /// </summary>
+    private static void SeedClosedEstate(AppDbContext db)
+    {
+        var closedEstate = Estate(ClosedEstate, "Konkursbo Avslutta", "399970003", 50970103);
+        closedEstate.IsDeleted = true;
+        closedEstate.DeletedAt = new DateTimeOffset(2025, 6, 30, 0, 0, 0, TimeSpan.Zero);
+        db.Entities.Add(closedEstate);
+        db.Assignments.Add(new Assignment { FromId = ClosedEstate, ToId = LawyerBodil, RoleId = RoleConstants.EstateAdministrator });
         db.SaveChanges();
     }
 
@@ -324,7 +342,7 @@ public class BankruptcyDelegationControllerTest
             {
                 services.AddSingleton<IUserProfileLookupService, EstatePersonLookupMock>();
             });
-            Fixture.EnsureSeedOnce<AddAdministrator>(SeedBankruptcyEstates, db =>
+            Fixture.EnsureSeedOnce<AddAdministrator>(SeedBankruptcyEstates, SeedClosedEstate, db =>
             {
                 // Arne already has a rightholder assignment on estate one with one of the three packages.
                 var arneOnEstateOne = new Assignment { FromId = EstateOne, ToId = AssistantArne, RoleId = RoleConstants.Rightholder };
@@ -337,8 +355,9 @@ public class BankruptcyDelegationControllerTest
         public ApiFixture Fixture { get; }
 
         /// <summary>
-        /// Bodil makes Anne administrator by SSN and last name. Expects the administrator role from Bodil to Anne,
-        /// and a rightholder assignment from each estate to Anne carrying the three bankruptcy estate packages.
+        /// Bodil makes Anne administrator by SSN and last name. Bodil is bostyrer on two active estates and on one
+        /// deleted estate. Expects the administrator role from Bodil to Anne, a rightholder assignment from each
+        /// active estate to Anne carrying the three bankruptcy estate packages, and nothing on the deleted estate.
         /// </summary>
         [Fact]
         public async Task AddAdministrator_BySsn_Returns200AndDelegatesEstatePackages()
@@ -557,6 +576,11 @@ public class BankruptcyDelegationControllerTest
                         .ToListAsync(TestContext.Current.CancellationToken);
                     Assert.Equal(EstatePackages.Order(), packages.Order());
                 }
+
+                // The deleted estate is not active, so nothing is delegated on it.
+                var closedEstateAccess = await db.Assignments.AsNoTracking()
+                    .AnyAsync(a => a.FromId == ClosedEstate && a.ToId == user, TestContext.Current.CancellationToken);
+                Assert.False(closedEstateAccess);
             });
         }
 
@@ -620,13 +644,14 @@ public class BankruptcyDelegationControllerTest
         public RevokeAdministrator(ApiFixture fixture)
         {
             Fixture = fixture;
-            Fixture.EnsureSeedOnce<RevokeAdministrator>(SeedBankruptcyEstates, db =>
+            Fixture.EnsureSeedOnce<RevokeAdministrator>(SeedBankruptcyEstates, SeedClosedEstate, db =>
             {
-                // Anne, Arne, Asle and Aud are full administrators: the role from Bodil plus packages on both estates.
+                // Anne, Arne, Asle and Aud are full administrators: the role from Bodil plus packages on both active
+                // estates, and an older delegation on the deleted estate from before it was closed.
                 foreach (var assistant in new[] { AssistantAnne, AssistantArne, AssistantAsle, AssistantAud })
                 {
                     db.Assignments.Add(new Assignment { FromId = LawyerBodil, ToId = assistant, RoleId = RoleConstants.BankruptcyEstateAdministrator });
-                    foreach (var estate in new[] { EstateOne, EstateTwo })
+                    foreach (var estate in new[] { EstateOne, EstateTwo, ClosedEstate })
                     {
                         var estateAssignment = new Assignment { FromId = estate, ToId = assistant, RoleId = RoleConstants.Rightholder };
                         db.Assignments.Add(estateAssignment);
@@ -644,7 +669,8 @@ public class BankruptcyDelegationControllerTest
         public ApiFixture Fixture { get; }
 
         /// <summary>
-        /// Bodil revokes Anne. Expects 204, and the administrator role and both estate assignments with their packages removed.
+        /// Bodil revokes Anne. Expects 204, and the administrator role and the estate assignments with their packages
+        /// removed, on the active estates and on the deleted one.
         /// </summary>
         [Fact]
         public async Task RevokeAdministrator_ForAdministrator_Returns204AndRemovesAccess()
@@ -763,7 +789,7 @@ public class BankruptcyDelegationControllerTest
                 Assert.False(admin);
 
                 var estateAssignments = await db.Assignments.AsNoTracking()
-                    .Where(a => (a.FromId == EstateOne || a.FromId == EstateTwo) && a.ToId == user)
+                    .Where(a => (a.FromId == EstateOne || a.FromId == EstateTwo || a.FromId == ClosedEstate) && a.ToId == user)
                     .ToListAsync(TestContext.Current.CancellationToken);
                 Assert.Empty(estateAssignments);
             });
